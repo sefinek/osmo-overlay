@@ -1,0 +1,318 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="OsmoOverlay.Gui.MainWindow"
+        Width="1280" Height="800" MinWidth="1000" MinHeight="640"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        Background="#121214"
+        Title="OsmoOverlay - DJI Osmo Action Telemetry HUD Renderer">
+
+	<Window.Styles>
+		<Style Selector="Border.card">
+			<Setter Property="Background" Value="#1B1B1E" />
+			<Setter Property="CornerRadius" Value="10" />
+			<Setter Property="Padding" Value="18" />
+		</Style>
+		<Style Selector="StackPanel.cardTitle">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="8" />
+			<Setter Property="Margin" Value="0,0,0,8" />
+		</Style>
+		<Style Selector="TextBlock.cardTitleText">
+			<Setter Property="FontSize" Value="15" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.85" />
+			<Setter Property="LetterSpacing" Value="1" />
+		</Style>
+		<Style Selector="TextBlock.infoLabel">
+			<Setter Property="Opacity" Value="0.55" />
+			<Setter Property="Margin" Value="0,5" />
+		</Style>
+		<Style Selector="TextBlock.infoValue">
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Margin" Value="0,5" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="Border.pill">
+			<Setter Property="CornerRadius" Value="10" />
+			<Setter Property="Padding" Value="10,2" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.accent">
+			<Setter Property="Background" Value="#3E9EFF" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#5CACFF" />
+		</Style>
+		<Style Selector="ScrollBar /template/ Thumb">
+			<Setter Property="Background" Value="#3A3A40" />
+			<Setter Property="CornerRadius" Value="8" />
+		</Style>
+		<Style Selector="ScrollBar /template/ Thumb:pointerover">
+			<Setter Property="Background" Value="#57575F" />
+		</Style>
+		<Style Selector="Button.toolbar">
+			<Setter Property="Background" Value="#232327" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="Padding" Value="0,7" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.toolbar:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+		<Style Selector="CheckBox.overlayItem">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Padding" Value="8,0,0,0" />
+		</Style>
+	</Window.Styles>
+
+	<Grid Margin="24" RowDefinitions="*,230" RowSpacing="16">
+
+		<Grid Grid.Row="0" ColumnDefinitions="550,*,300" ColumnSpacing="16">
+
+			<ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Disabled">
+				<StackPanel Spacing="16">
+					<Border Classes="card">
+						<StackPanel Spacing="12">
+							<StackPanel Classes="cardTitle">
+								<TextBlock Classes="cardTitleText" Text="SOURCE" />
+							</StackPanel>
+
+							<StackPanel Spacing="4">
+								<TextBlock Text="Input file" Classes="infoLabel" Margin="0" />
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+									<TextBox Grid.Column="0" Name="InputPathBox" IsReadOnly="True" />
+									<Button Grid.Column="1" Content="Browse..." Click="OnPickInputClick" />
+								</Grid>
+							</StackPanel>
+
+							<StackPanel Spacing="4">
+								<TextBlock Text="Output file" Classes="infoLabel" Margin="0" />
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+									<TextBox Grid.Column="0" Name="OutputPathBox" />
+									<Button Grid.Column="1" Content="Browse..." Click="OnPickOutputClick" />
+								</Grid>
+							</StackPanel>
+
+							<StackPanel Spacing="4">
+								<TextBlock Text="Frame limit (optional)" Classes="infoLabel" Margin="0" />
+								<NumericUpDown Name="FrameLimitBox" Minimum="0" Increment="60" FormatString="0"
+								               PlaceholderText="No limit" HorizontalAlignment="Stretch"
+								               ValueChanged="OnFrameLimitChanged" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+					<Border Classes="card">
+						<StackPanel Spacing="12">
+							<StackPanel Classes="cardTitle">
+								<TextBlock Classes="cardTitleText" Text="ACTION" />
+							</StackPanel>
+
+							<Grid>
+								<Button Name="ActionButton" Content="Get Summary" Click="OnActionClick"
+								        Classes="accent" IsEnabled="False" HorizontalAlignment="Stretch"
+								        HorizontalContentAlignment="Center" />
+								<Button Name="CancelButton" Content="Cancel" Click="OnCancelClick" IsVisible="False"
+								        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+							</Grid>
+							<ProgressBar Name="Progress" Minimum="0" Maximum="100" Height="16" IsVisible="False" />
+						</StackPanel>
+					</Border>
+
+					<StackPanel Name="SummaryPanel" Spacing="16" IsVisible="False">
+
+						<Border Classes="card" Name="FileInfoCard" IsVisible="False">
+							<StackPanel Spacing="4">
+								<StackPanel Classes="cardTitle">
+									<TextBlock Classes="cardTitleText" Text="INPUT" />
+								</StackPanel>
+								<Grid ColumnDefinitions="Auto,*,24,Auto,*"
+								      RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="2" ColumnSpacing="8">
+									<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Camera" />
+									<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
+									<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Telemetry" />
+									<Border Grid.Row="0" Grid.Column="4" Classes="pill" Name="TelemetryPill"
+									        HorizontalAlignment="Left">
+										<TextBlock Name="InfoTelemetry" FontWeight="SemiBold" FontSize="12" />
+									</Border>
+
+									<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
+									<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="InfoResolution" />
+									<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Frame rate" />
+									<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="InfoFrameRate" />
+
+									<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Codec" />
+									<TextBlock Grid.Row="2" Grid.Column="1" Classes="infoValue" Name="InfoCodec" />
+									<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Pixel format" />
+									<TextBlock Grid.Row="2" Grid.Column="4" Classes="infoValue" Name="InfoPixFmt" />
+
+									<TextBlock Grid.Row="3" Grid.Column="0" Classes="infoLabel" Text="Color" />
+									<TextBlock Grid.Row="3" Grid.Column="1" Classes="infoValue" Name="InfoColor" />
+									<TextBlock Grid.Row="3" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
+									<TextBlock Grid.Row="3" Grid.Column="4" Classes="infoValue" Name="InfoBitrate" />
+
+									<TextBlock Grid.Row="4" Grid.Column="0" Classes="infoLabel" Text="Duration" />
+									<TextBlock Grid.Row="4" Grid.Column="1" Classes="infoValue" Name="InfoDuration" />
+									<TextBlock Grid.Row="4" Grid.Column="3" Classes="infoLabel" Text="File size" />
+									<TextBlock Grid.Row="4" Grid.Column="4" Classes="infoValue" Name="InfoFileSize" />
+								</Grid>
+								<TextBlock Name="InfoAudio" Classes="infoLabel" Margin="0,10,0,0" />
+							</StackPanel>
+						</Border>
+
+						<Border Classes="card" Name="TelemetryCard" IsVisible="False">
+							<StackPanel Spacing="4">
+								<StackPanel Classes="cardTitle">
+									<TextBlock Classes="cardTitleText" Text="TELEMETRY" />
+								</StackPanel>
+								<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+								      ColumnSpacing="8">
+									<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Samples" />
+									<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="TeleSamples" />
+									<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Duration" />
+									<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="TeleDuration" />
+
+									<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Distance" />
+									<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="TeleDistance" />
+									<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Max speed" />
+									<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="TeleMaxSpeed" />
+
+									<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Altitude" />
+									<TextBlock Grid.Row="2" Grid.Column="1" Classes="infoValue" Name="TeleAltitude" />
+									<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Max G-force" />
+									<TextBlock Grid.Row="2" Grid.Column="4" Classes="infoValue" Name="TeleMaxG" />
+								</Grid>
+								<TextBlock Classes="infoLabel" Margin="0,10,0,0">
+									<Run Text="Recorded: " /><Run Name="TeleRecordedAt" />
+								</TextBlock>
+							</StackPanel>
+						</Border>
+
+						<Border Classes="card" Name="OutputInfoCard" IsVisible="False">
+							<StackPanel Spacing="4">
+								<StackPanel Classes="cardTitle">
+									<TextBlock Classes="cardTitleText" Text="OUTPUT" />
+								</StackPanel>
+								<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto" RowSpacing="2"
+								      ColumnSpacing="8">
+									<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Codec" />
+									<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutCodec" />
+									<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Encoder" />
+									<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutEncoder" />
+
+									<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
+									<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutResolution" />
+									<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Audio" />
+									<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="OutAudio" />
+								</Grid>
+								<TextBlock Name="OutFrames" Classes="infoLabel" Margin="0,10,0,0" />
+								<TextBlock Name="OutPath" Classes="infoLabel" Margin="0" TextWrapping="Wrap" />
+							</StackPanel>
+						</Border>
+
+					</StackPanel>
+				</StackPanel>
+			</ScrollViewer>
+
+			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
+				<Grid RowDefinitions="*,Auto" RowSpacing="12">
+					<Border Grid.Row="0" Background="Black" CornerRadius="6" ClipToBounds="True">
+						<Grid>
+							<Image Name="PreviewImage" Stretch="Uniform" />
+							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"
+							            Spacing="8">
+								<TextBlock Text="No video loaded" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" />
+								<TextBlock Text="Pick a DJI Osmo Action file and get its summary to preview the overlay"
+								           Opacity="0.3" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
+								           MaxWidth="320" TextAlignment="Center" />
+							</StackPanel>
+							<Canvas Name="OverlayDragCanvas" Background="Transparent" Cursor="Hand"
+							        PointerPressed="OnOverlayCanvasPointerPressed"
+							        PointerMoved="OnOverlayCanvasPointerMoved"
+							        PointerReleased="OnOverlayCanvasPointerReleased" />
+						</Grid>
+					</Border>
+
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+						<Button Grid.Column="0" Name="PlayPauseButton" Content="Play" Click="OnPlayPauseClick"
+						        IsEnabled="False" />
+						<Slider Grid.Column="1" Name="PreviewSlider" Minimum="0" Maximum="1" IsEnabled="False"
+						        VerticalAlignment="Center" ValueChanged="OnPreviewSliderValueChanged"
+						        PointerPressed="OnPreviewSliderPointerPressed"
+						        PointerReleased="OnPreviewSliderPointerReleased" />
+						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0"
+						           VerticalAlignment="Center" Text="00:00 / 00:00" />
+					</Grid>
+				</Grid>
+			</Border>
+
+			<Border Grid.Column="2" Classes="card" Name="OverlayCard" IsVisible="False">
+				<ScrollViewer HorizontalScrollBarVisibility="Disabled">
+					<StackPanel Spacing="14">
+						<StackPanel Classes="cardTitle">
+							<TextBlock Classes="cardTitleText" Text="OVERLAY" />
+						</StackPanel>
+
+						<StackPanel Spacing="4">
+							<TextBlock Text="Preset" Classes="infoLabel" Margin="0" />
+							<Grid ColumnDefinitions="*,Auto">
+								<ComboBox Grid.Column="0" Name="PresetComboBox" HorizontalAlignment="Stretch"
+								          IsVisible="True" SelectionChanged="OnPresetSelectionChanged" />
+								<TextBox Grid.Column="0" Name="PresetRenameBox" IsVisible="False"
+								         KeyDown="OnPresetRenameBoxKeyDown" LostFocus="OnPresetRenameBoxLostFocus" />
+							</Grid>
+							<UniformGrid Columns="2" Margin="0,2,0,0">
+								<Button Classes="toolbar" Margin="0,0,4,4" Content="New" Click="OnNewPresetClick" />
+								<Button Classes="toolbar" Margin="4,0,0,4" Content="Duplicate" Click="OnDuplicatePresetClick" />
+								<Button Classes="toolbar" Margin="0,0,4,4" Content="Rename" Click="OnRenamePresetClick" />
+								<Button Classes="toolbar" Margin="4,0,0,4" Content="Delete" Click="OnDeletePresetClick" />
+							</UniformGrid>
+							<Button Classes="toolbar" Content="Reset to default" Click="OnResetPresetClick" />
+						</StackPanel>
+
+						<StackPanel Spacing="10">
+							<TextBlock Text="Drag on the preview to move - uncheck to hide" Classes="infoLabel"
+							           Margin="0" TextWrapping="Wrap" />
+							<StackPanel Spacing="6">
+								<CheckBox Name="StatsBlockVisibleCheck" Classes="overlayItem" Content="Stats block"
+								          Click="OnStatsBlockVisibilityChanged" />
+								<CheckBox Name="CompassVisibleCheck" Classes="overlayItem" Content="Compass"
+								          Click="OnCompassVisibilityChanged" />
+								<CheckBox Name="SunVisibleCheck" Classes="overlayItem" Content="Sun / G-force"
+								          Click="OnSunVisibilityChanged" />
+								<CheckBox Name="PitchVisibleCheck" Classes="overlayItem" Content="Pitch gauge"
+								          Click="OnPitchVisibilityChanged" />
+								<CheckBox Name="SpeedVisibleCheck" Classes="overlayItem" Content="Speed gauge"
+								          Click="OnSpeedVisibilityChanged" />
+							</StackPanel>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+			</Border>
+		</Grid>
+
+		<Border Grid.Row="1" Classes="card" Name="LogCard">
+			<Grid RowDefinitions="Auto,*">
+				<StackPanel Grid.Row="0" Classes="cardTitle">
+					<TextBlock Classes="cardTitleText" Text="LOG" />
+				</StackPanel>
+				<Border Grid.Row="1" Background="#0A0A0B" CornerRadius="6" Padding="10">
+					<ScrollViewer Name="LogScroll">
+						<TextBox Name="LogBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+						         BorderThickness="0" Background="Transparent"
+						         FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
+					</ScrollViewer>
+				</Border>
+			</Grid>
+		</Border>
+	</Grid>
+</Window>

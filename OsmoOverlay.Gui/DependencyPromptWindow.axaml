@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="360"
+        x:Class="OsmoOverlay.Gui.DependencyPromptWindow"
+        Width="480" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#121214"
+        Title="Missing dependencies">
+
+	<Window.Styles>
+		<Style Selector="Button.accent">
+			<Setter Property="Background" Value="#3E9EFF" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#5CACFF" />
+		</Style>
+	</Window.Styles>
+
+	<StackPanel Margin="20" Spacing="14">
+		<TextBlock Text="Missing dependencies" FontSize="16" FontWeight="SemiBold" />
+		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
+		<ListBox Name="ToolList" MaxHeight="90" />
+
+		<Border Name="LogPanel" Background="#0A0A0B" CornerRadius="6" Padding="10" IsVisible="False" MaxHeight="160">
+			<ScrollViewer Name="LogScroll">
+				<TextBox Name="LogBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+				         BorderThickness="0" Background="Transparent"
+				         FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
+			</ScrollViewer>
+		</Border>
+
+		<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+			<TextBlock Grid.Column="0" />
+			<Button Grid.Column="1" Name="SkipButton" Content="Skip" Click="OnSkipClick" />
+			<Button Grid.Column="2" Name="InstallButton" Content="Install" Classes="accent" Click="OnInstallClick" />
+		</Grid>
+	</StackPanel>
+</Window>

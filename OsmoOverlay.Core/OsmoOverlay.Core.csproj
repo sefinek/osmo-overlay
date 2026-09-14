@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <AssemblyName>OsmoOverlay.Core</AssemblyName>
+    <RootNamespace>OsmoOverlay.Core</RootNamespace>
+
+    <Company>Sefinek</Company>
+    <Product>OsmoOverlay</Product>
+    <Title>OsmoOverlay Core</Title>
+    <FileDescription>Telemetry extraction, HUD rendering and ffmpeg pipeline for DJI Osmo Action series footage.</FileDescription>
+    <Copyright>© 2026 Sefinek. Licensed under MIT.</Copyright>
+    <Authors>Sefinek</Authors>
+    <NeutralLanguage>en-US</NeutralLanguage>
+
+    <Version>1.0.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="4.152.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.152.0" />
+  </ItemGroup>
+
+</Project>
