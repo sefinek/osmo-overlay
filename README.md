@@ -1,4 +1,4 @@
-# DJI Osmo Action 6 Overlay
+# Osmo Overlay
 Not finished yet.
 
 ![](.github/OsmoOverlay_ZerA4dHG.png)
