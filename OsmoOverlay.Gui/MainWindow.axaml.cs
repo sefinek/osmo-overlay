@@ -47,7 +47,11 @@ public partial class MainWindow : Window
 		_previewPlayer.Message += AppendLog;
 	}
 
-	private List<OverlayElement> ActiveElements => _overlayPresets.First(p => p.Id == _activePresetId).Elements;
+	// FirstOrDefault, not First: there's a narrow window right after picking a file where
+	// _summary is already set but LoadOverlayPresets (an earlier await) hasn't finished yet, so a
+	// pointer click on the drag canvas in that gap must not crash on an empty/stale preset list.
+	private List<OverlayElement> ActiveElements =>
+		_overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Elements ?? [];
 
 	private async void OnWindowOpened(object? sender, EventArgs e)
 	{

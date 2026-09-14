@@ -70,10 +70,14 @@ public static class TelemetryProcessor
 				lastDistanceIndex = i;
 			}
 
-			// Negated: Atan2(AccelX, ...) reports the opposite sign of the camera's actual
-			// left/right lean, so the HUD dot moved right when the camera tilted left.
-			var rawPitch = -AngleMath.RadToDeg(Math.Atan2(current.AccelX,
-				Math.Sqrt(current.AccelY * current.AccelY + current.AccelZ * current.AccelZ)));
+			// AccelX tracks forward/backward tilt (true pitch), not left/right lean - confirmed by
+			// extracting frames from a controlled tilt-test recording: large AccelX swings show the
+			// camera pitching to floor/ceiling with a level horizon, while large AccelY swings show
+			// a canted horizon (roll) with the camera still facing forward. This gauge is meant to
+			// read as left/right lean, so it uses AccelY. Negated: confirmed live in the GUI that the
+			// un-negated sign put the dot on the wrong side (tilt left showed the dot going right).
+			var rawPitch = -AngleMath.RadToDeg(Math.Atan2(current.AccelY,
+				Math.Sqrt(current.AccelX * current.AccelX + current.AccelZ * current.AccelZ)));
 
 			// Raw per-sample accelerometer readings are inherently noisy (vibration, bumps), so the
 			// live HUD gauges show an exponential moving average instead of the instantaneous value.

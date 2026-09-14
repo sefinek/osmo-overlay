@@ -34,10 +34,41 @@ public sealed class VideoFrameSource
 	///     Decodes a single frame, or returns null if <paramref name="ct" /> is cancelled first - a
 	///     scrub seek getting superseded by a newer one is expected, frequent behavior, not an
 	///     exceptional one, so cancellation is a plain cooperative check rather than a thrown exception.
+	///     Right near the end of a file, exactly how much margin ffmpeg needs before it can actually
+	///     decode a frame varies by encoder/keyframe layout - rather than guess one fixed epsilon,
+	///     this backs off further and retries a few times before giving up.
 	/// </summary>
 	public VideoFrame? GetFrame(TimeSpan position, CancellationToken ct = default)
 	{
-		using Process process = StartFfmpeg(Clamp(position), true);
+		var attemptPosition = Clamp(position);
+		var backoff = TimeSpan.FromMilliseconds(200);
+		var lastStderr = "";
+
+		// Retrying only helps the near-EOF case the docstring describes; a genuinely broken file
+		// fails at every position, so retrying it just multiplies ffmpeg spawns before the same
+		// error surfaces - and this runs under PreviewPlayer's lock, so that delay blocks playback too.
+		var maxAttempts = Duration - attemptPosition <= TimeSpan.FromSeconds(1) ? 5 : 1;
+
+		for (var attempt = 0; attempt < maxAttempts; attempt++)
+		{
+			(var read, byte[] buffer, var stderr, var cancelled) = DecodeOneFrame(attemptPosition, ct);
+			if (cancelled) return null;
+			if (read == buffer.Length) return new VideoFrame(buffer, _width * 4, _width, _height);
+
+			lastStderr = stderr;
+			if (attempt == maxAttempts - 1) break;
+
+			TimeSpan next = attemptPosition - backoff;
+			attemptPosition = next < TimeSpan.Zero ? TimeSpan.Zero : next;
+		}
+
+		throw new InvalidOperationException($"ffmpeg produced no frame near {position}: {lastStderr}");
+	}
+
+	private (int Read, byte[] Buffer, string Stderr, bool Cancelled) DecodeOneFrame(TimeSpan position,
+		CancellationToken ct)
+	{
+		using Process process = StartFfmpeg(position, true);
 		using CancellationTokenRegistration registration = ct.Register(() =>
 		{
 			try
@@ -55,13 +86,9 @@ public sealed class VideoFrameSource
 		var read = ReadFully(process.StandardOutput.BaseStream, buffer);
 		process.WaitForExit();
 
-		if (ct.IsCancellationRequested) return null;
+		if (ct.IsCancellationRequested) return (0, buffer, "", true);
 
-		if (read < buffer.Length)
-			throw new InvalidOperationException(
-				$"ffmpeg produced no frame at {position}: {stderrTask.GetAwaiter().GetResult()}");
-
-		return new VideoFrame(buffer, _width * 4, _width, _height);
+		return (read, buffer, stderrTask.GetAwaiter().GetResult(), false);
 	}
 
 	public VideoPlaybackStream OpenPlaybackStream(TimeSpan from)
