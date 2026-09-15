@@ -1,21 +1,24 @@
 using System.Diagnostics;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core;
 
 public sealed record RenderOptions(
-	string InputPath,
+	IReadOnlyList<string> InputPaths,
 	string OutputPath,
 	int? FrameLimit = null,
 	string? Encoder = null,
 	IReadOnlyList<TelemetryFrame>? TelemetryFrames = null,
 	bool Overwrite = true,
-	IReadOnlyList<OverlayElement>? Layout = null)
+	IReadOnlyList<OverlayElement>? Layout = null,
+	bool? ShowWatermark = null)
 {
-	public static string DefaultOutputPath(string inputPath)
+	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
 	{
+		var inputPath = inputPaths[0];
 		var dir = Path.GetDirectoryName(inputPath) ?? ".";
 		var name = Path.GetFileNameWithoutExtension(inputPath);
 		return Path.Combine(dir, $"{name}_overlay.mp4");
@@ -59,20 +62,25 @@ public static class RenderJob
 			progress?.Report(new RenderStatus(phase, message, current, total, sw.Elapsed));
 		}
 
-		if (!File.Exists(options.InputPath))
-			return new RenderResult(false, $"File not found: {options.InputPath}", sw.Elapsed);
+		foreach (var path in options.InputPaths)
+			if (!File.Exists(path))
+				return new RenderResult(false, $"File not found: {path}", sw.Elapsed);
 
 		try
 		{
-			Report(RenderPhase.Probing, "Probing source file (ffprobe)...");
-			SourceInfo source = SourceProbe.Probe(options.InputPath);
-			Report(RenderPhase.Probing,
-				$"{source.Video.CodecName} {source.Video.Profile}, {source.Video.Width}x{source.Video.Height}, " +
-				$"{source.Video.FrameRate} fps, {source.Video.PixFmt}, ~{source.Video.BitRate / 1_000_000} Mbps");
+			Report(RenderPhase.Probing, "Probing source file(s) (ffprobe)...");
+			IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(options.InputPaths);
+			VideoSegments.Validate(segments);
+			VideoSegment first = segments[0];
 
-			if (!source.HasDjmdTrack)
+			Report(RenderPhase.Probing,
+				$"{first.Source.Video.CodecName} {first.Source.Video.Profile}, {first.Source.Video.Width}x{first.Source.Video.Height}, " +
+				$"{first.Source.Video.FrameRate} fps, {first.Source.Video.PixFmt}, ~{first.Source.Video.BitRate / 1_000_000} Mbps" +
+				(segments.Count > 1 ? $" ({segments.Count} segments)" : ""));
+
+			if (!segments.AllHaveDjmdTrack())
 				return new RenderResult(false,
-					$"{options.InputPath} has no 'djmd' telemetry stream - this is likely a proxy/preview file, not an original DJI Osmo Action recording.",
+					$"{first.InputPath} has no 'djmd' telemetry stream - this is likely a proxy/preview file, not an original DJI Osmo Action recording.",
 					sw.Elapsed);
 
 			if (!options.Overwrite && File.Exists(options.OutputPath))
@@ -87,9 +95,9 @@ public static class RenderJob
 			else
 			{
 				Report(RenderPhase.ExtractingTelemetry, "Extracting telemetry (djmd stream)...");
-				rawFrames = TelemetryExtraction.Extract(options.InputPath, source).Frames;
+				rawFrames = TelemetryExtraction.ExtractCombined(segments).Frames;
 				if (rawFrames.Count == 0)
-					return new RenderResult(false, "No telemetry samples found in the file.", sw.Elapsed);
+					return new RenderResult(false, "No telemetry samples found in the file(s).", sw.Elapsed);
 				Report(RenderPhase.ExtractingTelemetry, $"Extracted {rawFrames.Count} telemetry samples.");
 			}
 
@@ -104,16 +112,18 @@ public static class RenderJob
 				$"Using encoder: {encoder}" +
 				(encoder == "libx265" ? " (NVENC unavailable - rendering on CPU)" : " (GPU)"));
 
-			var fps = source.Video.Fps;
-			var totalFrames = options.FrameLimit ?? (int)Math.Ceiling(source.DurationSeconds * fps);
+			var fps = first.Source.Video.Fps;
+			var totalFrames = options.FrameLimit ?? (int)Math.Ceiling(segments.TotalDurationSeconds() * fps);
 			double? limitSeconds = options.FrameLimit is not null ? options.FrameLimit.Value / fps : null;
 			Report(RenderPhase.Rendering, $"Rendering {totalFrames} frames to {options.OutputPath}...", 0, totalFrames);
 
-			IReadOnlyList<OverlayElement> layout = options.Layout ?? LoadActiveLayout(source.Video.Width, source.Video.Height);
-			using var renderer = new OverlayRenderer(source.Video.Width, source.Video.Height, startAltitude, layout,
-				maxSpeedKmh);
-			using Process ffmpeg = FfmpegPipeline.StartRender(options.InputPath, options.OutputPath, source, encoder,
-				options.Overwrite, limitSeconds);
+			IReadOnlyList<OverlayElement> layout =
+				options.Layout ?? LoadActiveLayout(first.Source.Video.Width, first.Source.Video.Height);
+			var showWatermark = options.ShowWatermark ?? OverlaySettingsStore.Load().ShowWatermark;
+			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
+				startAltitude, layout, derived, maxSpeedKmh, showWatermark);
+			using Process ffmpeg = FfmpegPipeline.StartRender(options.InputPaths, options.OutputPath, first.Source,
+				encoder, options.Overwrite, limitSeconds);
 
 			Stream stdin = ffmpeg.StandardInput.BaseStream;
 			Task<string> stderrTask = ffmpeg.StandardError.ReadToEndAsync(ct);
@@ -158,11 +168,11 @@ public static class RenderJob
 				return new RenderResult(false, $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}",
 					sw.Elapsed);
 
-			Report(RenderPhase.Done, $"Done: {options.OutputPath}", totalFrames, totalFrames);
 			return new RenderResult(true, null, sw.Elapsed);
 		}
 		catch (Exception ex)
 		{
+			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}");
 			Report(RenderPhase.Failed, $"Error: {ex.Message}");
 			return new RenderResult(false, ex.Message, sw.Elapsed);
 		}

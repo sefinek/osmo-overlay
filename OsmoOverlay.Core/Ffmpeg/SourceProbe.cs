@@ -29,7 +29,7 @@ public sealed record VideoInfo(
 	}
 }
 
-public sealed record AudioInfo(string CodecName, int SampleRate, int Channels);
+public sealed record AudioInfo(string CodecName, int SampleRate, int Channels, long BitRate);
 
 public sealed record SourceInfo(
 	VideoInfo Video,
@@ -102,7 +102,8 @@ public static class SourceProbe
 			: new AudioInfo(
 				audioStream["codec_name"]!.GetValue<string>(),
 				int.Parse(audioStream["sample_rate"]!.GetValue<string>()),
-				audioStream["channels"]!.GetValue<int>());
+				audioStream["channels"]!.GetValue<int>(),
+				ResolveAudioBitRate(audioStream, videoStream, root));
 
 		var duration = double.Parse(root["format"]!["duration"]!.GetValue<string>(), CultureInfo.InvariantCulture);
 
@@ -123,5 +124,21 @@ public static class SourceProbe
 		// report its own rate, subtract the audio track's so we don't inflate the video target.
 		var audioBitRate = audioStream?["bit_rate"]?.GetValue<string>();
 		return audioBitRate is not null ? Math.Max(0, formatBitRate - long.Parse(audioBitRate)) : formatBitRate;
+	}
+
+	private static long ResolveAudioBitRate(JsonNode audioStream, JsonNode videoStream, JsonNode root)
+	{
+		var audioBitRate = audioStream["bit_rate"]?.GetValue<string>();
+		if (audioBitRate is not null) return long.Parse(audioBitRate);
+
+		// Mirrors ResolveVideoBitRate: when the audio stream doesn't report its own rate, derive it
+		// from the container total minus the video track's rate instead of showing 0.
+		var formatBitRateStr = root["format"]?["bit_rate"]?.GetValue<string>();
+		if (formatBitRateStr is null) return 0;
+
+		var videoBitRate = videoStream["bit_rate"]?.GetValue<string>();
+		if (videoBitRate is null) return 0;
+
+		return Math.Max(0, long.Parse(formatBitRateStr) - long.Parse(videoBitRate));
 	}
 }

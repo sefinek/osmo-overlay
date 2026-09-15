@@ -4,6 +4,8 @@ using OsmoOverlay.Core.Telemetry;
 namespace OsmoOverlay.Core;
 
 public sealed record FileSummary(
+	IReadOnlyList<string> InputPaths,
+	IReadOnlyList<double> SegmentDurationsSeconds,
 	string? CameraModel,
 	VideoInfo Video,
 	AudioInfo? Audio,
@@ -17,45 +19,52 @@ public sealed record FileSummary(
 
 public static class FileSummaryReader
 {
-	public const int CacheFormatVersion = FileSummaryCache.FormatVersion;
-
-	public static string GetCachePath(string inputPath)
+	public static int ClearCache()
 	{
-		return FileSummaryCache.GetCachePath(inputPath);
+		return FileSummaryCache.ClearAll();
 	}
 
 	public static FileSummary Read(string inputPath)
 	{
-		if (FileSummaryCache.TryLoad(inputPath) is { } cached)
+		return Read([inputPath]);
+	}
+
+	public static FileSummary Read(IReadOnlyList<string> inputPaths)
+	{
+		if (FileSummaryCache.TryLoad(inputPaths) is { } cached)
 			return cached with { FromCache = true };
 
-		SourceInfo source = SourceProbe.Probe(inputPath);
-		var fileSize = new FileInfo(inputPath).Length;
+		IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(inputPaths);
+		VideoSegments.Validate(segments);
+		VideoSegment first = segments[0];
+		var fileSize = inputPaths.Sum(path => new FileInfo(path).Length);
+		var durationSeconds = segments.TotalDurationSeconds();
+		List<double> segmentDurations = segments.Select(s => s.Source.DurationSeconds).ToList();
 
-		string? cameraModel = null;
-		List<TelemetryFrame>? telemetryFrames = null;
-		List<DerivedFrame>? derivedFrames = null;
-		TelemetrySummary? telemetry = null;
-
-		if (source.HasDjmdTrack)
+		FileSummary summary;
+		if (!segments.AllHaveDjmdTrack())
 		{
-			TelemetryExtractionResult extraction = TelemetryExtraction.Extract(inputPath, source);
-			telemetryFrames = extraction.Frames;
-			cameraModel = extraction.CameraModel;
-
-			if (telemetryFrames.Count > 0)
+			var cameraModelOnly = ExifToolRunner.GetCameraModel(inputPaths[0]);
+			summary = new FileSummary(inputPaths, segmentDurations, cameraModelOnly, first.Source.Video,
+				first.Source.Audio, durationSeconds, fileSize, false, null, null, null);
+		}
+		else
+		{
+			TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
+			List<DerivedFrame>? derivedFrames = null;
+			TelemetrySummary? telemetry = null;
+			if (extraction.Frames.Count > 0)
 			{
-				derivedFrames = TelemetryProcessor.Process(telemetryFrames);
+				derivedFrames = TelemetryProcessor.Process(extraction.Frames);
 				telemetry = TelemetryProcessor.Summarize(derivedFrames);
 			}
+
+			var cameraModel = extraction.CameraModel ?? ExifToolRunner.GetCameraModel(inputPaths[0]);
+			summary = new FileSummary(inputPaths, segmentDurations, cameraModel, first.Source.Video,
+				first.Source.Audio, durationSeconds, fileSize, true, extraction.Frames, derivedFrames, telemetry);
 		}
 
-		cameraModel ??= ExifToolRunner.GetCameraModel(inputPath);
-
-		var summary = new FileSummary(cameraModel, source.Video, source.Audio, source.DurationSeconds, fileSize,
-			source.HasDjmdTrack, telemetryFrames, derivedFrames, telemetry);
-
-		FileSummaryCache.Save(inputPath, summary);
+		FileSummaryCache.Save(inputPaths, summary);
 		return summary;
 	}
 }

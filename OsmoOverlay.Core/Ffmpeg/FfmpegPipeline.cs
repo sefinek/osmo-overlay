@@ -19,8 +19,8 @@ public static class FfmpegPipeline
 		return process.ExitCode == 0 ? "hevc_nvenc" : "libx265";
 	}
 
-	public static Process StartRender(string inputPath, string outputPath, SourceInfo info, string encoder,
-		bool overwrite, double? limitSeconds = null)
+	public static Process StartRender(IReadOnlyList<string> inputPaths, string outputPath, SourceInfo info,
+		string encoder, bool overwrite, double? limitSeconds = null)
 	{
 		var (num, den) = ParseFrameRate(info.Video.FrameRate);
 
@@ -29,7 +29,19 @@ public static class FfmpegPipeline
 
 		if (limitSeconds is not null)
 			args.AddRange(["-t", limitSeconds.Value.ToString(CultureInfo.InvariantCulture)]);
-		args.AddRange(["-i", inputPath]);
+
+		// A single file is fed directly, exactly as before - the concat demuxer only kicks in for
+		// stitched multi-segment recordings, so the common single-file path has zero behavior change.
+		string? concatListPath = null;
+		if (inputPaths.Count == 1)
+		{
+			args.AddRange(["-i", inputPaths[0]]);
+		}
+		else
+		{
+			concatListPath = ConcatListWriter.Write(inputPaths.Select(p => (p, (double?)null)));
+			args.AddRange(["-f", "concat", "-safe", "0", "-i", concatListPath]);
+		}
 
 		args.AddRange([
 			"-f", "rawvideo",
@@ -61,8 +73,15 @@ public static class FfmpegPipeline
 				"-preset", "p7",
 				"-rc", "vbr",
 				"-cq", "18",
-				"-b:v", $"{info.Video.BitRate}",
-				"-maxrate", $"{(long)(info.Video.BitRate * 1.2)}",
+				// b:v 0 hands bitrate allocation entirely to -cq (pure quality-driven, like x265's crf
+				// below) instead of also chasing an average-bitrate target - the two fought each other,
+				// and a tight maxrate (previously 1.2x source) could starve high-motion frames below
+				// the cq target on exactly the segments most likely to need more bits, i.e. real quality
+				// loss. maxrate/bufsize stay only as a generous safety ceiling against pathological
+				// content, not as something -cq is expected to bump into during normal encoding.
+				"-b:v", "0",
+				"-maxrate", $"{(long)(info.Video.BitRate * 2.5)}",
+				"-bufsize", $"{info.Video.BitRate * 5}",
 				"-profile:v", "main10",
 				"-pix_fmt", "yuv420p10le"
 			]);
@@ -78,7 +97,11 @@ public static class FfmpegPipeline
 			"-color_primaries", info.Video.ColorPrimaries ?? "bt709",
 			"-color_trc", info.Video.ColorTransfer ?? "bt709",
 			"-colorspace", info.Video.ColorSpace ?? "bt709",
-			"-color_range", info.Video.ColorRange ?? "tv"
+			"-color_range", info.Video.ColorRange ?? "tv",
+			// Matches the source's MP4 HEVC tag (DJI writes hvc1: SPS/PPS/VPS out-of-band) instead of
+			// ffmpeg's hev1 default, so pickier players/editors (DaVinci Resolve, older QuickTime/FCP)
+			// that expect hvc1 don't choke on an otherwise-identical bitstream.
+			"-tag:v", "hvc1"
 		]);
 
 		args.Add(outputPath);
@@ -93,7 +116,25 @@ public static class FfmpegPipeline
 		};
 		foreach (var a in args) psi.ArgumentList.Add(a);
 
-		return Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+		Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+
+		if (concatListPath is not null)
+		{
+			process.EnableRaisingEvents = true;
+			process.Exited += (_, _) =>
+			{
+				try
+				{
+					File.Delete(concatListPath);
+				}
+				catch
+				{
+					// Best-effort: a stray temp file is harmless, not worth failing over.
+				}
+			};
+		}
+
+		return process;
 	}
 
 	private static (int num, int den) ParseFrameRate(string rFrameRate)

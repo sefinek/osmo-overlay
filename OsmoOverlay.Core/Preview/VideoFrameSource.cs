@@ -1,20 +1,32 @@
 using System.Diagnostics;
 using System.Globalization;
+using OsmoOverlay.Core.Ffmpeg;
 
 namespace OsmoOverlay.Core.Preview;
 
 public sealed record VideoFrame(byte[] Bgra, int Stride, int Width, int Height);
 
+/// <summary>One physical file on the combined preview timeline - just what VideoFrameSource needs.</summary>
+public sealed record PlaybackSegment(string Path, double DurationSeconds);
+
 public sealed class VideoFrameSource
 {
 	private readonly int _height;
-	private readonly string _inputPath;
+	private readonly IReadOnlyList<(string Path, double DurationSeconds, double StartOffsetSeconds)> _segments;
 	private readonly int _width;
 
-	private VideoFrameSource(string inputPath, TimeSpan duration, double fps, int width, int height)
+	private VideoFrameSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height)
 	{
-		_inputPath = inputPath;
-		Duration = duration;
+		var withOffsets = new List<(string Path, double DurationSeconds, double StartOffsetSeconds)>(segments.Count);
+		var offset = 0.0;
+		foreach (PlaybackSegment segment in segments)
+		{
+			withOffsets.Add((segment.Path, segment.DurationSeconds, offset));
+			offset += segment.DurationSeconds;
+		}
+
+		_segments = withOffsets;
+		Duration = TimeSpan.FromSeconds(offset);
 		Fps = fps;
 		_width = width;
 		_height = height;
@@ -25,33 +37,35 @@ public sealed class VideoFrameSource
 
 	private int FrameByteCount => _width * _height * 4;
 
-	public static VideoFrameSource Open(string inputPath, double durationSeconds, double fps, int width, int height)
+	public static VideoFrameSource Open(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height)
 	{
-		return new VideoFrameSource(inputPath, TimeSpan.FromSeconds(durationSeconds), fps, width, height);
+		return new VideoFrameSource(segments, fps, width, height);
 	}
 
 	/// <summary>
 	///     Decodes a single frame, or returns null if <paramref name="ct" /> is cancelled first - a
 	///     scrub seek getting superseded by a newer one is expected, frequent behavior, not an
 	///     exceptional one, so cancellation is a plain cooperative check rather than a thrown exception.
-	///     Right near the end of a file, exactly how much margin ffmpeg needs before it can actually
-	///     decode a frame varies by encoder/keyframe layout - rather than guess one fixed epsilon,
-	///     this backs off further and retries a few times before giving up.
+	///     Right near the end of the LAST segment, exactly how much margin ffmpeg needs before it can
+	///     actually decode a frame varies by encoder/keyframe layout - rather than guess one fixed
+	///     epsilon, this backs off further and retries a few times before giving up. An intermediate
+	///     segment boundary is not a real end of stream, so no retry is needed there.
 	/// </summary>
 	public VideoFrame? GetFrame(TimeSpan position, CancellationToken ct = default)
 	{
-		var attemptPosition = Clamp(position);
-		var backoff = TimeSpan.FromMilliseconds(200);
+		(var index, TimeSpan local) = Locate(ClampGlobal(position));
+		var (path, durationSeconds, _) = _segments[index];
+		var isLastSegment = index == _segments.Count - 1;
+
+		TimeSpan attemptPosition = ClampLocal(local, durationSeconds);
+		TimeSpan backoff = TimeSpan.FromMilliseconds(200);
 		var lastStderr = "";
 
-		// Retrying only helps the near-EOF case the docstring describes; a genuinely broken file
-		// fails at every position, so retrying it just multiplies ffmpeg spawns before the same
-		// error surfaces - and this runs under PreviewPlayer's lock, so that delay blocks playback too.
-		var maxAttempts = Duration - attemptPosition <= TimeSpan.FromSeconds(1) ? 5 : 1;
+		var maxAttempts = isLastSegment && durationSeconds - attemptPosition.TotalSeconds <= 1.0 ? 5 : 1;
 
 		for (var attempt = 0; attempt < maxAttempts; attempt++)
 		{
-			(var read, byte[] buffer, var stderr, var cancelled) = DecodeOneFrame(attemptPosition, ct);
+			var (read, buffer, stderr, cancelled) = DecodeOneFrame(path, attemptPosition, ct);
 			if (cancelled) return null;
 			if (read == buffer.Length) return new VideoFrame(buffer, _width * 4, _width, _height);
 
@@ -62,13 +76,14 @@ public sealed class VideoFrameSource
 			attemptPosition = next < TimeSpan.Zero ? TimeSpan.Zero : next;
 		}
 
-		throw new InvalidOperationException($"ffmpeg produced no frame near {position}: {lastStderr}");
+		throw new InvalidOperationException(
+			$"ffmpeg produced no frame near {position} ({path} @ {attemptPosition}): {lastStderr}");
 	}
 
-	private (int Read, byte[] Buffer, string Stderr, bool Cancelled) DecodeOneFrame(TimeSpan position,
+	private (int Read, byte[] Buffer, string Stderr, bool Cancelled) DecodeOneFrame(string path, TimeSpan position,
 		CancellationToken ct)
 	{
-		using Process process = StartFfmpeg(position, true);
+		using Process process = StartFfmpeg(path, position, true);
 		using CancellationTokenRegistration registration = ct.Register(() =>
 		{
 			try
@@ -91,14 +106,31 @@ public sealed class VideoFrameSource
 		return (read, buffer, stderrTask.GetAwaiter().GetResult(), false);
 	}
 
+	/// <summary>
+	///     Continuous decode from any point on the combined timeline through to the end. A single
+	///     remaining segment is played the same way as before (a plain -ss seek); when more than one
+	///     segment remains, they're stitched via the concat demuxer's per-entry "inpoint" (seeks into
+	///     the first segment, then streams the rest in full) so one ffmpeg process decodes straight
+	///     through file boundaries instead of Play having to restart on every segment change.
+	/// </summary>
 	public VideoPlaybackStream OpenPlaybackStream(TimeSpan from)
 	{
-		TimeSpan start = Clamp(from);
-		Process process = StartFfmpeg(start, false);
-		return new VideoPlaybackStream(process, start, Fps, _width, _height);
+		TimeSpan start = ClampGlobal(from);
+		(var index, TimeSpan local) = Locate(start);
+
+		if (_segments.Count - index == 1)
+		{
+			Process single = StartFfmpeg(_segments[index].Path, local, false);
+			return new VideoPlaybackStream(single, start, Fps, _width, _height, null);
+		}
+
+		IEnumerable<(string Path, double?)> entries = _segments.Skip(index).Select((s, i) => (s.Path, i == 0 ? (double?)local.TotalSeconds : null));
+		var listPath = ConcatListWriter.Write(entries);
+		Process process = StartFfmpegConcat(listPath);
+		return new VideoPlaybackStream(process, start, Fps, _width, _height, listPath);
 	}
 
-	private Process StartFfmpeg(TimeSpan position, bool singleFrame)
+	private Process StartFfmpeg(string inputPath, TimeSpan position, bool singleFrame)
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg");
 
@@ -108,7 +140,32 @@ public sealed class VideoFrameSource
 		psi.ArgumentList.Add("-hwaccel");
 		psi.ArgumentList.Add("auto");
 		psi.ArgumentList.Add("-i");
-		psi.ArgumentList.Add(_inputPath);
+		psi.ArgumentList.Add(inputPath);
+		AppendCommonDecodeArgs(psi, singleFrame);
+
+		return Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+	}
+
+	private Process StartFfmpegConcat(string listPath)
+	{
+		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg");
+
+		psi.ArgumentList.Add("-hide_banner");
+		psi.ArgumentList.Add("-hwaccel");
+		psi.ArgumentList.Add("auto");
+		psi.ArgumentList.Add("-f");
+		psi.ArgumentList.Add("concat");
+		psi.ArgumentList.Add("-safe");
+		psi.ArgumentList.Add("0");
+		psi.ArgumentList.Add("-i");
+		psi.ArgumentList.Add(listPath);
+		AppendCommonDecodeArgs(psi, false);
+
+		return Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+	}
+
+	private void AppendCommonDecodeArgs(ProcessStartInfo psi, bool singleFrame)
+	{
 		psi.ArgumentList.Add("-an");
 		psi.ArgumentList.Add("-sn");
 		if (singleFrame)
@@ -126,11 +183,21 @@ public sealed class VideoFrameSource
 		psi.ArgumentList.Add("-loglevel");
 		psi.ArgumentList.Add("error");
 		psi.ArgumentList.Add("pipe:1");
-
-		return Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
 	}
 
-	private TimeSpan Clamp(TimeSpan position)
+	/// <summary>Finds which segment a combined-timeline position falls into, and its local offset there.</summary>
+	private (int Index, TimeSpan Local) Locate(TimeSpan globalPosition)
+	{
+		var seconds = globalPosition.TotalSeconds;
+		for (var i = 0; i < _segments.Count - 1; i++)
+			if (seconds < _segments[i + 1].StartOffsetSeconds)
+				return (i, TimeSpan.FromSeconds(seconds - _segments[i].StartOffsetSeconds));
+
+		var last = _segments.Count - 1;
+		return (last, TimeSpan.FromSeconds(seconds - _segments[last].StartOffsetSeconds));
+	}
+
+	private TimeSpan ClampGlobal(TimeSpan position)
 	{
 		if (position < TimeSpan.Zero) return TimeSpan.Zero;
 
@@ -140,6 +207,14 @@ public sealed class VideoFrameSource
 		if (lastFrame < TimeSpan.Zero) lastFrame = TimeSpan.Zero;
 
 		return position > lastFrame ? lastFrame : position;
+	}
+
+	private TimeSpan ClampLocal(TimeSpan local, double segmentDurationSeconds)
+	{
+		if (local < TimeSpan.Zero) return TimeSpan.Zero;
+
+		var lastFrameSeconds = Math.Max(0, segmentDurationSeconds - 1.0 / Fps);
+		return local.TotalSeconds > lastFrameSeconds ? TimeSpan.FromSeconds(lastFrameSeconds) : local;
 	}
 
 	internal static int ReadFully(Stream stream, byte[] buffer)
@@ -158,6 +233,7 @@ public sealed class VideoFrameSource
 
 public sealed class VideoPlaybackStream : IDisposable
 {
+	private readonly string? _concatListPath;
 	private readonly double _fps;
 	private readonly int _height;
 	private readonly Process _process;
@@ -165,7 +241,8 @@ public sealed class VideoPlaybackStream : IDisposable
 	private readonly int _width;
 	private long _framesRead;
 
-	internal VideoPlaybackStream(Process process, TimeSpan startPosition, double fps, int width, int height)
+	internal VideoPlaybackStream(Process process, TimeSpan startPosition, double fps, int width, int height,
+		string? concatListPath)
 	{
 		_process = process;
 		_stdout = process.StandardOutput.BaseStream;
@@ -175,6 +252,7 @@ public sealed class VideoPlaybackStream : IDisposable
 		_fps = fps;
 		_width = width;
 		_height = height;
+		_concatListPath = concatListPath;
 	}
 
 	public TimeSpan StartPosition { get; }
@@ -192,6 +270,16 @@ public sealed class VideoPlaybackStream : IDisposable
 		}
 
 		_process.Dispose();
+
+		if (_concatListPath is not null)
+			try
+			{
+				File.Delete(_concatListPath);
+			}
+			catch
+			{
+				// Best-effort: a stray temp file is harmless, not worth failing over.
+			}
 	}
 
 	public VideoFrame? TryReadNextFrame()

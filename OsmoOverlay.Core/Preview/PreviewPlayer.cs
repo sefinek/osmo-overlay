@@ -10,7 +10,7 @@ public sealed class PreviewPlayer : IDisposable
 {
 	private const int ScrubDebounceMs = 80;
 
-	private readonly object _lock = new();
+	private readonly Lock _lock = new();
 	private TimeSpan _lastPosition;
 	private VideoFrame? _lastVideoFrame;
 	private CancellationTokenSource? _playbackCts;
@@ -32,7 +32,7 @@ public sealed class PreviewPlayer : IDisposable
 	public event Action? PlaybackStopped;
 	public event Action<string>? Message;
 
-	public async Task OpenAsync(string inputPath, FileSummary summary, int previewWidth, int previewHeight)
+	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight)
 	{
 		Close();
 
@@ -41,15 +41,22 @@ public sealed class PreviewPlayer : IDisposable
 
 		_summary = summary;
 
+		List<PlaybackSegment> segments =
+		[
+			.. summary.InputPaths
+				.Zip(summary.SegmentDurationsSeconds, (path, duration) => new PlaybackSegment(path, duration))
+		];
+
 		// Spawning ffmpeg and decoding the first frame are both blocking; awaiting Task.Run (rather
 		// than running the whole method inside one) lets the continuation - and the FrameReady
 		// event it raises - resume on the caller's thread (the UI thread), same as RunPlaybackAsync.
-		VideoFrameSource video = await Task.Run(() => VideoFrameSource.Open(inputPath, summary.DurationSeconds,
+		VideoFrameSource video = await Task.Run(() => VideoFrameSource.Open(segments,
 			summary.Video.Fps, previewWidth, previewHeight));
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout = presets.First(p => p.Id == activeId).Elements;
+		var showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 		var renderer = new OverlayRenderer(summary.Video.Width, summary.Video.Height,
-			derivedFrames[0].Raw.AltitudeMeters, layout, summary.Telemetry?.MaxSpeedKmh ?? 0);
+			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0, showWatermark);
 
 		_video = video;
 		_renderer = renderer;
@@ -139,6 +146,20 @@ public sealed class PreviewPlayer : IDisposable
 		{
 			if (_renderer is null) return;
 			_renderer.Layout = layout;
+
+			if (_lastVideoFrame is not { } videoFrame || _summary is null) return;
+			ComposedPreviewFrame? composed = Compose(_renderer, _summary, videoFrame, _lastPosition);
+			if (composed is not null) FrameReady?.Invoke(composed);
+		}
+	}
+
+	/// <summary>Mirrors SetLayout: lets Settings toggle the watermark live without reopening the file.</summary>
+	public void SetShowWatermark(bool show)
+	{
+		lock (_lock)
+		{
+			if (_renderer is null) return;
+			_renderer.ShowWatermark = show;
 
 			if (_lastVideoFrame is not { } videoFrame || _summary is null) return;
 			ComposedPreviewFrame? composed = Compose(_renderer, _summary, videoFrame, _lastPosition);

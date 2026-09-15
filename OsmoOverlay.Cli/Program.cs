@@ -1,15 +1,27 @@
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Logging;
 
 if (args.Length == 0)
 {
-	Console.WriteLine("Usage: OsmoOverlay.Cli <input.mp4> [-o <output.mp4>] [--frames N]");
+	Console.WriteLine("Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N]");
 	return 1;
 }
 
-var inputPath = args[0];
+var inputPaths = new List<string>();
 var outputPath = "";
 int? frameLimit = null;
-for (var i = 1; i < args.Length; i++)
+
+var i = 0;
+while (i < args.Length && args[i] is not ("-o" or "--frames"))
+	inputPaths.Add(args[i++]);
+
+if (inputPaths.Count == 0)
+{
+	Console.Error.WriteLine("Error: at least one input file is required.");
+	return 1;
+}
+
+for (; i < args.Length; i++)
 {
 	if (args[i] is not ("-o" or "--frames")) continue;
 
@@ -24,7 +36,7 @@ for (var i = 1; i < args.Length; i++)
 }
 
 if (string.IsNullOrEmpty(outputPath))
-	outputPath = RenderOptions.DefaultOutputPath(inputPath);
+	outputPath = RenderOptions.DefaultOutputPath(inputPaths);
 
 var progress = new Progress<RenderStatus>(status =>
 {
@@ -36,18 +48,21 @@ var progress = new Progress<RenderStatus>(status =>
 	else
 	{
 		Console.WriteLine(status.Message);
+		AppLogger.Info(status.Message);
 	}
 });
 
-RenderResult result = await RenderJob.RunAsync(new RenderOptions(inputPath, outputPath, frameLimit), progress,
+RenderResult result = await RenderJob.RunAsync(new RenderOptions(inputPaths, outputPath, frameLimit), progress,
 	CancellationToken.None);
 Console.WriteLine();
 
 if (!result.Success)
 {
 	Console.Error.WriteLine($"Error: {result.ErrorMessage}");
+	AppLogger.Error(new InvalidOperationException(result.ErrorMessage), "Render failed");
 	return 1;
 }
 
 Console.WriteLine($"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:ss})");
+AppLogger.Info($"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:ss})");
 return 0;

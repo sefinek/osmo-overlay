@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
@@ -14,6 +15,7 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using SkiaSharp;
+using AvaloniaPath = Avalonia.Controls.Shapes.Path;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
 
 namespace OsmoOverlay.Gui;
@@ -21,6 +23,25 @@ namespace OsmoOverlay.Gui;
 public partial class MainWindow : Window
 {
 	private const int PreviewMaxWidth = 960;
+
+	// Simple check/cross tick marks (24x24 viewbox) drawn as vector geometry rather than a Unicode
+	// glyph - a ✓/✗ character can silently fall back to a different font with its own baseline,
+	// throwing off vertical alignment next to the surrounding text in a way that varies by system.
+	private static readonly Geometry CheckGeometry = Geometry.Parse("M4.5 12.75l6 6 9-13.5");
+	private static readonly Geometry CrossGeometry = Geometry.Parse("M6 18L18 6M6 6l12 12");
+
+	private static readonly List<DateFormatOption> DateFormatOptions =
+	[
+		new("Default (dd/MM/yyyy HH:mm:ss)", null),
+		new("yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd  HH:mm:ss"),
+		new("MM/dd/yyyy hh:mm:ss tt", "MM/dd/yyyy  hh:mm:ss tt"),
+		new("yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd  HH:mm:ss"),
+		new("dd MMM yyyy HH:mm", "dd MMM yyyy  HH:mm"),
+		new("HH:mm:ss", "HH:mm:ss")
+	];
+
+	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
+	private readonly List<string> _inputPaths = [];
 	private readonly PreviewPlayer _previewPlayer = new();
 	private string _activePresetId = "";
 
@@ -28,10 +49,12 @@ public partial class MainWindow : Window
 	private string _detectedEncoder = "";
 	private Point _dragAnchorOffset;
 	private OverlayElementType? _draggingElementType;
+	private int? _frameLimit;
 
 	private List<OverlayPreset> _overlayPresets = [];
 	private UiPhase _phase = UiPhase.Idle;
 	private WriteableBitmap? _previewBitmap;
+	private bool _showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 	private bool _sliderDragInProgress;
 	private FileSummary? _summary;
 	private bool _suppressOverlayEvents;
@@ -41,6 +64,9 @@ public partial class MainWindow : Window
 	{
 		InitializeComponent();
 		Opened += OnWindowOpened;
+
+		DateTimeFormatCombo.ItemsSource = DateFormatOptions;
+		DateTimeLocaleCombo.ItemsSource = LocaleOptions;
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
@@ -53,6 +79,13 @@ public partial class MainWindow : Window
 	private List<OverlayElement> ActiveElements =>
 		_overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Elements ?? [];
 
+	/// <summary>
+	///     The built-in "Default" preset is read-only, so there's always one untouched baseline layout
+	///     to fall back to or Duplicate from - editing it directly would mean losing that baseline the
+	///     first time someone drags a widget.
+	/// </summary>
+	private bool IsActivePresetDefault => _activePresetId == OverlayPresetStore.DefaultPresetId;
+
 	private async void OnWindowOpened(object? sender, EventArgs e)
 	{
 		Opened -= OnWindowOpened;
@@ -63,28 +96,85 @@ public partial class MainWindow : Window
 		await new DependencyPromptWindow(missing).ShowDialog(this);
 	}
 
-	private async void OnPickInputClick(object? sender, RoutedEventArgs e)
+	private async void OnAddInputFilesClick(object? sender, RoutedEventArgs e)
 	{
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Select a DJI Osmo Action recording",
-			AllowMultiple = false,
+			Title = "Select DJI Osmo Action recording(s) - pick several segments to stitch them together",
+			AllowMultiple = true,
 			FileTypeFilter = [new FilePickerFileType("MP4 video") { Patterns = ["*.mp4", "*.MP4"] }]
 		});
 
 		if (files.Count == 0) return;
 
-		var inputPath = files[0].Path.LocalPath;
-		InputPathBox.Text = inputPath;
+		var wasEmpty = _inputPaths.Count == 0;
+		_inputPaths.AddRange(files.Select(f => f.Path.LocalPath).OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
+		RefreshInputFilesList();
 
-		OutputPathBox.Text = RenderOptions.DefaultOutputPath(inputPath);
+		if (wasEmpty)
+			OutputPathBox.Text = RenderOptions.DefaultOutputPath(_inputPaths);
 
 		ClosePreview();
 		SetPhase(UiPhase.Idle);
-		ActionButton.IsEnabled = true;
+		ActionButton.IsEnabled = _inputPaths.Count > 0;
+	}
+
+	private void OnMoveInputUpClick(object? sender, RoutedEventArgs e)
+	{
+		var index = InputFilesList.SelectedIndex;
+		if (index <= 0) return;
+
+		(_inputPaths[index - 1], _inputPaths[index]) = (_inputPaths[index], _inputPaths[index - 1]);
+		RefreshInputFilesList();
+		InputFilesList.SelectedIndex = index - 1;
+	}
+
+	private void OnMoveInputDownClick(object? sender, RoutedEventArgs e)
+	{
+		var index = InputFilesList.SelectedIndex;
+		if (index < 0 || index >= _inputPaths.Count - 1) return;
+
+		(_inputPaths[index + 1], _inputPaths[index]) = (_inputPaths[index], _inputPaths[index + 1]);
+		RefreshInputFilesList();
+		InputFilesList.SelectedIndex = index + 1;
+	}
+
+	private void OnRemoveInputClick(object? sender, RoutedEventArgs e)
+	{
+		var index = InputFilesList.SelectedIndex;
+		if (index < 0) return;
+
+		_inputPaths.RemoveAt(index);
+		RefreshInputFilesList();
+
+		ClosePreview();
+		SetPhase(UiPhase.Idle);
+		ActionButton.IsEnabled = _inputPaths.Count > 0;
+	}
+
+	private void RefreshInputFilesList()
+	{
+		InputFilesList.ItemsSource = _inputPaths.Select(Path.GetFileName).ToList();
+	}
+
+	private async void OnSettingsClick(object? sender, RoutedEventArgs e)
+	{
+		var settings = new SettingsWindow(_frameLimit, _showWatermark);
+		await settings.ShowDialog(this);
+		_frameLimit = settings.FrameLimit;
+
+		if (settings.ShowWatermark != _showWatermark)
+		{
+			_showWatermark = settings.ShowWatermark;
+			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ShowWatermark = _showWatermark });
+			_previewPlayer.SetShowWatermark(_showWatermark);
+		}
+
+		if (_summary is not null && _phase == UiPhase.SummaryReady)
+			PopulateOutputInfo(_summary, _detectedEncoder);
 	}
 
 	private async void OnPickOutputClick(object? sender, RoutedEventArgs e)
@@ -121,22 +211,20 @@ public partial class MainWindow : Window
 
 	private async Task RunGetSummaryAsync()
 	{
-		var inputPath = InputPathBox.Text ?? "";
-		if (string.IsNullOrWhiteSpace(inputPath) || !File.Exists(inputPath))
+		if (_inputPaths.Count == 0 || _inputPaths.Any(p => !File.Exists(p)))
 			return;
 
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
 		LogBox.Text = "";
-		AppendLog($"Input: {inputPath}");
-		var cachePath = FileSummaryReader.GetCachePath(inputPath);
-		AppendLog($"Cache file: {cachePath} (format v{FileSummaryReader.CacheFormatVersion})");
-		AppendLog("Probing source file (ffprobe)...");
+		foreach (var path in _inputPaths)
+			AppendLog($"Input: {path}");
+		AppendLog("Probing source file(s) (ffprobe)...");
 		AppendLog("Extracting telemetry (djmd stream)... falls back to exiftool if the raw layout doesn't match, unless cached.");
 
 		try
 		{
-			FileSummary summary = await Task.Run(() => FileSummaryReader.Read(inputPath));
+			FileSummary summary = await Task.Run(() => FileSummaryReader.Read(_inputPaths));
 
 			AppendLog(summary.FromCache
 				? "Cache hit: using cached analysis (file unchanged since last run)."
@@ -201,7 +289,7 @@ public partial class MainWindow : Window
 			ActionButton.IsEnabled = summary.HasTelemetry;
 
 			if (summary.HasTelemetry)
-				await OpenPreviewAsync(inputPath, summary);
+				await OpenPreviewAsync(summary);
 		}
 		catch (Exception ex)
 		{
@@ -213,7 +301,6 @@ public partial class MainWindow : Window
 
 	private async Task RunRenderAsync()
 	{
-		var inputPath = InputPathBox.Text ?? "";
 		var outputPath = OutputPathBox.Text ?? "";
 
 		if (string.IsNullOrWhiteSpace(outputPath))
@@ -222,7 +309,7 @@ public partial class MainWindow : Window
 			return;
 		}
 
-		int? frameLimit = FrameLimitBox.Value is { } v && v > 0 ? (int)v : null;
+		var frameLimit = _frameLimit;
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
@@ -231,11 +318,14 @@ public partial class MainWindow : Window
 
 		var progress = new Progress<RenderStatus>(OnProgress);
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
-		var options = new RenderOptions(inputPath, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
-			Layout: layout);
+		var options = new RenderOptions(_inputPaths, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
+			Layout: layout, ShowWatermark: _showWatermark);
 
 		AppendLog($"Output: {outputPath}");
 		AppendLog($"Encoder: {_detectedEncoder}, frame limit: {(frameLimit is { } fl ? fl.ToString() : "none")}");
+		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
+		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
+		AppendLog($"CLI equivalent: {BuildCliCommand(outputPath, frameLimit)}");
 
 		RenderResult result;
 		try
@@ -247,23 +337,44 @@ public partial class MainWindow : Window
 			_cts = null;
 		}
 
-		AppendLog(result.Success
-			? $"Done: {outputPath} (time: {result.Elapsed:hh\\:mm\\:ss})"
-			: $"Error: {result.ErrorMessage}");
+		if (result.Success)
+		{
+			Progress.Value = 100;
+			var sizeText = File.Exists(outputPath) ? $", {FormatBytes(new FileInfo(outputPath).Length)}" : "";
+			AppendLog($"Done: {outputPath} (time: {result.Elapsed:hh\\:mm\\:ss}{sizeText})");
+		}
+		else
+		{
+			AppendLog($"Error: {result.ErrorMessage}");
+		}
 
 		SetPhase(UiPhase.SummaryReady);
 		ActionButton.IsEnabled = true;
 	}
 
+	private string BuildCliCommand(string outputPath, int? frameLimit)
+	{
+		var parts = new List<string> { "OsmoOverlay.Cli" };
+		parts.AddRange(_inputPaths.Select(QuoteArg));
+		parts.Add("-o");
+		parts.Add(QuoteArg(outputPath));
+		if (frameLimit is { } limit)
+		{
+			parts.Add("--frames");
+			parts.Add(limit.ToString());
+		}
+
+		return string.Join(' ', parts);
+	}
+
+	private static string QuoteArg(string value)
+	{
+		return value.Contains(' ') ? $"\"{value}\"" : value;
+	}
+
 	private void OnCancelClick(object? sender, RoutedEventArgs e)
 	{
 		_cts?.Cancel();
-	}
-
-	private void OnFrameLimitChanged(object? sender, NumericUpDownValueChangedEventArgs e)
-	{
-		if (_summary is not null && _phase == UiPhase.SummaryReady)
-			PopulateOutputInfo(_summary, _detectedEncoder);
 	}
 
 	private void SetPhase(UiPhase phase)
@@ -275,7 +386,9 @@ public partial class MainWindow : Window
 		OutputInfoCard.IsVisible = summaryVisible;
 		FileInfoCard.IsVisible = phase == UiPhase.SummaryReady;
 		TelemetryCard.IsVisible = phase == UiPhase.SummaryReady && _summary?.Telemetry is not null;
-		OverlayCard.IsVisible = summaryVisible && _summary?.HasTelemetry == true;
+		var overlayReady = summaryVisible && _summary?.HasTelemetry == true;
+		OverlayContent.IsVisible = overlayReady;
+		OverlayPlaceholder.IsVisible = !overlayReady;
 
 		CancelButton.IsVisible = phase == UiPhase.Rendering;
 		Progress.IsVisible = phase == UiPhase.Rendering;
@@ -289,21 +402,63 @@ public partial class MainWindow : Window
 	private void PopulateInputInfo(FileSummary summary)
 	{
 		InfoCamera.Text = summary.CameraModel ?? "Unknown";
+
+		RecommendedSettings? recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
+
+		bool? Check(Func<RecommendedSettings, bool> predicate)
+		{
+			return recommended is { } r ? predicate(r) : null;
+		}
+
 		InfoResolution.Text = $"{summary.Video.Width}x{summary.Video.Height}";
+		SetCheck(InfoResolutionCheck, Check(r => summary.Video.Width >= r.Width && summary.Video.Height >= r.Height),
+			recommended is { } r1 ? $"{r1.Width}x{r1.Height} or higher" : null);
+
 		InfoFrameRate.Text = $"{FormatFps(summary.Video.Fps)} fps";
+		SetCheck(InfoFrameRateCheck, Check(r => Math.Abs(summary.Video.Fps - r.Fps) < 0.5),
+			recommended is { } r2 ? $"~{r2.Fps:0.##} fps" : null);
+
 		InfoCodec.Text = string.IsNullOrEmpty(summary.Video.Profile)
 			? summary.Video.CodecName
 			: $"{summary.Video.CodecName} ({summary.Video.Profile})";
+		SetCheck(InfoCodecCheck,
+			Check(_ => summary.Video.CodecName.Equals("hevc", StringComparison.OrdinalIgnoreCase) &&
+			           summary.Video.Profile.Contains("10", StringComparison.OrdinalIgnoreCase)),
+			"HEVC (H.265), 10-bit");
+
 		InfoPixFmt.Text = summary.Video.PixFmt;
-		InfoColor.Text =
-			$"{summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / {summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})";
+		SetCheck(InfoPixFmtCheck, Check(_ => summary.Video.PixFmt.Contains("10le", StringComparison.OrdinalIgnoreCase)),
+			"10-bit (yuv420p10le)");
+
+		var primaries = summary.Video.ColorPrimaries ?? "?";
+		var transfer = summary.Video.ColorTransfer ?? "?";
+		var colorSpace = summary.Video.ColorSpace ?? "?";
+		var range = summary.Video.ColorRange ?? "?";
+		InfoColor.Text = primaries == transfer && transfer == colorSpace
+			? $"{primaries} ({range})"
+			: $"{primaries} / {transfer} / {colorSpace} ({range})";
+		SetCheck(InfoColorCheck,
+			Check(_ => primaries == "bt709" && transfer == "bt709" && colorSpace == "bt709" && range == "tv"),
+			"bt709 / bt709 / bt709 (tv range)");
+
 		InfoBitrate.Text = $"{summary.Video.BitRate / 1_000_000.0:0.#} Mbps";
+		SetCheck(InfoBitrateCheck, Check(r => summary.Video.BitRate >= r.MinVideoBitrate),
+			recommended is { } r3 ? $"at least {r3.MinVideoBitrate / 1_000_000.0:0.#} Mbps" : null);
+
 		InfoDuration.Text = TimeSpan.FromSeconds(summary.DurationSeconds).ToString(@"hh\:mm\:ss");
 		InfoFileSize.Text = FormatBytes(summary.FileSizeBytes);
 
-		InfoAudio.Text = summary.Audio is { } a
-			? $"Audio: {a.CodecName}, {a.SampleRate} Hz, {a.Channels}ch"
-			: "Audio: none";
+		AudioGrid.IsVisible = summary.Audio is not null;
+		InfoAudioNone.IsVisible = summary.Audio is null;
+		if (summary.Audio is { } a)
+		{
+			InfoAudioCodec.Text = a.CodecName;
+			InfoAudioSampleRate.Text = $"{a.SampleRate} Hz";
+			InfoAudioChannels.Text = $"{a.Channels}ch";
+			InfoAudioBitrate.Text = $"{a.BitRate / 1000.0:0} kbps";
+			SetCheck(InfoAudioBitrateCheck, Check(r => a.BitRate >= r.MinAudioBitrate),
+				recommended is { } r4 ? $"at least {r4.MinAudioBitrate / 1000.0:0} kbps" : null);
+		}
 
 		InfoTelemetry.Text = summary.HasTelemetry ? "Detected" : "Not found";
 		InfoTelemetry.Foreground = summary.HasTelemetry
@@ -312,6 +467,29 @@ public partial class MainWindow : Window
 		TelemetryPill.Background = summary.HasTelemetry
 			? new SolidColorBrush(Color.Parse("#3D4CAF50"))
 			: new SolidColorBrush(Color.Parse("#3DE5484D"));
+	}
+
+	/// <summary>
+	///     ok is null when no RecommendedSettings entry exists for the detected camera model - in
+	///     that case no icon is shown at all rather than judging against a mismatched reference.
+	///     recommendedDescription is the human-readable recommended value (e.g. "at least 70 Mbps"),
+	///     used to phrase the tooltip depending on whether this field actually matches it.
+	/// </summary>
+	private static void SetCheck(AvaloniaPath path, bool? ok, string? recommendedDescription)
+	{
+		path.Data = ok switch { true => CheckGeometry, false => CrossGeometry, null => null };
+		path.Stroke = ok switch
+		{
+			true => new SolidColorBrush(Color.Parse("#4CAF50")),
+			false => new SolidColorBrush(Color.Parse("#E5484D")),
+			null => null
+		};
+		ToolTip.SetTip(path, ok switch
+		{
+			true => $"Nice - this is the recommended setting for your camera ({recommendedDescription}).",
+			false => $"Not the recommended setting for your camera - recommended: {recommendedDescription}.",
+			null => null
+		});
 	}
 
 	private void PopulateTelemetryInfo(FileSummary summary)
@@ -330,18 +508,13 @@ public partial class MainWindow : Window
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
 	{
 		var fps = summary.Video.Fps;
-		int? frameLimit = FrameLimitBox.Value is { } v && v > 0 ? (int)v : null;
+		var frameLimit = _frameLimit;
 		var totalFrames = frameLimit ?? (int)Math.Ceiling(summary.DurationSeconds * fps);
 		var outDurationSeconds = frameLimit is not null ? frameLimit.Value / fps : summary.DurationSeconds;
 
-		OutCodec.Text = string.IsNullOrEmpty(summary.Video.Profile)
-			? summary.Video.CodecName
-			: $"{summary.Video.CodecName} ({summary.Video.Profile})";
 		OutEncoder.Text = encoder + (encoder == "libx265" ? " (CPU)" : " (GPU)");
-		OutResolution.Text = $"{summary.Video.Width}x{summary.Video.Height} @ {FormatFps(summary.Video.Fps)} fps";
 		OutAudio.Text = summary.Audio is not null ? "Copied (no re-encode)" : "None";
 		OutFrames.Text = $"{totalFrames} frames (~{TimeSpan.FromSeconds(outDurationSeconds):hh\\:mm\\:ss})";
-		OutPath.Text = OutputPathBox.Text;
 	}
 
 	private static string FormatFps(double fps)
@@ -368,7 +541,7 @@ public partial class MainWindow : Window
 		LogBox.AppendLog(LogScroll, message);
 	}
 
-	private async Task OpenPreviewAsync(string inputPath, FileSummary summary)
+	private async Task OpenPreviewAsync(FileSummary summary)
 	{
 		ClosePreview();
 
@@ -384,7 +557,7 @@ public partial class MainWindow : Window
 				PixelFormat.Bgra8888, AlphaFormat.Opaque);
 			PreviewImage.Source = _previewBitmap;
 
-			await _previewPlayer.OpenAsync(inputPath, summary, previewWidth, previewHeight);
+			await _previewPlayer.OpenAsync(summary, previewWidth, previewHeight);
 			LoadOverlayPresets(summary.Video.Width, summary.Video.Height);
 
 			PreviewSlider.Maximum = _previewPlayer.Duration.TotalSeconds;
@@ -494,17 +667,70 @@ public partial class MainWindow : Window
 		List<OverlayElement> elements = ActiveElements;
 
 		_suppressOverlayEvents = true;
-		StatsBlockVisibleCheck.IsChecked = IsVisible(OverlayElementType.StatsBlock);
+		DateTimeVisibleCheck.IsChecked = IsVisible(OverlayElementType.DateTimeText);
+		ElevationVisibleCheck.IsChecked = IsVisible(OverlayElementType.Elevation);
+		GradientVisibleCheck.IsChecked = IsVisible(OverlayElementType.Gradient);
+		DistanceVisibleCheck.IsChecked = IsVisible(OverlayElementType.Distance);
 		CompassVisibleCheck.IsChecked = IsVisible(OverlayElementType.Compass);
 		SunVisibleCheck.IsChecked = IsVisible(OverlayElementType.SunWidget);
 		PitchVisibleCheck.IsChecked = IsVisible(OverlayElementType.PitchGauge);
 		SpeedVisibleCheck.IsChecked = IsVisible(OverlayElementType.SpeedGauge);
+
+		OverlayElement? dateTime = Find(OverlayElementType.DateTimeText);
+		DateTimeFormatCombo.SelectedItem =
+			DateFormatOptions.FirstOrDefault(o => o.Format == dateTime?.DateFormat) ?? DateFormatOptions[0];
+		DateTimeLocaleCombo.SelectedItem =
+			LocaleOptions.FirstOrDefault(o => o.CultureName == dateTime?.Locale) ?? LocaleOptions[0];
+
+		OverlayElement? elevation = Find(OverlayElementType.Elevation);
+		ElevationLabelBox.Text = elevation?.Label;
+		SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, elevation?.Units ?? UnitSystem.Metric);
+
+		GradientLabelBox.Text = Find(OverlayElementType.Gradient)?.Label;
+
+		OverlayElement? distance = Find(OverlayElementType.Distance);
+		DistanceLabelBox.Text = distance?.Label;
+		SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, distance?.Units ?? UnitSystem.Metric);
+
+		SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, Find(OverlayElementType.SpeedGauge)?.Units ?? UnitSystem.Metric);
+
+		var editable = !IsActivePresetDefault;
+		RenamePresetButton.IsEnabled = editable;
+		DeletePresetButton.IsEnabled = editable;
+		ResetPresetButton.IsEnabled = editable;
+		DefaultPresetLockedHint.IsVisible = !editable;
+
+		DateTimeVisibleCheck.IsEnabled = editable;
+		ElevationVisibleCheck.IsEnabled = editable;
+		GradientVisibleCheck.IsEnabled = editable;
+		DistanceVisibleCheck.IsEnabled = editable;
+		CompassVisibleCheck.IsEnabled = editable;
+		SunVisibleCheck.IsEnabled = editable;
+		PitchVisibleCheck.IsEnabled = editable;
+		SpeedVisibleCheck.IsEnabled = editable;
+		DateTimeGearButton.IsEnabled = editable;
+		ElevationGearButton.IsEnabled = editable;
+		GradientGearButton.IsEnabled = editable;
+		DistanceGearButton.IsEnabled = editable;
+		SpeedGearButton.IsEnabled = editable;
+
 		_suppressOverlayEvents = false;
 		return;
 
 		bool IsVisible(OverlayElementType type)
 		{
 			return elements.FirstOrDefault(el => el.Type == type)?.Visible ?? false;
+		}
+
+		OverlayElement? Find(OverlayElementType type)
+		{
+			return elements.FirstOrDefault(el => el.Type == type);
+		}
+
+		static void SetUnitsRadio(RadioButton metric, RadioButton imperial, UnitSystem units)
+		{
+			metric.IsChecked = units == UnitSystem.Metric;
+			imperial.IsChecked = units == UnitSystem.Imperial;
 		}
 	}
 
@@ -519,23 +745,64 @@ public partial class MainWindow : Window
 		if (index >= 0) _overlayPresets[index] = _overlayPresets[index] with { Elements = elements };
 	}
 
-	private void SetElementVisible(OverlayElementType type, bool visible)
+	private void UpdateElement(OverlayElementType type, Func<OverlayElement, OverlayElement> update)
 	{
-		if (_suppressOverlayEvents) return;
+		if (_suppressOverlayEvents || IsActivePresetDefault) return;
 
-		List<OverlayElement> elements = ActiveElements.ToList();
+		List<OverlayElement> elements = [.. ActiveElements];
 		var index = elements.FindIndex(el => el.Type == type);
 		if (index < 0) return;
 
-		elements[index] = elements[index] with { Visible = visible };
+		elements[index] = update(elements[index]);
 		ReplaceActiveElements(elements);
 		_previewPlayer.SetLayout(elements);
 		SaveOverlayPresets();
 	}
 
-	private void OnStatsBlockVisibilityChanged(object? sender, RoutedEventArgs e)
+	private void SetElementVisible(OverlayElementType type, bool visible)
 	{
-		SetElementVisible(OverlayElementType.StatsBlock, StatsBlockVisibleCheck.IsChecked == true);
+		UpdateElement(type, el => el with { Visible = visible });
+	}
+
+	private void SetElementUnits(OverlayElementType type, UnitSystem units)
+	{
+		UpdateElement(type, el => el with { Units = units });
+	}
+
+	private void SetElementLabel(OverlayElementType type, string? label)
+	{
+		var trimmed = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
+		UpdateElement(type, el => el with { Label = trimmed });
+	}
+
+	private void SetElementDateFormat(OverlayElementType type, string? format)
+	{
+		UpdateElement(type, el => el with { DateFormat = format });
+	}
+
+	private void SetElementLocale(OverlayElementType type, string? locale)
+	{
+		UpdateElement(type, el => el with { Locale = locale });
+	}
+
+	private void OnDateTimeVisibilityChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementVisible(OverlayElementType.DateTimeText, DateTimeVisibleCheck.IsChecked == true);
+	}
+
+	private void OnElevationVisibilityChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementVisible(OverlayElementType.Elevation, ElevationVisibleCheck.IsChecked == true);
+	}
+
+	private void OnGradientVisibilityChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementVisible(OverlayElementType.Gradient, GradientVisibleCheck.IsChecked == true);
+	}
+
+	private void OnDistanceVisibilityChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementVisible(OverlayElementType.Distance, DistanceVisibleCheck.IsChecked == true);
 	}
 
 	private void OnCompassVisibilityChanged(object? sender, RoutedEventArgs e)
@@ -556,6 +823,61 @@ public partial class MainWindow : Window
 	private void OnSpeedVisibilityChanged(object? sender, RoutedEventArgs e)
 	{
 		SetElementVisible(OverlayElementType.SpeedGauge, SpeedVisibleCheck.IsChecked == true);
+	}
+
+	private void OnDateTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || DateTimeFormatCombo.SelectedItem is not DateFormatOption option) return;
+		SetElementDateFormat(OverlayElementType.DateTimeText, option.Format);
+	}
+
+	private void OnDateTimeLocaleChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || DateTimeLocaleCombo.SelectedItem is not LocaleOption option) return;
+		SetElementLocale(OverlayElementType.DateTimeText, option.CultureName);
+	}
+
+	private void OnElevationLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementLabel(OverlayElementType.Elevation, ElevationLabelBox.Text);
+	}
+
+	private void OnElevationUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementUnits(OverlayElementType.Elevation, ElevationImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnGradientLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementLabel(OverlayElementType.Gradient, GradientLabelBox.Text);
+	}
+
+	private void OnDistanceLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementLabel(OverlayElementType.Distance, DistanceLabelBox.Text);
+	}
+
+	private void OnDistanceUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementUnits(OverlayElementType.Distance, DistanceImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnSpeedUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementUnits(OverlayElementType.SpeedGauge, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	/// <summary>
+	///     Pulls the language list from .NET's own culture database instead of hand-maintaining one, so
+	///     it covers whatever locales the runtime supports without the GUI needing to keep up.
+	/// </summary>
+	private static List<LocaleOption> BuildLocaleOptions()
+	{
+		List<LocaleOption> options = [new("System default", null)];
+		options.AddRange(CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+			.OrderBy(c => c.NativeName, StringComparer.Ordinal)
+			.Select(c => new LocaleOption($"{c.NativeName} ({c.Name})", c.Name)));
+		return options;
 	}
 
 	private void OnPresetSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -588,7 +910,7 @@ public partial class MainWindow : Window
 	{
 		OverlayPreset source = _overlayPresets.First(p => p.Id == _activePresetId);
 		var id = Guid.NewGuid().ToString("N");
-		var copy = new OverlayPreset(id, $"{source.Name} copy", source.Elements.Select(el => el).ToList());
+		var copy = new OverlayPreset(id, $"{source.Name} copy", [.. source.Elements]);
 		_overlayPresets.Add(copy);
 		_activePresetId = id;
 
@@ -704,16 +1026,17 @@ public partial class MainWindow : Window
 
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
-		if (_summary is null) return;
+		if (_summary is null || IsActivePresetDefault) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
+		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
 		List<OverlayElement> elements = ActiveElements;
 		for (var i = elements.Count - 1; i >= 0; i--)
 		{
 			OverlayElement el = elements[i];
 			if (!el.Visible) continue;
 
-			SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y);
+			SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale);
 			if (pos.X < bounds.Left || pos.X > bounds.Right || pos.Y < bounds.Top || pos.Y > bounds.Bottom) continue;
 
 			// Dragging needs a stable frame to align against, and it eliminates a real race:
@@ -728,6 +1051,7 @@ public partial class MainWindow : Window
 			_draggingElementType = el.Type;
 			_dragAnchorOffset = new Point(pos.X - el.X, pos.Y - el.Y);
 			e.Pointer.Capture(OverlayDragCanvas);
+			OverlayDragCanvas.Cursor = new Cursor(StandardCursorType.SizeAll);
 			return;
 		}
 	}
@@ -740,7 +1064,7 @@ public partial class MainWindow : Window
 		var newX = (float)Math.Clamp(pos.X - _dragAnchorOffset.X, 0, _summary.Video.Width);
 		var newY = (float)Math.Clamp(pos.Y - _dragAnchorOffset.Y, 0, _summary.Video.Height);
 
-		List<OverlayElement> elements = ActiveElements.ToList();
+		List<OverlayElement> elements = [.. ActiveElements];
 		var index = elements.FindIndex(el => el.Type == type);
 		if (index < 0) return;
 
@@ -755,6 +1079,7 @@ public partial class MainWindow : Window
 
 		_draggingElementType = null;
 		e.Pointer.Capture(null);
+		OverlayDragCanvas.Cursor = new Cursor(StandardCursorType.Hand);
 		SaveOverlayPresets();
 	}
 
@@ -762,6 +1087,22 @@ public partial class MainWindow : Window
 	{
 		_previewPlayer.Dispose();
 		base.OnClosed(e);
+	}
+
+	private sealed record DateFormatOption(string Display, string? Format)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	private sealed record LocaleOption(string Display, string? CultureName)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
 	}
 
 	private enum UiPhase

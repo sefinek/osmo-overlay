@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="320"
+        x:Class="OsmoOverlay.Gui.SettingsWindow"
+        Width="420" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#121214"
+        Title="Settings">
+
+	<Window.Styles>
+		<Style Selector="TextBlock.infoLabel">
+			<Setter Property="Opacity" Value="0.55" />
+			<Setter Property="Margin" Value="0,5" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="Opacity" Value="0.4" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="Margin" Value="0,4,0,0" />
+		</Style>
+		<Style Selector="Button.accent">
+			<Setter Property="Background" Value="#3E9EFF" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#5CACFF" />
+		</Style>
+	</Window.Styles>
+
+	<StackPanel Margin="20" Spacing="18">
+		<StackPanel Spacing="4">
+			<TextBlock Text="Frame limit (optional)" Classes="infoLabel" Margin="0" />
+			<NumericUpDown Name="FrameLimitBox" Minimum="0" Increment="60" FormatString="0"
+			               PlaceholderText="No limit" HorizontalAlignment="Stretch" />
+			<TextBlock Classes="hint"
+			           Text="Limits how many frames get rendered on export - e.g. set 300 to render only the first few seconds instead of the whole file. Useful for quickly testing overlay changes without waiting for a full render. Leave empty to render the entire video." />
+		</StackPanel>
+
+		<StackPanel Spacing="4">
+			<TextBlock Text="Watermark" Classes="infoLabel" Margin="0" />
+			<CheckBox Name="ShowWatermarkCheck" Content="Show attribution watermark" />
+			<TextBlock Classes="hint"
+			           Text="Shows 'Made with OsmoOverlay' plus the project link at the bottom of the video for the first few seconds, fading out. On by default." />
+		</StackPanel>
+
+		<StackPanel Spacing="4">
+			<TextBlock Text="Cache" Classes="infoLabel" Margin="0" />
+			<Button Content="Clear cache" Click="OnClearCacheClick" HorizontalAlignment="Left" />
+			<TextBlock Name="CacheStatusText" Classes="hint" />
+			<TextBlock Classes="hint"
+			           Text="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
+		</StackPanel>
+
+		<Grid ColumnDefinitions="*,Auto">
+			<TextBlock Grid.Column="0" />
+			<Button Grid.Column="1" Content="Close" Classes="accent" Click="OnCloseClick" />
+		</Grid>
+	</StackPanel>
+</Window>
