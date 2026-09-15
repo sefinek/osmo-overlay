@@ -38,7 +38,7 @@ public sealed class RouteMapMosaic : IDisposable
 	/// <summary>Pixel position of the given lat/lon within Bitmap.</summary>
 	public SKPoint GetPixel(double lat, double lon)
 	{
-		(double worldX, double worldY) = WebMercator.LatLonToWorldPixel(lat, lon, Zoom);
+		var (worldX, worldY) = WebMercator.LatLonToWorldPixel(lat, lon, Zoom);
 		return new SKPoint((float)(worldX - _originWorldX), (float)(worldY - _originWorldY));
 	}
 
@@ -57,8 +57,8 @@ public sealed class RouteMapMosaic : IDisposable
 		int minTileX, minTileY, maxTileX, maxTileY;
 		while (true)
 		{
-			(double topLeftX, double topLeftY) = WebMercator.LatLonToWorldPixel(maxLat, minLon, zoom);
-			(double bottomRightX, double bottomRightY) = WebMercator.LatLonToWorldPixel(minLat, maxLon, zoom);
+			var (topLeftX, topLeftY) = WebMercator.LatLonToWorldPixel(maxLat, minLon, zoom);
+			var (bottomRightX, bottomRightY) = WebMercator.LatLonToWorldPixel(minLat, maxLon, zoom);
 			(minTileX, minTileY) = WebMercator.WorldPixelToTile(topLeftX, topLeftY);
 			(maxTileX, maxTileY) = WebMercator.WorldPixelToTile(bottomRightX, bottomRightY);
 
