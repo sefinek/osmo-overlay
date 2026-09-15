@@ -315,6 +315,9 @@ public partial class MainWindow : Window
 		SetPhase(UiPhase.Rendering);
 		LogBox.Text = "";
 		Progress.Value = 0;
+		OutMeasuredPanel.IsVisible = false;
+		OutPlanText.IsVisible = true;
+		OutFrames.IsVisible = true;
 
 		var progress = new Progress<RenderStatus>(OnProgress);
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
@@ -342,6 +345,8 @@ public partial class MainWindow : Window
 			Progress.Value = 100;
 			var sizeText = File.Exists(outputPath) ? $", {FormatBytes(new FileInfo(outputPath).Length)}" : "";
 			AppendLog($"Done: {outputPath} (time: {result.Elapsed:hh\\:mm\\:ss}{sizeText})");
+
+			if (_summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
 		}
 		else
 		{
@@ -515,6 +520,80 @@ public partial class MainWindow : Window
 		OutEncoder.Text = encoder + (encoder == "libx265" ? " (CPU)" : " (GPU)");
 		OutAudio.Text = summary.Audio is not null ? "Copied (no re-encode)" : "None";
 		OutFrames.Text = $"{totalFrames} frames (~{TimeSpan.FromSeconds(outDurationSeconds):hh\\:mm\\:ss})";
+
+		// A changed setting (frame limit, input file) invalidates whatever was measured from a
+		// previous export, so fall back to the plan until the next render actually produces a file.
+		OutPlanText.IsVisible = true;
+		OutFrames.IsVisible = true;
+		OutMeasuredPanel.IsVisible = false;
+	}
+
+	/// <summary>
+	///     Replaces the pre-render plan with what ffprobe actually measured from the exported file, so
+	///     "matches the source" is a verified fact rather than an assumption baked into the UI text.
+	/// </summary>
+	private void PopulateMeasuredOutputInfo(string outputPath, FileSummary inputSummary)
+	{
+		SourceInfo output;
+		try
+		{
+			output = SourceProbe.Probe(outputPath);
+		}
+		catch (Exception ex)
+		{
+			AppendLog($"Could not verify the exported file: {ex.Message}");
+			return;
+		}
+
+		OutPlanText.IsVisible = false;
+		OutFrames.IsVisible = false;
+		OutMeasuredPanel.IsVisible = true;
+
+		OutResolution.Text = $"{output.Video.Width}x{output.Video.Height}";
+		SetMatchCheck(OutResolutionCheck,
+			output.Video.Width == inputSummary.Video.Width && output.Video.Height == inputSummary.Video.Height);
+
+		OutFrameRate.Text = $"{FormatFps(output.Video.Fps)} fps";
+		SetMatchCheck(OutFrameRateCheck, Math.Abs(output.Video.Fps - inputSummary.Video.Fps) < 0.01);
+
+		OutCodec.Text = string.IsNullOrEmpty(output.Video.Profile)
+			? output.Video.CodecName
+			: $"{output.Video.CodecName} ({output.Video.Profile})";
+		SetMatchCheck(OutCodecCheck,
+			output.Video.CodecName.Equals(inputSummary.Video.CodecName, StringComparison.OrdinalIgnoreCase) &&
+			output.Video.Profile.Equals(inputSummary.Video.Profile, StringComparison.OrdinalIgnoreCase));
+
+		OutPixFmt.Text = output.Video.PixFmt;
+		SetMatchCheck(OutPixFmtCheck,
+			output.Video.PixFmt.Equals(inputSummary.Video.PixFmt, StringComparison.OrdinalIgnoreCase));
+
+		var primaries = output.Video.ColorPrimaries ?? "?";
+		var transfer = output.Video.ColorTransfer ?? "?";
+		var colorSpace = output.Video.ColorSpace ?? "?";
+		var range = output.Video.ColorRange ?? "?";
+		OutColor.Text = primaries == transfer && transfer == colorSpace
+			? $"{primaries} ({range})"
+			: $"{primaries} / {transfer} / {colorSpace} ({range})";
+		SetMatchCheck(OutColorCheck,
+			primaries == (inputSummary.Video.ColorPrimaries ?? "?") &&
+			transfer == (inputSummary.Video.ColorTransfer ?? "?") &&
+			colorSpace == (inputSummary.Video.ColorSpace ?? "?") &&
+			range == (inputSummary.Video.ColorRange ?? "?"));
+
+		OutBitrate.Text = $"{output.Video.BitRate / 1_000_000.0:0.#} Mbps";
+		// VBR naturally drifts from the source's own bitrate - "matches" means close, not byte-exact.
+		var bitrateRatio = (double)output.Video.BitRate / inputSummary.Video.BitRate;
+		SetMatchCheck(OutBitrateCheck, bitrateRatio is >= 0.7 and <= 1.5);
+
+		OutMeasuredDuration.Text = TimeSpan.FromSeconds(output.DurationSeconds).ToString(@"hh\:mm\:ss");
+		OutMeasuredFileSize.Text = FormatBytes(new FileInfo(outputPath).Length);
+	}
+
+	private static void SetMatchCheck(AvaloniaPath path, bool matches)
+	{
+		path.Data = matches ? CheckGeometry : CrossGeometry;
+		path.Stroke = new SolidColorBrush(Color.Parse(matches ? "#4CAF50" : "#E5484D"));
+		ToolTip.SetTip(path, matches ? "Matches the source file." : "Differs from the source file.");
 	}
 
 	private static string FormatFps(double fps)
@@ -675,6 +754,12 @@ public partial class MainWindow : Window
 		SunVisibleCheck.IsChecked = IsVisible(OverlayElementType.SunWidget);
 		PitchVisibleCheck.IsChecked = IsVisible(OverlayElementType.PitchGauge);
 		SpeedVisibleCheck.IsChecked = IsVisible(OverlayElementType.SpeedGauge);
+		MapVisibleCheck.IsChecked = IsVisible(OverlayElementType.MapWidget);
+
+		OverlayElement? map = Find(OverlayElementType.MapWidget);
+		MapTileUrlBox.Text = map?.MapTileUrlTemplate;
+		MapZoomBox.Value = map?.MapZoom ?? 16;
+		MapAttributionBox.Text = map?.MapAttribution;
 
 		OverlayElement? dateTime = Find(OverlayElementType.DateTimeText);
 		DateTimeFormatCombo.SelectedItem =
@@ -708,11 +793,13 @@ public partial class MainWindow : Window
 		SunVisibleCheck.IsEnabled = editable;
 		PitchVisibleCheck.IsEnabled = editable;
 		SpeedVisibleCheck.IsEnabled = editable;
+		MapVisibleCheck.IsEnabled = editable;
 		DateTimeGearButton.IsEnabled = editable;
 		ElevationGearButton.IsEnabled = editable;
 		GradientGearButton.IsEnabled = editable;
 		DistanceGearButton.IsEnabled = editable;
 		SpeedGearButton.IsEnabled = editable;
+		MapGearButton.IsEnabled = editable;
 
 		_suppressOverlayEvents = false;
 		return;
@@ -865,6 +952,31 @@ public partial class MainWindow : Window
 	private void OnSpeedUnitsChanged(object? sender, RoutedEventArgs e)
 	{
 		SetElementUnits(OverlayElementType.SpeedGauge, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnMapVisibilityChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementVisible(OverlayElementType.MapWidget, MapVisibleCheck.IsChecked == true);
+	}
+
+	private void OnMapTileUrlChanged(object? sender, RoutedEventArgs e)
+	{
+		var url = MapTileUrlBox.Text;
+		UpdateElement(OverlayElementType.MapWidget,
+			el => el with { MapTileUrlTemplate = string.IsNullOrWhiteSpace(url) ? null : url.Trim() });
+	}
+
+	private void OnMapZoomChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || MapZoomBox.Value is not { } zoom) return;
+		UpdateElement(OverlayElementType.MapWidget, el => el with { MapZoom = (int)zoom });
+	}
+
+	private void OnMapAttributionChanged(object? sender, RoutedEventArgs e)
+	{
+		var text = MapAttributionBox.Text;
+		UpdateElement(OverlayElementType.MapWidget,
+			el => el with { MapAttribution = string.IsNullOrWhiteSpace(text) ? null : text.Trim() });
 	}
 
 	/// <summary>

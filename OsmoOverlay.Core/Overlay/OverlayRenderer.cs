@@ -1,4 +1,6 @@
 using System.Globalization;
+using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
@@ -40,7 +42,7 @@ public sealed class OverlayRenderer : IDisposable
 	private readonly SKFont _speedFont;
 	private readonly SKFont _speedUnitFont;
 	private readonly double _startAltitude;
-	private readonly List<(double East, double North)> _trail = [];
+	private readonly List<(double East, double North, double Lat, double Lon)> _trail = [];
 	private readonly SKFont _unitFont;
 	private readonly SKFont _valueFont;
 	private readonly SKFont _watermarkSubtitleFont;
@@ -49,6 +51,8 @@ public sealed class OverlayRenderer : IDisposable
 	private readonly int _width;
 	private (double East, double North)? _lastTrailPoint;
 	private int _trailCacheIndex = -1;
+	private RouteMapMosaic? _mapMosaic;
+	private (string Url, int Zoom)? _preparedMapKey;
 
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true)
@@ -93,6 +97,65 @@ public sealed class OverlayRenderer : IDisposable
 		_speedUnitFont.Dispose();
 		_watermarkTitleFont.Dispose();
 		_watermarkSubtitleFont.Dispose();
+		_mapMosaic?.Dispose();
+	}
+
+	/// <summary>
+	///     Fetches (or loads from disk cache) every map tile the route needs and stitches them into one
+	///     in-memory mosaic, so DrawMapWidget can just crop/pan a window per frame instead of hitting
+	///     the network on every one of potentially tens of thousands of frames. No-ops (no network call
+	///     at all) when Layout has no MapWidget - most renders never touch the network. Best-effort: a
+	///     failure (offline, unreachable tile server) leaves _mapMosaic null and MapWidget draws a
+	///     placeholder instead of failing the render.
+	/// </summary>
+	public async Task PrepareMapAsync(CancellationToken ct = default)
+	{
+		ApplyMapMosaic(await BuildMapMosaicAsync(ct));
+	}
+
+	/// <summary>
+	///     The fetch-only half of PrepareMapAsync, split out so a live-preview caller (PreviewPlayer)
+	///     can run the actual network I/O without holding whatever lock serializes calls into Render -
+	///     network fetches can take seconds, and Render must stay usable (scrubbing, playback) for other
+	///     frames in the meantime. ApplyMapMosaic is the only part that touches renderer state, so it's
+	///     the only part that needs to happen inside that lock.
+	/// </summary>
+	public async Task<RouteMapMosaic?> BuildMapMosaicAsync(CancellationToken ct = default)
+	{
+		if (Layout.FirstOrDefault(e => e.Type == OverlayElementType.MapWidget) is not { } mapElement) return null;
+
+		List<(double Lat, double Lon)> points = _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude)).ToList();
+		var urlTemplate = mapElement.MapTileUrlTemplate ?? MapTileFetcher.DefaultUrlTemplate;
+		_preparedMapKey = (urlTemplate, mapElement.MapZoom);
+
+		try
+		{
+			return await RouteMapMosaic.BuildAsync(points, urlTemplate, mapElement.MapZoom, ct);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			AppLogger.Warn(ex, "Map widget: failed to prepare the route map - the widget will show a placeholder.");
+			return null;
+		}
+	}
+
+	public void ApplyMapMosaic(RouteMapMosaic? mosaic)
+	{
+		_mapMosaic?.Dispose();
+		_mapMosaic = mosaic;
+	}
+
+	/// <summary>
+	///     True when layout has a MapWidget whose tile URL/zoom differ from whatever PrepareMapAsync
+	///     last actually fetched - lets a live-preview caller (PreviewPlayer) know a fresh call is
+	///     worth making after an edit, without ever re-fetching on every unrelated layout change (e.g.
+	///     dragging some other widget).
+	/// </summary>
+	public bool NeedsMapPrepare(IReadOnlyList<OverlayElement> layout)
+	{
+		if (layout.FirstOrDefault(e => e.Type == OverlayElementType.MapWidget) is not { } mapElement) return false;
+		(string Url, int Zoom) key = (mapElement.MapTileUrlTemplate ?? MapTileFetcher.DefaultUrlTemplate, mapElement.MapZoom);
+		return _preparedMapKey != key;
 	}
 
 	/// <summary>
@@ -176,6 +239,9 @@ public sealed class OverlayRenderer : IDisposable
 				case OverlayElementType.PitchGauge:
 					DrawPitchGauge(canvas, element.X, element.Y, frame.PitchDegrees);
 					break;
+				case OverlayElementType.MapWidget:
+					DrawMapWidget(canvas, frame, element);
+					break;
 				case OverlayElementType.SpeedGauge:
 					DrawSpeedGauge(canvas, element, frame.SpeedKmh);
 					break;
@@ -220,7 +286,7 @@ public sealed class OverlayRenderer : IDisposable
 		(double LocalEastMeters, double LocalNorthMeters) point = (frame.LocalEastMeters, frame.LocalNorthMeters);
 		if (_lastTrailPoint is not { } last || Distance(last, point) >= TrailMinStepMeters)
 		{
-			_trail.Add(point);
+			_trail.Add((point.LocalEastMeters, point.LocalNorthMeters, frame.Raw.Latitude, frame.Raw.Longitude));
 			_lastTrailPoint = point;
 		}
 	}
@@ -350,9 +416,9 @@ public sealed class OverlayRenderer : IDisposable
 
 		(double East, double North) currentPos = (frame.LocalEastMeters, frame.LocalNorthMeters);
 		var maxDist = 5.0;
-		foreach ((double East, double North) p in _trail)
+		foreach (var p in _trail)
 		{
-			var dist = Distance(p, currentPos);
+			var dist = Distance((p.East, p.North), currentPos);
 			if (dist > maxDist) maxDist = dist;
 		}
 
@@ -360,10 +426,98 @@ public sealed class OverlayRenderer : IDisposable
 
 		var builder = new SKPathBuilder();
 		var started = false;
-		foreach ((double East, double North) p in _trail)
+		foreach (var p in _trail)
 		{
 			var px = cx + (float)((p.East - frame.LocalEastMeters) * scale);
 			var py = cy - (float)((p.North - frame.LocalNorthMeters) * scale);
+			if (!started)
+			{
+				builder.MoveTo(px, py);
+				started = true;
+			}
+			else
+			{
+				builder.LineTo(px, py);
+			}
+		}
+
+		using SKPath path = builder.Detach();
+		using var trailPaint = new SKPaint
+		{
+			Color = TrailColor, IsAntialias = true, Style = SKPaintStyle.Stroke,
+			StrokeWidth = 4.5f, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round
+		};
+		canvas.DrawPath(path, trailPaint);
+	}
+
+	/// <summary>
+	///     A small live map centered on the current position, north-up - panning frame to frame rather
+	///     than showing the whole route at once (unlike the Compass trail), since RouteMapMosaic only
+	///     covers the route's bounding box at a fixed zoom and each frame just crops a window of it.
+	/// </summary>
+	private void DrawMapWidget(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	{
+		canvas.Save();
+		canvas.Translate(element.X, element.Y);
+		canvas.Scale(_scale, _scale);
+		const float radius = OverlayElementBounds.MapRadius;
+
+		DrawPanelShadow(canvas, 0, 0, radius);
+
+		if (_mapMosaic is null)
+		{
+			using var placeholderFill = new SKPaint { Color = PanelFill, IsAntialias = true, Style = SKPaintStyle.Fill };
+			canvas.DrawCircle(0, 0, radius, placeholderFill);
+			DrawOutlined(canvas, "MAP", 0, -10, _labelFont, White, SKTextAlign.Center);
+			DrawOutlined(canvas, "UNAVAILABLE", 0, 24, _smallFont, White, SKTextAlign.Center);
+		}
+		else
+		{
+			canvas.Save();
+			var clipBuilder = new SKPathBuilder();
+			clipBuilder.AddCircle(0, 0, radius);
+			using (SKPath clipPath = clipBuilder.Detach())
+				canvas.ClipPath(clipPath, antialias: true);
+
+			SKPoint center = _mapMosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
+			var src = SKRect.Create(center.X - radius, center.Y - radius, radius * 2, radius * 2);
+			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
+			canvas.DrawBitmap(_mapMosaic.Bitmap, src, dest, SKSamplingOptions.Default);
+
+			DrawMapTrail(canvas, center);
+
+			canvas.Restore();
+
+			using var dotOutline = new SKPaint { Color = SKColors.Black, IsAntialias = true, Style = SKPaintStyle.Fill };
+			using var dotFill = new SKPaint { Color = Accent, IsAntialias = true, Style = SKPaintStyle.Fill };
+			canvas.DrawCircle(0, 0, 9, dotOutline);
+			canvas.DrawCircle(0, 0, 6, dotFill);
+
+			DrawOutlined(canvas, element.MapAttribution ?? MapTileFetcher.DefaultAttribution, 0, radius - 16,
+				_smallFont, White, SKTextAlign.Center);
+		}
+
+		using var ring = new SKPaint
+		{
+			Color = new SKColor(255, 255, 255, 160), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 3
+		};
+		canvas.DrawCircle(0, 0, radius, ring);
+
+		canvas.Restore();
+	}
+
+	/// <summary>Same route trail as the Compass, redrawn in the map's Web Mercator pixel space so it lines up with the tiles.</summary>
+	private void DrawMapTrail(SKCanvas canvas, SKPoint center)
+	{
+		if (_trail.Count < 2 || _mapMosaic is null) return;
+
+		var builder = new SKPathBuilder();
+		var started = false;
+		foreach (var p in _trail)
+		{
+			SKPoint pixel = _mapMosaic.GetPixel(p.Lat, p.Lon);
+			var px = pixel.X - center.X;
+			var py = pixel.Y - center.Y;
 			if (!started)
 			{
 				builder.MoveTo(px, py);

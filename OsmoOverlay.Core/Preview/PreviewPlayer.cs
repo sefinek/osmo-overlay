@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
@@ -57,6 +58,9 @@ public sealed class PreviewPlayer : IDisposable
 		var showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 		var renderer = new OverlayRenderer(summary.Video.Width, summary.Video.Height,
 			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0, showWatermark);
+
+		if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
+			await renderer.PrepareMapAsync();
 
 		_video = video;
 		_renderer = renderer;
@@ -142,13 +146,57 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	public void SetLayout(IReadOnlyList<OverlayElement> layout)
 	{
+		OverlayRenderer? renderer;
 		lock (_lock)
 		{
 			if (_renderer is null) return;
-			_renderer.Layout = layout;
+			renderer = _renderer;
+			renderer.Layout = layout;
+
+			if (_lastVideoFrame is { } videoFrame && _summary is not null)
+			{
+				ComposedPreviewFrame? composed = Compose(renderer, _summary, videoFrame, _lastPosition);
+				if (composed is not null) FrameReady?.Invoke(composed);
+			}
+		}
+
+		if (renderer.NeedsMapPrepare(layout))
+			_ = PrepareMapInBackgroundAsync(renderer);
+	}
+
+	/// <summary>
+	///     Fetches map tiles for a newly-added/changed Map widget without blocking scrubbing or
+	///     playback for however long that takes - the network fetch runs outside _lock (see
+	///     OverlayRenderer.BuildMapMosaicAsync), and only the quick swap into the renderer + a
+	///     recompose of the current frame happens inside it.
+	/// </summary>
+	private async Task PrepareMapInBackgroundAsync(OverlayRenderer renderer)
+	{
+		RouteMapMosaic? mosaic;
+		try
+		{
+			mosaic = await renderer.BuildMapMosaicAsync();
+		}
+		catch (Exception ex)
+		{
+			Message?.Invoke($"Map preview failed: {ex.Message}");
+			return;
+		}
+
+		lock (_lock)
+		{
+			if (!ReferenceEquals(_renderer, renderer))
+			{
+				// The file was closed/reopened while this fetch was in flight - this result belongs to
+				// a renderer nobody references anymore.
+				mosaic?.Dispose();
+				return;
+			}
+
+			renderer.ApplyMapMosaic(mosaic);
 
 			if (_lastVideoFrame is not { } videoFrame || _summary is null) return;
-			ComposedPreviewFrame? composed = Compose(_renderer, _summary, videoFrame, _lastPosition);
+			ComposedPreviewFrame? composed = Compose(renderer, _summary, videoFrame, _lastPosition);
 			if (composed is not null) FrameReady?.Invoke(composed);
 		}
 	}

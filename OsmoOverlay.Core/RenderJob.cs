@@ -122,8 +122,17 @@ public static class RenderJob
 			var showWatermark = options.ShowWatermark ?? OverlaySettingsStore.Load().ShowWatermark;
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark);
+
+			if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
+			{
+				Report(RenderPhase.Rendering, "Fetching map tiles for the route...");
+				await renderer.PrepareMapAsync(ct);
+			}
+
 			using Process ffmpeg = FfmpegPipeline.StartRender(options.InputPaths, options.OutputPath, first.Source,
 				encoder, options.Overwrite, limitSeconds);
+			Report(RenderPhase.Rendering,
+				$"ffmpeg command: {ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList)}");
 
 			Stream stdin = ffmpeg.StandardInput.BaseStream;
 			Task<string> stderrTask = ffmpeg.StandardError.ReadToEndAsync(ct);

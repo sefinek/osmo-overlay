@@ -72,16 +72,18 @@ public static class FfmpegPipeline
 				"-c:v", "hevc_nvenc",
 				"-preset", "p7",
 				"-rc", "vbr",
-				"-cq", "18",
-				// b:v 0 hands bitrate allocation entirely to -cq (pure quality-driven, like x265's crf
-				// below) instead of also chasing an average-bitrate target - the two fought each other,
-				// and a tight maxrate (previously 1.2x source) could starve high-motion frames below
-				// the cq target on exactly the segments most likely to need more bits, i.e. real quality
-				// loss. maxrate/bufsize stay only as a generous safety ceiling against pathological
-				// content, not as something -cq is expected to bump into during normal encoding.
-				"-b:v", "0",
-				"-maxrate", $"{(long)(info.Video.BitRate * 2.5)}",
-				"-bufsize", $"{info.Video.BitRate * 5}",
+				// b:v = source's own bitrate is the actual target (parity with the source, not an
+				// independent quality knob) - measured: adding -cq on top fights the b:v target and
+				// let the encoder roughly double the source bitrate on high-motion footage, which is
+				// its own kind of "diverges from the source" even though nothing looked worse. maxrate/
+				// bufsize give VBR a little headroom over the bare average to borrow bits for a complex
+				// frame from a simpler one nearby - kept modest (not the 3x tried initially) because a
+				// wide bufsize forces NVENC to signal a higher HEVC level than the source needs, which
+				// is exactly the kind of divergence to avoid; measured close to the source's own level
+				// at this size.
+				"-b:v", $"{info.Video.BitRate}",
+				"-maxrate", $"{(long)(info.Video.BitRate * 1.2)}",
+				"-bufsize", $"{(long)(info.Video.BitRate * 2)}",
 				"-profile:v", "main10",
 				"-pix_fmt", "yuv420p10le"
 			]);

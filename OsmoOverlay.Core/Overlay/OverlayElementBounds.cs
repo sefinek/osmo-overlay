@@ -19,6 +19,7 @@ public static class OverlayElementBounds
 	public const float SunRadius = 90f;
 	public const float SpeedRadius = 260f;
 	public const float PitchRadius = 95f;
+	public const float MapRadius = 260f;
 
 	public const float DateTimeWidth = 420f;
 	public const float DateTimeHeight = 70f;
@@ -44,6 +45,7 @@ public static class OverlayElementBounds
 			OverlayElementType.SunWidget => Circle(x, y, (SunRadius + 70) * scale),
 			OverlayElementType.PitchGauge => Circle(x, y, PitchRadius * scale),
 			OverlayElementType.SpeedGauge => Circle(x, y, SpeedRadius * scale),
+			OverlayElementType.MapWidget => Circle(x, y, MapRadius * scale),
 			_ => SKRect.Empty
 		};
 	}

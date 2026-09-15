@@ -108,6 +108,13 @@
 			<Setter Property="Spacing" Value="8" />
 			<Setter Property="Width" Value="210" />
 		</Style>
+
+		<Style Selector="TextBox#LogBox:focus /template/ Border#PART_BorderElement">
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="TextBox#LogBox:focus-within /template/ Border#PART_BorderElement">
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
 	</Window.Styles>
 
 	<Grid Margin="24" RowDefinitions="*,230" RowSpacing="16">
@@ -293,9 +300,62 @@
 									<TextBlock Grid.Column="3" Classes="infoLabel" Text="Audio" />
 									<TextBlock Grid.Column="4" Classes="infoValue" Name="OutAudio" />
 								</Grid>
-								<TextBlock Classes="infoLabel" Margin="0,4,0,0"
+
+								<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,4,0,0"
 								           Text="Resolution, frame rate and codec match the source file." />
 								<TextBlock Name="OutFrames" Classes="infoLabel" Margin="0,6,0,0" />
+
+								<StackPanel Name="OutMeasuredPanel" Spacing="4" IsVisible="False">
+									<TextBlock Text="MEASURED (EXPORTED FILE)" Classes="sectionLabel" />
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+									      ColumnSpacing="8">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
+										<StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="OutResolution" Margin="0" />
+											<Path Classes="checkIcon" Name="OutResolutionCheck" />
+										</StackPanel>
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Frame rate" />
+										<StackPanel Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="OutFrameRate" Margin="0" />
+											<Path Classes="checkIcon" Name="OutFrameRateCheck" />
+										</StackPanel>
+
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Codec" />
+										<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="OutCodec" Margin="0" />
+											<Path Classes="checkIcon" Name="OutCodecCheck" />
+										</StackPanel>
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
+										<StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="OutBitrate" Margin="0" />
+											<Path Classes="checkIcon" Name="OutBitrateCheck" />
+										</StackPanel>
+
+										<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Pixel format" />
+										<StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="OutPixFmt" Margin="0" />
+											<Path Classes="checkIcon" Name="OutPixFmtCheck" />
+										</StackPanel>
+										<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Color" />
+										<StackPanel Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="OutColor" Margin="0" TextWrapping="Wrap" />
+											<Path Classes="checkIcon" Name="OutColorCheck" />
+										</StackPanel>
+									</Grid>
+
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" ColumnSpacing="8">
+										<TextBlock Grid.Column="0" Classes="infoLabel" Text="Duration" />
+										<TextBlock Grid.Column="1" Classes="infoValue" Name="OutMeasuredDuration" />
+										<TextBlock Grid.Column="3" Classes="infoLabel" Text="File size" />
+										<TextBlock Grid.Column="4" Classes="infoValue" Name="OutMeasuredFileSize" />
+									</Grid>
+								</StackPanel>
 							</StackPanel>
 						</Border>
 
@@ -481,6 +541,32 @@
 															<RadioButton Name="SpeedImperialRadio" Content="Imperial"
 															             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
 														</StackPanel>
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="MapVisibleCheck" Classes="overlayItem"
+										          Content="Map" Click="OnMapVisibilityChanged" />
+										<Button Name="MapGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Tile URL template" Classes="infoLabel" Margin="0" />
+														<TextBox Name="MapTileUrlBox" PlaceholderText="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+														         LostFocus="OnMapTileUrlChanged" TextWrapping="Wrap" />
+														<TextBlock Text="Zoom (2-19)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapZoomBox" Minimum="2" Maximum="19" Increment="1"
+														               FormatString="0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapZoomChanged" />
+														<TextBlock Text="Attribution" Classes="infoLabel" Margin="0" />
+														<TextBox Name="MapAttributionBox" PlaceholderText="© OpenStreetMap contributors"
+														         LostFocus="OnMapAttributionChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,4,0,0" FontSize="11" Opacity="0.4"
+														           TextWrapping="Wrap"
+														           Text="Fetches tiles over the network the first time a route is opened/rendered, then caches them on disk." />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
