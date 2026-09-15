@@ -63,6 +63,6 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			.Select(e => e with { Visible = false })
 			.ToList();
 
-		return missing.Count == 0 ? this : this with { Elements = [..Elements, ..missing] };
+		return missing.Count == 0 ? this : this with { Elements = [.. Elements, .. missing] };
 	}
 }

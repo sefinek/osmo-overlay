@@ -50,9 +50,9 @@ public sealed class OverlayRenderer : IDisposable
 
 	private readonly int _width;
 	private (double East, double North)? _lastTrailPoint;
-	private int _trailCacheIndex = -1;
 	private RouteMapMosaic? _mapMosaic;
 	private (string Url, int Zoom)? _preparedMapKey;
+	private int _trailCacheIndex = -1;
 
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true)
@@ -416,7 +416,7 @@ public sealed class OverlayRenderer : IDisposable
 
 		(double East, double North) currentPos = (frame.LocalEastMeters, frame.LocalNorthMeters);
 		var maxDist = 5.0;
-		foreach (var p in _trail)
+		foreach ((double East, double North, double Lat, double Lon) p in _trail)
 		{
 			var dist = Distance((p.East, p.North), currentPos);
 			if (dist > maxDist) maxDist = dist;
@@ -426,7 +426,7 @@ public sealed class OverlayRenderer : IDisposable
 
 		var builder = new SKPathBuilder();
 		var started = false;
-		foreach (var p in _trail)
+		foreach ((double East, double North, double Lat, double Lon) p in _trail)
 		{
 			var px = cx + (float)((p.East - frame.LocalEastMeters) * scale);
 			var py = cy - (float)((p.North - frame.LocalNorthMeters) * scale);
@@ -477,7 +477,9 @@ public sealed class OverlayRenderer : IDisposable
 			var clipBuilder = new SKPathBuilder();
 			clipBuilder.AddCircle(0, 0, radius);
 			using (SKPath clipPath = clipBuilder.Detach())
+			{
 				canvas.ClipPath(clipPath, antialias: true);
+			}
 
 			SKPoint center = _mapMosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
 			var src = SKRect.Create(center.X - radius, center.Y - radius, radius * 2, radius * 2);
@@ -513,7 +515,7 @@ public sealed class OverlayRenderer : IDisposable
 
 		var builder = new SKPathBuilder();
 		var started = false;
-		foreach (var p in _trail)
+		foreach ((double East, double North, double Lat, double Lon) p in _trail)
 		{
 			SKPoint pixel = _mapMosaic.GetPixel(p.Lat, p.Lon);
 			var px = pixel.X - center.X;

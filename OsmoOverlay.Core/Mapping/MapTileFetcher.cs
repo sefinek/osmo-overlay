@@ -43,7 +43,7 @@ public static class MapTileFetcher
 			}
 
 			var url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
-			byte[] bytes = await Http.GetByteArrayAsync(url, ct);
+			var bytes = await Http.GetByteArrayAsync(url, ct);
 
 			Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
 			await File.WriteAllBytesAsync(cachePath, bytes, ct);

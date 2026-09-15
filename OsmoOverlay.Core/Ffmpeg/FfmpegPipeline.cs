@@ -83,7 +83,7 @@ public static class FfmpegPipeline
 				// at this size.
 				"-b:v", $"{info.Video.BitRate}",
 				"-maxrate", $"{(long)(info.Video.BitRate * 1.2)}",
-				"-bufsize", $"{(long)(info.Video.BitRate * 2)}",
+				"-bufsize", $"{info.Video.BitRate * 2}",
 				"-profile:v", "main10",
 				"-pix_fmt", "yuv420p10le"
 			]);
