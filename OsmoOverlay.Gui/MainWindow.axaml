@@ -116,7 +116,7 @@
 								<ListBox Name="InputFilesList" Height="56" SelectionMode="Single" />
 								<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
 									<Button Grid.Column="0" Content="Add..." Click="OnAddInputFilesClick"
-									        HorizontalAlignment="Stretch" />
+									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 									<Button Grid.Column="1" Content="↑" Click="OnMoveInputUpClick" />
 									<Button Grid.Column="2" Content="↓" Click="OnMoveInputDownClick" />
 									<Button Grid.Column="3" Content="Remove" Click="OnRemoveInputClick" />
@@ -131,7 +131,10 @@
 								</Grid>
 							</StackPanel>
 
-							<Button Classes="toolbar" Content="Settings" Click="OnSettingsClick" />
+							<Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+								<Button Grid.Column="0" Classes="toolbar" Content="Settings" Click="OnSettingsClick" />
+								<Button Grid.Column="1" Classes="toolbar" Content="Tools" Click="OnToolsClick" />
+							</Grid>
 						</StackPanel>
 					</Border>
 

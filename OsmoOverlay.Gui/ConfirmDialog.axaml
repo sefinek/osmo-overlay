@@ -10,7 +10,10 @@
         Title="Confirm">
 
 	<StackPanel Margin="20" Spacing="16">
-		<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+		<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+			<Border Name="KindDot" Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" />
+			<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+		</StackPanel>
 		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
 		<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
 			<TextBlock Grid.Column="0" />

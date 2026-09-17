@@ -113,7 +113,7 @@ public static partial class ExifToolRunner
 
 		var frames = new List<TelemetryFrame>(rawFrames.Count);
 		var gpsFill = new GpsForwardFill();
-		foreach (var (frameNumber, sampleTime, rawLat, rawLon, rawAlt, gpsTimestamp, accelX, accelY, accelZ) in rawFrames)
+		foreach ((var frameNumber, var sampleTime, var rawLat, var rawLon, var rawAlt, DateTime? gpsTimestamp, var accelX, var accelY, var accelZ) in rawFrames)
 		{
 			var (lat, lon, altitudeMeters, hasFix) = gpsFill.Apply(rawLat, rawLon, rawAlt);
 

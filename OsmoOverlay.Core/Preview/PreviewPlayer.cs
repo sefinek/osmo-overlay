@@ -13,6 +13,7 @@ public sealed class PreviewPlayer : IDisposable
 	private const int ScrubDebounceMs = 80;
 
 	private readonly Lock _lock = new();
+	private IReadOnlyList<DerivedFrame>? _derivedFrames;
 	private TimeSpan _lastPosition;
 	private VideoFrame? _lastVideoFrame;
 	private CancellationTokenSource? _mapPrepareCts;
@@ -20,7 +21,6 @@ public sealed class PreviewPlayer : IDisposable
 	private OverlayRenderer? _renderer;
 	private bool _resumeAfterScrub;
 	private CancellationTokenSource? _scrubCts;
-	private IReadOnlyList<DerivedFrame>? _derivedFrames;
 	private VideoFrameSource? _video;
 
 	public bool IsPlaying => _playbackCts is not null;

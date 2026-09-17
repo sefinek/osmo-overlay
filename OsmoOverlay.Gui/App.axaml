@@ -124,6 +124,26 @@
 		<Style Selector="Button.danger:pressed /template/ ContentPresenter">
 			<Setter Property="Background" Value="#C93E42" />
 		</Style>
+		<Style Selector="Button.success">
+			<Setter Property="Background" Value="#3EBE6E" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.success:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#5CD98A" />
+		</Style>
+		<Style Selector="Button.success:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E9256" />
+		</Style>
+		<Style Selector="Button.warning">
+			<Setter Property="Background" Value="#E5A83E" />
+			<Setter Property="Foreground" Value="Black" />
+		</Style>
+		<Style Selector="Button.warning:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#FFC15C" />
+		</Style>
+		<Style Selector="Button.warning:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#C98A2E" />
+		</Style>
 		<Style Selector="ScrollBar /template/ Thumb">
 			<Setter Property="Background" Value="#3A3A40" />
 			<Setter Property="CornerRadius" Value="8" />

@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="220"
+        x:Class="OsmoOverlay.Gui.ToolsWindow"
+        Width="420" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#121214"
+        Title="Tools">
+
+	<Window.Styles>
+		<Style Selector="TextBlock.infoLabel">
+			<Setter Property="Opacity" Value="0.55" />
+			<Setter Property="Margin" Value="0,5" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="Opacity" Value="0.4" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="Margin" Value="0,4,0,0" />
+		</Style>
+	</Window.Styles>
+
+	<StackPanel Margin="20" Spacing="18">
+		<StackPanel Spacing="4">
+			<TextBlock Text="Fix color tags" Classes="infoLabel" Margin="0" />
+			<TextBlock Classes="hint" Margin="0,0,0,4" TextWrapping="Wrap"
+			           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. This rewrites the tag with a lossless stream copy - no re-encode." />
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<Button Content="Select file..." Click="OnSelectColorTagFileClick" />
+				<Button Name="FixColorTagsButton" Content="Fix" Click="OnFixColorTagsClick" IsEnabled="False" />
+			</StackPanel>
+			<TextBlock Name="ColorTagFilePathText" Classes="hint" />
+		</StackPanel>
+
+		<StackPanel Spacing="4">
+			<TextBlock Text="Data" Classes="infoLabel" Margin="0" />
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
+				<Button Content="Clear cache" Click="OnClearCacheClick"
+				        ToolTip.Tip="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
+			</StackPanel>
+			<TextBlock Name="CacheStatusText" Classes="hint" />
+		</StackPanel>
+
+		<Grid ColumnDefinitions="*,Auto">
+			<TextBlock Grid.Column="0" />
+			<Button Grid.Column="1" Content="Close" Classes="accent" Click="OnCloseClick" />
+		</Grid>
+	</StackPanel>
+</Window>

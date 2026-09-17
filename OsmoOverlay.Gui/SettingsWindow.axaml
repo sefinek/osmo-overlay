@@ -45,16 +45,6 @@
 			           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. Off by default; takes effect the next time a file/preview is opened." />
 		</StackPanel>
 
-		<StackPanel Spacing="4">
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
-				<Button Content="Clear cache" Click="OnClearCacheClick" />
-			</StackPanel>
-			<TextBlock Name="CacheStatusText" Classes="hint" />
-			<TextBlock Classes="hint"
-			           Text="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
-		</StackPanel>
-
 		<Grid ColumnDefinitions="*,Auto">
 			<TextBlock Grid.Column="0" />
 			<Button Grid.Column="1" Content="Close" Classes="accent" Click="OnCloseClick" />

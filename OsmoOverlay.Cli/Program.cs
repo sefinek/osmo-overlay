@@ -1,8 +1,5 @@
-using System.Reflection;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
-
-PrintBanner();
 
 if (args.Length == 0)
 {
@@ -84,21 +81,3 @@ var doneMessage = $"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:s
 Console.WriteLine(doneMessage);
 AppLogger.Info(doneMessage);
 return 0;
-
-// Only the CLI's own and Core's assembly versions are shown - the GUI is a separate, unreferenced
-// executable, so its version isn't something this process can read without loading that assembly
-// just for a version string.
-static void PrintBanner()
-{
-	var cliVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "?";
-	var coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
-
-	Console.WriteLine("==================================================");
-	Console.WriteLine("  OsmoOverlay CLI");
-	Console.WriteLine("  Telemetry HUD burner for DJI Osmo Action footage");
-	Console.WriteLine("==================================================");
-	Console.WriteLine($"  CLI  v{cliVersion}");
-	Console.WriteLine($"  Core v{coreVersion}");
-	Console.WriteLine("==================================================");
-	Console.WriteLine();
-}

@@ -17,6 +17,7 @@ using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Gui.Native;
 using SkiaSharp;
 using AvaloniaPath = Avalonia.Controls.Shapes.Path;
 using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
@@ -90,8 +91,8 @@ public partial class MainWindow : Window
 	private UiPhase _phase = UiPhase.Idle;
 	private WriteableBitmap? _previewBitmap;
 	private bool _showWatermark = OverlaySettingsStore.Load().ShowWatermark;
-	private bool _smoothGpsMotion = OverlaySettingsStore.Load().SmoothGpsMotion;
 	private bool _sliderDragInProgress;
+	private bool _smoothGpsMotion = OverlaySettingsStore.Load().SmoothGpsMotion;
 	private FileSummary? _summary;
 	private bool _suppressOverlayEvents;
 	private bool _suppressSliderEvent;
@@ -240,6 +241,11 @@ public partial class MainWindow : Window
 			PopulateOutputInfo(_summary, _detectedEncoder);
 	}
 
+	private async void OnToolsClick(object? sender, RoutedEventArgs e)
+	{
+		await new ToolsWindow().ShowDialog(this);
+	}
+
 	private async void OnPickOutputClick(object? sender, RoutedEventArgs e)
 	{
 		TopLevel? topLevel = GetTopLevel(this);
@@ -280,6 +286,10 @@ public partial class MainWindow : Window
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
 		LogBox.Text = "";
+		AppendBanner();
+		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
+		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
+		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);
 		foreach (var path in _inputPaths)
 			AppendLog($"Input: {path}");
 		AppendLog("Probing source file(s) (ffprobe)...");
@@ -370,6 +380,10 @@ public partial class MainWindow : Window
 			SetPhase(UiPhase.Idle);
 			ActionButton.IsEnabled = true;
 		}
+		finally
+		{
+			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
+		}
 	}
 
 	private async Task RunRenderAsync()
@@ -387,7 +401,9 @@ public partial class MainWindow : Window
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
 		LogBox.Text = "";
+		AppendBanner();
 		Progress.Value = 0;
+		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
 		OutMeasuredPanel.IsVisible = false;
 		OutPlanText.IsVisible = true;
 		OutFrames.IsVisible = true;
@@ -417,13 +433,22 @@ public partial class MainWindow : Window
 		{
 			Progress.Value = 100;
 			var sizeText = File.Exists(outputPath) ? $", {FormatBytes(new FileInfo(outputPath).Length)}" : "";
-			AppendLog($"Done: {outputPath} (time: {result.Elapsed:hh\\:mm\\:ss}{sizeText})");
+			var doneMessage = $"Done: {outputPath} (time: {result.Elapsed:hh\\:mm\\:ss}{sizeText})";
+			AppendLog(doneMessage);
 
 			if (_summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
+
+			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
+			await NotifyRenderFinishedAsync("Render complete", doneMessage, DialogKind.Success);
 		}
 		else
 		{
 			AppendLog($"Error: {result.ErrorMessage}");
+			// Left set (not cleared) rather than immediately reset to NoProgress - the red taskbar
+			// overlay stays as a persistent "this needs attention" flag until the next Get Summary/
+			// Render click resets it, since there's no other natural moment to clear it.
+			TaskbarProgress.SetState(this, TaskbarProgress.State.Error);
+			await NotifyRenderFinishedAsync("Render failed", result.ErrorMessage ?? "Unknown error", DialogKind.Danger);
 		}
 
 		SetPhase(UiPhase.SummaryReady);
@@ -685,12 +710,38 @@ public partial class MainWindow : Window
 		AppendLog(status.Message);
 
 		if (status.TotalFrames > 0)
+		{
 			Progress.Value = 100.0 * status.CurrentFrame / status.TotalFrames;
+			TaskbarProgress.SetValue(this, (ulong)status.CurrentFrame, (ulong)status.TotalFrames);
+		}
 	}
 
 	private void AppendLog(string message)
 	{
 		LogBox.AppendLog(LogScroll, message);
+	}
+
+	/// <summary>Same banner text the CLI prints to console (see AppBanner), shown in the GUI's own log so both surfaces show the same startup info.</summary>
+	private void AppendBanner()
+	{
+		foreach (var line in AppBanner.BuildLines("GUI"))
+			AppendLog(line);
+		AppendLog("");
+	}
+
+	/// <summary>
+	///     A render finishing (successfully or not) matters most when the user has switched away to do
+	///     something else - IsActive (window focus) is the signal for which surface to use: a focused
+	///     window already has the user's attention, so the app's own dialog reads as a direct answer to
+	///     what they just clicked; an unfocused one gets a taskbar balloon instead, since a modal dialog
+	///     popping up over whatever they're doing now would be far more disruptive than useful.
+	/// </summary>
+	private async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind)
+	{
+		if (IsActive)
+			await ConfirmDialog.ShowAsync(this, title, message, kind: kind);
+		else
+			BalloonNotifier.Show(this, title, message);
 	}
 
 	private async Task OpenPreviewAsync(FileSummary summary)
@@ -758,7 +809,7 @@ public partial class MainWindow : Window
 		var duration = PreviewSlider.Maximum;
 		if (width <= 0 || duration <= 0 || _gpsLossRanges.Count == 0) return;
 
-		foreach ((var start, var end) in _gpsLossRanges)
+		foreach (var (start, end) in _gpsLossRanges)
 		{
 			var x1 = width * Math.Clamp(start / duration, 0, 1);
 			var x2 = width * Math.Clamp(end / duration, 0, 1);
@@ -1430,7 +1481,7 @@ public partial class MainWindow : Window
 
 		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name ?? "this preset";
 		var confirmed = await ConfirmDialog.AskAsync(this, "Delete preset",
-			$"Delete \"{presetName}\"? This can't be undone.", "Delete", true);
+			$"Delete \"{presetName}\"? This can't be undone.", "Delete", DialogKind.Danger);
 		if (!confirmed) return;
 
 		_overlayPresets.RemoveAll(p => p.Id == _activePresetId);
@@ -1452,7 +1503,7 @@ public partial class MainWindow : Window
 		var presetName = _overlayPresets[index].Name;
 		var confirmed = await ConfirmDialog.AskAsync(this, "Reset preset",
 			$"Reset \"{presetName}\" to the default layout? Your widget positions and settings for it will be lost.",
-			"Reset", true);
+			"Reset", DialogKind.Danger);
 		if (!confirmed) return;
 
 		_overlayPresets[index] = OverlayPreset.CreateDefault(_activePresetId, presetName,
