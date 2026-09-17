@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="380" d:DesignHeight="160"
+        x:Class="OsmoOverlay.Gui.ConfirmDialog"
+        Width="380" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#121214"
+        Title="Confirm">
+
+	<StackPanel Margin="20" Spacing="16">
+		<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
+		<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+			<TextBlock Grid.Column="0" />
+			<Button Grid.Column="1" Name="CancelButton" Content="Cancel" Click="OnCancelClick" />
+			<Button Grid.Column="2" Name="ConfirmButton" Content="Confirm" Click="OnConfirmClick" />
+		</Grid>
+	</StackPanel>
+</Window>

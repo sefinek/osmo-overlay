@@ -1,0 +1,144 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="OsmoOverlay.Gui.App"
+             RequestedThemeVariant="Dark">
+	<Application.Resources>
+		<ResourceDictionary>
+			<!-- Recolors every accent-driven FluentTheme visual (checked CheckBox/RadioButton, Slider
+			     thumb/fill, focus rings, selected ComboBox/ListBox item) to this app's own blue instead
+			     of Fluent's stock accent, so default controls read as the same palette as the hand-styled
+			     Button.accent below rather than a slightly different, unrelated blue. -->
+			<Color x:Key="SystemAccentColor">#3E9EFF</Color>
+			<Color x:Key="SystemAccentColorDark1">#2E7ECC</Color>
+			<Color x:Key="SystemAccentColorDark2">#1F5E99</Color>
+			<Color x:Key="SystemAccentColorDark3">#123D66</Color>
+			<Color x:Key="SystemAccentColorLight1">#5CACFF</Color>
+			<Color x:Key="SystemAccentColorLight2">#7DBEFF</Color>
+			<Color x:Key="SystemAccentColorLight3">#9ECEFF</Color>
+		</ResourceDictionary>
+	</Application.Resources>
+
+	<Application.Styles>
+		<FluentTheme />
+
+		<!-- FluentTheme's stock dark-mode control chrome is calibrated for a lighter base than this
+		     app's near-black window background (#121214) - left alone, every plain Button/TextBox/
+		     ComboBox/NumericUpDown/ListBox reads as a flat, oddly light grey box that doesn't belong
+		     with the rest of the UI. These give unstyled controls the same dark palette the hand-styled
+		     ones already use (Border.card's #1B1B1E, Button.toolbar's #232327) instead of Fluent's
+		     defaults.
+		     Declared FIRST, before .accent/.danger/.toolbar/.gearButton below: Avalonia resolves two
+		     equally-scoped (both Application.Styles) matching styles by document order, not by selector
+		     specificity, so a later, more specific class selector only "wins" over an earlier, more
+		     generic one if it really is later - putting these generic Button/TextBox rules first is what
+		     lets the classed ones actually override them, instead of the reverse. -->
+		<Style Selector="Button">
+			<Setter Property="Background" Value="#232327" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#2E2E33" />
+			<Setter Property="CornerRadius" Value="6" />
+		</Style>
+		<Style Selector="Button:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+		<!-- Deliberately NOT #1B1B1E (Border.card's exact color) - that made a pressed button blend
+		     into the card behind it instead of reading as "pushed in". This sits between the card and
+		     the button's own resting #232327, close enough to look "darker/pressed" without vanishing. -->
+		<Style Selector="Button:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#1F1F23" />
+		</Style>
+		<Style Selector="Button:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="#1F1F23" />
+		</Style>
+
+		<Style Selector="TextBox">
+			<Setter Property="Background" Value="#1B1B1E" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#2E2E33" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="6" />
+		</Style>
+		<!-- TextBox's pointerover/focus border is drawn by this specific template part (same one
+		     TextBox#LogBox's own focus rule below already targets, confirmed working there) - setting
+		     BorderBrush on the outer TextBox itself only reaches the RESTING state; FluentTheme's
+		     control theme drives the hover/focus states straight off this Border directly, ignoring the
+		     outer control's own BorderBrush for those two pseudo-classes. -->
+		<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="#3A3A40" />
+		</Style>
+		<Style Selector="TextBox:focus-within /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="#3E9EFF" />
+		</Style>
+
+		<Style Selector="ComboBox">
+			<Setter Property="Background" Value="#1B1B1E" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#2E2E33" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="6" />
+		</Style>
+		<Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+
+		<Style Selector="NumericUpDown">
+			<Setter Property="Background" Value="#1B1B1E" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#2E2E33" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="6" />
+		</Style>
+
+		<Style Selector="ListBox">
+			<Setter Property="Background" Value="#1B1B1E" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#2E2E33" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="6" />
+		</Style>
+		<Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+
+		<!-- Shared by every window (MainWindow, SettingsWindow, ConfirmDialog, DependencyPromptWindow)
+		     instead of each declaring its own identical copy - one palette, one place to change it.
+		     Declared AFTER the generic Button rules above so their Background setters for :pointerover/
+		     :pressed actually take effect instead of being silently overwritten by the generic ones. -->
+		<Style Selector="Button.accent">
+			<Setter Property="Background" Value="#3E9EFF" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#5CACFF" />
+		</Style>
+		<Style Selector="Button.accent:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E7ECC" />
+		</Style>
+		<Style Selector="Button.danger">
+			<Setter Property="Background" Value="#E5484D" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#FF6369" />
+		</Style>
+		<Style Selector="Button.danger:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#C93E42" />
+		</Style>
+		<Style Selector="ScrollBar /template/ Thumb">
+			<Setter Property="Background" Value="#3A3A40" />
+			<Setter Property="CornerRadius" Value="8" />
+		</Style>
+		<Style Selector="ScrollBar /template/ Thumb:pointerover">
+			<Setter Property="Background" Value="#57575F" />
+		</Style>
+
+		<!-- Global, not window-scoped, so every read-only log TextBox (MainWindow, DependencyPromptWindow)
+		     gets it consistently instead of only whichever window happens to declare it. -->
+		<Style Selector="TextBox#LogBox:focus /template/ Border#PART_BorderElement">
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="TextBox#LogBox:focus-within /template/ Border#PART_BorderElement">
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+	</Application.Styles>
+</Application>
