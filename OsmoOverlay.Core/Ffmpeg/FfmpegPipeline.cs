@@ -108,15 +108,7 @@ public static class FfmpegPipeline
 
 		args.Add(outputPath);
 
-		var psi = new ProcessStartInfo("ffmpeg")
-		{
-			RedirectStandardInput = true,
-			RedirectStandardError = true,
-			UseShellExecute = false,
-			CreateNoWindow = true,
-			WindowStyle = ProcessWindowStyle.Hidden
-		};
-		foreach (var a in args) psi.ArgumentList.Add(a);
+		ProcessStartInfo psi = ProcessHelper.CreateHiddenWithStdin("ffmpeg", args);
 
 		Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
 

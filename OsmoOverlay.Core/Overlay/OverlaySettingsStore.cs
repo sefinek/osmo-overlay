@@ -48,7 +48,7 @@ public static class OverlaySettingsStore
 		try
 		{
 			Directory.CreateDirectory(StoreDir);
-			File.WriteAllText(StorePath, JsonSerializer.Serialize(settings));
+			AtomicFile.WriteAllText(StorePath, JsonSerializer.Serialize(settings));
 		}
 		catch (Exception ex)
 		{

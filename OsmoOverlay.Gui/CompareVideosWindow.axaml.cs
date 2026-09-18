@@ -233,18 +233,22 @@ public partial class CompareVideosWindow : Window
 	private (string[] Values, bool Differs) ComputeRow(RowSpec row)
 	{
 		var values = new string[_paths.Count];
+		var loadedValues = new List<string>(_paths.Count);
 		for (var col = 0; col < _paths.Count; col++)
 		{
 			var path = _paths[col];
-			values[col] = _summaries.TryGetValue(path, out FileSummary? summary) && summary is not null
-				? row.Value(summary)
-				: _errors.ContainsKey(path)
-					? "Error"
-					: "Loading...";
+			if (_summaries.TryGetValue(path, out FileSummary? summary) && summary is not null)
+			{
+				values[col] = row.Value(summary);
+				loadedValues.Add(values[col]);
+			}
+			else
+			{
+				values[col] = _errors.ContainsKey(path) ? "Error" : "Loading...";
+			}
 		}
 
-		List<string> loaded = [.. values.Where((_, i) => _summaries.GetValueOrDefault(_paths[i]) is not null)];
-		return (values, loaded.Distinct().Count() > 1);
+		return (values, loadedValues.Distinct().Count() > 1);
 	}
 
 	private static int[] ComputeSectionIds(IReadOnlyList<RowSpec> rows)
@@ -388,7 +392,7 @@ public partial class CompareVideosWindow : Window
 			new RowSpec("Audio bitrate", s => s.Audio is { } a ? $"{a.BitRate / 1000.0:0} kbps" : "-"),
 
 			new RowSpec("Duration", s => TimeSpan.FromSeconds(s.DurationSeconds).ToString(@"hh\:mm\:ss"), true),
-			new RowSpec("File size", s => FormatBytes(s.FileSizeBytes)),
+			new RowSpec("File size", s => FormatHelper.FormatBytes(s.FileSizeBytes)),
 
 			new RowSpec("Telemetry", s => s.HasTelemetry ? "Detected" : "Not found", true),
 			new RowSpec("Max speed", s => s.Telemetry is { } t ? $"{t.MaxSpeedKmh:0.#} km/h" : "-"),
@@ -397,12 +401,6 @@ public partial class CompareVideosWindow : Window
 			new RowSpec("Max G-force", s => s.Telemetry is { } t ? $"{t.MaxGForce:0.00} G" : "-"),
 			new RowSpec("Recorded at", s => s.Telemetry?.RecordedAtUtc is { } utc ? utc.ToLocalFromUtc().ToString("yyyy-MM-dd HH:mm:ss") : "Unknown")
 		];
-	}
-
-	private static string FormatBytes(long bytes)
-	{
-		var gb = bytes / 1_073_741_824.0;
-		return gb >= 1 ? $"{gb:0.##} GB" : $"{bytes / 1_048_576.0:0.#} MB";
 	}
 
 	// NewSection marks the first row of a new logical group (general info / color tags / bitrate &

@@ -83,7 +83,7 @@ internal static class FileSummaryCache
 			}).ToList();
 
 			var entry = new CacheEntry(FormatVersion, files, summary);
-			File.WriteAllText(GetCachePath(inputPaths), JsonSerializer.Serialize(entry));
+			AtomicFile.WriteAllText(GetCachePath(inputPaths), JsonSerializer.Serialize(entry));
 		}
 		catch (Exception ex)
 		{

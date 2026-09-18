@@ -7,17 +7,44 @@ internal static class ProcessHelper
 {
 	public static ProcessStartInfo CreateHidden(string command, params string[] args)
 	{
+		return Create(command, args, notify: true, redirectStandardOutput: true, redirectStandardInput: false);
+	}
+
+	/// <summary>
+	///     Like CreateHidden, but for a command that's spawned at high frequency for routine, uninteresting
+	///     work (e.g. one ffmpeg process per frame while scrubbing a preview) - still reaches the file log
+	///     (AppLogger.Info, for debugging a broken preview), but skips AppLogger.Notify so it doesn't flood
+	///     the GUI's log panel the way a scrub session would if every frame grab surfaced there.
+	/// </summary>
+	public static ProcessStartInfo CreateHiddenQuiet(string command, params string[] args)
+	{
+		return Create(command, args, notify: false, redirectStandardOutput: true, redirectStandardInput: false);
+	}
+
+	/// <summary>Like CreateHidden, but pipes into stdin instead of redirecting stdout - for a tool that's fed data (e.g. ffmpeg's overlay compositing, which reads raw frames from stdin) rather than one whose stdout is read.</summary>
+	public static ProcessStartInfo CreateHiddenWithStdin(string command, IEnumerable<string> args)
+	{
+		return Create(command, args, notify: true, redirectStandardOutput: false, redirectStandardInput: true);
+	}
+
+	private static ProcessStartInfo Create(string command, IEnumerable<string> args, bool notify, bool redirectStandardOutput, bool redirectStandardInput)
+	{
+		var argList = args as IReadOnlyCollection<string> ?? args.ToList();
 		var psi = new ProcessStartInfo(command)
 		{
-			RedirectStandardOutput = true,
+			RedirectStandardOutput = redirectStandardOutput,
+			RedirectStandardInput = redirectStandardInput,
 			RedirectStandardError = true,
 			UseShellExecute = false,
 			CreateNoWindow = true,
 			WindowStyle = ProcessWindowStyle.Hidden
 		};
-		foreach (var arg in args) psi.ArgumentList.Add(arg);
+		foreach (var arg in argList) psi.ArgumentList.Add(arg);
 
-		AppLogger.Notify($"Running: {FormatCommand(command, args)}");
+		var line = $"Running: {FormatCommand(command, argList)}";
+		if (notify) AppLogger.Notify(line);
+		else AppLogger.Info(line);
+
 		return psi;
 	}
 

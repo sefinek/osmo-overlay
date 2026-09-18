@@ -31,7 +31,7 @@ public static class TelemetryProcessor
 		var originLat = frames[0].Latitude;
 		var originLon = frames[0].Longitude;
 		var metersPerDegLat = 111_320.0;
-		var metersPerDegLon = 111_320.0 * Math.Cos(originLat * Math.PI / 180.0);
+		var metersPerDegLon = 111_320.0 * Math.Cos(AngleMath.DegToRad(originLat));
 
 		var smoothedPitch = 0.0;
 		var smoothedGForce = 0.0;

@@ -330,7 +330,7 @@ public partial class MainWindow : Window
 			AppendLog(
 				$"Color: {summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / " +
 				$"{summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})");
-			AppendLog($"Duration: {TimeSpan.FromSeconds(summary.DurationSeconds):hh\\:mm\\:ss}, size: {FormatBytes(summary.FileSizeBytes)}");
+			AppendLog($"Duration: {TimeSpan.FromSeconds(summary.DurationSeconds):hh\\:mm\\:ss}, size: {FormatHelper.FormatBytes(summary.FileSizeBytes)}");
 			AppendLog(summary.Audio is { } audio
 				? $"Audio: {audio.CodecName}, {audio.SampleRate} Hz, {audio.Channels}ch"
 				: "Audio: none");
@@ -367,19 +367,19 @@ public partial class MainWindow : Window
 					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
 					AppendLog(gpsLossRanges.Count > 0
 						? $"GPS signal lost: {gpsLossRanges.Count} range(s), {gpsLossRanges.Sum(r => r.End - r.Start):0.0}s total " +
-						  "(shown as red marks on the preview scrubber)."
-						: "GPS signal: no loss detected.");
+						  "(shown as red marks on the preview scrubber)"
+						: "GPS signal: no loss detected");
 				}
 
 				if (!_hasGpsTimestamp)
-					AppendLog("GPS timestamp: not present in this recording - Date & time / UTC time are unavailable and greyed out.");
+					AppendLog("GPS timestamp: not present in this recording - Date & time / UTC time are unavailable and greyed out");
 
 				var withCameraSettings = rawFrames.Count(f => f.Iso is not null);
 				AppendLog(withCameraSettings == rawFrames.Count
-					? "Telemetry source: native djmd decoder (ISO/shutter/color temp all present, exiftool not needed)."
+					? "Telemetry source: native djmd decoder (ISO/shutter/color temp all present, exiftool not needed)"
 					: withCameraSettings > 0
-						? $"Telemetry source: native djmd decoder, partial camera settings ({withCameraSettings}/{rawFrames.Count})."
-						: "Telemetry source: exiftool fallback (native djmd decode failed or ISO/shutter/CT unavailable).");
+						? $"Telemetry source: native djmd decoder, partial camera settings ({withCameraSettings}/{rawFrames.Count})"
+						: "Telemetry source: exiftool fallback (native djmd decode failed or ISO/shutter/CT unavailable)");
 			}
 
 			if (summary.Telemetry is { } tele)
@@ -470,7 +470,7 @@ public partial class MainWindow : Window
 		{
 			Progress.Value = 100;
 			var elapsedText = result.Elapsed.ToString(@"hh\:mm\:ss");
-			var sizeText = File.Exists(outputPath) ? FormatBytes(new FileInfo(outputPath).Length) : "unknown";
+			var sizeText = File.Exists(outputPath) ? FormatHelper.FormatBytes(new FileInfo(outputPath).Length) : "unknown";
 			AppendLog($"Done: {outputPath} (time: {elapsedText}, {sizeText})");
 
 			if (_summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
@@ -597,7 +597,7 @@ public partial class MainWindow : Window
 			recommended is { } r3 ? $"at least {r3.MinVideoBitrate / 1_000_000.0:0.#} Mbps" : null);
 
 		InfoDuration.Text = TimeSpan.FromSeconds(summary.DurationSeconds).ToString(@"hh\:mm\:ss");
-		InfoFileSize.Text = FormatBytes(summary.FileSizeBytes);
+		InfoFileSize.Text = FormatHelper.FormatBytes(summary.FileSizeBytes);
 
 		AudioGrid.IsVisible = summary.Audio is not null;
 		InfoAudioNone.IsVisible = summary.Audio is null;
@@ -732,7 +732,7 @@ public partial class MainWindow : Window
 		SetMatchCheck(OutBitrateCheck, bitrateRatio is >= 0.7 and <= 1.5);
 
 		OutMeasuredDuration.Text = TimeSpan.FromSeconds(output.DurationSeconds).ToString(@"hh\:mm\:ss");
-		OutMeasuredFileSize.Text = FormatBytes(new FileInfo(outputPath).Length);
+		OutMeasuredFileSize.Text = FormatHelper.FormatBytes(new FileInfo(outputPath).Length);
 	}
 
 	private static void SetMatchCheck(AvaloniaPath path, bool matches)
@@ -745,12 +745,6 @@ public partial class MainWindow : Window
 	private static string FormatFps(double fps)
 	{
 		return fps.ToString("0.##");
-	}
-
-	private static string FormatBytes(long bytes)
-	{
-		var gb = bytes / 1_073_741_824.0;
-		return gb >= 1 ? $"{gb:0.##} GB" : $"{bytes / 1_048_576.0:0.#} MB";
 	}
 
 	private void OnProgress(RenderStatus status)

@@ -65,7 +65,7 @@ public static class OverlayPresetStore
 					File.Delete(file);
 
 			foreach (OverlayPreset preset in presets)
-				File.WriteAllText(PresetPath(preset.Id), JsonSerializer.Serialize(preset));
+				AtomicFile.WriteAllText(PresetPath(preset.Id), JsonSerializer.Serialize(preset));
 
 			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ActivePresetId = activePresetId });
 		}
@@ -96,7 +96,7 @@ public static class OverlayPresetStore
 			// CreateDirectory covers the very first run too, where PresetsDir doesn't exist yet.
 			presets.Insert(0, fresh);
 			Directory.CreateDirectory(PresetsDir);
-			File.WriteAllText(PresetPath(fresh.Id), JsonSerializer.Serialize(fresh));
+			AtomicFile.WriteAllText(PresetPath(fresh.Id), JsonSerializer.Serialize(fresh));
 		}
 		else
 		{
@@ -118,7 +118,7 @@ public static class OverlayPresetStore
 			if (ReferenceEquals(original, filled)) continue;
 
 			presets[i] = filled;
-			File.WriteAllText(PresetPath(filled.Id), JsonSerializer.Serialize(filled));
+			AtomicFile.WriteAllText(PresetPath(filled.Id), JsonSerializer.Serialize(filled));
 		}
 	}
 
@@ -161,7 +161,7 @@ public static class OverlayPresetStore
 
 		Directory.CreateDirectory(PresetsDir);
 		foreach (OverlayPreset preset in data.Presets)
-			File.WriteAllText(PresetPath(preset.Id), JsonSerializer.Serialize(preset));
+			AtomicFile.WriteAllText(PresetPath(preset.Id), JsonSerializer.Serialize(preset));
 
 		var activeId = data.ActivePresetId ?? data.Presets[0].Id;
 		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ActivePresetId = activeId });

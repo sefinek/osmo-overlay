@@ -60,11 +60,7 @@ public static class MapTileFetcher
 			var bytes = await Http.GetByteArrayAsync(url, ct);
 
 			Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-			// Write-then-rename so a cancelled/crashed write can never leave a truncated PNG at
-			// cachePath itself - only ever an orphaned .tmp file next to it.
-			var tempPath = $"{cachePath}.{Guid.NewGuid():N}.tmp";
-			await File.WriteAllBytesAsync(tempPath, bytes, ct);
-			File.Move(tempPath, cachePath, true);
+			await AtomicFile.WriteAllBytesAsync(cachePath, bytes, ct);
 
 			return SKBitmap.Decode(bytes);
 		}

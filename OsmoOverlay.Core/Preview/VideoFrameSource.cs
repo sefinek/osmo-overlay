@@ -128,59 +128,63 @@ public sealed class VideoFrameSource
 		return new VideoPlaybackStream(process, start, Fps, _width, _height, listPath);
 	}
 
+	/// <summary>
+	///     singleFrame doubles as the "is this routine, high-frequency work" signal for logging: true is
+	///     one grab per scrubbed frame (CreateHiddenQuiet - file log only, no GUI spam), false is a Play
+	///     click starting continuous decode, a meaningful one-off worth CreateHidden's GUI-visible log line.
+	/// </summary>
 	private Process StartFfmpeg(string inputPath, TimeSpan position, bool singleFrame)
 	{
-		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg");
+		var args = new List<string>
+		{
+			"-hide_banner",
+			"-ss", position.TotalSeconds.ToString("F3", CultureInfo.InvariantCulture),
+			"-hwaccel", "auto",
+			"-i", inputPath
+		};
+		AppendCommonDecodeArgs(args, singleFrame);
 
-		psi.ArgumentList.Add("-hide_banner");
-		psi.ArgumentList.Add("-ss");
-		psi.ArgumentList.Add(position.TotalSeconds.ToString("F3", CultureInfo.InvariantCulture));
-		psi.ArgumentList.Add("-hwaccel");
-		psi.ArgumentList.Add("auto");
-		psi.ArgumentList.Add("-i");
-		psi.ArgumentList.Add(inputPath);
-		AppendCommonDecodeArgs(psi, singleFrame);
+		ProcessStartInfo psi = singleFrame
+			? ProcessHelper.CreateHiddenQuiet("ffmpeg", [.. args])
+			: ProcessHelper.CreateHidden("ffmpeg", [.. args]);
 
 		return Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
 	}
 
 	private Process StartFfmpegConcat(string listPath)
 	{
-		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg");
+		var args = new List<string>
+		{
+			"-hide_banner",
+			"-hwaccel", "auto",
+			"-f", "concat",
+			"-safe", "0",
+			"-i", listPath
+		};
+		AppendCommonDecodeArgs(args, false);
 
-		psi.ArgumentList.Add("-hide_banner");
-		psi.ArgumentList.Add("-hwaccel");
-		psi.ArgumentList.Add("auto");
-		psi.ArgumentList.Add("-f");
-		psi.ArgumentList.Add("concat");
-		psi.ArgumentList.Add("-safe");
-		psi.ArgumentList.Add("0");
-		psi.ArgumentList.Add("-i");
-		psi.ArgumentList.Add(listPath);
-		AppendCommonDecodeArgs(psi, false);
+		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg", [.. args]);
 
 		return Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
 	}
 
-	private void AppendCommonDecodeArgs(ProcessStartInfo psi, bool singleFrame)
+	private void AppendCommonDecodeArgs(List<string> args, bool singleFrame)
 	{
-		psi.ArgumentList.Add("-an");
-		psi.ArgumentList.Add("-sn");
+		args.Add("-an");
+		args.Add("-sn");
 		if (singleFrame)
 		{
-			psi.ArgumentList.Add("-frames:v");
-			psi.ArgumentList.Add("1");
+			args.Add("-frames:v");
+			args.Add("1");
 		}
 
-		psi.ArgumentList.Add("-vf");
-		psi.ArgumentList.Add($"scale={_width}:{_height}");
-		psi.ArgumentList.Add("-pix_fmt");
-		psi.ArgumentList.Add("bgra");
-		psi.ArgumentList.Add("-f");
-		psi.ArgumentList.Add("rawvideo");
-		psi.ArgumentList.Add("-loglevel");
-		psi.ArgumentList.Add("error");
-		psi.ArgumentList.Add("pipe:1");
+		args.AddRange([
+			"-vf", $"scale={_width}:{_height}",
+			"-pix_fmt", "bgra",
+			"-f", "rawvideo",
+			"-loglevel", "error",
+			"pipe:1"
+		]);
 	}
 
 	/// <summary>Finds which segment a combined-timeline position falls into, and its local offset there.</summary>
