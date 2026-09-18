@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Gui;
 
@@ -30,19 +31,24 @@ public partial class ToolsWindow : Window
 		}
 		catch (Exception ex)
 		{
-			CacheStatusText.Text = $"Could not open the data folder: {ex.Message}";
+			AppLogger.Notify($"Could not open the data folder: {ex.Message}");
 		}
 	}
 
 	private void OnClearCacheClick(object? sender, RoutedEventArgs e)
 	{
 		var deleted = FileSummaryReader.ClearCache();
-		CacheStatusText.Text = $"Cleared {deleted} cached file(s).";
+		AppLogger.Notify($"Cleared {deleted} cached file(s).");
 	}
 
 	private void OnCloseClick(object? sender, RoutedEventArgs e)
 	{
 		Close();
+	}
+
+	private void OnCompareVideosClick(object? sender, RoutedEventArgs e)
+	{
+		new CompareVideosWindow().Show(this);
 	}
 
 	private async void OnSelectColorTagFileClick(object? sender, RoutedEventArgs e)
@@ -80,13 +86,7 @@ public partial class ToolsWindow : Window
 			}
 
 			if (status.NeedsFix)
-				await ConfirmDialog.AskAsync(this, "Fix this file?",
-					$"\"{fileName}\" is missing its Rec.709 color tag - this is the typical Vegas Pro export " +
-					"gap this tool exists for, and it's safe to fix. Rewrite the tag with a lossless stream " +
-					"copy (no re-encode, no quality loss)?\n\n" +
-					$"Current tags:\n{DescribeTags(status)}",
-					"Fix", DialogKind.Warning, "Fix color tags",
-					() => RunFixAsync(path, fileName), "Fixing...");
+				await AskAndFixAsync(path, fileName, status);
 			else
 				await ConfirmDialog.ShowAsync(this, "Nothing to do",
 					$"\"{fileName}\" already has a correct Rec.709 color tag - there's nothing to fix here.\n\n" +
@@ -107,11 +107,37 @@ public partial class ToolsWindow : Window
 		}
 	}
 
-	private async Task RunFixAsync(string path, string fileName)
+	/// <summary>
+	///     onConfirm here only runs the fix itself (captured into fixResult/fixError) and does NOT show
+	///     the outcome dialog - AskAsync only closes the "Fix this file?" dialog once onConfirm's task
+	///     completes, so showing the outcome dialog from inside onConfirm would leave this one sitting
+	///     open behind it (still saying "Fixing...") until the outcome dialog is dismissed too.
+	/// </summary>
+	private async Task AskAndFixAsync(string path, string fileName, ColorTagStatus status)
 	{
-		try
-		{
-			ColorTagFixResult result = await Task.Run(() => ColorTagFixer.Fix(path));
+		ColorTagFixResult? fixResult = null;
+		Exception? fixError = null;
+
+		await ConfirmDialog.AskAsync(this, "Fix this file?",
+			$"\"{fileName}\" is missing its Rec.709 color tag - this is the typical Vegas Pro export " +
+			"gap this tool exists for, and it's safe to fix. Rewrite the tag with a lossless stream " +
+			"copy (no re-encode, no quality loss)?\n\n" +
+			$"Current tags:\n{DescribeTags(status)}",
+			"Fix", DialogKind.Warning, "Fix color tags",
+			async () =>
+			{
+				try
+				{
+					fixResult = await Task.Run(() => ColorTagFixer.Fix(path));
+				}
+				catch (Exception ex)
+				{
+					fixError = ex;
+				}
+			},
+			"Fixing...");
+
+		if (fixResult is { } result)
 			await ConfirmDialog.ShowAsync(this, "Fixed successfully",
 				$"\"{fileName}\" was fixed successfully - the color tag was rewritten to Rec.709 with a " +
 				"lossless stream copy, so picture quality is untouched.\n\n" +
@@ -119,30 +145,17 @@ public partial class ToolsWindow : Window
 				$"After:\n{DescribeTags(result.After)}\n\n" +
 				$"Saved to: {Path.GetFileName(result.OutputPath)}",
 				kind: DialogKind.Success, windowTitle: "Fix color tags",
-				secondaryText: "Show in folder", onSecondary: () => ShowInExplorer(result.OutputPath));
-		}
-		catch (Exception ex)
-		{
+				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(result.OutputPath),
+				extraText: "Compare files", onExtra: () => OpenCompareWindow(path, result.OutputPath));
+		else if (fixError is not null)
 			await ConfirmDialog.ShowAsync(this, "Fix failed",
-				$"Fixing \"{fileName}\" failed.\n\nDetails: {ex.Message}",
+				$"Fixing \"{fileName}\" failed.\n\nDetails: {fixError.Message}",
 				kind: DialogKind.Danger, windowTitle: "Fix color tags");
-		}
 	}
 
-	// Opens Explorer with the given file pre-selected, e.g. as proof the fix actually produced an
-	// output file - UseShellExecute so this runs like a user double-clicking it, not like the
-	// CreateHidden/redirected-output pattern used for ffmpeg/ffprobe/exiftool elsewhere.
-	private static void ShowInExplorer(string filePath)
+	private void OpenCompareWindow(params string[] paths)
 	{
-		try
-		{
-			Process.Start(new ProcessStartInfo("explorer.exe") { Arguments = $"/select,\"{filePath}\"", UseShellExecute = true });
-		}
-		catch
-		{
-			// Best-effort - the success dialog already confirms the fix, so a failure to open
-			// Explorer isn't worth surfacing as an error.
-		}
+		new CompareVideosWindow(paths).Show(this);
 	}
 
 	private static string DescribeTags(ColorTagStatus status)

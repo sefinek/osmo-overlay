@@ -10,9 +10,11 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
@@ -123,6 +125,14 @@ public partial class MainWindow : Window
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
 		_previewPlayer.Message += AppendLog;
+
+		// Mirrors every AppLogger.Notify call - ffmpeg/ffprobe/exiftool invocations (from this window,
+		// ToolsWindow, or CompareVideosWindow) and one-off status lines like "Cleared N cached files" -
+		// into the GUI's log panel, on top of the file log it already reaches, instead of each window
+		// showing its own separate status label. The event can fire from a background thread (Task.Run
+		// in a tool window), so this posts to the UI thread rather than touching LogBox directly;
+		// AppendLogLine (not AppendLog) skips re-logging to AppLogger, since Notify already did.
+		AppLogger.Notified += message => Dispatcher.UIThread.Post(() => LogBox.AppendLogLine(LogScroll, message));
 
 		// The canvas has no width until layout runs (and resizes with the window afterwards) - marks
 		// are positioned in absolute pixels, so they need redrawing whenever that width changes.
@@ -459,14 +469,18 @@ public partial class MainWindow : Window
 		if (result.Success)
 		{
 			Progress.Value = 100;
-			var sizeText = File.Exists(outputPath) ? $", {FormatBytes(new FileInfo(outputPath).Length)}" : "";
-			var doneMessage = $"Done: {outputPath} (time: {result.Elapsed:hh\\:mm\\:ss}{sizeText})";
-			AppendLog(doneMessage);
+			var elapsedText = result.Elapsed.ToString(@"hh\:mm\:ss");
+			var sizeText = File.Exists(outputPath) ? FormatBytes(new FileInfo(outputPath).Length) : "unknown";
+			AppendLog($"Done: {outputPath} (time: {elapsedText}, {sizeText})");
 
 			if (_summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
 
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
-			await NotifyRenderFinishedAsync("Render complete", doneMessage, DialogKind.Success);
+
+			// User-facing surfaces (dialog, balloon) show just the filename - the full path is only
+			// useful for the log line above, where it's there to be pasted/searched, not read at a glance.
+			var summary = $"{Path.GetFileName(outputPath)}\nTime: {elapsedText} · Size: {sizeText}";
+			await NotifyRenderFinishedAsync("Render complete", summary, DialogKind.Success, outputPath);
 		}
 		else if (cts.Token.IsCancellationRequested)
 		{
@@ -764,18 +778,23 @@ public partial class MainWindow : Window
 	}
 
 	/// <summary>
-	///     A render finishing (successfully or not) matters most when the user has switched away to do
-	///     something else - IsActive (window focus) is the signal for which surface to use: a focused
-	///     window already has the user's attention, so the app's own dialog reads as a direct answer to
-	///     what they just clicked; an unfocused one gets a taskbar balloon instead, since a modal dialog
-	///     popping up over whatever they're doing now would be far more disruptive than useful.
+	///     A render finishing always gets the app's own dialog (so there's a clear, unambiguous answer
+	///     to what the user just clicked, whether or not the window is currently focused) and always
+	///     plays the OS notification sound. The taskbar balloon is additive, not a replacement: it only
+	///     appears when the window is unfocused, since that's the one case where the dialog - fully
+	///     shown, just not the visible surface right now - could otherwise go unnoticed until the user
+	///     switches back to it.
 	/// </summary>
-	private async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind)
+	private async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind, string? outputPath = null)
 	{
-		if (IsActive)
-			await ConfirmDialog.ShowAsync(this, title, message, kind: kind);
-		else
+		SystemSound.PlayNotification();
+
+		if (!IsActive)
 			BalloonNotifier.Show(this, title, message);
+
+		await ConfirmDialog.ShowAsync(this, title, message, kind: kind,
+			secondaryText: outputPath is not null ? "Show in folder" : null,
+			onSecondary: outputPath is not null ? () => ExplorerHelper.ShowInFolder(outputPath) : null);
 	}
 
 	private async Task OpenPreviewAsync(FileSummary summary)
@@ -1047,7 +1066,7 @@ public partial class MainWindow : Window
 		{
 			var dataOk = OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp);
 			check.IsEnabled = presetEditable && dataOk;
-			if (gear is not null) gear.IsEnabled = presetEditable && dataOk;
+			gear?.IsEnabled = presetEditable && dataOk;
 
 			ToolTip.SetTip(check, dataOk
 				? null

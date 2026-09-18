@@ -713,7 +713,7 @@ public sealed class OverlayRenderer : IDisposable
 	}
 
 	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, the older static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>
-	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, bool useArrow)
+	private static void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, bool useArrow)
 	{
 		if (useArrow)
 			DrawHeadingArrow(canvas, cx, cy, headingDegrees);

@@ -17,7 +17,7 @@ internal static class ProcessHelper
 		};
 		foreach (var arg in args) psi.ArgumentList.Add(arg);
 
-		AppLogger.Info($"Running: {FormatCommand(command, args)}");
+		AppLogger.Notify($"Running: {FormatCommand(command, args)}");
 		return psi;
 	}
 

@@ -18,10 +18,11 @@
 			<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
 		</StackPanel>
 		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
-		<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+		<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
 			<TextBlock Grid.Column="0" />
 			<Button Grid.Column="1" Name="CancelButton" Content="Cancel" Click="OnCancelClick" />
-			<Button Grid.Column="2" Name="ConfirmButton" Content="Confirm" Click="OnConfirmClick" />
+			<Button Grid.Column="2" Name="ExtraButton" Content="Extra" Click="OnExtraClick" IsVisible="False" />
+			<Button Grid.Column="3" Name="ConfirmButton" Content="Confirm" Click="OnConfirmClick" />
 		</Grid>
 	</StackPanel>
 </Window>

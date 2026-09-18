@@ -12,8 +12,18 @@ internal static class LogPanelExtensions
 	/// </summary>
 	public static void AppendLog(this TextBox logBox, ScrollViewer logScroll, string message)
 	{
+		logBox.AppendLogLine(logScroll, message);
+		AppLogger.Info(message);
+	}
+
+	/// <summary>
+	///     Like AppendLog, but skips the AppLogger.Info call - for a message that's already been logged
+	///     elsewhere (e.g. AppLogger.Notified, raised by AppLogger.Notify after it already logged the
+	///     message itself), so mirroring it into the GUI doesn't also duplicate the file log entry.
+	/// </summary>
+	public static void AppendLogLine(this TextBox logBox, ScrollViewer logScroll, string message)
+	{
 		logBox.Text += $"[{DateTime.Now:HH:mm:ss}] {message}\n";
 		logScroll.ScrollToEnd();
-		AppLogger.Info(message);
 	}
 }

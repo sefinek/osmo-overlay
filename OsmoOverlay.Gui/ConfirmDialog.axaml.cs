@@ -23,8 +23,9 @@ public partial class ConfirmDialog : Window
 	private static readonly IBrush DangerDotBrush = new SolidColorBrush(Color.Parse("#E5484D"));
 
 	private readonly Func<Task>? _onConfirm;
-	private readonly string? _workingText;
+	private readonly Action? _onExtra;
 	private readonly Action? _onSecondary;
+	private readonly string? _workingText;
 
 	public ConfirmDialog()
 	{
@@ -32,7 +33,8 @@ public partial class ConfirmDialog : Window
 	}
 
 	private ConfirmDialog(string title, string message, string confirmText, DialogKind kind, bool alert,
-		string? windowTitle, Func<Task>? onConfirm, string? workingText, string? secondaryText, Action? onSecondary) : this()
+		string? windowTitle, Func<Task>? onConfirm, string? workingText, string? secondaryText, Action? onSecondary,
+		string? extraText, Action? onExtra) : this()
 	{
 		// windowTitle (the OS window chrome/taskbar text) is deliberately separate from `title` (the
 		// heading shown in the body) - a caller that shows several outcomes for the same action (e.g.
@@ -48,17 +50,19 @@ public partial class ConfirmDialog : Window
 		_onConfirm = onConfirm;
 		_workingText = workingText;
 		_onSecondary = onSecondary;
+		_onExtra = onExtra;
 
 		// Alert mode (ShowAsync) is normally a single-button "OK" notice, not a Cancel/Confirm choice,
 		// so Cancel is hidden - unless the caller gave it a secondary action (e.g. "Show in folder"),
 		// in which case it's repurposed into that action button instead of a Cancel.
 		if (onSecondary is not null)
-		{
 			CancelButton.Content = secondaryText ?? "Cancel";
-		}
-		else if (alert)
+		else if (alert) CancelButton.IsVisible = false;
+
+		if (onExtra is not null)
 		{
-			CancelButton.IsVisible = false;
+			ExtraButton.Content = extraText ?? "Extra";
+			ExtraButton.IsVisible = true;
 		}
 	}
 
@@ -72,19 +76,20 @@ public partial class ConfirmDialog : Window
 	public static Task<bool> AskAsync(Window owner, string title, string message, string confirmText = "Confirm",
 		DialogKind kind = DialogKind.Neutral, string? windowTitle = null, Func<Task>? onConfirm = null, string? workingText = null)
 	{
-		return new ConfirmDialog(title, message, confirmText, kind, false, windowTitle, onConfirm, workingText, null, null).ShowDialog<bool>(owner);
+		return new ConfirmDialog(title, message, confirmText, kind, false, windowTitle, onConfirm, workingText, null, null, null, null).ShowDialog<bool>(owner);
 	}
 
 	/// <summary>
 	///     Shows a modal single-button notice over `owner` - no Cancel/decision, just an acknowledgement.
-	///     If `onSecondary` is given, a second button labeled `secondaryText` appears next to the close
-	///     button (e.g. "Show in folder") - clicking it runs the action without closing the dialog, so
-	///     the caller can still read the rest of the message afterwards.
+	///     If `onSecondary`/`onExtra` are given, one or two extra buttons appear next to the close button
+	///     (e.g. "Show in folder", "Compare files") - clicking either runs its action without closing the
+	///     dialog, so the caller can still read the rest of the message or click another action afterwards.
 	/// </summary>
 	public static Task ShowAsync(Window owner, string title, string message, string closeText = "OK",
-		DialogKind kind = DialogKind.Info, string? windowTitle = null, string? secondaryText = null, Action? onSecondary = null)
+		DialogKind kind = DialogKind.Info, string? windowTitle = null, string? secondaryText = null, Action? onSecondary = null,
+		string? extraText = null, Action? onExtra = null)
 	{
-		return new ConfirmDialog(title, message, closeText, kind, true, windowTitle, null, null, secondaryText, onSecondary).ShowDialog(owner);
+		return new ConfirmDialog(title, message, closeText, kind, true, windowTitle, null, null, secondaryText, onSecondary, extraText, onExtra).ShowDialog(owner);
 	}
 
 	private static string ButtonClassFor(DialogKind kind)
@@ -131,6 +136,11 @@ public partial class ConfirmDialog : Window
 		}
 
 		Close(false);
+	}
+
+	private void OnExtraClick(object? sender, RoutedEventArgs e)
+	{
+		_onExtra?.Invoke();
 	}
 
 	private async void OnConfirmClick(object? sender, RoutedEventArgs e)
