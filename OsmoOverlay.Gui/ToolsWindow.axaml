@@ -28,10 +28,8 @@
 			<TextBlock Classes="hint" Margin="0,0,0,4" TextWrapping="Wrap"
 			           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. This rewrites the tag with a lossless stream copy - no re-encode." />
 			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Content="Select file..." Click="OnSelectColorTagFileClick" />
-				<Button Name="FixColorTagsButton" Content="Fix" Click="OnFixColorTagsClick" IsEnabled="False" />
+				<Button Name="SelectColorTagFileButton" Content="Select file..." Click="OnSelectColorTagFileClick" />
 			</StackPanel>
-			<TextBlock Name="ColorTagFilePathText" Classes="hint" />
 		</StackPanel>
 
 		<StackPanel Spacing="4">

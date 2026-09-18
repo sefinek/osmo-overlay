@@ -100,9 +100,16 @@ public static class ColorTagFixer
 			resolvedOutput);
 
 		using Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
-		var stdout = process.StandardOutput.ReadToEnd();
-		var stderr = process.StandardError.ReadToEnd();
+
+		// ffmpeg writes its progress/stats to stderr while copying; reading stdout to completion
+		// before touching stderr (as opposed to draining both concurrently) deadlocks once ffmpeg
+		// fills the stderr pipe buffer and blocks on writing to it - the process then never exits,
+		// so WaitForExit() below would hang forever even though the output file is already complete.
+		Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+		Task<string> stderrTask = process.StandardError.ReadToEndAsync();
 		process.WaitForExit();
+		var stdout = stdoutTask.GetAwaiter().GetResult();
+		var stderr = stderrTask.GetAwaiter().GetResult();
 
 		if (process.ExitCode != 0)
 			throw new InvalidOperationException($"ffmpeg exited with an error ({process.ExitCode}): {stderr}{stdout}");

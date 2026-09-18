@@ -80,6 +80,10 @@ public partial class MainWindow : Window
 	private int? _frameLimit;
 
 	private List<(double Start, double End)> _gpsLossRanges = [];
+	// Default true (nothing greyed out) until a file's actually been read - RefreshElementCheckboxes
+	// only starts using these once _summary is set, so the default only matters for that brief gap.
+	private bool _hasGpsFix = true;
+	private bool _hasGpsTimestamp = true;
 	private List<OverlayPreset> _overlayPresets = [];
 	// Guards a real race: SetPhase(SummaryReady) can run before LoadOverlayPresets (an earlier await
 	// in OpenPreviewAsync) has populated _overlayPresets. Without this, the Overlay panel's "New"/
@@ -141,6 +145,8 @@ public partial class MainWindow : Window
 	private async void OnWindowOpened(object? sender, EventArgs e)
 	{
 		Opened -= OnWindowOpened;
+
+		AppendBanner();
 
 		IReadOnlyList<ExternalTool> missing = await DependencyChecker.FindMissingAsync(RequiredTools.All);
 		if (missing.Count == 0) return;
@@ -285,8 +291,9 @@ public partial class MainWindow : Window
 
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
+		_hasGpsFix = false;
+		_hasGpsTimestamp = false;
 		LogBox.Text = "";
-		AppendBanner();
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);
@@ -326,17 +333,36 @@ public partial class MainWindow : Window
 
 			if (summary.TelemetryFrames is { Count: > 0 } rawFrames)
 			{
+				_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
+				_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
+
 				var withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
 				AppendLog(withGpsSpeed > 0
 					? $"GPS-measured speed: {withGpsSpeed}/{rawFrames.Count} frames (protobuf djmd velocity); " +
 					  $"{rawFrames.Count - withGpsSpeed} fall back to derived speed."
 					: "GPS-measured speed: not available for this file - using derived speed for all frames.");
 
-				List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
-				AppendLog(gpsLossRanges.Count > 0
-					? $"GPS signal lost: {gpsLossRanges.Count} range(s), {gpsLossRanges.Sum(r => r.End - r.Start):0.0}s total " +
-					  "(shown as red marks below the preview scrubber)."
-					: "GPS signal: no loss detected.");
+				if (!_hasGpsFix)
+				{
+					// No fix anywhere isn't an "anomaly" to flag red on the scrubber - it's just this
+					// recording's normal state (e.g. filmed indoors) - see OpenPreviewAsync/DrawGpsLossMarks.
+					AppendLog("GPS: not present in this recording - position-based widgets (Compass, Map, " +
+					          "Elevation, Gradient, Distance, Speed) are unavailable and greyed out.");
+				}
+				else
+				{
+					// Logged here from a local, not _gpsLossRanges directly - OpenPreviewAsync (called
+					// further down) starts with ClosePreview(), which resets _gpsLossRanges to [] before
+					// recomputing its own copy, so writing the field here would just get discarded.
+					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
+					AppendLog(gpsLossRanges.Count > 0
+						? $"GPS signal lost: {gpsLossRanges.Count} range(s), {gpsLossRanges.Sum(r => r.End - r.Start):0.0}s total " +
+						  "(shown as red marks on the preview scrubber)."
+						: "GPS signal: no loss detected.");
+				}
+
+				if (!_hasGpsTimestamp)
+					AppendLog("GPS timestamp: not present in this recording - Date & time / UTC time are unavailable and greyed out.");
 
 				var withCameraSettings = rawFrames.Count(f => f.Iso is not null);
 				AppendLog(withCameraSettings == rawFrames.Count
@@ -419,10 +445,11 @@ public partial class MainWindow : Window
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
 		AppendLog($"CLI equivalent: {BuildCliCommand(outputPath, frameLimit)}");
 
+		CancellationTokenSource cts = _cts;
 		RenderResult result;
 		try
 		{
-			result = await RenderJob.RunAsync(options, progress, _cts.Token);
+			result = await RenderJob.RunAsync(options, progress, cts.Token);
 		}
 		finally
 		{
@@ -440,6 +467,13 @@ public partial class MainWindow : Window
 
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 			await NotifyRenderFinishedAsync("Render complete", doneMessage, DialogKind.Success);
+		}
+		else if (cts.Token.IsCancellationRequested)
+		{
+			// The user asked for this via the Cancel button - not a failure, so no red taskbar flag
+			// and no "render failed" dialog/balloon telling them something they already know.
+			AppendLog($"Cancelled: {result.ErrorMessage}");
+			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 		}
 		else
 		{
@@ -768,7 +802,9 @@ public partial class MainWindow : Window
 			PlayPauseButton.IsEnabled = true;
 			PreviewSlider.IsEnabled = true;
 
-			_gpsLossRanges = summary.TelemetryFrames is { Count: > 0 } rawFrames
+			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
+			// flagging red on the scrubber, just this file's normal state (see RunGetSummaryAsync).
+			_gpsLossRanges = _hasGpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
 				? TelemetryProcessor.FindGpsLossRanges(rawFrames)
 				: [];
 			DrawGpsLossMarks();
@@ -985,24 +1021,16 @@ public partial class MainWindow : Window
 		ResetPresetButton.IsEnabled = editable;
 		DefaultPresetLockedHint.IsVisible = !editable;
 
-		DateTimeVisibleCheck.IsEnabled = editable;
-		UtcTimeVisibleCheck.IsEnabled = editable;
-		ElevationVisibleCheck.IsEnabled = editable;
-		GradientVisibleCheck.IsEnabled = editable;
-		DistanceVisibleCheck.IsEnabled = editable;
-		CompassVisibleCheck.IsEnabled = editable;
-		SunVisibleCheck.IsEnabled = editable;
-		PitchVisibleCheck.IsEnabled = editable;
-		SpeedVisibleCheck.IsEnabled = editable;
-		MapVisibleCheck.IsEnabled = editable;
-		DateTimeGearButton.IsEnabled = editable;
-		UtcTimeGearButton.IsEnabled = editable;
-		ElevationGearButton.IsEnabled = editable;
-		GradientGearButton.IsEnabled = editable;
-		DistanceGearButton.IsEnabled = editable;
-		CompassGearButton.IsEnabled = editable;
-		SpeedGearButton.IsEnabled = editable;
-		MapGearButton.IsEnabled = editable;
+		SetWidgetAvailability(DateTimeVisibleCheck, DateTimeGearButton, OverlayElementType.DateTimeText, editable);
+		SetWidgetAvailability(UtcTimeVisibleCheck, UtcTimeGearButton, OverlayElementType.UtcTimeText, editable);
+		SetWidgetAvailability(ElevationVisibleCheck, ElevationGearButton, OverlayElementType.Elevation, editable);
+		SetWidgetAvailability(GradientVisibleCheck, GradientGearButton, OverlayElementType.Gradient, editable);
+		SetWidgetAvailability(DistanceVisibleCheck, DistanceGearButton, OverlayElementType.Distance, editable);
+		SetWidgetAvailability(CompassVisibleCheck, CompassGearButton, OverlayElementType.Compass, editable);
+		SetWidgetAvailability(SunVisibleCheck, null, OverlayElementType.SunWidget, editable);
+		SetWidgetAvailability(PitchVisibleCheck, null, OverlayElementType.PitchGauge, editable);
+		SetWidgetAvailability(SpeedVisibleCheck, SpeedGearButton, OverlayElementType.SpeedGauge, editable);
+		SetWidgetAvailability(MapVisibleCheck, MapGearButton, OverlayElementType.MapWidget, editable);
 
 		_suppressOverlayEvents = false;
 		return;
@@ -1010,6 +1038,22 @@ public partial class MainWindow : Window
 		bool IsVisible(OverlayElementType type)
 		{
 			return elements.FirstOrDefault(el => el.Type == type)?.Visible ?? false;
+		}
+
+		// Greys out (and disables the gear flyout for) a widget this file's telemetry can never fill
+		// in - e.g. Map/Compass/Elevation with no GPS fix at all, Date&time with no GPS timestamp -
+		// instead of leaving it toggleable to a widget that would just render "--"/0/a placeholder.
+		void SetWidgetAvailability(CheckBox check, Button? gear, OverlayElementType type, bool presetEditable)
+		{
+			var dataOk = OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp);
+			check.IsEnabled = presetEditable && dataOk;
+			if (gear is not null) gear.IsEnabled = presetEditable && dataOk;
+
+			ToolTip.SetTip(check, dataOk
+				? null
+				: type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText
+					? "This file has no GPS timestamp, so this widget can't show a time."
+					: "This file has no GPS fix, so this widget has nothing to show.");
 		}
 
 		OverlayElement? Find(OverlayElementType type)

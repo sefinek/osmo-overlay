@@ -121,6 +121,11 @@ public static class RenderJob
 
 			IReadOnlyList<OverlayElement> layout =
 				options.Layout ?? LoadActiveLayout(first.Source.Video.Width, first.Source.Video.Height);
+			// Forces off any widget this file's telemetry can't support (e.g. Map/Compass checked from
+			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
+			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
+			layout = OverlayDataRequirements.ApplyAvailability(layout,
+				TelemetryProcessor.HasAnyGpsFix(rawFrames), TelemetryProcessor.HasAnyGpsTimestamp(rawFrames));
 			var showWatermark = options.ShowWatermark ?? OverlaySettingsStore.Load().ShowWatermark;
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark);

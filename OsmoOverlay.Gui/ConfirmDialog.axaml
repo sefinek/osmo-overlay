@@ -2,16 +2,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="380" d:DesignHeight="160"
+        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="160"
         x:Class="OsmoOverlay.Gui.ConfirmDialog"
-        Width="380" SizeToContent="Height" CanResize="False"
+        Width="480" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="#121214"
         Title="Confirm">
 
 	<StackPanel Margin="20" Spacing="16">
 		<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-			<Border Name="KindDot" Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" />
+			<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" VerticalAlignment="Center">
+				<TextBlock Name="KindGlyph" FontSize="13" FontWeight="Bold" Foreground="White"
+				           HorizontalAlignment="Center" VerticalAlignment="Center" />
+			</Border>
 			<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
 		</StackPanel>
 		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />

@@ -14,8 +14,6 @@ public partial class ToolsWindow : Window
 	private static readonly string DataDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay");
 
-	private string? _colorTagFilePath;
-
 	public ToolsWindow()
 	{
 		InitializeComponent();
@@ -61,87 +59,97 @@ public partial class ToolsWindow : Window
 
 		if (files.Count == 0) return;
 
-		_colorTagFilePath = files[0].Path.LocalPath;
-		ColorTagFilePathText.Text = Path.GetFileName(_colorTagFilePath);
-		FixColorTagsButton.IsEnabled = false;
+		var path = files[0].Path.LocalPath;
+		var fileName = Path.GetFileName(path);
 
+		SelectColorTagFileButton.IsEnabled = false;
+		SelectColorTagFileButton.Content = "Working...";
 		try
 		{
-			var fileName = Path.GetFileName(_colorTagFilePath);
-			ColorTagStatus status = await Task.Run(() => ColorTagFixer.Check(_colorTagFilePath));
+			ColorTagStatus status = await Task.Run(() => ColorTagFixer.Check(path));
 
 			if (!status.IsEligible)
 			{
-				FixColorTagsButton.IsEnabled = false;
-				await ConfirmDialog.ShowAsync(this, "Fix color tags",
+				await ConfirmDialog.ShowAsync(this, "Can't fix this file",
 					$"\"{fileName}\" already has an explicit color tag that isn't Rec.709 - it looks like HDR " +
 					"or wide-gamut content, not a plain Rec.709 export. Forcing Rec.709 over that would " +
 					"mislabel the color space instead of fixing it, so this tool won't touch this file.\n\n" +
-					$"Current tags: {DescribeTags(status)}",
-					kind: DialogKind.Danger);
+					$"Current tags:\n{DescribeTags(status)}",
+					kind: DialogKind.Danger, windowTitle: "Fix color tags");
 				return;
 			}
 
 			if (status.NeedsFix)
-			{
-				FixColorTagsButton.IsEnabled = true;
-				await ConfirmDialog.ShowAsync(this, "Fix color tags",
+				await ConfirmDialog.AskAsync(this, "Fix this file?",
 					$"\"{fileName}\" is missing its Rec.709 color tag - this is the typical Vegas Pro export " +
-					"gap this tool exists for, and it's safe to fix. Click \"Fix\" to rewrite the tag with a " +
-					"lossless stream copy (no re-encode, no quality loss).\n\n" +
-					$"Current tags: {DescribeTags(status)}",
-					kind: DialogKind.Warning);
-			}
+					"gap this tool exists for, and it's safe to fix. Rewrite the tag with a lossless stream " +
+					"copy (no re-encode, no quality loss)?\n\n" +
+					$"Current tags:\n{DescribeTags(status)}",
+					"Fix", DialogKind.Warning, "Fix color tags",
+					() => RunFixAsync(path, fileName), "Fixing...");
 			else
-			{
-				FixColorTagsButton.IsEnabled = false;
-				await ConfirmDialog.ShowAsync(this, "Fix color tags",
+				await ConfirmDialog.ShowAsync(this, "Nothing to do",
 					$"\"{fileName}\" already has a correct Rec.709 color tag - there's nothing to fix here.\n\n" +
-					$"Current tags: {DescribeTags(status)}",
-					kind: DialogKind.Success);
-			}
+					$"Current tags:\n{DescribeTags(status)}",
+					kind: DialogKind.Success, windowTitle: "Fix color tags");
 		}
 		catch (Exception ex)
 		{
-			FixColorTagsButton.IsEnabled = false;
-			await ConfirmDialog.ShowAsync(this, "Fix color tags",
+			await ConfirmDialog.ShowAsync(this, "Couldn't read file",
 				$"Could not read this file - it may be corrupted, still being written, or not a video file at " +
 				$"all.\n\nDetails: {ex.Message}",
-				kind: DialogKind.Danger);
+				kind: DialogKind.Danger, windowTitle: "Fix color tags");
+		}
+		finally
+		{
+			SelectColorTagFileButton.IsEnabled = true;
+			SelectColorTagFileButton.Content = "Select file...";
 		}
 	}
 
-	private async void OnFixColorTagsClick(object? sender, RoutedEventArgs e)
+	private async Task RunFixAsync(string path, string fileName)
 	{
-		if (_colorTagFilePath is null) return;
-
-		FixColorTagsButton.IsEnabled = false;
-		var fileName = Path.GetFileName(_colorTagFilePath);
-
 		try
 		{
-			var path = _colorTagFilePath;
 			ColorTagFixResult result = await Task.Run(() => ColorTagFixer.Fix(path));
-			await ConfirmDialog.ShowAsync(this, "Fix color tags",
+			await ConfirmDialog.ShowAsync(this, "Fixed successfully",
 				$"\"{fileName}\" was fixed successfully - the color tag was rewritten to Rec.709 with a " +
 				"lossless stream copy, so picture quality is untouched.\n\n" +
-				$"Before: {DescribeTags(result.Before)}\n" +
-				$"After:    {DescribeTags(result.After)}\n\n" +
+				$"Before:\n{DescribeTags(result.Before)}\n\n" +
+				$"After:\n{DescribeTags(result.After)}\n\n" +
 				$"Saved to: {Path.GetFileName(result.OutputPath)}",
-				kind: DialogKind.Success);
+				kind: DialogKind.Success, windowTitle: "Fix color tags",
+				secondaryText: "Show in folder", onSecondary: () => ShowInExplorer(result.OutputPath));
 		}
 		catch (Exception ex)
 		{
-			await ConfirmDialog.ShowAsync(this, "Fix color tags",
+			await ConfirmDialog.ShowAsync(this, "Fix failed",
 				$"Fixing \"{fileName}\" failed.\n\nDetails: {ex.Message}",
-				kind: DialogKind.Danger);
-			FixColorTagsButton.IsEnabled = true;
+				kind: DialogKind.Danger, windowTitle: "Fix color tags");
+		}
+	}
+
+	// Opens Explorer with the given file pre-selected, e.g. as proof the fix actually produced an
+	// output file - UseShellExecute so this runs like a user double-clicking it, not like the
+	// CreateHidden/redirected-output pattern used for ffmpeg/ffprobe/exiftool elsewhere.
+	private static void ShowInExplorer(string filePath)
+	{
+		try
+		{
+			Process.Start(new ProcessStartInfo("explorer.exe") { Arguments = $"/select,\"{filePath}\"", UseShellExecute = true });
+		}
+		catch
+		{
+			// Best-effort - the success dialog already confirms the fix, so a failure to open
+			// Explorer isn't worth surfacing as an error.
 		}
 	}
 
 	private static string DescribeTags(ColorTagStatus status)
 	{
-		return $"color primaries = {status.ColorPrimaries ?? "unknown"}, transfer curve = {status.ColorTransfer ?? "unknown"}, " +
-		       $"matrix = {status.ColorSpace ?? "unknown"}, range = {status.ColorRange ?? "unknown"}";
+		return $"    primaries: {status.ColorPrimaries ?? "unknown"}\n" +
+		       $"    transfer: {status.ColorTransfer ?? "unknown"}\n" +
+		       $"    matrix: {status.ColorSpace ?? "unknown"}\n" +
+		       $"    range: {status.ColorRange ?? "unknown"}";
 	}
 }

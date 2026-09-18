@@ -129,11 +129,25 @@ public static class TelemetryProcessor
 		return frames[lo];
 	}
 
+	/// <summary>True if the recording has at least one real GPS fix anywhere - false means the camera never had a signal at all (e.g. filmed indoors), not that it was "lost".</summary>
+	public static bool HasAnyGpsFix(IReadOnlyList<TelemetryFrame> frames)
+	{
+		return frames.Any(f => f.HasGpsFix);
+	}
+
+	/// <summary>True if the recording has at least one real GPS timestamp anywhere (DateTimeText/UtcTimeText read this, not HasGpsFix - a fix without a decoded clock string is theoretically possible).</summary>
+	public static bool HasAnyGpsTimestamp(IReadOnlyList<TelemetryFrame> frames)
+	{
+		return frames.Any(f => f.GpsTimestamp is not null);
+	}
+
 	/// <summary>
 	///     Contiguous [Start, End] SampleTimeSeconds ranges where the raw stream had no real GPS fix
 	///     (TelemetryFrame.HasGpsFix false - see GpsForwardFill) - e.g. for a GUI to mark on a scrub
 	///     timeline. Runs on the raw frames, not DerivedFrames, so it reflects what the camera actually
-	///     recorded regardless of the (optional, cosmetic) GpsInterpolation smoothing setting.
+	///     recorded regardless of the (optional, cosmetic) GpsInterpolation smoothing setting. Callers
+	///     that want to flag only genuine anomalies (a fix that dropped out mid-recording, not a file
+	///     that never had one at all) should gate this behind HasAnyGpsFix themselves.
 	/// </summary>
 	public static List<(double Start, double End)> FindGpsLossRanges(IReadOnlyList<TelemetryFrame> frames)
 	{

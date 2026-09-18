@@ -367,15 +367,17 @@
 					<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 						<Button Grid.Column="0" Name="PlayPauseButton" Content="Play" Click="OnPlayPauseClick"
 						        IsEnabled="False" />
-						<Grid Grid.Column="1" RowDefinitions="Auto,4">
-							<Slider Grid.Row="0" Name="PreviewSlider" Minimum="0" Maximum="1" IsEnabled="False"
+						<Grid Grid.Column="1">
+							<Slider Name="PreviewSlider" Minimum="0" Maximum="1" IsEnabled="False"
 							        VerticalAlignment="Center" ValueChanged="OnPreviewSliderValueChanged"
 							        PointerPressed="OnPreviewSliderPointerPressed"
 							        PointerReleased="OnPreviewSliderPointerReleased" />
-							<!-- Thin strip of red marks below the scrubber for ranges with no real GPS fix
-							     (see TelemetryProcessor.FindGpsLossRanges) - not hit-test visible, purely
-							     informational, so it can't interfere with dragging the slider above it. -->
-							<Canvas Grid.Row="1" Name="GpsLossCanvas" IsHitTestVisible="False" Margin="0,1,0,0" />
+							<!-- Overlaid directly on the scrubber's own track (same cell, drawn after the
+							     Slider so it paints on top) instead of as a separate strip underneath - reads
+							     as part of the scrubber itself, matching how a media player usually marks
+							     ranges on the seek bar. Not hit-test visible, so it can't interfere with
+							     dragging the slider beneath it. See TelemetryProcessor.FindGpsLossRanges. -->
+							<Canvas Name="GpsLossCanvas" IsHitTestVisible="False" Height="4" VerticalAlignment="Center" />
 						</Grid>
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />

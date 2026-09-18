@@ -14,6 +14,8 @@ public sealed class PreviewPlayer : IDisposable
 
 	private readonly Lock _lock = new();
 	private IReadOnlyList<DerivedFrame>? _derivedFrames;
+	private bool _hasGpsFix;
+	private bool _hasGpsTimestamp;
 	private TimeSpan _lastPosition;
 	private VideoFrame? _lastVideoFrame;
 	private CancellationTokenSource? _mapPrepareCts;
@@ -48,6 +50,8 @@ public sealed class PreviewPlayer : IDisposable
 		var smoothGps = OverlaySettingsStore.Load().SmoothGpsMotion;
 		List<DerivedFrame> derivedFrames = TelemetryProcessor.Process(rawFrames, smoothGps);
 		_derivedFrames = derivedFrames;
+		_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
+		_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
 
 		List<PlaybackSegment> segments =
 		[
@@ -61,7 +65,8 @@ public sealed class PreviewPlayer : IDisposable
 		VideoFrameSource video = await Task.Run(() => VideoFrameSource.Open(segments,
 			summary.Video.Fps, previewWidth, previewHeight));
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(summary.Video.Width, summary.Video.Height);
-		IReadOnlyList<OverlayElement> layout = presets.First(p => p.Id == activeId).Elements;
+		IReadOnlyList<OverlayElement> layout =
+			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix, _hasGpsTimestamp);
 		var showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 		var renderer = new OverlayRenderer(summary.Video.Width, summary.Video.Height,
 			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0, showWatermark);
@@ -156,6 +161,11 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	public void SetLayout(IReadOnlyList<OverlayElement> layout)
 	{
+		// Same filter OpenAsync applies up front - every live edit (drag, a checkbox, a preset switch)
+		// re-sends the raw preset layout here, so without re-filtering each time, a widget this file's
+		// telemetry can't support would come right back as soon as anything else changed.
+		layout = OverlayDataRequirements.ApplyAvailability(layout, _hasGpsFix, _hasGpsTimestamp);
+
 		OverlayRenderer? renderer;
 		lock (_lock)
 		{

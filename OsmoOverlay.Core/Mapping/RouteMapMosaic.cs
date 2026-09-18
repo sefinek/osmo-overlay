@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OsmoOverlay.Core.Logging;
 using SkiaSharp;
 
@@ -96,6 +97,13 @@ public sealed class RouteMapMosaic : IDisposable
 		var fetchedAny = false;
 		var fetchedCount = 0;
 		var drawLock = new Lock();
+		// Reported at most a few times a second (plus always the final tile), not on a fixed tile-count
+		// interval - cached tiles resolve from disk in milliseconds, so a count-based throttle (e.g.
+		// every 10 tiles) still spams a dozen near-simultaneous log lines once a route is fully cached;
+		// this only reports again once meaningful wall-clock time has actually passed.
+		var progressStopwatch = Stopwatch.StartNew();
+		var lastReportedMs = 0L;
+		const int reportIntervalMs = 250;
 		try
 		{
 			using var canvas = new SKCanvas(bitmap);
@@ -131,12 +139,11 @@ public sealed class RouteMapMosaic : IDisposable
 							}
 
 							fetchedCount++;
-							// Reported every 10 tiles (plus the very last one), not every single one, so a
-							// route needing hundreds of tiles doesn't flood the console/log with
-							// near-identical lines - same throttling spirit as RenderJob's own per-frame
-							// progress reporting.
-							if (fetchedCount % 10 == 0 || fetchedCount == totalTiles)
+							if (fetchedCount == totalTiles || progressStopwatch.ElapsedMilliseconds - lastReportedMs >= reportIntervalMs)
+							{
+								lastReportedMs = progressStopwatch.ElapsedMilliseconds;
 								onProgress?.Invoke(fetchedCount, totalTiles);
+							}
 						}
 					}
 					finally
