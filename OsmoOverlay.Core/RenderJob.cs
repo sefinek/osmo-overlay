@@ -16,7 +16,8 @@ public sealed record RenderOptions(
 	IReadOnlyList<OverlayElement>? Layout = null,
 	bool? ShowWatermark = null,
 	bool? SmoothGpsMotion = null,
-	string? CameraModel = null)
+	string? CameraModel = null,
+	bool GreenScreen = false)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
 	{
@@ -24,6 +25,22 @@ public sealed record RenderOptions(
 		var dir = Path.GetDirectoryName(inputPath) ?? ".";
 		var name = Path.GetFileNameWithoutExtension(inputPath);
 		return Path.Combine(dir, $"{name}_overlay.mp4");
+	}
+
+	/// <summary>
+	///     Derives the green-screen sibling of an already-chosen normal output path (same directory,
+	///     "_greenscreen" instead of whatever suffix the normal path used) rather than starting fresh
+	///     from the input paths, so it still respects a location the user picked via "..." for the
+	///     normal render instead of silently writing somewhere else.
+	/// </summary>
+	public static string GreenScreenOutputPath(string outputPath)
+	{
+		var dir = Path.GetDirectoryName(outputPath) ?? ".";
+		var name = Path.GetFileNameWithoutExtension(outputPath);
+		var ext = Path.GetExtension(outputPath);
+		if (name.EndsWith("_overlay", StringComparison.OrdinalIgnoreCase))
+			name = name[..^"_overlay".Length];
+		return Path.Combine(dir, $"{name}_greenscreen{ext}");
 	}
 }
 
@@ -151,7 +168,8 @@ public static class RenderJob
 				}
 			}
 
-			using Process ffmpeg = FfmpegPipeline.StartRender(options.InputPaths, options.OutputPath, first.Source, encoder, options.Overwrite, limitSeconds);
+			using Process ffmpeg = FfmpegPipeline.StartRender(options.InputPaths, options.OutputPath, first.Source, encoder,
+				options.Overwrite, limitSeconds, options.GreenScreen, totalFrames);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			Stream stdin = ffmpeg.StandardInput.BaseStream;
@@ -187,11 +205,40 @@ public static class RenderJob
 				stdin.Close();
 			}
 
+			if (cancelled)
+			{
+				// Closing stdin alone doesn't make ffmpeg exit promptly - the overlay filter's default
+				// eof_action (repeat) just freezes the last overlay frame it got and keeps encoding
+				// against whatever's left on the main input regardless of the now-closed pipe: the real
+				// source video's remaining length for a normal render, or - far worse - the render's
+				// full original frame count for a green-screen render, whose main input is otherwise-
+				// infinite (see FfmpegPipeline.StartRender). Kill the whole process tree so Cancel
+				// actually stops the render instead of ffmpeg grinding through however much is left.
+				try
+				{
+					if (!ffmpeg.HasExited) ffmpeg.Kill(true);
+				}
+				catch (InvalidOperationException)
+				{
+				}
+
+				ffmpeg.WaitForExit();
+				try
+				{
+					await stderrTask;
+				}
+				catch (Exception)
+				{
+					// Reading a killed process's stderr can fault in various ways (broken pipe, the
+					// cancelled token itself) - none of it matters once this is already reporting a
+					// user cancellation, not a render failure.
+				}
+
+				return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
+			}
+
 			ffmpeg.WaitForExit();
 			var stderr = await stderrTask;
-
-			if (cancelled)
-				return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
 
 			if (ffmpeg.ExitCode != 0)
 				return new RenderResult(false, $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}",

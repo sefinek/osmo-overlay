@@ -242,9 +242,14 @@ public partial class MainWindow : Window
 				await RunGetSummaryAsync();
 				break;
 			case UiPhase.SummaryReady:
-				await RunRenderAsync();
+				await RunRenderAsync(false);
 				break;
 		}
+	}
+
+	private async void OnGreenScreenRenderClick(object? sender, RoutedEventArgs e)
+	{
+		await RunRenderAsync(true);
 	}
 
 	private void SetPhase(UiPhase phase)
@@ -264,6 +269,7 @@ public partial class MainWindow : Window
 		Progress.IsVisible = phase == UiPhase.Rendering;
 		ActionButton.IsVisible = phase != UiPhase.Rendering;
 		ActionButton.Content = phase == UiPhase.SummaryReady ? "Render" : "Get Summary";
+		GreenScreenButton.IsVisible = phase == UiPhase.SummaryReady;
 
 		if (phase is UiPhase.LoadingSummary or UiPhase.Rendering)
 			ActionButton.IsEnabled = false;

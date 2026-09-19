@@ -19,8 +19,13 @@ public static class FfmpegPipeline
 		return process.ExitCode == 0 ? "hevc_nvenc" : "libx265";
 	}
 
+	// Pure, maximally-saturated green - the color virtually every chroma-key tool's "pick green"
+	// default targets, so a plain, untagged green-screen export keys out cleanly without the user
+	// having to dial in a custom key color first.
+	private const string GreenScreenColor = "0x00FF00";
+
 	public static Process StartRender(IReadOnlyList<string> inputPaths, string outputPath, SourceInfo info,
-		string encoder, bool overwrite, double? limitSeconds = null)
+		string encoder, bool overwrite, double? limitSeconds = null, bool greenScreen = false, int totalFrames = 0)
 	{
 		var (num, den) = ParseFrameRate(info.Video.FrameRate);
 
@@ -33,7 +38,20 @@ public static class FfmpegPipeline
 		// A single file is fed directly, exactly as before - the concat demuxer only kicks in for
 		// stitched multi-segment recordings, so the common single-file path has zero behavior change.
 		string? concatListPath = null;
-		if (inputPaths.Count == 1)
+		if (greenScreen)
+		{
+			// A synthetic solid-color background instead of decoding/re-muxing the real source - the
+			// whole point of this mode is an alpha-free HUD-only asset for compositing elsewhere, so
+			// there's nothing about the source video itself worth preserving (and skipping its decode
+			// makes this render lighter too). Left otherwise-infinite here (no per-input frame limit -
+			// -frames:v is an output-only option in ffmpeg, it belongs down by -map [v] below, not here)
+			// unlike the real source video, which ends the filtergraph/output naturally at its own
+			// duration.
+			args.AddRange([
+				"-f", "lavfi", "-i", $"color=c={GreenScreenColor}:s={info.Video.Width}x{info.Video.Height}:r={num}/{den}"
+			]);
+		}
+		else if (inputPaths.Count == 1)
 		{
 			args.AddRange(["-i", inputPaths[0]]);
 		}
@@ -64,8 +82,17 @@ public static class FfmpegPipeline
 		]);
 
 		args.AddRange(["-map", "[v]"]);
-		if (info.Audio is not null)
+		// No corresponding "0:a" input to map when greenScreen replaced input 0 with a silent color
+		// source - this export is a compositing asset, not a finished clip, so dropping audio here
+		// (rather than muxing it in from a source the user would then have to strip back out) is fine.
+		if (!greenScreen && info.Audio is not null)
 			args.AddRange(["-map", "0:a", "-c:a", "copy"]);
+
+		// Output-side limit (unlike -t above, -frames:v is only valid as an output option) on the [v]
+		// stream - needed because the lavfi color background feeding it is otherwise infinite, unlike
+		// the real source video's own natural duration the non-green-screen path relies on instead.
+		if (greenScreen)
+			args.AddRange(["-frames:v", totalFrames.ToString(CultureInfo.InvariantCulture)]);
 
 		if (encoder == "hevc_nvenc")
 			args.AddRange([

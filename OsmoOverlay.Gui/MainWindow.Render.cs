@@ -9,15 +9,20 @@ namespace OsmoOverlay.Gui;
 /// <summary>Running the actual render (RenderJob), progress reporting, and the completion dialog/balloon.</summary>
 public partial class MainWindow
 {
-	private async Task RunRenderAsync()
+	private async Task RunRenderAsync(bool greenScreen)
 	{
-		var outputPath = OutputPathBox.Text ?? "";
+		var normalOutputPath = OutputPathBox.Text ?? "";
 
-		if (string.IsNullOrWhiteSpace(outputPath))
+		if (string.IsNullOrWhiteSpace(normalOutputPath))
 		{
 			AppendLog("Enter an output file path");
 			return;
 		}
+
+		// Derived from whatever's in OutputPathBox (respects a location the user picked via "..."),
+		// not a second independent path the user has to manage themselves - this render is a
+		// compositing asset, not an alternative final output, so it shouldn't need its own UI.
+		var outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
 
 		var frameLimit = _frameLimit;
 
@@ -34,13 +39,17 @@ public partial class MainWindow
 		var progress = new Progress<RenderStatus>(OnProgress);
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
 		var options = new RenderOptions(_inputPaths, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
-			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel);
+			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
+			GreenScreen: greenScreen);
 
+		AppendLog(greenScreen ? "Mode: green screen (HUD only, solid background, no audio)" : "Mode: normal");
 		AppendLog($"Output: {outputPath}");
 		AppendLog($"Encoder: {_detectedEncoder}, frame limit: {(frameLimit is { } fl ? fl.ToString() : "none")}");
 		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
-		AppendLog($"CLI equivalent: {BuildCliCommand(outputPath, frameLimit)}");
+		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
+		if (!greenScreen)
+			AppendLog($"CLI equivalent: {BuildCliCommand(outputPath, frameLimit)}");
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -60,7 +69,10 @@ public partial class MainWindow
 			var sizeText = File.Exists(outputPath) ? FormatHelper.FormatBytes(new FileInfo(outputPath).Length) : "unknown";
 			AppendLog($"Done: {outputPath} (time: {elapsedText}, {sizeText})");
 
-			if (_summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
+			// "Matches the source" doesn't mean anything for a green-screen render - there's no source
+			// video in it to match (synthetic background, no audio) - so the Output card keeps showing
+			// whatever it already had (the plan, or an earlier normal render's measured results).
+			if (!greenScreen && _summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
 
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 
@@ -88,6 +100,7 @@ public partial class MainWindow
 
 		SetPhase(UiPhase.SummaryReady);
 		ActionButton.IsEnabled = true;
+		GreenScreenButton.IsEnabled = true;
 	}
 
 	private string BuildCliCommand(string outputPath, int? frameLimit)

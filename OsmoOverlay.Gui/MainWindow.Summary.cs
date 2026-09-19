@@ -140,6 +140,7 @@ public partial class MainWindow
 
 			SetPhase(UiPhase.SummaryReady);
 			ActionButton.IsEnabled = summary.HasTelemetry;
+			GreenScreenButton.IsEnabled = summary.HasTelemetry;
 
 			if (summary.HasTelemetry)
 				await OpenPreviewAsync(summary);
