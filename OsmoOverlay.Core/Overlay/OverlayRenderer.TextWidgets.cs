@@ -76,7 +76,7 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
 
-		var elapsed = TimeSpan.FromSeconds(Math.Max(frame.Raw.SampleTimeSeconds, 0));
+		TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(frame.Raw.SampleTimeSeconds, 0));
 		var text = elapsed.TotalHours >= 1
 			? $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
 			: $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";

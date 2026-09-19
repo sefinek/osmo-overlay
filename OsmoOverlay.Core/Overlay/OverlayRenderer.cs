@@ -250,9 +250,12 @@ public sealed partial class OverlayRenderer : IDisposable
 			? (float)((sampleTime - transitionStart) / (introEnd - transitionStart))
 			: null;
 
-		string? routeIntroMapAttribution() => _routeIntroMosaic is not null && MapShowAttribution
-			? MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution
-			: null;
+		string? routeIntroMapAttribution()
+		{
+			return _routeIntroMosaic is not null && MapShowAttribution
+				? MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution
+				: null;
+		}
 
 		string? mapAttribution;
 
@@ -284,7 +287,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		// card as a whole - right-aligned to the same margin the stats column and map panel already use
 		// reads as part of that summary instead.
 		float? watermarkAnchorX = isRouteIntroFrame ? _width - OverlayElementBounds.Margin * _scale : null;
-		var watermarkAlign = isRouteIntroFrame ? SKTextAlign.Right : SKTextAlign.Center;
+		SKTextAlign watermarkAlign = isRouteIntroFrame ? SKTextAlign.Right : SKTextAlign.Center;
 
 		if (ShowWatermark)
 		{

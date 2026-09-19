@@ -7,7 +7,7 @@ internal static class ProcessHelper
 {
 	public static ProcessStartInfo CreateHidden(string command, params string[] args)
 	{
-		return Create(command, args, notify: true, redirectStandardOutput: true, redirectStandardInput: false);
+		return Create(command, args, true, true, false);
 	}
 
 	/// <summary>
@@ -18,18 +18,18 @@ internal static class ProcessHelper
 	/// </summary>
 	public static ProcessStartInfo CreateHiddenQuiet(string command, params string[] args)
 	{
-		return Create(command, args, notify: false, redirectStandardOutput: true, redirectStandardInput: false);
+		return Create(command, args, false, true, false);
 	}
 
 	/// <summary>Like CreateHidden, but pipes into stdin instead of redirecting stdout - for a tool that's fed data (e.g. ffmpeg's overlay compositing, which reads raw frames from stdin) rather than one whose stdout is read.</summary>
 	public static ProcessStartInfo CreateHiddenWithStdin(string command, IEnumerable<string> args)
 	{
-		return Create(command, args, notify: true, redirectStandardOutput: false, redirectStandardInput: true);
+		return Create(command, args, true, false, true);
 	}
 
 	private static ProcessStartInfo Create(string command, IEnumerable<string> args, bool notify, bool redirectStandardOutput, bool redirectStandardInput)
 	{
-		var argList = args as IReadOnlyCollection<string> ?? args.ToList();
+		IReadOnlyCollection<string> argList = args as IReadOnlyCollection<string> ?? args.ToList();
 		var psi = new ProcessStartInfo(command)
 		{
 			RedirectStandardOutput = redirectStandardOutput,
