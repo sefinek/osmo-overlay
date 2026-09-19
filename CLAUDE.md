@@ -23,6 +23,8 @@ Building the whole `.slnx` also works, but build Core/Cli separately when you're
 
 No unit tests in this repo - verification happens through an actual build plus (when it makes sense) manually running the CLI against a real file, or rendering `OverlayRenderer` straight to a PNG via SkiaSharp (bypassing the GUI) to check visual changes.
 
+Real DJI Osmo Action MP4s embed GPS data and the camera's serial number directly in the file. Treat any such sample/test file as sensitive - don't paste its telemetry contents into anything shared externally.
+
 External runtime dependencies: `ffmpeg`/`ffprobe` on PATH (required), `exiftool` (optional fallback, see below). `OsmoOverlay.Core/Dependencies/` checks/installs these in the GUI.
 
 ## Telemetry architecture (the most important part to understand)
