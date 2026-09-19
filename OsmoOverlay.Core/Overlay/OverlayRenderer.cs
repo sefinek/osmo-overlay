@@ -23,20 +23,24 @@ public sealed partial class OverlayRenderer : IDisposable
 	private static readonly SKColor Shadow = new(0, 0, 0, 225);
 	private static readonly SKColor PanelFill = new(0, 0, 0, 55);
 
+	// Canvas dimensions and the per-resolution scale every widget draws at (see OverlayElementBounds.GetScale).
+	private readonly int _width;
+	private readonly int _height;
+	private readonly float _scale;
+
+	// Per-file data the whole render depends on, handed in once at construction.
 	private readonly IReadOnlyList<DerivedFrame> _allFrames;
 	private readonly string? _cameraModel;
 	private readonly DateTime? _containerRecordingStartUtc;
-	private readonly SKFont _dateFont;
-	private readonly int _height;
+	private readonly double _startAltitude;
+	private readonly double _observedMaxSpeedKmh;
 
 	private readonly SKTypeface _hudTypeface;
+	private readonly SKFont _dateFont;
 	private readonly SKFont _labelFont;
-	private readonly double _observedMaxSpeedKmh;
-	private readonly float _scale;
 	private readonly SKFont _smallFont;
 	private readonly SKFont _speedFont;
 	private readonly SKFont _speedUnitFont;
-	private readonly double _startAltitude;
 	private readonly SKFont _unitFont;
 	private readonly SKFont _valueFont;
 	private readonly SKFont _watermarkSubtitleFont;
@@ -62,22 +66,22 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _speedBandOrange;
 	private readonly SKPaint _speedBandRed;
 
-	private readonly int _width;
-
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true,
 		string? cameraModel = null, DateTime? containerRecordingStartUtc = null)
 	{
 		_width = width;
 		_height = height;
-		_startAltitude = startAltitude;
-		Layout = layout;
-		_allFrames = allFrames;
-		_observedMaxSpeedKmh = observedMaxSpeedKmh;
 		_scale = OverlayElementBounds.GetScale(width, height);
-		ShowWatermark = showWatermark;
+
+		_allFrames = allFrames;
 		_cameraModel = cameraModel;
 		_containerRecordingStartUtc = containerRecordingStartUtc;
+		_startAltitude = startAltitude;
+		_observedMaxSpeedKmh = observedMaxSpeedKmh;
+
+		Layout = layout;
+		ShowWatermark = showWatermark;
 
 		_hudTypeface = CreateHudTypeface();
 
