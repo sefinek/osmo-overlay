@@ -58,7 +58,7 @@ public sealed class RouteMapMosaic : IDisposable
 	/// <summary>Null when there are no points to map, or every single tile fetch failed (e.g. fully offline).</summary>
 	public static async Task<RouteMapMosaic?> BuildAsync(IReadOnlyList<(double Lat, double Lon)> points,
 		string urlTemplate, int requestedZoom, int paddingTiles, CancellationToken ct,
-		Action<int, int>? onProgress = null)
+		Action<int, int>? onProgress = null, double? targetAspectRatio = null)
 	{
 		if (points.Count == 0) return null;
 
@@ -83,6 +83,36 @@ public sealed class RouteMapMosaic : IDisposable
 			minTileY -= paddingTiles;
 			maxTileX += paddingTiles;
 			maxTileY += paddingTiles;
+
+			// A caller that draws the whole mosaic fit-to-rect (RouteIntro) needs its aspect ratio to
+			// already match the target rect - otherwise the draw side has to choose between letterboxing
+			// (contain) or cropping into the actual route (cover). Padding out the shorter tile axis
+			// here, before the tile-count budget check below, means the extra tiles count against
+			// MaxTiles too, so a route that's already close to the budget still backs off zoom instead
+			// of silently overshooting it.
+			if (targetAspectRatio is { } targetAspect)
+			{
+				// "Before" the aspect pad below, not before paddingTiles above - the two padding steps
+				// stack (paddingTiles first, then this), though in practice no caller passes both a
+				// non-zero paddingTiles and a targetAspectRatio at once.
+				var tilesWideBeforeAspectPad = maxTileX - minTileX + 1;
+				var tilesHighBeforeAspectPad = maxTileY - minTileY + 1;
+				var currentAspect = (double)tilesWideBeforeAspectPad / tilesHighBeforeAspectPad;
+				if (currentAspect < targetAspect)
+				{
+					var extra = (int)Math.Ceiling(tilesHighBeforeAspectPad * targetAspect) - tilesWideBeforeAspectPad;
+					var extraLeft = extra / 2;
+					minTileX -= extraLeft;
+					maxTileX += extra - extraLeft;
+				}
+				else if (currentAspect > targetAspect)
+				{
+					var extra = (int)Math.Ceiling(tilesWideBeforeAspectPad / targetAspect) - tilesHighBeforeAspectPad;
+					var extraTop = extra / 2;
+					minTileY -= extraTop;
+					maxTileY += extra - extraTop;
+				}
+			}
 
 			var tileCount = (long)(maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
 			if (tileCount <= MaxTiles || zoom <= 2) break;

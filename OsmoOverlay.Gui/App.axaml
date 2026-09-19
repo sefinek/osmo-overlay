@@ -21,6 +21,18 @@
 	<Application.Styles>
 		<FluentTheme />
 
+		<!-- FluentTheme leaves the platform Arrow cursor on every clickable control - global, not
+		     window-scoped, so every Button/CheckBox/RadioButton/ComboBox/ListBox row and NumericUpDown's
+		     spinner buttons get the pointer hint app-wide instead of each window declaring its own copy.
+		     RepeatButton covers NumericUpDown's up/down spinners specifically (they're RepeatButtons, not
+		     plain Buttons, so the Button selector below doesn't reach them). -->
+		<Style Selector="Button, RepeatButton, ToggleButton, CheckBox, RadioButton, ComboBoxItem, ListBoxItem">
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Button:disabled, ToggleButton:disabled, CheckBox:disabled, RadioButton:disabled, ComboBoxItem:disabled, ListBoxItem:disabled">
+			<Setter Property="Cursor" Value="Arrow" />
+		</Style>
+
 		<!-- FluentTheme's stock dark-mode control chrome is calibrated for a lighter base than this
 		     app's near-black window background (#121214) - left alone, every plain Button/TextBox/
 		     ComboBox/NumericUpDown/ListBox reads as a flat, oddly light grey box that doesn't belong
@@ -70,12 +82,18 @@
 			<Setter Property="BorderBrush" Value="#3E9EFF" />
 		</Style>
 
+		<!-- FluentTheme's default ComboBox content padding is asymmetric top/bottom, which sits the
+		     selected item's text visibly above center while the dropdown arrow (centered by its own,
+		     separate template column) looks fine - explicit symmetric Padding + VerticalContentAlignment
+		     overrides that instead of inheriting the lopsided default. -->
 		<Style Selector="ComboBox">
 			<Setter Property="Background" Value="#1B1B1E" />
 			<Setter Property="Foreground" Value="White" />
 			<Setter Property="BorderBrush" Value="#2E2E33" />
 			<Setter Property="BorderThickness" Value="1" />
 			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="12,8" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
 		</Style>
 		<Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
 			<Setter Property="Background" Value="#2E2E33" />

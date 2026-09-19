@@ -90,7 +90,8 @@ public partial class MainWindow
 		}
 		else
 		{
-			AppendLog($"Error: {result.ErrorMessage}", LogLevel.Error);
+			// No AppendLog here - RenderJob already logged this failure through AppLogger.Error, which
+			// AppLogger.Notified mirrors into this same panel (see MainWindow.axaml.cs's subscriber).
 			// Left set (not cleared) rather than immediately reset to NoProgress - the red taskbar
 			// overlay stays as a persistent "this needs attention" flag until the next Get Summary/
 			// Render click resets it, since there's no other natural moment to clear it.

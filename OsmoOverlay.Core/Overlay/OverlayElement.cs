@@ -15,7 +15,8 @@ public enum OverlayElementType
 	CameraInfo,
 	ElapsedTimeText,
 	CameraModelText,
-	GMeter
+	GMeter,
+	TripProgressBar
 }
 
 /// <summary>
@@ -23,12 +24,11 @@ public enum OverlayElementType
 ///     circle center for round gauges/widgets. Units applies to Elevation/Distance/SpeedGauge;
 ///     DateFormat/Locale to DateTimeText and UtcTimeText (raw GPS timestamp, no local-time
 ///     conversion, but same format/locale fields); Label (caption override) to
-///     Elevation/Gradient/Distance/CameraInfo. Map* is MapWidget-only: null MapTileUrlTemplate/MapAttribution
-///     means the default OpenStreetMap source; MapDynamicZoomMaxFactor caps how far
-///     MapDynamicZoom can zoom out (see OverlayRenderer.GetMapZoomFactor); MapShowAttribution
-///     should normally stay on - most tile providers require visible credit wherever the map is
-///     shown, and turning it off moves that responsibility onto the user; MapApiKey fills a literal
-///     "{api_key}" placeholder for providers that need one (e.g. CARTO), and is a no-op otherwise.
+///     Elevation/Gradient/Distance/CameraInfo. Map* is MapWidget-only: MapZoom is the fixed
+///     close-up zoom the panning widget draws at; MapDynamicZoomMaxFactor caps how far
+///     MapDynamicZoom can zoom out (see OverlayRenderer.GetMapZoomFactor). The tile source itself
+///     (URL template/attribution/API key) is a global setting shared by every map-based widget -
+///     see OverlaySettings - not a per-element field, so it can't drift between MapWidget instances.
 ///     Trail* is duplicated independently on Compass and MapWidget so the two can be styled
 ///     differently - TrailColor/TrailWidth for the route line, TrailUseArrow for the current-position
 ///     marker (heading arrow vs. a static dot) - see OverlayRenderer.DrawTrailMarker.
@@ -47,13 +47,9 @@ public sealed record OverlayElement(
 	string? DateFormat = null,
 	string? Label = null,
 	string? Locale = null,
-	string? MapTileUrlTemplate = null,
 	int MapZoom = 16,
-	string? MapAttribution = null,
 	bool MapDynamicZoom = false,
 	double MapDynamicZoomMaxFactor = OverlayRenderer.MapDynamicZoomMaxFactorDefault,
-	bool MapShowAttribution = true,
-	string? MapApiKey = null,
 	string? TrailColor = null,
 	float TrailWidth = 4.5f,
 	bool TrailUseArrow = true,

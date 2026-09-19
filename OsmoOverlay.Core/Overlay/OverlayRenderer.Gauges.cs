@@ -236,4 +236,45 @@ public sealed partial class OverlayRenderer
 
 		canvas.Restore();
 	}
+
+	/// <summary>
+	///     A track + moving dot, same "shape encodes a live value" idea as the round gauges above, just
+	///     laid out horizontally. Progress is cumulative distance so far over the route's total distance
+	///     (_totalDistanceMeters, the last frame's CumulativeDistanceMeters, cached once in the
+	///     constructor) - 0 at the start of the recording, 1 on its last frame.
+	/// </summary>
+	private void DrawTripProgressBar(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	{
+		canvas.Save();
+		canvas.Translate(element.X, element.Y);
+		canvas.Scale(_scale, _scale);
+
+		const float halfWidth = OverlayElementBounds.ProgressBarWidth / 2f;
+		const float trackHeight = 14f;
+
+		var progress = _totalDistanceMeters > 0
+			? Math.Clamp(frame.CumulativeDistanceMeters / _totalDistanceMeters, 0.0, 1.0)
+			: 0.0;
+
+		var trackRect = new SKRect(-halfWidth, -trackHeight / 2, halfWidth, trackHeight / 2);
+		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, _panelFillPaint);
+		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, _thinStroke2White70);
+
+		var dotX = -halfWidth + (float)(OverlayElementBounds.ProgressBarWidth * progress);
+		if (progress > 0)
+		{
+			var fillRect = new SKRect(-halfWidth, -trackHeight / 2, dotX, trackHeight / 2);
+			canvas.DrawRoundRect(fillRect, trackHeight / 2, trackHeight / 2, _dotFillAccent);
+		}
+
+		canvas.DrawCircle(dotX, 0, 16, _dotOutlineBlackFill);
+		canvas.DrawCircle(dotX, 0, 12, _dotFillAccent);
+
+		var (remainingValue, remainingUnit) =
+			FormatDistance(Math.Max(_totalDistanceMeters - frame.CumulativeDistanceMeters, 0), element.Units);
+		DrawOutlined(canvas, $"{F(progress * 100, "0")}%", -halfWidth, -26, _smallFont, White);
+		DrawOutlined(canvas, $"{remainingValue} {remainingUnit} LEFT", halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+
+		canvas.Restore();
+	}
 }

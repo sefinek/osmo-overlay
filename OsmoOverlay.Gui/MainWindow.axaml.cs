@@ -66,7 +66,6 @@ public partial class MainWindow : Window
 		DateTimeLocaleCombo.ItemsSource = LocaleOptions;
 		UtcTimeFormatCombo.ItemsSource = DateFormatOptions;
 		UtcTimeLocaleCombo.ItemsSource = LocaleOptions;
-		MapProviderCombo.ItemsSource = TileProviderOptions;
 
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in
@@ -80,13 +79,18 @@ public partial class MainWindow : Window
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
 		_previewPlayer.Message += message => AppendLog(message);
 
-		// Mirrors every AppLogger.Notify call - ffmpeg/ffprobe/exiftool invocations (from this window,
-		// ToolsWindow, or CompareVideosWindow) and one-off status lines like "Cleared N cached files" -
-		// into the GUI's log panel, on top of the file log it already reaches, instead of each window
-		// showing its own separate status label. The event can fire from a background thread (Task.Run
-		// in a tool window), so this posts to the UI thread rather than touching LogBox directly;
-		// AppendLogLine (not AppendLog) skips re-logging to AppLogger, since Notify already did.
-		AppLogger.Notified += message => Dispatcher.UIThread.Post(() => LogBox.AppendLogLine(LogScroll, message));
+		// See AppLogger.Notified for the general contract. Concretely: ffmpeg/ffprobe/exiftool
+		// invocations (from this window, ToolsWindow, or CompareVideosWindow), one-off status lines,
+		// and now every Warn/Error too - a failed map tile fetch, a corrupt preset file, a failed
+		// render - previously visible only in app.log. AppendLogLine (not AppendLog) skips re-logging
+		// to AppLogger, since the call that raised Notified already did its own logging.
+		AppLogger.Notified += (message, level) => Dispatcher.UIThread.Post(() =>
+			LogBox.AppendLogLine(LogScroll, message, level switch
+			{
+				AppLogLevel.Warn => LogLevel.Warn,
+				AppLogLevel.Error => LogLevel.Error,
+				_ => LogLevel.Info
+			}));
 
 		// The canvas has no width until layout runs (and resizes with the window afterwards) - marks
 		// are positioned in absolute pixels, so they need redrawing whenever that width changes.
@@ -171,7 +175,10 @@ public partial class MainWindow : Window
 
 	private async void OnSettingsClick(object? sender, RoutedEventArgs e)
 	{
-		var settings = new SettingsWindow(_frameLimit, _showWatermark, _smoothGpsMotion, _previewMaxWidth);
+		OverlaySettings currentSettings = OverlaySettingsStore.Load();
+		var settings = new SettingsWindow(_frameLimit, _showWatermark, _smoothGpsMotion, _previewMaxWidth,
+			currentSettings.MapTileUrlTemplate, currentSettings.MapAttribution, currentSettings.MapShowAttribution,
+			currentSettings.MapApiKey, RouteIntroSettings.From(currentSettings));
 		await settings.ShowDialog(this);
 		_frameLimit = settings.FrameLimit;
 
@@ -200,6 +207,36 @@ public partial class MainWindow : Window
 		{
 			_previewMaxWidth = settings.PreviewMaxWidth;
 			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewMaxWidth = _previewMaxWidth });
+			needsPreviewReopen = true;
+		}
+
+		// Same "baked in at OpenAsync, no live-swap path" category as SmoothGpsMotion/PreviewMaxWidth
+		// above - the map tile source and route-intro card are both fetched/laid out when the preview
+		// (or a render) starts, not per frame. Reloaded fresh (not the pre-dialog currentSettings)
+		// since the ShowWatermark/SmoothGpsMotion/PreviewMaxWidth blocks above may have already saved
+		// their own changes to disk; OverlaySettings' structural equality then does this whole group's
+		// change-detection in one comparison instead of one `if` per field.
+		OverlaySettings beforeMapAndRouteIntroChanges = OverlaySettingsStore.Load();
+		OverlaySettings updatedSettings = beforeMapAndRouteIntroChanges with
+		{
+			MapTileUrlTemplate = settings.MapTileUrlTemplate,
+			MapAttribution = settings.MapAttribution,
+			MapShowAttribution = settings.MapShowAttribution,
+			MapApiKey = settings.MapApiKey,
+			ShowRouteIntro = settings.RouteIntro.Enabled,
+			RouteIntroDurationSeconds = settings.RouteIntro.DurationSeconds,
+			RouteIntroShowDistance = settings.RouteIntro.ShowDistance,
+			RouteIntroShowMaxSpeed = settings.RouteIntro.ShowMaxSpeed,
+			RouteIntroShowAvgSpeed = settings.RouteIntro.ShowAvgSpeed,
+			RouteIntroShowDate = settings.RouteIntro.ShowDate,
+			RouteIntroShowDuration = settings.RouteIntro.ShowDuration,
+			RouteIntroShowCameraModel = settings.RouteIntro.ShowCameraModel,
+			RouteIntroShowElevationGain = settings.RouteIntro.ShowElevationGain,
+			RouteIntroUnits = settings.RouteIntro.Units
+		};
+		if (updatedSettings != beforeMapAndRouteIntroChanges)
+		{
+			OverlaySettingsStore.Save(updatedSettings);
 			needsPreviewReopen = true;
 		}
 

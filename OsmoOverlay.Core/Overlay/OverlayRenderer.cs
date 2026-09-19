@@ -10,9 +10,11 @@ namespace OsmoOverlay.Core.Overlay;
 ///     dispatch that switches on each visible OverlayElement's type. The actual per-widget drawing
 ///     code lives in sibling partial-class files grouped by widget family: OverlayRenderer.Position.cs
 ///     (Compass + MapWidget + the shared route trail), OverlayRenderer.Gauges.cs (SpeedGauge +
-///     PitchGauge + SunWidget + GMeter), OverlayRenderer.TextWidgets.cs (DateTimeText/UtcTimeText +
-///     ElapsedTimeText + CameraModelText + Elevation/Gradient/Distance + CameraInfo), and
-///     OverlayRenderer.Watermark.cs (the "Made with OsmoOverlay" watermark + map attribution slide).
+///     PitchGauge + SunWidget + GMeter + TripProgressBar), OverlayRenderer.TextWidgets.cs
+///     (DateTimeText/UtcTimeText + ElapsedTimeText + CameraModelText + Elevation/Gradient/Distance +
+///     CameraInfo), OverlayRenderer.Watermark.cs (the "Made with OsmoOverlay" watermark + map
+///     attribution slide), and OverlayRenderer.RouteIntro.cs (the optional fullscreen route-overview
+///     card shown at the start of the render).
 /// </summary>
 public sealed partial class OverlayRenderer : IDisposable
 {
@@ -34,6 +36,14 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly DateTime? _containerRecordingStartUtc;
 	private readonly double _startAltitude;
 	private readonly double _observedMaxSpeedKmh;
+	// Cached once from _allFrames rather than recomputed on every one of DrawRouteIntro's per-frame
+	// calls during the whole route-intro card - the source data (cumulative distance, sample time,
+	// altitude) is already fully known as soon as the frame list is handed in, and none of these
+	// change from one frame to the next.
+	private readonly double _totalDistanceMeters;
+	private readonly double _totalDurationSeconds;
+	private readonly double _totalElevationGainMeters;
+	private readonly double _avgSpeedKmh;
 
 	private readonly SKTypeface _hudTypeface;
 	private readonly SKFont _dateFont;
@@ -45,6 +55,11 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKFont _valueFont;
 	private readonly SKFont _watermarkSubtitleFont;
 	private readonly SKFont _watermarkTitleFont;
+	// Route intro's stat list gets its own, larger sizes rather than reusing _labelFont/_dateFont -
+	// those are shared by every other widget (Compass, TextWidgets, ...), so bumping them up would
+	// resize the whole HUD, not just this one card.
+	private readonly SKFont _routeIntroLabelFont;
+	private readonly SKFont _routeIntroValueFont;
 
 	// Fixed-style paints (color/width never change frame to frame) reused across widgets, cached once
 	// here the same way fonts already are above - Render() runs once per output frame, so allocating
@@ -68,7 +83,9 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true,
-		string? cameraModel = null, DateTime? containerRecordingStartUtc = null)
+		string? cameraModel = null, DateTime? containerRecordingStartUtc = null,
+		string? mapTileUrlTemplate = null, string? mapAttribution = null, bool mapShowAttribution = true,
+		string? mapApiKey = null, RouteIntroSettings? routeIntro = null)
 	{
 		_width = width;
 		_height = height;
@@ -79,9 +96,27 @@ public sealed partial class OverlayRenderer : IDisposable
 		_containerRecordingStartUtc = containerRecordingStartUtc;
 		_startAltitude = startAltitude;
 		_observedMaxSpeedKmh = observedMaxSpeedKmh;
+		_totalDistanceMeters = allFrames.Count > 0 ? allFrames[^1].CumulativeDistanceMeters : 0;
+		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
+		// Sum of positive altitude deltas only (a simple running climb total, not the true barometric
+		// "elevation gain" a dedicated sensor would give) - GPS altitude jitter means this reads a bit
+		// high on flat ground, but it's the only altitude source this app has.
+		_totalElevationGainMeters = 0;
+		for (var i = 1; i < allFrames.Count; i++)
+		{
+			var delta = allFrames[i].Raw.AltitudeMeters - allFrames[i - 1].Raw.AltitudeMeters;
+			if (delta > 0) _totalElevationGainMeters += delta;
+		}
+
+		_avgSpeedKmh = _totalDurationSeconds > 0 ? _totalDistanceMeters / _totalDurationSeconds * 3.6 : 0;
 
 		Layout = layout;
 		ShowWatermark = showWatermark;
+		MapTileUrlTemplate = mapTileUrlTemplate;
+		MapAttribution = mapAttribution;
+		MapShowAttribution = mapShowAttribution;
+		MapApiKey = mapApiKey;
+		RouteIntro = routeIntro ?? RouteIntroSettings.Disabled;
 
 		_hudTypeface = CreateHudTypeface();
 
@@ -94,6 +129,8 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedUnitFont = new SKFont(_hudTypeface, 38);
 		_watermarkTitleFont = new SKFont(_hudTypeface, 40);
 		_watermarkSubtitleFont = new SKFont(_hudTypeface, 30);
+		_routeIntroLabelFont = new SKFont(_hudTypeface, 36);
+		_routeIntroValueFont = new SKFont(_hudTypeface, 56);
 
 		_panelFillPaint = new SKPaint { Color = PanelFill, IsAntialias = true, Style = SKPaintStyle.Fill };
 		_ringStroke3White160 = new SKPaint
@@ -127,6 +164,16 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// <summary>Mutable so the GUI can toggle it live from Settings without recreating the renderer.</summary>
 	public bool ShowWatermark { get; set; }
 
+	// Mutable for the same reason as ShowWatermark above - see OverlaySettings for why these are
+	// global rather than per-element.
+	public string? MapTileUrlTemplate { get; set; }
+	public string? MapAttribution { get; set; }
+	public bool MapShowAttribution { get; set; }
+	public string? MapApiKey { get; set; }
+
+	/// <summary>Mutable so the GUI can toggle/reconfigure it live from Settings without recreating the renderer.</summary>
+	public RouteIntroSettings RouteIntro { get; set; }
+
 	public void Dispose()
 	{
 		_hudTypeface.Dispose();
@@ -139,6 +186,8 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedUnitFont.Dispose();
 		_watermarkTitleFont.Dispose();
 		_watermarkSubtitleFont.Dispose();
+		_routeIntroLabelFont.Dispose();
+		_routeIntroValueFont.Dispose();
 		_panelFillPaint.Dispose();
 		_ringStroke3White160.Dispose();
 		_ringStroke3White140.Dispose();
@@ -155,6 +204,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedBandOrange.Dispose();
 		_speedBandRed.Dispose();
 		_mapMosaic?.Dispose();
+		_routeIntroMosaic?.Dispose();
 	}
 
 	private static SKTypeface CreateHudTypeface()
@@ -189,6 +239,70 @@ public sealed partial class OverlayRenderer : IDisposable
 		canvas.Clear(SKColors.Transparent);
 		canvas.Scale(outW / (float)_width, outH / (float)_height);
 
+		var sampleTime = frame.Raw.SampleTimeSeconds;
+		var introEnd = RouteIntro.DurationSeconds;
+		var isRouteIntroFrame = RouteIntro.Enabled && sampleTime < introEnd;
+		// Non-null only inside the crossfade window right before introEnd: 0 at its start (intro still
+		// fully opaque) to 1 at introEnd (intro fully gone, widgets fully opaque takes over exactly as
+		// the plain isRouteIntroFrame branch below would from here on).
+		var transitionStart = RouteIntroTransitionStartSeconds;
+		float? crossfadeT = isRouteIntroFrame && sampleTime >= transitionStart
+			? (float)((sampleTime - transitionStart) / (introEnd - transitionStart))
+			: null;
+
+		string? routeIntroMapAttribution() => _routeIntroMosaic is not null && MapShowAttribution
+			? MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution
+			: null;
+
+		string? mapAttribution;
+
+		if (isRouteIntroFrame)
+		{
+			if (crossfadeT is { } t)
+			{
+				DrawWithAlpha(canvas, 1 - t, c => DrawRouteIntro(c, frame));
+				string? widgetsAttribution = null;
+				DrawWithAlpha(canvas, t, c => widgetsAttribution = DrawWidgets(c, frame));
+				// The card's own attribution is about to disappear along with it - once the widgets
+				// underneath are visible at all, their attribution requirement (if any) is what matters
+				// going forward.
+				mapAttribution = widgetsAttribution ?? routeIntroMapAttribution();
+			}
+			else
+			{
+				DrawRouteIntro(canvas, frame);
+				mapAttribution = routeIntroMapAttribution();
+			}
+		}
+		else
+		{
+			mapAttribution = DrawWidgets(canvas, frame);
+		}
+
+		// On the route-intro card, centering under the whole frame (the normal-frame default) lands the
+		// watermark under the map alone (which only occupies the card's left portion) rather than the
+		// card as a whole - right-aligned to the same margin the stats column and map panel already use
+		// reads as part of that summary instead.
+		float? watermarkAnchorX = isRouteIntroFrame ? _width - OverlayElementBounds.Margin * _scale : null;
+		var watermarkAlign = isRouteIntroFrame ? SKTextAlign.Right : SKTextAlign.Center;
+
+		if (ShowWatermark)
+		{
+			DrawWatermark(canvas, frame.Raw.SampleTimeSeconds, watermarkAnchorX, watermarkAlign);
+			if (mapAttribution is not null)
+				DrawMapAttributionSlide(canvas, frame.Raw.SampleTimeSeconds, mapAttribution, watermarkAnchorX, watermarkAlign);
+		}
+		else if (mapAttribution is not null)
+		{
+			DrawMapAttributionOnly(canvas, mapAttribution, watermarkAnchorX, watermarkAlign);
+		}
+
+		return bitmap.Bytes;
+	}
+
+	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see Render's mapAttribution.</summary>
+	private string? DrawWidgets(SKCanvas canvas, DerivedFrame frame)
+	{
 		string? mapAttribution = null;
 
 		foreach (OverlayElement element in Layout)
@@ -223,7 +337,7 @@ public sealed partial class OverlayRenderer : IDisposable
 					break;
 				case OverlayElementType.MapWidget:
 					DrawMapWidget(canvas, frame, element);
-					if (element.MapShowAttribution) mapAttribution = element.MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
+					if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
 					break;
 				case OverlayElementType.SpeedGauge:
 					DrawSpeedGauge(canvas, element, frame.SpeedKmh);
@@ -240,20 +354,26 @@ public sealed partial class OverlayRenderer : IDisposable
 				case OverlayElementType.GMeter:
 					DrawGMeter(canvas, frame, element);
 					break;
+				case OverlayElementType.TripProgressBar:
+					DrawTripProgressBar(canvas, frame, element);
+					break;
 			}
 		}
 
-		if (ShowWatermark)
-		{
-			DrawWatermark(canvas, frame.Raw.SampleTimeSeconds);
-			if (mapAttribution is not null) DrawMapAttributionSlide(canvas, frame.Raw.SampleTimeSeconds, mapAttribution);
-		}
-		else if (mapAttribution is not null)
-		{
-			DrawMapAttributionOnly(canvas, mapAttribution);
-		}
+		return mapAttribution;
+	}
 
-		return bitmap.Bytes;
+	/// <summary>
+	///     Group opacity for the route-intro crossfade (see Render): SaveLayer/Restore composites
+	///     everything `draw` does as one flattened group at `alpha`, rather than needing every widget
+	///     it calls into to accept and thread through an opacity parameter of its own.
+	/// </summary>
+	private static void DrawWithAlpha(SKCanvas canvas, float alpha, Action<SKCanvas> draw)
+	{
+		using var paint = new SKPaint { Color = SKColors.White.WithAlpha((byte)Math.Clamp(alpha * 255f, 0, 255)) };
+		canvas.SaveLayer(paint);
+		draw(canvas);
+		canvas.Restore();
 	}
 
 	/// <summary>

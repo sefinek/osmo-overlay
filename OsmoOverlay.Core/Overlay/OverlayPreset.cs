@@ -1,5 +1,3 @@
-using OsmoOverlay.Core.Mapping;
-
 namespace OsmoOverlay.Core.Overlay;
 
 public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> Elements)
@@ -36,7 +34,13 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		var compassCx = m + OverlayElementBounds.CompassRadius * scale;
 		var mapCx = compassCx + (OverlayElementBounds.CompassRadius + 40 + OverlayElementBounds.MapRadius) * scale;
 		var gMeterCx = width - m - OverlayElementBounds.GMeterRadius * scale;
-		var gMeterCy = m + OverlayElementBounds.SunRadius * 2 * scale + OverlayElementBounds.GMeterRadius * scale + 40 * scale;
+		var gMeterCy = m + OverlayElementBounds.GMeterRadius * scale;
+		var sunCx = width - m - OverlayElementBounds.SunRadius * scale;
+		var sunCy = m + OverlayElementBounds.GMeterRadius * 2 * scale + OverlayElementBounds.SunRadius * scale + 40 * scale;
+		// Centered along the bottom edge, clear of Compass (bottom-left) and SpeedGauge (bottom-right)
+		// at their default positions.
+		var progressBarCx = width / 2f;
+		var progressBarCy = height - m - OverlayElementBounds.ProgressBarHeight / 2 * scale;
 
 		List<OverlayElement> elements =
 		[
@@ -53,21 +57,25 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new(OverlayElementType.ElapsedTimeText, statsX, elapsedY, false),
 			// Off by default - purely cosmetic branding of which camera shot the clip.
 			new(OverlayElementType.CameraModelText, statsX, cameraModelY, false),
-			new(OverlayElementType.Compass, compassCx, height - m - OverlayElementBounds.CompassRadius * scale),
-			new(OverlayElementType.SunWidget, width - m - OverlayElementBounds.SunRadius * scale,
-				m + OverlayElementBounds.SunRadius * scale),
+			// Off by default (swapped with MapWidget below, which now takes the primary bottom-left
+			// spot) - still positioned one slot over so it has somewhere sensible to land if re-enabled.
+			new(OverlayElementType.Compass, mapCx, height - m - OverlayElementBounds.CompassRadius * scale, false),
+			// Off by default (swapped with GMeter below, which now takes the primary top-right spot) -
+			// still positioned one slot down so it has somewhere sensible to land if re-enabled.
+			new(OverlayElementType.SunWidget, sunCx, sunCy, false),
 			new(OverlayElementType.SpeedGauge, speedCx, speedCy),
 			new(OverlayElementType.PitchGauge, speedCx, pitchCy),
-			// Off by default - unlike every other widget, this one needs network access to fetch map
-			// tiles, so it shouldn't silently start making HTTP requests for someone who never asked
-			// for a map. Defaults to satellite imagery (rather than OpenStreetMapUrlTemplate's street
-			// map) since it reads better at a glance alongside the rest of the HUD.
-			new(OverlayElementType.MapWidget, mapCx, height - m - OverlayElementBounds.MapRadius * scale, false,
-				MapTileUrlTemplate: MapTileFetcher.SatelliteUrlTemplate, MapAttribution: MapTileFetcher.SatelliteAttribution),
-			// Off by default - experimental: unlike PitchGauge's AccelY mapping, the X/Z axes plotted
-			// here were never empirically verified against a controlled recording (see the comment
-			// above OverlayRenderer.DrawGMeter), so it shouldn't suddenly appear as "real" data.
-			new(OverlayElementType.GMeter, gMeterCx, gMeterCy, false)
+			// On by default (unlike Compass above) - takes Compass's old bottom-left spot. Tile source
+			// (satellite by default) is a global setting - see OverlaySettings - not a per-element
+			// field, so turning this on doesn't need any per-widget provider setup to already look right.
+			new(OverlayElementType.MapWidget, compassCx, height - m - OverlayElementBounds.MapRadius * scale),
+			// On by default (swapped with SunWidget above) - takes its old top-right corner spot. Still
+			// experimental: unlike PitchGauge's AccelY mapping, the X/Z axes plotted here were never
+			// empirically verified against a controlled recording (see the comment above
+			// OverlayRenderer.DrawGMeter) - kept as the default anyway per an explicit request to
+			// prefer it over Sun/G-force.
+			new(OverlayElementType.GMeter, gMeterCx, gMeterCy),
+			new(OverlayElementType.TripProgressBar, progressBarCx, progressBarCy, false)
 		];
 
 		return new OverlayPreset(id, name, elements);

@@ -40,35 +40,53 @@ public static class MapTileFetcher
 		return client;
 	}
 
-	/// <summary>Null on any failure (offline, 404, timeout, corrupt image) - callers draw a placeholder instead of failing the render.</summary>
+	// A mosaic fetches dozens to low hundreds of tiles at once (bounded by RouteMapMosaic.MaxTiles),
+	// MaxConcurrentFetches of them in flight together - a public tile server occasionally rate-limits
+	// or times out a request under that burst even though the tile itself is perfectly fine, and
+	// without a retry that tile just stays a permanent hole in the mosaic (very visible once something
+	// draws the whole mosaic at once, e.g. the route-intro overview, not just MapWidget's small
+	// per-frame crop). Short, since a real outage/offline shouldn't make every single tile wait this
+	// out three times over.
+	private const int MaxFetchAttempts = 3;
+
+	/// <summary>Null after MaxFetchAttempts failures (offline, 404, timeout, corrupt image) - callers draw a placeholder instead of failing the render.</summary>
 	public static async Task<SKBitmap?> FetchAsync(string urlTemplate, int zoom, int x, int y, CancellationToken ct)
 	{
 		var cachePath = CachePath(urlTemplate, zoom, x, y);
-		try
+		if (File.Exists(cachePath))
 		{
-			if (File.Exists(cachePath))
+			// Not a `using` declaration: ownership of the decoded bitmap transfers to the caller
+			// (every call site disposes it), so disposing it here before returning would hand back
+			// an already-disposed SKBitmap on every cache hit - i.e. every render after the first
+			// one for a given route.
+			SKBitmap? cached = SKBitmap.Decode(cachePath);
+			if (cached is not null) return cached;
+		}
+
+		var url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
+
+		for (var attempt = 1; attempt <= MaxFetchAttempts; attempt++)
+			try
 			{
-				// Not a `using` declaration: ownership of the decoded bitmap transfers to the caller
-				// (every call site disposes it), so disposing it here before returning would hand back
-				// an already-disposed SKBitmap on every cache hit - i.e. every render after the first
-				// one for a given route.
-				SKBitmap? cached = SKBitmap.Decode(cachePath);
-				if (cached is not null) return cached;
+				var bytes = await Http.GetByteArrayAsync(url, ct);
+
+				Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+				await AtomicFile.WriteAllBytesAsync(cachePath, bytes, ct);
+
+				return SKBitmap.Decode(bytes);
+			}
+			catch (Exception ex) when (ex is not OperationCanceledException)
+			{
+				if (attempt == MaxFetchAttempts)
+				{
+					AppLogger.Warn(ex, $"Failed to fetch map tile z={zoom} x={x} y={y} after {MaxFetchAttempts} attempts");
+					return null;
+				}
+
+				await Task.Delay(TimeSpan.FromMilliseconds(300 * attempt), ct);
 			}
 
-			var url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
-			var bytes = await Http.GetByteArrayAsync(url, ct);
-
-			Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-			await AtomicFile.WriteAllBytesAsync(cachePath, bytes, ct);
-
-			return SKBitmap.Decode(bytes);
-		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
-		{
-			AppLogger.Warn(ex, $"Failed to fetch map tile z={zoom} x={x} y={y}");
-			return null;
-		}
+		return null;
 	}
 
 	/// <summary>

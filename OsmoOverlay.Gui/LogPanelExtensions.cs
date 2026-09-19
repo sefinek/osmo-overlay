@@ -8,9 +8,10 @@ namespace OsmoOverlay.Gui;
 /// <summary>
 ///     GUI-only presentation concept, not a general logging severity - Core's AppLogger stays
 ///     string-only (see its own "no GUI dependency" note) since it's shared with the CLI, which has no
-///     panel to color. Only call sites this window itself writes (RunGetSummaryAsync etc.) can set
-///     this explicitly; lines mirrored from AppLogger.Notified or PreviewPlayer.Message are plain
-///     strings with no severity attached, so they always render as Info.
+///     panel to color. Call sites this window itself writes (RunGetSummaryAsync etc.) set this
+///     explicitly; lines mirrored from AppLogger.Notified carry their own AppLogLevel (mapped to this
+///     enum in MainWindow's subscriber), while PreviewPlayer.Message has no severity and always renders
+///     as Info.
 /// </summary>
 public enum LogLevel
 {

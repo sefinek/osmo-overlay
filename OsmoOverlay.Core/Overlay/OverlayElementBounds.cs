@@ -28,6 +28,8 @@ public static class OverlayElementBounds
 	public const float StatHeight = 170f;
 	public const float CameraInfoWidth = 380f;
 	public const float CameraInfoHeight = 220f;
+	public const float ProgressBarWidth = 760f;
+	public const float ProgressBarHeight = 60f;
 
 	public static float GetScale(int width, int height)
 	{
@@ -47,6 +49,12 @@ public static class OverlayElementBounds
 				new SKRect(x - 10 * scale, y - 50 * scale, x + (StatWidth - 10) * scale, y + (StatHeight - 50) * scale),
 			OverlayElementType.CameraInfo =>
 				new SKRect(x - 10 * scale, y - 50 * scale, x + (CameraInfoWidth - 10) * scale, y + (CameraInfoHeight - 50) * scale),
+			// TripProgressBar's anchor is the bar's vertical/horizontal center (DrawTripProgressBar
+			// translates to (x, y) and draws the track symmetrically around it), unlike the text panels
+			// above whose anchor is a corner - so the hit box is centered on (x, y) too.
+			OverlayElementType.TripProgressBar =>
+				new SKRect(x - ProgressBarWidth / 2 * scale, y - ProgressBarHeight / 2 * scale,
+					x + ProgressBarWidth / 2 * scale, y + ProgressBarHeight / 2 * scale),
 			OverlayElementType.Compass => Circle(x, y, CompassRadius * scale),
 			OverlayElementType.SunWidget => Circle(x, y, (SunRadius + 70) * scale),
 			OverlayElementType.PitchGauge => Circle(x, y, PitchRadius * scale),

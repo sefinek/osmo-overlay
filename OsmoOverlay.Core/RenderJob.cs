@@ -123,7 +123,8 @@ public static class RenderJob
 				Report(RenderPhase.ExtractingTelemetry, $"Extracted {rawFrames.Count} telemetry samples.");
 			}
 
-			var smoothGps = options.SmoothGpsMotion ?? OverlaySettingsStore.Load().SmoothGpsMotion;
+			OverlaySettings settings = OverlaySettingsStore.Load();
+			var smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
 			List<DerivedFrame> derived = TelemetryProcessor.Process(rawFrames, smoothGps);
 			var startAltitude = derived[0].Raw.AltitudeMeters;
 			var maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
@@ -142,16 +143,18 @@ public static class RenderJob
 
 			IReadOnlyList<OverlayElement> layout =
 				options.Layout ?? LoadActiveLayout(first.Source.Video.Width, first.Source.Video.Height);
+			var hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
 			// Forces off any widget this file's telemetry can't support (e.g. Map/Compass checked from
 			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
 			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
 			layout = OverlayDataRequirements.ApplyAvailability(layout,
-				TelemetryProcessor.HasAnyGpsFix(rawFrames), TelemetryProcessor.HasAnyGpsTimestamp(rawFrames),
+				hasGpsFix, TelemetryProcessor.HasAnyGpsTimestamp(rawFrames),
 				first.Source.ContainerCreationTimeUtc is not null);
-			var showWatermark = options.ShowWatermark ?? OverlaySettingsStore.Load().ShowWatermark;
+			var showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
-				first.Source.ContainerCreationTimeUtc);
+				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
+				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.From(settings));
 
 			if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
 			{
@@ -160,6 +163,21 @@ public static class RenderJob
 				{
 					await renderer.PrepareMapAsync(
 						(fetched, total) => Report(RenderPhase.Rendering, $"Fetching map tiles: {fetched}/{total}", fetched, total),
+						ct);
+				}
+				catch (OperationCanceledException)
+				{
+					return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
+				}
+			}
+
+			if (settings.ShowRouteIntro && hasGpsFix)
+			{
+				Report(RenderPhase.Rendering, "Fetching route overview map...");
+				try
+				{
+					await renderer.PrepareRouteIntroMapAsync(
+						(fetched, total) => Report(RenderPhase.Rendering, $"Fetching route overview map: {fetched}/{total}", fetched, total),
 						ct);
 				}
 				catch (OperationCanceledException)
@@ -241,15 +259,21 @@ public static class RenderJob
 			var stderr = await stderrTask;
 
 			if (ffmpeg.ExitCode != 0)
-				return new RenderResult(false, $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}",
-					sw.Elapsed);
+			{
+				var message = $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}";
+				AppLogger.Error(message);
+				return new RenderResult(false, message, sw.Elapsed);
+			}
 
 			return new RenderResult(true, null, sw.Elapsed);
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}");
-			Report(RenderPhase.Failed, $"Error: {ex.Message}");
+			// Single place a render failure is logged/surfaced - callers (GUI, CLI) read it back off
+			// RenderResult.ErrorMessage for their own user-facing dialog/console line, but don't log it
+			// again themselves, since AppLogger.Error already reaches the file log and (via Notified)
+			// the GUI's on-screen panel.
+			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}: {ex.Message}");
 			return new RenderResult(false, ex.Message, sw.Elapsed);
 		}
 	}

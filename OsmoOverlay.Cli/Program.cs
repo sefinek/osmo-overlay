@@ -72,8 +72,8 @@ Console.WriteLine();
 
 if (!result.Success)
 {
+	// No AppLogger.Error call here - RenderJob already logged this failure to the file log.
 	Console.Error.WriteLine($"Error: {result.ErrorMessage}");
-	AppLogger.Error(new InvalidOperationException(result.ErrorMessage), "Render failed");
 	return 1;
 }
 

@@ -1,11 +1,10 @@
 using System.Globalization;
-using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using OsmoOverlay.Core.Mapping;
+using Avalonia.Platform.Storage;
 using OsmoOverlay.Core.Overlay;
 using SkiaSharp;
 
@@ -25,24 +24,6 @@ public partial class MainWindow
 	];
 
 	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
-
-	// Curated tile sources with their required attribution text, filled in when picked (see
-	// OnMapProviderChanged). "{api_key}" is this app's own placeholder token (see
-	// OverlayRenderer.ResolveUrlTemplate), baked into whichever position a provider's URL expects it
-	// and simply absent for templates that don't need one. "Custom..." (kept last) reveals a free-text
-	// URL box instead. "(default)" is labeled on Esri, listed first, because OverlayPreset.CreateDefault
-	// actually points every new/reset Map widget at it - OpenStreetMapUrlTemplate is a separate, lower-
-	// level fallback CreateDefault never leaves in effect, so it isn't the picker's own default.
-	private static readonly List<TileProviderOption> TileProviderOptions =
-	[
-		new("Esri World Imagery (satellite, default)", MapTileFetcher.SatelliteUrlTemplate, MapTileFetcher.SatelliteAttribution),
-		new("OpenStreetMap", MapTileFetcher.OpenStreetMapUrlTemplate, MapTileFetcher.OpenStreetMapAttribution),
-		new("OpenTopoMap", "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)"),
-		new("CARTO Positron (light) - requires API key", "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", IsCarto: true),
-		new("CARTO Dark Matter - requires API key", "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", IsCarto: true),
-		new("CARTO Voyager", "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", IsCarto: true),
-		TileProviderOption.Custom
-	];
 
 	// FirstOrDefault, not First: there's a narrow window right after picking a file where
 	// _summary is already set but LoadOverlayPresets (an earlier await) hasn't finished yet, so a
@@ -103,28 +84,11 @@ public partial class MainWindow
 		CameraModelVisibleCheck.IsChecked = IsVisible(OverlayElementType.CameraModelText);
 		SpeedVisibleCheck.IsChecked = IsVisible(OverlayElementType.SpeedGauge);
 		MapVisibleCheck.IsChecked = IsVisible(OverlayElementType.MapWidget);
+		TripProgressBarVisibleCheck.IsChecked = IsVisible(OverlayElementType.TripProgressBar);
 
 		OverlayElement? map = Find(OverlayElementType.MapWidget);
 
-		var effectiveUrl = map?.MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
-		TileProviderOption provider = TileProviderOptions.FirstOrDefault(p => !p.IsCustom && p.UrlTemplate == effectiveUrl)
-		                              ?? TileProviderOption.Custom;
-		MapProviderCombo.SelectedItem = provider;
-		MapTileUrlBox.Text = provider.IsCustom ? effectiveUrl : null;
-		MapTileUrlBox.IsVisible = provider.IsCustom;
-		MapCustomUrlLabel.IsVisible = provider.IsCustom;
-
-		MapApiKeyBox.Text = map?.MapApiKey;
-		UpdateMapApiKeyVisibility(effectiveUrl);
-		UpdateMapApiKeyValidation();
-
 		MapZoomBox.Value = map?.MapZoom ?? 16;
-
-		var showAttribution = map?.MapShowAttribution ?? true;
-		MapShowAttributionCheck.IsChecked = showAttribution;
-		MapAttributionLabel.IsVisible = showAttribution;
-		MapAttributionBox.IsVisible = showAttribution;
-		MapAttributionBox.Text = map?.MapAttribution;
 
 		var mapDynamicZoom = map?.MapDynamicZoom ?? false;
 		MapDynamicZoomCheck.IsChecked = mapDynamicZoom;
@@ -196,6 +160,7 @@ public partial class MainWindow
 		SetWidgetAvailability(CameraModelVisibleCheck, null, OverlayElementType.CameraModelText, editable);
 		SetWidgetAvailability(SpeedVisibleCheck, SpeedGearButton, OverlayElementType.SpeedGauge, editable);
 		SetWidgetAvailability(MapVisibleCheck, MapGearButton, OverlayElementType.MapWidget, editable);
+		SetWidgetAvailability(TripProgressBarVisibleCheck, null, OverlayElementType.TripProgressBar, editable);
 
 		_suppressOverlayEvents = false;
 		return;
@@ -494,97 +459,15 @@ public partial class MainWindow
 		SetElementVisible(OverlayElementType.MapWidget, MapVisibleCheck.IsChecked == true);
 	}
 
-	/// <summary>
-	///     Picking a built-in provider sets both the URL template and its correct required attribution
-	///     in one go (and hides the free-text URL box, since it's fixed); picking "Custom..." instead
-	///     reveals that box for a hand-entered template, leaving Attribution as whatever's already there
-	///     for the user to fill in themselves.
-	/// </summary>
-	private void OnMapProviderChanged(object? sender, SelectionChangedEventArgs e)
+	private void OnTripProgressBarVisibilityChanged(object? sender, RoutedEventArgs e)
 	{
-		if (MapProviderCombo.SelectedItem is not TileProviderOption provider) return;
-
-		MapTileUrlBox.IsVisible = provider.IsCustom;
-		MapCustomUrlLabel.IsVisible = provider.IsCustom;
-		UpdateMapApiKeyVisibility(provider.IsCustom ? "" : provider.UrlTemplate);
-		UpdateMapApiKeyValidation();
-		if (_suppressOverlayEvents) return;
-
-		if (provider.IsCustom)
-		{
-			MapTileUrlBox.Text = "";
-			UpdateElement(OverlayElementType.MapWidget, el => el with { MapTileUrlTemplate = null });
-		}
-		else
-		{
-			UpdateElement(OverlayElementType.MapWidget,
-				el => el with { MapTileUrlTemplate = provider.UrlTemplate, MapAttribution = provider.Attribution });
-			MapAttributionBox.Text = provider.Attribution;
-		}
-	}
-
-	/// <summary>Shows the API key field only for a template that actually references "{api_key}" - harmless to fill in otherwise, but pointless to show.</summary>
-	private void UpdateMapApiKeyVisibility(string effectiveUrl)
-	{
-		var needsApiKey = effectiveUrl.Contains("{api_key}");
-		MapApiKeyLabel.IsVisible = needsApiKey;
-		MapApiKeyBox.IsVisible = needsApiKey;
-	}
-
-	// CARTO's own basemap keys follow a fixed "<id>_<id>_<n>_<24 hex chars>" shape.
-	[GeneratedRegex(@"^[a-z0-9]+_[a-z0-9]+_\d+_[0-9a-f]{24}$", RegexOptions.IgnoreCase)]
-	private static partial Regex CartoApiKeyPattern();
-
-	/// <summary>
-	///     Flags an API key that doesn't look like a CARTO key while a CARTO provider is selected - a
-	///     soft hint (a render will still be attempted either way), not a hard block, since the only
-	///     real validation is CARTO's own server rejecting the key on the next tile fetch. Doesn't
-	///     apply to "Custom..." - a hand-entered template could be pointing at an entirely different
-	///     provider with its own, unrelated key format.
-	/// </summary>
-	private void UpdateMapApiKeyValidation()
-	{
-		var isCarto = MapProviderCombo.SelectedItem is TileProviderOption { IsCarto: true };
-		var key = MapApiKeyBox.Text;
-		MapApiKeyHint.IsVisible = isCarto && !string.IsNullOrWhiteSpace(key) && !CartoApiKeyPattern().IsMatch(key.Trim());
-	}
-
-	private void OnMapTileUrlChanged(object? sender, RoutedEventArgs e)
-	{
-		var url = MapTileUrlBox.Text;
-		UpdateElement(OverlayElementType.MapWidget,
-			el => el with { MapTileUrlTemplate = string.IsNullOrWhiteSpace(url) ? null : url.Trim() });
-		UpdateMapApiKeyVisibility(url ?? "");
-		UpdateMapApiKeyValidation();
-	}
-
-	private void OnMapApiKeyChanged(object? sender, RoutedEventArgs e)
-	{
-		var key = MapApiKeyBox.Text;
-		UpdateElement(OverlayElementType.MapWidget,
-			el => el with { MapApiKey = string.IsNullOrWhiteSpace(key) ? null : key.Trim() });
-		UpdateMapApiKeyValidation();
+		SetElementVisible(OverlayElementType.TripProgressBar, TripProgressBarVisibleCheck.IsChecked == true);
 	}
 
 	private void OnMapZoomChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (_suppressOverlayEvents || MapZoomBox.Value is not { } zoom) return;
 		UpdateElement(OverlayElementType.MapWidget, el => el with { MapZoom = (int)zoom });
-	}
-
-	private void OnMapAttributionChanged(object? sender, RoutedEventArgs e)
-	{
-		var text = MapAttributionBox.Text;
-		UpdateElement(OverlayElementType.MapWidget,
-			el => el with { MapAttribution = string.IsNullOrWhiteSpace(text) ? null : text.Trim() });
-	}
-
-	private void OnMapShowAttributionChanged(object? sender, RoutedEventArgs e)
-	{
-		var show = MapShowAttributionCheck.IsChecked == true;
-		MapAttributionLabel.IsVisible = show;
-		MapAttributionBox.IsVisible = show;
-		UpdateElement(OverlayElementType.MapWidget, el => el with { MapShowAttribution = show });
 	}
 
 	private void OnMapDynamicZoomChanged(object? sender, RoutedEventArgs e)
@@ -764,6 +647,61 @@ public partial class MainWindow
 		SaveOverlayPresets();
 	}
 
+	private async void OnExportPresetClick(object? sender, RoutedEventArgs e)
+	{
+		if (_overlayPresets.Count == 0) return;
+		TopLevel? topLevel = GetTopLevel(this);
+		if (topLevel is null) return;
+
+		OverlayPreset preset = _overlayPresets.First(p => p.Id == _activePresetId);
+
+		IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		{
+			Title = "Export overlay preset",
+			SuggestedFileName = preset.Name,
+			DefaultExtension = "json",
+			FileTypeChoices = [new FilePickerFileType("Overlay preset") { Patterns = ["*.json"] }]
+		});
+		if (file is null) return;
+
+		OverlayPresetStore.ExportToFile(preset, file.Path.LocalPath);
+		AppendLog($"Exported preset \"{preset.Name}\" to {file.Path.LocalPath}");
+	}
+
+	/// <summary>Same shape as OnDuplicatePresetClick - a new id avoids colliding with a preset already on this machine, WithMissingDefaultsFilled backfills any widget type added since the file was exported.</summary>
+	private async void OnImportPresetClick(object? sender, RoutedEventArgs e)
+	{
+		if (_summary is null) return;
+		TopLevel? topLevel = GetTopLevel(this);
+		if (topLevel is null) return;
+
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = "Import overlay preset",
+			AllowMultiple = false,
+			FileTypeFilter = [new FilePickerFileType("Overlay preset") { Patterns = ["*.json"] }]
+		});
+		if (files.Count == 0) return;
+
+		OverlayPreset? imported = OverlayPresetStore.ImportFromFile(files[0].Path.LocalPath);
+		if (imported is null)
+		{
+			AppendLog($"Failed to import preset from {files[0].Path.LocalPath} - see the log for details.");
+			return;
+		}
+
+		var id = Guid.NewGuid().ToString("N");
+		OverlayPreset preset = (imported with { Id = id }).WithMissingDefaultsFilled(_summary.Video.Width, _summary.Video.Height);
+		_overlayPresets.Add(preset);
+		_activePresetId = id;
+
+		RefreshPresetComboBox();
+		RefreshElementCheckboxes();
+		_previewPlayer.SetLayout(ActiveElements);
+		SaveOverlayPresets();
+		AppendLog($"Imported preset \"{preset.Name}\".");
+	}
+
 	private void OnRenamePresetClick(object? sender, RoutedEventArgs e)
 	{
 		if (_overlayPresets.Count == 0) return;
@@ -905,21 +843,6 @@ public partial class MainWindow
 
 	private sealed record LocaleOption(string Display, string? CultureName)
 	{
-		public override string ToString()
-		{
-			return Display;
-		}
-	}
-
-	private sealed record TileProviderOption(
-		string Display,
-		string UrlTemplate,
-		string Attribution,
-		bool IsCustom = false,
-		bool IsCarto = false)
-	{
-		public static readonly TileProviderOption Custom = new("Custom...", "", "", true);
-
 		public override string ToString()
 		{
 			return Display;

@@ -1,5 +1,8 @@
+using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using OsmoOverlay.Core.Mapping;
+using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
 
@@ -17,33 +20,195 @@ public partial class SettingsWindow : Window
 		new("Full resolution (native - slowest)", int.MaxValue)
 	];
 
+	// Curated tile sources with their required attribution text, filled in when picked (see
+	// OnMapProviderChanged). "{api_key}" is this app's own placeholder token (see
+	// OverlayRenderer.ResolveUrlTemplate), baked into whichever position a provider's URL expects it
+	// and simply absent for templates that don't need one. "Custom..." (kept last) reveals a free-text
+	// URL box instead. "(default)" is labeled on Esri, listed first, since it's OverlaySettings' own
+	// default MapTileUrlTemplate - OpenStreetMapUrlTemplate is a separate, lower-level fallback that
+	// setting's default never leaves in effect, so it isn't the picker's own default either.
+	private static readonly List<TileProviderOption> TileProviderOptions =
+	[
+		new("Esri World Imagery (satellite, default)", MapTileFetcher.SatelliteUrlTemplate, MapTileFetcher.SatelliteAttribution),
+		new("OpenStreetMap", MapTileFetcher.OpenStreetMapUrlTemplate, MapTileFetcher.OpenStreetMapAttribution),
+		new("OpenTopoMap", "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)"),
+		new("CARTO Positron (light) - requires API key", "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", IsCarto: true),
+		new("CARTO Dark Matter - requires API key", "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", IsCarto: true),
+		new("CARTO Voyager", "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", IsCarto: true),
+		TileProviderOption.Custom
+	];
+
 	public SettingsWindow()
 	{
 		InitializeComponent();
 		PreviewQualityCombo.ItemsSource = PreviewQualityOptions;
+		MapProviderCombo.ItemsSource = TileProviderOptions;
 	}
 
-	public SettingsWindow(int? frameLimit, bool showWatermark, bool smoothGpsMotion, int previewMaxWidth) : this()
+	public SettingsWindow(int? frameLimit, bool showWatermark, bool smoothGpsMotion, int previewMaxWidth,
+		string? mapTileUrlTemplate, string? mapAttribution, bool mapShowAttribution, string? mapApiKey,
+		RouteIntroSettings routeIntro) : this()
 	{
 		FrameLimitBox.Value = frameLimit;
 		ShowWatermarkCheck.IsChecked = showWatermark;
 		SmoothGpsMotionCheck.IsChecked = smoothGpsMotion;
 		PreviewQualityCombo.SelectedItem =
 			PreviewQualityOptions.FirstOrDefault(o => o.MaxWidth == previewMaxWidth) ?? PreviewQualityOptions[2];
+
+		var effectiveUrl = mapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
+		TileProviderOption provider = TileProviderOptions.FirstOrDefault(p => !p.IsCustom && p.UrlTemplate == effectiveUrl)
+		                              ?? TileProviderOption.Custom;
+		MapProviderCombo.SelectedItem = provider;
+		MapTileUrlBox.Text = provider.IsCustom ? effectiveUrl : null;
+		MapTileUrlBox.IsVisible = provider.IsCustom;
+		MapCustomUrlLabel.IsVisible = provider.IsCustom;
+
+		MapApiKeyBox.Text = mapApiKey;
+		UpdateMapApiKeyVisibility(provider.IsCustom ? "" : provider.UrlTemplate);
+		UpdateMapApiKeyValidation();
+
+		MapShowAttributionCheck.IsChecked = mapShowAttribution;
+		MapAttributionLabel.IsVisible = mapShowAttribution;
+		MapAttributionBox.IsVisible = mapShowAttribution;
+		MapAttributionBox.Text = mapAttribution;
+
+		ShowRouteIntroCheck.IsChecked = routeIntro.Enabled;
+		RouteIntroOptionsPanel.IsEnabled = routeIntro.Enabled;
+		RouteIntroDurationBox.Value = (decimal)routeIntro.DurationSeconds;
+		RouteIntroDistanceCheck.IsChecked = routeIntro.ShowDistance;
+		RouteIntroMaxSpeedCheck.IsChecked = routeIntro.ShowMaxSpeed;
+		RouteIntroAvgSpeedCheck.IsChecked = routeIntro.ShowAvgSpeed;
+		RouteIntroDateCheck.IsChecked = routeIntro.ShowDate;
+		RouteIntroDurationCheck.IsChecked = routeIntro.ShowDuration;
+		RouteIntroElevationGainCheck.IsChecked = routeIntro.ShowElevationGain;
+		RouteIntroCameraModelCheck.IsChecked = routeIntro.ShowCameraModel;
+		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
+		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
 	}
 
-	public int? FrameLimit => FrameLimitBox.Value is { } v && v > 0 ? (int)v : null;
+	public int? FrameLimit => FrameLimitBox.Value is { } v and > 0 ? (int)v : null;
 	public bool ShowWatermark => ShowWatermarkCheck.IsChecked == true;
 	public bool SmoothGpsMotion => SmoothGpsMotionCheck.IsChecked == true;
 	public int PreviewMaxWidth => (PreviewQualityCombo.SelectedItem as PreviewQualityOption ?? PreviewQualityOptions[2]).MaxWidth;
 
-	private void OnCloseClick(object? sender, RoutedEventArgs e)
+	public string? MapTileUrlTemplate =>
+		MapProviderCombo.SelectedItem is TileProviderOption { IsCustom: true }
+			? string.IsNullOrWhiteSpace(MapTileUrlBox.Text) ? null : MapTileUrlBox.Text.Trim()
+			: (MapProviderCombo.SelectedItem as TileProviderOption)?.UrlTemplate;
+
+	public string? MapAttribution => string.IsNullOrWhiteSpace(MapAttributionBox.Text) ? null : MapAttributionBox.Text.Trim();
+	public bool MapShowAttribution => MapShowAttributionCheck.IsChecked == true;
+	public string? MapApiKey => string.IsNullOrWhiteSpace(MapApiKeyBox.Text) ? null : MapApiKeyBox.Text.Trim();
+
+	public RouteIntroSettings RouteIntro => new(
+		ShowRouteIntroCheck.IsChecked == true,
+		(double)(RouteIntroDurationBox.Value ?? 10),
+		RouteIntroDistanceCheck.IsChecked == true,
+		RouteIntroMaxSpeedCheck.IsChecked == true,
+		RouteIntroAvgSpeedCheck.IsChecked == true,
+		RouteIntroDateCheck.IsChecked == true,
+		RouteIntroDurationCheck.IsChecked == true,
+		RouteIntroCameraModelCheck.IsChecked == true,
+		RouteIntroElevationGainCheck.IsChecked == true,
+		RouteIntroImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+
+	/// <summary>
+	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
+	///     - switching category just swaps which one is visible instead of reparenting content.
+	///     CategoryList's SelectedIndex="0" in XAML fires this event during InitializeComponent, before
+	///     the panel fields further down the visual tree have been assigned yet - harmless to skip then,
+	///     since GeneralPanel is already the one visible by default in XAML (only MapPanel/RouteIntroPanel
+	///     start with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
+	/// </summary>
+	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		Close();
+		if (GeneralPanel is null || MapPanel is null || RouteIntroPanel is null) return;
+
+		GeneralPanel.IsVisible = CategoryList.SelectedIndex == 0;
+		MapPanel.IsVisible = CategoryList.SelectedIndex == 1;
+		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
+	}
+
+	/// <summary>
+	///     Picking a built-in provider sets both the URL template and its correct required attribution
+	///     in one go (and hides the free-text URL box, since it's fixed); picking "Custom..." instead
+	///     reveals that box for a hand-entered template, leaving Attribution as whatever's already there
+	///     for the user to fill in themselves.
+	/// </summary>
+	private void OnMapProviderChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (MapProviderCombo.SelectedItem is not TileProviderOption provider) return;
+
+		MapTileUrlBox.IsVisible = provider.IsCustom;
+		MapCustomUrlLabel.IsVisible = provider.IsCustom;
+		UpdateMapApiKeyVisibility(provider.IsCustom ? "" : provider.UrlTemplate);
+		UpdateMapApiKeyValidation();
+
+		if (provider.IsCustom) MapTileUrlBox.Text = "";
+		else MapAttributionBox.Text = provider.Attribution;
+	}
+
+	/// <summary>Shows the API key field only for a template that actually references "{api_key}" - harmless to fill in otherwise, but pointless to show.</summary>
+	private void UpdateMapApiKeyVisibility(string effectiveUrl)
+	{
+		var needsApiKey = effectiveUrl.Contains("{api_key}");
+		MapApiKeyLabel.IsVisible = needsApiKey;
+		MapApiKeyBox.IsVisible = needsApiKey;
+	}
+
+	// CARTO's own basemap keys follow a fixed "<id>_<id>_<n>_<24 hex chars>" shape.
+	[GeneratedRegex(@"^[a-z0-9]+_[a-z0-9]+_\d+_[0-9a-f]{24}$", RegexOptions.IgnoreCase)]
+	private static partial Regex CartoApiKeyPattern();
+
+	/// <summary>
+	///     Flags an API key that doesn't look like a CARTO key while a CARTO provider is selected - a
+	///     soft hint (a render will still be attempted either way), not a hard block, since the only
+	///     real validation is CARTO's own server rejecting the key on the next tile fetch. Doesn't
+	///     apply to "Custom..." - a hand-entered template could be pointing at an entirely different
+	///     provider with its own, unrelated key format.
+	/// </summary>
+	private void UpdateMapApiKeyValidation()
+	{
+		var isCarto = MapProviderCombo.SelectedItem is TileProviderOption { IsCarto: true };
+		var key = MapApiKeyBox.Text;
+		MapApiKeyHint.IsVisible = isCarto && !string.IsNullOrWhiteSpace(key) && !CartoApiKeyPattern().IsMatch(key.Trim());
+	}
+
+	private void OnMapTileUrlChanged(object? sender, RoutedEventArgs e)
+	{
+		UpdateMapApiKeyVisibility(MapTileUrlBox.Text ?? "");
+		UpdateMapApiKeyValidation();
+	}
+
+	private void OnMapApiKeyChanged(object? sender, RoutedEventArgs e)
+	{
+		UpdateMapApiKeyValidation();
+	}
+
+	private void OnMapShowAttributionChanged(object? sender, RoutedEventArgs e)
+	{
+		var show = MapShowAttributionCheck.IsChecked == true;
+		MapAttributionLabel.IsVisible = show;
+		MapAttributionBox.IsVisible = show;
+	}
+
+	private void OnShowRouteIntroChanged(object? sender, RoutedEventArgs e)
+	{
+		RouteIntroOptionsPanel.IsEnabled = ShowRouteIntroCheck.IsChecked == true;
 	}
 
 	private sealed record PreviewQualityOption(string Display, int MaxWidth)
 	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	private sealed record TileProviderOption(string Display, string UrlTemplate, string Attribution, bool IsCustom = false, bool IsCarto = false)
+	{
+		public static readonly TileProviderOption Custom = new("Custom...", "", "", true);
+
 		public override string ToString()
 		{
 			return Display;

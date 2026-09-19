@@ -48,8 +48,8 @@ public sealed class PreviewPlayer : IDisposable
 		// Recomputed here rather than reusing summary.DerivedFrames so a live SmoothGpsMotion toggle
 		// is picked up on every open; kept as _derivedFrames so every call below uses this same
 		// smoothed list instead of falling back to the cached, unsmoothed one.
-		var smoothGps = OverlaySettingsStore.Load().SmoothGpsMotion;
-		List<DerivedFrame> derivedFrames = TelemetryProcessor.Process(rawFrames, smoothGps);
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		List<DerivedFrame> derivedFrames = TelemetryProcessor.Process(rawFrames, settings.SmoothGpsMotion);
 		_derivedFrames = derivedFrames;
 		_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
 		_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
@@ -70,14 +70,19 @@ public sealed class PreviewPlayer : IDisposable
 		IReadOnlyList<OverlayElement> layout =
 			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix,
 				_hasGpsTimestamp, _hasContainerTime);
-		var showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 		var renderer = new OverlayRenderer(summary.Video.Width, summary.Video.Height,
-			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0, showWatermark,
-			summary.CameraModel, summary.ContainerRecordingStartUtc);
+			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0,
+			settings.ShowWatermark, summary.CameraModel, summary.ContainerRecordingStartUtc,
+			settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution, settings.MapApiKey,
+			RouteIntroSettings.From(settings));
 
 		if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
 			await renderer.PrepareMapAsync((fetched, total) =>
 				Message?.Invoke($"Fetching map tiles: {fetched}/{total}"));
+
+		if (settings.ShowRouteIntro && _hasGpsFix)
+			await renderer.PrepareRouteIntroMapAsync((fetched, total) =>
+				Message?.Invoke($"Fetching route overview map: {fetched}/{total}"));
 
 		_video = video;
 		_renderer = renderer;

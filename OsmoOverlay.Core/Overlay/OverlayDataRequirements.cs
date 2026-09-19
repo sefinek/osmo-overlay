@@ -20,7 +20,8 @@ public static class OverlayDataRequirements
 		{
 			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText => hasGpsTimestamp || hasContainerTime,
 			OverlayElementType.Compass or OverlayElementType.MapWidget or OverlayElementType.Elevation
-				or OverlayElementType.Gradient or OverlayElementType.Distance or OverlayElementType.SpeedGauge => hasGpsFix,
+				or OverlayElementType.Gradient or OverlayElementType.Distance or OverlayElementType.SpeedGauge
+				or OverlayElementType.TripProgressBar => hasGpsFix,
 			// PitchGauge and SunWidget's G-force readout both come from the accelerometer alone, which
 			// is present whenever the djmd stream itself is - no GPS/timestamp dependency to gate on.
 			_ => true

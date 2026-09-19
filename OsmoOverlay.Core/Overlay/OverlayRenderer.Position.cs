@@ -57,7 +57,7 @@ public sealed partial class OverlayRenderer
 			return (null, null);
 
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
-		var urlTemplate = ResolveUrlTemplate(mapElement);
+		var urlTemplate = ResolveUrlTemplate();
 		var maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
 		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor);
 		_preparedMapKey = key;
@@ -106,20 +106,22 @@ public sealed partial class OverlayRenderer
 		if (layout.FirstOrDefault(e => e is { Type: OverlayElementType.MapWidget, Visible: true }) is not { } mapElement)
 			return false;
 		var maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		MapMosaicKey key = (ResolveUrlTemplate(mapElement), mapElement.MapZoom, maxFactor);
+		MapMosaicKey key = (ResolveUrlTemplate(), mapElement.MapZoom, maxFactor);
 		return _preparedMapKey != key;
 	}
 
 	/// <summary>
-	///     The tile URL template actually used for fetching: the widget's own template (or the default
-	///     source) with a literal "{api_key}" placeholder filled from MapApiKey - a no-op for templates
-	///     without that placeholder. Baking the key into the URL means an API key edit alone already
-	///     changes this string, so NeedsMapPrepare/BuildMapMosaicAsync's key comparisons catch it for free.
+	///     The tile URL template actually used for fetching: the global MapTileUrlTemplate (or the
+	///     default source) with a literal "{api_key}" placeholder filled from the global MapApiKey - a
+	///     no-op for templates without that placeholder. Baking the key into the URL means an API key
+	///     edit alone already changes this string, so NeedsMapPrepare/BuildMapMosaicAsync's key
+	///     comparisons catch it for free. Shared by DrawMapWidget's mosaic and the route-intro overview
+	///     mosaic - both draw from the same configured tile source.
 	/// </summary>
-	private static string ResolveUrlTemplate(OverlayElement mapElement)
+	private string ResolveUrlTemplate()
 	{
-		var template = mapElement.MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
-		return template.Replace("{api_key}", mapElement.MapApiKey ?? "");
+		var template = MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
+		return template.Replace("{api_key}", MapApiKey ?? "");
 	}
 
 	/// <summary>Keeps a hand-edited or out-of-range preset value from pushing the crop/fetch math outside sane bounds.</summary>

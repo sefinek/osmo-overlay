@@ -141,6 +141,14 @@ public sealed partial class OverlayRenderer
 			: (F(meters, "0.00"), "M");
 	}
 
+	/// <summary>Same KmhToMph conversion SpeedGauge/GaugeMaxSpeed already use, exposed here for callers (RouteIntro) that report a speed as plain text rather than on the gauge itself.</summary>
+	private static (string Value, string Unit) FormatSpeed(double kmh, UnitSystem units)
+	{
+		return units == UnitSystem.Imperial
+			? (F(kmh * KmhToMph, "0"), "MPH")
+			: (F(kmh, "0"), "KM/H");
+	}
+
 	/// <summary>
 	///     ISO/shutter speed/color temperature straight from the djmd stream's camera-settings block
 	///     (see DjiMetaTelemetryParser) - exposure metadata that was already being extracted for every

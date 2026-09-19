@@ -1,5 +1,6 @@
 using System.Text.Json;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Mapping;
 
 namespace OsmoOverlay.Core.Overlay;
 
@@ -34,6 +35,10 @@ public static class OverlayPresetStore
 			MigrateLegacyStoreIfNeeded();
 
 			List<OverlayPreset> presets = LoadPresetFiles();
+			// Reads the still-on-disk JSON (not the deserialized OverlayPreset, which no longer has these
+			// properties at all) before RefreshBuiltInDefault/BackfillMissingWidgetTypes below get a
+			// chance to overwrite any preset file and strip the old fields for good.
+			MigrateLegacyMapSettingsIfNeeded(presets);
 			RefreshBuiltInDefault(presets, width, height);
 			BackfillMissingWidgetTypes(presets, width, height);
 			if (presets.Count > 0)
@@ -119,6 +124,97 @@ public static class OverlayPresetStore
 
 			presets[i] = filled;
 			AtomicFile.WriteAllText(PresetPath(filled.Id), JsonSerializer.Serialize(filled));
+		}
+	}
+
+	/// <summary>
+	///     One-time upgrade path for presets saved before MapApiKey/MapTileUrlTemplate/MapAttribution/
+	///     MapShowAttribution moved from per-widget OverlayElement fields to a single OverlaySettings
+	///     global setting (see OverlayElement.cs) - copies the first MapWidget's old values into the new
+	///     global setting so an already-configured map provider/API key survives the upgrade, instead of
+	///     silently reverting to the default. Only runs while the global setting is still untouched (not
+	///     just non-null - a user could have already set it up fresh in Settings), and only reads the
+	///     properties: writing the migrated JsonSerializer.Deserialize<OverlayElement>() result back out
+	///     wouldn't help, since that type no longer even has these properties to read from.
+	/// </summary>
+	private static void MigrateLegacyMapSettingsIfNeeded(List<OverlayPreset> presets)
+	{
+		OverlaySettings current = OverlaySettingsStore.Load();
+		var stillAtDefaults = current.MapApiKey is null
+			&& current.MapTileUrlTemplate == MapTileFetcher.SatelliteUrlTemplate
+			&& current.MapAttribution == MapTileFetcher.SatelliteAttribution
+			&& current.MapShowAttribution;
+		if (!stillAtDefaults) return;
+
+		foreach (OverlayPreset preset in presets)
+		{
+			var path = PresetPath(preset.Id);
+			if (!File.Exists(path)) continue;
+
+			try
+			{
+				using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(path));
+				if (!doc.RootElement.TryGetProperty("Elements", out JsonElement elements)) continue;
+
+				foreach (JsonElement element in elements.EnumerateArray())
+				{
+					if (!element.TryGetProperty("Type", out JsonElement typeProp) ||
+					    !typeProp.TryGetInt32(out var typeValue) ||
+					    typeValue != (int)OverlayElementType.MapWidget)
+						continue;
+
+					var apiKey = GetLegacyString(element, "MapApiKey");
+					var urlTemplate = GetLegacyString(element, "MapTileUrlTemplate");
+					var attribution = GetLegacyString(element, "MapAttribution");
+					if (apiKey is null && urlTemplate is null && attribution is null) continue;
+
+					var showAttribution = element.TryGetProperty("MapShowAttribution", out JsonElement showProp) &&
+					                       showProp.ValueKind is JsonValueKind.True or JsonValueKind.False
+						? showProp.GetBoolean()
+						: current.MapShowAttribution;
+
+					OverlaySettingsStore.Save(current with
+					{
+						MapApiKey = apiKey ?? current.MapApiKey,
+						MapTileUrlTemplate = urlTemplate ?? current.MapTileUrlTemplate,
+						MapAttribution = attribution ?? current.MapAttribution,
+						MapShowAttribution = showAttribution
+					});
+					AppLogger.Info($"Migrated per-widget map settings from preset '{preset.Name}' to the new global setting.");
+					return;
+				}
+			}
+			catch (Exception ex)
+			{
+				AppLogger.Warn(ex, $"Failed to check preset file for legacy map settings to migrate: {path}");
+			}
+		}
+	}
+
+	private static string? GetLegacyString(JsonElement element, string propertyName)
+	{
+		return element.TryGetProperty(propertyName, out JsonElement prop) && prop.ValueKind == JsonValueKind.String
+			? prop.GetString()
+			: null;
+	}
+
+	/// <summary>Serializes one preset to an arbitrary file the user picked, so it can be shared/sent to someone else.</summary>
+	public static void ExportToFile(OverlayPreset preset, string filePath)
+	{
+		AtomicFile.WriteAllText(filePath, JsonSerializer.Serialize(preset));
+	}
+
+	/// <summary>Deserializes a preset from a file (e.g. one received from someone else) - null on any read/parse failure, logged the same way a corrupt local preset file is in LoadPresetFiles.</summary>
+	public static OverlayPreset? ImportFromFile(string filePath)
+	{
+		try
+		{
+			return JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath));
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Warn(ex, $"Failed to import overlay preset from: {filePath}");
+			return null;
 		}
 	}
 

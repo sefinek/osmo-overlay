@@ -8,11 +8,21 @@ public sealed partial class OverlayRenderer
 	// Watermark holds at full opacity from frame 0, then fades out. When the Map widget is visible,
 	// its required OSM credit follows as its own second slide (see MapAttributionSlideAlpha) rather
 	// than being crammed into this block, so the two read as a short sequence, not a cluttered stack.
+	// These fixed numbers are the fallback for when there's no route-intro card at all; with one
+	// enabled, WatermarkFadeOutStartSecondsEffective/WatermarkFadeOutEndSeconds below replace them so
+	// the watermark's own fade locks to the card's actual crossfade instead of running on its own
+	// unrelated clock.
 	private const double WatermarkFadeOutStartSeconds = 5.0;
 	private const double WatermarkDurationSeconds = 6.0;
 	private const double MapAttributionSlideDurationSeconds = 4.0;
 	private const float WatermarkBottomMargin = 110f;
 	private const float WatermarkLineGap = 46f;
+
+	private double WatermarkFadeOutStartSecondsEffective =>
+		RouteIntro.Enabled ? RouteIntroTransitionStartSeconds : WatermarkFadeOutStartSeconds;
+
+	private double WatermarkFadeOutEndSeconds =>
+		RouteIntro.Enabled ? RouteIntro.DurationSeconds : WatermarkDurationSeconds;
 
 	private static readonly string WatermarkVersion = FormatVersion(typeof(OverlayRenderer).Assembly.GetName().Version);
 
@@ -20,36 +30,39 @@ public sealed partial class OverlayRenderer
 	///     Bottom-center attribution watermark, full opacity from frame 0 then fading out (see
 	///     WatermarkAlpha). When the Map widget is also visible, DrawMapAttributionSlide follows as a
 	///     separate second slide - see DrawMapAttributionOnly for when this watermark is off but the
-	///     map's mandatory credit isn't.
+	///     map's mandatory credit isn't. anchorX/align default to centered under the whole frame (the
+	///     normal per-frame widget pass); Render passes a right-aligned override for the route-intro
+	///     card, whose map only covers the card's left portion.
 	/// </summary>
-	private void DrawWatermark(SKCanvas canvas, double sampleTimeSeconds)
+	private void DrawWatermark(SKCanvas canvas, double sampleTimeSeconds, float? anchorX = null,
+		SKTextAlign align = SKTextAlign.Center)
 	{
 		var alpha = WatermarkAlpha(sampleTimeSeconds);
 		if (alpha <= 0f) return;
 
 		canvas.Save();
-		canvas.Translate(_width / 2f, _height - WatermarkBottomMargin * _scale);
+		canvas.Translate(anchorX ?? _width / 2f, _height - WatermarkBottomMargin * _scale);
 		canvas.Scale(_scale, _scale);
 
-		DrawOutlined(canvas, "Made with OsmoOverlay", 0, -WatermarkLineGap, _watermarkTitleFont, White,
-			SKTextAlign.Center, alpha);
+		DrawOutlined(canvas, "Made with OsmoOverlay", 0, -WatermarkLineGap, _watermarkTitleFont, White, align, alpha);
 		DrawOutlined(canvas, $"github.com/sefinek/osmo-overlay  •  v{WatermarkVersion}", 0, 0, _watermarkSubtitleFont,
-			Accent, SKTextAlign.Center, alpha);
+			Accent, align, alpha);
 
 		canvas.Restore();
 	}
 
-	/// <summary>The map's required OSM credit, shown as its own short slide right after the watermark's (see MapAttributionSlideAlpha).</summary>
-	private void DrawMapAttributionSlide(SKCanvas canvas, double sampleTimeSeconds, string mapAttribution)
+	/// <summary>The map's required OSM credit, shown as its own short slide right after the watermark's (see MapAttributionSlideAlpha). anchorX/align - see DrawWatermark.</summary>
+	private void DrawMapAttributionSlide(SKCanvas canvas, double sampleTimeSeconds, string mapAttribution,
+		float? anchorX = null, SKTextAlign align = SKTextAlign.Center)
 	{
 		var alpha = MapAttributionSlideAlpha(sampleTimeSeconds);
 		if (alpha <= 0f) return;
 
 		canvas.Save();
-		canvas.Translate(_width / 2f, _height - WatermarkBottomMargin * _scale);
+		canvas.Translate(anchorX ?? _width / 2f, _height - WatermarkBottomMargin * _scale);
 		canvas.Scale(_scale, _scale);
 
-		DrawOutlined(canvas, mapAttribution, 0, 0, _smallFont, White, SKTextAlign.Center, alpha);
+		DrawOutlined(canvas, mapAttribution, 0, 0, _smallFont, White, align, alpha);
 
 		canvas.Restore();
 	}
@@ -57,23 +70,25 @@ public sealed partial class OverlayRenderer
 	/// <summary>
 	///     OSM's tile usage policy requires visible attribution whenever its tiles are shown, so unlike
 	///     the optional "Made with OsmoOverlay" watermark, this can't fade out or be turned off - drawn
-	///     at full opacity for the whole video when the watermark itself is disabled.
+	///     at full opacity for the whole video when the watermark itself is disabled. anchorX/align - see
+	///     DrawWatermark.
 	/// </summary>
-	private void DrawMapAttributionOnly(SKCanvas canvas, string mapAttribution)
+	private void DrawMapAttributionOnly(SKCanvas canvas, string mapAttribution, float? anchorX = null,
+		SKTextAlign align = SKTextAlign.Center)
 	{
 		canvas.Save();
-		canvas.Translate(_width / 2f, _height - WatermarkBottomMargin * _scale);
+		canvas.Translate(anchorX ?? _width / 2f, _height - WatermarkBottomMargin * _scale);
 		canvas.Scale(_scale, _scale);
 
-		DrawOutlined(canvas, mapAttribution, 0, 0, _smallFont, White, SKTextAlign.Center);
+		DrawOutlined(canvas, mapAttribution, 0, 0, _smallFont, White, align);
 
 		canvas.Restore();
 	}
 
 	/// <summary>No fade-in - it's on screen from the very first frame, so an instant appearance reads as the video simply starting, not as something popping in.</summary>
-	private static float WatermarkAlpha(double sampleTimeSeconds)
+	private float WatermarkAlpha(double sampleTimeSeconds)
 	{
-		return FadeAlpha(sampleTimeSeconds, 0, 0, WatermarkFadeOutStartSeconds, WatermarkDurationSeconds);
+		return FadeAlpha(sampleTimeSeconds, 0, 0, WatermarkFadeOutStartSecondsEffective, WatermarkFadeOutEndSeconds);
 	}
 
 	/// <summary>
@@ -81,9 +96,9 @@ public sealed partial class OverlayRenderer
 	///     ends) rather than at frame 0, so it gets a short fade-in too - popping in abruptly here would
 	///     read as a glitch rather than an intentional second slide.
 	/// </summary>
-	private static float MapAttributionSlideAlpha(double sampleTimeSeconds)
+	private float MapAttributionSlideAlpha(double sampleTimeSeconds)
 	{
-		var start = WatermarkDurationSeconds;
+		var start = WatermarkFadeOutEndSeconds;
 		var fadeInEnd = start + 1.0;
 		var end = start + MapAttributionSlideDurationSeconds;
 		var fadeOutStart = end - 1.0;
