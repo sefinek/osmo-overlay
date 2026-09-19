@@ -94,6 +94,13 @@
 			<Setter Property="Spacing" Value="8" />
 			<Setter Property="Width" Value="210" />
 		</Style>
+		<Style Selector="TextBlock.fallbackWarning">
+			<Setter Property="Foreground" Value="#E5A83E" />
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Margin" Value="4,0" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
 	</Window.Styles>
 
 	<Grid Margin="24" RowDefinitions="*,230" RowSpacing="16">
@@ -386,19 +393,20 @@
 			</Border>
 
 			<Border Grid.Column="2" Classes="card" Name="OverlayCard">
-				<StackPanel Spacing="14">
-					<StackPanel Classes="cardTitle">
+				<Grid RowDefinitions="Auto,Auto,*">
+					<StackPanel Grid.Row="0" Classes="cardTitle">
 						<TextBlock Classes="cardTitleText" Text="OVERLAY" />
 					</StackPanel>
 
-					<StackPanel Name="OverlayPlaceholder" Spacing="8" Margin="0,20,0,0">
+					<StackPanel Grid.Row="1" Name="OverlayPlaceholder" Spacing="8" Margin="0,20,0,0">
 						<TextBlock Text="No file loaded" Opacity="0.4" FontSize="13" HorizontalAlignment="Center" />
 						<TextBlock Text="Pick a file and get its summary to edit widgets" Opacity="0.3" FontSize="12"
 						           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="200"
 						           TextAlignment="Center" />
 					</StackPanel>
 
-					<ScrollViewer Name="OverlayContent" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+					<ScrollViewer Grid.Row="2" Name="OverlayContent" HorizontalScrollBarVisibility="Disabled"
+					              Margin="0,14,0,0" IsVisible="False">
 						<StackPanel Spacing="14">
 							<StackPanel Spacing="4">
 								<TextBlock Text="Preset" Classes="infoLabel" Margin="0" />
@@ -429,10 +437,12 @@
 								<TextBlock Text="Drag on the preview to move - uncheck to hide" Classes="infoLabel"
 								           Margin="0" TextWrapping="Wrap" />
 								<StackPanel Spacing="6">
-									<Grid ColumnDefinitions="*,Auto">
+									<Grid ColumnDefinitions="*,Auto,Auto">
 										<CheckBox Grid.Column="0" Name="DateTimeVisibleCheck" Classes="overlayItem"
 										          Content="Date &amp; time" Click="OnDateTimeVisibilityChanged" />
-										<Button Name="DateTimeGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<TextBlock Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning"
+										           Text="⚠" IsVisible="False" />
+										<Button Name="DateTimeGearButton" Grid.Column="2" Classes="gearButton" Content="⚙">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -450,10 +460,12 @@
 										</Button>
 									</Grid>
 
-									<Grid ColumnDefinitions="*,Auto">
+									<Grid ColumnDefinitions="*,Auto,Auto">
 										<CheckBox Grid.Column="0" Name="UtcTimeVisibleCheck" Classes="overlayItem"
 										          Content="UTC time" Click="OnUtcTimeVisibilityChanged" />
-										<Button Name="UtcTimeGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<TextBlock Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning"
+										           Text="⚠" IsVisible="False" />
+										<Button Name="UtcTimeGearButton" Grid.Column="2" Classes="gearButton" Content="⚙">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -465,6 +477,24 @@
 														          SelectionChanged="OnUtcTimeLocaleChanged" />
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnUtcTimeResetClick" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="CameraInfoVisibleCheck" Classes="overlayItem"
+										          Content="Camera info" Click="OnCameraInfoVisibilityChanged" />
+										<Button Name="CameraInfoGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+														<TextBox Name="CameraInfoLabelBox" PlaceholderText="Camera"
+														         LostFocus="OnCameraInfoLabelChanged" />
+														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+														        Click="OnCameraInfoResetClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -603,6 +633,31 @@
 									          Click="OnPitchVisibilityChanged" />
 									<CheckBox Name="SunVisibleCheck" Classes="overlayItem" Content="Sun / G-force"
 									          Click="OnSunVisibilityChanged" />
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="GMeterVisibleCheck" Classes="overlayItem"
+										          Content="G-meter" Click="OnGMeterVisibilityChanged" />
+										<Button Name="GMeterGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Full-scale range (G)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="GMeterFullScaleBox" Minimum="0.1" Maximum="5"
+														               Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnGMeterFullScaleChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+														           TextWrapping="Wrap"
+														           Text="How many G's put the dot at the ring's edge - lower for a gentle ride, higher for motorsport." />
+														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+														        Click="OnGMeterResetClick" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+									<CheckBox Name="ElapsedTimeVisibleCheck" Classes="overlayItem" Content="Elapsed time"
+									          Click="OnElapsedTimeVisibilityChanged" />
+									<CheckBox Name="CameraModelVisibleCheck" Classes="overlayItem" Content="Camera model"
+									          Click="OnCameraModelVisibilityChanged" />
 
 									<Grid ColumnDefinitions="*,Auto">
 										<CheckBox Grid.Column="0" Name="ElevationVisibleCheck" Classes="overlayItem"
@@ -675,7 +730,7 @@
 							</StackPanel>
 						</StackPanel>
 					</ScrollViewer>
-				</StackPanel>
+				</Grid>
 			</Border>
 		</Grid>
 
@@ -686,9 +741,8 @@
 				</StackPanel>
 				<Border Grid.Row="1" Background="#0A0A0B" CornerRadius="6" Padding="10">
 					<ScrollViewer Name="LogScroll">
-						<TextBox Name="LogBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-						         BorderThickness="0" Background="Transparent"
-						         FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
+						<SelectableTextBlock Name="LogBox" TextWrapping="Wrap"
+						                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
 					</ScrollViewer>
 				</Border>
 			</Grid>

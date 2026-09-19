@@ -14,6 +14,7 @@ public sealed class PreviewPlayer : IDisposable
 
 	private readonly Lock _lock = new();
 	private IReadOnlyList<DerivedFrame>? _derivedFrames;
+	private bool _hasContainerTime;
 	private bool _hasGpsFix;
 	private bool _hasGpsTimestamp;
 	private TimeSpan _lastPosition;
@@ -52,6 +53,7 @@ public sealed class PreviewPlayer : IDisposable
 		_derivedFrames = derivedFrames;
 		_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
 		_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
+		_hasContainerTime = summary.ContainerRecordingStartUtc is not null;
 
 		List<PlaybackSegment> segments =
 		[
@@ -66,10 +68,12 @@ public sealed class PreviewPlayer : IDisposable
 			summary.Video.Fps, previewWidth, previewHeight));
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout =
-			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix, _hasGpsTimestamp);
+			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix,
+				_hasGpsTimestamp, _hasContainerTime);
 		var showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 		var renderer = new OverlayRenderer(summary.Video.Width, summary.Video.Height,
-			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0, showWatermark);
+			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0, showWatermark,
+			summary.CameraModel, summary.ContainerRecordingStartUtc);
 
 		if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
 			await renderer.PrepareMapAsync((fetched, total) =>
@@ -164,7 +168,7 @@ public sealed class PreviewPlayer : IDisposable
 		// Same filter OpenAsync applies up front - every live edit (drag, a checkbox, a preset switch)
 		// re-sends the raw preset layout here, so without re-filtering each time, a widget this file's
 		// telemetry can't support would come right back as soon as anything else changed.
-		layout = OverlayDataRequirements.ApplyAvailability(layout, _hasGpsFix, _hasGpsTimestamp);
+		layout = OverlayDataRequirements.ApplyAvailability(layout, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
 
 		OverlayRenderer? renderer;
 		lock (_lock)
@@ -286,11 +290,21 @@ public sealed class PreviewPlayer : IDisposable
 		IReadOnlyList<DerivedFrame> frames, TimeSpan startPosition, CancellationTokenSource ownCts)
 	{
 		CancellationToken ct = ownCts.Token;
-		var sw = Stopwatch.StartNew();
 
 		try
 		{
 			using VideoPlaybackStream stream = await Task.Run(() => video.OpenPlaybackStream(startPosition), ct);
+			// See HighResolutionTimer - default Windows timer resolution otherwise makes the Task.Delay
+			// below overshoot by several ms per frame, which is most of this loop's entire real-time
+			// budget on a demanding (e.g. 4K60) source.
+			using var highResTimer = new HighResolutionTimer();
+
+			// Started only once frames can actually flow, not before - OpenPlaybackStream spawns ffmpeg
+			// and waits for the process/pipe to be ready, which alone can take a real chunk of time
+			// (hwaccel init especially). Starting the clock any earlier would count that startup delay
+			// as "playback already behind real-time", dropping a burst of otherwise-fine early frames
+			// as stale before the very first one is even shown.
+			var sw = Stopwatch.StartNew();
 
 			while (!ct.IsCancellationRequested)
 			{

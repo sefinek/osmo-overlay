@@ -3,14 +3,16 @@ using System.Diagnostics;
 namespace OsmoOverlay.Core.Ffmpeg;
 
 /// <summary>
-///     Vegas Pro's MainConcept MP4 muxer (confirmed on Vegas Pro 2026, both the HEVC/NVENC and AVC
-///     export paths) leaves color_primaries/color_transfer/color_space unset in the exported HEVC/H.264
-///     stream even when the project's color space is explicitly Rec.709 - a muxer limitation, not a
-///     project setting the user can fix from Vegas's own UI. Players that then can't read an explicit
-///     tag guess the matrix themselves (often wrongly), which shows up as a small but real color shift.
-///     Measured on real DJI Osmo footage: forcing bt709 on decode of an "unknown"-tagged render brings it
-///     back in line with the source to within compression noise, confirming the encoded pixels were
-///     always correct - only the tag was missing.
+///     Vegas Pro's MainConcept MP4 muxer (confirmed on Vegas Pro 2026's HEVC/NVENC export path only -
+///     the AVC/H.264 export path hasn't been tested and may not have the same issue) leaves
+///     color_primaries/color_transfer/color_space unset in the exported stream even when the project's
+///     color space is explicitly Rec.709 - a muxer limitation, not a project setting the user can fix
+///     from Vegas's own UI. Players that then can't read an explicit tag guess the matrix themselves
+///     (often wrongly), which shows up as a small but real color shift. Measured on real DJI Osmo
+///     footage: forcing bt709 on decode of an "unknown"-tagged render brings it back in line with the
+///     source to within compression noise, confirming the encoded pixels were always correct - only the
+///     tag was missing. The fix itself (below) still supports both HEVC and H.264 streams either way,
+///     since the tag-rewrite is the same regardless of which encoder produced them.
 /// </summary>
 public sealed record ColorTagStatus(
 	bool NeedsFix,

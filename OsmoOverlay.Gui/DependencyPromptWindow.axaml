@@ -16,9 +16,8 @@
 
 		<Border Name="LogPanel" Background="#0A0A0B" CornerRadius="6" Padding="10" IsVisible="False" MaxHeight="160">
 			<ScrollViewer Name="LogScroll">
-				<TextBox Name="LogBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
-				         BorderThickness="0" Background="Transparent"
-				         FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
+				<SelectableTextBlock Name="LogBox" TextWrapping="Wrap"
+				                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
 			</ScrollViewer>
 		</Border>
 

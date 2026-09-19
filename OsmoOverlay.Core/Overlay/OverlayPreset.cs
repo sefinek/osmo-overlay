@@ -28,9 +28,15 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		// Elevation - it's off by default, so it must not shift anything else's default position just
 		// to make room for it.
 		var utcY = distanceY + 240 * scale;
+		// Same reasoning as UtcTimeText above - off by default, appended after it instead of shifting it.
+		var cameraInfoY = utcY + 240 * scale;
+		var elapsedY = cameraInfoY + 240 * scale;
+		var cameraModelY = elapsedY + 110 * scale;
 
 		var compassCx = m + OverlayElementBounds.CompassRadius * scale;
 		var mapCx = compassCx + (OverlayElementBounds.CompassRadius + 40 + OverlayElementBounds.MapRadius) * scale;
+		var gMeterCx = width - m - OverlayElementBounds.GMeterRadius * scale;
+		var gMeterCy = m + OverlayElementBounds.SunRadius * 2 * scale + OverlayElementBounds.GMeterRadius * scale + 40 * scale;
 
 		List<OverlayElement> elements =
 		[
@@ -41,6 +47,12 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			// Off by default - most users only need one clock; UTC is an opt-in extra for syncing
 			// footage against UTC-timestamped external data (flight logs, other sensors, etc.).
 			new(OverlayElementType.UtcTimeText, statsX, utcY, false),
+			// Off by default - niche/photographer-oriented metadata most riders/pilots don't need burned in.
+			new(OverlayElementType.CameraInfo, statsX, cameraInfoY, false),
+			// Off by default - a stopwatch duplicates what most editors already show in their timeline.
+			new(OverlayElementType.ElapsedTimeText, statsX, elapsedY, false),
+			// Off by default - purely cosmetic branding of which camera shot the clip.
+			new(OverlayElementType.CameraModelText, statsX, cameraModelY, false),
 			new(OverlayElementType.Compass, compassCx, height - m - OverlayElementBounds.CompassRadius * scale),
 			new(OverlayElementType.SunWidget, width - m - OverlayElementBounds.SunRadius * scale,
 				m + OverlayElementBounds.SunRadius * scale),
@@ -51,7 +63,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			// for a map. Defaults to satellite imagery (rather than OpenStreetMapUrlTemplate's street
 			// map) since it reads better at a glance alongside the rest of the HUD.
 			new(OverlayElementType.MapWidget, mapCx, height - m - OverlayElementBounds.MapRadius * scale, false,
-				MapTileUrlTemplate: MapTileFetcher.SatelliteUrlTemplate, MapAttribution: MapTileFetcher.SatelliteAttribution)
+				MapTileUrlTemplate: MapTileFetcher.SatelliteUrlTemplate, MapAttribution: MapTileFetcher.SatelliteAttribution),
+			// Off by default - experimental: unlike PitchGauge's AccelY mapping, the X/Z axes plotted
+			// here were never empirically verified against a controlled recording (see the comment
+			// above OverlayRenderer.DrawGMeter), so it shouldn't suddenly appear as "real" data.
+			new(OverlayElementType.GMeter, gMeterCx, gMeterCy, false)
 		];
 
 		return new OverlayPreset(id, name, elements);

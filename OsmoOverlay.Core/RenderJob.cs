@@ -15,7 +15,8 @@ public sealed record RenderOptions(
 	bool Overwrite = true,
 	IReadOnlyList<OverlayElement>? Layout = null,
 	bool? ShowWatermark = null,
-	bool? SmoothGpsMotion = null)
+	bool? SmoothGpsMotion = null,
+	string? CameraModel = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
 	{
@@ -88,6 +89,7 @@ public static class RenderJob
 				return new RenderResult(false, $"Output file already exists: {options.OutputPath}", sw.Elapsed);
 
 			IReadOnlyList<TelemetryFrame> rawFrames;
+			var cameraModel = options.CameraModel;
 			if (options.TelemetryFrames is { Count: > 0 })
 			{
 				rawFrames = options.TelemetryFrames;
@@ -96,7 +98,9 @@ public static class RenderJob
 			else
 			{
 				Report(RenderPhase.ExtractingTelemetry, "Extracting telemetry (djmd stream)...");
-				rawFrames = TelemetryExtraction.ExtractCombined(segments).Frames;
+				TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
+				rawFrames = extraction.Frames;
+				cameraModel ??= extraction.CameraModel;
 				if (rawFrames.Count == 0)
 					return new RenderResult(false, "No telemetry samples found in the file(s).", sw.Elapsed);
 				Report(RenderPhase.ExtractingTelemetry, $"Extracted {rawFrames.Count} telemetry samples.");
@@ -125,10 +129,12 @@ public static class RenderJob
 			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
 			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
 			layout = OverlayDataRequirements.ApplyAvailability(layout,
-				TelemetryProcessor.HasAnyGpsFix(rawFrames), TelemetryProcessor.HasAnyGpsTimestamp(rawFrames));
+				TelemetryProcessor.HasAnyGpsFix(rawFrames), TelemetryProcessor.HasAnyGpsTimestamp(rawFrames),
+				first.Source.ContainerCreationTimeUtc is not null);
 			var showWatermark = options.ShowWatermark ?? OverlaySettingsStore.Load().ShowWatermark;
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
-				startAltitude, layout, derived, maxSpeedKmh, showWatermark);
+				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
+				first.Source.ContainerCreationTimeUtc);
 
 			if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
 			{

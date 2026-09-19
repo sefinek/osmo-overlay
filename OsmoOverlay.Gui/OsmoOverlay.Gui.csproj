@@ -25,6 +25,14 @@
 
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <!-- Live preview decodes+composites large (>85KB, straight to the Large Object Heap) BGRA frame
+         buffers at up to 60fps - Server GC's per-core heaps and background collection handle that
+         allocation rate with shorter pauses than the Workstation GC default, which matters for a
+         real-time pipeline (PreviewPlayer.RunPlaybackAsync) where an occasional multi-ms GC pause
+         shows up as a dropped frame. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

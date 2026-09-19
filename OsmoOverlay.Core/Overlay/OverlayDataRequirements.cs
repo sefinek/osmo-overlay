@@ -8,11 +8,17 @@ namespace OsmoOverlay.Core.Overlay;
 /// </summary>
 public static class OverlayDataRequirements
 {
-	public static bool IsSupported(OverlayElementType type, bool hasGpsFix, bool hasGpsTimestamp)
+	/// <summary>
+	///     hasContainerTime is separate from hasGpsTimestamp - DateTimeText/UtcTimeText can still show
+	///     something useful from the container's own creation_time tag (OverlayRenderer.DrawTimeText)
+	///     even when this recording never had a real GPS timestamp, so it isn't gated behind GPS at
+	///     all like the position-based widgets below are.
+	/// </summary>
+	public static bool IsSupported(OverlayElementType type, bool hasGpsFix, bool hasGpsTimestamp, bool hasContainerTime)
 	{
 		return type switch
 		{
-			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText => hasGpsTimestamp,
+			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText => hasGpsTimestamp || hasContainerTime,
 			OverlayElementType.Compass or OverlayElementType.MapWidget or OverlayElementType.Elevation
 				or OverlayElementType.Gradient or OverlayElementType.Distance or OverlayElementType.SpeedGauge => hasGpsFix,
 			// PitchGauge and SunWidget's G-force readout both come from the accelerometer alone, which
@@ -29,11 +35,13 @@ public static class OverlayDataRequirements
 	///     burned into the video (or shown in the live preview) as a "--"/0/placeholder.
 	/// </summary>
 	public static IReadOnlyList<OverlayElement> ApplyAvailability(IReadOnlyList<OverlayElement> layout,
-		bool hasGpsFix, bool hasGpsTimestamp)
+		bool hasGpsFix, bool hasGpsTimestamp, bool hasContainerTime)
 	{
 		return
 		[
-			.. layout.Select(e => e.Visible && !IsSupported(e.Type, hasGpsFix, hasGpsTimestamp) ? e with { Visible = false } : e)
+			.. layout.Select(e => e.Visible && !IsSupported(e.Type, hasGpsFix, hasGpsTimestamp, hasContainerTime)
+				? e with { Visible = false }
+				: e)
 		];
 	}
 }

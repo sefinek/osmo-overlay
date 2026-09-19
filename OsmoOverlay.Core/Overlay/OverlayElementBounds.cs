@@ -20,11 +20,14 @@ public static class OverlayElementBounds
 	public const float SpeedRadius = 260f;
 	public const float PitchRadius = 95f;
 	public const float MapRadius = 260f;
+	public const float GMeterRadius = 110f;
 
 	public const float DateTimeWidth = 420f;
 	public const float DateTimeHeight = 70f;
 	public const float StatWidth = 380f;
 	public const float StatHeight = 170f;
+	public const float CameraInfoWidth = 380f;
+	public const float CameraInfoHeight = 220f;
 
 	public static float GetScale(int width, int height)
 	{
@@ -37,15 +40,19 @@ public static class OverlayElementBounds
 		{
 			// DrawTimeText renders the text with its baseline at (x, y), so the glyphs sit mostly
 			// above that anchor - the hit box must follow, or clicking the visible text misses it.
-			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText => new SKRect(x, y - (DateTimeHeight - 10) * scale,
-				x + DateTimeWidth * scale, y + 10 * scale),
+			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText or OverlayElementType.ElapsedTimeText
+				or OverlayElementType.CameraModelText => new SKRect(x, y - (DateTimeHeight - 10) * scale,
+					x + DateTimeWidth * scale, y + 10 * scale),
 			OverlayElementType.Elevation or OverlayElementType.Gradient or OverlayElementType.Distance =>
 				new SKRect(x - 10 * scale, y - 50 * scale, x + (StatWidth - 10) * scale, y + (StatHeight - 50) * scale),
+			OverlayElementType.CameraInfo =>
+				new SKRect(x - 10 * scale, y - 50 * scale, x + (CameraInfoWidth - 10) * scale, y + (CameraInfoHeight - 50) * scale),
 			OverlayElementType.Compass => Circle(x, y, CompassRadius * scale),
 			OverlayElementType.SunWidget => Circle(x, y, (SunRadius + 70) * scale),
 			OverlayElementType.PitchGauge => Circle(x, y, PitchRadius * scale),
 			OverlayElementType.SpeedGauge => Circle(x, y, SpeedRadius * scale),
 			OverlayElementType.MapWidget => Circle(x, y, MapRadius * scale),
+			OverlayElementType.GMeter => Circle(x, y, GMeterRadius * scale),
 			_ => SKRect.Empty
 		};
 	}

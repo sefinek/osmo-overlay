@@ -36,7 +36,13 @@ public sealed record SourceInfo(
 	AudioInfo? Audio,
 	bool HasDjmdTrack,
 	double DurationSeconds,
-	int? DjmdStreamIndex);
+	int? DjmdStreamIndex,
+	// The container's own "when did recording start" (its creation_time tag, written by the camera
+	// itself) - independent of GPS, so it's the only usable fallback for Date&Time/UTC time on a
+	// recording with no GPS timestamp at all (e.g. filmed indoors, no fix ever acquired). Null when
+	// the container has no such tag or it fails to parse - callers must treat that as "no fallback
+	// available", not "recording started at DateTime default".
+	DateTime? ContainerCreationTimeUtc);
 
 public static class SourceProbe
 {
@@ -107,7 +113,13 @@ public static class SourceProbe
 
 		var duration = double.Parse(root["format"]!["duration"]!.GetValue<string>(), CultureInfo.InvariantCulture);
 
-		return new SourceInfo(video, audio, hasDjmd, duration, djmdStreamIndex);
+		DateTime? containerCreationTimeUtc = null;
+		if (root["format"]?["tags"]?["creation_time"]?.GetValue<string>() is { } creationTimeStr &&
+		    DateTime.TryParse(creationTimeStr, CultureInfo.InvariantCulture,
+			    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out DateTime parsed))
+			containerCreationTimeUtc = parsed;
+
+		return new SourceInfo(video, audio, hasDjmd, duration, djmdStreamIndex, containerCreationTimeUtc);
 	}
 
 	private static long ResolveVideoBitRate(JsonNode videoStream, JsonNode? audioStream, JsonNode root)

@@ -45,6 +45,13 @@
 			           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. Off by default; takes effect the next time a file/preview is opened." />
 		</StackPanel>
 
+		<StackPanel Spacing="4">
+			<TextBlock Text="Preview quality" Classes="infoLabel" Margin="0" />
+			<ComboBox Name="PreviewQualityCombo" HorizontalAlignment="Stretch" />
+			<TextBlock Classes="hint"
+			           Text="How sharp the live preview looks while scrubbing/playing - lower is faster (less to decode per frame), higher is sharper but slower. Never affects the exported video, which always renders at the source's full resolution regardless of this setting. Takes effect the next time a file/preview is opened." />
+		</StackPanel>
+
 		<Grid ColumnDefinitions="*,Auto">
 			<TextBlock Grid.Column="0" />
 			<Button Grid.Column="1" Content="Close" Classes="accent" Click="OnCloseClick" />
