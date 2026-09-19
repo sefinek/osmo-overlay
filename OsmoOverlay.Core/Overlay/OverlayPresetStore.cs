@@ -134,16 +134,17 @@ public static class OverlayPresetStore
 	///     global setting so an already-configured map provider/API key survives the upgrade, instead of
 	///     silently reverting to the default. Only runs while the global setting is still untouched (not
 	///     just non-null - a user could have already set it up fresh in Settings), and only reads the
-	///     properties: writing the migrated JsonSerializer.Deserialize<OverlayElement>() result back out
+	///     raw JSON directly (below) rather than the migrated OverlayPreset objects - by the time
+	///     BackfillMissingWidgetTypes/RefreshBuiltInDefault run, <c>JsonSerializer.Deserialize&lt;OverlayElement&gt;()</c>
 	///     wouldn't help, since that type no longer even has these properties to read from.
 	/// </summary>
 	private static void MigrateLegacyMapSettingsIfNeeded(List<OverlayPreset> presets)
 	{
 		OverlaySettings current = OverlaySettingsStore.Load();
 		var stillAtDefaults = current.MapApiKey is null
-			&& current.MapTileUrlTemplate == MapTileFetcher.SatelliteUrlTemplate
-			&& current.MapAttribution == MapTileFetcher.SatelliteAttribution
-			&& current.MapShowAttribution;
+		                      && current.MapTileUrlTemplate == MapTileFetcher.SatelliteUrlTemplate
+		                      && current.MapAttribution == MapTileFetcher.SatelliteAttribution
+		                      && current.MapShowAttribution;
 		if (!stillAtDefaults) return;
 
 		foreach (OverlayPreset preset in presets)
@@ -169,7 +170,7 @@ public static class OverlayPresetStore
 					if (apiKey is null && urlTemplate is null && attribution is null) continue;
 
 					var showAttribution = element.TryGetProperty("MapShowAttribution", out JsonElement showProp) &&
-					                       showProp.ValueKind is JsonValueKind.True or JsonValueKind.False
+					                      showProp.ValueKind is JsonValueKind.True or JsonValueKind.False
 						? showProp.GetBoolean()
 						: current.MapShowAttribution;
 

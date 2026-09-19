@@ -25,14 +25,13 @@
 		<!-- Same FontSize/Padding as MainWindow's CheckBox.overlayItem (this window can't reach that
 		     Window.Styles-scoped class directly) - every CheckBox/RadioButton here uses it so the whole
 		     dialog reads as one row height instead of the default FluentTheme size looking taller than
-		     the app's own established checkbox-list convention. MinHeight="0" matters more than the
-		     StackPanel Spacing above it does - FluentTheme's default CheckBox MinHeight (~32px) was
-		     dominating row height regardless of how tight Spacing was set, which is why the "Stats to
-		     show" list still looked tall even after Spacing alone was reduced. -->
+		     the app's own established checkbox-list convention. Deliberately no Height/MinHeight override
+		     here - forcing an exact Height clips the indicator glyph's bottom edge (FluentTheme's
+		     template needs more room than a tight guess gives it), so row tightness comes from the
+		     StackPanel Spacing tiers alone, same as overlayItem does. -->
 		<Style Selector="CheckBox, RadioButton">
 			<Setter Property="FontSize" Value="14" />
 			<Setter Property="Padding" Value="8,0,0,0" />
-			<Setter Property="MinHeight" Value="0" />
 		</Style>
 		<!-- Scoped to this window's own nav list (not every ListBox app-wide) - drops the boxed-in
 		     card look App.axaml's generic ListBox style gives every other list, since this one reads
@@ -144,7 +143,7 @@
 
 							<StackPanel Spacing="6">
 								<TextBlock Name="RouteIntroStatsLabel" Text="Stats to show" Classes="infoLabel" />
-								<StackPanel Spacing="4">
+								<StackPanel Spacing="2">
 									<CheckBox Name="RouteIntroDistanceCheck" Content="Total distance" />
 									<CheckBox Name="RouteIntroMaxSpeedCheck" Content="Max speed" />
 									<CheckBox Name="RouteIntroAvgSpeedCheck" Content="Average speed" />

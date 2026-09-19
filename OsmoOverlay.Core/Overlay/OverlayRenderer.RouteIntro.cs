@@ -134,7 +134,9 @@ public sealed partial class OverlayRenderer
 		canvas.Scale(_scale, _scale);
 
 		using (var backgroundPaint = new SKPaint { Color = new SKColor(10, 12, 16, 225), IsAntialias = true, Style = SKPaintStyle.Fill })
+		{
 			canvas.DrawRect(0, 0, refWidth, refHeight, backgroundPaint);
+		}
 
 		SKRect mapRect = GetRouteIntroMapRect();
 		DrawRouteIntroMap(canvas, mapRect);
@@ -146,7 +148,9 @@ public sealed partial class OverlayRenderer
 	private void DrawRouteIntroMap(SKCanvas canvas, SKRect mapRect)
 	{
 		using (var panelPaint = new SKPaint { Color = new SKColor(0, 0, 0, 90), IsAntialias = true, Style = SKPaintStyle.Fill })
+		{
 			canvas.DrawRect(mapRect, panelPaint);
+		}
 
 		if (_routeIntroMosaic is null)
 		{
@@ -261,7 +265,7 @@ public sealed partial class OverlayRenderer
 		(string Label, string Value)? duration = null;
 		if (RouteIntro.ShowDuration)
 		{
-			var elapsed = TimeSpan.FromSeconds(Math.Max(_totalDurationSeconds, 0));
+			TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(_totalDurationSeconds, 0));
 			var durationText = elapsed.TotalHours >= 1
 				? $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
 				: $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
