@@ -5,6 +5,12 @@ namespace OsmoOverlay.Core.Ffmpeg;
 
 public static class FfmpegPipeline
 {
+
+	// Pure, maximally-saturated green - the color virtually every chroma-key tool's "pick green"
+	// default targets, so a plain, untagged green-screen export keys out cleanly without the user
+	// having to dial in a custom key color first.
+	private const string GreenScreenColor = "0x00FF00";
+
 	public static string SelectVideoEncoder()
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
@@ -18,11 +24,6 @@ public static class FfmpegPipeline
 
 		return process.ExitCode == 0 ? "hevc_nvenc" : "libx265";
 	}
-
-	// Pure, maximally-saturated green - the color virtually every chroma-key tool's "pick green"
-	// default targets, so a plain, untagged green-screen export keys out cleanly without the user
-	// having to dial in a custom key color first.
-	private const string GreenScreenColor = "0x00FF00";
 
 	public static Process StartRender(IReadOnlyList<string> inputPaths, string outputPath, SourceInfo info,
 		string encoder, bool overwrite, double? limitSeconds = null, bool greenScreen = false, int totalFrames = 0)

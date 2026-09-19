@@ -11,7 +11,10 @@ namespace OsmoOverlay.Core.Overlay;
 ///     cosmetic touch-up, not a correctness fix, so it shouldn't silently change what a render looks
 ///     like for someone who hasn't opted in.
 /// </summary>
-public sealed record OverlaySettings(string? ActivePresetId = null, bool ShowWatermark = true, bool SmoothGpsMotion = false,
+public sealed record OverlaySettings(
+	string? ActivePresetId = null,
+	bool ShowWatermark = true,
+	bool SmoothGpsMotion = false,
 	// How wide (in pixels) the live preview is decoded/composited at - capped down from the source
 	// resolution (never upscaled, see MainWindow.OpenPreviewAsync), trading preview sharpness for
 	// scrub/playback responsiveness. Does not affect the exported render, which always uses the

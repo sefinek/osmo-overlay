@@ -21,9 +21,9 @@ public sealed partial class OverlayRenderer
 	public const double MapDynamicZoomMaxFactorMax = 15.0;
 	private const double MapTrailFitFraction = 0.7;
 	private const double MapZoomSmoothingSeconds = 2.5;
+	private readonly ResettableEma _mapZoomEma = new();
 
 	private readonly List<(double East, double North, double Lat, double Lon)> _trail = [];
-	private readonly ResettableEma _mapZoomEma = new();
 	private (double East, double North)? _lastTrailPoint;
 	private RouteMapMosaic? _mapMosaic;
 	private MapMosaicKey? _preparedMapKey;

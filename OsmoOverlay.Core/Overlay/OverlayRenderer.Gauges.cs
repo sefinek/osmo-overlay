@@ -154,7 +154,7 @@ public sealed partial class OverlayRenderer
 		canvas.DrawLine(cx, cy - radius, cx, cy + radius, _thinStroke2White70);
 
 		var fullScaleG = Math.Clamp(element.GMeterFullScaleG, GMeterFullScaleGMin, GMeterFullScaleGMax);
-		(var lateral, var longitudinal) = SmoothGMeterDelta(frame.Raw);
+		var (lateral, longitudinal) = SmoothGMeterDelta(frame.Raw);
 		var dotX = cx + (float)Math.Clamp(lateral / fullScaleG, -1, 1) * radius;
 		var dotY = cy - (float)Math.Clamp(longitudinal / fullScaleG, -1, 1) * radius;
 

@@ -147,7 +147,7 @@ public partial class MainWindow
 		DateTimeFallbackWarningIcon.IsVisible = usingTimeFallback;
 		UtcTimeFallbackWarningIcon.IsVisible = usingTimeFallback;
 		var timeFallbackTip = "This recording has no GPS timestamp - showing the file's own recording-start " +
-		                       "time instead (from the camera's clock, not GPS-synced).";
+		                      "time instead (from the camera's clock, not GPS-synced).";
 		ToolTip.SetTip(DateTimeFallbackWarningIcon, timeFallbackTip);
 		ToolTip.SetTip(UtcTimeFallbackWarningIcon, timeFallbackTip);
 

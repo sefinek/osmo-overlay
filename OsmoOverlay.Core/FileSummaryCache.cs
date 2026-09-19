@@ -135,8 +135,15 @@ internal static class FileSummaryCache
 
 	/// <summary>DerivedFrame minus Raw (see Save) - everything TelemetryProcessor computes from one TelemetryFrame, paired back up with it by index in Reinflate.</summary>
 	private sealed record CachedDerivedFrame(
-		double SpeedKmh, double HeadingDegrees, double GradientPercent, double CumulativeDistanceMeters,
-		double PitchDegrees, SunPosition Sun, double LocalEastMeters, double LocalNorthMeters, double SmoothedGForce)
+		double SpeedKmh,
+		double HeadingDegrees,
+		double GradientPercent,
+		double CumulativeDistanceMeters,
+		double PitchDegrees,
+		SunPosition Sun,
+		double LocalEastMeters,
+		double LocalNorthMeters,
+		double SmoothedGForce)
 	{
 		public static CachedDerivedFrame From(DerivedFrame frame)
 		{
