@@ -300,10 +300,7 @@ public sealed partial class OverlayRenderer
 			canvas.Save();
 			var clipBuilder = new SKPathBuilder();
 			clipBuilder.AddCircle(0, 0, radius);
-			using (SKPath clipPath = clipBuilder.Detach())
-			{
-				canvas.ClipPath(clipPath, antialias: true);
-			}
+			using (SKPath clipPath = clipBuilder.Detach()) canvas.ClipPath(clipPath, antialias: true);
 
 			SKPoint center = _mapMosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
 			// Computed once and shared with GetMapZoomFactor (when dynamic zoom needs it) and the trail
