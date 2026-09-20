@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using OsmoOverlay.Core.Ffmpeg;
@@ -84,16 +85,7 @@ public sealed class VideoFrameSource
 		CancellationToken ct)
 	{
 		using Process process = StartFfmpeg(path, position, true);
-		using CancellationTokenRegistration registration = ct.Register(() =>
-		{
-			try
-			{
-				if (!process.HasExited) process.Kill(true);
-			}
-			catch (InvalidOperationException)
-			{
-			}
-		});
+		using CancellationTokenRegistration registration = ct.Register(() => KillIfRunning(process));
 
 		Task<string> stderrTask = process.StandardError.ReadToEndAsync(ct);
 
@@ -255,6 +247,21 @@ public sealed class VideoFrameSource
 
 		return offset;
 	}
+
+	/// <summary>Best-effort kill shared by DecodeOneFrame's registration and VideoPlaybackStream.KillCurrentProcess.</summary>
+	internal static void KillIfRunning(Process process)
+	{
+		try
+		{
+			if (!process.HasExited) process.Kill(true);
+		}
+		catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+		{
+			// InvalidOperationException: the process exited in the gap between HasExited and Kill.
+			// Win32Exception: the OS refused to terminate it (already exiting, access denied, etc.) -
+			// this is a best-effort cleanup, not something worth failing playback/decode over.
+		}
+	}
 }
 
 public sealed class VideoPlaybackStream : IDisposable
@@ -312,13 +319,7 @@ public sealed class VideoPlaybackStream : IDisposable
 
 	private void KillCurrentProcess()
 	{
-		try
-		{
-			if (!_process.HasExited) _process.Kill(true);
-		}
-		catch (InvalidOperationException)
-		{
-		}
+		VideoFrameSource.KillIfRunning(_process);
 	}
 
 	private void DeleteListFile()

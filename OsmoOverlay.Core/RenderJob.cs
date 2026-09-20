@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Channels;
 using OsmoOverlay.Core.Ffmpeg;
@@ -306,7 +307,9 @@ public static class RenderJob
 					// full original frame count for a green-screen render, whose main input is otherwise-
 					// infinite (see FfmpegPipeline.StartRender). killOnCancel above already killed the
 					// whole process tree the moment ct was cancelled, so this just waits for that to land.
-					ffmpeg.WaitForExit();
+					// CancellationToken.None, not ct - it's already cancelled, and this wait must run to
+					// completion regardless so the exit code/stderr below are actually available.
+					await ffmpeg.WaitForExitAsync(CancellationToken.None);
 					try
 					{
 						await stderrTask;
@@ -321,7 +324,7 @@ public static class RenderJob
 					return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
 				}
 
-				ffmpeg.WaitForExit();
+				await ffmpeg.WaitForExitAsync(CancellationToken.None);
 				var stderr = await stderrTask;
 
 				if (ffmpeg.ExitCode != 0)
@@ -355,8 +358,11 @@ public static class RenderJob
 		{
 			if (!ffmpeg.HasExited) ffmpeg.Kill(true);
 		}
-		catch (InvalidOperationException)
+		catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
 		{
+			// InvalidOperationException: the process exited in the gap between HasExited and Kill.
+			// Win32Exception: the OS refused to terminate it (already exiting, access denied, etc.) -
+			// this is a best-effort cleanup, not something worth failing the whole render over.
 		}
 	}
 
