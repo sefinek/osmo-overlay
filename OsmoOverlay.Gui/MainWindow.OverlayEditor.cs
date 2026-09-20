@@ -135,6 +135,12 @@ public partial class MainWindow
 
 		SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, Find(OverlayElementType.SpeedGauge)?.Units ?? UnitSystem.Metric);
 
+		OverlayElement? tripProgress = Find(OverlayElementType.TripProgressBar);
+		SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, tripProgress?.Units ?? UnitSystem.Metric);
+		TripProgressToleranceBox.Value =
+			(decimal)(tripProgress?.TripArrivedToleranceMeters ?? OverlayRenderer.TripArrivedToleranceMetersDefault);
+		TripProgressLabelBox.Text = tripProgress?.TripArrivedLabel ?? OverlayRenderer.TripArrivedLabelDefault;
+
 		PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox,
 			CompassTrailArrowRadio, CompassTrailDotRadio, Find(OverlayElementType.Compass));
 		PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox,
@@ -160,7 +166,7 @@ public partial class MainWindow
 		SetWidgetAvailability(CameraModelVisibleCheck, null, OverlayElementType.CameraModelText, editable);
 		SetWidgetAvailability(SpeedVisibleCheck, SpeedGearButton, OverlayElementType.SpeedGauge, editable);
 		SetWidgetAvailability(MapVisibleCheck, MapGearButton, OverlayElementType.MapWidget, editable);
-		SetWidgetAvailability(TripProgressBarVisibleCheck, null, OverlayElementType.TripProgressBar, editable);
+		SetWidgetAvailability(TripProgressBarVisibleCheck, TripProgressBarGearButton, OverlayElementType.TripProgressBar, editable);
 
 		_suppressOverlayEvents = false;
 		return;
@@ -454,6 +460,26 @@ public partial class MainWindow
 		SetElementUnits(OverlayElementType.SpeedGauge, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
+	private void OnTripProgressUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		SetElementUnits(OverlayElementType.TripProgressBar,
+			TripProgressImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnTripProgressToleranceChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || TripProgressToleranceBox.Value is not { } tolerance) return;
+		UpdateElement(OverlayElementType.TripProgressBar, el => el with { TripArrivedToleranceMeters = (double)tolerance });
+	}
+
+	private void OnTripProgressLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		var label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text)
+			? OverlayRenderer.TripArrivedLabelDefault
+			: TripProgressLabelBox.Text.Trim();
+		UpdateElement(OverlayElementType.TripProgressBar, el => el with { TripArrivedLabel = label });
+	}
+
 	private void OnMapVisibilityChanged(object? sender, RoutedEventArgs e)
 	{
 		SetElementVisible(OverlayElementType.MapWidget, MapVisibleCheck.IsChecked == true);
@@ -513,6 +539,11 @@ public partial class MainWindow
 	private void OnSpeedResetClick(object? sender, RoutedEventArgs e)
 	{
 		ResetElementToFactoryDefaults(OverlayElementType.SpeedGauge);
+	}
+
+	private void OnTripProgressResetClick(object? sender, RoutedEventArgs e)
+	{
+		ResetElementToFactoryDefaults(OverlayElementType.TripProgressBar);
 	}
 
 	private void OnMapResetClick(object? sender, RoutedEventArgs e)

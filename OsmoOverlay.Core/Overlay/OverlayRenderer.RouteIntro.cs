@@ -134,9 +134,7 @@ public sealed partial class OverlayRenderer
 		canvas.Scale(_scale, _scale);
 
 		using (var backgroundPaint = new SKPaint { Color = new SKColor(10, 12, 16, 225), IsAntialias = true, Style = SKPaintStyle.Fill })
-		{
 			canvas.DrawRect(0, 0, refWidth, refHeight, backgroundPaint);
-		}
 
 		SKRect mapRect = GetRouteIntroMapRect();
 		DrawRouteIntroMap(canvas, mapRect);
@@ -148,9 +146,7 @@ public sealed partial class OverlayRenderer
 	private void DrawRouteIntroMap(SKCanvas canvas, SKRect mapRect)
 	{
 		using (var panelPaint = new SKPaint { Color = new SKColor(0, 0, 0, 90), IsAntialias = true, Style = SKPaintStyle.Fill })
-		{
 			canvas.DrawRect(mapRect, panelPaint);
-		}
 
 		if (_routeIntroMosaic is null)
 		{

@@ -42,6 +42,12 @@ public sealed partial class OverlayRenderer
 	public const double GMeterFullScaleGMin = 0.1;
 	public const double GMeterFullScaleGMax = 5.0;
 
+	// User-configurable per widget (OverlayElement.TripArrivedToleranceMeters/TripArrivedLabel) - see
+	// DrawTripProgressBar's remarks for why a tolerance is needed at all. 1.5m default: comfortably
+	// above typical consumer GPS jitter, negligible next to any real trip distance.
+	public const double TripArrivedToleranceMetersDefault = 1.5;
+	public const string TripArrivedLabelDefault = "FINISH";
+
 	private readonly ResettableEma _gMeterBaselineLateralEma = new();
 	private readonly ResettableEma _gMeterBaselineLongitudinalEma = new();
 	private readonly ResettableEma _gMeterSmoothedLateralEma = new();
@@ -270,10 +276,25 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(dotX, 0, 16, _dotOutlineBlackFill);
 		canvas.DrawCircle(dotX, 0, 12, _dotFillAccent);
 
-		var (remainingValue, remainingUnit) =
-			FormatDistance(Math.Max(_totalDistanceMeters - frame.CumulativeDistanceMeters, 0), element.Units);
-		DrawOutlined(canvas, $"{F(progress * 100, "0")}%", -halfWidth, -26, _smallFont, White);
-		DrawOutlined(canvas, $"{remainingValue} {remainingUnit} LEFT", halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+		var remainingMeters = Math.Max(_totalDistanceMeters - frame.CumulativeDistanceMeters, 0);
+
+		// A stationary GPS receiver's position jitter means remainingMeters almost never settles on
+		// exactly 0 (see element.TripArrivedToleranceMeters) - within that margin, treat the trip as
+		// arrived and show a clean "100%"/TripArrivedLabel instead of the two numbers rounding
+		// independently into a contradiction like "100%, 0.4 M LEFT".
+		var arrived = remainingMeters <= element.TripArrivedToleranceMeters;
+		var displayPercent = arrived ? 100.0 : Math.Min(progress * 100, 99);
+		DrawOutlined(canvas, $"{F(displayPercent, "0")}%", -halfWidth, -26, _smallFont, White);
+
+		if (arrived)
+		{
+			DrawOutlined(canvas, element.TripArrivedLabel, halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+		}
+		else
+		{
+			var (remainingValue, remainingUnit) = FormatDistance(remainingMeters, element.Units);
+			DrawOutlined(canvas, $"{remainingValue} {remainingUnit} LEFT", halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+		}
 
 		canvas.Restore();
 	}
