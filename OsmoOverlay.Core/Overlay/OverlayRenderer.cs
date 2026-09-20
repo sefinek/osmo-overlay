@@ -103,6 +103,14 @@ public sealed partial class OverlayRenderer : IDisposable
 	// renderer's lifetime.
 	private readonly Dictionary<float, SKMaskFilter> _blurMaskFilters = [];
 
+	// Per-element FontFamily overrides on the text widgets (see OverlayRenderer.TextWidgets.cs) - unlike
+	// the fixed fonts above, these come from arbitrary user input, so they fill in lazily instead of being
+	// built upfront. Keyed separately from _blurMaskFilters' single-float key since a font also varies by
+	// family; typefaces are cached (and disposed) independently of the fonts built from them since several
+	// sizes can share one typeface (see ResolveTypeface/GetFont).
+	private readonly Dictionary<string, SKTypeface> _customTypefacesByFamily = [];
+	private readonly Dictionary<(string Family, float Size), SKFont> _fontCache = [];
+
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true,
 		string? cameraModel = null, DateTime? containerRecordingStartUtc = null,
@@ -140,13 +148,13 @@ public sealed partial class OverlayRenderer : IDisposable
 		MapApiKey = mapApiKey;
 		RouteIntro = routeIntro ?? RouteIntroSettings.Disabled;
 
-		_hudTypeface = CreateHudTypeface();
+		_hudTypeface = OverlayElementBounds.CreateHudTypeface();
 
-		_dateFont = new SKFont(_hudTypeface, 46);
-		_labelFont = new SKFont(_hudTypeface, 30);
-		_valueFont = new SKFont(_hudTypeface, 95);
-		_unitFont = new SKFont(_hudTypeface, 46);
-		_smallFont = new SKFont(_hudTypeface, 36);
+		_dateFont = new SKFont(_hudTypeface, OverlayElementBounds.DateFontSize);
+		_labelFont = new SKFont(_hudTypeface, OverlayElementBounds.LabelFontSize);
+		_valueFont = new SKFont(_hudTypeface, OverlayElementBounds.ValueFontSize);
+		_unitFont = new SKFont(_hudTypeface, OverlayElementBounds.UnitFontSize);
+		_smallFont = new SKFont(_hudTypeface, OverlayElementBounds.SmallFontSize);
 		_speedFont = new SKFont(_hudTypeface, 115);
 		_speedUnitFont = new SKFont(_hudTypeface, 38);
 		_watermarkTitleFont = new SKFont(_hudTypeface, 40);
@@ -235,28 +243,14 @@ public sealed partial class OverlayRenderer : IDisposable
 		_outlineFillPaint.Dispose();
 		_panelShadowPaint.Dispose();
 		foreach (SKMaskFilter filter in _blurMaskFilters.Values) filter.Dispose();
+		foreach (SKFont font in _fontCache.Values) font.Dispose();
+		// A family that isn't installed on this machine resolves to _hudTypeface itself (see
+		// ResolveTypeface's fallback) - skip those entries so it isn't disposed twice.
+		foreach (SKTypeface typeface in _customTypefacesByFamily.Values)
+			if (!ReferenceEquals(typeface, _hudTypeface))
+				typeface.Dispose();
 		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
-	}
-
-	private static SKTypeface CreateHudTypeface()
-	{
-		var style = new SKFontStyle(SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-		string[] candidates = OperatingSystem.IsWindows()
-			? ["Segoe UI"]
-			: OperatingSystem.IsMacOS()
-				? ["Helvetica Neue", "Arial"]
-				: ["Noto Sans", "DejaVu Sans", "Liberation Sans", "Arial"];
-
-		foreach (var family in candidates)
-		{
-			SKTypeface? typeface = SKFontManager.Default.MatchFamily(family, style);
-			if (typeface is not null && typeface.FamilyName.Equals(family, StringComparison.OrdinalIgnoreCase))
-				return typeface;
-			typeface?.Dispose();
-		}
-
-		return SKTypeface.FromFamilyName(null, style);
 	}
 
 	public byte[] Render(DerivedFrame frame, int? outputWidth = null, int? outputHeight = null)
@@ -424,20 +418,58 @@ public sealed partial class OverlayRenderer : IDisposable
 		canvas.DrawCircle(cx, cy + radius * 0.06f, radius * 0.97f, _panelShadowPaint);
 	}
 
+	/// <summary>
+	///     `outlineColor`/`outlineWidthScale` default to the built-in near-black outline at its normal
+	///     width - only the text widgets' per-element OutlineColor/OutlineWidth override them (see
+	///     OverlayRenderer.TextWidgets.cs); every other caller draws exactly as before these existed.
+	/// </summary>
 	private void DrawOutlined(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color,
-		SKTextAlign align = SKTextAlign.Left, float opacity = 1f)
+		SKTextAlign align = SKTextAlign.Left, float opacity = 1f, SKColor? outlineColor = null, float outlineWidthScale = 1f)
 	{
 		var dropOffset = font.Size * 0.045f;
 		_outlineShadowPaint.Color = new SKColor(0, 0, 0, (byte)(130 * opacity));
 		_outlineShadowPaint.MaskFilter = GetBlurMaskFilter(font.Size * 0.04f);
 		canvas.DrawText(text, x + dropOffset, y + dropOffset, align, font, _outlineShadowPaint);
 
-		_outlineStrokePaint.Color = Shadow.WithAlpha((byte)(Shadow.Alpha * opacity));
-		_outlineStrokePaint.StrokeWidth = font.Size * 0.045f;
+		SKColor stroke = outlineColor ?? Shadow;
+		_outlineStrokePaint.Color = stroke.WithAlpha((byte)(stroke.Alpha * opacity));
+		_outlineStrokePaint.StrokeWidth = font.Size * 0.045f * outlineWidthScale;
 		canvas.DrawText(text, x, y, align, font, _outlineStrokePaint);
 
 		_outlineFillPaint.Color = color.WithAlpha((byte)(color.Alpha * opacity));
 		canvas.DrawText(text, x, y, align, font, _outlineFillPaint);
+	}
+
+	/// <summary>Hex string (e.g. "#FFFFFF"), or `fallback` when null/unparsable - fails soft, same policy as TrailColor/DateFormat/Locale. Shared by every per-element color override (TrailColor, and TextColor/AccentColor/OutlineColor below).</summary>
+	private static SKColor ResolveColor(string? hex, SKColor fallback)
+	{
+		return !string.IsNullOrWhiteSpace(hex) && SKColor.TryParse(hex, out SKColor parsed) ? parsed : fallback;
+	}
+
+	/// <summary>
+	///     A font at `size` in `family` (or the built-in HUD typeface when `family` is null/not installed
+	///     on this machine - see OverlayElementBounds.ResolveTypefaceOrFallback), cached per (family, size)
+	///     pair for this renderer's lifetime - only the text widgets ever request a non-null family, so in
+	///     the overwhelmingly common case this is a single cache lookup, not a fresh SKFont per frame.
+	/// </summary>
+	private SKFont GetFont(string? family, float size)
+	{
+		(string, float) key = (family ?? "", size);
+		if (_fontCache.TryGetValue(key, out SKFont? font)) return font;
+
+		font = new SKFont(ResolveTypeface(family), size);
+		_fontCache[key] = font;
+		return font;
+	}
+
+	private SKTypeface ResolveTypeface(string? family)
+	{
+		if (string.IsNullOrWhiteSpace(family)) return _hudTypeface;
+		if (_customTypefacesByFamily.TryGetValue(family, out SKTypeface? cached)) return cached;
+
+		SKTypeface resolved = OverlayElementBounds.ResolveTypefaceOrFallback(family, _hudTypeface);
+		_customTypefacesByFamily[family] = resolved;
+		return resolved;
 	}
 
 	/// <summary>Lazily builds (and thereafter reuses) the blur mask filter for a given sigma - see the fields above for why this is safe to share across calls.</summary>

@@ -1,4 +1,3 @@
-using System.Globalization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
@@ -255,20 +254,16 @@ public sealed partial class OverlayRenderer
 		if (RouteIntro.ShowDate)
 		{
 			DateTime? utc = _allFrames.Count > 0 ? _allFrames[0].Raw.GpsTimestamp ?? _containerRecordingStartUtc : null;
-			var dateText = utc is { } resolvedUtc
-				? resolvedUtc.ToLocalFromUtc().ToString(DefaultDateFormat, CultureInfo.CurrentCulture)
-				: "--";
+			string dateText;
+			if (utc is { } resolvedUtc) OverlayTimeFormatting.TryFormat(resolvedUtc.ToLocalFromUtc(), null, null, out dateText);
+			else dateText = "--";
 			date = ("DATE", dateText);
 		}
 
 		(string Label, string Value)? duration = null;
 		if (RouteIntro.ShowDuration)
 		{
-			TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(_totalDurationSeconds, 0));
-			var durationText = elapsed.TotalHours >= 1
-				? $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
-				: $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
-			duration = ("DURATION", durationText);
+			duration = ("DURATION", OverlayTimeFormatting.FormatElapsed(_totalDurationSeconds));
 		}
 
 		(string Label, string Value)? camera = RouteIntro.ShowCameraModel ? ("CAMERA", _cameraModel ?? "--") : null;

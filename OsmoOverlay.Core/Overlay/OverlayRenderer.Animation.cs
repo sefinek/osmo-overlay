@@ -55,8 +55,10 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	/// <summary>Scales everything `draw` renders by element.Scale, pivoted on the widget's own anchor
-	/// (element.X, element.Y) so resizing never shifts its position.</summary>
+	/// <summary>
+	///     Scales everything `draw` renders by element.Scale, pivoted on the widget's own anchor
+	///     (element.X, element.Y) so resizing never shifts its position.
+	/// </summary>
 	private static void ScaleAroundAnchor(SKCanvas canvas, OverlayElement element)
 	{
 		canvas.Translate(element.X, element.Y);

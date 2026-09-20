@@ -395,7 +395,7 @@ public sealed partial class OverlayRenderer
 	/// <summary>Hex string (e.g. "#46DC6E") from OverlayElement.TrailColor, or the built-in green when null/unparsable - fails soft, same policy as the time widgets' Locale/DateFormat.</summary>
 	private static SKColor ResolveTrailColor(string? hex)
 	{
-		return !string.IsNullOrWhiteSpace(hex) && SKColor.TryParse(hex, out SKColor parsed) ? parsed : TrailColor;
+		return ResolveColor(hex, TrailColor);
 	}
 
 	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, the older static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>

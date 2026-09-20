@@ -1,4 +1,3 @@
-using System.Globalization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
@@ -10,7 +9,6 @@ public sealed partial class OverlayRenderer
 {
 	private const double MetersToFeet = 3.28084;
 	private const double MilesInMeters = 1609.344;
-	private const string DefaultDateFormat = "dd/MM/yyyy  HH:mm:ss";
 
 	private void DrawDateTime(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
 	{
@@ -45,26 +43,17 @@ public sealed partial class OverlayRenderer
 		else
 		{
 			DateTime shown = toLocal ? resolvedUtc.ToLocalFromUtc() : resolvedUtc;
-			try
-			{
-				CultureInfo culture = element.Locale is null ? CultureInfo.CurrentCulture : CultureInfo.GetCultureInfo(element.Locale);
-				dateText = shown.ToString(element.DateFormat ?? DefaultDateFormat, culture);
-			}
-			catch (Exception ex) when (ex is CultureNotFoundException or FormatException)
-			{
-				// A hand-edited/shared preset can carry an invalid Locale or DateFormat string - fail
-				// soft (fall back to the default) instead of throwing out of Render and aborting the
-				// whole export, same "one bad user-editable field" policy as the map widget's
-				// placeholder fallback.
-				AppLogger.Warn(ex,
-					$"Time widget: invalid Locale/DateFormat ('{element.Locale}' / '{element.DateFormat}') - using default.");
-				dateText = shown.ToString(DefaultDateFormat, CultureInfo.CurrentCulture);
-			}
+			// A hand-edited/shared preset can carry an invalid Locale or DateFormat string - fail soft
+			// (fall back to the default) instead of throwing out of Render and aborting the whole export,
+			// same "one bad user-editable field" policy as the map widget's placeholder fallback.
+			if (!OverlayTimeFormatting.TryFormat(shown, element.DateFormat, element.Locale, out dateText))
+				AppLogger.Warn($"Time widget: invalid Locale/DateFormat ('{element.Locale}' / '{element.DateFormat}') - using default.");
 
 			if (!toLocal) dateText += "  UTC";
 		}
 
-		DrawOutlined(canvas, dateText, 0, 0, _dateFont, White);
+		DrawOutlined(canvas, dateText, 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
+			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
@@ -76,11 +65,9 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
 
-		TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(frame.Raw.SampleTimeSeconds, 0));
-		var text = elapsed.TotalHours >= 1
-			? $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
-			: $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
-		DrawOutlined(canvas, text, 0, 0, _dateFont, White);
+		var text = OverlayTimeFormatting.FormatElapsed(frame.Raw.SampleTimeSeconds);
+		DrawOutlined(canvas, text, 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
+			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
@@ -92,7 +79,8 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
 
-		DrawOutlined(canvas, _cameraModel ?? "--", 0, 0, _dateFont, White);
+		DrawOutlined(canvas, _cameraModel ?? "--", 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
+			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
@@ -106,7 +94,7 @@ public sealed partial class OverlayRenderer
 		var (value, unit) = element.Units == UnitSystem.Imperial
 			? (F(meters * MetersToFeet, "0"), "FT")
 			: (F(meters, "0"), "M");
-		DrawStat(canvas, element.Label ?? "ELEVATION", value, unit);
+		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);
 		canvas.Restore();
 	}
 
@@ -115,7 +103,7 @@ public sealed partial class OverlayRenderer
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
-		DrawStat(canvas, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");
+		DrawStat(canvas, element, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");
 		canvas.Restore();
 	}
 
@@ -125,7 +113,7 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
 		var (distanceValue, distanceUnit) = FormatDistance(frame.CumulativeDistanceMeters, element.Units);
-		DrawStat(canvas, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);
+		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);
 		canvas.Restore();
 	}
 
@@ -161,14 +149,22 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
 
-		DrawOutlined(canvas, (element.Label ?? "CAMERA").ToUpperInvariant(), 0, 0, _labelFont, White);
+		SKFont labelFont = TextFont(element, OverlayElementBounds.LabelFontSize);
+		SKFont smallFont = TextFont(element, OverlayElementBounds.SmallFontSize);
+		SKColor textColor = TextColorOf(element);
+		SKColor accentColor = AccentColorOf(element);
+		SKColor outlineColor = OutlineColorOf(element);
+
+		DrawOutlined(canvas, (element.Label ?? "CAMERA").ToUpperInvariant(), 0, 0, labelFont, textColor,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 
 		var isoText = frame.Raw.Iso is { } iso ? $"ISO {F(iso, "0")}" : "ISO --";
 		var colorTempText = frame.Raw.ColorTemperatureKelvin is { } kelvin ? $"{kelvin} K" : "-- K";
 
-		DrawOutlined(canvas, isoText, 0, 58, _smallFont, Accent);
-		DrawOutlined(canvas, FormatShutter(frame.Raw.ShutterSeconds), 0, 102, _smallFont, Accent);
-		DrawOutlined(canvas, colorTempText, 0, 146, _smallFont, Accent);
+		DrawOutlined(canvas, isoText, 0, 58, smallFont, accentColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, FormatShutter(frame.Raw.ShutterSeconds), 0, 102, smallFont, accentColor,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, colorTempText, 0, 146, smallFont, accentColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
@@ -181,11 +177,38 @@ public sealed partial class OverlayRenderer
 		return denominator >= 1 ? $"1/{F(denominator, "0")} S" : $"{F(seconds.Value, "0.0")} S";
 	}
 
-	private void DrawStat(SKCanvas canvas, string label, string value, string unit)
+	private void DrawStat(SKCanvas canvas, OverlayElement element, string label, string value, string unit)
 	{
-		DrawOutlined(canvas, label.ToUpperInvariant(), 0, 0, _labelFont, White);
-		DrawOutlined(canvas, value, 0, 90, _valueFont, Accent);
-		var valueWidth = _valueFont.MeasureText(value);
-		DrawOutlined(canvas, unit, valueWidth + 12, 90, _unitFont, White);
+		SKFont valueFont = TextFont(element, OverlayElementBounds.ValueFontSize);
+		SKColor textColor = TextColorOf(element);
+		SKColor outlineColor = OutlineColorOf(element);
+
+		DrawOutlined(canvas, label.ToUpperInvariant(), 0, 0, TextFont(element, OverlayElementBounds.LabelFontSize), textColor,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, value, 0, 90, valueFont, AccentColorOf(element), outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		var valueWidth = valueFont.MeasureText(value);
+		DrawOutlined(canvas, unit, valueWidth + 12, 90, TextFont(element, OverlayElementBounds.UnitFontSize), textColor,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+	}
+
+	/// <summary>This widget's own font at `baseSize`, from its FontFamily override (or the built-in HUD font when null/not installed) - see OverlayRenderer.GetFont.</summary>
+	private SKFont TextFont(OverlayElement element, float baseSize)
+	{
+		return GetFont(element.FontFamily, baseSize);
+	}
+
+	private static SKColor TextColorOf(OverlayElement element)
+	{
+		return ResolveColor(element.TextColor, White);
+	}
+
+	private static SKColor AccentColorOf(OverlayElement element)
+	{
+		return ResolveColor(element.AccentColor, Accent);
+	}
+
+	private static SKColor OutlineColorOf(OverlayElement element)
+	{
+		return ResolveColor(element.OutlineColor, Shadow);
 	}
 }

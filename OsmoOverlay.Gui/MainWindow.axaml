@@ -650,32 +650,50 @@
 										</Border>
 										<TextBlock Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning"
 										           Text="⚠" IsVisible="False" />
-										<Button Name="DateTimeGearButton" Grid.Column="2" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="DateTimeFormatCombo" HorizontalAlignment="Stretch"
-														          SelectionChanged="OnDateTimeFormatChanged" />
-														<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="DateTimeLocaleCombo" HorizontalAlignment="Stretch"
-														          SelectionChanged="OnDateTimeLocaleChanged" />
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DateTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DateTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="DateTimeAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="DateTimeAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="DateTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="DateTimeSettingsPanel" Grid.Column="2" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DateTimeFormatCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnDateTimeFormatChanged" />
+												<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DateTimeLocaleCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnDateTimeLocaleChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DateTimeFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DateTimeScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="DateTimeTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="DateTimeTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="DateTimeOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="DateTimeOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DateTimeOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DateTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DateTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DateTimeAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="DateTimeAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="DateTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto,Auto">
@@ -686,32 +704,50 @@
 										</Border>
 										<TextBlock Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning"
 										           Text="⚠" IsVisible="False" />
-										<Button Name="UtcTimeGearButton" Grid.Column="2" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="UtcTimeFormatCombo" HorizontalAlignment="Stretch"
-														          SelectionChanged="OnUtcTimeFormatChanged" />
-														<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="UtcTimeLocaleCombo" HorizontalAlignment="Stretch"
-														          SelectionChanged="OnUtcTimeLocaleChanged" />
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="UtcTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="UtcTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="UtcTimeAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="UtcTimeAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="UtcTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="UtcTimeSettingsPanel" Grid.Column="2" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="UtcTimeFormatCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnUtcTimeFormatChanged" />
+												<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="UtcTimeLocaleCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnUtcTimeLocaleChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="UtcTimeFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="UtcTimeScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="UtcTimeTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="UtcTimeTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="UtcTimeOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="UtcTimeOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="UtcTimeOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="UtcTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="UtcTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="UtcTimeAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="UtcTimeAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="UtcTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -720,29 +756,53 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Camera info" />
 										</Border>
-										<Button Name="CameraInfoGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
-														<TextBox Name="CameraInfoLabelBox" PlaceholderText="Camera"
-														         LostFocus="OnCameraInfoLabelChanged" />
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraInfoAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraInfoDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="CameraInfoAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="CameraInfoAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="CameraInfoAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="CameraInfoSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="CameraInfoLabelBox" PlaceholderText="Camera"
+												         LostFocus="OnCameraInfoLabelChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="CameraInfoFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraInfoScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CameraInfoTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CameraInfoTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CameraInfoAccentColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CameraInfoAccentColorBox" PlaceholderText="#46BEFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CameraInfoOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CameraInfoOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraInfoOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraInfoAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraInfoDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="CameraInfoAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="CameraInfoAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="CameraInfoAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -751,44 +811,42 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Compass" />
 										</Border>
-										<Button Name="CompassGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
-														<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-															<Border Grid.Column="0" Name="CompassTrailColorSwatch" Width="20" Height="20"
-															        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-															<TextBox Grid.Column="1" Name="CompassTrailColorBox" PlaceholderText="#46DC6E"
-															         LostFocus="OnCompassTrailColorChanged" />
-														</Grid>
-														<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CompassTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
-														               FormatString="0.0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnCompassTrailWidthChanged" />
-														<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
-														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="CompassTrailArrowRadio" Content="Arrow"
-															             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
-															<RadioButton Name="CompassTrailDotRadio" Content="Dot"
-															             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
-														</StackPanel>
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CompassAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CompassDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="CompassAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="CompassAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="CompassAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="CompassSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CompassTrailColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CompassTrailColorBox" PlaceholderText="#46DC6E"
+													         LostFocus="OnCompassTrailColorChanged" />
+												</Grid>
+												<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CompassTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
+												               FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnCompassTrailWidthChanged" />
+												<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="CompassTrailArrowRadio" Content="Arrow"
+													             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
+													<RadioButton Name="CompassTrailDotRadio" Content="Dot"
+													             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CompassAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CompassDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="CompassAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="CompassAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="CompassAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -797,66 +855,64 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Map" />
 										</Border>
-										<Button Name="MapGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
-														           TextWrapping="Wrap"
-														           Text="Tile provider, API key and attribution are set once for every map widget in Settings, not per widget." />
-														<TextBlock Text="Zoom (2-19)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="MapZoomBox" Increment="1"
-														               FormatString="0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnMapZoomChanged" />
-														<CheckBox Name="MapDynamicZoomCheck" Content="Auto zoom to fit route"
-														          Click="OnMapDynamicZoomChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
-														           TextWrapping="Wrap"
-														           Text="Zooms out as the driven trail grows so it stays fully in view; when off, the map stays at a fixed zoom and the trail may get cut off near the edge." />
-														<TextBlock Name="MapZoomOutMaxLabel" Text="Max zoom-out (x)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="MapZoomOutMaxBox" Increment="1"
-														               FormatString="0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnMapZoomOutMaxChanged" />
-														<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,0,0,4" FontSize="11"
-														           Opacity="0.4" TextWrapping="Wrap"
-														           Text="How far out the map is allowed to zoom to keep the trail visible (higher = shows more area, further from the built-in zoom level above)." />
-														<TextBlock Classes="infoLabel" Margin="0,4,0,0" FontSize="11" Opacity="0.4"
-														           TextWrapping="Wrap"
-														           Text="Fetches tiles over the network the first time a route is opened/rendered, then caches them on disk." />
-														<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
-														<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-															<Border Grid.Column="0" Name="MapTrailColorSwatch" Width="20" Height="20"
-															        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-															<TextBox Grid.Column="1" Name="MapTrailColorBox" PlaceholderText="#46DC6E"
-															         LostFocus="OnMapTrailColorChanged" />
-														</Grid>
-														<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="MapTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
-														               FormatString="0.0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnMapTrailWidthChanged" />
-														<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
-														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="MapTrailArrowRadio" Content="Arrow"
-															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
-															<RadioButton Name="MapTrailDotRadio" Content="Dot"
-															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
-														</StackPanel>
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="MapAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="MapDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="MapAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="MapAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="MapSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="Tile provider, API key and attribution are set once for every map widget in Settings, not per widget." />
+												<TextBlock Text="Zoom (2-19)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="MapZoomBox" Increment="1"
+												               FormatString="0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnMapZoomChanged" />
+												<CheckBox Name="MapDynamicZoomCheck" Content="Auto zoom to fit route"
+												          Click="OnMapDynamicZoomChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="Zooms out as the driven trail grows so it stays fully in view; when off, the map stays at a fixed zoom and the trail may get cut off near the edge." />
+												<TextBlock Name="MapZoomOutMaxLabel" Text="Max zoom-out (x)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="MapZoomOutMaxBox" Increment="1"
+												               FormatString="0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnMapZoomOutMaxChanged" />
+												<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,0,0,4" FontSize="11"
+												           Opacity="0.4" TextWrapping="Wrap"
+												           Text="How far out the map is allowed to zoom to keep the trail visible (higher = shows more area, further from the built-in zoom level above)." />
+												<TextBlock Classes="infoLabel" Margin="0,4,0,0" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="Fetches tiles over the network the first time a route is opened/rendered, then caches them on disk." />
+												<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="MapTrailColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="MapTrailColorBox" PlaceholderText="#46DC6E"
+													         LostFocus="OnMapTrailColorChanged" />
+												</Grid>
+												<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="MapTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
+												               FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnMapTrailWidthChanged" />
+												<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="MapTrailArrowRadio" Content="Arrow"
+													             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
+													<RadioButton Name="MapTrailDotRadio" Content="Dot"
+													             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="MapAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="MapDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="MapAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="MapAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -865,33 +921,31 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Speed gauge" />
 										</Border>
-										<Button Name="SpeedGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
-														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="SpeedMetricRadio" Content="Metric"
-															             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
-															<RadioButton Name="SpeedImperialRadio" Content="Imperial"
-															             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
-														</StackPanel>
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SpeedAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SpeedDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="SpeedAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="SpeedAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="SpeedAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="SpeedSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="SpeedMetricRadio" Content="Metric"
+													             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
+													<RadioButton Name="SpeedImperialRadio" Content="Imperial"
+													             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="SpeedAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="SpeedDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="SpeedAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="SpeedAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="SpeedAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="PitchListItem" Classes="overlayListItem"
@@ -899,26 +953,23 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Pitch gauge" />
 										</Border>
-										<Button Name="PitchGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="PitchAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="PitchDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="PitchAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="PitchAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="PitchAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="PitchSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+																								<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="PitchAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="PitchDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="PitchAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="PitchAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="PitchAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="SunListItem" Classes="overlayListItem"
@@ -926,26 +977,23 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Sun / G-force" />
 										</Border>
-										<Button Name="SunGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SunAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SunDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="SunAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="SunAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="SunAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="SunSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+																								<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="SunAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="SunDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="SunAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="SunAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="SunAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="GMeterListItem" Classes="overlayListItem"
@@ -953,33 +1001,31 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="G-meter" />
 										</Border>
-										<Button Name="GMeterGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Full-scale range (G)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GMeterFullScaleBox" Minimum="0.1" Maximum="5"
-														               Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnGMeterFullScaleChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
-														           TextWrapping="Wrap"
-														           Text="How many G's put the dot at the ring's edge - lower for a gentle ride, higher for motorsport." />
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GMeterAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GMeterDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="GMeterAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="GMeterAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="GMeterAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="GMeterSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Full-scale range (G)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GMeterFullScaleBox" Minimum="0.1" Maximum="5"
+												               Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnGMeterFullScaleChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="How many G's put the dot at the ring's edge - lower for a gentle ride, higher for motorsport." />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GMeterAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GMeterDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="GMeterAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="GMeterAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="GMeterAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="ElapsedTimeListItem" Classes="overlayListItem"
@@ -987,26 +1033,43 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Elapsed time" />
 										</Border>
-										<Button Name="ElapsedTimeGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElapsedTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElapsedTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="ElapsedTimeAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="ElapsedTimeAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="ElapsedTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="ElapsedTimeSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="ElapsedTimeFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElapsedTimeScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="ElapsedTimeTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="ElapsedTimeTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="ElapsedTimeOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="ElapsedTimeOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElapsedTimeOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElapsedTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElapsedTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="ElapsedTimeAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="ElapsedTimeAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="ElapsedTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="CameraModelListItem" Classes="overlayListItem"
@@ -1014,26 +1077,43 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Camera model" />
 										</Border>
-										<Button Name="CameraModelGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraModelAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraModelDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="CameraModelAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="CameraModelAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="CameraModelAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="CameraModelSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="CameraModelFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraModelScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CameraModelTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CameraModelTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CameraModelOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CameraModelOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraModelOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraModelAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CameraModelDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="CameraModelAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="CameraModelAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="CameraModelAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="TripProgressBarListItem" Classes="overlayListItem"
@@ -1041,43 +1121,41 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Trip progress bar" />
 										</Border>
-										<Button Name="TripProgressBarGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
-														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="TripProgressMetricRadio" Content="Metric"
-															             GroupName="TripProgressUnits" Click="OnTripProgressUnitsChanged" />
-															<RadioButton Name="TripProgressImperialRadio" Content="Imperial"
-															             GroupName="TripProgressUnits" Click="OnTripProgressUnitsChanged" />
-														</StackPanel>
-														<TextBlock Text="Arrival margin (m)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="TripProgressToleranceBox" Minimum="0" Maximum="100"
-														               Increment="0.5" FormatString="0.0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnTripProgressToleranceChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
-														           TextWrapping="Wrap"
-														           Text="How close to the total distance counts as 'arrived' - below this, GPS jitter would otherwise never quite resolve the remaining distance to exactly zero." />
-														<TextBlock Text="Arrived label" Classes="infoLabel" Margin="0" />
-														<TextBox Name="TripProgressLabelBox" PlaceholderText="FINISH"
-														         LostFocus="OnTripProgressLabelChanged" />
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="TripProgressBarAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="TripProgressBarDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="TripProgressBarAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="TripProgressBarAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="TripProgressBarAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="TripProgressBarSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="TripProgressMetricRadio" Content="Metric"
+													             GroupName="TripProgressUnits" Click="OnTripProgressUnitsChanged" />
+													<RadioButton Name="TripProgressImperialRadio" Content="Imperial"
+													             GroupName="TripProgressUnits" Click="OnTripProgressUnitsChanged" />
+												</StackPanel>
+												<TextBlock Text="Arrival margin (m)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="TripProgressToleranceBox" Minimum="0" Maximum="100"
+												               Increment="0.5" FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnTripProgressToleranceChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="How close to the total distance counts as 'arrived' - below this, GPS jitter would otherwise never quite resolve the remaining distance to exactly zero." />
+												<TextBlock Text="Arrived label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="TripProgressLabelBox" PlaceholderText="FINISH"
+												         LostFocus="OnTripProgressLabelChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="TripProgressBarAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="TripProgressBarDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="TripProgressBarAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="TripProgressBarAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="TripProgressBarAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -1086,36 +1164,60 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Elevation" />
 										</Border>
-										<Button Name="ElevationGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
-														<TextBox Name="ElevationLabelBox" PlaceholderText="Elevation"
-														         LostFocus="OnElevationLabelChanged" />
-														<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
-														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="ElevationMetricRadio" Content="Metric"
-															             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
-															<RadioButton Name="ElevationImperialRadio" Content="Imperial"
-															             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
-														</StackPanel>
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElevationAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElevationDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="ElevationAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="ElevationAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="ElevationAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="ElevationSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="ElevationLabelBox" PlaceholderText="Elevation"
+												         LostFocus="OnElevationLabelChanged" />
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ElevationMetricRadio" Content="Metric"
+													             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
+													<RadioButton Name="ElevationImperialRadio" Content="Imperial"
+													             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="ElevationFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElevationScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="ElevationTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="ElevationTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="ElevationAccentColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="ElevationAccentColorBox" PlaceholderText="#46BEFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="ElevationOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="ElevationOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElevationOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElevationAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ElevationDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="ElevationAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="ElevationAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="ElevationAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -1124,29 +1226,53 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Gradient" />
 										</Border>
-										<Button Name="GradientGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
-														<TextBox Name="GradientLabelBox" PlaceholderText="Gradient"
-														         LostFocus="OnGradientLabelChanged" />
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GradientAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GradientDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="GradientAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="GradientAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="GradientAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="GradientSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="GradientLabelBox" PlaceholderText="Gradient"
+												         LostFocus="OnGradientLabelChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="GradientFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GradientScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="GradientTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="GradientTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="GradientAccentColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="GradientAccentColorBox" PlaceholderText="#46BEFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="GradientOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="GradientOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GradientOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GradientAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GradientDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="GradientAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="GradientAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="GradientAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
@@ -1155,36 +1281,60 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<TextBlock Classes="overlayListItemText" Text="Total distance" />
 										</Border>
-										<Button Name="DistanceGearButton" Grid.Column="1" IsVisible="False">
-											<Button.Flyout>
-												<Flyout Placement="Left">
-													<StackPanel Classes="settingsFlyout">
-														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
-														<TextBox Name="DistanceLabelBox" PlaceholderText="Total distance"
-														         LostFocus="OnDistanceLabelChanged" />
-														<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
-														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="DistanceMetricRadio" Content="Metric"
-															             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
-															<RadioButton Name="DistanceImperialRadio" Content="Imperial"
-															             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
-														</StackPanel>
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DistanceAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DistanceDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="DistanceAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="DistanceAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="DistanceAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
-														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnResetElementClick" />
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
+										<Border Name="DistanceSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="DistanceLabelBox" PlaceholderText="Total distance"
+												         LostFocus="OnDistanceLabelChanged" />
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="DistanceMetricRadio" Content="Metric"
+													             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
+													<RadioButton Name="DistanceImperialRadio" Content="Imperial"
+													             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DistanceFontCombo" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DistanceScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="DistanceTextColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="DistanceTextColorBox" PlaceholderText="#FFFFFF" />
+												</Grid>
+												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="DistanceAccentColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="DistanceAccentColorBox" PlaceholderText="#46BEFF" />
+												</Grid>
+												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="DistanceOutlineColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="DistanceOutlineColorBox" PlaceholderText="#000000" />
+												</Grid>
+												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DistanceOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DistanceAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="DistanceDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DistanceAnimationCombo" HorizontalAlignment="Stretch" />
+												<StackPanel Name="DistanceAnimationDurationPanel" Spacing="6">
+													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+													<NumericUpDown Name="DistanceAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												</StackPanel>
+												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+												        Click="OnResetElementClick" />
+											</StackPanel>
+										</Border>
 									</Grid>
 								</StackPanel>
 							</StackPanel>

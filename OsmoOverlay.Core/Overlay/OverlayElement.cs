@@ -71,6 +71,14 @@ public enum OverlayElementType
 ///     is only a transient/deserialization state: OverlayPreset.CreateDefault always assigns Type.ToString()
 ///     to the one instance it creates per type, new instances the GUI adds get a random Guid, and
 ///     OverlayPreset.WithElementIdsBackfilled fixes up presets saved before this field existed.
+///     FontFamily/TextColor/AccentColor/OutlineColor/OutlineWidth style the text-based widgets only
+///     (DateTimeText/UtcTimeText/ElapsedTimeText/CameraModelText/Elevation/Gradient/Distance/CameraInfo -
+///     see OverlayRenderer.TextWidgets.cs); every other widget type ignores them. Null/1 means "use the
+///     built-in default" (white text, the built-in accent blue, the built-in near-black outline at its
+///     normal width, the built-in HUD font), same fail-soft-on-bad-value policy as TrailColor/DateFormat -
+///     an invalid hex or a font family not installed on this machine falls back rather than throwing. Text
+///     *size* deliberately reuses Scale (already resizes a text widget uniformly, including via the GUI's
+///     resize handle) instead of a second, overlapping field.
 /// </summary>
 public sealed record OverlayElement(
 	OverlayElementType Type,
@@ -95,4 +103,9 @@ public sealed record OverlayElement(
 	OverlayAnimationType AnimationType = OverlayAnimationType.None,
 	double AnimationDurationSeconds = OverlayRenderer.AnimationDurationSecondsDefault,
 	string Id = "",
-	float Scale = 1f);
+	float Scale = 1f,
+	string? FontFamily = null,
+	string? TextColor = null,
+	string? AccentColor = null,
+	string? OutlineColor = null,
+	float OutlineWidth = 1f);

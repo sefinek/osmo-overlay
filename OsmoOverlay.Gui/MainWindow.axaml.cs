@@ -43,9 +43,9 @@ public partial class MainWindow : Window
 	private string _detectedEncoder = "";
 	private Point _dragAnchorOffset;
 	private string? _draggingElementId;
-	// Id of whichever element's settings Flyout is currently populated/open - every field-changed
-	// handler in the flyout targets this instance rather than a fixed OverlayElementType, since a type
-	// can now have several instances on the canvas at once (see OnWidgetGearHoverButtonClick).
+	// Id of whichever element's settings panel is currently populated/open in WidgetSettingsWindow - every
+	// field-changed handler in that panel targets this instance rather than a fixed OverlayElementType,
+	// since a type can now have several instances on the canvas at once (see OnWidgetGearHoverButtonClick).
 	private string? _editingElementId;
 	private int? _frameLimit;
 
@@ -79,6 +79,9 @@ public partial class MainWindow : Window
 	private FileSummary? _summary;
 	private bool _suppressOverlayEvents;
 	private bool _suppressSliderEvent;
+	// Lazily created, reused for this window's whole lifetime - see GetOrCreateWidgetSettingsWindow and
+	// WidgetSettingsWindow's own class doc for why closing it hides rather than disposes it.
+	private WidgetSettingsWindow? _widgetSettingsWindow;
 
 	public MainWindow()
 	{
@@ -125,6 +128,39 @@ public partial class MainWindow : Window
 		WireTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel);
 		WireTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel);
 		WireTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel);
+
+		// Style (Font/Text size/Text color/Outline color/Outline width, plus Value color on the four
+		// widgets with a second accent-colored text slot) applies only to the text-based widgets - every
+		// other widget type has no per-element text to style, so it gets no Style section/WireStyle call.
+		DateTimeFontCombo.ItemsSource = FontOptions;
+		UtcTimeFontCombo.ItemsSource = FontOptions;
+		ElapsedTimeFontCombo.ItemsSource = FontOptions;
+		CameraModelFontCombo.ItemsSource = FontOptions;
+		ElevationFontCombo.ItemsSource = FontOptions;
+		GradientFontCombo.ItemsSource = FontOptions;
+		DistanceFontCombo.ItemsSource = FontOptions;
+		CameraInfoFontCombo.ItemsSource = FontOptions;
+
+		WireStyle(DateTimeFontCombo, DateTimeScaleBox, DateTimeTextColorBox, DateTimeTextColorSwatch,
+			DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox);
+		WireStyle(UtcTimeFontCombo, UtcTimeScaleBox, UtcTimeTextColorBox, UtcTimeTextColorSwatch,
+			UtcTimeOutlineColorBox, UtcTimeOutlineColorSwatch, UtcTimeOutlineWidthBox);
+		WireStyle(ElapsedTimeFontCombo, ElapsedTimeScaleBox, ElapsedTimeTextColorBox, ElapsedTimeTextColorSwatch,
+			ElapsedTimeOutlineColorBox, ElapsedTimeOutlineColorSwatch, ElapsedTimeOutlineWidthBox);
+		WireStyle(CameraModelFontCombo, CameraModelScaleBox, CameraModelTextColorBox, CameraModelTextColorSwatch,
+			CameraModelOutlineColorBox, CameraModelOutlineColorSwatch, CameraModelOutlineWidthBox);
+		WireStyle(ElevationFontCombo, ElevationScaleBox, ElevationTextColorBox, ElevationTextColorSwatch,
+			ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox,
+			ElevationAccentColorBox, ElevationAccentColorSwatch);
+		WireStyle(GradientFontCombo, GradientScaleBox, GradientTextColorBox, GradientTextColorSwatch,
+			GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox,
+			GradientAccentColorBox, GradientAccentColorSwatch);
+		WireStyle(DistanceFontCombo, DistanceScaleBox, DistanceTextColorBox, DistanceTextColorSwatch,
+			DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox,
+			DistanceAccentColorBox, DistanceAccentColorSwatch);
+		WireStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
+			CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox,
+			CameraInfoAccentColorBox, CameraInfoAccentColorSwatch);
 
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in

@@ -41,6 +41,16 @@ public partial class MainWindow
 		new("Slide right", OverlayAnimationType.SlideRight)
 	];
 
+	private static readonly List<FontOption> FontOptions = BuildFontOptions();
+
+	// Hex the swatches fall back to when the box is empty/unparsable - matches OverlayRenderer's own
+	// built-in White/Accent/Shadow defaults exactly (see OverlayRenderer.TextWidgets.cs' *Of helpers), so
+	// what the swatch shows before you've typed anything is exactly what the render already uses.
+	private const string DefaultTextColorHex = "#FFFFFF";
+	private const string DefaultAccentColorHex = "#46BEFF";
+	private const string DefaultOutlineColorHex = "#000000";
+	private const string DefaultTrailColorHex = "#46DC6E";
+
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
 
@@ -91,9 +101,9 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Refreshes everything driven by the active preset's element list except a widget's own settings
-	///     flyout, which is populated on demand instead (see PopulateFlyoutFields) - with several
-	///     instances of a type possibly on the canvas at once, there's no single "the" instance left to
-	///     eagerly bind every flyout's fields to.
+	///     panel (in WidgetSettingsWindow), which is populated on demand instead (see
+	///     PopulateElementSettings) - with several instances of a type possibly on the canvas at once,
+	///     there's no single "the" instance left to eagerly bind every panel's fields to.
 	/// </summary>
 	private void RefreshWidgetList()
 	{
@@ -258,7 +268,7 @@ public partial class MainWindow
 		}
 
 		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
-		SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale * el.Scale);
+		SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
 		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
 		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
 		{
@@ -276,6 +286,19 @@ public partial class MainWindow
 		Canvas.SetLeft(ResizeHandle, bottomRight.X - ResizeHandle.Width / 2);
 		Canvas.SetTop(ResizeHandle, bottomRight.Y - ResizeHandle.Height / 2);
 		ResizeHandle.IsVisible = !IsActivePresetDefault;
+	}
+
+	/// <summary>
+	///     OverlayElementBounds.GetBounds with this element's own DateFormat/Locale/Label/FontFamily and
+	///     (for CameraModelText) the loaded file's actual camera model, instead of the generic placeholder
+	///     text/font GetBounds falls back to - keeps every hit-test/selection call site in this file
+	///     measuring against what that specific instance will really render, without repeating the same
+	///     five extra arguments at each one.
+	/// </summary>
+	private SKRect GetElementBounds(OverlayElement element, float x, float y, float scale)
+	{
+		return OverlayElementBounds.GetBounds(element.Type, x, y, scale,
+			element.DateFormat, element.Locale, element.Label, _summary?.CameraModel, element.FontFamily);
 	}
 
 	/// <summary>
@@ -403,7 +426,7 @@ public partial class MainWindow
 
 		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible });
 
-		if (ActiveElements.FirstOrDefault(e => e.Id == id) is { } updated) PopulateFlyoutFields(updated);
+		if (ActiveElements.FirstOrDefault(e => e.Id == id) is { } updated) PopulateElementSettings(updated);
 		RefreshWidgetList();
 	}
 
@@ -417,7 +440,7 @@ public partial class MainWindow
 	///     whichever instance's flyout is currently open (_editingElementId) - same 4 fields for every
 	///     widget type, so this is called once per widget from the constructor instead of duplicating a
 	///     handler per widget the way the type-specific settings above do. ValueChanged/SelectionChanged
-	///     also fire when PopulateFlyoutFields populates these controls programmatically, but that already
+	///     also fire when PopulateElementSettings populates these controls programmatically, but that already
 	///     sets _suppressOverlayEvents, so Apply() just no-ops in that case.
 	/// </summary>
 	private void WireTiming(NumericUpDown appearBox, NumericUpDown disappearBox,
@@ -448,23 +471,47 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Populates one widget instance's settings flyout and shows it, anchored to the ⚙ that was
-	///     just clicked (see WidgetGearHoverButton) - the single entry point for opening settings, whether
-	///     reached from a canvas click or (in the future) anywhere else that identifies a specific element.
+	///     Populates one widget instance's settings panel and shows it in the (non-modal, reused)
+	///     WidgetSettingsWindow - the single entry point for opening settings, whether reached from a
+	///     canvas click or (in the future) anywhere else that identifies a specific element.
 	/// </summary>
 	private void OpenElementSettings(OverlayElement element)
 	{
 		_editingElementId = element.Id;
-		PopulateFlyoutFields(element);
-		GetGearButton(element.Type)?.Flyout?.ShowAt(WidgetGearHoverButton);
+		PopulateElementSettings(element);
+
+		if (GetSettingsPanel(element.Type) is not { } panel) return;
+
+		WidgetSettingsWindow window = GetOrCreateWidgetSettingsWindow();
+		window.ShowPanel(GetWidgetLabel(element.Type), panel);
+		if (!window.IsVisible) window.Show(this);
+		window.Activate();
 	}
 
 	/// <summary>
-	///     Fills one widget type's flyout controls from a specific instance's data - the counterpart
-	///     to the type-specific field-changed handlers below, which write back to whichever instance's id is
-	///     currently in _editingElementId.
+	///     Lazily creates the single WidgetSettingsWindow instance this MainWindow reuses for its whole
+	///     lifetime (see that class's own doc for why it's one persistent instance rather than one per
+	///     open) - its own titlebar close hides it instead of disposing.
 	/// </summary>
-	private void PopulateFlyoutFields(OverlayElement el)
+	private WidgetSettingsWindow GetOrCreateWidgetSettingsWindow()
+	{
+		if (_widgetSettingsWindow is not null) return _widgetSettingsWindow;
+
+		_widgetSettingsWindow = new WidgetSettingsWindow();
+		_widgetSettingsWindow.Closing += (_, e) =>
+		{
+			e.Cancel = true;
+			_widgetSettingsWindow!.Hide();
+		};
+		return _widgetSettingsWindow;
+	}
+
+	/// <summary>
+	///     Fills one widget type's settings panel controls from a specific instance's data - the
+	///     counterpart to the type-specific field-changed handlers below, which write back to whichever
+	///     instance's id is currently in _editingElementId.
+	/// </summary>
+	private void PopulateElementSettings(OverlayElement el)
 	{
 		_suppressOverlayEvents = true;
 
@@ -473,34 +520,50 @@ public partial class MainWindow
 			case OverlayElementType.DateTimeText:
 				DateTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == el.DateFormat) ?? DateFormatOptions[0];
 				DateTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == el.Locale) ?? LocaleOptions[0];
+				PopulateStyle(DateTimeFontCombo, DateTimeScaleBox, DateTimeTextColorBox, DateTimeTextColorSwatch,
+					DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox, el);
 				PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.UtcTimeText:
 				UtcTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == el.DateFormat) ?? DateFormatOptions[0];
 				UtcTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == el.Locale) ?? LocaleOptions[0];
+				PopulateStyle(UtcTimeFontCombo, UtcTimeScaleBox, UtcTimeTextColorBox, UtcTimeTextColorSwatch,
+					UtcTimeOutlineColorBox, UtcTimeOutlineColorSwatch, UtcTimeOutlineWidthBox, el);
 				PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.Elevation:
 				ElevationLabelBox.Text = el.Label;
 				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, el.Units);
+				PopulateStyle(ElevationFontCombo, ElevationScaleBox, ElevationTextColorBox, ElevationTextColorSwatch,
+					ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox, el,
+					ElevationAccentColorBox, ElevationAccentColorSwatch);
 				PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.Gradient:
 				GradientLabelBox.Text = el.Label;
+				PopulateStyle(GradientFontCombo, GradientScaleBox, GradientTextColorBox, GradientTextColorSwatch,
+					GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox, el,
+					GradientAccentColorBox, GradientAccentColorSwatch);
 				PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.Distance:
 				DistanceLabelBox.Text = el.Label;
 				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, el.Units);
+				PopulateStyle(DistanceFontCombo, DistanceScaleBox, DistanceTextColorBox, DistanceTextColorSwatch,
+					DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox, el,
+					DistanceAccentColorBox, DistanceAccentColorSwatch);
 				PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.CameraInfo:
 				CameraInfoLabelBox.Text = el.Label;
+				PopulateStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
+					CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox, el,
+					CameraInfoAccentColorBox, CameraInfoAccentColorSwatch);
 				PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, el);
 				break;
 
@@ -539,10 +602,14 @@ public partial class MainWindow
 				break;
 
 			case OverlayElementType.ElapsedTimeText:
+				PopulateStyle(ElapsedTimeFontCombo, ElapsedTimeScaleBox, ElapsedTimeTextColorBox, ElapsedTimeTextColorSwatch,
+					ElapsedTimeOutlineColorBox, ElapsedTimeOutlineColorSwatch, ElapsedTimeOutlineWidthBox, el);
 				PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.CameraModelText:
+				PopulateStyle(CameraModelFontCombo, CameraModelScaleBox, CameraModelTextColorBox, CameraModelTextColorSwatch,
+					CameraModelOutlineColorBox, CameraModelOutlineColorSwatch, CameraModelOutlineWidthBox, el);
 				PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, el);
 				break;
 
@@ -567,7 +634,7 @@ public partial class MainWindow
 		RadioButton arrowRadio, RadioButton dotRadio, OverlayElement element)
 	{
 		colorBox.Text = element.TrailColor;
-		UpdateTrailColorSwatch(swatch, element.TrailColor);
+		UpdateColorSwatch(swatch, element.TrailColor, DefaultTrailColorHex);
 		widthBox.Value = (decimal)element.TrailWidth;
 		arrowRadio.IsChecked = element.TrailUseArrow;
 		dotRadio.IsChecked = !element.TrailUseArrow;
@@ -586,11 +653,73 @@ public partial class MainWindow
 		durationPanel.IsVisible = element.AnimationType != OverlayAnimationType.None;
 	}
 
+	/// <summary>
+	///     Wires a text-based widget type's Style controls (Font/Text size/Text color/Outline
+	///     color/Outline width, plus Value color on the four widgets that have a second accent-colored text
+	///     slot - Elevation/Gradient/Distance/CameraInfo) to whichever instance's flyout is currently open,
+	///     same one-wiring-per-type shape as WireTiming above. `accentColorBox`/`accentColorSwatch` are
+	///     omitted for the four single-color widgets (DateTimeText/UtcTimeText/ElapsedTimeText/
+	///     CameraModelText), which have no accent-colored text to style.
+	/// </summary>
+	private void WireStyle(ComboBox fontCombo, NumericUpDown scaleBox, TextBox textColorBox, Border textColorSwatch,
+		TextBox outlineColorBox, Border outlineColorSwatch, NumericUpDown outlineWidthBox,
+		TextBox? accentColorBox = null, Border? accentColorSwatch = null)
+	{
+		void Apply()
+		{
+			if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+			UpdateElement(id, el => el with
+			{
+				FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
+				Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, MinElementScale, MaxElementScale) : el.Scale,
+				TextColor = NormalizeHexInput(textColorBox.Text),
+				AccentColor = accentColorBox is null ? el.AccentColor : NormalizeHexInput(accentColorBox.Text),
+				OutlineColor = NormalizeHexInput(outlineColorBox.Text),
+				OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : el.OutlineWidth
+			});
+
+			UpdateColorSwatch(textColorSwatch, textColorBox.Text, DefaultTextColorHex);
+			if (accentColorSwatch is not null) UpdateColorSwatch(accentColorSwatch, accentColorBox!.Text, DefaultAccentColorHex);
+			UpdateColorSwatch(outlineColorSwatch, outlineColorBox.Text, DefaultOutlineColorHex);
+		}
+
+		fontCombo.SelectionChanged += (_, _) => Apply();
+		scaleBox.ValueChanged += (_, _) => Apply();
+		textColorBox.LostFocus += (_, _) => Apply();
+		outlineColorBox.LostFocus += (_, _) => Apply();
+		outlineWidthBox.ValueChanged += (_, _) => Apply();
+		if (accentColorBox is not null) accentColorBox.LostFocus += (_, _) => Apply();
+	}
+
+	/// <summary>Counterpart to WireStyle - fills a widget instance's Style controls from its own data, same shape as PopulateTiming/PopulateTrailControls above.</summary>
+	private static void PopulateStyle(ComboBox fontCombo, NumericUpDown scaleBox, TextBox textColorBox, Border textColorSwatch,
+		TextBox outlineColorBox, Border outlineColorSwatch, NumericUpDown outlineWidthBox, OverlayElement element,
+		TextBox? accentColorBox = null, Border? accentColorSwatch = null)
+	{
+		fontCombo.SelectedItem = FontOptions.FirstOrDefault(o => o.Family == element.FontFamily) ?? FontOptions[0];
+		scaleBox.Value = (decimal)element.Scale;
+		textColorBox.Text = element.TextColor;
+		UpdateColorSwatch(textColorSwatch, element.TextColor, DefaultTextColorHex);
+		outlineColorBox.Text = element.OutlineColor;
+		UpdateColorSwatch(outlineColorSwatch, element.OutlineColor, DefaultOutlineColorHex);
+		outlineWidthBox.Value = (decimal)element.OutlineWidth;
+
+		if (accentColorBox is null) return;
+		accentColorBox.Text = element.AccentColor;
+		UpdateColorSwatch(accentColorSwatch!, element.AccentColor, DefaultAccentColorHex);
+	}
+
+	private static string? NormalizeHexInput(string? text)
+	{
+		return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+	}
+
 	private void OnCompassTrailColorChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, CompassTrailColorBox.Text);
-		UpdateTrailColorSwatch(CompassTrailColorSwatch, CompassTrailColorBox.Text);
+		UpdateColorSwatch(CompassTrailColorSwatch, CompassTrailColorBox.Text, DefaultTrailColorHex);
 	}
 
 	private void OnCompassTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -725,7 +854,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, MapTrailColorBox.Text);
-		UpdateTrailColorSwatch(MapTrailColorSwatch, MapTrailColorBox.Text);
+		UpdateColorSwatch(MapTrailColorSwatch, MapTrailColorBox.Text, DefaultTrailColorHex);
 	}
 
 	private void OnMapTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -742,15 +871,15 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Resolves a hand-typed hex string (e.g. "#46DC6E") to a swatch preview color, falling back to
-	///     the renderer's own built-in trail green when the text is empty or doesn't parse - matches
-	///     OverlayRenderer.ResolveTrailColor's fail-soft policy, so what the swatch shows is exactly
-	///     what the render will actually use.
+	///     `fallbackHex` when the text is empty or doesn't parse - matches OverlayRenderer.ResolveColor's
+	///     fail-soft policy (TrailColor/TextColor/AccentColor/OutlineColor all share it), so what the swatch
+	///     shows is exactly what the render will actually use.
 	/// </summary>
-	private static void UpdateTrailColorSwatch(Border swatch, string? hex)
+	private static void UpdateColorSwatch(Border swatch, string? hex, string fallbackHex)
 	{
 		Color color = !string.IsNullOrWhiteSpace(hex) && Color.TryParse(hex.Trim(), out Color parsed)
 			? parsed
-			: Color.Parse("#46DC6E");
+			: Color.Parse(fallbackHex);
 		swatch.Background = new SolidColorBrush(color);
 	}
 
@@ -764,6 +893,23 @@ public partial class MainWindow
 		options.AddRange(CultureInfo.GetCultures(CultureTypes.SpecificCultures)
 			.OrderBy(c => c.NativeName, StringComparer.Ordinal)
 			.Select(c => new LocaleOption($"{c.NativeName} ({c.Name})", c.Name)));
+		return options;
+	}
+
+	/// <summary>
+	///     Pulls the installed-font list from Avalonia's own FontManager instead of hand-maintaining one, so
+	///     it covers whatever fonts this machine actually has - the same fail-soft policy as Locale/DateFormat
+	///     applies on the render side (OverlayElementBounds.ResolveTypefaceOrFallback) if a preset picks a
+	///     family that turns out not to be installed on whatever machine later renders it.
+	/// </summary>
+	private static List<FontOption> BuildFontOptions()
+	{
+		List<FontOption> options = [new("System default", null)];
+		options.AddRange(FontManager.Current.SystemFonts
+			.Select(f => f.Name)
+			.Distinct(StringComparer.OrdinalIgnoreCase)
+			.OrderBy(n => n, StringComparer.Ordinal)
+			.Select(n => new FontOption(n, n)));
 		return options;
 	}
 
@@ -1135,12 +1281,12 @@ public partial class MainWindow
 	///     raw anchor X/Y - most widget types anchor at a corner, not their visual center, so snapping the raw
 	///     anchor alone only ever lined up center-anchored types (gauges, the progress bar) by coincidence.
 	/// </summary>
-	private (float X, float Y) SnapToGuides(OverlayElementType type, float x, float y, float elementScale)
+	private (float X, float Y) SnapToGuides(OverlayElement element, float x, float y)
 	{
 		if (!_snapToGuides || _summary is null || GetPreviewTransform() is not { } t) return (x, y);
 
 		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
-		SKRect bounds = OverlayElementBounds.GetBounds(type, x, y, scale * elementScale);
+		SKRect bounds = GetElementBounds(element, x, y, scale * element.Scale);
 		var (xTargets, yTargets) = GetGuideTargets();
 		var threshold = (float)(SnapThresholdCanvasPixels * t.FullResScale / t.Scale);
 
@@ -1182,7 +1328,7 @@ public partial class MainWindow
 			OverlayElement el = elements[i];
 			if (!el.Visible) continue;
 
-			SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale * el.Scale);
+			SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
 			if (pos.X >= bounds.Left && pos.X <= bounds.Right && pos.Y >= bounds.Top && pos.Y <= bounds.Bottom) return el;
 		}
 
@@ -1190,29 +1336,29 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Maps a widget type to the hidden Button hosting its settings Flyout (see the XAML - the
-	///     gear button itself is IsVisible="False", kept only so its Flyout content can be shown from code
-	///     when WidgetGearHoverButton is clicked on the canvas).
+	///     Maps a widget type to its hidden settings panel (see the XAML - each XxxSettingsPanel Border is
+	///     IsVisible="False" in its original spot in the widget palette, kept only so WidgetSettingsWindow
+	///     has something to adopt and show when OpenElementSettings is called).
 	/// </summary>
-	private Button? GetGearButton(OverlayElementType type)
+	private Control? GetSettingsPanel(OverlayElementType type)
 	{
 		return type switch
 		{
-			OverlayElementType.DateTimeText => DateTimeGearButton,
-			OverlayElementType.UtcTimeText => UtcTimeGearButton,
-			OverlayElementType.Elevation => ElevationGearButton,
-			OverlayElementType.Gradient => GradientGearButton,
-			OverlayElementType.Distance => DistanceGearButton,
-			OverlayElementType.CameraInfo => CameraInfoGearButton,
-			OverlayElementType.Compass => CompassGearButton,
-			OverlayElementType.SunWidget => SunGearButton,
-			OverlayElementType.PitchGauge => PitchGearButton,
-			OverlayElementType.GMeter => GMeterGearButton,
-			OverlayElementType.ElapsedTimeText => ElapsedTimeGearButton,
-			OverlayElementType.CameraModelText => CameraModelGearButton,
-			OverlayElementType.SpeedGauge => SpeedGearButton,
-			OverlayElementType.MapWidget => MapGearButton,
-			OverlayElementType.TripProgressBar => TripProgressBarGearButton,
+			OverlayElementType.DateTimeText => DateTimeSettingsPanel,
+			OverlayElementType.UtcTimeText => UtcTimeSettingsPanel,
+			OverlayElementType.Elevation => ElevationSettingsPanel,
+			OverlayElementType.Gradient => GradientSettingsPanel,
+			OverlayElementType.Distance => DistanceSettingsPanel,
+			OverlayElementType.CameraInfo => CameraInfoSettingsPanel,
+			OverlayElementType.Compass => CompassSettingsPanel,
+			OverlayElementType.SunWidget => SunSettingsPanel,
+			OverlayElementType.PitchGauge => PitchSettingsPanel,
+			OverlayElementType.GMeter => GMeterSettingsPanel,
+			OverlayElementType.ElapsedTimeText => ElapsedTimeSettingsPanel,
+			OverlayElementType.CameraModelText => CameraModelSettingsPanel,
+			OverlayElementType.SpeedGauge => SpeedSettingsPanel,
+			OverlayElementType.MapWidget => MapSettingsPanel,
+			OverlayElementType.TripProgressBar => TripProgressBarSettingsPanel,
 			_ => null
 		};
 	}
@@ -1308,7 +1454,7 @@ public partial class MainWindow
 		var index = elements.FindIndex(el => el.Id == id);
 		if (index < 0) return;
 
-		(newX, newY) = SnapToGuides(elements[index].Type, newX, newY, elements[index].Scale);
+		(newX, newY) = SnapToGuides(elements[index], newX, newY);
 
 		elements[index] = elements[index] with { X = newX, Y = newY };
 		ReplaceActiveElements(elements);
@@ -1428,7 +1574,7 @@ public partial class MainWindow
 	private void ShowHoverIconsFor(OverlayElement element)
 	{
 		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
-		SKRect bounds = OverlayElementBounds.GetBounds(element.Type, element.X, element.Y, scale * element.Scale);
+		SKRect bounds = GetElementBounds(element, element.X, element.Y, scale * element.Scale);
 		if (MapFullResPointToCanvas(bounds.Right, bounds.Top) is not { } corner)
 		{
 			HideHoverIcons();
@@ -1484,6 +1630,14 @@ public partial class MainWindow
 	}
 
 	private sealed record AnimationOption(string Display, OverlayAnimationType Value)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	private sealed record FontOption(string Display, string? Family)
 	{
 		public override string ToString()
 		{
