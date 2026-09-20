@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace OsmoOverlay.Gui;
 
@@ -13,10 +14,19 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class WidgetSettingsWindow : Window
 {
+	/// <summary>
+	///     Raised by this window's own top-right "Reset to default" button - shared across every widget
+	///     type's panel (unlike the rest of the panel content, which stays owned by MainWindow), so
+	///     MainWindow just wires this once instead of each panel carrying its own reset button.
+	/// </summary>
+	public event EventHandler<RoutedEventArgs>? ResetRequested;
+
 	public WidgetSettingsWindow()
 	{
 		InitializeComponent();
 	}
+
+	private void OnResetButtonClick(object? sender, RoutedEventArgs e) => ResetRequested?.Invoke(this, e);
 
 	/// <summary>
 	///     Displays `panel` (one of MainWindow's XxxSettingsPanel Borders, still fully wired to its own

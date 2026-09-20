@@ -74,10 +74,10 @@
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
 		<Style Selector="TextBlock.sectionLabel">
-			<Setter Property="FontSize" Value="10" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="Opacity" Value="0.4" />
-			<Setter Property="LetterSpacing" Value="1" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="Opacity" Value="0.85" />
+			<Setter Property="LetterSpacing" Value="0.6" />
 			<Setter Property="Margin" Value="0,8,0,2" />
 		</Style>
 		<Style Selector="Button.gearButton">
@@ -124,6 +124,39 @@
 			<Setter Property="Height" Value="1" />
 			<Setter Property="Background" Value="#26FFFFFF" />
 			<Setter Property="Margin" Value="0,10,0,2" />
+		</Style>
+		<!-- Groups related fields inside a widget's settings flyout (e.g. "Zoom & framing" vs. "Trail
+		     style") into their own visually separated card, instead of one long undifferentiated list of
+		     label/control pairs. -->
+		<Style Selector="Border.settingsGroup">
+			<Setter Property="Background" Value="#18181B" />
+			<Setter Property="BorderBrush" Value="#22FFFFFF" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="8" />
+			<Setter Property="Padding" Value="12,10" />
+		</Style>
+		<Style Selector="TextBlock.settingsGroupTitle">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="Opacity" Value="0.85" />
+			<Setter Property="LetterSpacing" Value="0.6" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+		</Style>
+		<!-- A quieter, tinted alternative to a plain dim TextBlock for a note that isn't a per-field
+		     hint (e.g. "this is shared across every map widget, not per-instance") - reads as an aside
+		     rather than another setting in the list. -->
+		<Style Selector="Border.calloutInfo">
+			<Setter Property="Background" Value="#15212E" />
+			<Setter Property="BorderBrush" Value="#2A4258" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="10,8" />
+		</Style>
+		<Style Selector="TextBlock.calloutInfoText">
+			<Setter Property="FontSize" Value="11" />
+			<Setter Property="Opacity" Value="0.75" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="15" />
 		</Style>
 		<Style Selector="TextBlock.fallbackWarning">
 			<Setter Property="Foreground" Value="#E5A83E" />
@@ -695,8 +728,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="DateTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -749,8 +780,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="UtcTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -804,8 +833,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="CameraInfoAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -848,8 +875,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="CompassAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -861,61 +886,76 @@
 											<TextBlock Classes="overlayListItemText" Text="Map" />
 										</Border>
 										<Border Name="MapSettingsPanel" Grid.Column="1" IsVisible="False">
-											<StackPanel Classes="settingsFlyout">
-												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
-												           TextWrapping="Wrap"
-												           Text="Tile provider, API key and attribution are set once for every map widget in Settings, not per widget." />
-												<TextBlock Text="Zoom (2-19)" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="MapZoomBox" Increment="1"
-												               FormatString="0" HorizontalAlignment="Stretch"
-												               ValueChanged="OnMapZoomChanged" />
-												<CheckBox Name="MapDynamicZoomCheck" Content="Auto zoom to fit route"
-												          Click="OnMapDynamicZoomChanged" />
-												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
-												           TextWrapping="Wrap"
-												           Text="Zooms out as the driven trail grows so it stays fully in view; when off, the map stays at a fixed zoom and the trail may get cut off near the edge." />
-												<TextBlock Name="MapZoomOutMaxLabel" Text="Max zoom-out (x)" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="MapZoomOutMaxBox" Increment="1"
-												               FormatString="0" HorizontalAlignment="Stretch"
-												               ValueChanged="OnMapZoomOutMaxChanged" />
-												<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,0,0,4" FontSize="11"
-												           Opacity="0.4" TextWrapping="Wrap"
-												           Text="How far out the map is allowed to zoom to keep the trail visible (higher = shows more area, further from the built-in zoom level above)." />
-												<TextBlock Classes="infoLabel" Margin="0,4,0,0" FontSize="11" Opacity="0.4"
-												           TextWrapping="Wrap"
-												           Text="Fetches tiles over the network the first time a route is opened/rendered, then caches them on disk." />
-												<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="MapTrailColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="MapTrailColorBox" PlaceholderText="#46DC6E"
-													         LostFocus="OnMapTrailColorChanged" />
-												</Grid>
-												<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="MapTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
-												               FormatString="0.0" HorizontalAlignment="Stretch"
-												               ValueChanged="OnMapTrailWidthChanged" />
-												<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
-												<StackPanel Orientation="Horizontal" Spacing="12">
-													<RadioButton Name="MapTrailArrowRadio" Content="Arrow"
-													             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
-													<RadioButton Name="MapTrailDotRadio" Content="Dot"
-													             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
-												</StackPanel>
-												<Border Classes="flyoutDivider" />
-												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="MapAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="MapDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="MapAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="MapAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<Border Classes="calloutInfo">
+													<TextBlock Classes="calloutInfoText"
+													           Text="Tile provider, API key and attribution are set once for every map widget in Settings, not per widget." />
+												</Border>
+
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="ZOOM &amp; FRAMING" Classes="settingsGroupTitle" />
+														<TextBlock Text="Zoom (2-19)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapZoomBox" Increment="1"
+														               FormatString="0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapZoomChanged" />
+														<CheckBox Name="MapDynamicZoomCheck" Content="Auto zoom to fit route"
+														          Click="OnMapDynamicZoomChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="11" Opacity="0.45"
+														           TextWrapping="Wrap"
+														           Text="Zooms out as the driven trail grows so it stays fully in view; when off, the map stays at a fixed zoom and the trail may get cut off near the edge." />
+														<TextBlock Name="MapZoomOutMaxLabel" Text="Max zoom-out (x)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapZoomOutMaxBox" Increment="1"
+														               FormatString="0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapZoomOutMaxChanged" />
+														<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,-4,0,0" FontSize="11"
+														           Opacity="0.45" TextWrapping="Wrap"
+														           Text="How far out the map is allowed to zoom to keep the trail visible (higher = shows more area, further from the built-in zoom level above)." />
+														<TextBlock Classes="infoLabel" Margin="0" FontSize="11" Opacity="0.4"
+														           TextWrapping="Wrap"
+														           Text="Fetches tiles over the network the first time a route is opened/rendered, then caches them on disk." />
+													</StackPanel>
+												</Border>
+
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="TRAIL STYLE" Classes="settingsGroupTitle" />
+														<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
+														<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+															<Border Grid.Column="0" Name="MapTrailColorSwatch" Width="20" Height="20"
+															        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+															<TextBox Grid.Column="1" Name="MapTrailColorBox" PlaceholderText="#46DC6E"
+															         LostFocus="OnMapTrailColorChanged" />
+														</Grid>
+														<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
+														               FormatString="0.0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapTrailWidthChanged" />
+														<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
+														<StackPanel Orientation="Horizontal" Spacing="12">
+															<RadioButton Name="MapTrailArrowRadio" Content="Arrow"
+															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
+															<RadioButton Name="MapTrailDotRadio" Content="Dot"
+															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
+														</StackPanel>
+													</StackPanel>
+												</Border>
+
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="MapAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="MapAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
+													</StackPanel>
+												</Border>
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -947,8 +987,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="SpeedAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -971,8 +1009,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="PitchAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -995,8 +1031,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="SunAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1027,8 +1061,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="GMeterAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1071,8 +1103,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="ElapsedTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1115,8 +1145,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="CameraModelAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1157,8 +1185,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="TripProgressBarAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1219,8 +1245,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="ElevationAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1274,8 +1298,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="GradientAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1336,8 +1358,6 @@
 													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
 													<NumericUpDown Name="DistanceAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 												</StackPanel>
-												<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-												        Click="OnResetElementClick" />
 											</StackPanel>
 										</Border>
 									</Grid>

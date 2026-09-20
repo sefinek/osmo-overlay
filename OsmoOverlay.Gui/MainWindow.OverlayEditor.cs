@@ -503,6 +503,7 @@ public partial class MainWindow
 			e.Cancel = true;
 			_widgetSettingsWindow!.Hide();
 		};
+		_widgetSettingsWindow.ResetRequested += OnResetElementClick;
 		return _widgetSettingsWindow;
 	}
 
