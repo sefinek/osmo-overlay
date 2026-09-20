@@ -6,10 +6,8 @@ namespace OsmoOverlay.Core.Ffmpeg;
 public static class FfmpegPipeline
 {
 
-	// Pure, maximally-saturated green - the color virtually every chroma-key tool's "pick green"
-	// default targets, so a plain, untagged green-screen export keys out cleanly without the user
-	// having to dial in a custom key color first.
-	private const string GreenScreenColor = "0x00FF00";
+	// HSV (115 degrees, 0.9, 0.96), rounded to 8-bit RGB (43, 245, 24).
+	private const string GreenScreenColor = "0x2BF518";
 
 	public static string SelectVideoEncoder()
 	{
