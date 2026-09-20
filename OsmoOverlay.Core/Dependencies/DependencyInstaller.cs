@@ -56,6 +56,52 @@ public static class DependencyInstaller
 		return new InstallResult(false, "Automatic installation is not supported on this platform.");
 	}
 
+	/// <summary>
+	///     Separate from InstallAsync because "install" and "upgrade" aren't interchangeable per package
+	///     manager: winget's `install` no-ops on an already-installed app (needs `upgrade`), while pacman's
+	///     `-S` already always resolves to the latest sync-db version either way.
+	/// </summary>
+	public static async Task<InstallResult> UpgradeAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
+	{
+		if (OperatingSystem.IsWindows())
+			return await RunAsync("winget",
+				["upgrade", "--id", tool.WingetId, "-e", "--accept-package-agreements", "--accept-source-agreements"],
+				onOutput, ct);
+
+		if (OperatingSystem.IsMacOS())
+		{
+			if (!DependencyChecker.IsCommandAvailable("brew"))
+				return new InstallResult(false,
+					"Homebrew is not installed. Install it from https://brew.sh, then retry.");
+
+			return await RunAsync("brew", ["upgrade", tool.BrewPackage], onOutput, ct);
+		}
+
+		if (OperatingSystem.IsLinux())
+		{
+			var manager = FindLinuxPackageManager();
+			if (manager is null)
+				return new InstallResult(false,
+					$"No supported package manager (apt, dnf, pacman) was found. Upgrade {tool.DisplayName} manually.");
+
+			var upgradeArgs = manager switch
+			{
+				"apt-get" => new[] { "install", "--only-upgrade", "-y", tool.AptPackage },
+				"dnf" => new[] { "upgrade", "-y", tool.DnfPackage },
+				"pacman" => new[] { "-S", "--noconfirm", tool.PacmanPackage },
+				_ => throw new InvalidOperationException($"Unhandled package manager: {manager}")
+			};
+
+			if (DependencyChecker.IsCommandAvailable("pkexec"))
+				return await RunAsync("pkexec", [manager, .. upgradeArgs], onOutput, ct);
+
+			return new InstallResult(false,
+				$"Run this in a terminal to upgrade {tool.DisplayName}: sudo {manager} {string.Join(' ', upgradeArgs)}");
+		}
+
+		return new InstallResult(false, "Automatic upgrade is not supported on this platform.");
+	}
+
 	private static string? FindLinuxPackageManager()
 	{
 		return new[] { "apt-get", "dnf", "pacman" }.FirstOrDefault(DependencyChecker.IsCommandAvailable);

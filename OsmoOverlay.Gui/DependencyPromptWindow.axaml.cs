@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OsmoOverlay.Core.Dependencies;
 
 namespace OsmoOverlay.Gui;
@@ -64,8 +65,11 @@ public partial class DependencyPromptWindow : Window
 		SkipButton.IsEnabled = true;
 	}
 
+	// Dispatcher.UIThread.Post, not a direct call: DependencyInstaller.InstallAsync's onOutput fires
+	// from Process.OutputDataReceived, which runs on the process's own async stream-reader thread, not
+	// the UI thread - touching LogBox from there throws (Avalonia controls are UI-thread-only).
 	private void AppendLog(string message)
 	{
-		LogBox.AppendLog(LogScroll, message);
+		Dispatcher.UIThread.Post(() => LogBox.AppendLog(LogScroll, message));
 	}
 }

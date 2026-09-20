@@ -25,6 +25,9 @@ public partial class MainWindow
 
 	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
 
+	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
+	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
+
 	// FirstOrDefault, not First: there's a narrow window right after picking a file where
 	// _summary is already set but LoadOverlayPresets (an earlier await) hasn't finished yet, so a
 	// pointer click on the drag canvas in that gap must not crash on an empty/stale preset list.
@@ -746,8 +749,15 @@ public partial class MainWindow
 
 	private void OnPresetRenameBoxKeyDown(object? sender, KeyEventArgs e)
 	{
-		if (e.Key == Key.Enter) CommitPresetRename();
-		else if (e.Key == Key.Escape) CancelPresetRename();
+		switch (e.Key)
+		{
+			case Key.Enter:
+				CommitPresetRename();
+				break;
+			case Key.Escape:
+				CancelPresetRename();
+				break;
+		}
 	}
 
 	private void OnPresetRenameBoxLostFocus(object? sender, RoutedEventArgs e)
@@ -805,10 +815,10 @@ public partial class MainWindow
 		return new Point(localX / scale * fullResScale, localY / scale * fullResScale);
 	}
 
-	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
+	/// <summary>Topmost visible element whose bounds contain `pos`, or null - shared by the drag hit-test and the hover cursor.</summary>
+	private OverlayElement? FindElementAt(Point pos)
 	{
-		if (_summary is null || IsActivePresetDefault) return;
-		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
+		if (_summary is null) return null;
 
 		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
 		List<OverlayElement> elements = ActiveElements;
@@ -818,28 +828,42 @@ public partial class MainWindow
 			if (!el.Visible) continue;
 
 			SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale);
-			if (pos.X < bounds.Left || pos.X > bounds.Right || pos.Y < bounds.Top || pos.Y > bounds.Bottom) continue;
-
-			// Dragging needs a stable frame to align against, and it eliminates a real race:
-			// without pausing, the playback thread keeps calling Render() on the same elements
-			// list this drag is about to replace concurrently.
-			if (_previewPlayer.IsPlaying)
-			{
-				_previewPlayer.Pause();
-				PlayPauseButton.Content = "Play";
-			}
-
-			_draggingElementType = el.Type;
-			_dragAnchorOffset = new Point(pos.X - el.X, pos.Y - el.Y);
-			e.Pointer.Capture(OverlayDragCanvas);
-			OverlayDragCanvas.Cursor = new Cursor(StandardCursorType.SizeAll);
-			return;
+			if (pos.X >= bounds.Left && pos.X <= bounds.Right && pos.Y >= bounds.Top && pos.Y <= bounds.Bottom) return el;
 		}
+
+		return null;
+	}
+
+	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
+	{
+		if (_summary is null || IsActivePresetDefault) return;
+		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
+		if (FindElementAt(pos) is not { } el) return;
+
+		// Dragging needs a stable frame to align against, and it eliminates a real race:
+		// without pausing, the playback thread keeps calling Render() on the same elements
+		// list this drag is about to replace concurrently.
+		if (_previewPlayer.IsPlaying)
+		{
+			_previewPlayer.Pause();
+			PlayPauseButton.Content = "Play";
+		}
+
+		_draggingElementType = el.Type;
+		_dragAnchorOffset = new Point(pos.X - el.X, pos.Y - el.Y);
+		e.Pointer.Capture(OverlayDragCanvas);
+		OverlayDragCanvas.Cursor = SizeAllCursor;
 	}
 
 	private void OnOverlayCanvasPointerMoved(object? sender, PointerEventArgs e)
 	{
-		if (_draggingElementType is not { } type || _summary is null) return;
+		if (_draggingElementType is not { } type)
+		{
+			UpdateHoverCursor(e);
+			return;
+		}
+
+		if (_summary is null) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
 		var newX = (float)Math.Clamp(pos.X - _dragAnchorOffset.X, 0, _summary.Video.Width);
@@ -860,8 +884,20 @@ public partial class MainWindow
 
 		_draggingElementType = null;
 		e.Pointer.Capture(null);
-		OverlayDragCanvas.Cursor = new Cursor(StandardCursorType.Hand);
+		UpdateHoverCursor(e);
 		SaveOverlayPresets();
+	}
+
+	private void UpdateHoverCursor(PointerEventArgs e)
+	{
+		if (_summary is null || IsActivePresetDefault)
+		{
+			OverlayDragCanvas.Cursor = null;
+			return;
+		}
+
+		Point? pos = MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas));
+		OverlayDragCanvas.Cursor = pos is { } p && FindElementAt(p) is not null ? HandCursor : null;
 	}
 
 	private sealed record DateFormatOption(string Display, string? Format)

@@ -1,6 +1,11 @@
+using System.Diagnostics;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using OsmoOverlay.Core;
+using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 
@@ -43,6 +48,12 @@ public partial class SettingsWindow : Window
 		InitializeComponent();
 		PreviewQualityCombo.ItemsSource = PreviewQualityOptions;
 		MapProviderCombo.ItemsSource = TileProviderOptions;
+
+		var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
+		AppVersionText.Text = $"OsmoOverlay v{appVersion}";
+
+		var coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
+		CoreVersionText.Text = $"Core v{coreVersion}";
 	}
 
 	public SettingsWindow(int? frameLimit, bool showWatermark, bool smoothGpsMotion, int previewMaxWidth,
@@ -117,16 +128,63 @@ public partial class SettingsWindow : Window
 	///     - switching category just swaps which one is visible instead of reparenting content.
 	///     CategoryList's SelectedIndex="0" in XAML fires this event during InitializeComponent, before
 	///     the panel fields further down the visual tree have been assigned yet - harmless to skip then,
-	///     since GeneralPanel is already the one visible by default in XAML (only MapPanel/RouteIntroPanel
-	///     start with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
+	///     since GeneralPanel is already the one visible by default in XAML (every other panel starts
+	///     with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
 	/// </summary>
+	// Set once the About tab has triggered its own automatic check, so switching back to it later
+	// (or switching away and back) doesn't re-spawn winget/brew/apt-cache every time - CheckForUpdatesButton
+	// stays available for an explicit re-check.
+	private bool _dependencyCheckStarted;
+
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (GeneralPanel is null || MapPanel is null || RouteIntroPanel is null) return;
+		if (GeneralPanel is null || RenderingPanel is null || MapPanel is null || RouteIntroPanel is null || AboutPanel is null)
+			return;
 
 		GeneralPanel.IsVisible = CategoryList.SelectedIndex == 0;
-		MapPanel.IsVisible = CategoryList.SelectedIndex == 1;
-		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
+		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 1;
+		MapPanel.IsVisible = CategoryList.SelectedIndex == 2;
+		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 3;
+		AboutPanel.IsVisible = CategoryList.SelectedIndex == 4;
+
+		if (CategoryList.SelectedIndex == 4 && !_dependencyCheckStarted)
+		{
+			_dependencyCheckStarted = true;
+			_ = RunDependencyCheckAsync();
+		}
+	}
+
+	private void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e)
+	{
+		_ = RunDependencyCheckAsync();
+	}
+
+	/// <summary>
+	///     No separate status line - the table below already shows each tool's installed/latest side by
+	///     side, so a one-line verdict above it would just repeat what's already visible. The button's own
+	///     Content ("Checking..." while running) is the only progress indicator here; per-tool detail still
+	///     reaches the main window's LOG panel via AppLogger.Notify (see DependencyVersionChecker.CheckAsync).
+	/// </summary>
+	private async Task RunDependencyCheckAsync()
+	{
+		CheckForUpdatesButton.IsEnabled = false;
+		CheckForUpdatesButton.Content = "Checking...";
+
+		// Off the UI thread: each tool spawns a process (ffmpeg -version, winget/brew/apt-cache show),
+		// which can take a couple of seconds combined.
+		IReadOnlyList<ToolVersionInfo> statuses =
+			await Task.Run(() => DependencyVersionChecker.CheckAllAsync(RequiredTools.All, CancellationToken.None));
+
+		List<ToolVersionInfo> present = [.. statuses.Where(s => s.InstalledVersion is not null)];
+		DependencyStatusRows.Populate(DependencyStatusGrid, present);
+
+		CheckForUpdatesButton.Content = "Check for updates";
+		CheckForUpdatesButton.IsEnabled = true;
+	}
+
+	private void OnGitHubLinkClick(object? sender, PointerPressedEventArgs e)
+	{
+		Process.Start(new ProcessStartInfo("https://github.com/sefinek/osmo-overlay") { UseShellExecute = true });
 	}
 
 	/// <summary>

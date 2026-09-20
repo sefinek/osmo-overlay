@@ -7,7 +7,9 @@ public sealed record ExternalTool(
 	string AptPackage,
 	string DnfPackage,
 	string PacmanPackage,
-	string BrewPackage);
+	string BrewPackage,
+	string VersionCommand,
+	IReadOnlyList<string> VersionArgs);
 
 public static class RequiredTools
 {
@@ -18,7 +20,9 @@ public static class RequiredTools
 		"ffmpeg",
 		"ffmpeg",
 		"ffmpeg",
-		"ffmpeg");
+		"ffmpeg",
+		"ffmpeg",
+		["-version"]);
 
 	public static readonly ExternalTool ExifTool = new(
 		"ExifTool",
@@ -27,7 +31,9 @@ public static class RequiredTools
 		"libimage-exiftool-perl",
 		"perl-Image-ExifTool",
 		"perl-image-exiftool",
-		"exiftool");
+		"exiftool",
+		"exiftool",
+		["-ver"]);
 
 	public static IReadOnlyList<ExternalTool> All { get; } = [Ffmpeg, ExifTool];
 }

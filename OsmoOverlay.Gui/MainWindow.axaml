@@ -372,7 +372,7 @@
 								           Opacity="0.3" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
 								           MaxWidth="320" TextAlignment="Center" />
 							</StackPanel>
-							<Canvas Name="OverlayDragCanvas" Background="Transparent" Cursor="Hand"
+							<Canvas Name="OverlayDragCanvas" Background="Transparent"
 							        PointerPressed="OnOverlayCanvasPointerPressed"
 							        PointerMoved="OnOverlayCanvasPointerMoved"
 							        PointerReleased="OnOverlayCanvasPointerReleased" />

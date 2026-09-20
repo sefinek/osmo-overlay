@@ -213,8 +213,11 @@ public sealed partial class OverlayRenderer
 	private void DrawRouteIntroMapLabel(SKCanvas canvas, SKRect mapRect)
 	{
 		const float labelPadding = 24f;
-		DrawOutlined(canvas, "ROUTE", mapRect.Right - labelPadding, mapRect.Bottom - labelPadding, _labelFont, White,
-			SKTextAlign.Right);
+		// _routeIntroLabelFont (36, already used for this card's stat labels), not the shared _labelFont
+		// (30) every other widget's small text reuses - bumping that one would resize labels across the
+		// whole HUD, not just this badge.
+		DrawOutlined(canvas, "ROUTE", mapRect.Right - labelPadding, mapRect.Bottom - labelPadding, _routeIntroLabelFont,
+			White, SKTextAlign.Right);
 	}
 
 	/// <summary>Units come from RouteIntro.Units (a card-level setting, see OverlaySettings.RouteIntroUnits) rather than a per-widget OverlayElement.Units - this card has no OverlayElement of its own to carry one.</summary>

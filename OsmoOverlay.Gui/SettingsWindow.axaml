@@ -53,13 +53,26 @@
 			<Border Grid.Column="0" Background="#1B1B1E" Padding="10">
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
 					<ListBoxItem Content="General" />
+					<ListBoxItem Content="Rendering" />
 					<ListBoxItem Content="Map" />
 					<ListBoxItem Content="Route intro" />
+					<ListBoxItem Content="About" />
 				</ListBox>
 			</Border>
 
 			<Grid Grid.Column="1">
 				<ScrollViewer Name="GeneralPanel" VerticalScrollBarVisibility="Auto">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Preview quality" Classes="infoLabel" />
+							<ComboBox Name="PreviewQualityCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="How sharp the live preview looks while scrubbing/playing - lower is faster (less to decode per frame), higher is sharper but slower. Never affects the exported video, which always renders at the source's full resolution regardless of this setting. Takes effect the next time a file/preview is opened." />
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
 					<StackPanel Margin="24,20" Spacing="20">
 						<StackPanel Spacing="6">
 							<TextBlock Text="Frame limit (optional)" Classes="infoLabel" />
@@ -81,13 +94,6 @@
 							<CheckBox Name="SmoothGpsMotionCheck" Content="Smooth GPS-derived motion" />
 							<TextBlock Classes="hint"
 							           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. Off by default; takes effect the next time a file/preview is opened." />
-						</StackPanel>
-
-						<StackPanel Spacing="6">
-							<TextBlock Text="Preview quality" Classes="infoLabel" />
-							<ComboBox Name="PreviewQualityCombo" HorizontalAlignment="Stretch" />
-							<TextBlock Classes="hint"
-							           Text="How sharp the live preview looks while scrubbing/playing - lower is faster (less to decode per frame), higher is sharper but slower. Never affects the exported video, which always renders at the source's full resolution regardless of this setting. Takes effect the next time a file/preview is opened." />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>
@@ -161,6 +167,25 @@
 									<RadioButton Name="RouteIntroImperialRadio" Content="Imperial" GroupName="RouteIntroUnits" />
 								</StackPanel>
 							</StackPanel>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="AboutPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Application" Classes="infoLabel" />
+							<TextBlock Name="AppVersionText" Text="OsmoOverlay" />
+							<TextBlock Name="CoreVersionText" Text="Core" />
+							<TextBlock Name="GitHubLinkText" Text="github.com/sefinek/osmo-overlay" Foreground="#4EA1F3"
+							           Cursor="Hand" PointerPressed="OnGitHubLinkClick" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Dependencies" Classes="infoLabel" />
+							<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
+							<Button Name="CheckForUpdatesButton" Content="Check for updates" HorizontalAlignment="Left"
+							        Click="OnCheckForUpdatesClick" />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>
