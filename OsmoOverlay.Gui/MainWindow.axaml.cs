@@ -67,6 +67,42 @@ public partial class MainWindow : Window
 		UtcTimeFormatCombo.ItemsSource = DateFormatOptions;
 		UtcTimeLocaleCombo.ItemsSource = LocaleOptions;
 
+		// Every widget gets the same Appear at/Disappear at/Animation/Duration controls (see
+		// WireTiming) - unlike the type-specific settings above, there's nothing widget-specific about
+		// timing, so this is one mechanical block instead of 15 near-identical constructors' worth of
+		// per-widget code.
+		DateTimeAnimationCombo.ItemsSource = AnimationOptions;
+		UtcTimeAnimationCombo.ItemsSource = AnimationOptions;
+		ElevationAnimationCombo.ItemsSource = AnimationOptions;
+		GradientAnimationCombo.ItemsSource = AnimationOptions;
+		DistanceAnimationCombo.ItemsSource = AnimationOptions;
+		CameraInfoAnimationCombo.ItemsSource = AnimationOptions;
+		CompassAnimationCombo.ItemsSource = AnimationOptions;
+		SunAnimationCombo.ItemsSource = AnimationOptions;
+		PitchAnimationCombo.ItemsSource = AnimationOptions;
+		GMeterAnimationCombo.ItemsSource = AnimationOptions;
+		ElapsedTimeAnimationCombo.ItemsSource = AnimationOptions;
+		CameraModelAnimationCombo.ItemsSource = AnimationOptions;
+		SpeedAnimationCombo.ItemsSource = AnimationOptions;
+		MapAnimationCombo.ItemsSource = AnimationOptions;
+		TripProgressBarAnimationCombo.ItemsSource = AnimationOptions;
+
+		WireTiming(OverlayElementType.DateTimeText, DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel);
+		WireTiming(OverlayElementType.UtcTimeText, UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel);
+		WireTiming(OverlayElementType.Elevation, ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel);
+		WireTiming(OverlayElementType.Gradient, GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel);
+		WireTiming(OverlayElementType.Distance, DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel);
+		WireTiming(OverlayElementType.CameraInfo, CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel);
+		WireTiming(OverlayElementType.Compass, CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel);
+		WireTiming(OverlayElementType.SunWidget, SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel);
+		WireTiming(OverlayElementType.PitchGauge, PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel);
+		WireTiming(OverlayElementType.GMeter, GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel);
+		WireTiming(OverlayElementType.ElapsedTimeText, ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel);
+		WireTiming(OverlayElementType.CameraModelText, CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel);
+		WireTiming(OverlayElementType.SpeedGauge, SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel);
+		WireTiming(OverlayElementType.MapWidget, MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel);
+		WireTiming(OverlayElementType.TripProgressBar, TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel);
+
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in
 		// XAML, so the two can't silently drift apart if either constant ever changes.

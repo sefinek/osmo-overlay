@@ -106,12 +106,20 @@ public sealed class VideoFrameSource
 
 	/// <summary>
 	///     Continuous decode from any point on the combined timeline through to the end. A single
-	///     remaining segment is played the same way as before (a plain -ss seek); when more than one
-	///     segment remains, they're stitched via the concat demuxer's per-entry "inpoint" (seeks into
-	///     the first segment, then streams the rest in full) so one ffmpeg process decodes straight
-	///     through file boundaries instead of Play having to restart on every segment change.
+	///     remaining segment is played the same way as before (a plain -ss seek). When more than one
+	///     segment remains and the start position falls exactly at a segment's own beginning (Play
+	///     from 0, or resuming right after a segment boundary), the concat demuxer stitches all of
+	///     them in one process cleanly - confirmed against a real recording, no seek involved there.
+	///     Resuming into the *middle* of a non-last segment (a scrub-and-resume) is the one case the
+	///     concat demuxer can't be trusted with - confirmed against a real recording that both its
+	///     seek mechanisms (per-entry "inpoint" and a top-level -ss before -i) decode a stuck,
+	///     repeated frame (or break reference frames outright) instead of actually seeking, with or
+	///     without hwaccel. That case plays the partial first segment via its own plain single-file
+	///     -ss process (the same reliable mechanism scrubbing already uses), then transparently hands
+	///     off to a concat of the untouched remaining segments once that one naturally ends - see
+	///     VideoPlaybackStream's nextStage.
 	/// </summary>
-	public VideoPlaybackStream OpenPlaybackStream(TimeSpan from)
+	public VideoPlaybackStream OpenPlaybackStream(TimeSpan from, CancellationToken ct = default)
 	{
 		TimeSpan start = ClampGlobal(from);
 		(var index, TimeSpan local) = Locate(start);
@@ -119,13 +127,29 @@ public sealed class VideoFrameSource
 		if (_segments.Count - index == 1)
 		{
 			Process single = StartFfmpeg(_segments[index].Path, local, false);
-			return new VideoPlaybackStream(single, start, Fps, _width, _height, null);
+			return new VideoPlaybackStream(single, null, start, Fps, _width, _height, null, ct);
 		}
 
-		IEnumerable<(string Path, double?)> entries = _segments.Skip(index).Select((s, i) => (s.Path, i == 0 ? (double?)local.TotalSeconds : null));
-		var listPath = ConcatListWriter.Write(entries);
-		Process process = StartFfmpegConcat(listPath);
-		return new VideoPlaybackStream(process, start, Fps, _width, _height, listPath);
+		if (local <= TimeSpan.Zero)
+		{
+			var listPath = ConcatListWriter.Write(_segments.Skip(index).Select(s => s.Path));
+			Process process = StartFfmpegConcat(listPath);
+			return new VideoPlaybackStream(process, null, start, Fps, _width, _height, listPath, ct);
+		}
+
+		Process firstStage = StartFfmpeg(_segments[index].Path, local, false);
+		List<(string Path, double DurationSeconds, double StartOffsetSeconds)> tail = _segments.Skip(index + 1).ToList();
+		VideoPlaybackStream.NextStageFactory nextStage = () => OpenTailStage(tail);
+		return new VideoPlaybackStream(firstStage, nextStage, start, Fps, _width, _height, null, ct);
+	}
+
+	private (Process Process, string? ConcatListPath) OpenTailStage(
+		List<(string Path, double DurationSeconds, double StartOffsetSeconds)> tail)
+	{
+		if (tail.Count == 1) return (StartFfmpeg(tail[0].Path, TimeSpan.Zero, false), null);
+
+		var listPath = ConcatListWriter.Write(tail.Select(s => s.Path));
+		return (StartFfmpegConcat(listPath), listPath);
 	}
 
 	/// <summary>
@@ -235,18 +259,33 @@ public sealed class VideoFrameSource
 
 public sealed class VideoPlaybackStream : IDisposable
 {
-	private readonly string? _concatListPath;
+	/// <summary>Lazily opens the next process once the current one naturally runs out - see TryReadNextFrame.</summary>
+	internal delegate (Process Process, string? ConcatListPath) NextStageFactory();
+
+	private readonly CancellationToken _ct;
 	private readonly double _fps;
 	private readonly int _height;
-	private readonly Process _process;
-	private readonly Stream _stdout;
 	private readonly int _width;
+	private CancellationTokenRegistration _cancellationRegistration;
+	private string? _concatListPath;
 	private long _framesRead;
+	private NextStageFactory? _nextStage;
+	private Process _process;
+	private Stream _stdout;
 
-	internal VideoPlaybackStream(Process process, TimeSpan startPosition, double fps, int width, int height,
-		string? concatListPath)
+	// The registration targets the _process field itself (not a captured local), so it stays
+	// correct across AdvanceToNextStage swapping which process is "current" - no need to
+	// re-register per stage. Mirrors DecodeOneFrame's kill-on-cancel: TryReadNextFrame's stdout
+	// read is a plain blocking Stream.Read with no cancellation of its own, held under
+	// PreviewPlayer._lock - if ffmpeg ever stops producing bytes mid-stream without exiting (a
+	// wedged decoder), that read would otherwise never return, and every other _lock-guarded
+	// preview operation (Pause, scrub, dragging an element) would hang forever waiting on the same
+	// lock. Killing the process here unblocks the read (as an early EOF) as soon as ct is cancelled.
+	internal VideoPlaybackStream(Process process, NextStageFactory? nextStage, TimeSpan startPosition, double fps,
+		int width, int height, string? concatListPath, CancellationToken ct)
 	{
 		_process = process;
+		_nextStage = nextStage;
 		_stdout = process.StandardOutput.BaseStream;
 		StderrTask = process.StandardError.ReadToEndAsync();
 		StartPosition = startPosition;
@@ -255,13 +294,23 @@ public sealed class VideoPlaybackStream : IDisposable
 		_width = width;
 		_height = height;
 		_concatListPath = concatListPath;
+		_ct = ct;
+		_cancellationRegistration = ct.Register(KillCurrentProcess);
 	}
 
 	public TimeSpan StartPosition { get; }
 	public TimeSpan Position { get; private set; }
-	public Task<string> StderrTask { get; }
+	public Task<string> StderrTask { get; private set; }
 
 	public void Dispose()
+	{
+		_cancellationRegistration.Dispose();
+		KillCurrentProcess();
+		_process.Dispose();
+		DeleteListFile();
+	}
+
+	private void KillCurrentProcess()
 	{
 		try
 		{
@@ -270,25 +319,54 @@ public sealed class VideoPlaybackStream : IDisposable
 		catch (InvalidOperationException)
 		{
 		}
-
-		_process.Dispose();
-
-		if (_concatListPath is not null)
-			try
-			{
-				File.Delete(_concatListPath);
-			}
-			catch
-			{
-				// Best-effort: a stray temp file is harmless, not worth failing over.
-			}
 	}
 
+	private void DeleteListFile()
+	{
+		if (_concatListPath is null) return;
+
+		try
+		{
+			File.Delete(_concatListPath);
+		}
+		catch
+		{
+			// Best-effort: a stray temp file is harmless, not worth failing over.
+		}
+
+		_concatListPath = null;
+	}
+
+	/// <summary>
+	///     Position keeps counting frames delivered since StartPosition regardless of which
+	///     underlying process is providing them, so the swap to the next stage (see
+	///     VideoFrameSource.OpenPlaybackStream) is seamless to the caller - it just looks like the
+	///     stream kept going.
+	/// </summary>
 	public VideoFrame? TryReadNextFrame()
 	{
 		var buffer = new byte[_width * _height * 4];
 		var read = VideoFrameSource.ReadFully(_stdout, buffer);
-		if (read < buffer.Length) return null;
+
+		if (read < buffer.Length)
+		{
+			if (_nextStage is null || _ct.IsCancellationRequested) return null;
+
+			NextStageFactory factory = _nextStage;
+			_nextStage = null;
+
+			KillCurrentProcess();
+			_process.Dispose();
+			DeleteListFile();
+
+			(Process process, string? listPath) = factory();
+			_process = process;
+			_stdout = process.StandardOutput.BaseStream;
+			StderrTask = process.StandardError.ReadToEndAsync();
+			_concatListPath = listPath;
+
+			return TryReadNextFrame();
+		}
 
 		Position = StartPosition + TimeSpan.FromSeconds(_framesRead / _fps);
 		_framesRead++;

@@ -464,6 +464,16 @@
 														<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="DateTimeLocaleCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnDateTimeLocaleChanged" />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DateTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DateTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="DateTimeAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="DateTimeAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="DateTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnDateTimeResetClick" />
 													</StackPanel>
@@ -487,6 +497,16 @@
 														<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="UtcTimeLocaleCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnUtcTimeLocaleChanged" />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="UtcTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="UtcTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="UtcTimeAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="UtcTimeAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="UtcTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnUtcTimeResetClick" />
 													</StackPanel>
@@ -505,6 +525,16 @@
 														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
 														<TextBox Name="CameraInfoLabelBox" PlaceholderText="Camera"
 														         LostFocus="OnCameraInfoLabelChanged" />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="CameraInfoAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="CameraInfoDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="CameraInfoAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="CameraInfoAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="CameraInfoAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnCameraInfoResetClick" />
 													</StackPanel>
@@ -537,6 +567,16 @@
 															             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
 															<RadioButton Name="CompassTrailDotRadio" Content="Dot"
 															             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
+														</StackPanel>
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="CompassAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="CompassDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="CompassAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="CompassAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="CompassAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnCompassResetClick" />
@@ -593,6 +633,16 @@
 															<RadioButton Name="MapTrailDotRadio" Content="Dot"
 															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
 														</StackPanel>
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="MapAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="MapAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnMapResetClick" />
 													</StackPanel>
@@ -615,6 +665,16 @@
 															<RadioButton Name="SpeedImperialRadio" Content="Imperial"
 															             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
 														</StackPanel>
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SpeedAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SpeedDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="SpeedAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="SpeedAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="SpeedAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnSpeedResetClick" />
 													</StackPanel>
@@ -622,10 +682,54 @@
 											</Button.Flyout>
 										</Button>
 									</Grid>
-									<CheckBox Name="PitchVisibleCheck" Classes="overlayItem" Content="Pitch gauge"
-									          Click="OnPitchVisibilityChanged" />
-									<CheckBox Name="SunVisibleCheck" Classes="overlayItem" Content="Sun / G-force"
-									          Click="OnSunVisibilityChanged" />
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="PitchVisibleCheck" Classes="overlayItem"
+										          Content="Pitch gauge" Click="OnPitchVisibilityChanged" />
+										<Button Name="PitchGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="PitchAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="PitchDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="PitchAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="PitchAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="PitchAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
+														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+														        Click="OnPitchResetClick" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="SunVisibleCheck" Classes="overlayItem"
+										          Content="Sun / G-force" Click="OnSunVisibilityChanged" />
+										<Button Name="SunGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SunAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SunDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="SunAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="SunAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="SunAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
+														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+														        Click="OnSunResetClick" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<CheckBox Grid.Column="0" Name="GMeterVisibleCheck" Classes="overlayItem"
 										          Content="G-meter" Click="OnGMeterVisibilityChanged" />
@@ -640,6 +744,16 @@
 														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="How many G's put the dot at the ring's edge - lower for a gentle ride, higher for motorsport." />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="GMeterAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="GMeterDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="GMeterAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="GMeterAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="GMeterAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnGMeterResetClick" />
 													</StackPanel>
@@ -647,10 +761,54 @@
 											</Button.Flyout>
 										</Button>
 									</Grid>
-									<CheckBox Name="ElapsedTimeVisibleCheck" Classes="overlayItem" Content="Elapsed time"
-									          Click="OnElapsedTimeVisibilityChanged" />
-									<CheckBox Name="CameraModelVisibleCheck" Classes="overlayItem" Content="Camera model"
-									          Click="OnCameraModelVisibilityChanged" />
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="ElapsedTimeVisibleCheck" Classes="overlayItem"
+										          Content="Elapsed time" Click="OnElapsedTimeVisibilityChanged" />
+										<Button Name="ElapsedTimeGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="ElapsedTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="ElapsedTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="ElapsedTimeAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="ElapsedTimeAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="ElapsedTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
+														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+														        Click="OnElapsedTimeResetClick" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<CheckBox Grid.Column="0" Name="CameraModelVisibleCheck" Classes="overlayItem"
+										          Content="Camera model" Click="OnCameraModelVisibilityChanged" />
+										<Button Name="CameraModelGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+											<Button.Flyout>
+												<Flyout Placement="Left">
+													<StackPanel Classes="settingsFlyout">
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="CameraModelAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="CameraModelDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="CameraModelAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="CameraModelAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="CameraModelAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
+														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
+														        Click="OnCameraModelResetClick" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
 										<CheckBox Grid.Column="0" Name="TripProgressBarVisibleCheck" Classes="overlayItem"
 										          Content="Trip progress bar" Click="OnTripProgressBarVisibilityChanged" />
@@ -675,6 +833,16 @@
 														<TextBlock Text="Arrived label" Classes="infoLabel" Margin="0" />
 														<TextBox Name="TripProgressLabelBox" PlaceholderText="FINISH"
 														         LostFocus="OnTripProgressLabelChanged" />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="TripProgressBarAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="TripProgressBarDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="TripProgressBarAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="TripProgressBarAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="TripProgressBarAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnTripProgressResetClick" />
 													</StackPanel>
@@ -700,6 +868,16 @@
 															<RadioButton Name="ElevationImperialRadio" Content="Imperial"
 															             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
 														</StackPanel>
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="ElevationAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="ElevationDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="ElevationAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="ElevationAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="ElevationAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnElevationResetClick" />
 													</StackPanel>
@@ -718,6 +896,16 @@
 														<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
 														<TextBox Name="GradientLabelBox" PlaceholderText="Gradient"
 														         LostFocus="OnGradientLabelChanged" />
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="GradientAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="GradientDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="GradientAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="GradientAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="GradientAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnGradientResetClick" />
 													</StackPanel>
@@ -742,6 +930,16 @@
 															             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
 															<RadioButton Name="DistanceImperialRadio" Content="Imperial"
 															             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
+														</StackPanel>
+														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DistanceAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DistanceDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="DistanceAnimationCombo" HorizontalAlignment="Stretch" />
+														<StackPanel Name="DistanceAnimationDurationPanel" Spacing="6">
+															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="DistanceAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
 														        Click="OnDistanceResetClick" />

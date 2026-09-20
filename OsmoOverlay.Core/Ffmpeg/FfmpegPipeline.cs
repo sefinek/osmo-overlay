@@ -58,7 +58,7 @@ public static class FfmpegPipeline
 		}
 		else
 		{
-			concatListPath = ConcatListWriter.Write(inputPaths.Select(p => (p, (double?)null)));
+			concatListPath = ConcatListWriter.Write(inputPaths);
 			args.AddRange(["-f", "concat", "-safe", "0", "-i", concatListPath]);
 		}
 

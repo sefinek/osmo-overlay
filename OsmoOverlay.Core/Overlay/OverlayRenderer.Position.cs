@@ -218,7 +218,12 @@ public sealed partial class OverlayRenderer
 		if (_trail.Count < 2) return;
 
 		(double East, double North) currentPos = (frame.LocalEastMeters, frame.LocalNorthMeters);
-		var maxDist = _trail.Select(p => Distance((p.East, p.North), currentPos)).Prepend(5.0).Max();
+		var maxDist = 5.0;
+		foreach (var p in _trail)
+		{
+			var dist = Distance((p.East, p.North), currentPos);
+			if (dist > maxDist) maxDist = dist;
+		}
 
 		var scale = OverlayElementBounds.CompassRadius * 0.82 / maxDist;
 
@@ -345,7 +350,8 @@ public sealed partial class OverlayRenderer
 	private List<SKPoint> GetTrailPixels()
 	{
 		var pixels = new List<SKPoint>(_trail.Count);
-		pixels.AddRange(_trail.Select(p => _mapMosaic!.GetPixel(p.Lat, p.Lon)));
+		foreach (var p in _trail)
+			pixels.Add(_mapMosaic!.GetPixel(p.Lat, p.Lon));
 		return pixels;
 	}
 

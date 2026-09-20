@@ -58,6 +58,8 @@ Both paths share `GpsForwardFill` (a dropped GPS fix in a tunnel/building should
 
 The speed gauge's scale is dynamic (`ComputeGaugeMaxSpeed` in `OverlayRenderer`) - it rounds up to the nearest ten based on the actual max speed observed in the given recording, not a fixed 60 km/h.
 
+Every widget (regardless of type) can also have its own appear/disappear timing and transition, via `OverlayElement.AppearAtSeconds`/`DisappearAtSeconds`/`AnimationType`/`AnimationDurationSeconds` - null `AppearAtSeconds` means visible from frame 0, null `DisappearAtSeconds` means it never goes away, and the default `AnimationType.None` is an instant hard cut (so an existing preset with none of this set renders exactly as before this existed). `OverlayRenderer.Animation.cs` (`DrawElement`/`ElementProgress`) is the single place `DrawWidgets` routes every widget's draw call through - it reuses the same `FadeAlpha`/`DrawWithAlpha` machinery the watermark's own fade already relied on, rather than a separate mechanism. This is generic across all 15 `OverlayElementType`s, unlike the type-specific fields on `OverlayElement` (Label, Units, etc.) - so the GUI wires it once via `MainWindow.WireTiming`/`PopulateTiming` (`MainWindow.OverlayEditor.cs`) instead of per-widget code, even though the Timing/Animation XAML block itself is still duplicated per widget flyout in `MainWindow.axaml` (4 named controls: `{Widget}AppearAtBox`/`DisappearAtBox`/`AnimationCombo`/`AnimationDurationBox`).
+
 ## Live preview (`PreviewPlayer` + Avalonia GUI)
 
 `PreviewPlayer` decodes frames through `VideoFrameSource` (spawns `ffmpeg` per frame request) and composites them with the overlay (`Compose`, `OverlayRenderer.Render`). Two distinct access modes:

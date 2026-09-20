@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace OsmoOverlay.Core.Ffmpeg;
 
 /// <summary>
@@ -10,22 +8,18 @@ namespace OsmoOverlay.Core.Ffmpeg;
 ///     </c>
 ///     ), shared by the full render pipeline (FfmpegPipeline) and the live preview
 ///     (VideoFrameSource) so both stitch multi-segment recordings the same way.
+///     No per-entry "inpoint" support - confirmed against a real multi-segment recording that the
+///     concat demuxer's own seek (inpoint, or a top-level -ss before -i) decodes a stuck, repeated
+///     frame (or breaks reference frames entirely) instead of actually seeking, regardless of
+///     hwaccel. Entries here always start at their own beginning; VideoFrameSource handles seeking
+///     into the middle of a segment itself, via a plain single-file -ss (see OpenPlaybackStream).
 /// </summary>
 internal static class ConcatListWriter
 {
-	public static string Write(IEnumerable<(string Path, double? InpointSeconds)> entries)
+	public static string Write(IEnumerable<string> paths)
 	{
 		var listPath = Path.Combine(Path.GetTempPath(), $"osmooverlay_concat_{Guid.NewGuid():N}.txt");
-
-		var lines = new List<string>();
-		foreach (var (path, inpointSeconds) in entries)
-		{
-			lines.Add($"file '{Escape(path)}'");
-			if (inpointSeconds is > 0)
-				lines.Add($"inpoint {inpointSeconds.Value.ToString(CultureInfo.InvariantCulture)}");
-		}
-
-		File.WriteAllLines(listPath, lines);
+		File.WriteAllLines(listPath, paths.Select(p => $"file '{Escape(p)}'"));
 		return listPath;
 	}
 

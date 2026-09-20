@@ -25,6 +25,16 @@ public partial class MainWindow
 
 	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
 
+	private static readonly List<AnimationOption> AnimationOptions =
+	[
+		new("None (instant)", OverlayAnimationType.None),
+		new("Fade", OverlayAnimationType.Fade),
+		new("Slide up", OverlayAnimationType.SlideUp),
+		new("Slide down", OverlayAnimationType.SlideDown),
+		new("Slide left", OverlayAnimationType.SlideLeft),
+		new("Slide right", OverlayAnimationType.SlideRight)
+	];
+
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
 
@@ -149,6 +159,22 @@ public partial class MainWindow
 		PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox,
 			MapTrailArrowRadio, MapTrailDotRadio, map);
 
+		PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, dateTime);
+		PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, utcTime);
+		PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, elevation);
+		PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, Find(OverlayElementType.Gradient));
+		PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, distance);
+		PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, Find(OverlayElementType.CameraInfo));
+		PopulateTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel, Find(OverlayElementType.Compass));
+		PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, Find(OverlayElementType.SunWidget));
+		PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, Find(OverlayElementType.PitchGauge));
+		PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, Find(OverlayElementType.GMeter));
+		PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, Find(OverlayElementType.ElapsedTimeText));
+		PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, Find(OverlayElementType.CameraModelText));
+		PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, Find(OverlayElementType.SpeedGauge));
+		PopulateTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel, map);
+		PopulateTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel, tripProgress);
+
 		var editable = !IsActivePresetDefault;
 		RenamePresetButton.IsEnabled = editable;
 		DeletePresetButton.IsEnabled = editable;
@@ -162,11 +188,11 @@ public partial class MainWindow
 		SetWidgetAvailability(DistanceVisibleCheck, DistanceGearButton, OverlayElementType.Distance, editable);
 		SetWidgetAvailability(CameraInfoVisibleCheck, CameraInfoGearButton, OverlayElementType.CameraInfo, editable);
 		SetWidgetAvailability(CompassVisibleCheck, CompassGearButton, OverlayElementType.Compass, editable);
-		SetWidgetAvailability(SunVisibleCheck, null, OverlayElementType.SunWidget, editable);
-		SetWidgetAvailability(PitchVisibleCheck, null, OverlayElementType.PitchGauge, editable);
+		SetWidgetAvailability(SunVisibleCheck, SunGearButton, OverlayElementType.SunWidget, editable);
+		SetWidgetAvailability(PitchVisibleCheck, PitchGearButton, OverlayElementType.PitchGauge, editable);
 		SetWidgetAvailability(GMeterVisibleCheck, GMeterGearButton, OverlayElementType.GMeter, editable);
-		SetWidgetAvailability(ElapsedTimeVisibleCheck, null, OverlayElementType.ElapsedTimeText, editable);
-		SetWidgetAvailability(CameraModelVisibleCheck, null, OverlayElementType.CameraModelText, editable);
+		SetWidgetAvailability(ElapsedTimeVisibleCheck, ElapsedTimeGearButton, OverlayElementType.ElapsedTimeText, editable);
+		SetWidgetAvailability(CameraModelVisibleCheck, CameraModelGearButton, OverlayElementType.CameraModelText, editable);
 		SetWidgetAvailability(SpeedVisibleCheck, SpeedGearButton, OverlayElementType.SpeedGauge, editable);
 		SetWidgetAvailability(MapVisibleCheck, MapGearButton, OverlayElementType.MapWidget, editable);
 		SetWidgetAvailability(TripProgressBarVisibleCheck, TripProgressBarGearButton, OverlayElementType.TripProgressBar, editable);
@@ -215,6 +241,21 @@ public partial class MainWindow
 			var useArrow = element?.TrailUseArrow ?? true;
 			arrowRadio.IsChecked = useArrow;
 			dotRadio.IsChecked = !useArrow;
+		}
+
+		static void PopulateTiming(NumericUpDown appearBox, NumericUpDown disappearBox, ComboBox animationCombo,
+			NumericUpDown durationBox, StackPanel durationPanel, OverlayElement? element)
+		{
+			var animation = element?.AnimationType ?? OverlayAnimationType.None;
+
+			appearBox.Value = (decimal?)element?.AppearAtSeconds;
+			disappearBox.Value = (decimal?)element?.DisappearAtSeconds;
+			animationCombo.SelectedItem = AnimationOptions.FirstOrDefault(o => o.Value == animation) ?? AnimationOptions[0];
+			durationBox.Value = (decimal)(element?.AnimationDurationSeconds ?? OverlayRenderer.AnimationDurationSecondsDefault);
+			// Set explicitly (not left to SelectionChanged above) - picking the same AnimationOption
+			// instance as already selected (e.g. switching between two None widgets) doesn't raise that
+			// event, which would otherwise leave a stale visibility from whichever widget was shown before.
+			durationPanel.IsVisible = animation != OverlayAnimationType.None;
 		}
 	}
 
@@ -299,6 +340,61 @@ public partial class MainWindow
 
 		UpdateElement(type, el => defaults with { X = el.X, Y = el.Y, Visible = el.Visible });
 		RefreshElementCheckboxes();
+	}
+
+	/// <summary>
+	///     Wires a widget's Timing/Animation controls (Appear at/Disappear at/Animation/Duration) to
+	///     OverlayElement - same 4 fields for every widget type, so this is called once per widget from
+	///     the constructor instead of duplicating a handler per widget the way the type-specific settings
+	///     above do. ValueChanged/SelectionChanged also fire when RefreshElementCheckboxes populates these
+	///     controls programmatically, but UpdateElement itself already no-ops while _suppressOverlayEvents
+	///     is set, so that's harmless - durationPanel's visibility still needs to update in that case
+	///     though (switching preset/element shouldn't leave a stale duration field showing for an
+	///     animation that isn't None anymore), hence it's set outside the UpdateElement call.
+	/// </summary>
+	private void WireTiming(OverlayElementType type, NumericUpDown appearBox, NumericUpDown disappearBox,
+		ComboBox animationCombo, NumericUpDown durationBox, StackPanel durationPanel)
+	{
+		void Apply()
+		{
+			var animation = (animationCombo.SelectedItem as AnimationOption)?.Value ?? OverlayAnimationType.None;
+			durationPanel.IsVisible = animation != OverlayAnimationType.None;
+
+			UpdateElement(type, el => el with
+			{
+				AppearAtSeconds = (double?)appearBox.Value,
+				DisappearAtSeconds = (double?)disappearBox.Value,
+				AnimationType = animation,
+				AnimationDurationSeconds = durationBox.Value is { } d
+					? (double)d
+					: OverlayRenderer.AnimationDurationSecondsDefault
+			});
+		}
+
+		appearBox.ValueChanged += (_, _) => Apply();
+		disappearBox.ValueChanged += (_, _) => Apply();
+		animationCombo.SelectionChanged += (_, _) => Apply();
+		durationBox.ValueChanged += (_, _) => Apply();
+	}
+
+	private void OnPitchResetClick(object? sender, RoutedEventArgs e)
+	{
+		ResetElementToFactoryDefaults(OverlayElementType.PitchGauge);
+	}
+
+	private void OnSunResetClick(object? sender, RoutedEventArgs e)
+	{
+		ResetElementToFactoryDefaults(OverlayElementType.SunWidget);
+	}
+
+	private void OnElapsedTimeResetClick(object? sender, RoutedEventArgs e)
+	{
+		ResetElementToFactoryDefaults(OverlayElementType.ElapsedTimeText);
+	}
+
+	private void OnCameraModelResetClick(object? sender, RoutedEventArgs e)
+	{
+		ResetElementToFactoryDefaults(OverlayElementType.CameraModelText);
 	}
 
 	private void OnDateTimeVisibilityChanged(object? sender, RoutedEventArgs e)
@@ -909,6 +1005,14 @@ public partial class MainWindow
 	}
 
 	private sealed record LocaleOption(string Display, string? CultureName)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	private sealed record AnimationOption(string Display, OverlayAnimationType Value)
 	{
 		public override string ToString()
 		{

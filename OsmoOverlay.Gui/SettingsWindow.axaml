@@ -93,7 +93,7 @@
 							<TextBlock Text="GPS motion" Classes="infoLabel" />
 							<CheckBox Name="SmoothGpsMotionCheck" Content="Smooth GPS-derived motion" />
 							<TextBlock Classes="hint"
-							           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. Off by default; takes effect the next time a file/preview is opened." />
+							           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. On by default; takes effect the next time a file/preview is opened." />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>

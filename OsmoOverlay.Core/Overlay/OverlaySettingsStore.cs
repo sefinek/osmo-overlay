@@ -8,9 +8,10 @@ namespace OsmoOverlay.Core.Overlay;
 ///     Small pieces of overlay-related state that aren't tied to any single preset's layout: which
 ///     preset is active, whether the attribution watermark is shown, and whether GPS-derived
 ///     position (Compass trail, Map pan/center) is smoothed between real GPS fixes instead of
-///     holding each one for several video frames - see GpsInterpolation. Off by default: it's a
-///     cosmetic touch-up, not a correctness fix, so it shouldn't silently change what a render looks
-///     like for someone who hasn't opted in.
+///     holding each one for several video frames - see GpsInterpolation. On by default: it only
+///     interpolates between two already-real, already-known fixes (never extrapolates into unknown
+///     territory), and MapWidget - the widget it benefits most - is itself on by default, so most
+///     renders would otherwise ship with the jumpier trail nobody actually prefers.
 ///     Map* is the tile source shared by every map-based widget (MapWidget, the route-intro
 ///     overview) - one place to set it instead of a per-widget field, so it can't drift between
 ///     widgets. Defaults to satellite imagery since it reads better than a street map alongside the
@@ -19,15 +20,15 @@ namespace OsmoOverlay.Core.Overlay;
 ///     the user. MapApiKey fills a literal "{api_key}" placeholder for providers that need one (e.g.
 ///     CARTO), and is a no-op otherwise.
 ///     RouteIntro* configures the optional fullscreen "whole route" card shown for the first
-///     RouteIntroDurationSeconds of the render - off by default like MapWidget, since it also needs
-///     network access to fetch map tiles. The RouteIntroShow* flags let the user pick which stats
+///     RouteIntroDurationSeconds of the render - on by default, same as MapWidget, even though it
+///     also needs network access to fetch map tiles. The RouteIntroShow* flags let the user pick which stats
 ///     appear alongside the map; RouteIntroUnits is its own setting (not per-widget Units, like
 ///     Elevation/Distance/SpeedGauge use) since the card has no OverlayElement of its own to carry one.
 /// </summary>
 public sealed record OverlaySettings(
 	string? ActivePresetId = null,
 	bool ShowWatermark = true,
-	bool SmoothGpsMotion = false,
+	bool SmoothGpsMotion = true,
 	// How wide (in pixels) the live preview is decoded/composited at - capped down from the source
 	// resolution (never upscaled, see MainWindow.OpenPreviewAsync), trading preview sharpness for
 	// scrub/playback responsiveness. Does not affect the exported render, which always uses the
@@ -37,14 +38,14 @@ public sealed record OverlaySettings(
 	string? MapAttribution = MapTileFetcher.SatelliteAttribution,
 	bool MapShowAttribution = true,
 	string? MapApiKey = null,
-	bool ShowRouteIntro = false,
-	double RouteIntroDurationSeconds = 10.0,
+	bool ShowRouteIntro = true,
+	double RouteIntroDurationSeconds = 12.0,
 	bool RouteIntroShowDistance = true,
 	bool RouteIntroShowMaxSpeed = true,
 	bool RouteIntroShowAvgSpeed = true,
 	bool RouteIntroShowDate = true,
 	bool RouteIntroShowDuration = true,
-	bool RouteIntroShowCameraModel = true,
+	bool RouteIntroShowCameraModel = false,
 	bool RouteIntroShowElevationGain = true,
 	UnitSystem RouteIntroUnits = UnitSystem.Metric);
 

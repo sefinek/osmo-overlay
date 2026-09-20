@@ -75,7 +75,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			// OverlayRenderer.DrawGMeter) - kept as the default anyway per an explicit request to
 			// prefer it over Sun/G-force.
 			new(OverlayElementType.GMeter, gMeterCx, gMeterCy),
-			new(OverlayElementType.TripProgressBar, progressBarCx, progressBarCy, false)
+			// Fades in at 16s rather than being on screen the whole time - by then the ride's actually
+			// under way, so "X% / Y km left" reads as a status update instead of a number sitting there
+			// before there's anywhere meaningful left to go.
+			new(OverlayElementType.TripProgressBar, progressBarCx, progressBarCy,
+				AppearAtSeconds: 16.0, AnimationType: OverlayAnimationType.Fade)
 		];
 
 		return new OverlayPreset(id, name, elements);

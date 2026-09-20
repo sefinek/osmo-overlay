@@ -113,7 +113,7 @@ public partial class SettingsWindow : Window
 
 	public RouteIntroSettings RouteIntro => new(
 		ShowRouteIntroCheck.IsChecked == true,
-		(double)(RouteIntroDurationBox.Value ?? 10),
+		(double)(RouteIntroDurationBox.Value ?? 12),
 		RouteIntroDistanceCheck.IsChecked == true,
 		RouteIntroMaxSpeedCheck.IsChecked == true,
 		RouteIntroAvgSpeedCheck.IsChecked == true,

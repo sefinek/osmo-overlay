@@ -81,6 +81,24 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _speedBandOrange;
 	private readonly SKPaint _speedBandRed;
 
+	// Mutable paints reused by DrawOutlined/DrawPanelShadow (see below) - unlike the fixed-style paints
+	// above, color/stroke width/blur radius vary per call (font size, requested color, fade opacity), so
+	// these can't be assigned once at construction - instead their properties are overwritten right
+	// before each draw and the same instances are reused, avoiding a fresh SKPaint (and, for the blur
+	// variants, a fresh native blur kernel) on every single piece of HUD text drawn every frame. Safe
+	// because Render() is only ever called sequentially for a given instance - see RenderJob's single
+	// render loop - never concurrently.
+	private readonly SKPaint _outlineShadowPaint;
+	private readonly SKPaint _outlineStrokePaint;
+	private readonly SKPaint _outlineFillPaint;
+	private readonly SKPaint _panelShadowPaint;
+
+	// Blur mask filters keyed by sigma (font.Size * 0.04 for text shadows, radius * 0.12 for panel
+	// shadows) - both draw from a small, closed set of font sizes/widget radii fixed at construction
+	// time, so this fills in lazily and then never grows past a handful of entries for the rest of the
+	// renderer's lifetime.
+	private readonly Dictionary<float, SKMaskFilter> _blurMaskFilters = [];
+
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true,
 		string? cameraModel = null, DateTime? containerRecordingStartUtc = null,
@@ -156,6 +174,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedBandYellow = CreateGaugeBandPaint(new SKColor(230, 200, 60));
 		_speedBandOrange = CreateGaugeBandPaint(new SKColor(235, 140, 50));
 		_speedBandRed = CreateGaugeBandPaint(new SKColor(220, 60, 60));
+
+		_outlineShadowPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+		_outlineStrokePaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
+		_outlineFillPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+		_panelShadowPaint = new SKPaint { Color = new SKColor(0, 0, 0, 120), IsAntialias = true, Style = SKPaintStyle.Fill };
 	}
 
 	/// <summary>Mutable so the GUI editor can reposition/toggle elements without rebuilding fonts.</summary>
@@ -203,6 +226,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedBandYellow.Dispose();
 		_speedBandOrange.Dispose();
 		_speedBandRed.Dispose();
+		_outlineShadowPaint.Dispose();
+		_outlineStrokePaint.Dispose();
+		_outlineFillPaint.Dispose();
+		_panelShadowPaint.Dispose();
+		foreach (SKMaskFilter filter in _blurMaskFilters.Values) filter.Dispose();
 		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
 	}
@@ -312,55 +340,58 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			if (!element.Visible) continue;
 
-			switch (element.Type)
+			DrawElement(canvas, element, frame.Raw.SampleTimeSeconds, c =>
 			{
-				case OverlayElementType.DateTimeText:
-					DrawDateTime(canvas, frame, element);
-					break;
-				case OverlayElementType.UtcTimeText:
-					DrawUtcTime(canvas, frame, element);
-					break;
-				case OverlayElementType.Elevation:
-					DrawElevation(canvas, frame, element);
-					break;
-				case OverlayElementType.Gradient:
-					DrawGradient(canvas, frame, element);
-					break;
-				case OverlayElementType.Distance:
-					DrawDistance(canvas, frame, element);
-					break;
-				case OverlayElementType.Compass:
-					DrawCompass(canvas, frame, element);
-					break;
-				case OverlayElementType.SunWidget:
-					DrawSunWidget(canvas, frame, element.X, element.Y);
-					break;
-				case OverlayElementType.PitchGauge:
-					DrawPitchGauge(canvas, element.X, element.Y, frame.PitchDegrees);
-					break;
-				case OverlayElementType.MapWidget:
-					DrawMapWidget(canvas, frame, element);
-					if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
-					break;
-				case OverlayElementType.SpeedGauge:
-					DrawSpeedGauge(canvas, element, frame.SpeedKmh);
-					break;
-				case OverlayElementType.CameraInfo:
-					DrawCameraInfo(canvas, frame, element);
-					break;
-				case OverlayElementType.ElapsedTimeText:
-					DrawElapsedTime(canvas, frame, element);
-					break;
-				case OverlayElementType.CameraModelText:
-					DrawCameraModel(canvas, element);
-					break;
-				case OverlayElementType.GMeter:
-					DrawGMeter(canvas, frame, element);
-					break;
-				case OverlayElementType.TripProgressBar:
-					DrawTripProgressBar(canvas, frame, element);
-					break;
-			}
+				switch (element.Type)
+				{
+					case OverlayElementType.DateTimeText:
+						DrawDateTime(c, frame, element);
+						break;
+					case OverlayElementType.UtcTimeText:
+						DrawUtcTime(c, frame, element);
+						break;
+					case OverlayElementType.Elevation:
+						DrawElevation(c, frame, element);
+						break;
+					case OverlayElementType.Gradient:
+						DrawGradient(c, frame, element);
+						break;
+					case OverlayElementType.Distance:
+						DrawDistance(c, frame, element);
+						break;
+					case OverlayElementType.Compass:
+						DrawCompass(c, frame, element);
+						break;
+					case OverlayElementType.SunWidget:
+						DrawSunWidget(c, frame, element.X, element.Y);
+						break;
+					case OverlayElementType.PitchGauge:
+						DrawPitchGauge(c, element.X, element.Y, frame.PitchDegrees);
+						break;
+					case OverlayElementType.MapWidget:
+						DrawMapWidget(c, frame, element);
+						if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
+						break;
+					case OverlayElementType.SpeedGauge:
+						DrawSpeedGauge(c, element, frame.SpeedKmh);
+						break;
+					case OverlayElementType.CameraInfo:
+						DrawCameraInfo(c, frame, element);
+						break;
+					case OverlayElementType.ElapsedTimeText:
+						DrawElapsedTime(c, frame, element);
+						break;
+					case OverlayElementType.CameraModelText:
+						DrawCameraModel(c, element);
+						break;
+					case OverlayElementType.GMeter:
+						DrawGMeter(c, frame, element);
+						break;
+					case OverlayElementType.TripProgressBar:
+						DrawTripProgressBar(c, frame, element);
+						break;
+				}
+			});
 		}
 
 		return mapAttribution;
@@ -383,38 +414,36 @@ public sealed partial class OverlayRenderer : IDisposable
 	///     Soft blurred disc drawn behind a round panel/gauge, offset slightly down, so it reads as a
 	///     drop shadow lifting the widget off the video instead of floating flat on top of it.
 	/// </summary>
-	private static void DrawPanelShadow(SKCanvas canvas, float cx, float cy, float radius)
+	private void DrawPanelShadow(SKCanvas canvas, float cx, float cy, float radius)
 	{
-		using var shadowPaint = new SKPaint
-		{
-			Color = new SKColor(0, 0, 0, 120), IsAntialias = true, Style = SKPaintStyle.Fill,
-			MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, radius * 0.12f)
-		};
-		canvas.DrawCircle(cx, cy + radius * 0.06f, radius * 0.97f, shadowPaint);
+		_panelShadowPaint.MaskFilter = GetBlurMaskFilter(radius * 0.12f);
+		canvas.DrawCircle(cx, cy + radius * 0.06f, radius * 0.97f, _panelShadowPaint);
 	}
 
-	private static void DrawOutlined(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color,
+	private void DrawOutlined(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color,
 		SKTextAlign align = SKTextAlign.Left, float opacity = 1f)
 	{
 		var dropOffset = font.Size * 0.045f;
-		using var dropShadowPaint = new SKPaint();
-		dropShadowPaint.Color = new SKColor(0, 0, 0, (byte)(130 * opacity));
-		dropShadowPaint.IsAntialias = true;
-		dropShadowPaint.Style = SKPaintStyle.Fill;
-		dropShadowPaint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, font.Size * 0.04f);
-		canvas.DrawText(text, x + dropOffset, y + dropOffset, align, font, dropShadowPaint);
+		_outlineShadowPaint.Color = new SKColor(0, 0, 0, (byte)(130 * opacity));
+		_outlineShadowPaint.MaskFilter = GetBlurMaskFilter(font.Size * 0.04f);
+		canvas.DrawText(text, x + dropOffset, y + dropOffset, align, font, _outlineShadowPaint);
 
-		using var strokePaint = new SKPaint();
-		strokePaint.Color = Shadow.WithAlpha((byte)(Shadow.Alpha * opacity));
-		strokePaint.IsAntialias = true;
-		strokePaint.Style = SKPaintStyle.Stroke;
-		strokePaint.StrokeWidth = font.Size * 0.045f;
-		using var fillPaint = new SKPaint();
-		fillPaint.Color = color.WithAlpha((byte)(color.Alpha * opacity));
-		fillPaint.IsAntialias = true;
-		fillPaint.Style = SKPaintStyle.Fill;
-		canvas.DrawText(text, x, y, align, font, strokePaint);
-		canvas.DrawText(text, x, y, align, font, fillPaint);
+		_outlineStrokePaint.Color = Shadow.WithAlpha((byte)(Shadow.Alpha * opacity));
+		_outlineStrokePaint.StrokeWidth = font.Size * 0.045f;
+		canvas.DrawText(text, x, y, align, font, _outlineStrokePaint);
+
+		_outlineFillPaint.Color = color.WithAlpha((byte)(color.Alpha * opacity));
+		canvas.DrawText(text, x, y, align, font, _outlineFillPaint);
+	}
+
+	/// <summary>Lazily builds (and thereafter reuses) the blur mask filter for a given sigma - see the fields above for why this is safe to share across calls.</summary>
+	private SKMaskFilter GetBlurMaskFilter(float sigma)
+	{
+		if (_blurMaskFilters.TryGetValue(sigma, out SKMaskFilter? filter)) return filter;
+
+		filter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, sigma);
+		_blurMaskFilters[sigma] = filter;
+		return filter;
 	}
 
 	private static string F(double value, string format)

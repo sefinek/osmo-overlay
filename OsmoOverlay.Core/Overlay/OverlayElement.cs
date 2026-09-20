@@ -1,5 +1,22 @@
 namespace OsmoOverlay.Core.Overlay;
 
+/// <summary>
+///     How a widget transitions in/out of the frame at its AppearAtSeconds/DisappearAtSeconds edges (see
+///     OverlayElement). None is an instant hard cut - no fade, no offset - matching every widget's
+///     existing always-on behavior exactly, so a preset with no timing set renders identically to before
+///     this existed. The slide directions name where the widget slides *in from* (SlideUp enters moving
+///     upward from below its resting position, etc.), mirrored in reverse on the way out.
+/// </summary>
+public enum OverlayAnimationType
+{
+	None,
+	Fade,
+	SlideUp,
+	SlideDown,
+	SlideLeft,
+	SlideRight
+}
+
 public enum OverlayElementType
 {
 	DateTimeText,
@@ -40,6 +57,12 @@ public enum OverlayElementType
 ///     once within that margin - see OverlayRenderer.DrawTripProgressBar.
 ///     Null means "use the built-in default" (Locale null means OS/thread culture at render time),
 ///     so old preset files without these fields still deserialize correctly.
+///     AppearAtSeconds/DisappearAtSeconds/AnimationType/AnimationDurationSeconds apply to every widget
+///     type uniformly (unlike the type-specific fields above) - see OverlayRenderer.ElementProgress.
+///     Null AppearAtSeconds means visible from the very first frame; null DisappearAtSeconds means it
+///     never goes away. Together with the default AnimationType of None, the default for all four is
+///     "always visible, instant, exactly like every widget already behaved" - so an existing preset with
+///     none of this set renders unchanged.
 /// </summary>
 public sealed record OverlayElement(
 	OverlayElementType Type,
@@ -58,4 +81,8 @@ public sealed record OverlayElement(
 	bool TrailUseArrow = true,
 	double GMeterFullScaleG = OverlayRenderer.GMeterFullScaleGDefault,
 	double TripArrivedToleranceMeters = OverlayRenderer.TripArrivedToleranceMetersDefault,
-	string TripArrivedLabel = OverlayRenderer.TripArrivedLabelDefault);
+	string TripArrivedLabel = OverlayRenderer.TripArrivedLabelDefault,
+	double? AppearAtSeconds = null,
+	double? DisappearAtSeconds = null,
+	OverlayAnimationType AnimationType = OverlayAnimationType.None,
+	double AnimationDurationSeconds = OverlayRenderer.AnimationDurationSecondsDefault);

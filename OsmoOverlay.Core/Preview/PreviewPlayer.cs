@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading.Channels;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
@@ -12,6 +13,13 @@ public sealed class PreviewPlayer : IDisposable
 {
 	private const int ScrubDebounceMs = 80;
 
+	// How many decoded+composed frames the background producer is allowed to run ahead of what
+	// RunPlaybackAsync is currently pacing out - enough to absorb a transient decode hiccup (a slow
+	// disk read, a GC pause, the first frames after a fresh ffmpeg process starts) without it
+	// reaching the screen as a stutter, without buffering so much that a Pause feels laggy or memory
+	// use grows needlessly (each buffered frame is a full preview-resolution BGRA copy).
+	private const int PlaybackPrefetchFrames = 3;
+
 	private readonly Lock _lock = new();
 	private IReadOnlyList<DerivedFrame>? _derivedFrames;
 	private bool _hasContainerTime;
@@ -23,6 +31,7 @@ public sealed class PreviewPlayer : IDisposable
 	private CancellationTokenSource? _playbackCts;
 	private OverlayRenderer? _renderer;
 	private bool _resumeAfterScrub;
+	private CancellationTokenSource? _routeIntroPrepareCts;
 	private CancellationTokenSource? _scrubCts;
 	private VideoFrameSource? _video;
 
@@ -76,20 +85,35 @@ public sealed class PreviewPlayer : IDisposable
 			settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution, settings.MapApiKey,
 			RouteIntroSettings.From(settings));
 
-		if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
-			await renderer.PrepareMapAsync((fetched, total) =>
-				Message?.Invoke($"Fetching map tiles: {fetched}/{total}"));
-
-		if (settings.ShowRouteIntro && _hasGpsFix)
-			await renderer.PrepareRouteIntroMapAsync((fetched, total) =>
-				Message?.Invoke($"Fetching route overview map: {fetched}/{total}"));
-
 		_video = video;
 		_renderer = renderer;
 
+		// Map/RouteIntro tiles are fetched in the background (see PrepareMapInBackgroundAsync/
+		// PrepareRouteIntroInBackgroundAsync below) instead of being awaited here - both widgets are on
+		// by default, and awaiting a possibly-slow or unreachable tile server before showing even the
+		// first frame made opening ANY file hang on network I/O with no way to tell "still fetching" from
+		// "frozen". The first frame now shows immediately (Map/RouteIntro drawing their normal "no data
+		// yet" placeholder - see DrawMapWidget/DrawRouteIntroMap), then recomposes once tiles land, same
+		// UX SetLayout already gives a live MapWidget toggle.
 		ComposedPreviewFrame? first =
 			await Task.Run(() => DecodeSeekCore(video, renderer, derivedFrames, TimeSpan.Zero, CancellationToken.None));
 		if (first is not null) FrameReady?.Invoke(first);
+
+		if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
+		{
+			_mapPrepareCts?.Cancel();
+			var mapCts = new CancellationTokenSource();
+			_mapPrepareCts = mapCts;
+			_ = PrepareMapInBackgroundAsync(renderer, mapCts.Token);
+		}
+
+		if (settings.ShowRouteIntro && _hasGpsFix)
+		{
+			_routeIntroPrepareCts?.Cancel();
+			var routeIntroCts = new CancellationTokenSource();
+			_routeIntroPrepareCts = routeIntroCts;
+			_ = PrepareRouteIntroInBackgroundAsync(renderer, routeIntroCts.Token);
+		}
 	}
 
 	public void Close()
@@ -100,6 +124,8 @@ public sealed class PreviewPlayer : IDisposable
 		_scrubCts = null;
 		_mapPrepareCts?.Cancel();
 		_mapPrepareCts = null;
+		_routeIntroPrepareCts?.Cancel();
+		_routeIntroPrepareCts = null;
 		_resumeAfterScrub = false;
 
 		lock (_lock)
@@ -245,6 +271,42 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
+	/// <summary>Same shape as PrepareMapInBackgroundAsync, for the route-intro overview mosaic instead of MapWidget's.</summary>
+	private async Task PrepareRouteIntroInBackgroundAsync(OverlayRenderer renderer, CancellationToken ct)
+	{
+		RouteMapMosaic? mosaic;
+		string? key;
+		try
+		{
+			(mosaic, key) = await renderer.BuildRouteIntroMosaicAsync(
+				(fetched, total) => Message?.Invoke($"Fetching route overview map: {fetched}/{total}"), ct);
+		}
+		catch (OperationCanceledException)
+		{
+			return;
+		}
+		catch (Exception ex)
+		{
+			Message?.Invoke($"Route overview map failed: {ex.Message}");
+			return;
+		}
+
+		lock (_lock)
+		{
+			if (!ReferenceEquals(_renderer, renderer))
+			{
+				mosaic?.Dispose();
+				return;
+			}
+
+			renderer.ApplyRouteIntroMapMosaic(mosaic, key);
+
+			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
+			ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
+			if (composed is not null) FrameReady?.Invoke(composed);
+		}
+	}
+
 	/// <summary>Mirrors SetLayout: lets Settings toggle the watermark live without reopening the file.</summary>
 	public void SetShowWatermark(bool show)
 	{
@@ -291,6 +353,18 @@ public sealed class PreviewPlayer : IDisposable
 		if (composed is not null && !ct.IsCancellationRequested) FrameReady?.Invoke(composed);
 	}
 
+	/// <summary>
+	///     Decode/compose and pacing/display are two separate concerns run on two separate threads,
+	///     joined by a small bounded channel (ProduceFramesAsync is the writer, the loop below is the
+	///     sole reader): the producer decodes flat-out, ahead of what's currently on screen, so a
+	///     transient decode hiccup (the first frames after a fresh ffmpeg process, a slow disk read, a
+	///     GC pause) gets absorbed by frames already sitting in the channel instead of reaching the
+	///     screen as a stutter. This replaced an earlier single-threaded decode-then-wait-then-display
+	///     loop that had no way to hide a slow frame, plus a "Stale" catch-up mechanism that silently
+	///     dropped a whole burst of frames after any slow open/seek - both are gone now; backpressure
+	///     from the channel's bounded capacity is what keeps the producer from running away, and
+	///     nothing needs to be discarded to "catch up" from a slow start.
+	/// </summary>
 	private async Task RunPlaybackAsync(VideoFrameSource video, OverlayRenderer renderer,
 		IReadOnlyList<DerivedFrame> frames, TimeSpan startPosition, CancellationTokenSource ownCts)
 	{
@@ -298,44 +372,60 @@ public sealed class PreviewPlayer : IDisposable
 
 		try
 		{
-			using VideoPlaybackStream stream = await Task.Run(() => video.OpenPlaybackStream(startPosition), ct);
+			using VideoPlaybackStream stream = await Task.Run(() => video.OpenPlaybackStream(startPosition, ct), ct);
 			// See HighResolutionTimer - default Windows timer resolution otherwise makes the Task.Delay
 			// below overshoot by several ms per frame, which is most of this loop's entire real-time
 			// budget on a demanding (e.g. 4K60) source.
 			using var highResTimer = new HighResolutionTimer();
 
-			// Started only once frames can actually flow, not before - OpenPlaybackStream spawns ffmpeg
-			// and waits for the process/pipe to be ready, which alone can take a real chunk of time
-			// (hwaccel init especially). Starting the clock any earlier would count that startup delay
-			// as "playback already behind real-time", dropping a burst of otherwise-fine early frames
-			// as stale before the very first one is even shown.
-			var sw = Stopwatch.StartNew();
+			var channel = Channel.CreateBounded<ComposedPreviewFrame>(
+				new BoundedChannelOptions(PlaybackPrefetchFrames) { SingleReader = true, SingleWriter = true });
+			Task producer = Task.Run(() => ProduceFramesAsync(stream, renderer, frames, video.Duration, channel.Writer, ct), ct);
 
-			while (!ct.IsCancellationRequested)
+			try
 			{
-				TimeSpan dueBy = startPosition + sw.Elapsed;
-				(DecodeStatus status, ComposedPreviewFrame? composed) =
-					await Task.Run(() => DecodeNextCore(stream, renderer, frames, dueBy), ct);
+				// Not started until the first frame actually arrives - opening the stream and an
+				// accurate -ss seek into the middle of a segment can each take a real chunk of
+				// wall-clock time on their own, and none of that should be charged against the very
+				// first delay calculation below.
+				Stopwatch? sw = null;
+				TimeSpan clockBase = startPosition;
 
-				if (status == DecodeStatus.EndOfStream)
+				await foreach (ComposedPreviewFrame composed in channel.Reader.ReadAllAsync(ct))
 				{
-					if (stream.Position < video.Duration - TimeSpan.FromSeconds(1))
+					if (sw is null)
 					{
-						var stderr = await stream.StderrTask;
-						if (!string.IsNullOrWhiteSpace(stderr)) Message?.Invoke($"ffmpeg stopped early: {stderr}");
+						sw = Stopwatch.StartNew();
+						clockBase = composed.Position;
+					}
+					else
+					{
+						TimeSpan delay = composed.Position - clockBase - sw.Elapsed;
+						if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
 					}
 
-					break;
+					FrameReady?.Invoke(composed);
 				}
+			}
+			finally
+			{
+				// Must finish before `stream` is disposed below (`using`) - the producer may still
+				// be mid-read on it otherwise, racing the process kill/dispose against that read.
+				// Any real failure was already observed via the channel (ReadAllAsync rethrows it),
+				// so a second throw here would only be a duplicate.
+				try
+				{
+					await producer;
+				}
+				catch
+				{
+				}
+			}
 
-				if (status == DecodeStatus.Stale) continue;
-
-				if (composed is null || composed.Position >= video.Duration) break;
-
-				TimeSpan delay = composed.Position - startPosition - sw.Elapsed;
-				if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
-
-				FrameReady?.Invoke(composed);
+			if (stream.Position < video.Duration - TimeSpan.FromSeconds(1))
+			{
+				var stderr = await stream.StderrTask;
+				if (!string.IsNullOrWhiteSpace(stderr)) Message?.Invoke($"ffmpeg stopped early: {stderr}");
 			}
 		}
 		catch (OperationCanceledException)
@@ -355,6 +445,41 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
+	private async Task ProduceFramesAsync(VideoPlaybackStream stream, OverlayRenderer renderer,
+		IReadOnlyList<DerivedFrame> frames, TimeSpan duration, ChannelWriter<ComposedPreviewFrame> writer,
+		CancellationToken ct)
+	{
+		try
+		{
+			while (!ct.IsCancellationRequested)
+			{
+				ComposedPreviewFrame? composed;
+				lock (_lock)
+				{
+					VideoFrame? videoFrame = stream.TryReadNextFrame();
+					composed = videoFrame is null ? null : Compose(renderer, frames, videoFrame, stream.Position);
+				}
+
+				if (composed is null || composed.Position >= duration) break;
+
+				// Backpressure, not held under _lock - once the channel is full this waits for the
+				// consumer to drain a slot, which can legitimately take a while (that's the pacing
+				// working as intended), and _lock is needed by SetLayout/scrub/etc. in the meantime.
+				await writer.WriteAsync(composed, ct);
+			}
+
+			writer.TryComplete();
+		}
+		catch (OperationCanceledException)
+		{
+			writer.TryComplete();
+		}
+		catch (Exception ex)
+		{
+			writer.TryComplete(ex);
+		}
+	}
+
 	private ComposedPreviewFrame? DecodeSeekCore(VideoFrameSource video, OverlayRenderer renderer,
 		IReadOnlyList<DerivedFrame> frames, TimeSpan position, CancellationToken ct)
 	{
@@ -362,21 +487,6 @@ public sealed class PreviewPlayer : IDisposable
 		{
 			VideoFrame? videoFrame = video.GetFrame(position, ct);
 			return videoFrame is null ? null : Compose(renderer, frames, videoFrame, position);
-		}
-	}
-
-	private (DecodeStatus Status, ComposedPreviewFrame? Frame) DecodeNextCore(VideoPlaybackStream stream,
-		OverlayRenderer renderer, IReadOnlyList<DerivedFrame> frames, TimeSpan staleBefore)
-	{
-		lock (_lock)
-		{
-			VideoFrame? videoFrame = stream.TryReadNextFrame();
-			if (videoFrame is null) return (DecodeStatus.EndOfStream, null);
-
-			TimeSpan position = stream.Position;
-			if (position < staleBefore) return (DecodeStatus.Stale, null);
-
-			return (DecodeStatus.Ready, Compose(renderer, frames, videoFrame, position));
 		}
 	}
 
@@ -394,12 +504,5 @@ public sealed class PreviewPlayer : IDisposable
 			videoFrame.Stride, overlayBytes, videoFrame.Width, videoFrame.Height);
 
 		return new ComposedPreviewFrame(position, composed);
-	}
-
-	private enum DecodeStatus
-	{
-		EndOfStream,
-		Stale,
-		Ready
 	}
 }
