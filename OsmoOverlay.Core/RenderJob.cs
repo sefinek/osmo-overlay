@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading.Channels;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
@@ -65,6 +66,11 @@ public sealed record RenderResult(bool Success, string? ErrorMessage, TimeSpan E
 
 public static class RenderJob
 {
+	// How many rendered-but-not-yet-written frames the producer may get ahead of ffmpeg by. Each one
+	// is a full native-resolution BGRA frame (tens of MB at 4K), so this stays modest - just enough
+	// to overlap render and encode, not to buffer a meaningful chunk of the render in memory.
+	private const int RenderPrefetchFrames = 3;
+
 	public static Task<RenderResult> RunAsync(RenderOptions options, IProgress<RenderStatus>? progress,
 		CancellationToken ct)
 	{
@@ -190,82 +196,147 @@ public static class RenderJob
 				options.Overwrite, limitSeconds, options.GreenScreen, totalFrames);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
-			Stream stdin = ffmpeg.StandardInput.BaseStream;
-			Task<string> stderrTask = ffmpeg.StandardError.ReadToEndAsync(ct);
-
-			var cancelled = false;
+			// `using Process ffmpeg` above only releases managed handles on Dispose - it does NOT
+			// terminate the OS process. Every path out of the try below - including one that has
+			// nothing to do with cancellation, e.g. a genuine exception thrown by renderer.Render() -
+			// must still guarantee ffmpeg.exe is dead before this method returns; otherwise it's
+			// orphaned running against a closed stdin, and for a green-screen render (infinite main
+			// input, see FfmpegPipeline.StartRender) that can mean forever, not just "a while".
 			try
 			{
-				for (var i = 0; i < totalFrames; i++)
+				Stream stdin = ffmpeg.StandardInput.BaseStream;
+				Task<string> stderrTask = ffmpeg.StandardError.ReadToEndAsync(ct);
+
+				// stdin.Write below is a plain blocking write with no cancellation of its own - if ffmpeg
+				// ever stops draining its input (a genuine hang), that write would otherwise block forever
+				// with no way for Cancel to interrupt it. Killing the process here breaks the pipe, which
+				// unblocks the write as an IOException (caught below) instead.
+				using CancellationTokenRegistration killOnCancel = ct.Register(() => KillFfmpegIfRunning(ffmpeg));
+
+				// Rendering the overlay (CPU-bound SkiaSharp drawing) and feeding ffmpeg (I/O-bound,
+				// throttled by however fast the encoder drains its input) are two different bottlenecks -
+				// running them on separate threads lets one overlap the other instead of strictly
+				// alternating "render a frame, then sit idle waiting for ffmpeg to catch up, repeat".
+				// Render() itself stays strictly sequential - see its own doc comment, its cached paint
+				// objects aren't safe to call concurrently - only this one producer thread ever calls it.
+				var channel = Channel.CreateBounded<byte[]>(
+					new BoundedChannelOptions(RenderPrefetchFrames) { SingleReader = true, SingleWriter = true });
+
+				// Linked, not just `ct` directly: if the consumer loop below stops for a reason that has
+				// nothing to do with `ct` (e.g. stdin.Write hits an IOException because ffmpeg crashed on
+				// its own), the producer can otherwise be left blocked forever on a full channel nobody is
+				// draining anymore - awaiting it in the consumer's finally would then hang too. Cancelling
+				// this in that finally, unconditionally, guarantees the producer can always be unblocked
+				// regardless of why the consumer stopped.
+				using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+				CancellationToken producerCt = producerCts.Token;
+
+				Task producer = Task.Run(async () =>
 				{
-					if (ct.IsCancellationRequested)
+					try
 					{
-						cancelled = true;
-						break;
+						for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
+						{
+							DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
+							var pixels = renderer.Render(frame);
+							await channel.Writer.WriteAsync(pixels, producerCt);
+						}
+
+						channel.Writer.TryComplete();
 					}
+					catch (OperationCanceledException)
+					{
+						channel.Writer.TryComplete();
+					}
+					catch (Exception ex)
+					{
+						channel.Writer.TryComplete(ex);
+					}
+				}, producerCt);
 
-					DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
-					var pixels = renderer.Render(frame);
-					stdin.Write(pixels, 0, pixels.Length);
-
-					if (i % 60 == 0)
-						Report(RenderPhase.Rendering, $"Frame {i}/{totalFrames}", i, totalFrames);
-				}
-
-				stdin.Flush();
-			}
-			catch (IOException)
-			{
-				// ffmpeg likely died mid-write - fall through and surface its stderr instead of a bare pipe exception
-			}
-			finally
-			{
-				stdin.Close();
-			}
-
-			if (cancelled)
-			{
-				// Closing stdin alone doesn't make ffmpeg exit promptly - the overlay filter's default
-				// eof_action (repeat) just freezes the last overlay frame it got and keeps encoding
-				// against whatever's left on the main input regardless of the now-closed pipe: the real
-				// source video's remaining length for a normal render, or - far worse - the render's
-				// full original frame count for a green-screen render, whose main input is otherwise-
-				// infinite (see FfmpegPipeline.StartRender). Kill the whole process tree so Cancel
-				// actually stops the render instead of ffmpeg grinding through however much is left.
+				var written = 0;
 				try
 				{
-					if (!ffmpeg.HasExited) ffmpeg.Kill(true);
+					await foreach (var pixels in channel.Reader.ReadAllAsync(ct))
+					{
+						stdin.Write(pixels, 0, pixels.Length);
+						written++;
+
+						if (written % 60 == 0)
+							Report(RenderPhase.Rendering, $"Frame {written}/{totalFrames}", written, totalFrames);
+					}
+
+					stdin.Flush();
 				}
-				catch (InvalidOperationException)
+				catch (OperationCanceledException)
 				{
+					// Observed directly by this loop's own ReadAllAsync(ct) - the cancelled check below
+					// (not this catch alone) is what decides whether to report a cancellation, since the
+					// producer noticing ct first and completing the channel normally takes this same path
+					// without throwing here.
+				}
+				catch (IOException)
+				{
+					// ffmpeg's pipe broke - either it died on its own, or killOnCancel above just killed it
+					// because of a cancellation already in flight; the checks below sort out which.
+				}
+				finally
+				{
+					producerCts.Cancel();
+					stdin.Close();
+
+					try
+					{
+						await producer;
+					}
+					catch
+					{
+						// Any real failure was already observed via the channel (ReadAllAsync rethrows it
+						// above) - a second throw here would only be a duplicate.
+					}
+				}
+
+				var cancelled = ct.IsCancellationRequested;
+				if (cancelled)
+				{
+					// Closing stdin alone doesn't make ffmpeg exit promptly - the overlay filter's default
+					// eof_action (repeat) just freezes the last overlay frame it got and keeps encoding
+					// against whatever's left on the main input regardless of the now-closed pipe: the real
+					// source video's remaining length for a normal render, or - far worse - the render's
+					// full original frame count for a green-screen render, whose main input is otherwise-
+					// infinite (see FfmpegPipeline.StartRender). killOnCancel above already killed the
+					// whole process tree the moment ct was cancelled, so this just waits for that to land.
+					ffmpeg.WaitForExit();
+					try
+					{
+						await stderrTask;
+					}
+					catch (Exception)
+					{
+						// Reading a killed process's stderr can fault in various ways (broken pipe, the
+						// cancelled token itself) - none of it matters once this is already reporting a
+						// user cancellation, not a render failure.
+					}
+
+					return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
 				}
 
 				ffmpeg.WaitForExit();
-				try
+				var stderr = await stderrTask;
+
+				if (ffmpeg.ExitCode != 0)
 				{
-					await stderrTask;
-				}
-				catch (Exception)
-				{
-					// Reading a killed process's stderr can fault in various ways (broken pipe, the
-					// cancelled token itself) - none of it matters once this is already reporting a
-					// user cancellation, not a render failure.
+					var message = $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}";
+					AppLogger.Error(message);
+					return new RenderResult(false, message, sw.Elapsed);
 				}
 
-				return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
+				return new RenderResult(true, null, sw.Elapsed);
 			}
-
-			ffmpeg.WaitForExit();
-			var stderr = await stderrTask;
-
-			if (ffmpeg.ExitCode != 0)
+			finally
 			{
-				var message = $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}";
-				AppLogger.Error(message);
-				return new RenderResult(false, message, sw.Elapsed);
+				KillFfmpegIfRunning(ffmpeg);
 			}
-
-			return new RenderResult(true, null, sw.Elapsed);
 		}
 		catch (Exception ex)
 		{
@@ -275,6 +346,17 @@ public static class RenderJob
 			// the GUI's on-screen panel.
 			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}: {ex.Message}");
 			return new RenderResult(false, ex.Message, sw.Elapsed);
+		}
+	}
+
+	private static void KillFfmpegIfRunning(Process ffmpeg)
+	{
+		try
+		{
+			if (!ffmpeg.HasExited) ffmpeg.Kill(true);
+		}
+		catch (InvalidOperationException)
+		{
 		}
 	}
 

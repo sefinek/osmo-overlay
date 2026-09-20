@@ -380,7 +380,16 @@ public sealed class PreviewPlayer : IDisposable
 
 			var channel = Channel.CreateBounded<ComposedPreviewFrame>(
 				new BoundedChannelOptions(PlaybackPrefetchFrames) { SingleReader = true, SingleWriter = true });
-			Task producer = Task.Run(() => ProduceFramesAsync(stream, renderer, frames, video.Duration, channel.Writer, ct), ct);
+
+			// Linked, not just `ct` directly: if the consumer loop below stops for a reason that has
+			// nothing to do with `ct` (e.g. a FrameReady subscriber throws), the producer can otherwise
+			// be left blocked forever on a full channel nobody is draining anymore - awaiting it in the
+			// consumer's finally would then hang too. Cancelling this in that finally, unconditionally,
+			// guarantees the producer can always be unblocked regardless of why the consumer stopped.
+			using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+			Task producer = Task.Run(
+				() => ProduceFramesAsync(stream, renderer, frames, video.Duration, channel.Writer, producerCts.Token),
+				producerCts.Token);
 
 			try
 			{
@@ -413,6 +422,7 @@ public sealed class PreviewPlayer : IDisposable
 				// be mid-read on it otherwise, racing the process kill/dispose against that read.
 				// Any real failure was already observed via the channel (ReadAllAsync rethrows it),
 				// so a second throw here would only be a duplicate.
+				producerCts.Cancel();
 				try
 				{
 					await producer;
