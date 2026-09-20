@@ -5,7 +5,7 @@ using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Gui;
 
-/// <summary>Shared "Name | installed | latest | [Update]" row layout - used by DependencyUpdateWindow and SettingsWindow's About tab so the two can't drift on how an update row looks or behaves.</summary>
+/// <summary>Shared "Name | installed | latest | [Update]" row layout used by SettingsWindow's About tab.</summary>
 internal static class DependencyStatusRows
 {
 	public static void Populate(Grid grid, IReadOnlyList<ToolVersionInfo> statuses)
@@ -36,8 +36,7 @@ internal static class DependencyStatusRows
 		}
 	}
 
-	// AppLogger.Notify (not a local log panel) so the update's line-by-line output always lands in the
-	// same place regardless of which window (DependencyUpdateWindow or SettingsWindow) triggered it.
+	// AppLogger.Notify (not a local log panel) so the update's line-by-line output always lands in the same place.
 	private static async Task OnUpdateClickAsync(ToolVersionInfo status, Button button)
 	{
 		button.IsEnabled = false;

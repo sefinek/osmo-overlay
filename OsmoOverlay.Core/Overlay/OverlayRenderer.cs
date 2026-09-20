@@ -53,8 +53,6 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKFont _dateFont;
 	private readonly SKFont _labelFont;
 	private readonly SKFont _smallFont;
-	private readonly SKFont _speedFont;
-	private readonly SKFont _speedUnitFont;
 	private readonly SKFont _unitFont;
 	private readonly SKFont _valueFont;
 	private readonly SKFont _watermarkSubtitleFont;
@@ -155,8 +153,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		_valueFont = new SKFont(_hudTypeface, OverlayElementBounds.ValueFontSize);
 		_unitFont = new SKFont(_hudTypeface, OverlayElementBounds.UnitFontSize);
 		_smallFont = new SKFont(_hudTypeface, OverlayElementBounds.SmallFontSize);
-		_speedFont = new SKFont(_hudTypeface, 115);
-		_speedUnitFont = new SKFont(_hudTypeface, 38);
 		_watermarkTitleFont = new SKFont(_hudTypeface, 40);
 		_watermarkSubtitleFont = new SKFont(_hudTypeface, 30);
 		_routeIntroLabelFont = new SKFont(_hudTypeface, 36);
@@ -217,8 +213,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		_valueFont.Dispose();
 		_unitFont.Dispose();
 		_smallFont.Dispose();
-		_speedFont.Dispose();
-		_speedUnitFont.Dispose();
 		_watermarkTitleFont.Dispose();
 		_watermarkSubtitleFont.Dispose();
 		_routeIntroLabelFont.Dispose();
@@ -361,10 +355,10 @@ public sealed partial class OverlayRenderer : IDisposable
 						DrawCompass(c, frame, element);
 						break;
 					case OverlayElementType.SunWidget:
-						DrawSunWidget(c, frame, element.X, element.Y);
+						DrawSunWidget(c, frame, element);
 						break;
 					case OverlayElementType.PitchGauge:
-						DrawPitchGauge(c, element.X, element.Y, frame.PitchDegrees);
+						DrawPitchGauge(c, element, frame.PitchDegrees);
 						break;
 					case OverlayElementType.MapWidget:
 						DrawMapWidget(c, frame, element);

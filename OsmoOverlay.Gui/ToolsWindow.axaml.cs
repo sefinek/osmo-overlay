@@ -51,11 +51,6 @@ public partial class ToolsWindow : Window
 		new CompareVideosWindow().Show(this);
 	}
 
-	private void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e)
-	{
-		new DependencyUpdateWindow().Show(this);
-	}
-
 	private async void OnSelectColorTagFileClick(object? sender, RoutedEventArgs e)
 	{
 		TopLevel? topLevel = GetTopLevel(this);

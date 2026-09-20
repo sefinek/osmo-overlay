@@ -43,9 +43,10 @@ public partial class MainWindow : Window
 	private string _detectedEncoder = "";
 	private Point _dragAnchorOffset;
 	private string? _draggingElementId;
-	// Id of whichever element's settings panel is currently populated/open in WidgetSettingsWindow - every
-	// field-changed handler in that panel targets this instance rather than a fixed OverlayElementType,
-	// since a type can now have several instances on the canvas at once (see OnWidgetGearHoverButtonClick).
+	// Id of whichever element's settings panel is currently populated/shown in the left column's inline
+	// widget-settings view - every field-changed handler in that panel targets this instance rather than
+	// a fixed OverlayElementType, since a type can now have several instances on the canvas at once (see
+	// OnWidgetGearHoverButtonClick).
 	private string? _editingElementId;
 	private int? _frameLimit;
 
@@ -79,9 +80,6 @@ public partial class MainWindow : Window
 	private FileSummary? _summary;
 	private bool _suppressOverlayEvents;
 	private bool _suppressSliderEvent;
-	// Lazily created, reused for this window's whole lifetime - see GetOrCreateWidgetSettingsWindow and
-	// WidgetSettingsWindow's own class doc for why closing it hides rather than disposes it.
-	private WidgetSettingsWindow? _widgetSettingsWindow;
 
 	public MainWindow()
 	{
@@ -130,8 +128,9 @@ public partial class MainWindow : Window
 		WireTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel);
 
 		// Style (Font/Text size/Text color/Outline color/Outline width, plus Value color on the four
-		// widgets with a second accent-colored text slot) applies only to the text-based widgets - every
-		// other widget type has no per-element text to style, so it gets no Style section/WireStyle call.
+		// widgets with a second accent-colored text slot) applies to the text-based widgets and every
+		// round gauge's own readout - Compass/MapWidget/TripProgressBar have no per-element text to
+		// style, so they get no Style section/WireStyle call.
 		DateTimeFontCombo.ItemsSource = FontOptions;
 		UtcTimeFontCombo.ItemsSource = FontOptions;
 		ElapsedTimeFontCombo.ItemsSource = FontOptions;
@@ -140,6 +139,10 @@ public partial class MainWindow : Window
 		GradientFontCombo.ItemsSource = FontOptions;
 		DistanceFontCombo.ItemsSource = FontOptions;
 		CameraInfoFontCombo.ItemsSource = FontOptions;
+		SpeedFontCombo.ItemsSource = FontOptions;
+		PitchFontCombo.ItemsSource = FontOptions;
+		SunFontCombo.ItemsSource = FontOptions;
+		GMeterFontCombo.ItemsSource = FontOptions;
 
 		WireStyle(DateTimeFontCombo, DateTimeScaleBox, DateTimeTextColorBox, DateTimeTextColorSwatch,
 			DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox);
@@ -161,6 +164,14 @@ public partial class MainWindow : Window
 		WireStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
 			CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox,
 			CameraInfoAccentColorBox, CameraInfoAccentColorSwatch);
+		WireStyle(SpeedFontCombo, SpeedScaleBox, SpeedTextColorBox, SpeedTextColorSwatch,
+			SpeedOutlineColorBox, SpeedOutlineColorSwatch, SpeedOutlineWidthBox);
+		WireStyle(PitchFontCombo, PitchScaleBox, PitchTextColorBox, PitchTextColorSwatch,
+			PitchOutlineColorBox, PitchOutlineColorSwatch, PitchOutlineWidthBox);
+		WireStyle(SunFontCombo, SunScaleBox, SunTextColorBox, SunTextColorSwatch,
+			SunOutlineColorBox, SunOutlineColorSwatch, SunOutlineWidthBox);
+		WireStyle(GMeterFontCombo, GMeterScaleBox, GMeterTextColorBox, GMeterTextColorSwatch,
+			GMeterOutlineColorBox, GMeterOutlineColorSwatch, GMeterOutlineWidthBox);
 
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in

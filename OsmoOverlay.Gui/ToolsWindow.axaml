@@ -42,13 +42,6 @@
 		</StackPanel>
 
 		<StackPanel Spacing="4">
-			<TextBlock Text="Dependencies" Classes="infoLabel" Margin="0" />
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Content="Check for updates..." Click="OnCheckForUpdatesClick" />
-			</StackPanel>
-		</StackPanel>
-
-		<StackPanel Spacing="4">
 			<TextBlock Text="Data" Classes="infoLabel" Margin="0" />
 			<StackPanel Orientation="Horizontal" Spacing="8">
 				<Button Content="Open data folder" Click="OnOpenDataFolderClick" />

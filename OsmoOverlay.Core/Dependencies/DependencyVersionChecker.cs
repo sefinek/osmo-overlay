@@ -26,8 +26,8 @@ public static partial class DependencyVersionChecker
 	///     waiting, so silence here would look like the app hung, especially on Linux/macOS where a
 	///     package-manager query can take a couple of seconds. onProgress is a second, optional route for
 	///     the same lines - AppLogger.Notify reaches the main window's LOG panel, but a caller showing its
-	///     own live status label (Settings' About tab, DependencyUpdateWindow) wants these lines directly,
-	///     without picking up unrelated Notify traffic from elsewhere in the app.
+	///     own live status label (Settings' About tab) wants these lines directly, without picking up
+	///     unrelated Notify traffic from elsewhere in the app.
 	/// </summary>
 	public static async Task<ToolVersionInfo> CheckAsync(ExternalTool tool, CancellationToken ct, Action<string>? onProgress = null)
 	{

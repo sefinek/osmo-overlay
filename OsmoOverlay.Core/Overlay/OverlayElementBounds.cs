@@ -32,6 +32,8 @@ public static class OverlayElementBounds
 	public const float ValueFontSize = 95f;
 	public const float UnitFontSize = 46f;
 	public const float SmallFontSize = 36f;
+	public const float SpeedFontSize = 115f;
+	public const float SpeedUnitFontSize = 38f;
 
 	public const float ProgressBarWidth = 760f;
 	public const float ProgressBarHeight = 60f;

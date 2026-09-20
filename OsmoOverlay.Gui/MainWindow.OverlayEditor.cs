@@ -51,6 +51,13 @@ public partial class MainWindow
 	private const string DefaultOutlineColorHex = "#000000";
 	private const string DefaultTrailColorHex = "#46DC6E";
 
+	// Shown in the Label box in place of a null Label - matches the fallback caption OverlayRenderer.
+	// TextWidgets.cs itself draws (case-insensitively; the renderer uppercases whatever it gets).
+	private const string DefaultElevationLabel = "Elevation";
+	private const string DefaultGradientLabel = "Gradient";
+	private const string DefaultDistanceLabel = "Total distance";
+	private const string DefaultCameraInfoLabel = "Camera";
+
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
 
@@ -101,9 +108,9 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Refreshes everything driven by the active preset's element list except a widget's own settings
-	///     panel (in WidgetSettingsWindow), which is populated on demand instead (see
-	///     PopulateElementSettings) - with several instances of a type possibly on the canvas at once,
-	///     there's no single "the" instance left to eagerly bind every panel's fields to.
+	///     panel (the left column's inline widget-settings view), which is populated on demand instead
+	///     (see PopulateElementSettings) - with several instances of a type possibly on the canvas at
+	///     once, there's no single "the" instance left to eagerly bind every panel's fields to.
 	/// </summary>
 	private void RefreshWidgetList()
 	{
@@ -471,9 +478,12 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Populates one widget instance's settings panel and shows it in the (non-modal, reused)
-	///     WidgetSettingsWindow - the single entry point for opening settings, whether reached from a
-	///     canvas click or (in the future) anywhere else that identifies a specific element.
+	///     Populates one widget instance's settings panel and swaps the left column over to show it (in
+	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings,
+	///     whether reached from a canvas click or (in the future) anywhere else that identifies a specific
+	///     element. Not a separate window: an earlier popup-window version made it impossible to see the
+	///     SOURCE/preview area at the same time as the settings, which is exactly what editing a widget
+	///     needs.
 	/// </summary>
 	private void OpenElementSettings(OverlayElement element)
 	{
@@ -482,29 +492,28 @@ public partial class MainWindow
 
 		if (GetSettingsPanel(element.Type) is not { } panel) return;
 
-		WidgetSettingsWindow window = GetOrCreateWidgetSettingsWindow();
-		window.ShowPanel(GetWidgetLabel(element.Type), panel);
-		if (!window.IsVisible) window.Show(this);
-		window.Activate();
+		if (panel.Parent is Panel oldParent) oldParent.Children.Remove(panel);
+		panel.IsVisible = true;
+		WidgetSettingsPanelHost.Content = panel;
+		WidgetSettingsTitleRun.Text = GetWidgetLabel(element.Type);
+
+		SourceColumnScroll.IsVisible = false;
+		WidgetSettingsColumnScroll.IsVisible = true;
+		WidgetSettingsColumnScroll.Offset = default;
 	}
 
-	/// <summary>
-	///     Lazily creates the single WidgetSettingsWindow instance this MainWindow reuses for its whole
-	///     lifetime (see that class's own doc for why it's one persistent instance rather than one per
-	///     open) - its own titlebar close hides it instead of disposing.
-	/// </summary>
-	private WidgetSettingsWindow GetOrCreateWidgetSettingsWindow()
-	{
-		if (_widgetSettingsWindow is not null) return _widgetSettingsWindow;
+	private void OnWidgetSettingsBackClick(object? sender, RoutedEventArgs e) => CloseElementSettings();
 
-		_widgetSettingsWindow = new WidgetSettingsWindow();
-		_widgetSettingsWindow.Closing += (_, e) =>
-		{
-			e.Cancel = true;
-			_widgetSettingsWindow!.Hide();
-		};
-		_widgetSettingsWindow.ResetRequested += OnResetElementClick;
-		return _widgetSettingsWindow;
+	/// <summary>
+	///     Switches the left column back to its normal SOURCE/ACTION/summary view - the settings panel
+	///     itself is left alone (still parented to WidgetSettingsPanelHost, still populated) so
+	///     re-opening the same instance doesn't need to rebuild anything.
+	/// </summary>
+	private void CloseElementSettings()
+	{
+		_editingElementId = null;
+		WidgetSettingsColumnScroll.IsVisible = false;
+		SourceColumnScroll.IsVisible = true;
 	}
 
 	/// <summary>
@@ -535,7 +544,7 @@ public partial class MainWindow
 				break;
 
 			case OverlayElementType.Elevation:
-				ElevationLabelBox.Text = el.Label;
+				ElevationLabelBox.Text = el.Label ?? DefaultElevationLabel;
 				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, el.Units);
 				PopulateStyle(ElevationFontCombo, ElevationScaleBox, ElevationTextColorBox, ElevationTextColorSwatch,
 					ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox, el,
@@ -544,7 +553,7 @@ public partial class MainWindow
 				break;
 
 			case OverlayElementType.Gradient:
-				GradientLabelBox.Text = el.Label;
+				GradientLabelBox.Text = el.Label ?? DefaultGradientLabel;
 				PopulateStyle(GradientFontCombo, GradientScaleBox, GradientTextColorBox, GradientTextColorSwatch,
 					GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox, el,
 					GradientAccentColorBox, GradientAccentColorSwatch);
@@ -552,7 +561,7 @@ public partial class MainWindow
 				break;
 
 			case OverlayElementType.Distance:
-				DistanceLabelBox.Text = el.Label;
+				DistanceLabelBox.Text = el.Label ?? DefaultDistanceLabel;
 				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, el.Units);
 				PopulateStyle(DistanceFontCombo, DistanceScaleBox, DistanceTextColorBox, DistanceTextColorSwatch,
 					DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox, el,
@@ -561,7 +570,7 @@ public partial class MainWindow
 				break;
 
 			case OverlayElementType.CameraInfo:
-				CameraInfoLabelBox.Text = el.Label;
+				CameraInfoLabelBox.Text = el.Label ?? DefaultCameraInfoLabel;
 				PopulateStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
 					CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox, el,
 					CameraInfoAccentColorBox, CameraInfoAccentColorSwatch);
@@ -574,20 +583,28 @@ public partial class MainWindow
 				break;
 
 			case OverlayElementType.SunWidget:
+				PopulateStyle(SunFontCombo, SunScaleBox, SunTextColorBox, SunTextColorSwatch,
+					SunOutlineColorBox, SunOutlineColorSwatch, SunOutlineWidthBox, el);
 				PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.PitchGauge:
+				PopulateStyle(PitchFontCombo, PitchScaleBox, PitchTextColorBox, PitchTextColorSwatch,
+					PitchOutlineColorBox, PitchOutlineColorSwatch, PitchOutlineWidthBox, el);
 				PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.GMeter:
 				GMeterFullScaleBox.Value = (decimal)el.GMeterFullScaleG;
+				PopulateStyle(GMeterFontCombo, GMeterScaleBox, GMeterTextColorBox, GMeterTextColorSwatch,
+					GMeterOutlineColorBox, GMeterOutlineColorSwatch, GMeterOutlineWidthBox, el);
 				PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, el);
 				break;
 
 			case OverlayElementType.SpeedGauge:
 				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, el.Units);
+				PopulateStyle(SpeedFontCombo, SpeedScaleBox, SpeedTextColorBox, SpeedTextColorSwatch,
+					SpeedOutlineColorBox, SpeedOutlineColorSwatch, SpeedOutlineWidthBox, el);
 				PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, el);
 				break;
 
@@ -634,7 +651,7 @@ public partial class MainWindow
 	private static void PopulateTrailControls(TextBox colorBox, Border swatch, NumericUpDown widthBox,
 		RadioButton arrowRadio, RadioButton dotRadio, OverlayElement element)
 	{
-		colorBox.Text = element.TrailColor;
+		colorBox.Text = element.TrailColor ?? DefaultTrailColorHex;
 		UpdateColorSwatch(swatch, element.TrailColor, DefaultTrailColorHex);
 		widthBox.Value = (decimal)element.TrailWidth;
 		arrowRadio.IsChecked = element.TrailUseArrow;
@@ -700,14 +717,14 @@ public partial class MainWindow
 	{
 		fontCombo.SelectedItem = FontOptions.FirstOrDefault(o => o.Family == element.FontFamily) ?? FontOptions[0];
 		scaleBox.Value = (decimal)element.Scale;
-		textColorBox.Text = element.TextColor;
+		textColorBox.Text = element.TextColor ?? DefaultTextColorHex;
 		UpdateColorSwatch(textColorSwatch, element.TextColor, DefaultTextColorHex);
-		outlineColorBox.Text = element.OutlineColor;
+		outlineColorBox.Text = element.OutlineColor ?? DefaultOutlineColorHex;
 		UpdateColorSwatch(outlineColorSwatch, element.OutlineColor, DefaultOutlineColorHex);
 		outlineWidthBox.Value = (decimal)element.OutlineWidth;
 
 		if (accentColorBox is null) return;
-		accentColorBox.Text = element.AccentColor;
+		accentColorBox.Text = element.AccentColor ?? DefaultAccentColorHex;
 		UpdateColorSwatch(accentColorSwatch!, element.AccentColor, DefaultAccentColorHex);
 	}
 
@@ -1338,8 +1355,8 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Maps a widget type to its hidden settings panel (see the XAML - each XxxSettingsPanel Border is
-	///     IsVisible="False" in its original spot in the widget palette, kept only so WidgetSettingsWindow
-	///     has something to adopt and show when OpenElementSettings is called).
+	///     IsVisible="False" in its original spot in the widget palette, kept only so OpenElementSettings
+	///     has something to adopt and show in WidgetSettingsPanelHost).
 	/// </summary>
 	private Control? GetSettingsPanel(OverlayElementType type)
 	{

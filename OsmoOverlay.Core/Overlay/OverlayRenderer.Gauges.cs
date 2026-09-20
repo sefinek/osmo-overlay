@@ -83,13 +83,13 @@ public sealed partial class OverlayRenderer
 		return ComputeGaugeMaxSpeed(observed);
 	}
 
-	private void DrawSunWidget(SKCanvas canvas, DerivedFrame frame, float cx, float cy)
+	private void DrawSunWidget(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
 	{
 		canvas.Save();
-		canvas.Translate(cx, cy);
+		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
-		cx = 0;
-		cy = 0;
+		const float cx = 0;
+		const float cy = 0;
 
 		DrawPanelShadow(canvas, cx, cy, OverlayElementBounds.SunRadius);
 
@@ -109,18 +109,19 @@ public sealed partial class OverlayRenderer
 
 		var gText = $"{F(frame.SmoothedGForce, "0.0")}G";
 		DrawOutlined(canvas, gText, cx, cy + OverlayElementBounds.SunRadius + OverlayElementBounds.LabelBelowRadiusOffset,
-			_labelFont, White, SKTextAlign.Center);
+			TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element), SKTextAlign.Center,
+			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
 
-	private void DrawPitchGauge(SKCanvas canvas, float cx, float cy, double pitchDegrees)
+	private void DrawPitchGauge(SKCanvas canvas, OverlayElement element, double pitchDegrees)
 	{
 		canvas.Save();
-		canvas.Translate(cx, cy);
+		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
-		cx = 0;
-		cy = 0;
+		const float cx = 0;
+		const float cy = 0;
 
 		DrawPanelShadow(canvas, cx, cy, OverlayElementBounds.PitchRadius);
 		canvas.DrawCircle(cx, cy, OverlayElementBounds.PitchRadius, _panelFillPaint);
@@ -137,7 +138,8 @@ public sealed partial class OverlayRenderer
 
 		canvas.DrawCircle(dotX, dotY, 12, _dotFillAccent);
 
-		DrawOutlined(canvas, $"{F(pitchDegrees, "0")}°", cx, cy + 16, _labelFont, White, SKTextAlign.Center);
+		DrawOutlined(canvas, $"{F(pitchDegrees, "0")}°", cx, cy + 16, TextFont(element, OverlayElementBounds.LabelFontSize),
+			TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
@@ -169,7 +171,8 @@ public sealed partial class OverlayRenderer
 
 		var magnitude = Math.Sqrt(lateral * lateral + longitudinal * longitudinal);
 		DrawOutlined(canvas, $"{F(magnitude, "0.00")}G", cx, cy + radius + OverlayElementBounds.LabelBelowRadiusOffset,
-			_labelFont, White, SKTextAlign.Center);
+			TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element), SKTextAlign.Center,
+			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
@@ -236,10 +239,17 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(cx, cy, 9, _dotOutlineBlackFill);
 		canvas.DrawCircle(cx, cy, 6, _dotFillAccent);
 
+		SKFont speedFont = TextFont(element, OverlayElementBounds.SpeedFontSize);
+		SKFont speedUnitFont = TextFont(element, OverlayElementBounds.SpeedUnitFontSize);
+		SKColor textColor = TextColorOf(element);
+		SKColor outlineColor = OutlineColorOf(element);
+
 		var speedText = F(displaySpeed, "0");
-		var textWidth = _speedFont.MeasureText(speedText);
-		DrawOutlined(canvas, speedText, cx - textWidth / 2, cy + radius - 90, _speedFont, White);
-		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", cx, cy + radius - 30, _speedUnitFont, White, SKTextAlign.Center);
+		var textWidth = speedFont.MeasureText(speedText);
+		DrawOutlined(canvas, speedText, cx - textWidth / 2, cy + radius - 90, speedFont, textColor,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", cx, cy + radius - 30, speedUnitFont, textColor, SKTextAlign.Center,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 
 		canvas.Restore();
 	}
