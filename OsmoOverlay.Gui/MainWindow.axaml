@@ -118,7 +118,12 @@
 		</Style>
 		<Style Selector="StackPanel.settingsFlyout">
 			<Setter Property="Spacing" Value="8" />
-			<Setter Property="Width" Value="210" />
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+		</Style>
+		<Style Selector="Border.flyoutDivider">
+			<Setter Property="Height" Value="1" />
+			<Setter Property="Background" Value="#26FFFFFF" />
+			<Setter Property="Margin" Value="0,10,0,2" />
 		</Style>
 		<Style Selector="TextBlock.fallbackWarning">
 			<Setter Property="Foreground" Value="#E5A83E" />
@@ -955,7 +960,7 @@
 										</Border>
 										<Border Name="PitchSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
-																								<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
 												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
 												<NumericUpDown Name="PitchAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
 												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
@@ -979,7 +984,7 @@
 										</Border>
 										<Border Name="SunSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
-																								<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
+												<TextBlock Text="Timing" Classes="sectionLabel" Margin="0,2,0,0" />
 												<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
 												<NumericUpDown Name="SunAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
 												<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
