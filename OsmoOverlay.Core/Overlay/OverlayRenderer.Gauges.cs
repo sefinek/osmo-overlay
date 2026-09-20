@@ -108,8 +108,8 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(dotX, dotY, sunDotRadius, _blackStroke2);
 
 		var gText = $"{F(frame.SmoothedGForce, "0.0")}G";
-		DrawOutlined(canvas, gText, cx, cy + OverlayElementBounds.SunRadius + 56, _labelFont, White,
-			SKTextAlign.Center);
+		DrawOutlined(canvas, gText, cx, cy + OverlayElementBounds.SunRadius + OverlayElementBounds.LabelBelowRadiusOffset,
+			_labelFont, White, SKTextAlign.Center);
 
 		canvas.Restore();
 	}
@@ -168,7 +168,8 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(dotX, dotY, 9, _dotFillAccent);
 
 		var magnitude = Math.Sqrt(lateral * lateral + longitudinal * longitudinal);
-		DrawOutlined(canvas, $"{F(magnitude, "0.00")}G", cx, cy + radius + 56, _labelFont, White, SKTextAlign.Center);
+		DrawOutlined(canvas, $"{F(magnitude, "0.00")}G", cx, cy + radius + OverlayElementBounds.LabelBelowRadiusOffset,
+			_labelFont, White, SKTextAlign.Center);
 
 		canvas.Restore();
 	}

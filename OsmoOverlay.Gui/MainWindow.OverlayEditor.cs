@@ -10,7 +10,13 @@ using SkiaSharp;
 
 namespace OsmoOverlay.Gui;
 
-/// <summary>The Overlay card: preset management, per-widget settings/visibility, and dragging elements on the preview canvas.</summary>
+/// <summary>
+///     The Overlay card: preset management, the widget palette (drag onto the preview canvas to add -
+///     several instances of the same type are allowed, see AddElementInstance), the "on overlay" list of
+///     what's currently placed, and dragging/removing/configuring elements on the preview canvas itself.
+///     A widget's settings open only from the canvas (the ⚙ shown on hover, next to ✕ to remove) - the
+///     palette and "on overlay" list are for adding/reviewing/selecting, not editing.
+/// </summary>
 public partial class MainWindow
 {
 	private static readonly List<DateFormatOption> DateFormatOptions =
@@ -38,6 +44,13 @@ public partial class MainWindow
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
 
+	/// <summary>
+	///     Custom drag-and-drop format used to carry an OverlayElementType through a widget-list-to-canvas
+	///     drag. DataFormat&lt;T&gt; requires a reference type, so the enum travels as its name string.
+	/// </summary>
+	private static readonly DataFormat<string> WidgetDragFormat =
+		DataFormat.CreateInProcessFormat<string>("OsmoOverlay.OverlayElementType");
+
 	// FirstOrDefault, not First: there's a narrow window right after picking a file where
 	// _summary is already set but LoadOverlayPresets (an earlier await) hasn't finished yet, so a
 	// pointer click on the drag canvas in that gap must not crash on an empty/stale preset list.
@@ -56,7 +69,7 @@ public partial class MainWindow
 		(_overlayPresets, _activePresetId) = OverlayPresetStore.Load(width, height);
 		_overlayPresetsLoaded = true;
 		RefreshPresetComboBox();
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		// Re-evaluate SetPhase's visibility now that _overlayPresetsLoaded flipped - the Overlay
 		// panel (New/Duplicate/etc.) only actually appears from this point on, see the field's doc.
@@ -76,45 +89,27 @@ public partial class MainWindow
 		_suppressOverlayEvents = false;
 	}
 
-	private void RefreshElementCheckboxes()
+	/// <summary>
+	///     Refreshes everything driven by the active preset's element list except a widget's own settings
+	///     flyout, which is populated on demand instead (see PopulateFlyoutFields) - with several
+	///     instances of a type possibly on the canvas at once, there's no single "the" instance left to
+	///     eagerly bind every flyout's fields to.
+	/// </summary>
+	private void RefreshWidgetList()
 	{
 		List<OverlayElement> elements = ActiveElements;
+		var editable = !IsActivePresetDefault;
 
-		_suppressOverlayEvents = true;
-		DateTimeVisibleCheck.IsChecked = IsVisible(OverlayElementType.DateTimeText);
-		UtcTimeVisibleCheck.IsChecked = IsVisible(OverlayElementType.UtcTimeText);
-		ElevationVisibleCheck.IsChecked = IsVisible(OverlayElementType.Elevation);
-		GradientVisibleCheck.IsChecked = IsVisible(OverlayElementType.Gradient);
-		DistanceVisibleCheck.IsChecked = IsVisible(OverlayElementType.Distance);
-		CameraInfoVisibleCheck.IsChecked = IsVisible(OverlayElementType.CameraInfo);
-		CompassVisibleCheck.IsChecked = IsVisible(OverlayElementType.Compass);
-		SunVisibleCheck.IsChecked = IsVisible(OverlayElementType.SunWidget);
-		PitchVisibleCheck.IsChecked = IsVisible(OverlayElementType.PitchGauge);
-		GMeterVisibleCheck.IsChecked = IsVisible(OverlayElementType.GMeter);
-		GMeterFullScaleBox.Value =
-			(decimal)(Find(OverlayElementType.GMeter)?.GMeterFullScaleG ?? OverlayRenderer.GMeterFullScaleGDefault);
-		ElapsedTimeVisibleCheck.IsChecked = IsVisible(OverlayElementType.ElapsedTimeText);
-		CameraModelVisibleCheck.IsChecked = IsVisible(OverlayElementType.CameraModelText);
-		SpeedVisibleCheck.IsChecked = IsVisible(OverlayElementType.SpeedGauge);
-		MapVisibleCheck.IsChecked = IsVisible(OverlayElementType.MapWidget);
-		TripProgressBarVisibleCheck.IsChecked = IsVisible(OverlayElementType.TripProgressBar);
+		HideHoverIcons();
+		if (_selectedElementId is not null && elements.All(e => e.Id != _selectedElementId)) _selectedElementId = null;
 
-		OverlayElement? map = Find(OverlayElementType.MapWidget);
+		foreach (OverlayElementType type in Enum.GetValues<OverlayElementType>())
+		{
+			if (GetPaletteItem(type) is not { } item) continue;
 
-		MapZoomBox.Value = map?.MapZoom ?? 16;
-
-		var mapDynamicZoom = map?.MapDynamicZoom ?? false;
-		MapDynamicZoomCheck.IsChecked = mapDynamicZoom;
-		MapZoomOutMaxBox.Value = (decimal)(map?.MapDynamicZoomMaxFactor ?? OverlayRenderer.MapDynamicZoomMaxFactorDefault);
-		MapZoomOutMaxLabel.IsVisible = mapDynamicZoom;
-		MapZoomOutMaxBox.IsVisible = mapDynamicZoom;
-		MapZoomOutMaxHint.IsVisible = mapDynamicZoom;
-
-		OverlayElement? dateTime = Find(OverlayElementType.DateTimeText);
-		DateTimeFormatCombo.SelectedItem =
-			DateFormatOptions.FirstOrDefault(o => o.Format == dateTime?.DateFormat) ?? DateFormatOptions[0];
-		DateTimeLocaleCombo.SelectedItem =
-			LocaleOptions.FirstOrDefault(o => o.CultureName == dateTime?.Locale) ?? LocaleOptions[0];
+			item.Classes.Set("active", elements.Any(el => el.Type == type && el.Visible));
+			SetWidgetAvailability(item, type, editable);
+		}
 
 		// Shown whenever the widget is actually usable but only through the container-time fallback
 		// (see OverlayRenderer.DrawTimeText) - not real GPS-recorded time, so a driving log synced
@@ -128,135 +123,159 @@ public partial class MainWindow
 		ToolTip.SetTip(DateTimeFallbackWarningIcon, timeFallbackTip);
 		ToolTip.SetTip(UtcTimeFallbackWarningIcon, timeFallbackTip);
 
-		OverlayElement? utcTime = Find(OverlayElementType.UtcTimeText);
-		UtcTimeFormatCombo.SelectedItem =
-			DateFormatOptions.FirstOrDefault(o => o.Format == utcTime?.DateFormat) ?? DateFormatOptions[0];
-		UtcTimeLocaleCombo.SelectedItem =
-			LocaleOptions.FirstOrDefault(o => o.CultureName == utcTime?.Locale) ?? LocaleOptions[0];
+		RebuildAddedWidgetsList();
+		RefreshSelectionHighlight();
+		UpdatePreviewGuides();
 
-		OverlayElement? elevation = Find(OverlayElementType.Elevation);
-		ElevationLabelBox.Text = elevation?.Label;
-		SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, elevation?.Units ?? UnitSystem.Metric);
-
-		GradientLabelBox.Text = Find(OverlayElementType.Gradient)?.Label;
-
-		CameraInfoLabelBox.Text = Find(OverlayElementType.CameraInfo)?.Label;
-
-		OverlayElement? distance = Find(OverlayElementType.Distance);
-		DistanceLabelBox.Text = distance?.Label;
-		SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, distance?.Units ?? UnitSystem.Metric);
-
-		SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, Find(OverlayElementType.SpeedGauge)?.Units ?? UnitSystem.Metric);
-
-		OverlayElement? tripProgress = Find(OverlayElementType.TripProgressBar);
-		SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, tripProgress?.Units ?? UnitSystem.Metric);
-		TripProgressToleranceBox.Value =
-			(decimal)(tripProgress?.TripArrivedToleranceMeters ?? OverlayRenderer.TripArrivedToleranceMetersDefault);
-		TripProgressLabelBox.Text = tripProgress?.TripArrivedLabel ?? OverlayRenderer.TripArrivedLabelDefault;
-
-		PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox,
-			CompassTrailArrowRadio, CompassTrailDotRadio, Find(OverlayElementType.Compass));
-		PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox,
-			MapTrailArrowRadio, MapTrailDotRadio, map);
-
-		PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, dateTime);
-		PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, utcTime);
-		PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, elevation);
-		PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, Find(OverlayElementType.Gradient));
-		PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, distance);
-		PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, Find(OverlayElementType.CameraInfo));
-		PopulateTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel, Find(OverlayElementType.Compass));
-		PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, Find(OverlayElementType.SunWidget));
-		PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, Find(OverlayElementType.PitchGauge));
-		PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, Find(OverlayElementType.GMeter));
-		PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, Find(OverlayElementType.ElapsedTimeText));
-		PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, Find(OverlayElementType.CameraModelText));
-		PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, Find(OverlayElementType.SpeedGauge));
-		PopulateTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel, map);
-		PopulateTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel, tripProgress);
-
-		var editable = !IsActivePresetDefault;
 		RenamePresetButton.IsEnabled = editable;
 		DeletePresetButton.IsEnabled = editable;
 		ResetPresetButton.IsEnabled = editable;
 		DefaultPresetLockedHint.IsVisible = !editable;
 
-		SetWidgetAvailability(DateTimeVisibleCheck, DateTimeGearButton, OverlayElementType.DateTimeText, editable);
-		SetWidgetAvailability(UtcTimeVisibleCheck, UtcTimeGearButton, OverlayElementType.UtcTimeText, editable);
-		SetWidgetAvailability(ElevationVisibleCheck, ElevationGearButton, OverlayElementType.Elevation, editable);
-		SetWidgetAvailability(GradientVisibleCheck, GradientGearButton, OverlayElementType.Gradient, editable);
-		SetWidgetAvailability(DistanceVisibleCheck, DistanceGearButton, OverlayElementType.Distance, editable);
-		SetWidgetAvailability(CameraInfoVisibleCheck, CameraInfoGearButton, OverlayElementType.CameraInfo, editable);
-		SetWidgetAvailability(CompassVisibleCheck, CompassGearButton, OverlayElementType.Compass, editable);
-		SetWidgetAvailability(SunVisibleCheck, SunGearButton, OverlayElementType.SunWidget, editable);
-		SetWidgetAvailability(PitchVisibleCheck, PitchGearButton, OverlayElementType.PitchGauge, editable);
-		SetWidgetAvailability(GMeterVisibleCheck, GMeterGearButton, OverlayElementType.GMeter, editable);
-		SetWidgetAvailability(ElapsedTimeVisibleCheck, ElapsedTimeGearButton, OverlayElementType.ElapsedTimeText, editable);
-		SetWidgetAvailability(CameraModelVisibleCheck, CameraModelGearButton, OverlayElementType.CameraModelText, editable);
-		SetWidgetAvailability(SpeedVisibleCheck, SpeedGearButton, OverlayElementType.SpeedGauge, editable);
-		SetWidgetAvailability(MapVisibleCheck, MapGearButton, OverlayElementType.MapWidget, editable);
-		SetWidgetAvailability(TripProgressBarVisibleCheck, TripProgressBarGearButton, OverlayElementType.TripProgressBar, editable);
-
-		_suppressOverlayEvents = false;
 		return;
 
-		bool IsVisible(OverlayElementType type)
-		{
-			return elements.FirstOrDefault(el => el.Type == type)?.Visible ?? false;
-		}
-
-		// Greys out (and disables the gear flyout for) a widget this file's telemetry can never fill
-		// in - e.g. Map/Compass/Elevation with no GPS fix at all, Date&time with no GPS timestamp -
-		// instead of leaving it toggleable to a widget that would just render "--"/0/a placeholder.
-		void SetWidgetAvailability(CheckBox check, Button? gear, OverlayElementType type, bool presetEditable)
+		// Greys out a widget this file's telemetry can never fill in - e.g. Map/Compass/Elevation with
+		// no GPS fix at all, Date&time with no GPS timestamp - instead of leaving it draggable onto the
+		// canvas as a widget that would just render "--"/0/a placeholder.
+		void SetWidgetAvailability(Border listItem, OverlayElementType type, bool presetEditable)
 		{
 			var dataOk = OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
-			check.IsEnabled = presetEditable && dataOk;
-			gear?.IsEnabled = presetEditable && dataOk;
+			listItem.IsEnabled = presetEditable && dataOk;
 
-			ToolTip.SetTip(check, dataOk
+			ToolTip.SetTip(listItem, dataOk
 				? null
 				: type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText
 					? "This file has no GPS timestamp and no usable recording-start time, so this widget can't show a time."
 					: "This file has no GPS fix, so this widget has nothing to show.");
 		}
+	}
 
-		OverlayElement? Find(OverlayElementType type)
+	/// <summary>
+	///     Maps a widget type to its palette row (see the XAML) - the single source for that
+	///     type's display label and drag source, shared by RefreshWidgetList's availability pass and
+	///     GetWidgetLabel's lookup for the "on overlay" list.
+	/// </summary>
+	private Border? GetPaletteItem(OverlayElementType type)
+	{
+		return type switch
 		{
-			return elements.FirstOrDefault(el => el.Type == type);
+			OverlayElementType.DateTimeText => DateTimeListItem,
+			OverlayElementType.UtcTimeText => UtcTimeListItem,
+			OverlayElementType.Elevation => ElevationListItem,
+			OverlayElementType.Gradient => GradientListItem,
+			OverlayElementType.Distance => DistanceListItem,
+			OverlayElementType.CameraInfo => CameraInfoListItem,
+			OverlayElementType.Compass => CompassListItem,
+			OverlayElementType.SunWidget => SunListItem,
+			OverlayElementType.PitchGauge => PitchListItem,
+			OverlayElementType.GMeter => GMeterListItem,
+			OverlayElementType.ElapsedTimeText => ElapsedTimeListItem,
+			OverlayElementType.CameraModelText => CameraModelListItem,
+			OverlayElementType.SpeedGauge => SpeedListItem,
+			OverlayElementType.MapWidget => MapListItem,
+			OverlayElementType.TripProgressBar => TripProgressBarListItem,
+			_ => null
+		};
+	}
+
+	private string GetWidgetLabel(OverlayElementType type)
+	{
+		return GetPaletteItem(type) is { Child: TextBlock { Text: { } text } } ? text : type.ToString();
+	}
+
+	/// <summary>
+	///     Rebuilds the "on overlay" list from scratch on every call (cheap - at most a couple dozen
+	///     rows) instead of diffing, matching the copy-on-write style already used for the element list
+	///     itself. Multiple instances of the same type are numbered "(2)", "(3)", ... in drop order so
+	///     they can be told apart without needing a per-instance custom name.
+	/// </summary>
+	private void RebuildAddedWidgetsList()
+	{
+		AddedWidgetsList.Children.Clear();
+		List<OverlayElement> visible = [.. ActiveElements.Where(e => e.Visible)];
+		var editable = !IsActivePresetDefault;
+
+		Dictionary<OverlayElementType, int> totalByType = [];
+		foreach (OverlayElement el in visible) totalByType[el.Type] = totalByType.GetValueOrDefault(el.Type) + 1;
+
+		Dictionary<OverlayElementType, int> seenByType = [];
+		foreach (OverlayElement el in visible)
+		{
+			var index = seenByType[el.Type] = seenByType.GetValueOrDefault(el.Type) + 1;
+			var name = GetWidgetLabel(el.Type) + (totalByType[el.Type] > 1 ? $" ({index})" : "");
+			AddedWidgetsList.Children.Add(BuildAddedWidgetRow(el.Id, name, editable));
 		}
 
-		static void SetUnitsRadio(RadioButton metric, RadioButton imperial, UnitSystem units)
+		AddedWidgetsEmptyHint.IsVisible = visible.Count == 0;
+	}
+
+	/// <summary>
+	///     Clicking a row only selects it (highlights it on the canvas) - it does not open
+	///     settings, which stays a canvas-only action (see the class doc) so there's one consistent place
+	///     to configure a widget regardless of how many instances of its type exist.
+	/// </summary>
+	private Border BuildAddedWidgetRow(string id, string name, bool editable)
+	{
+		var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+
+		var text = new TextBlock { Text = name, Classes = { "overlayListItemText" } };
+		Grid.SetColumn(text, 0);
+		grid.Children.Add(text);
+
+		if (editable)
 		{
-			metric.IsChecked = units == UnitSystem.Metric;
-			imperial.IsChecked = units == UnitSystem.Imperial;
+			var removeButton = new Button { Content = "✕", Classes = { "addedWidgetRemove" } };
+			removeButton.Click += (_, _) => RemoveElementInstance(id);
+			Grid.SetColumn(removeButton, 1);
+			grid.Children.Add(removeButton);
 		}
 
-		static void PopulateTrailControls(TextBox colorBox, Border swatch, NumericUpDown widthBox,
-			RadioButton arrowRadio, RadioButton dotRadio, OverlayElement? element)
+		var row = new Border { Classes = { "addedWidgetRow" }, Child = grid };
+		row.Classes.Set("selected", id == _selectedElementId);
+		row.PointerPressed += (_, _) => ToggleSelection(id);
+		return row;
+	}
+
+	private void ToggleSelection(string id)
+	{
+		_selectedElementId = _selectedElementId == id ? null : id;
+		RefreshSelectionHighlight();
+		RebuildAddedWidgetsList();
+	}
+
+	/// <summary>
+	///     Draws (or hides) the blue box - and its bottom-right resize handle - around whichever element
+	///     is selected via the "on overlay" list, kept in sync with drag/resize moves in
+	///     OnOverlayCanvasPointerMoved and with list rebuilds here.
+	/// </summary>
+	private void RefreshSelectionHighlight()
+	{
+		if (_selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el)
 		{
-			colorBox.Text = element?.TrailColor;
-			UpdateTrailColorSwatch(swatch, element?.TrailColor);
-			widthBox.Value = (decimal)(element?.TrailWidth ?? 4.5f);
-			var useArrow = element?.TrailUseArrow ?? true;
-			arrowRadio.IsChecked = useArrow;
-			dotRadio.IsChecked = !useArrow;
+			SelectionHighlightBox.IsVisible = false;
+			ResizeHandle.IsVisible = false;
+			return;
 		}
 
-		static void PopulateTiming(NumericUpDown appearBox, NumericUpDown disappearBox, ComboBox animationCombo,
-			NumericUpDown durationBox, StackPanel durationPanel, OverlayElement? element)
+		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
+		SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale * el.Scale);
+		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
+		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
 		{
-			var animation = element?.AnimationType ?? OverlayAnimationType.None;
-
-			appearBox.Value = (decimal?)element?.AppearAtSeconds;
-			disappearBox.Value = (decimal?)element?.DisappearAtSeconds;
-			animationCombo.SelectedItem = AnimationOptions.FirstOrDefault(o => o.Value == animation) ?? AnimationOptions[0];
-			durationBox.Value = (decimal)(element?.AnimationDurationSeconds ?? OverlayRenderer.AnimationDurationSecondsDefault);
-			// Set explicitly (not left to SelectionChanged above) - picking the same AnimationOption
-			// instance as already selected (e.g. switching between two None widgets) doesn't raise that
-			// event, which would otherwise leave a stale visibility from whichever widget was shown before.
-			durationPanel.IsVisible = animation != OverlayAnimationType.None;
+			SelectionHighlightBox.IsVisible = false;
+			ResizeHandle.IsVisible = false;
+			return;
 		}
+
+		Canvas.SetLeft(SelectionHighlightBox, topLeft.X);
+		Canvas.SetTop(SelectionHighlightBox, topLeft.Y);
+		SelectionHighlightBox.Width = Math.Max(0, bottomRight.X - topLeft.X);
+		SelectionHighlightBox.Height = Math.Max(0, bottomRight.Y - topLeft.Y);
+		SelectionHighlightBox.IsVisible = true;
+
+		Canvas.SetLeft(ResizeHandle, bottomRight.X - ResizeHandle.Width / 2);
+		Canvas.SetTop(ResizeHandle, bottomRight.Y - ResizeHandle.Height / 2);
+		ResizeHandle.IsVisible = !IsActivePresetDefault;
 	}
 
 	/// <summary>
@@ -270,12 +289,12 @@ public partial class MainWindow
 		if (index >= 0) _overlayPresets[index] = _overlayPresets[index] with { Elements = elements };
 	}
 
-	private void UpdateElement(OverlayElementType type, Func<OverlayElement, OverlayElement> update)
+	private void UpdateElement(string id, Func<OverlayElement, OverlayElement> update)
 	{
 		if (_suppressOverlayEvents || IsActivePresetDefault) return;
 
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Type == type);
+		var index = elements.FindIndex(el => el.Id == id);
 		if (index < 0) return;
 
 		elements[index] = update(elements[index]);
@@ -284,83 +303,134 @@ public partial class MainWindow
 		SaveOverlayPresets();
 	}
 
-	private void SetElementVisible(OverlayElementType type, bool visible)
+	private void SetElementUnits(string id, UnitSystem units)
 	{
-		UpdateElement(type, el => el with { Visible = visible });
+		UpdateElement(id, el => el with { Units = units });
 	}
 
-	private void SetElementUnits(OverlayElementType type, UnitSystem units)
-	{
-		UpdateElement(type, el => el with { Units = units });
-	}
-
-	private void SetElementLabel(OverlayElementType type, string? label)
+	private void SetElementLabel(string id, string? label)
 	{
 		var trimmed = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
-		UpdateElement(type, el => el with { Label = trimmed });
+		UpdateElement(id, el => el with { Label = trimmed });
 	}
 
-	private void SetElementDateFormat(OverlayElementType type, string? format)
+	private void SetElementDateFormat(string id, string? format)
 	{
-		UpdateElement(type, el => el with { DateFormat = format });
+		UpdateElement(id, el => el with { DateFormat = format });
 	}
 
-	private void SetElementLocale(OverlayElementType type, string? locale)
+	private void SetElementLocale(string id, string? locale)
 	{
-		UpdateElement(type, el => el with { Locale = locale });
+		UpdateElement(id, el => el with { Locale = locale });
 	}
 
-	private void SetElementTrailColor(OverlayElementType type, string? hex)
+	private void SetElementTrailColor(string id, string? hex)
 	{
 		var trimmed = string.IsNullOrWhiteSpace(hex) ? null : hex.Trim();
-		UpdateElement(type, el => el with { TrailColor = trimmed });
+		UpdateElement(id, el => el with { TrailColor = trimmed });
 	}
 
-	private void SetElementTrailWidth(OverlayElementType type, float width)
+	private void SetElementTrailWidth(string id, float width)
 	{
-		UpdateElement(type, el => el with { TrailWidth = width });
+		UpdateElement(id, el => el with { TrailWidth = width });
 	}
 
-	private void SetElementTrailUseArrow(OverlayElementType type, bool useArrow)
+	private void SetElementTrailUseArrow(string id, bool useArrow)
 	{
-		UpdateElement(type, el => el with { TrailUseArrow = useArrow });
+		UpdateElement(id, el => el with { TrailUseArrow = useArrow });
 	}
 
 	/// <summary>
-	///     Restores one widget's own settings (format, units, label, map source, etc.) to factory
-	///     values - unlike "Reset to default" for the whole preset, position/visibility are untouched.
-	///     Pulled from a freshly computed CreateDefault so it can't drift from the real defaults.
+	///     Always creates a brand-new OverlayElement rather than reusing/revealing an existing one of the
+	///     same type - dragging a widget from the palette repeatedly is how several instances of the same
+	///     type end up on the canvas at once. Settings start at that type's factory defaults, the same
+	///     baseline ResetElementToFactoryDefaults resets an existing instance back to.
 	/// </summary>
-	private void ResetElementToFactoryDefaults(OverlayElementType type)
+	private void AddElementInstance(OverlayElementType type, float x, float y)
+	{
+		if (_summary is null || IsActivePresetDefault) return;
+
+		var factory = OverlayPreset.CreateDefault("factory", "Factory", _summary.Video.Width, _summary.Video.Height);
+		if (factory.Elements.FirstOrDefault(e => e.Type == type) is not { } template) return;
+
+		OverlayElement instance = template with { Id = Guid.NewGuid().ToString("N"), X = x, Y = y, Visible = true };
+
+		List<OverlayElement> elements = [.. ActiveElements, instance];
+		ReplaceActiveElements(elements);
+		_previewPlayer.SetLayout(elements);
+		SaveOverlayPresets();
+
+		_selectedElementId = instance.Id;
+		RefreshWidgetList();
+	}
+
+	/// <summary>
+	///     Deletes this one instance outright rather than just hiding it (Visible=false) - with
+	///     palette drops always creating a new instance instead of revealing a hidden one, an unreachable
+	///     hidden leftover would just be permanent clutter in the saved preset.
+	/// </summary>
+	private void RemoveElementInstance(string id)
+	{
+		if (IsActivePresetDefault) return;
+
+		List<OverlayElement> elements = [.. ActiveElements];
+		if (elements.RemoveAll(el => el.Id == id) == 0) return;
+
+		if (_selectedElementId == id) _selectedElementId = null;
+		if (_editingElementId == id) _editingElementId = null;
+
+		ReplaceActiveElements(elements);
+		_previewPlayer.SetLayout(elements);
+		SaveOverlayPresets();
+		RefreshWidgetList();
+	}
+
+	/// <summary>
+	///     Restores one widget instance's own settings (format, units, label, map source, etc.) to
+	///     factory values - unlike "Reset to default" for the whole preset, position/visibility are
+	///     untouched. Pulled from a freshly computed CreateDefault so it can't drift from the real
+	///     defaults.
+	/// </summary>
+	private void ResetElementToFactoryDefaults(string id)
 	{
 		if (_summary is null) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory", _summary.Video.Width, _summary.Video.Height);
-		if (factory.Elements.FirstOrDefault(e => e.Type == type) is not { } defaults) return;
+		OverlayElement? existing = ActiveElements.FirstOrDefault(e => e.Id == id);
+		if (existing is null) return;
 
-		UpdateElement(type, el => defaults with { X = el.X, Y = el.Y, Visible = el.Visible });
-		RefreshElementCheckboxes();
+		var factory = OverlayPreset.CreateDefault("factory", "Factory", _summary.Video.Width, _summary.Video.Height);
+		if (factory.Elements.FirstOrDefault(e => e.Type == existing.Type) is not { } defaults) return;
+
+		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible });
+
+		if (ActiveElements.FirstOrDefault(e => e.Id == id) is { } updated) PopulateFlyoutFields(updated);
+		RefreshWidgetList();
+	}
+
+	private void OnResetElementClick(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is { } id) ResetElementToFactoryDefaults(id);
 	}
 
 	/// <summary>
-	///     Wires a widget's Timing/Animation controls (Appear at/Disappear at/Animation/Duration) to
-	///     OverlayElement - same 4 fields for every widget type, so this is called once per widget from
-	///     the constructor instead of duplicating a handler per widget the way the type-specific settings
-	///     above do. ValueChanged/SelectionChanged also fire when RefreshElementCheckboxes populates these
-	///     controls programmatically, but UpdateElement itself already no-ops while _suppressOverlayEvents
-	///     is set, so that's harmless - durationPanel's visibility still needs to update in that case
-	///     though (switching preset/element shouldn't leave a stale duration field showing for an
-	///     animation that isn't None anymore), hence it's set outside the UpdateElement call.
+	///     Wires a widget type's Timing/Animation controls (Appear at/Disappear at/Animation/Duration) to
+	///     whichever instance's flyout is currently open (_editingElementId) - same 4 fields for every
+	///     widget type, so this is called once per widget from the constructor instead of duplicating a
+	///     handler per widget the way the type-specific settings above do. ValueChanged/SelectionChanged
+	///     also fire when PopulateFlyoutFields populates these controls programmatically, but that already
+	///     sets _suppressOverlayEvents, so Apply() just no-ops in that case.
 	/// </summary>
-	private void WireTiming(OverlayElementType type, NumericUpDown appearBox, NumericUpDown disappearBox,
+	private void WireTiming(NumericUpDown appearBox, NumericUpDown disappearBox,
 		ComboBox animationCombo, NumericUpDown durationBox, StackPanel durationPanel)
 	{
 		void Apply()
 		{
-			var animation = (animationCombo.SelectedItem as AnimationOption)?.Value ?? OverlayAnimationType.None;
+			if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+			OverlayAnimationType animation = (animationCombo.SelectedItem as AnimationOption)?.Value ?? OverlayAnimationType.None;
 			durationPanel.IsVisible = animation != OverlayAnimationType.None;
 
-			UpdateElement(type, el => el with
+			UpdateElement(id, el => el with
 			{
 				AppearAtSeconds = (double?)appearBox.Value,
 				DisappearAtSeconds = (double?)disappearBox.Value,
@@ -377,294 +447,297 @@ public partial class MainWindow
 		durationBox.ValueChanged += (_, _) => Apply();
 	}
 
-	private void OnPitchResetClick(object? sender, RoutedEventArgs e)
+	/// <summary>
+	///     Populates one widget instance's settings flyout and shows it, anchored to the ⚙ that was
+	///     just clicked (see WidgetGearHoverButton) - the single entry point for opening settings, whether
+	///     reached from a canvas click or (in the future) anywhere else that identifies a specific element.
+	/// </summary>
+	private void OpenElementSettings(OverlayElement element)
 	{
-		ResetElementToFactoryDefaults(OverlayElementType.PitchGauge);
+		_editingElementId = element.Id;
+		PopulateFlyoutFields(element);
+		GetGearButton(element.Type)?.Flyout?.ShowAt(WidgetGearHoverButton);
 	}
 
-	private void OnSunResetClick(object? sender, RoutedEventArgs e)
+	/// <summary>
+	///     Fills one widget type's flyout controls from a specific instance's data - the counterpart
+	///     to the type-specific field-changed handlers below, which write back to whichever instance's id is
+	///     currently in _editingElementId.
+	/// </summary>
+	private void PopulateFlyoutFields(OverlayElement el)
 	{
-		ResetElementToFactoryDefaults(OverlayElementType.SunWidget);
+		_suppressOverlayEvents = true;
+
+		switch (el.Type)
+		{
+			case OverlayElementType.DateTimeText:
+				DateTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == el.DateFormat) ?? DateFormatOptions[0];
+				DateTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == el.Locale) ?? LocaleOptions[0];
+				PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.UtcTimeText:
+				UtcTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == el.DateFormat) ?? DateFormatOptions[0];
+				UtcTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == el.Locale) ?? LocaleOptions[0];
+				PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.Elevation:
+				ElevationLabelBox.Text = el.Label;
+				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, el.Units);
+				PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.Gradient:
+				GradientLabelBox.Text = el.Label;
+				PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.Distance:
+				DistanceLabelBox.Text = el.Label;
+				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, el.Units);
+				PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.CameraInfo:
+				CameraInfoLabelBox.Text = el.Label;
+				PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.Compass:
+				PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox, CompassTrailArrowRadio, CompassTrailDotRadio, el);
+				PopulateTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.SunWidget:
+				PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.PitchGauge:
+				PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.GMeter:
+				GMeterFullScaleBox.Value = (decimal)el.GMeterFullScaleG;
+				PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.SpeedGauge:
+				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, el.Units);
+				PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.MapWidget:
+				MapZoomBox.Value = el.MapZoom;
+				MapDynamicZoomCheck.IsChecked = el.MapDynamicZoom;
+				MapZoomOutMaxBox.Value = (decimal)el.MapDynamicZoomMaxFactor;
+				MapZoomOutMaxLabel.IsVisible = el.MapDynamicZoom;
+				MapZoomOutMaxBox.IsVisible = el.MapDynamicZoom;
+				MapZoomOutMaxHint.IsVisible = el.MapDynamicZoom;
+				PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox, MapTrailArrowRadio, MapTrailDotRadio, el);
+				PopulateTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.ElapsedTimeText:
+				PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.CameraModelText:
+				PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, el);
+				break;
+
+			case OverlayElementType.TripProgressBar:
+				SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, el.Units);
+				TripProgressToleranceBox.Value = (decimal)el.TripArrivedToleranceMeters;
+				TripProgressLabelBox.Text = el.TripArrivedLabel;
+				PopulateTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel, el);
+				break;
+		}
+
+		_suppressOverlayEvents = false;
 	}
 
-	private void OnElapsedTimeResetClick(object? sender, RoutedEventArgs e)
+	private static void SetUnitsRadio(RadioButton metric, RadioButton imperial, UnitSystem units)
 	{
-		ResetElementToFactoryDefaults(OverlayElementType.ElapsedTimeText);
+		metric.IsChecked = units == UnitSystem.Metric;
+		imperial.IsChecked = units == UnitSystem.Imperial;
 	}
 
-	private void OnCameraModelResetClick(object? sender, RoutedEventArgs e)
+	private static void PopulateTrailControls(TextBox colorBox, Border swatch, NumericUpDown widthBox,
+		RadioButton arrowRadio, RadioButton dotRadio, OverlayElement element)
 	{
-		ResetElementToFactoryDefaults(OverlayElementType.CameraModelText);
+		colorBox.Text = element.TrailColor;
+		UpdateTrailColorSwatch(swatch, element.TrailColor);
+		widthBox.Value = (decimal)element.TrailWidth;
+		arrowRadio.IsChecked = element.TrailUseArrow;
+		dotRadio.IsChecked = !element.TrailUseArrow;
 	}
 
-	private void OnDateTimeVisibilityChanged(object? sender, RoutedEventArgs e)
+	private static void PopulateTiming(NumericUpDown appearBox, NumericUpDown disappearBox, ComboBox animationCombo,
+		NumericUpDown durationBox, StackPanel durationPanel, OverlayElement element)
 	{
-		SetElementVisible(OverlayElementType.DateTimeText, DateTimeVisibleCheck.IsChecked == true);
-	}
-
-	private void OnUtcTimeVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.UtcTimeText, UtcTimeVisibleCheck.IsChecked == true);
-	}
-
-	private void OnElevationVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.Elevation, ElevationVisibleCheck.IsChecked == true);
-	}
-
-	private void OnGradientVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.Gradient, GradientVisibleCheck.IsChecked == true);
-	}
-
-	private void OnDistanceVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.Distance, DistanceVisibleCheck.IsChecked == true);
-	}
-
-	private void OnCompassVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.Compass, CompassVisibleCheck.IsChecked == true);
+		appearBox.Value = (decimal?)element.AppearAtSeconds;
+		disappearBox.Value = (decimal?)element.DisappearAtSeconds;
+		animationCombo.SelectedItem = AnimationOptions.FirstOrDefault(o => o.Value == element.AnimationType) ?? AnimationOptions[0];
+		durationBox.Value = (decimal)element.AnimationDurationSeconds;
+		// Set explicitly (not left to SelectionChanged above) - picking the same AnimationOption
+		// instance as already selected doesn't raise that event, which would otherwise leave a stale
+		// visibility from whichever instance's flyout was shown before.
+		durationPanel.IsVisible = element.AnimationType != OverlayAnimationType.None;
 	}
 
 	private void OnCompassTrailColorChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementTrailColor(OverlayElementType.Compass, CompassTrailColorBox.Text);
+		if (_editingElementId is not { } id) return;
+		SetElementTrailColor(id, CompassTrailColorBox.Text);
 		UpdateTrailColorSwatch(CompassTrailColorSwatch, CompassTrailColorBox.Text);
 	}
 
 	private void OnCompassTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || CompassTrailWidthBox.Value is not { } width) return;
-		SetElementTrailWidth(OverlayElementType.Compass, (float)width);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || CompassTrailWidthBox.Value is not { } width) return;
+		SetElementTrailWidth(id, (float)width);
 	}
 
 	private void OnCompassTrailMarkerChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementTrailUseArrow(OverlayElementType.Compass, CompassTrailArrowRadio.IsChecked == true);
-	}
-
-	private void OnCompassResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.Compass);
-	}
-
-	private void OnCameraInfoVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.CameraInfo, CameraInfoVisibleCheck.IsChecked == true);
+		if (_editingElementId is not { } id) return;
+		SetElementTrailUseArrow(id, CompassTrailArrowRadio.IsChecked == true);
 	}
 
 	private void OnCameraInfoLabelChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementLabel(OverlayElementType.CameraInfo, CameraInfoLabelBox.Text);
-	}
-
-	private void OnCameraInfoResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.CameraInfo);
-	}
-
-	private void OnSunVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.SunWidget, SunVisibleCheck.IsChecked == true);
-	}
-
-	private void OnPitchVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.PitchGauge, PitchVisibleCheck.IsChecked == true);
-	}
-
-	private void OnGMeterVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.GMeter, GMeterVisibleCheck.IsChecked == true);
+		if (_editingElementId is not { } id) return;
+		SetElementLabel(id, CameraInfoLabelBox.Text);
 	}
 
 	private void OnGMeterFullScaleChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || GMeterFullScaleBox.Value is not { } fullScale) return;
-		UpdateElement(OverlayElementType.GMeter, el => el with { GMeterFullScaleG = (double)fullScale });
-	}
-
-	private void OnGMeterResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.GMeter);
-	}
-
-	private void OnElapsedTimeVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.ElapsedTimeText, ElapsedTimeVisibleCheck.IsChecked == true);
-	}
-
-	private void OnCameraModelVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.CameraModelText, CameraModelVisibleCheck.IsChecked == true);
-	}
-
-	private void OnSpeedVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.SpeedGauge, SpeedVisibleCheck.IsChecked == true);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || GMeterFullScaleBox.Value is not { } fullScale) return;
+		UpdateElement(id, el => el with { GMeterFullScaleG = (double)fullScale });
 	}
 
 	private void OnDateTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || DateTimeFormatCombo.SelectedItem is not DateFormatOption option) return;
-		SetElementDateFormat(OverlayElementType.DateTimeText, option.Format);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || DateTimeFormatCombo.SelectedItem is not DateFormatOption option) return;
+		SetElementDateFormat(id, option.Format);
 	}
 
 	private void OnDateTimeLocaleChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || DateTimeLocaleCombo.SelectedItem is not LocaleOption option) return;
-		SetElementLocale(OverlayElementType.DateTimeText, option.CultureName);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || DateTimeLocaleCombo.SelectedItem is not LocaleOption option) return;
+		SetElementLocale(id, option.CultureName);
 	}
 
 	private void OnUtcTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || UtcTimeFormatCombo.SelectedItem is not DateFormatOption option) return;
-		SetElementDateFormat(OverlayElementType.UtcTimeText, option.Format);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || UtcTimeFormatCombo.SelectedItem is not DateFormatOption option) return;
+		SetElementDateFormat(id, option.Format);
 	}
 
 	private void OnUtcTimeLocaleChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || UtcTimeLocaleCombo.SelectedItem is not LocaleOption option) return;
-		SetElementLocale(OverlayElementType.UtcTimeText, option.CultureName);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || UtcTimeLocaleCombo.SelectedItem is not LocaleOption option) return;
+		SetElementLocale(id, option.CultureName);
 	}
 
 	private void OnElevationLabelChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementLabel(OverlayElementType.Elevation, ElevationLabelBox.Text);
+		if (_editingElementId is not { } id) return;
+		SetElementLabel(id, ElevationLabelBox.Text);
 	}
 
 	private void OnElevationUnitsChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementUnits(OverlayElementType.Elevation, ElevationImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+		if (_editingElementId is not { } id) return;
+		SetElementUnits(id, ElevationImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
 	private void OnGradientLabelChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementLabel(OverlayElementType.Gradient, GradientLabelBox.Text);
+		if (_editingElementId is not { } id) return;
+		SetElementLabel(id, GradientLabelBox.Text);
 	}
 
 	private void OnDistanceLabelChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementLabel(OverlayElementType.Distance, DistanceLabelBox.Text);
+		if (_editingElementId is not { } id) return;
+		SetElementLabel(id, DistanceLabelBox.Text);
 	}
 
 	private void OnDistanceUnitsChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementUnits(OverlayElementType.Distance, DistanceImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+		if (_editingElementId is not { } id) return;
+		SetElementUnits(id, DistanceImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
 	private void OnSpeedUnitsChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementUnits(OverlayElementType.SpeedGauge, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+		if (_editingElementId is not { } id) return;
+		SetElementUnits(id, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
 	private void OnTripProgressUnitsChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementUnits(OverlayElementType.TripProgressBar,
-			TripProgressImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+		if (_editingElementId is not { } id) return;
+		SetElementUnits(id, TripProgressImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
 	private void OnTripProgressToleranceChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || TripProgressToleranceBox.Value is not { } tolerance) return;
-		UpdateElement(OverlayElementType.TripProgressBar, el => el with { TripArrivedToleranceMeters = (double)tolerance });
+		if (_suppressOverlayEvents || _editingElementId is not { } id || TripProgressToleranceBox.Value is not { } tolerance) return;
+		UpdateElement(id, el => el with { TripArrivedToleranceMeters = (double)tolerance });
 	}
 
 	private void OnTripProgressLabelChanged(object? sender, RoutedEventArgs e)
 	{
+		if (_editingElementId is not { } id) return;
 		var label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text)
 			? OverlayRenderer.TripArrivedLabelDefault
 			: TripProgressLabelBox.Text.Trim();
-		UpdateElement(OverlayElementType.TripProgressBar, el => el with { TripArrivedLabel = label });
-	}
-
-	private void OnMapVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.MapWidget, MapVisibleCheck.IsChecked == true);
-	}
-
-	private void OnTripProgressBarVisibilityChanged(object? sender, RoutedEventArgs e)
-	{
-		SetElementVisible(OverlayElementType.TripProgressBar, TripProgressBarVisibleCheck.IsChecked == true);
+		UpdateElement(id, el => el with { TripArrivedLabel = label });
 	}
 
 	private void OnMapZoomChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || MapZoomBox.Value is not { } zoom) return;
-		UpdateElement(OverlayElementType.MapWidget, el => el with { MapZoom = (int)zoom });
+		if (_suppressOverlayEvents || _editingElementId is not { } id || MapZoomBox.Value is not { } zoom) return;
+		UpdateElement(id, el => el with { MapZoom = (int)zoom });
 	}
 
 	private void OnMapDynamicZoomChanged(object? sender, RoutedEventArgs e)
 	{
+		if (_editingElementId is not { } id) return;
+
 		var enabled = MapDynamicZoomCheck.IsChecked == true;
 		MapZoomOutMaxLabel.IsVisible = enabled;
 		MapZoomOutMaxBox.IsVisible = enabled;
 		MapZoomOutMaxHint.IsVisible = enabled;
-		UpdateElement(OverlayElementType.MapWidget, el => el with { MapDynamicZoom = enabled });
+		UpdateElement(id, el => el with { MapDynamicZoom = enabled });
 	}
 
 	private void OnMapZoomOutMaxChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || MapZoomOutMaxBox.Value is not { } factor) return;
-		UpdateElement(OverlayElementType.MapWidget, el => el with { MapDynamicZoomMaxFactor = (double)factor });
-	}
-
-	private void OnDateTimeResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.DateTimeText);
-	}
-
-	private void OnUtcTimeResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.UtcTimeText);
-	}
-
-	private void OnElevationResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.Elevation);
-	}
-
-	private void OnGradientResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.Gradient);
-	}
-
-	private void OnDistanceResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.Distance);
-	}
-
-	private void OnSpeedResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.SpeedGauge);
-	}
-
-	private void OnTripProgressResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.TripProgressBar);
-	}
-
-	private void OnMapResetClick(object? sender, RoutedEventArgs e)
-	{
-		ResetElementToFactoryDefaults(OverlayElementType.MapWidget);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || MapZoomOutMaxBox.Value is not { } factor) return;
+		UpdateElement(id, el => el with { MapDynamicZoomMaxFactor = (double)factor });
 	}
 
 	private void OnMapTrailColorChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementTrailColor(OverlayElementType.MapWidget, MapTrailColorBox.Text);
+		if (_editingElementId is not { } id) return;
+		SetElementTrailColor(id, MapTrailColorBox.Text);
 		UpdateTrailColorSwatch(MapTrailColorSwatch, MapTrailColorBox.Text);
 	}
 
 	private void OnMapTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
-		if (_suppressOverlayEvents || MapTrailWidthBox.Value is not { } width) return;
-		SetElementTrailWidth(OverlayElementType.MapWidget, (float)width);
+		if (_suppressOverlayEvents || _editingElementId is not { } id || MapTrailWidthBox.Value is not { } width) return;
+		SetElementTrailWidth(id, (float)width);
 	}
 
 	private void OnMapTrailMarkerChanged(object? sender, RoutedEventArgs e)
 	{
-		SetElementTrailUseArrow(OverlayElementType.MapWidget, MapTrailArrowRadio.IsChecked == true);
+		if (_editingElementId is not { } id) return;
+		SetElementTrailUseArrow(id, MapTrailArrowRadio.IsChecked == true);
 	}
 
 	/// <summary>
@@ -699,7 +772,7 @@ public partial class MainWindow
 		if (_suppressOverlayEvents || PresetComboBox.SelectedIndex < 0) return;
 
 		_activePresetId = _overlayPresets[PresetComboBox.SelectedIndex].Id;
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
 	}
@@ -715,7 +788,7 @@ public partial class MainWindow
 		_activePresetId = id;
 
 		RefreshPresetComboBox();
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
 	}
@@ -729,7 +802,7 @@ public partial class MainWindow
 		_activePresetId = id;
 
 		RefreshPresetComboBox();
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
 	}
@@ -751,7 +824,7 @@ public partial class MainWindow
 		_activePresetId = _overlayPresets[0].Id;
 
 		RefreshPresetComboBox();
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
 	}
@@ -772,7 +845,7 @@ public partial class MainWindow
 		_overlayPresets[index] = OverlayPreset.CreateDefault(_activePresetId, presetName,
 			_summary.Video.Width, _summary.Video.Height);
 
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
 	}
@@ -826,7 +899,7 @@ public partial class MainWindow
 		_activePresetId = id;
 
 		RefreshPresetComboBox();
-		RefreshElementCheckboxes();
+		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
 		AppendLog($"Imported preset \"{preset.Name}\".");
@@ -884,7 +957,15 @@ public partial class MainWindow
 		RefreshPresetComboBox();
 	}
 
-	private Point? MapCanvasPointToFullRes(Point canvasPoint)
+	/// <summary>
+	///     PreviewImage uses Stretch="Uniform", which letterboxes the bitmap inside the control - this is
+	///     the shared scale/offset math for converting between a point on the canvas control and a pixel
+	///     in the full-res video, used both directions: mapping a click/drag/drop to a render position
+	///     (MapCanvasPointToFullRes) and placing UI - the hover icons, selection box, guide lines - back
+	///     over a position in the full-res frame (MapFullResPointToCanvas).
+	/// </summary>
+	private (double Scale, double OffsetX, double OffsetY, double RenderedWidth, double RenderedHeight, double FullResScale)?
+		GetPreviewTransform()
 	{
 		if (_summary is null || _previewBitmap is null) return null;
 
@@ -894,24 +975,202 @@ public partial class MainWindow
 		var bitmapHeight = _previewBitmap.PixelSize.Height;
 		if (controlWidth <= 0 || controlHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0) return null;
 
-		// PreviewImage uses Stretch="Uniform", which letterboxes the bitmap inside the control -
-		// replicate that math to turn a click on the control into a pixel in the preview bitmap.
 		var scale = Math.Min(controlWidth / bitmapWidth, controlHeight / bitmapHeight);
 		var renderedWidth = bitmapWidth * scale;
 		var renderedHeight = bitmapHeight * scale;
 		var offsetX = (controlWidth - renderedWidth) / 2;
 		var offsetY = (controlHeight - renderedHeight) / 2;
-
-		var localX = canvasPoint.X - offsetX;
-		var localY = canvasPoint.Y - offsetY;
-		if (localX < 0 || localY < 0 || localX > renderedWidth || localY > renderedHeight) return null;
-
 		// The preview bitmap is a uniformly downscaled copy of the full render resolution.
 		var fullResScale = _summary.Video.Width / (double)bitmapWidth;
-		return new Point(localX / scale * fullResScale, localY / scale * fullResScale);
+
+		return (scale, offsetX, offsetY, renderedWidth, renderedHeight, fullResScale);
 	}
 
-	/// <summary>Topmost visible element whose bounds contain `pos`, or null - shared by the drag hit-test and the hover cursor.</summary>
+	private Point? MapCanvasPointToFullRes(Point canvasPoint)
+	{
+		if (GetPreviewTransform() is not { } t) return null;
+
+		var localX = canvasPoint.X - t.OffsetX;
+		var localY = canvasPoint.Y - t.OffsetY;
+		if (localX < 0 || localY < 0 || localX > t.RenderedWidth || localY > t.RenderedHeight) return null;
+
+		return new Point(localX / t.Scale * t.FullResScale, localY / t.Scale * t.FullResScale);
+	}
+
+	private Point? MapFullResPointToCanvas(double fullResX, double fullResY)
+	{
+		if (GetPreviewTransform() is not { } t) return null;
+
+		return new Point(t.OffsetX + fullResX / t.FullResScale * t.Scale, t.OffsetY + fullResY / t.FullResScale * t.Scale);
+	}
+
+	/// <summary>
+	///     Rule-of-thirds + safe-margin guide lines over the preview, editor-only - purely a positioning
+	///     aid, never baked into the actual render (OverlayRenderer never draws these). The margin box
+	///     uses the exact same OverlayElementBounds.Margin OverlayPreset.CreateDefault positions widgets
+	///     within, so it visibly matches where widgets land by default.
+	/// </summary>
+	/// <summary>
+	///     Entries in the grid button's Flyout (GridModeOffButton/GridModeThirdsButton/
+	///     GridModeMarginButton/GridModeBothButton, matched by Name) - picks which of UpdatePreviewGuides' two
+	///     guide layers are drawn. Independent of _snapToGuides (OnToggleSnapClick).
+	/// </summary>
+	private void OnGridModeClick(object? sender, RoutedEventArgs e)
+	{
+		if (sender is not Button button) return;
+
+		_gridMode = button.Name switch
+		{
+			nameof(GridModeThirdsButton) => PreviewGridMode.Thirds,
+			nameof(GridModeMarginButton) => PreviewGridMode.Margin,
+			nameof(GridModeBothButton) => PreviewGridMode.Both,
+			_ => PreviewGridMode.Off
+		};
+
+		ApplyGridModeButtonClasses();
+		ToggleGridButton.Flyout?.Hide();
+		UpdatePreviewGuides();
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewGridMode = _gridMode.ToString() });
+	}
+
+	private void ApplyGridModeButtonClasses()
+	{
+		GridModeOffButton.Classes.Set("active", _gridMode == PreviewGridMode.Off);
+		GridModeThirdsButton.Classes.Set("active", _gridMode == PreviewGridMode.Thirds);
+		GridModeMarginButton.Classes.Set("active", _gridMode == PreviewGridMode.Margin);
+		GridModeBothButton.Classes.Set("active", _gridMode == PreviewGridMode.Both);
+		ToggleGridButton.Classes.Set("active", _gridMode != PreviewGridMode.Off);
+	}
+
+	/// <summary>
+	///     Toolbar toggle above the preview - whether a dragged widget snaps to the guide lines
+	///     (OnOverlayCanvasPointerMoved / SnapToGuides), independent of whether those lines are even shown
+	///     (_gridMode) - matches "Show Grid" vs. "Snap to Grid" being separate settings in editing software.
+	/// </summary>
+	private void OnToggleSnapClick(object? sender, RoutedEventArgs e)
+	{
+		_snapToGuides = !_snapToGuides;
+		ToggleSnapButton.Classes.Set("active", _snapToGuides);
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewSnapToGrid = _snapToGuides });
+	}
+
+	private void UpdatePreviewGuides()
+	{
+		var showThirds = _gridMode is PreviewGridMode.Thirds or PreviewGridMode.Both;
+		var showMargin = _gridMode is PreviewGridMode.Margin or PreviewGridMode.Both;
+
+		if ((!showThirds && !showMargin) || GetPreviewTransform() is null || _summary is null)
+		{
+			PreviewGridVLine1.IsVisible = false;
+			PreviewGridVLine2.IsVisible = false;
+			PreviewGridHLine1.IsVisible = false;
+			PreviewGridHLine2.IsVisible = false;
+			PreviewSafeMarginBox.IsVisible = false;
+			return;
+		}
+
+		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
+		var margin = OverlayElementBounds.Margin * scale;
+		if (MapFullResPointToCanvas(margin, margin) is not var (left, top) ||
+		    MapFullResPointToCanvas(_summary.Video.Width - margin, _summary.Video.Height - margin) is not { } bottomRight)
+		{
+			PreviewGridVLine1.IsVisible = false;
+			PreviewGridVLine2.IsVisible = false;
+			PreviewGridHLine1.IsVisible = false;
+			PreviewGridHLine2.IsVisible = false;
+			PreviewSafeMarginBox.IsVisible = false;
+			return;
+		}
+
+		// The rule-of-thirds lines are drawn within the same safe-margin box (not the full video frame) so
+		// both guides share one set of bounds - otherwise the thirds lines poke past the margin box's own
+		// top/bottom border out to the true video edge, which looked broken.
+		var right = bottomRight.X;
+		var bottom = bottomRight.Y;
+		var width = right - left;
+		var height = bottom - top;
+
+		PreviewGridVLine1.StartPoint = new Point(left + width / 3, top);
+		PreviewGridVLine1.EndPoint = new Point(left + width / 3, bottom);
+		PreviewGridVLine2.StartPoint = new Point(left + width * 2 / 3, top);
+		PreviewGridVLine2.EndPoint = new Point(left + width * 2 / 3, bottom);
+		PreviewGridHLine1.StartPoint = new Point(left, top + height / 3);
+		PreviewGridHLine1.EndPoint = new Point(right, top + height / 3);
+		PreviewGridHLine2.StartPoint = new Point(left, top + height * 2 / 3);
+		PreviewGridHLine2.EndPoint = new Point(right, top + height * 2 / 3);
+		PreviewGridVLine1.IsVisible = showThirds;
+		PreviewGridVLine2.IsVisible = showThirds;
+		PreviewGridHLine1.IsVisible = showThirds;
+		PreviewGridHLine2.IsVisible = showThirds;
+
+		Canvas.SetLeft(PreviewSafeMarginBox, left);
+		Canvas.SetTop(PreviewSafeMarginBox, top);
+		PreviewSafeMarginBox.Width = Math.Max(0, width);
+		PreviewSafeMarginBox.Height = Math.Max(0, height);
+		PreviewSafeMarginBox.IsVisible = showMargin;
+	}
+
+	private const double SnapThresholdCanvasPixels = 8;
+
+	/// <summary>
+	///     Full-res-space X/Y positions of the guide lines UpdatePreviewGuides draws (margin box edges
+	///     + rule-of-thirds), shared with SnapToGuides so a dragged widget aligns to the same lines it sees.
+	/// </summary>
+	private (float[] X, float[] Y) GetGuideTargets()
+	{
+		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
+		var margin = OverlayElementBounds.Margin * scale;
+		var width = _summary.Video.Width - margin * 2;
+		var height = _summary.Video.Height - margin * 2;
+
+		float[] x = [margin, margin + width / 3, margin + width * 2 / 3, margin + width];
+		float[] y = [margin, margin + height / 3, margin + height * 2 / 3, margin + height];
+		return (x, y);
+	}
+
+	/// <summary>
+	///     Snaps a dragged widget to the nearest guide line when it's within a small on-screen distance
+	///     - purely an editor convenience on top of OnOverlayCanvasPointerMoved. Checks the widget's actual
+	///     bounding-box edges and center (via OverlayElementBounds.GetBounds) against the guides, not just the
+	///     raw anchor X/Y - most widget types anchor at a corner, not their visual center, so snapping the raw
+	///     anchor alone only ever lined up center-anchored types (gauges, the progress bar) by coincidence.
+	/// </summary>
+	private (float X, float Y) SnapToGuides(OverlayElementType type, float x, float y, float elementScale)
+	{
+		if (!_snapToGuides || _summary is null || GetPreviewTransform() is not { } t) return (x, y);
+
+		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
+		SKRect bounds = OverlayElementBounds.GetBounds(type, x, y, scale * elementScale);
+		var (xTargets, yTargets) = GetGuideTargets();
+		var threshold = (float)(SnapThresholdCanvasPixels * t.FullResScale / t.Scale);
+
+		float[] xOffsets = bounds.IsEmpty ? [0f] : [bounds.Left - x, bounds.MidX - x, bounds.Right - x];
+		float[] yOffsets = bounds.IsEmpty ? [0f] : [bounds.Top - y, bounds.MidY - y, bounds.Bottom - y];
+
+		return (SnapAxis(x, xOffsets, xTargets, threshold), SnapAxis(y, yOffsets, yTargets, threshold));
+	}
+
+	private static float SnapAxis(float anchor, float[] edgeOffsets, float[] targets, float threshold)
+	{
+		var best = anchor;
+		var bestDistance = threshold;
+		foreach (var offset in edgeOffsets)
+		{
+			var edge = anchor + offset;
+			foreach (var target in targets)
+			{
+				var distance = Math.Abs(edge - target);
+				if (distance >= bestDistance) continue;
+
+				bestDistance = distance;
+				best = target - offset;
+			}
+		}
+
+		return best;
+	}
+
+	/// <summary>Topmost visible element whose bounds contain `pos`, or null - shared by the drag hit-test and the hover state.</summary>
 	private OverlayElement? FindElementAt(Point pos)
 	{
 		if (_summary is null) return null;
@@ -923,11 +1182,76 @@ public partial class MainWindow
 			OverlayElement el = elements[i];
 			if (!el.Visible) continue;
 
-			SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale);
+			SKRect bounds = OverlayElementBounds.GetBounds(el.Type, el.X, el.Y, scale * el.Scale);
 			if (pos.X >= bounds.Left && pos.X <= bounds.Right && pos.Y >= bounds.Top && pos.Y <= bounds.Bottom) return el;
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	///     Maps a widget type to the hidden Button hosting its settings Flyout (see the XAML - the
+	///     gear button itself is IsVisible="False", kept only so its Flyout content can be shown from code
+	///     when WidgetGearHoverButton is clicked on the canvas).
+	/// </summary>
+	private Button? GetGearButton(OverlayElementType type)
+	{
+		return type switch
+		{
+			OverlayElementType.DateTimeText => DateTimeGearButton,
+			OverlayElementType.UtcTimeText => UtcTimeGearButton,
+			OverlayElementType.Elevation => ElevationGearButton,
+			OverlayElementType.Gradient => GradientGearButton,
+			OverlayElementType.Distance => DistanceGearButton,
+			OverlayElementType.CameraInfo => CameraInfoGearButton,
+			OverlayElementType.Compass => CompassGearButton,
+			OverlayElementType.SunWidget => SunGearButton,
+			OverlayElementType.PitchGauge => PitchGearButton,
+			OverlayElementType.GMeter => GMeterGearButton,
+			OverlayElementType.ElapsedTimeText => ElapsedTimeGearButton,
+			OverlayElementType.CameraModelText => CameraModelGearButton,
+			OverlayElementType.SpeedGauge => SpeedGearButton,
+			OverlayElementType.MapWidget => MapGearButton,
+			OverlayElementType.TripProgressBar => TripProgressBarGearButton,
+			_ => null
+		};
+	}
+
+	/// <summary>
+	///     Starts an OS-level drag from a palette row - the counterpart to OnOverlayCanvasDrop,
+	///     which turns the drop into a brand-new widget instance (see AddElementInstance).
+	/// </summary>
+	private async void OnWidgetItemPointerPressed(object? sender, PointerPressedEventArgs e)
+	{
+		if (sender is not Border { Tag: OverlayElementType type } item || !item.IsEnabled) return;
+
+		var data = new DataTransfer();
+		data.Add(DataTransferItem.Create(WidgetDragFormat, type.ToString()));
+		await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move);
+	}
+
+	private bool CanAcceptWidgetDrop(DragEventArgs e, out OverlayElementType type)
+	{
+		type = default;
+		if (_summary is null || IsActivePresetDefault) return false;
+		if (e.DataTransfer.TryGetValue(WidgetDragFormat) is not { } name || !Enum.TryParse(name, out type)) return false;
+
+		return OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
+	}
+
+	private void OnOverlayCanvasDragOver(object? sender, DragEventArgs e)
+	{
+		e.DragEffects = CanAcceptWidgetDrop(e, out _) ? DragDropEffects.Move : DragDropEffects.None;
+	}
+
+	private void OnOverlayCanvasDrop(object? sender, DragEventArgs e)
+	{
+		if (!CanAcceptWidgetDrop(e, out OverlayElementType type)) return;
+		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
+
+		var x = (float)Math.Clamp(pos.X, 0, _summary!.Video.Width);
+		var y = (float)Math.Clamp(pos.Y, 0, _summary.Video.Height);
+		AddElementInstance(type, x, y);
 	}
 
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -945,17 +1269,32 @@ public partial class MainWindow
 			PlayPauseButton.Content = "Play";
 		}
 
-		_draggingElementType = el.Type;
+		_draggingElementId = el.Id;
 		_dragAnchorOffset = new Point(pos.X - el.X, pos.Y - el.Y);
 		e.Pointer.Capture(OverlayDragCanvas);
 		OverlayDragCanvas.Cursor = SizeAllCursor;
+		HideHoverIcons();
+
+		if (_selectedElementId != el.Id)
+		{
+			_selectedElementId = el.Id;
+			RebuildAddedWidgetsList();
+		}
+
+		RefreshSelectionHighlight();
 	}
 
 	private void OnOverlayCanvasPointerMoved(object? sender, PointerEventArgs e)
 	{
-		if (_draggingElementType is not { } type)
+		if (_resizingElementId is { } resizingId)
 		{
-			UpdateHoverCursor(e);
+			UpdateResize(resizingId, e);
+			return;
+		}
+
+		if (_draggingElementId is not { } id)
+		{
+			UpdateHoverState(e);
 			return;
 		}
 
@@ -966,34 +1305,166 @@ public partial class MainWindow
 		var newY = (float)Math.Clamp(pos.Y - _dragAnchorOffset.Y, 0, _summary.Video.Height);
 
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Type == type);
+		var index = elements.FindIndex(el => el.Id == id);
 		if (index < 0) return;
+
+		(newX, newY) = SnapToGuides(elements[index].Type, newX, newY, elements[index].Scale);
 
 		elements[index] = elements[index] with { X = newX, Y = newY };
 		ReplaceActiveElements(elements);
 		_previewPlayer.SetLayout(elements);
+		if (_selectedElementId == id) RefreshSelectionHighlight();
 	}
+
+	private const float MinElementScale = 0.4f;
+	private const float MaxElementScale = 2.5f;
+
+	/// <summary>Starts a resize drag from ResizeHandle - a corner grab at the selected widget's own
+	/// bottom-right bound, sized by the ratio of the pointer's current vs. starting distance from the
+	/// widget's anchor (element.X/Y) to its own OverlayElement.Scale at press time, so dragging away from
+	/// the anchor grows it and dragging toward it shrinks it, uniformly (both axes, one multiplier).</summary>
+	private void OnResizeHandlePointerPressed(object? sender, PointerPressedEventArgs e)
+	{
+		if (_summary is null || IsActivePresetDefault) return;
+		if (_selectedElementId is not { } id) return;
+		if (ActiveElements.FirstOrDefault(el => el.Id == id) is not { Visible: true } el) return;
+		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
+
+		if (_previewPlayer.IsPlaying)
+		{
+			_previewPlayer.Pause();
+			PlayPauseButton.Content = "Play";
+		}
+
+		_resizingElementId = id;
+		_resizeStartScale = el.Scale;
+		_resizeStartDistance = Math.Max(Distance(pos, new Point(el.X, el.Y)), 1);
+		e.Pointer.Capture(OverlayDragCanvas);
+		e.Handled = true;
+		HideHoverIcons();
+	}
+
+	private void UpdateResize(string id, PointerEventArgs e)
+	{
+		if (_summary is null) return;
+		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
+
+		List<OverlayElement> elements = [.. ActiveElements];
+		var index = elements.FindIndex(el => el.Id == id);
+		if (index < 0) return;
+
+		OverlayElement el = elements[index];
+		var distance = Distance(pos, new Point(el.X, el.Y));
+		var newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), MinElementScale, MaxElementScale);
+
+		elements[index] = el with { Scale = newScale };
+		ReplaceActiveElements(elements);
+		_previewPlayer.SetLayout(elements);
+		if (_selectedElementId == id) RefreshSelectionHighlight();
+	}
+
+	private static double Distance(Point a, Point b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
 
 	private void OnOverlayCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
 	{
-		if (_draggingElementType is null) return;
+		if (_resizingElementId is not null)
+		{
+			_resizingElementId = null;
+			e.Pointer.Capture(null);
+			UpdateHoverState(e);
+			SaveOverlayPresets();
+			return;
+		}
 
-		_draggingElementType = null;
+		if (_draggingElementId is null) return;
+
+		_draggingElementId = null;
 		e.Pointer.Capture(null);
-		UpdateHoverCursor(e);
+		UpdateHoverState(e);
 		SaveOverlayPresets();
 	}
 
-	private void UpdateHoverCursor(PointerEventArgs e)
+	private void UpdateHoverState(PointerEventArgs e)
 	{
 		if (_summary is null || IsActivePresetDefault)
 		{
 			OverlayDragCanvas.Cursor = null;
+			HideHoverIcons();
 			return;
 		}
 
-		Point? pos = MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas));
-		OverlayDragCanvas.Cursor = pos is { } p && FindElementAt(p) is not null ? HandCursor : null;
+		Point canvasPos = e.GetPosition(OverlayDragCanvas);
+
+		// Ignore while the pointer is over one of the hover icons themselves - they sit at a widget's
+		// corner, partly outside the widget's own hit-test bounds, so re-running the hit test below
+		// would otherwise hide them out from under the pointer before a click can land.
+		if (IsPointerOverHoverIcon(canvasPos)) return;
+
+		Point? pos = MapCanvasPointToFullRes(canvasPos);
+		OverlayElement? hovered = pos is { } p ? FindElementAt(p) : null;
+		OverlayDragCanvas.Cursor = hovered is not null ? HandCursor : null;
+
+		if (hovered is null)
+		{
+			HideHoverIcons();
+			return;
+		}
+
+		ShowHoverIconsFor(hovered);
+	}
+
+	private bool IsPointerOverHoverIcon(Point canvasPos)
+	{
+		return (WidgetGearHoverButton.IsVisible && GetCanvasChildRect(WidgetGearHoverButton).Contains(canvasPos))
+		       || (RemoveWidgetButton.IsVisible && GetCanvasChildRect(RemoveWidgetButton).Contains(canvasPos));
+	}
+
+	private static Rect GetCanvasChildRect(Control control)
+	{
+		return new Rect(Canvas.GetLeft(control), Canvas.GetTop(control), control.Bounds.Width, control.Bounds.Height);
+	}
+
+	/// <summary>Positions the ⚙/✕ pair at a widget's top-right corner, gear to the left of remove.</summary>
+	private void ShowHoverIconsFor(OverlayElement element)
+	{
+		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
+		SKRect bounds = OverlayElementBounds.GetBounds(element.Type, element.X, element.Y, scale * element.Scale);
+		if (MapFullResPointToCanvas(bounds.Right, bounds.Top) is not { } corner)
+		{
+			HideHoverIcons();
+			return;
+		}
+
+		_hoveredElementId = element.Id;
+
+		const double gap = 4;
+		Canvas.SetLeft(RemoveWidgetButton, corner.X - RemoveWidgetButton.Width / 2);
+		Canvas.SetTop(RemoveWidgetButton, corner.Y - RemoveWidgetButton.Height / 2);
+		Canvas.SetLeft(WidgetGearHoverButton, corner.X - RemoveWidgetButton.Width / 2 - gap - WidgetGearHoverButton.Width);
+		Canvas.SetTop(WidgetGearHoverButton, corner.Y - WidgetGearHoverButton.Height / 2);
+
+		RemoveWidgetButton.IsVisible = true;
+		WidgetGearHoverButton.IsVisible = true;
+	}
+
+	private void HideHoverIcons()
+	{
+		_hoveredElementId = null;
+		RemoveWidgetButton.IsVisible = false;
+		WidgetGearHoverButton.IsVisible = false;
+	}
+
+	private void OnWidgetGearHoverButtonClick(object? sender, RoutedEventArgs e)
+	{
+		if (_hoveredElementId is not { } id || ActiveElements.FirstOrDefault(el => el.Id == id) is not { } element) return;
+		OpenElementSettings(element);
+	}
+
+	private void OnRemoveWidgetButtonClick(object? sender, RoutedEventArgs e)
+	{
+		if (_hoveredElementId is not { } id) return;
+		HideHoverIcons();
+		RemoveElementInstance(id);
 	}
 
 	private sealed record DateFormatOption(string Display, string? Format)

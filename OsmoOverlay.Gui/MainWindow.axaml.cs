@@ -15,6 +15,18 @@ using RenderOptions = OsmoOverlay.Core.RenderOptions;
 namespace OsmoOverlay.Gui;
 
 /// <summary>
+///     Which of UpdatePreviewGuides' two guide layers (rule-of-thirds lines, safe-margin box) the
+///     preview toolbar's grid button currently shows - independent of SnapToGuides, which has its own toggle.
+/// </summary>
+public enum PreviewGridMode
+{
+	Off,
+	Thirds,
+	Margin,
+	Both
+}
+
+/// <summary>
 ///     Window shell: input file list, the Get Summary/Render action flow, and phase-driven panel
 ///     visibility. The rest of this window's logic is split across sibling partial-class files by
 ///     concern - MainWindow.Summary.cs (Get Summary + Input/Telemetry/Output info cards),
@@ -30,15 +42,20 @@ public partial class MainWindow : Window
 	private CancellationTokenSource? _cts;
 	private string _detectedEncoder = "";
 	private Point _dragAnchorOffset;
-	private OverlayElementType? _draggingElementType;
+	private string? _draggingElementId;
+	// Id of whichever element's settings Flyout is currently populated/open - every field-changed
+	// handler in the flyout targets this instance rather than a fixed OverlayElementType, since a type
+	// can now have several instances on the canvas at once (see OnWidgetGearHoverButtonClick).
+	private string? _editingElementId;
 	private int? _frameLimit;
 
 	private List<(double Start, double End)> _gpsLossRanges = [];
-	// Default true (nothing greyed out) until a file's actually been read - RefreshElementCheckboxes
-	// only starts using these once _summary is set, so the default only matters for that brief gap.
+	// Default true (nothing greyed out) until a file's actually been read - RefreshWidgetList only
+	// starts using these once _summary is set, so the default only matters for that brief gap.
 	private bool _hasContainerTime = true;
 	private bool _hasGpsFix = true;
 	private bool _hasGpsTimestamp = true;
+	private string? _hoveredElementId;
 	private List<OverlayPreset> _overlayPresets = [];
 	// Guards a real race: SetPhase(SummaryReady) can run before LoadOverlayPresets (an earlier await
 	// in OpenPreviewAsync) has populated _overlayPresets. Without this, the Overlay panel's "New"/
@@ -50,6 +67,12 @@ public partial class MainWindow : Window
 	private UiPhase _phase = UiPhase.Idle;
 	private WriteableBitmap? _previewBitmap;
 	private int _previewMaxWidth = OverlaySettingsStore.Load().PreviewMaxWidth;
+	private string? _selectedElementId;
+	private PreviewGridMode _gridMode = Enum.TryParse(OverlaySettingsStore.Load().PreviewGridMode, out PreviewGridMode loadedGridMode) ? loadedGridMode : PreviewGridMode.Both;
+	private bool _snapToGuides = OverlaySettingsStore.Load().PreviewSnapToGrid;
+	private string? _resizingElementId;
+	private float _resizeStartScale = 1f;
+	private double _resizeStartDistance = 1;
 	private bool _showWatermark = OverlaySettingsStore.Load().ShowWatermark;
 	private bool _sliderDragInProgress;
 	private bool _smoothGpsMotion = OverlaySettingsStore.Load().SmoothGpsMotion;
@@ -87,21 +110,21 @@ public partial class MainWindow : Window
 		MapAnimationCombo.ItemsSource = AnimationOptions;
 		TripProgressBarAnimationCombo.ItemsSource = AnimationOptions;
 
-		WireTiming(OverlayElementType.DateTimeText, DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel);
-		WireTiming(OverlayElementType.UtcTimeText, UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel);
-		WireTiming(OverlayElementType.Elevation, ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel);
-		WireTiming(OverlayElementType.Gradient, GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel);
-		WireTiming(OverlayElementType.Distance, DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel);
-		WireTiming(OverlayElementType.CameraInfo, CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel);
-		WireTiming(OverlayElementType.Compass, CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel);
-		WireTiming(OverlayElementType.SunWidget, SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel);
-		WireTiming(OverlayElementType.PitchGauge, PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel);
-		WireTiming(OverlayElementType.GMeter, GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel);
-		WireTiming(OverlayElementType.ElapsedTimeText, ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel);
-		WireTiming(OverlayElementType.CameraModelText, CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel);
-		WireTiming(OverlayElementType.SpeedGauge, SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel);
-		WireTiming(OverlayElementType.MapWidget, MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel);
-		WireTiming(OverlayElementType.TripProgressBar, TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel);
+		WireTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel);
+		WireTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel);
+		WireTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel);
+		WireTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel);
+		WireTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel);
+		WireTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel);
+		WireTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel);
+		WireTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel);
+		WireTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel);
+		WireTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel);
+		WireTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel);
+		WireTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel);
+		WireTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel);
+		WireTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel);
+		WireTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel);
 
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in
@@ -131,6 +154,16 @@ public partial class MainWindow : Window
 		// The canvas has no width until layout runs (and resizes with the window afterwards) - marks
 		// are positioned in absolute pixels, so they need redrawing whenever that width changes.
 		GpsLossCanvas.SizeChanged += (_, _) => DrawGpsLossMarks();
+
+		// Same reasoning as GpsLossCanvas above - the rule-of-thirds/safe-margin guide lines are
+		// positioned in absolute canvas pixels, so a window resize (which resizes OverlayDragCanvas
+		// itself, independent of when a new preview bitmap loads) needs to redraw them too.
+		OverlayDragCanvas.SizeChanged += (_, _) => UpdatePreviewGuides();
+
+		// XAML hardcodes the "Both"/snap-on look as a starting point for the designer - reconcile the
+		// toolbar buttons with whatever was actually loaded from settings.json above.
+		ApplyGridModeButtonClasses();
+		ToggleSnapButton.Classes.Set("active", _snapToGuides);
 	}
 
 	private async void OnWindowOpened(object? sender, EventArgs e)

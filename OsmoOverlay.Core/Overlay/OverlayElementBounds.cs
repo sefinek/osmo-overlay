@@ -21,9 +21,13 @@ public static class OverlayElementBounds
 	public const float PitchRadius = 95f;
 	public const float MapRadius = 260f;
 	public const float GMeterRadius = 110f;
+	public const float LabelBelowRadiusOffset = 56f;
+	public const float LabelBelowRadiusPadding = LabelBelowRadiusOffset + 14f;
 
 	public const float DateTimeWidth = 420f;
 	public const float DateTimeHeight = 70f;
+	public const float ElapsedTimeWidth = 200f;
+	public const float CameraModelWidth = 300f;
 	public const float StatWidth = 380f;
 	public const float StatHeight = 170f;
 	public const float CameraInfoWidth = 380f;
@@ -42,9 +46,12 @@ public static class OverlayElementBounds
 		{
 			// DrawTimeText renders the text with its baseline at (x, y), so the glyphs sit mostly
 			// above that anchor - the hit box must follow, or clicking the visible text misses it.
-			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText or OverlayElementType.ElapsedTimeText
-				or OverlayElementType.CameraModelText => new SKRect(x, y - (DateTimeHeight - 10) * scale,
-					x + DateTimeWidth * scale, y + 10 * scale),
+			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText => new SKRect(x,
+				y - (DateTimeHeight - 10) * scale, x + DateTimeWidth * scale, y + 10 * scale),
+			OverlayElementType.ElapsedTimeText => new SKRect(x, y - (DateTimeHeight - 10) * scale,
+				x + ElapsedTimeWidth * scale, y + 10 * scale),
+			OverlayElementType.CameraModelText => new SKRect(x, y - (DateTimeHeight - 10) * scale,
+				x + CameraModelWidth * scale, y + 10 * scale),
 			OverlayElementType.Elevation or OverlayElementType.Gradient or OverlayElementType.Distance =>
 				new SKRect(x - 10 * scale, y - 50 * scale, x + (StatWidth - 10) * scale, y + (StatHeight - 50) * scale),
 			OverlayElementType.CameraInfo =>
@@ -56,11 +63,11 @@ public static class OverlayElementBounds
 				new SKRect(x - ProgressBarWidth / 2 * scale, y - ProgressBarHeight / 2 * scale,
 					x + ProgressBarWidth / 2 * scale, y + ProgressBarHeight / 2 * scale),
 			OverlayElementType.Compass => Circle(x, y, CompassRadius * scale),
-			OverlayElementType.SunWidget => Circle(x, y, (SunRadius + 70) * scale),
+			OverlayElementType.SunWidget => CircleWithBottomLabel(x, y, SunRadius, scale),
 			OverlayElementType.PitchGauge => Circle(x, y, PitchRadius * scale),
 			OverlayElementType.SpeedGauge => Circle(x, y, SpeedRadius * scale),
 			OverlayElementType.MapWidget => Circle(x, y, MapRadius * scale),
-			OverlayElementType.GMeter => Circle(x, y, GMeterRadius * scale),
+			OverlayElementType.GMeter => CircleWithBottomLabel(x, y, GMeterRadius, scale),
 			_ => SKRect.Empty
 		};
 	}
@@ -68,5 +75,11 @@ public static class OverlayElementBounds
 	private static SKRect Circle(float cx, float cy, float radius)
 	{
 		return new SKRect(cx - radius, cy - radius, cx + radius, cy + radius);
+	}
+
+	private static SKRect CircleWithBottomLabel(float cx, float cy, float radius, float scale)
+	{
+		return new SKRect(cx - radius * scale, cy - radius * scale, cx + radius * scale,
+			cy + (radius + LabelBelowRadiusPadding) * scale);
 	}
 }

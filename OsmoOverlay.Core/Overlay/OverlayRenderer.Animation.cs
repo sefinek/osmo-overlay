@@ -20,10 +20,21 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private void DrawElement(SKCanvas canvas, OverlayElement element, double sampleTimeSeconds, Action<SKCanvas> draw)
 	{
+		var resized = element.Scale != 1f;
+
 		if (element.AppearAtSeconds is null && element.DisappearAtSeconds is null &&
 		    element.AnimationType == OverlayAnimationType.None)
 		{
+			if (!resized)
+			{
+				draw(canvas);
+				return;
+			}
+
+			canvas.Save();
+			ScaleAroundAnchor(canvas, element);
 			draw(canvas);
+			canvas.Restore();
 			return;
 		}
 
@@ -31,16 +42,26 @@ public sealed partial class OverlayRenderer
 		if (progress <= 0f) return;
 
 		var (offsetX, offsetY) = SlideOffset(element.AnimationType, progress);
-		if (offsetX == 0f && offsetY == 0f)
+		if (offsetX == 0f && offsetY == 0f && !resized)
 		{
 			DrawWithAlpha(canvas, progress, draw);
 			return;
 		}
 
 		canvas.Save();
-		canvas.Translate(offsetX, offsetY);
+		if (offsetX != 0f || offsetY != 0f) canvas.Translate(offsetX, offsetY);
+		if (resized) ScaleAroundAnchor(canvas, element);
 		DrawWithAlpha(canvas, progress, draw);
 		canvas.Restore();
+	}
+
+	/// <summary>Scales everything `draw` renders by element.Scale, pivoted on the widget's own anchor
+	/// (element.X, element.Y) so resizing never shifts its position.</summary>
+	private static void ScaleAroundAnchor(SKCanvas canvas, OverlayElement element)
+	{
+		canvas.Translate(element.X, element.Y);
+		canvas.Scale(element.Scale, element.Scale);
+		canvas.Translate(-element.X, -element.Y);
 	}
 
 	/// <summary>

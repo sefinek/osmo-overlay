@@ -62,7 +62,7 @@ public static partial class DependencyVersionChecker
 
 	private static async Task<string?> GetInstalledVersionAsync(ExternalTool tool, CancellationToken ct)
 	{
-		(var exitCode, var stdout, var stderr) = await RunAsync(tool.VersionCommand, tool.VersionArgs, ct);
+		var (exitCode, stdout, stderr) = await RunAsync(tool.VersionCommand, tool.VersionArgs, ct);
 		if (exitCode != 0) return null;
 
 		// exiftool's -ver prints a bare number on stdout; ffmpeg's -version prints a sentence on stdout,
@@ -82,7 +82,7 @@ public static partial class DependencyVersionChecker
 	{
 		if (!DependencyChecker.IsCommandAvailable("winget")) return null;
 
-		(var exitCode, var stdout, _) = await RunAsync("winget",
+		var (exitCode, stdout, _) = await RunAsync("winget",
 			["show", "--id", tool.WingetId, "-e", "--accept-source-agreements"], ct);
 		if (exitCode != 0) return null;
 
@@ -94,7 +94,7 @@ public static partial class DependencyVersionChecker
 	{
 		if (!DependencyChecker.IsCommandAvailable("brew")) return null;
 
-		(var exitCode, var stdout, _) = await RunAsync("brew", ["info", "--json=v2", tool.BrewPackage], ct);
+		var (exitCode, stdout, _) = await RunAsync("brew", ["info", "--json=v2", tool.BrewPackage], ct);
 		if (exitCode != 0) return null;
 
 		var stable = JsonNode.Parse(stdout)?["formulae"]?.AsArray().FirstOrDefault()?["versions"]?["stable"]?.GetValue<string>();
@@ -113,7 +113,7 @@ public static partial class DependencyVersionChecker
 	{
 		if (DependencyChecker.IsCommandAvailable("apt-cache"))
 		{
-			(var exitCode, var stdout, _) = await RunAsync("apt-cache", ["policy", tool.AptPackage], ct);
+			var (exitCode, stdout, _) = await RunAsync("apt-cache", ["policy", tool.AptPackage], ct);
 			if (exitCode != 0) return null;
 
 			var candidateLine = stdout.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("Candidate:"));
@@ -122,7 +122,7 @@ public static partial class DependencyVersionChecker
 
 		if (DependencyChecker.IsCommandAvailable("dnf"))
 		{
-			(var exitCode, var stdout, _) = await RunAsync("dnf", ["--cacheonly", "list", "available", tool.DnfPackage], ct);
+			var (exitCode, stdout, _) = await RunAsync("dnf", ["--cacheonly", "list", "available", tool.DnfPackage], ct);
 			if (exitCode != 0) return null;
 
 			return ExtractVersionNumber(stdout);
@@ -130,7 +130,7 @@ public static partial class DependencyVersionChecker
 
 		if (DependencyChecker.IsCommandAvailable("pacman"))
 		{
-			(var exitCode, var stdout, _) = await RunAsync("pacman", ["-Si", tool.PacmanPackage], ct);
+			var (exitCode, stdout, _) = await RunAsync("pacman", ["-Si", tool.PacmanPackage], ct);
 			if (exitCode != 0) return null;
 
 			var versionLine = stdout.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("Version"));

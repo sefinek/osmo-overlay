@@ -63,6 +63,14 @@ public enum OverlayElementType
 ///     never goes away. Together with the default AnimationType of None, the default for all four is
 ///     "always visible, instant, exactly like every widget already behaved" - so an existing preset with
 ///     none of this set renders unchanged.
+///     Scale multiplies a widget's size on top of the resolution-based scale every widget already draws
+///     at (OverlayElementBounds.GetScale) - applied once in OverlayRenderer.DrawElement, pivoted on X/Y so
+///     resizing never moves the widget. 1 (default) renders at the same size as before this field existed.
+///     Id distinguishes multiple instances of the same Type (the GUI lets you drag a widget onto the
+///     canvas more than once) - Type alone is no longer unique within a preset's Elements. Empty string
+///     is only a transient/deserialization state: OverlayPreset.CreateDefault always assigns Type.ToString()
+///     to the one instance it creates per type, new instances the GUI adds get a random Guid, and
+///     OverlayPreset.WithElementIdsBackfilled fixes up presets saved before this field existed.
 /// </summary>
 public sealed record OverlayElement(
 	OverlayElementType Type,
@@ -85,4 +93,6 @@ public sealed record OverlayElement(
 	double? AppearAtSeconds = null,
 	double? DisappearAtSeconds = null,
 	OverlayAnimationType AnimationType = OverlayAnimationType.None,
-	double AnimationDurationSeconds = OverlayRenderer.AnimationDurationSecondsDefault);
+	double AnimationDurationSeconds = OverlayRenderer.AnimationDurationSecondsDefault,
+	string Id = "",
+	float Scale = 1f);

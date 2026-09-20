@@ -34,7 +34,7 @@ public static class OverlayPresetStore
 		{
 			MigrateLegacyStoreIfNeeded();
 
-			List<OverlayPreset> presets = LoadPresetFiles();
+			List<OverlayPreset> presets = [.. LoadPresetFiles().Select(p => p.WithElementIdsBackfilled())];
 			// Reads the still-on-disk JSON (not the deserialized OverlayPreset, which no longer has these
 			// properties at all) before RefreshBuiltInDefault/BackfillMissingWidgetTypes below get a
 			// chance to overwrite any preset file and strip the old fields for good.
@@ -210,7 +210,7 @@ public static class OverlayPresetStore
 	{
 		try
 		{
-			return JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath));
+			return JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath))?.WithElementIdsBackfilled();
 		}
 		catch (Exception ex)
 		{

@@ -82,7 +82,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 				AppearAtSeconds: 16.0, AnimationType: OverlayAnimationType.Fade)
 		];
 
-		return new OverlayPreset(id, name, elements);
+		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid -
+		// keeps a freshly created preset's JSON deterministic, and matches WithElementIdsBackfilled's
+		// migration for presets saved before Id existed (which likewise never had more than one instance
+		// per type). Any additional instance of a type the GUI lets someone drag on later gets a real Guid.
+		return new OverlayPreset(id, name, [.. elements.Select(e => e with { Id = e.Type.ToString() })]);
 	}
 
 	/// <summary>
@@ -103,5 +107,17 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		];
 
 		return missing.Count == 0 ? this : this with { Elements = [.. Elements, .. missing] };
+	}
+
+	/// <summary>
+	///     Assigns a stable id (its type name) to any element left over from before OverlayElement.Id
+	///     existed - a preset saved back then always had exactly one instance per type, so Type.ToString()
+	///     can't collide with anything else already in Elements. No-op once every element already has one.
+	/// </summary>
+	public OverlayPreset WithElementIdsBackfilled()
+	{
+		return Elements.All(e => !string.IsNullOrEmpty(e.Id))
+			? this
+			: this with { Elements = [.. Elements.Select(e => string.IsNullOrEmpty(e.Id) ? e with { Id = e.Type.ToString() } : e)] };
 	}
 }

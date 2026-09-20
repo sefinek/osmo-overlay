@@ -68,5 +68,4 @@ internal static class LogPanelExtensions
 			logBox.Inlines?.Clear();
 		}
 	}
-
 }

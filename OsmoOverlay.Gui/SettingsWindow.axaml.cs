@@ -54,6 +54,11 @@ public partial class SettingsWindow : Window
 
 		var coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
 		CoreVersionText.Text = $"Core v{coreVersion}";
+
+		DateTime? configLastUpdatedUtc = OverlaySettingsStore.GetLastUpdatedUtc();
+		ConfigLastUpdatedText.Text = configLastUpdatedUtc is { } utc
+			? $"Config last updated: {utc.ToLocalTime():yyyy-MM-dd HH:mm}"
+			: "Config last updated: never";
 	}
 
 	public SettingsWindow(int? frameLimit, bool showWatermark, bool smoothGpsMotion, int previewMaxWidth,

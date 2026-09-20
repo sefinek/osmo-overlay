@@ -182,6 +182,11 @@
 						</StackPanel>
 
 						<StackPanel Spacing="6">
+							<TextBlock Text="Configuration" Classes="infoLabel" />
+							<TextBlock Name="ConfigLastUpdatedText" Text="Config last updated: -" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
 							<TextBlock Text="Dependencies" Classes="infoLabel" />
 							<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
 							<Button Name="CheckForUpdatesButton" Content="Check for updates" HorizontalAlignment="Left"

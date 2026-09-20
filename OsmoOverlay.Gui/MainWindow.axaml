@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:core="clr-namespace:OsmoOverlay.Core.Overlay;assembly=OsmoOverlay.Core"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="OsmoOverlay.Gui.MainWindow"
         Width="1280" Height="800" MinWidth="1000" MinHeight="640"
@@ -54,9 +55,10 @@
 		<Style Selector="Button.toolbar:pointerover /template/ ContentPresenter">
 			<Setter Property="Background" Value="#2E2E33" />
 		</Style>
-		<Style Selector="CheckBox.overlayItem">
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="Padding" Value="8,0,0,0" />
+		<Style Selector="Button.toolbar.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="#19222E" />
+			<Setter Property="BorderBrush" Value="#4C9AFF" />
+			<Setter Property="BorderThickness" Value="1" />
 		</Style>
 		<Style Selector="ListBox#InputFilesList ListBoxItem">
 			<Setter Property="Padding" Value="8,4" />
@@ -90,6 +92,30 @@
 		<Style Selector="Button.gearButton:pointerover /template/ ContentPresenter">
 			<Setter Property="Background" Value="#2E2E33" />
 		</Style>
+		<Style Selector="Button.previewToolButton">
+			<Setter Property="Background" Value="#232327" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="Opacity" Value="0.7" />
+			<Setter Property="Padding" Value="7" />
+			<Setter Property="Width" Value="28" />
+			<Setter Property="Height" Value="28" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="#26FFFFFF" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.previewToolButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+		<Style Selector="Button.previewToolButton.active">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="BorderBrush" Value="#4C9AFF" />
+		</Style>
+		<Style Selector="Button.previewToolButton.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="#19222E" />
+		</Style>
 		<Style Selector="StackPanel.settingsFlyout">
 			<Setter Property="Spacing" Value="8" />
 			<Setter Property="Width" Value="210" />
@@ -100,6 +126,109 @@
 			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="Margin" Value="4,0" />
 			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.overlayListItem">
+			<Setter Property="Background" Value="#232327" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="10,8" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="#26FFFFFF" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.overlayListItem:pointerover">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+		<Style Selector="Border.overlayListItem.active">
+			<Setter Property="Background" Value="#20301F" />
+			<Setter Property="BorderBrush" Value="#46DC6E" />
+		</Style>
+		<Style Selector="Border.overlayListItem:disabled">
+			<Setter Property="Opacity" Value="0.35" />
+			<Setter Property="Cursor" Value="Arrow" />
+		</Style>
+		<Style Selector="TextBlock.overlayListItemText">
+			<Setter Property="FontSize" Value="13" />
+		</Style>
+		<Style Selector="Border.addedWidgetRow">
+			<Setter Property="Background" Value="#232327" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="#26FFFFFF" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.addedWidgetRow:pointerover">
+			<Setter Property="Background" Value="#2E2E33" />
+		</Style>
+		<Style Selector="Border.addedWidgetRow.selected">
+			<Setter Property="BorderBrush" Value="#4C9AFF" />
+			<Setter Property="Background" Value="#19222E" />
+		</Style>
+		<Style Selector="Button.addedWidgetRemove">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Foreground" Value="#E5484D" />
+			<Setter Property="Padding" Value="6,0" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="CornerRadius" Value="4" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.addedWidgetRemove:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#E5484D" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.widgetHoverButton">
+			<Setter Property="Width" Value="20" />
+			<Setter Property="Height" Value="20" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="CornerRadius" Value="10" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Button.widgetGearButton">
+			<Setter Property="Background" Value="#CC1E1E22" />
+			<Setter Property="Foreground" Value="#C9CCD1" />
+			<Setter Property="BorderBrush" Value="#60FFFFFF" />
+		</Style>
+		<Style Selector="Button.widgetGearButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#3A3A40" />
+		</Style>
+		<Style Selector="Button.removeWidgetButton">
+			<Setter Property="Background" Value="#CC1E1E22" />
+			<Setter Property="Foreground" Value="#E5484D" />
+			<Setter Property="BorderBrush" Value="#E5484D" />
+		</Style>
+		<Style Selector="Button.removeWidgetButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#E5484D" />
+		</Style>
+		<Style Selector="Border.selectionHighlight">
+			<Setter Property="BorderBrush" Value="#4C9AFF" />
+			<Setter Property="BorderThickness" Value="2" />
+			<Setter Property="CornerRadius" Value="4" />
+		</Style>
+		<Style Selector="Ellipse.resizeHandle">
+			<Setter Property="Width" Value="14" />
+			<Setter Property="Height" Value="14" />
+			<Setter Property="Fill" Value="#4C9AFF" />
+			<Setter Property="Stroke" Value="White" />
+			<Setter Property="StrokeThickness" Value="2" />
+			<Setter Property="Cursor" Value="BottomRightCorner" />
+		</Style>
+		<Style Selector="Line.previewGuide">
+			<Setter Property="Stroke" Value="#40FFFFFF" />
+			<Setter Property="StrokeThickness" Value="1" />
+			<Setter Property="StrokeDashArray" Value="4,4" />
+		</Style>
+		<Style Selector="Rectangle.previewGuide">
+			<Setter Property="Stroke" Value="#40FFFFFF" />
+			<Setter Property="StrokeThickness" Value="1" />
+			<Setter Property="StrokeDashArray" Value="4,4" />
+			<Setter Property="Fill" Value="Transparent" />
 		</Style>
 	</Window.Styles>
 
@@ -361,8 +490,38 @@
 			</ScrollViewer>
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
-				<Grid RowDefinitions="*,Auto" RowSpacing="8">
-					<Border Grid.Row="0" Background="Black" CornerRadius="6" ClipToBounds="True">
+				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+					<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+						<Button Name="ToggleGridButton" Classes="previewToolButton active"
+						        ToolTip.Tip="Grid guides">
+							<Path Width="14" Height="14" Stretch="Uniform" Stroke="White" StrokeThickness="1.3"
+							      Data="M0,4.5 L14,4.5 M0,9.5 L14,9.5 M4.5,0 L4.5,14 M9.5,0 L9.5,14" />
+							<Button.Flyout>
+								<Flyout Placement="Bottom">
+									<StackPanel Spacing="4" Width="150">
+										<Button Name="GridModeOffButton" Classes="toolbar" Content="Off"
+										        Click="OnGridModeClick" />
+										<Button Name="GridModeThirdsButton" Classes="toolbar" Content="Rule of thirds"
+										        Click="OnGridModeClick" />
+										<Button Name="GridModeMarginButton" Classes="toolbar" Content="Safe margin"
+										        Click="OnGridModeClick" />
+										<Button Name="GridModeBothButton" Classes="toolbar active" Content="Thirds + margin"
+										        Click="OnGridModeClick" />
+									</StackPanel>
+								</Flyout>
+							</Button.Flyout>
+						</Button>
+						<Button Name="ToggleSnapButton" Classes="previewToolButton active" Click="OnToggleSnapClick"
+						        ToolTip.Tip="Snap widgets to grid">
+							<Grid Width="14" Height="14">
+								<Path Stroke="White" StrokeThickness="1.2"
+								      Data="M7,0 L7,3.5 M7,10.5 L7,14 M0,7 L3.5,7 M10.5,7 L14,7" />
+								<Ellipse Width="4" Height="4" Fill="White" HorizontalAlignment="Center"
+								         VerticalAlignment="Center" />
+							</Grid>
+						</Button>
+					</StackPanel>
+					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
 						<Grid>
 							<Image Name="PreviewImage" Stretch="Uniform" />
 							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -373,13 +532,39 @@
 								           MaxWidth="320" TextAlignment="Center" />
 							</StackPanel>
 							<Canvas Name="OverlayDragCanvas" Background="Transparent"
+							        DragDrop.AllowDrop="True"
 							        PointerPressed="OnOverlayCanvasPointerPressed"
 							        PointerMoved="OnOverlayCanvasPointerMoved"
-							        PointerReleased="OnOverlayCanvasPointerReleased" />
+							        PointerReleased="OnOverlayCanvasPointerReleased"
+							        DragDrop.DragOver="OnOverlayCanvasDragOver"
+							        DragDrop.Drop="OnOverlayCanvasDrop">
+								<!-- Rule-of-thirds + safe-margin guides, editor-only - never part of the actual
+								     render (see UpdatePreviewGuides). IsHitTestVisible="False" throughout so they
+								     can't intercept drag/hover/drop. -->
+								<Line Name="PreviewGridVLine1" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Line Name="PreviewGridVLine2" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Line Name="PreviewGridHLine1" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Line Name="PreviewGridHLine2" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Rectangle Name="PreviewSafeMarginBox" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+
+								<Border Name="SelectionHighlightBox" Classes="selectionHighlight" IsHitTestVisible="False" IsVisible="False" />
+								<Ellipse Name="ResizeHandle" Classes="resizeHandle" IsVisible="False"
+								         PointerPressed="OnResizeHandlePointerPressed"
+								         ToolTip.Tip="Drag to resize" />
+
+								<!-- Hover cluster shown over whichever visible widget the pointer is over (see
+								     UpdateHoverState) - gear opens its settings, ✕ removes it from the overlay. -->
+								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton" Content="⚙"
+								        IsVisible="False" Click="OnWidgetGearHoverButtonClick"
+								        ToolTip.Tip="Widget settings" />
+								<Button Name="RemoveWidgetButton" Classes="widgetHoverButton removeWidgetButton" Content="✕"
+								        IsVisible="False" Click="OnRemoveWidgetButtonClick"
+								        ToolTip.Tip="Remove from overlay" />
+							</Canvas>
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 						<Button Grid.Column="0" Name="PlayPauseButton" Content="Play" Click="OnPlayPauseClick"
 						        IsEnabled="False" />
 						<Grid Grid.Column="1">
@@ -439,22 +624,33 @@
 									<Button Classes="toolbar" Margin="4,0,0,0" Content="Import..." Click="OnImportPresetClick" />
 								</UniformGrid>
 								<TextBlock Name="DefaultPresetLockedHint"
-								           Text="This is the built-in read-only preset - use Duplicate to customize it"
-								           Classes="infoLabel" Margin="0" FontSize="11" Opacity="0.4"
+								           Text="This is the built-in read-only preset - use Duplicate to customize it."
+								           Classes="infoLabel" Margin="0" FontSize="12"
 								           TextWrapping="Wrap" IsVisible="False" />
 							</StackPanel>
 
 							<StackPanel Spacing="10">
-								<TextBlock Text="Widgets" Classes="infoLabel" Margin="0" FontSize="13" />
-								<TextBlock Text="Drag on the preview to move - uncheck to hide" Classes="infoLabel"
-								           Margin="0" TextWrapping="Wrap" />
+								<TextBlock Text="WIDGETS" Classes="sectionLabel" Margin="0" />
+								<TextBlock Text="Drag a widget from the palette below onto the preview to add it - drag it there to reposition, hover it and use ⚙ for settings or ✕ to remove it."
+								           Classes="infoLabel" Margin="0" FontSize="12" TextWrapping="Wrap" />
+
+								<TextBlock Text="ON OVERLAY" Classes="sectionLabel" Margin="0" />
+								<StackPanel Name="AddedWidgetsList" Spacing="4" />
+								<TextBlock Name="AddedWidgetsEmptyHint" Classes="infoLabel" Margin="0" FontSize="11" Opacity="0.4"
+								           TextWrapping="Wrap"
+								           Text="Nothing on the overlay yet - drag a widget from the palette below onto the preview." />
+
+								<TextBlock Text="PALETTE - DRAG ONTO PREVIEW" Classes="sectionLabel" Margin="0" />
 								<StackPanel Spacing="6">
 									<Grid ColumnDefinitions="*,Auto,Auto">
-										<CheckBox Grid.Column="0" Name="DateTimeVisibleCheck" Classes="overlayItem"
-										          Content="Date &amp; time" Click="OnDateTimeVisibilityChanged" />
+										<Border Grid.Column="0" Name="DateTimeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.DateTimeText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Date &amp; time" />
+										</Border>
 										<TextBlock Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning"
 										           Text="⚠" IsVisible="False" />
-										<Button Name="DateTimeGearButton" Grid.Column="2" Classes="gearButton" Content="⚙">
+										<Button Name="DateTimeGearButton" Grid.Column="2" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -475,7 +671,7 @@
 															<NumericUpDown Name="DateTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnDateTimeResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -483,11 +679,14 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto,Auto">
-										<CheckBox Grid.Column="0" Name="UtcTimeVisibleCheck" Classes="overlayItem"
-										          Content="UTC time" Click="OnUtcTimeVisibilityChanged" />
+										<Border Grid.Column="0" Name="UtcTimeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.UtcTimeText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="UTC time" />
+										</Border>
 										<TextBlock Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning"
 										           Text="⚠" IsVisible="False" />
-										<Button Name="UtcTimeGearButton" Grid.Column="2" Classes="gearButton" Content="⚙">
+										<Button Name="UtcTimeGearButton" Grid.Column="2" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -508,7 +707,7 @@
 															<NumericUpDown Name="UtcTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnUtcTimeResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -516,9 +715,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="CameraInfoVisibleCheck" Classes="overlayItem"
-										          Content="Camera info" Click="OnCameraInfoVisibilityChanged" />
-										<Button Name="CameraInfoGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="CameraInfoListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.CameraInfo}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Camera info" />
+										</Border>
+										<Button Name="CameraInfoGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -536,7 +738,7 @@
 															<NumericUpDown Name="CameraInfoAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnCameraInfoResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -544,9 +746,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="CompassVisibleCheck" Classes="overlayItem"
-										          Content="Compass" Click="OnCompassVisibilityChanged" />
-										<Button Name="CompassGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="CompassListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Compass}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Compass" />
+										</Border>
+										<Button Name="CompassGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -579,7 +784,7 @@
 															<NumericUpDown Name="CompassAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnCompassResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -587,9 +792,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="MapVisibleCheck" Classes="overlayItem"
-										          Content="Map" Click="OnMapVisibilityChanged" />
-										<Button Name="MapGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="MapListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.MapWidget}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Map" />
+										</Border>
+										<Button Name="MapGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -644,7 +852,7 @@
 															<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnMapResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -652,9 +860,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="SpeedVisibleCheck" Classes="overlayItem"
-										          Content="Speed gauge" Click="OnSpeedVisibilityChanged" />
-										<Button Name="SpeedGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="SpeedListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.SpeedGauge}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Speed gauge" />
+										</Border>
+										<Button Name="SpeedGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -676,16 +887,19 @@
 															<NumericUpDown Name="SpeedAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnSpeedResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
 										</Button>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="PitchVisibleCheck" Classes="overlayItem"
-										          Content="Pitch gauge" Click="OnPitchVisibilityChanged" />
-										<Button Name="PitchGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="PitchListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.PitchGauge}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Pitch gauge" />
+										</Border>
+										<Button Name="PitchGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -700,16 +914,19 @@
 															<NumericUpDown Name="PitchAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnPitchResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
 										</Button>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="SunVisibleCheck" Classes="overlayItem"
-										          Content="Sun / G-force" Click="OnSunVisibilityChanged" />
-										<Button Name="SunGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="SunListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.SunWidget}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Sun / G-force" />
+										</Border>
+										<Button Name="SunGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -724,16 +941,19 @@
 															<NumericUpDown Name="SunAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnSunResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
 										</Button>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="GMeterVisibleCheck" Classes="overlayItem"
-										          Content="G-meter" Click="OnGMeterVisibilityChanged" />
-										<Button Name="GMeterGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="GMeterListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.GMeter}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="G-meter" />
+										</Border>
+										<Button Name="GMeterGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -755,16 +975,19 @@
 															<NumericUpDown Name="GMeterAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnGMeterResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
 										</Button>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="ElapsedTimeVisibleCheck" Classes="overlayItem"
-										          Content="Elapsed time" Click="OnElapsedTimeVisibilityChanged" />
-										<Button Name="ElapsedTimeGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="ElapsedTimeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.ElapsedTimeText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Elapsed time" />
+										</Border>
+										<Button Name="ElapsedTimeGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -779,16 +1002,19 @@
 															<NumericUpDown Name="ElapsedTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnElapsedTimeResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
 										</Button>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="CameraModelVisibleCheck" Classes="overlayItem"
-										          Content="Camera model" Click="OnCameraModelVisibilityChanged" />
-										<Button Name="CameraModelGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="CameraModelListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.CameraModelText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Camera model" />
+										</Border>
+										<Button Name="CameraModelGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -803,16 +1029,19 @@
 															<NumericUpDown Name="CameraModelAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnCameraModelResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
 										</Button>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="TripProgressBarVisibleCheck" Classes="overlayItem"
-										          Content="Trip progress bar" Click="OnTripProgressBarVisibilityChanged" />
-										<Button Name="TripProgressBarGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="TripProgressBarListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.TripProgressBar}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Trip progress bar" />
+										</Border>
+										<Button Name="TripProgressBarGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -844,7 +1073,7 @@
 															<NumericUpDown Name="TripProgressBarAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnTripProgressResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -852,9 +1081,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="ElevationVisibleCheck" Classes="overlayItem"
-										          Content="Elevation" Click="OnElevationVisibilityChanged" />
-										<Button Name="ElevationGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="ElevationListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Elevation}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Elevation" />
+										</Border>
+										<Button Name="ElevationGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -879,7 +1111,7 @@
 															<NumericUpDown Name="ElevationAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnElevationResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -887,9 +1119,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="GradientVisibleCheck" Classes="overlayItem"
-										          Content="Gradient" Click="OnGradientVisibilityChanged" />
-										<Button Name="GradientGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="GradientListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Gradient}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Gradient" />
+										</Border>
+										<Button Name="GradientGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -907,7 +1142,7 @@
 															<NumericUpDown Name="GradientAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnGradientResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>
@@ -915,9 +1150,12 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
-										<CheckBox Grid.Column="0" Name="DistanceVisibleCheck" Classes="overlayItem"
-										          Content="Total distance" Click="OnDistanceVisibilityChanged" />
-										<Button Name="DistanceGearButton" Grid.Column="1" Classes="gearButton" Content="⚙">
+										<Border Grid.Column="0" Name="DistanceListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Distance}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Total distance" />
+										</Border>
+										<Button Name="DistanceGearButton" Grid.Column="1" IsVisible="False">
 											<Button.Flyout>
 												<Flyout Placement="Left">
 													<StackPanel Classes="settingsFlyout">
@@ -942,7 +1180,7 @@
 															<NumericUpDown Name="DistanceAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 														</StackPanel>
 														<Button Classes="toolbar" Margin="0,4,0,0" Content="Reset to default"
-														        Click="OnDistanceResetClick" />
+														        Click="OnResetElementClick" />
 													</StackPanel>
 												</Flyout>
 											</Button.Flyout>

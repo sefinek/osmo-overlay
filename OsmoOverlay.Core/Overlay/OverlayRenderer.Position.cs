@@ -219,7 +219,7 @@ public sealed partial class OverlayRenderer
 
 		(double East, double North) currentPos = (frame.LocalEastMeters, frame.LocalNorthMeters);
 		var maxDist = 5.0;
-		foreach (var p in _trail)
+		foreach ((double East, double North, double Lat, double Lon) p in _trail)
 		{
 			var dist = Distance((p.East, p.North), currentPos);
 			if (dist > maxDist) maxDist = dist;
@@ -350,7 +350,7 @@ public sealed partial class OverlayRenderer
 	private List<SKPoint> GetTrailPixels()
 	{
 		var pixels = new List<SKPoint>(_trail.Count);
-		foreach (var p in _trail)
+		foreach ((double East, double North, double Lat, double Lon) p in _trail)
 			pixels.Add(_mapMosaic!.GetPixel(p.Lat, p.Lon));
 		return pixels;
 	}

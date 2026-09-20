@@ -23,7 +23,11 @@ public sealed partial class OverlayRenderer : IDisposable
 	private static readonly SKColor TrailColor = new(70, 220, 110);
 	private static readonly SKColor SunColor = new(255, 175, 45);
 	private static readonly SKColor Shadow = new(0, 0, 0, 225);
-	private static readonly SKColor PanelFill = new(0, 0, 0, 55);
+	// Was alpha 55 (~21%) - on bright footage (sky, water, sand) the gauge panels read as barely-there,
+	// making their actual footprint (which matches the GUI's selection/hit box exactly, see
+	// OverlayElementBounds) look like mostly-empty padding. Bumped for legibility, not size - the radius
+	// each gauge draws at is unchanged.
+	private static readonly SKColor PanelFill = new(0, 0, 0, 100);
 
 	// Canvas dimensions and the per-resolution scale every widget draws at (see OverlayElementBounds.GetScale).
 	private readonly int _width;

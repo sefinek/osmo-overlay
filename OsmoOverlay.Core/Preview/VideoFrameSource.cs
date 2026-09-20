@@ -273,7 +273,7 @@ public sealed class VideoPlaybackStream : IDisposable
 	private readonly double _fps;
 	private readonly int _height;
 	private readonly int _width;
-	private CancellationTokenRegistration _cancellationRegistration;
+	private readonly CancellationTokenRegistration _cancellationRegistration;
 	private string? _concatListPath;
 	private long _framesRead;
 	private NextStageFactory? _nextStage;
@@ -360,7 +360,7 @@ public sealed class VideoPlaybackStream : IDisposable
 			_process.Dispose();
 			DeleteListFile();
 
-			(Process process, string? listPath) = factory();
+			(Process process, var listPath) = factory();
 			_process = process;
 			_stdout = process.StandardOutput.BaseStream;
 			StderrTask = process.StandardError.ReadToEndAsync();

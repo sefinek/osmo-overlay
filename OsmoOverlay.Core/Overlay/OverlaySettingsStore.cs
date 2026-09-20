@@ -47,7 +47,11 @@ public sealed record OverlaySettings(
 	bool RouteIntroShowDuration = true,
 	bool RouteIntroShowCameraModel = false,
 	bool RouteIntroShowElevationGain = true,
-	UnitSystem RouteIntroUnits = UnitSystem.Metric);
+	UnitSystem RouteIntroUnits = UnitSystem.Metric,
+	bool PreviewSnapToGrid = true,
+	// Mirrors the GUI's own PreviewGridMode enum (Off/Thirds/Margin/Both) as a string, since this Core
+	// project has no dependency on the Gui project to reference that enum directly.
+	string PreviewGridMode = "Both");
 
 /// <summary>
 ///     Persists OverlaySettings to one general settings.json, shared between the GUI and the CLI the
@@ -91,5 +95,15 @@ public static class OverlaySettingsStore
 			// Best-effort cache: a failed write should not break the editing flow.
 			AppLogger.Warn(ex, "Failed to write overlay settings file");
 		}
+	}
+
+	/// <summary>
+	///     The settings file's own last-write timestamp - not a field inside OverlaySettings itself,
+	///     since the filesystem already tracks this accurately for every Save() call site (there are
+	///     many, scattered across the GUI) without each one needing to remember to stamp it manually.
+	/// </summary>
+	public static DateTime? GetLastUpdatedUtc()
+	{
+		return File.Exists(StorePath) ? File.GetLastWriteTimeUtc(StorePath) : null;
 	}
 }
