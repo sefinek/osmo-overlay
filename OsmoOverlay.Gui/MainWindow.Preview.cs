@@ -106,10 +106,7 @@ public partial class MainWindow
 	{
 		if (_previewBitmap is null) return;
 
-		using (ILockedFramebuffer fb = _previewBitmap.Lock())
-		{
-			Marshal.Copy(frame.Bgra, 0, fb.Address, frame.Bgra.Length);
-		}
+		using (ILockedFramebuffer fb = _previewBitmap.Lock()) Marshal.Copy(frame.Bgra, 0, fb.Address, frame.Bgra.Length);
 
 		PreviewImage.InvalidateVisual();
 
