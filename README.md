@@ -1,7 +1,7 @@
 # Osmo Overlay ✨
 Not finished yet.
 
-![](.github/OsmoOverlay_D9oY2fKX.jpg)
+![](.github/OsmoOverlay_ru8MsYzI.jpg)
 
 ## Important information
 Do not add the overlay in the DJI Mimo app. Doing so will slightly reduce the quality of your footage.
