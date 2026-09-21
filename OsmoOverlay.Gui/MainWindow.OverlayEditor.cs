@@ -511,7 +511,10 @@ public partial class MainWindow
 		WidgetSettingsColumnScroll.Offset = default;
 	}
 
-	private void OnWidgetSettingsBackClick(object? sender, RoutedEventArgs e) => CloseElementSettings();
+	private void OnWidgetSettingsBackClick(object? sender, RoutedEventArgs e)
+	{
+		CloseElementSettings();
+	}
 
 	/// <summary>
 	///     Switches the left column back to its normal SOURCE/ACTION/summary view - the settings panel
@@ -1557,10 +1560,12 @@ public partial class MainWindow
 	private const float MinElementScale = 0.4f;
 	private const float MaxElementScale = 2.5f;
 
-	/// <summary>Starts a resize drag from ResizeHandle - a corner grab at the selected widget's own
-	/// bottom-right bound, sized by the ratio of the pointer's current vs. starting distance from the
-	/// widget's anchor (element.X/Y) to its own OverlayElement.Scale at press time, so dragging away from
-	/// the anchor grows it and dragging toward it shrinks it, uniformly (both axes, one multiplier).</summary>
+	/// <summary>
+	///     Starts a resize drag from ResizeHandle - a corner grab at the selected widget's own
+	///     bottom-right bound, sized by the ratio of the pointer's current vs. starting distance from the
+	///     widget's anchor (element.X/Y) to its own OverlayElement.Scale at press time, so dragging away from
+	///     the anchor grows it and dragging toward it shrinks it, uniformly (both axes, one multiplier).
+	/// </summary>
 	private void OnResizeHandlePointerPressed(object? sender, PointerPressedEventArgs e)
 	{
 		if (_summary is null || IsActivePresetDefault) return;
@@ -1601,7 +1606,10 @@ public partial class MainWindow
 		if (_selectedElementId == id) RefreshSelectionHighlight();
 	}
 
-	private static double Distance(Point a, Point b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+	private static double Distance(Point a, Point b)
+	{
+		return Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+	}
 
 	private void OnOverlayCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
 	{
