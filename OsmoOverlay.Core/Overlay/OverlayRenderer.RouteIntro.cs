@@ -261,10 +261,7 @@ public sealed partial class OverlayRenderer
 		}
 
 		(string Label, string Value)? duration = null;
-		if (RouteIntro.ShowDuration)
-		{
-			duration = ("DURATION", OverlayTimeFormatting.FormatElapsed(_totalDurationSeconds));
-		}
+		if (RouteIntro.ShowDuration) duration = ("DURATION", OverlayTimeFormatting.FormatElapsed(_totalDurationSeconds));
 
 		(string Label, string Value)? camera = RouteIntro.ShowCameraModel ? ("CAMERA", _cameraModel ?? "--") : null;
 

@@ -212,7 +212,7 @@ public static class OverlayElementBounds
 	/// </summary>
 	private static SKRect MeasureLine(string text, float fontSize, string? family)
 	{
-		(var ascent, var descent, var width) = LineExtent(text, fontSize, family);
+		var (ascent, descent, width) = LineExtent(text, fontSize, family);
 		var pad = fontSize * 0.09f;
 		return new SKRect(-pad, ascent - pad, width + pad, descent + pad);
 	}
@@ -220,9 +220,9 @@ public static class OverlayElementBounds
 	/// <summary>Mirrors DrawStat's layout: an uppercased label at y=0, then VALUE + " " + UNIT at y=StatValueBaselineY.</summary>
 	private static SKRect MeasureStat(string label, string value, string unit, string? family)
 	{
-		(var labelAscent, var labelDescent, var labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
-		(var valueAscent, var valueDescent, var valueWidth) = LineExtent(value, ValueFontSize, family);
-		(_, var unitDescent, var unitWidth) = LineExtent(unit, UnitFontSize, family);
+		var (labelAscent, labelDescent, labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
+		var (valueAscent, valueDescent, valueWidth) = LineExtent(value, ValueFontSize, family);
+		var (_, unitDescent, unitWidth) = LineExtent(unit, UnitFontSize, family);
 		var pad = ValueFontSize * 0.09f;
 
 		var top = Math.Min(labelAscent, StatValueBaselineY + valueAscent) - pad;
@@ -234,7 +234,7 @@ public static class OverlayElementBounds
 	/// <summary>Mirrors DrawCameraInfo's layout: an uppercased label at y=0, then three lines at CameraInfoLineBaselineYs.</summary>
 	private static SKRect MeasureCameraInfo(string label, string? family)
 	{
-		(var labelAscent, var labelDescent, var labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
+		var (labelAscent, labelDescent, labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
 		var pad = SmallFontSize * 0.09f;
 
 		var top = labelAscent - pad;
@@ -244,7 +244,7 @@ public static class OverlayElementBounds
 		string[] lines = [SampleIsoText, SampleShutterText, SampleColorTempText];
 		for (var i = 0; i < lines.Length; i++)
 		{
-			(_, var descent, var width) = LineExtent(lines[i], SmallFontSize, family);
+			var (_, descent, width) = LineExtent(lines[i], SmallFontSize, family);
 			bottom = Math.Max(bottom, CameraInfoLineBaselineYs[i] + descent);
 			right = Math.Max(right, width);
 		}

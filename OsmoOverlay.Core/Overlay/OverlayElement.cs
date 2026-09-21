@@ -79,8 +79,7 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(TripProgressBarElement), (int)OverlayElementType.TripProgressBar)]
 public abstract record OverlayElement
 {
-	[JsonIgnore]
-	public abstract OverlayElementType Type { get; }
+	[JsonIgnore] public abstract OverlayElementType Type { get; }
 
 	public required float X { get; init; }
 	public required float Y { get; init; }
@@ -122,30 +121,26 @@ public abstract record LabeledStatElement : StyledOverlayElement
 
 public sealed record ElevationElement : LabeledStatElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.Elevation;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Elevation;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 }
 
 /// <summary>No Units - OverlayRenderer.DrawGradient always shows a plain percentage, unit-agnostic.</summary>
 public sealed record GradientElement : LabeledStatElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.Gradient;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Gradient;
 }
 
 public sealed record DistanceElement : LabeledStatElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.Distance;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Distance;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 }
 
 /// <summary>No Units - CameraInfo shows ISO/shutter/color-temperature, none of which are metric/imperial.</summary>
 public sealed record CameraInfoElement : LabeledStatElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.CameraInfo;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.CameraInfo;
 }
 
 /// <summary>
@@ -162,45 +157,38 @@ public abstract record TimeTextElementBase : StyledOverlayElement
 
 public sealed record DateTimeTextElement : TimeTextElementBase
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.DateTimeText;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.DateTimeText;
 }
 
 public sealed record UtcTimeTextElement : TimeTextElementBase
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.UtcTimeText;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.UtcTimeText;
 }
 
 public sealed record ElapsedTimeTextElement : StyledOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.ElapsedTimeText;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ElapsedTimeText;
 }
 
 public sealed record CameraModelTextElement : StyledOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.CameraModelText;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.CameraModelText;
 }
 
 public sealed record SpeedGaugeElement : StyledOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.SpeedGauge;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SpeedGauge;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 }
 
 public sealed record PitchGaugeElement : StyledOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.PitchGauge;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.PitchGauge;
 }
 
 public sealed record SunWidgetElement : StyledOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.SunWidget;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SunWidget;
 }
 
 /// <summary>
@@ -210,8 +198,7 @@ public sealed record SunWidgetElement : StyledOverlayElement
 /// </summary>
 public sealed record GMeterElement : StyledOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.GMeter;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.GMeter;
 	public double GMeterFullScaleG { get; init; } = OverlayRenderer.GMeterFullScaleGDefault;
 }
 
@@ -231,8 +218,7 @@ public abstract record TrailOverlayElement : OverlayElement
 
 public sealed record CompassElement : TrailOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.Compass;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Compass;
 }
 
 /// <summary>
@@ -243,8 +229,7 @@ public sealed record CompassElement : TrailOverlayElement
 /// </summary>
 public sealed record MapWidgetElement : TrailOverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.MapWidget;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.MapWidget;
 	public int MapZoom { get; init; } = 16;
 	public bool MapDynamicZoom { get; init; }
 	public double MapDynamicZoomMaxFactor { get; init; } = OverlayRenderer.MapDynamicZoomMaxFactorDefault;
@@ -258,8 +243,7 @@ public sealed record MapWidgetElement : TrailOverlayElement
 /// </summary>
 public sealed record TripProgressBarElement : OverlayElement
 {
-	[JsonIgnore]
-	public override OverlayElementType Type => OverlayElementType.TripProgressBar;
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.TripProgressBar;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 	public double TripArrivedToleranceMeters { get; init; } = OverlayRenderer.TripArrivedToleranceMetersDefault;
 	public string TripArrivedLabel { get; init; } = OverlayRenderer.TripArrivedLabelDefault;
