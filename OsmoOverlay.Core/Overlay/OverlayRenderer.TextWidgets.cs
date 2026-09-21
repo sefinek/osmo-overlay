@@ -10,18 +10,18 @@ public sealed partial class OverlayRenderer
 	private const double MetersToFeet = 3.28084;
 	private const double MilesInMeters = 1609.344;
 
-	private void DrawDateTime(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawDateTime(SKCanvas canvas, DerivedFrame frame, TimeTextElementBase element)
 	{
 		DrawTimeText(canvas, frame, element, true);
 	}
 
-	private void DrawUtcTime(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawUtcTime(SKCanvas canvas, DerivedFrame frame, TimeTextElementBase element)
 	{
 		DrawTimeText(canvas, frame, element, false);
 	}
 
 	/// <summary>Shared by DateTimeText (local time) and UtcTimeText (raw UTC, no conversion) - both use the same DateFormat/Locale fields.</summary>
-	private void DrawTimeText(SKCanvas canvas, DerivedFrame frame, OverlayElement element, bool toLocal)
+	private void DrawTimeText(SKCanvas canvas, DerivedFrame frame, TimeTextElementBase element, bool toLocal)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -59,7 +59,7 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>Time since the recording's own frame 0 (SampleTimeSeconds), not a wall-clock reading - a stopwatch, distinct from DateTimeText/UtcTimeText.</summary>
-	private void DrawElapsedTime(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawElapsedTime(SKCanvas canvas, DerivedFrame frame, ElapsedTimeTextElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -73,7 +73,7 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>Static per-recording text (FileSummary.CameraModel) - same value on every frame, so unlike the other widgets nothing here depends on `frame`.</summary>
-	private void DrawCameraModel(SKCanvas canvas, OverlayElement element)
+	private void DrawCameraModel(SKCanvas canvas, CameraModelTextElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -85,7 +85,7 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawElevation(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawElevation(SKCanvas canvas, DerivedFrame frame, ElevationElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -98,7 +98,7 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawGradient(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawGradient(SKCanvas canvas, DerivedFrame frame, GradientElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -107,7 +107,7 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawDistance(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawDistance(SKCanvas canvas, DerivedFrame frame, DistanceElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -143,7 +143,7 @@ public sealed partial class OverlayRenderer
 	///     file but never shown anywhere. Each field is independently nullable (a fallback exiftool read
 	///     may not populate all three), so each renders "--" rather than pulling the whole widget down.
 	/// </summary>
-	private void DrawCameraInfo(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawCameraInfo(SKCanvas canvas, DerivedFrame frame, CameraInfoElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -177,7 +177,7 @@ public sealed partial class OverlayRenderer
 		return denominator >= 1 ? $"1/{F(denominator, "0")} S" : $"{F(seconds.Value, "0.0")} S";
 	}
 
-	private void DrawStat(SKCanvas canvas, OverlayElement element, string label, string value, string unit)
+	private void DrawStat(SKCanvas canvas, LabeledStatElement element, string label, string value, string unit)
 	{
 		SKFont valueFont = TextFont(element, OverlayElementBounds.ValueFontSize);
 		SKColor textColor = TextColorOf(element);
@@ -192,22 +192,22 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>This widget's own font at `baseSize`, from its FontFamily override (or the built-in HUD font when null/not installed) - see OverlayRenderer.GetFont.</summary>
-	private SKFont TextFont(OverlayElement element, float baseSize)
+	private SKFont TextFont(StyledOverlayElement element, float baseSize)
 	{
 		return GetFont(element.FontFamily, baseSize);
 	}
 
-	private static SKColor TextColorOf(OverlayElement element)
+	private static SKColor TextColorOf(StyledOverlayElement element)
 	{
 		return ResolveColor(element.TextColor, White);
 	}
 
-	private static SKColor AccentColorOf(OverlayElement element)
+	private static SKColor AccentColorOf(LabeledStatElement element)
 	{
 		return ResolveColor(element.AccentColor, Accent);
 	}
 
-	private static SKColor OutlineColorOf(OverlayElement element)
+	private static SKColor OutlineColorOf(StyledOverlayElement element)
 	{
 		return ResolveColor(element.OutlineColor, Shadow);
 	}

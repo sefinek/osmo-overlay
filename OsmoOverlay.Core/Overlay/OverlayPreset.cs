@@ -44,42 +44,45 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 
 		List<OverlayElement> elements =
 		[
-			new(OverlayElementType.DateTimeText, statsX, dateY),
-			new(OverlayElementType.Elevation, statsX, elevationY),
-			new(OverlayElementType.Gradient, statsX, gradientY),
-			new(OverlayElementType.Distance, statsX, distanceY),
+			new DateTimeTextElement { X = statsX, Y = dateY },
+			new ElevationElement { X = statsX, Y = elevationY },
+			new GradientElement { X = statsX, Y = gradientY },
+			new DistanceElement { X = statsX, Y = distanceY },
 			// Off by default - most users only need one clock; UTC is an opt-in extra for syncing
 			// footage against UTC-timestamped external data (flight logs, other sensors, etc.).
-			new(OverlayElementType.UtcTimeText, statsX, utcY, false),
+			new UtcTimeTextElement { X = statsX, Y = utcY, Visible = false },
 			// Off by default - niche/photographer-oriented metadata most riders/pilots don't need burned in.
-			new(OverlayElementType.CameraInfo, statsX, cameraInfoY, false),
+			new CameraInfoElement { X = statsX, Y = cameraInfoY, Visible = false },
 			// Off by default - a stopwatch duplicates what most editors already show in their timeline.
-			new(OverlayElementType.ElapsedTimeText, statsX, elapsedY, false),
+			new ElapsedTimeTextElement { X = statsX, Y = elapsedY, Visible = false },
 			// Off by default - purely cosmetic branding of which camera shot the clip.
-			new(OverlayElementType.CameraModelText, statsX, cameraModelY, false),
+			new CameraModelTextElement { X = statsX, Y = cameraModelY, Visible = false },
 			// Off by default (swapped with MapWidget below, which now takes the primary bottom-left
 			// spot) - still positioned one slot over so it has somewhere sensible to land if re-enabled.
-			new(OverlayElementType.Compass, mapCx, height - m - OverlayElementBounds.CompassRadius * scale, false),
+			new CompassElement { X = mapCx, Y = height - m - OverlayElementBounds.CompassRadius * scale, Visible = false },
 			// Off by default (swapped with GMeter below, which now takes the primary top-right spot) -
 			// still positioned one slot down so it has somewhere sensible to land if re-enabled.
-			new(OverlayElementType.SunWidget, sunCx, sunCy, false),
-			new(OverlayElementType.SpeedGauge, speedCx, speedCy),
-			new(OverlayElementType.PitchGauge, speedCx, pitchCy),
+			new SunWidgetElement { X = sunCx, Y = sunCy, Visible = false },
+			new SpeedGaugeElement { X = speedCx, Y = speedCy },
+			new PitchGaugeElement { X = speedCx, Y = pitchCy },
 			// On by default (unlike Compass above) - takes Compass's old bottom-left spot. Tile source
 			// (satellite by default) is a global setting - see OverlaySettings - not a per-element
 			// field, so turning this on doesn't need any per-widget provider setup to already look right.
-			new(OverlayElementType.MapWidget, compassCx, height - m - OverlayElementBounds.MapRadius * scale),
+			new MapWidgetElement { X = compassCx, Y = height - m - OverlayElementBounds.MapRadius * scale },
 			// On by default (swapped with SunWidget above) - takes its old top-right corner spot. Still
 			// experimental: unlike PitchGauge's AccelY mapping, the X/Z axes plotted here were never
 			// empirically verified against a controlled recording (see the comment above
 			// OverlayRenderer.DrawGMeter) - kept as the default anyway per an explicit request to
 			// prefer it over Sun/G-force.
-			new(OverlayElementType.GMeter, gMeterCx, gMeterCy),
+			new GMeterElement { X = gMeterCx, Y = gMeterCy },
 			// Fades in at 16s rather than being on screen the whole time - by then the ride's actually
 			// under way, so "X% / Y km left" reads as a status update instead of a number sitting there
 			// before there's anywhere meaningful left to go.
-			new(OverlayElementType.TripProgressBar, progressBarCx, progressBarCy,
-				AppearAtSeconds: 16.0, AnimationType: OverlayAnimationType.Fade)
+			new TripProgressBarElement
+			{
+				X = progressBarCx, Y = progressBarCy,
+				AppearAtSeconds = 16.0, AnimationType = OverlayAnimationType.Fade
+			}
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid -

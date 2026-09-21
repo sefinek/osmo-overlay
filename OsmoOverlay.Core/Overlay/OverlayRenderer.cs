@@ -337,50 +337,50 @@ public sealed partial class OverlayRenderer : IDisposable
 				switch (element.Type)
 				{
 					case OverlayElementType.DateTimeText:
-						DrawDateTime(c, frame, element);
+						DrawDateTime(c, frame, (TimeTextElementBase)element);
 						break;
 					case OverlayElementType.UtcTimeText:
-						DrawUtcTime(c, frame, element);
+						DrawUtcTime(c, frame, (TimeTextElementBase)element);
 						break;
 					case OverlayElementType.Elevation:
-						DrawElevation(c, frame, element);
+						DrawElevation(c, frame, (ElevationElement)element);
 						break;
 					case OverlayElementType.Gradient:
-						DrawGradient(c, frame, element);
+						DrawGradient(c, frame, (GradientElement)element);
 						break;
 					case OverlayElementType.Distance:
-						DrawDistance(c, frame, element);
+						DrawDistance(c, frame, (DistanceElement)element);
 						break;
 					case OverlayElementType.Compass:
-						DrawCompass(c, frame, element);
+						DrawCompass(c, frame, (CompassElement)element);
 						break;
 					case OverlayElementType.SunWidget:
-						DrawSunWidget(c, frame, element);
+						DrawSunWidget(c, frame, (SunWidgetElement)element);
 						break;
 					case OverlayElementType.PitchGauge:
-						DrawPitchGauge(c, element, frame.PitchDegrees);
+						DrawPitchGauge(c, (PitchGaugeElement)element, frame.PitchDegrees);
 						break;
 					case OverlayElementType.MapWidget:
-						DrawMapWidget(c, frame, element);
+						DrawMapWidget(c, frame, (MapWidgetElement)element);
 						if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
 						break;
 					case OverlayElementType.SpeedGauge:
-						DrawSpeedGauge(c, element, frame.SpeedKmh);
+						DrawSpeedGauge(c, (SpeedGaugeElement)element, frame.SpeedKmh);
 						break;
 					case OverlayElementType.CameraInfo:
-						DrawCameraInfo(c, frame, element);
+						DrawCameraInfo(c, frame, (CameraInfoElement)element);
 						break;
 					case OverlayElementType.ElapsedTimeText:
-						DrawElapsedTime(c, frame, element);
+						DrawElapsedTime(c, frame, (ElapsedTimeTextElement)element);
 						break;
 					case OverlayElementType.CameraModelText:
-						DrawCameraModel(c, element);
+						DrawCameraModel(c, (CameraModelTextElement)element);
 						break;
 					case OverlayElementType.GMeter:
-						DrawGMeter(c, frame, element);
+						DrawGMeter(c, frame, (GMeterElement)element);
 						break;
 					case OverlayElementType.TripProgressBar:
-						DrawTripProgressBar(c, frame, element);
+						DrawTripProgressBar(c, frame, (TripProgressBarElement)element);
 						break;
 				}
 			});

@@ -99,7 +99,7 @@ public sealed class PreviewPlayer : IDisposable
 			await Task.Run(() => DecodeSeekCore(video, renderer, derivedFrames, TimeSpan.Zero, CancellationToken.None));
 		if (first is not null) FrameReady?.Invoke(first);
 
-		if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
+		if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 		{
 			_mapPrepareCts?.Cancel();
 			var mapCts = new CancellationTokenSource();

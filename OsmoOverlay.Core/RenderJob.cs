@@ -163,7 +163,7 @@ public static class RenderJob
 				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
 				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.From(settings));
 
-			if (layout.Any(e => e is { Type: OverlayElementType.MapWidget, Visible: true }))
+			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 			{
 				Report(RenderPhase.Rendering, "Fetching map tiles for the route...");
 				try

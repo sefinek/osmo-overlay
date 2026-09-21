@@ -53,7 +53,7 @@ public sealed partial class OverlayRenderer
 	{
 		// Visible, not just present: every preset always carries a MapWidget entry (off by default), so
 		// checking existence alone would fetch and cache tiles for a widget nobody turned on.
-		if (Layout.FirstOrDefault(e => e is { Type: OverlayElementType.MapWidget, Visible: true }) is not { } mapElement)
+		if (Layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
 			return (null, null);
 
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
@@ -103,7 +103,7 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	public bool NeedsMapPrepare(IReadOnlyList<OverlayElement> layout)
 	{
-		if (layout.FirstOrDefault(e => e is { Type: OverlayElementType.MapWidget, Visible: true }) is not { } mapElement)
+		if (layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
 			return false;
 		var maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
 		MapMosaicKey key = (ResolveUrlTemplate(), mapElement.MapZoom, maxFactor);
@@ -186,7 +186,7 @@ public sealed partial class OverlayRenderer
 		return Math.Sqrt(dx * dx + dy * dy);
 	}
 
-	private void DrawCompass(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawCompass(SKCanvas canvas, DerivedFrame frame, CompassElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -213,7 +213,7 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawTrail(SKCanvas canvas, float cx, float cy, DerivedFrame frame, OverlayElement element)
+	private void DrawTrail(SKCanvas canvas, float cx, float cy, DerivedFrame frame, TrailOverlayElement element)
 	{
 		if (_trail.Count < 2) return;
 
@@ -285,7 +285,7 @@ public sealed partial class OverlayRenderer
 	///     than showing the whole route at once (unlike the Compass trail), since RouteMapMosaic only
 	///     covers the route's bounding box at a fixed zoom and each frame just crops a window of it.
 	/// </summary>
-	private void DrawMapWidget(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawMapWidget(SKCanvas canvas, DerivedFrame frame, MapWidgetElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);

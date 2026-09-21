@@ -305,7 +305,8 @@ public partial class MainWindow
 	private SKRect GetElementBounds(OverlayElement element, float x, float y, float scale)
 	{
 		return OverlayElementBounds.GetBounds(element.Type, x, y, scale,
-			element.DateFormat, element.Locale, element.Label, _summary?.CameraModel, element.FontFamily);
+			(element as TimeTextElementBase)?.DateFormat, (element as TimeTextElementBase)?.Locale,
+			(element as LabeledStatElement)?.Label, _summary?.CameraModel, (element as StyledOverlayElement)?.FontFamily);
 	}
 
 	/// <summary>
@@ -333,41 +334,49 @@ public partial class MainWindow
 		SaveOverlayPresets();
 	}
 
+	/// <summary>Units has no single shared abstract ancestor across the 4 types that use it (unlike Label/DateFormat below), so this stays an explicit switch.</summary>
 	private void SetElementUnits(string id, UnitSystem units)
 	{
-		UpdateElement(id, el => el with { Units = units });
+		UpdateElement(id, el => el switch
+		{
+			ElevationElement e => e with { Units = units },
+			DistanceElement e => e with { Units = units },
+			SpeedGaugeElement e => e with { Units = units },
+			TripProgressBarElement e => e with { Units = units },
+			_ => el
+		});
 	}
 
 	private void SetElementLabel(string id, string? label)
 	{
 		var trimmed = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
-		UpdateElement(id, el => el with { Label = trimmed });
+		UpdateElement(id, el => el is LabeledStatElement stat ? stat with { Label = trimmed } : el);
 	}
 
 	private void SetElementDateFormat(string id, string? format)
 	{
-		UpdateElement(id, el => el with { DateFormat = format });
+		UpdateElement(id, el => el is TimeTextElementBase t ? t with { DateFormat = format } : el);
 	}
 
 	private void SetElementLocale(string id, string? locale)
 	{
-		UpdateElement(id, el => el with { Locale = locale });
+		UpdateElement(id, el => el is TimeTextElementBase t ? t with { Locale = locale } : el);
 	}
 
 	private void SetElementTrailColor(string id, string? hex)
 	{
 		var trimmed = string.IsNullOrWhiteSpace(hex) ? null : hex.Trim();
-		UpdateElement(id, el => el with { TrailColor = trimmed });
+		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailColor = trimmed } : el);
 	}
 
 	private void SetElementTrailWidth(string id, float width)
 	{
-		UpdateElement(id, el => el with { TrailWidth = width });
+		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailWidth = width } : el);
 	}
 
 	private void SetElementTrailUseArrow(string id, bool useArrow)
 	{
-		UpdateElement(id, el => el with { TrailUseArrow = useArrow });
+		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailUseArrow = useArrow } : el);
 	}
 
 	/// <summary>
@@ -528,115 +537,160 @@ public partial class MainWindow
 		switch (el.Type)
 		{
 			case OverlayElementType.DateTimeText:
-				DateTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == el.DateFormat) ?? DateFormatOptions[0];
-				DateTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == el.Locale) ?? LocaleOptions[0];
+			{
+				var x = (DateTimeTextElement)el;
+				DateTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == x.DateFormat) ?? DateFormatOptions[0];
+				DateTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == x.Locale) ?? LocaleOptions[0];
 				PopulateStyle(DateTimeFontCombo, DateTimeScaleBox, DateTimeTextColorBox, DateTimeTextColorSwatch,
-					DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox, el);
-				PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, el);
+					DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox, x);
+				PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.UtcTimeText:
-				UtcTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == el.DateFormat) ?? DateFormatOptions[0];
-				UtcTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == el.Locale) ?? LocaleOptions[0];
+			{
+				var x = (UtcTimeTextElement)el;
+				UtcTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == x.DateFormat) ?? DateFormatOptions[0];
+				UtcTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == x.Locale) ?? LocaleOptions[0];
 				PopulateStyle(UtcTimeFontCombo, UtcTimeScaleBox, UtcTimeTextColorBox, UtcTimeTextColorSwatch,
-					UtcTimeOutlineColorBox, UtcTimeOutlineColorSwatch, UtcTimeOutlineWidthBox, el);
-				PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, el);
+					UtcTimeOutlineColorBox, UtcTimeOutlineColorSwatch, UtcTimeOutlineWidthBox, x);
+				PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.Elevation:
-				ElevationLabelBox.Text = el.Label ?? DefaultElevationLabel;
-				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, el.Units);
+			{
+				var x = (ElevationElement)el;
+				ElevationLabelBox.Text = x.Label ?? DefaultElevationLabel;
+				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, x.Units);
 				PopulateStyle(ElevationFontCombo, ElevationScaleBox, ElevationTextColorBox, ElevationTextColorSwatch,
-					ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox, el,
-					ElevationAccentColorBox, ElevationAccentColorSwatch);
-				PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, el);
+					ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox, x,
+					ElevationAccentColorBox, ElevationAccentColorSwatch, x.AccentColor);
+				PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.Gradient:
-				GradientLabelBox.Text = el.Label ?? DefaultGradientLabel;
+			{
+				var x = (GradientElement)el;
+				GradientLabelBox.Text = x.Label ?? DefaultGradientLabel;
 				PopulateStyle(GradientFontCombo, GradientScaleBox, GradientTextColorBox, GradientTextColorSwatch,
-					GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox, el,
-					GradientAccentColorBox, GradientAccentColorSwatch);
-				PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, el);
+					GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox, x,
+					GradientAccentColorBox, GradientAccentColorSwatch, x.AccentColor);
+				PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.Distance:
-				DistanceLabelBox.Text = el.Label ?? DefaultDistanceLabel;
-				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, el.Units);
+			{
+				var x = (DistanceElement)el;
+				DistanceLabelBox.Text = x.Label ?? DefaultDistanceLabel;
+				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, x.Units);
 				PopulateStyle(DistanceFontCombo, DistanceScaleBox, DistanceTextColorBox, DistanceTextColorSwatch,
-					DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox, el,
-					DistanceAccentColorBox, DistanceAccentColorSwatch);
-				PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, el);
+					DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox, x,
+					DistanceAccentColorBox, DistanceAccentColorSwatch, x.AccentColor);
+				PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.CameraInfo:
-				CameraInfoLabelBox.Text = el.Label ?? DefaultCameraInfoLabel;
+			{
+				var x = (CameraInfoElement)el;
+				CameraInfoLabelBox.Text = x.Label ?? DefaultCameraInfoLabel;
 				PopulateStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
-					CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox, el,
-					CameraInfoAccentColorBox, CameraInfoAccentColorSwatch);
-				PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, el);
+					CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox, x,
+					CameraInfoAccentColorBox, CameraInfoAccentColorSwatch, x.AccentColor);
+				PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.Compass:
-				PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox, CompassTrailArrowRadio, CompassTrailDotRadio, el);
-				PopulateTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel, el);
+			{
+				var x = (CompassElement)el;
+				PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox, CompassTrailArrowRadio, CompassTrailDotRadio, x);
+				PopulateTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.SunWidget:
+			{
+				var x = (SunWidgetElement)el;
 				PopulateStyle(SunFontCombo, SunScaleBox, SunTextColorBox, SunTextColorSwatch,
-					SunOutlineColorBox, SunOutlineColorSwatch, SunOutlineWidthBox, el);
-				PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, el);
+					SunOutlineColorBox, SunOutlineColorSwatch, SunOutlineWidthBox, x);
+				PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.PitchGauge:
+			{
+				var x = (PitchGaugeElement)el;
 				PopulateStyle(PitchFontCombo, PitchScaleBox, PitchTextColorBox, PitchTextColorSwatch,
-					PitchOutlineColorBox, PitchOutlineColorSwatch, PitchOutlineWidthBox, el);
-				PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, el);
+					PitchOutlineColorBox, PitchOutlineColorSwatch, PitchOutlineWidthBox, x);
+				PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.GMeter:
-				GMeterFullScaleBox.Value = (decimal)el.GMeterFullScaleG;
+			{
+				var x = (GMeterElement)el;
+				GMeterFullScaleBox.Value = (decimal)x.GMeterFullScaleG;
 				PopulateStyle(GMeterFontCombo, GMeterScaleBox, GMeterTextColorBox, GMeterTextColorSwatch,
-					GMeterOutlineColorBox, GMeterOutlineColorSwatch, GMeterOutlineWidthBox, el);
-				PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, el);
+					GMeterOutlineColorBox, GMeterOutlineColorSwatch, GMeterOutlineWidthBox, x);
+				PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.SpeedGauge:
-				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, el.Units);
+			{
+				var x = (SpeedGaugeElement)el;
+				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, x.Units);
 				PopulateStyle(SpeedFontCombo, SpeedScaleBox, SpeedTextColorBox, SpeedTextColorSwatch,
-					SpeedOutlineColorBox, SpeedOutlineColorSwatch, SpeedOutlineWidthBox, el);
-				PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, el);
+					SpeedOutlineColorBox, SpeedOutlineColorSwatch, SpeedOutlineWidthBox, x);
+				PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.MapWidget:
-				MapZoomBox.Value = el.MapZoom;
-				MapDynamicZoomCheck.IsChecked = el.MapDynamicZoom;
-				MapZoomOutMaxBox.Value = (decimal)el.MapDynamicZoomMaxFactor;
-				MapZoomOutMaxLabel.IsVisible = el.MapDynamicZoom;
-				MapZoomOutMaxBox.IsVisible = el.MapDynamicZoom;
-				MapZoomOutMaxHint.IsVisible = el.MapDynamicZoom;
-				PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox, MapTrailArrowRadio, MapTrailDotRadio, el);
-				PopulateTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel, el);
+			{
+				var x = (MapWidgetElement)el;
+				MapZoomBox.Value = x.MapZoom;
+				MapDynamicZoomCheck.IsChecked = x.MapDynamicZoom;
+				MapZoomOutMaxBox.Value = (decimal)x.MapDynamicZoomMaxFactor;
+				MapZoomOutMaxLabel.IsVisible = x.MapDynamicZoom;
+				MapZoomOutMaxBox.IsVisible = x.MapDynamicZoom;
+				MapZoomOutMaxHint.IsVisible = x.MapDynamicZoom;
+				PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox, MapTrailArrowRadio, MapTrailDotRadio, x);
+				PopulateTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.ElapsedTimeText:
+			{
+				var x = (ElapsedTimeTextElement)el;
 				PopulateStyle(ElapsedTimeFontCombo, ElapsedTimeScaleBox, ElapsedTimeTextColorBox, ElapsedTimeTextColorSwatch,
-					ElapsedTimeOutlineColorBox, ElapsedTimeOutlineColorSwatch, ElapsedTimeOutlineWidthBox, el);
-				PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, el);
+					ElapsedTimeOutlineColorBox, ElapsedTimeOutlineColorSwatch, ElapsedTimeOutlineWidthBox, x);
+				PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.CameraModelText:
+			{
+				var x = (CameraModelTextElement)el;
 				PopulateStyle(CameraModelFontCombo, CameraModelScaleBox, CameraModelTextColorBox, CameraModelTextColorSwatch,
-					CameraModelOutlineColorBox, CameraModelOutlineColorSwatch, CameraModelOutlineWidthBox, el);
-				PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, el);
+					CameraModelOutlineColorBox, CameraModelOutlineColorSwatch, CameraModelOutlineWidthBox, x);
+				PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, x);
 				break;
+			}
 
 			case OverlayElementType.TripProgressBar:
-				SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, el.Units);
-				TripProgressToleranceBox.Value = (decimal)el.TripArrivedToleranceMeters;
-				TripProgressLabelBox.Text = el.TripArrivedLabel;
-				PopulateTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel, el);
+			{
+				var x = (TripProgressBarElement)el;
+				SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, x.Units);
+				TripProgressToleranceBox.Value = (decimal)x.TripArrivedToleranceMeters;
+				TripProgressLabelBox.Text = x.TripArrivedLabel;
+				PopulateTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel, x);
 				break;
+			}
 		}
 
 		_suppressOverlayEvents = false;
@@ -649,7 +703,7 @@ public partial class MainWindow
 	}
 
 	private static void PopulateTrailControls(TextBox colorBox, Border swatch, NumericUpDown widthBox,
-		RadioButton arrowRadio, RadioButton dotRadio, OverlayElement element)
+		RadioButton arrowRadio, RadioButton dotRadio, TrailOverlayElement element)
 	{
 		colorBox.Text = element.TrailColor ?? DefaultTrailColorHex;
 		UpdateColorSwatch(swatch, element.TrailColor, DefaultTrailColorHex);
@@ -687,14 +741,29 @@ public partial class MainWindow
 		{
 			if (_suppressOverlayEvents || _editingElementId is not { } id) return;
 
-			UpdateElement(id, el => el with
+			// AccentColor only exists on LabeledStatElement (Elevation/Gradient/Distance/CameraInfo,
+			// the only callers that pass accentColorBox) - every other styled widget's `with` can only
+			// touch fields StyledOverlayElement itself declares.
+			UpdateElement(id, el => el switch
 			{
-				FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
-				Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, MinElementScale, MaxElementScale) : el.Scale,
-				TextColor = NormalizeHexInput(textColorBox.Text),
-				AccentColor = accentColorBox is null ? el.AccentColor : NormalizeHexInput(accentColorBox.Text),
-				OutlineColor = NormalizeHexInput(outlineColorBox.Text),
-				OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : el.OutlineWidth
+				LabeledStatElement stat when accentColorBox is not null => stat with
+				{
+					FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
+					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, MinElementScale, MaxElementScale) : stat.Scale,
+					TextColor = NormalizeHexInput(textColorBox.Text),
+					AccentColor = NormalizeHexInput(accentColorBox.Text),
+					OutlineColor = NormalizeHexInput(outlineColorBox.Text),
+					OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : stat.OutlineWidth
+				},
+				StyledOverlayElement styled => styled with
+				{
+					FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
+					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, MinElementScale, MaxElementScale) : styled.Scale,
+					TextColor = NormalizeHexInput(textColorBox.Text),
+					OutlineColor = NormalizeHexInput(outlineColorBox.Text),
+					OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : styled.OutlineWidth
+				},
+				_ => el
 			});
 
 			UpdateColorSwatch(textColorSwatch, textColorBox.Text, DefaultTextColorHex);
@@ -710,10 +779,15 @@ public partial class MainWindow
 		if (accentColorBox is not null) accentColorBox.LostFocus += (_, _) => Apply();
 	}
 
-	/// <summary>Counterpart to WireStyle - fills a widget instance's Style controls from its own data, same shape as PopulateTiming/PopulateTrailControls above.</summary>
+	/// <summary>
+	///     Counterpart to WireStyle - fills a widget instance's Style controls from its own data, same shape
+	///     as PopulateTiming/PopulateTrailControls above. `accentColor` is passed explicitly (rather than
+	///     read off `element`) since AccentColor only exists on LabeledStatElement, one level below the
+	///     StyledOverlayElement this otherwise operates on.
+	/// </summary>
 	private static void PopulateStyle(ComboBox fontCombo, NumericUpDown scaleBox, TextBox textColorBox, Border textColorSwatch,
-		TextBox outlineColorBox, Border outlineColorSwatch, NumericUpDown outlineWidthBox, OverlayElement element,
-		TextBox? accentColorBox = null, Border? accentColorSwatch = null)
+		TextBox outlineColorBox, Border outlineColorSwatch, NumericUpDown outlineWidthBox, StyledOverlayElement element,
+		TextBox? accentColorBox = null, Border? accentColorSwatch = null, string? accentColor = null)
 	{
 		fontCombo.SelectedItem = FontOptions.FirstOrDefault(o => o.Family == element.FontFamily) ?? FontOptions[0];
 		scaleBox.Value = (decimal)element.Scale;
@@ -724,8 +798,8 @@ public partial class MainWindow
 		outlineWidthBox.Value = (decimal)element.OutlineWidth;
 
 		if (accentColorBox is null) return;
-		accentColorBox.Text = element.AccentColor ?? DefaultAccentColorHex;
-		UpdateColorSwatch(accentColorSwatch!, element.AccentColor, DefaultAccentColorHex);
+		accentColorBox.Text = accentColor ?? DefaultAccentColorHex;
+		UpdateColorSwatch(accentColorSwatch!, accentColor, DefaultAccentColorHex);
 	}
 
 	private static string? NormalizeHexInput(string? text)
@@ -761,7 +835,7 @@ public partial class MainWindow
 	private void OnGMeterFullScaleChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id || GMeterFullScaleBox.Value is not { } fullScale) return;
-		UpdateElement(id, el => el with { GMeterFullScaleG = (double)fullScale });
+		UpdateElement(id, el => el is GMeterElement g ? g with { GMeterFullScaleG = (double)fullScale } : el);
 	}
 
 	private void OnDateTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
@@ -833,7 +907,7 @@ public partial class MainWindow
 	private void OnTripProgressToleranceChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id || TripProgressToleranceBox.Value is not { } tolerance) return;
-		UpdateElement(id, el => el with { TripArrivedToleranceMeters = (double)tolerance });
+		UpdateElement(id, el => el is TripProgressBarElement t ? t with { TripArrivedToleranceMeters = (double)tolerance } : el);
 	}
 
 	private void OnTripProgressLabelChanged(object? sender, RoutedEventArgs e)
@@ -842,13 +916,13 @@ public partial class MainWindow
 		var label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text)
 			? OverlayRenderer.TripArrivedLabelDefault
 			: TripProgressLabelBox.Text.Trim();
-		UpdateElement(id, el => el with { TripArrivedLabel = label });
+		UpdateElement(id, el => el is TripProgressBarElement t ? t with { TripArrivedLabel = label } : el);
 	}
 
 	private void OnMapZoomChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id || MapZoomBox.Value is not { } zoom) return;
-		UpdateElement(id, el => el with { MapZoom = (int)zoom });
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { MapZoom = (int)zoom } : el);
 	}
 
 	private void OnMapDynamicZoomChanged(object? sender, RoutedEventArgs e)
@@ -859,13 +933,13 @@ public partial class MainWindow
 		MapZoomOutMaxLabel.IsVisible = enabled;
 		MapZoomOutMaxBox.IsVisible = enabled;
 		MapZoomOutMaxHint.IsVisible = enabled;
-		UpdateElement(id, el => el with { MapDynamicZoom = enabled });
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { MapDynamicZoom = enabled } : el);
 	}
 
 	private void OnMapZoomOutMaxChanged(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id || MapZoomOutMaxBox.Value is not { } factor) return;
-		UpdateElement(id, el => el with { MapDynamicZoomMaxFactor = (double)factor });
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { MapDynamicZoomMaxFactor = (double)factor } : el);
 	}
 
 	private void OnMapTrailColorChanged(object? sender, RoutedEventArgs e)

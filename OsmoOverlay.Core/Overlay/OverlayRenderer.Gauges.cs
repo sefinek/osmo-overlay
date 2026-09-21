@@ -83,7 +83,7 @@ public sealed partial class OverlayRenderer
 		return ComputeGaugeMaxSpeed(observed);
 	}
 
-	private void DrawSunWidget(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawSunWidget(SKCanvas canvas, DerivedFrame frame, SunWidgetElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -115,7 +115,7 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawPitchGauge(SKCanvas canvas, OverlayElement element, double pitchDegrees)
+	private void DrawPitchGauge(SKCanvas canvas, PitchGaugeElement element, double pitchDegrees)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -144,7 +144,7 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawGMeter(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawGMeter(SKCanvas canvas, DerivedFrame frame, GMeterElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -201,7 +201,7 @@ public sealed partial class OverlayRenderer
 		return (-(smoothedLateral - baselineLateral), smoothedLongitudinal - baselineLongitudinal);
 	}
 
-	private void DrawSpeedGauge(SKCanvas canvas, OverlayElement element, double speedKmh)
+	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
@@ -260,7 +260,7 @@ public sealed partial class OverlayRenderer
 	///     (_totalDistanceMeters, the last frame's CumulativeDistanceMeters, cached once in the
 	///     constructor) - 0 at the start of the recording, 1 on its last frame.
 	/// </summary>
-	private void DrawTripProgressBar(SKCanvas canvas, DerivedFrame frame, OverlayElement element)
+	private void DrawTripProgressBar(SKCanvas canvas, DerivedFrame frame, TripProgressBarElement element)
 	{
 		canvas.Save();
 		canvas.Translate(element.X, element.Y);
