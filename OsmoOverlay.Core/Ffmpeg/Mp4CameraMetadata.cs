@@ -41,7 +41,7 @@ internal static class Mp4CameraMetadata
 
 		try
 		{
-			Rebuild(output, moov, moovBox.Offset, sourceTracks, sourceUdta, maskSerial: !selection.SerialNumber);
+			Rebuild(output, moov, moovBox.Offset, sourceTracks, sourceUdta, !selection.SerialNumber);
 		}
 		catch
 		{
@@ -454,13 +454,13 @@ internal static class Mp4FastStart
 				ulong shift;
 				while (true)
 				{
-					foreach (var (stbl, offsets) in tables) ReplaceChunkOffsets(stbl, offsets, 0, force64);
+					foreach ((Mp4Box stbl, var offsets) in tables) ReplaceChunkOffsets(stbl, offsets, 0, force64);
 					shift = (ulong)moov.Size;
 					if (force64 || tables.All(t => t.Offsets.Length == 0 || t.Offsets.Max() + shift <= uint.MaxValue)) break;
 					force64 = true;
 				}
 
-				foreach (var (stbl, offsets) in tables) ReplaceChunkOffsets(stbl, offsets, shift, force64);
+				foreach ((Mp4Box stbl, var offsets) in tables) ReplaceChunkOffsets(stbl, offsets, shift, force64);
 
 				using var outputFile = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1 << 20);
 				var insertAt = topLevel[firstMdat].Offset;

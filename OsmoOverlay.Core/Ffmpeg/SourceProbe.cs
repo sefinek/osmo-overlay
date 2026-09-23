@@ -158,9 +158,12 @@ public static partial class SourceProbe
 			var (exitCode, stdout, _) = ProcessHelper.RunCaptured(psi);
 			if (exitCode != 0) return null;
 
-			List<double> times = [.. stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-				.Select(line => double.TryParse(line, CultureInfo.InvariantCulture, out var t) ? t : double.NaN)
-				.Where(double.IsFinite)];
+			List<double> times =
+			[
+				.. stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+					.Select(line => double.TryParse(line, CultureInfo.InvariantCulture, out var t) ? t : double.NaN)
+					.Where(double.IsFinite)
+			];
 			if (times.Count < 2) return null;
 
 			List<int> gaps = [.. times.Zip(times.Skip(1), (a, b) => (int)Math.Round((b - a) * fps)).Where(g => g > 0).Order()];

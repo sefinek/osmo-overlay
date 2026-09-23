@@ -92,7 +92,7 @@ public static class RenderSpeedHistory
 		if (!(fps > 0) || !double.IsFinite(fps)) return;
 
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		Dictionary<string, double> history = settings.RenderFpsHistory is { } existing ? new(existing) : [];
+		Dictionary<string, double> history = settings.RenderFpsHistory is { } existing ? new Dictionary<string, double>(existing) : [];
 		history[key] = Math.Round(fps, 2);
 		OverlaySettingsStore.Save(settings with { RenderFpsHistory = history });
 	}

@@ -292,9 +292,12 @@ public static class OverlayPresetStore
 		    preset.Id.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
 			throw new InvalidDataException($"Preset id '{preset.Id}' is not a valid file name.");
 
-		List<OverlayElement> elements = [.. preset.Elements.Select(e => e.Scale is >= OverlayElementBounds.MinElementScale and <= OverlayElementBounds.MaxElementScale
-			? e
-			: e with { Scale = float.IsFinite(e.Scale) ? Math.Clamp(e.Scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : 1f })];
+		List<OverlayElement> elements =
+		[
+			.. preset.Elements.Select(e => e.Scale is >= OverlayElementBounds.MinElementScale and <= OverlayElementBounds.MaxElementScale
+				? e
+				: e with { Scale = float.IsFinite(e.Scale) ? Math.Clamp(e.Scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : 1f })
+		];
 
 		return (preset with { Name = preset.Name ?? preset.Id, Elements = elements }).WithElementIdsBackfilled();
 	}

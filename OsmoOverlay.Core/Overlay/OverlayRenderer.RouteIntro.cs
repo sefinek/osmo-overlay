@@ -1,6 +1,5 @@
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
-using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -140,7 +139,7 @@ public sealed partial class OverlayRenderer
 		if (_routeIntroCard is null || _routeIntroCardKey != key)
 		{
 			_routeIntroCard?.Dispose();
-			using SKSurface surface = SKSurface.Create(new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Premul));
+			using var surface = SKSurface.Create(new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Premul));
 			surface.Canvas.Clear(SKColors.Transparent);
 			surface.Canvas.Scale(outW / (float)_width, outH / (float)_height);
 			DrawRouteIntro(surface.Canvas);

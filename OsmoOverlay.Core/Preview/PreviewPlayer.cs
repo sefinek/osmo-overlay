@@ -514,7 +514,7 @@ public sealed class PreviewPlayer : IDisposable
 		DerivedFrame frame = TelemetryProcessor.FindNearest(frames, position.TotalSeconds);
 		var overlaySize = renderer.FrameBufferSize(videoFrame.Width, videoFrame.Height);
 		if (_overlayBuffer?.Length != overlaySize) _overlayBuffer = new byte[overlaySize];
-		renderer.RenderInto(frame, _overlayBuffer, videoFrame.Width, videoFrame.Height, premultiplied: true);
+		renderer.RenderInto(frame, _overlayBuffer, videoFrame.Width, videoFrame.Height, true);
 		var composed = PreviewCompositor.Compose(videoFrame.Width, videoFrame.Height, videoFrame.Bgra,
 			videoFrame.Stride, _overlayBuffer, videoFrame.Width, videoFrame.Height);
 

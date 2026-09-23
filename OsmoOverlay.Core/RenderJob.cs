@@ -484,7 +484,7 @@ internal sealed class RenderRateEstimator(double sourceFps)
 		var fps = (framesWritten - oldest.Frames) / span;
 		if (fps <= 0) return "";
 
-		var left = TimeSpan.FromSeconds(Math.Max(totalFrames - framesWritten, 0) / fps);
+		TimeSpan left = TimeSpan.FromSeconds(Math.Max(totalFrames - framesWritten, 0) / fps);
 		var realtime = sourceFps > 0 ? $" ({fps / sourceFps:0.00}x realtime)" : "";
 		return $" - {fps:0.0} fps{realtime} - {left:hh\\:mm\\:ss} left";
 	}

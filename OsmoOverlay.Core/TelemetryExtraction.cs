@@ -11,7 +11,7 @@ public static class TelemetryExtraction
 		if (source.DjmdStreamIndex is { } djmdStreamIndex)
 			try
 			{
-				var raw = DjiMetaTelemetryParser.ExtractRawStream(inputPath, djmdStreamIndex);
+				ReadOnlyMemory<byte> raw = DjiMetaTelemetryParser.ExtractRawStream(inputPath, djmdStreamIndex);
 				return DjiMetaTelemetryParser.Parse(raw, source.Video.Fps);
 			}
 			catch (Exception ex)

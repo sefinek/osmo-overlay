@@ -219,7 +219,7 @@ internal static class Mp4Fields
 
 	public static List<(uint Count, uint Delta)> ReadStts(Mp4Box stts)
 	{
-		var p = stts.Payload!.AsSpan();
+		Span<byte> p = stts.Payload!.AsSpan();
 		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		List<(uint, uint)> entries = new((int)count);
 		for (var i = 0; i < count; i++)
@@ -229,7 +229,7 @@ internal static class Mp4Fields
 
 	public static uint[] ReadSampleSizes(Mp4Box stsz)
 	{
-		var p = stsz.Payload!.AsSpan();
+		Span<byte> p = stsz.Payload!.AsSpan();
 		var uniform = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		var count = BinaryPrimitives.ReadUInt32BigEndian(p[8..]);
 		var sizes = new uint[count];
@@ -240,7 +240,7 @@ internal static class Mp4Fields
 
 	public static List<(uint FirstChunk, uint SamplesPerChunk)> ReadStsc(Mp4Box stsc)
 	{
-		var p = stsc.Payload!.AsSpan();
+		Span<byte> p = stsc.Payload!.AsSpan();
 		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		List<(uint, uint)> entries = new((int)count);
 		for (var i = 0; i < count; i++)
@@ -250,7 +250,7 @@ internal static class Mp4Fields
 
 	public static ulong[] ReadChunkOffsets(Mp4Box stcoOrCo64)
 	{
-		var p = stcoOrCo64.Payload!.AsSpan();
+		Span<byte> p = stcoOrCo64.Payload!.AsSpan();
 		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		var offsets = new ulong[count];
 		var is64 = stcoOrCo64.Type == "co64";
@@ -273,7 +273,7 @@ internal static class Mp4Fields
 	public static uint[]? ReadSyncSamples(Mp4Box? stss)
 	{
 		if (stss is null) return null;
-		var p = stss.Payload!.AsSpan();
+		Span<byte> p = stss.Payload!.AsSpan();
 		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		var samples = new uint[count];
 		for (var i = 0; i < count; i++) samples[i] = BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 4)..]);

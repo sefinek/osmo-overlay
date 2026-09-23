@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Core.Ffmpeg;
 
@@ -209,7 +210,7 @@ public static class FfmpegPipeline
 	}
 
 	/// <summary>Maps OverlaySettings' export options, see there for what each default preserves.</summary>
-	public static RenderEncodeSettings EncodeSettingsFrom(Overlay.OverlaySettings settings, bool postProcessing)
+	public static RenderEncodeSettings EncodeSettingsFrom(OverlaySettings settings, bool postProcessing)
 	{
 		string[] presets = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"];
 		return new RenderEncodeSettings(

@@ -17,17 +17,11 @@ internal static class ExplorerHelper
 		{
 			ProcessStartInfo psi;
 			if (OperatingSystem.IsWindows())
-			{
 				psi = new ProcessStartInfo("explorer.exe") { Arguments = $"/select,\"{filePath}\"", UseShellExecute = true };
-			}
 			else if (OperatingSystem.IsMacOS())
-			{
 				psi = new ProcessStartInfo("open") { ArgumentList = { "-R", filePath } };
-			}
 			else
-			{
 				psi = new ProcessStartInfo(Path.GetDirectoryName(filePath) ?? filePath) { UseShellExecute = true };
-			}
 
 			Process.Start(psi)?.Dispose();
 		}
