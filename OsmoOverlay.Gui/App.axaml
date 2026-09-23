@@ -4,6 +4,10 @@
              RequestedThemeVariant="Dark">
 	<Application.Resources>
 		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="avares://OsmoOverlay/Icons.axaml" />
+			</ResourceDictionary.MergedDictionaries>
+
 			<!-- Palette - the only place a UI color is defined; XAML uses the *Brush keys, C# goes through Palette. -->
 			<Color x:Key="WindowBackgroundColor">#111113</Color>
 			<Color x:Key="SurfaceColor">#19191C</Color>
@@ -23,6 +27,7 @@
 			<Color x:Key="TextMutedColor">#85858D</Color>
 			<Color x:Key="OnVideoColor">#CC18181B</Color>
 			<Color x:Key="OnVideoBorderColor">#60FFFFFF</Color>
+			<Color x:Key="ScrimColor">#A6000000</Color>
 
 			<Color x:Key="AccentColor">#3E9EFF</Color>
 			<Color x:Key="AccentHoverColor">#5CACFF</Color>
@@ -58,6 +63,7 @@
 			<SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
 			<SolidColorBrush x:Key="OnVideoBrush" Color="{StaticResource OnVideoColor}" />
 			<SolidColorBrush x:Key="OnVideoBorderBrush" Color="{StaticResource OnVideoBorderColor}" />
+			<SolidColorBrush x:Key="ScrimBrush" Color="{StaticResource ScrimColor}" />
 			<SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
 			<SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
 			<SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />

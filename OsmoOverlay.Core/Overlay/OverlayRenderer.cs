@@ -45,10 +45,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	// calls during the whole route-intro card - the source data (cumulative distance, sample time,
 	// altitude) is already fully known as soon as the frame list is handed in, and none of these
 	// change from one frame to the next.
-	// The last frame's running distance - what TripProgressBar's progress must reach 100% against.
 	private readonly double _totalDistanceMeters;
-	// The route's true total (Summarize adds the running distance's last partial step) - for the stats shown as numbers.
-	private readonly double _routeDistanceMeters;
 	private readonly double _totalDurationSeconds;
 	private readonly double _totalElevationGainMeters;
 	private readonly double _avgSpeedKmh;
@@ -129,7 +126,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		_startAltitude = startAltitude;
 		_observedMaxSpeedKmh = observedMaxSpeedKmh;
 		_totalDistanceMeters = allFrames.Count > 0 ? allFrames[^1].CumulativeDistanceMeters : 0;
-		_routeDistanceMeters = allFrames.Count > 0 ? TelemetryProcessor.Summarize(allFrames).TotalDistanceMeters : 0;
 		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
 		// Sum of positive altitude deltas only (a simple running climb total, not the true barometric
 		// "elevation gain" a dedicated sensor would give) - GPS altitude jitter means this reads a bit
@@ -141,7 +137,7 @@ public sealed partial class OverlayRenderer : IDisposable
 			if (delta > 0) _totalElevationGainMeters += delta;
 		}
 
-		_avgSpeedKmh = _totalDurationSeconds > 0 ? _routeDistanceMeters / _totalDurationSeconds * 3.6 : 0;
+		_avgSpeedKmh = _totalDurationSeconds > 0 ? _totalDistanceMeters / _totalDurationSeconds * 3.6 : 0;
 
 		Layout = layout;
 		ShowWatermark = showWatermark;
@@ -209,21 +205,6 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>Mutable so the GUI can toggle/reconfigure it live from Settings without recreating the renderer.</summary>
 	public RouteIntroSettings RouteIntro { get; set; }
-
-	/// <summary>
-	///     Where the output starts on the recording's timeline, for a render of a range: the route intro,
-	///     watermark and every widget's Appear/Disappear timing count from here, so the clip opens the way a
-	///     full render does. Data (time, elapsed, trail, map) stays on recording time. Before it - reachable
-	///     only in the preview, outside the range - nothing is shifted, so the preview there shows what a
-	///     full render would.
-	/// </summary>
-	public double TimelineOffsetSeconds { get; set; }
-
-	private double PresentationTime(DerivedFrame frame)
-	{
-		var t = frame.Raw.SampleTimeSeconds;
-		return t >= TimelineOffsetSeconds ? t - TimelineOffsetSeconds : t;
-	}
 
 	public void Dispose()
 	{
@@ -314,7 +295,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		canvas.Clear(SKColors.Transparent);
 		canvas.Scale(outW / (float)_width, outH / (float)_height);
 
-		var sampleTime = PresentationTime(frame);
+		var sampleTime = frame.Raw.SampleTimeSeconds;
 		var introEnd = RouteIntro.DurationSeconds;
 		var isRouteIntroFrame = RouteIntro.Enabled && sampleTime < introEnd;
 		// Non-null only inside the crossfade window right before introEnd: 0 at its start (intro still
@@ -385,7 +366,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			if (!element.Visible) continue;
 
-			DrawElement(canvas, element, PresentationTime(frame), c =>
+			DrawElement(canvas, element, frame.Raw.SampleTimeSeconds, c =>
 			{
 				switch (element.Type)
 				{

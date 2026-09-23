@@ -49,15 +49,14 @@ public partial class MainWindow : Window
 	// a fixed OverlayElementType, since a type can now have several instances on the canvas at once (see
 	// OnWidgetGearHoverButtonClick).
 	private string? _editingElementId;
-	private int? _frameLimit;
 
-	private List<(double Start, double End)> _gpsLossRanges = [];
 	// Default true (nothing greyed out) until a file's actually been read - RefreshWidgetList only
 	// starts using these once _summary is set, so the default only matters for that brief gap.
 	private bool _hasContainerTime = true;
 	private bool _hasGpsFix = true;
 	private bool _hasGpsTimestamp = true;
 	private string? _hoveredElementId;
+	private TimeSpan _previewPosition;
 	private List<OverlayPreset> _overlayPresets = [];
 	// Guards a real race: SetPhase(SummaryReady) can run before LoadOverlayPresets (an earlier await
 	// in OpenPreviewAsync) has populated _overlayPresets. Without this, the Overlay panel's "New"/
@@ -76,11 +75,11 @@ public partial class MainWindow : Window
 	private float _resizeStartScale = 1f;
 	private double _resizeStartDistance = 1;
 	private bool _showWatermark;
-	private bool _sliderDragInProgress;
 	private bool _smoothGpsMotion;
 	private FileSummary? _summary;
 	private bool _suppressOverlayEvents;
-	private bool _suppressSliderEvent;
+	private bool _suppressTimelineEvent;
+	private bool _timelineScrubbing;
 
 	public MainWindow()
 	{
@@ -123,7 +122,9 @@ public partial class MainWindow : Window
 		MapZoomOutMaxBox.Minimum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
 
-		WireRangeShortcuts();
+		WireCuts();
+		WirePreviewTimeline();
+		WirePreviewShortcuts();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
@@ -143,13 +144,9 @@ public partial class MainWindow : Window
 				_ => LogLevel.Info
 			}));
 
-		// The canvas has no width until layout runs (and resizes with the window afterwards) - marks
-		// are positioned in absolute pixels, so they need redrawing whenever that width changes.
-		GpsLossCanvas.SizeChanged += (_, _) => DrawGpsLossMarks();
-
-		// Same reasoning as GpsLossCanvas above - the rule-of-thirds/safe-margin guide lines are
-		// positioned in absolute canvas pixels, so a window resize (which resizes OverlayDragCanvas
-		// itself, independent of when a new preview bitmap loads) needs to redraw them too.
+		// The rule-of-thirds/safe-margin guide lines are positioned in absolute canvas pixels, so a
+		// window resize (which resizes OverlayDragCanvas itself, independent of when a new preview
+		// bitmap loads) needs to redraw them.
 		OverlayDragCanvas.SizeChanged += (_, _) => UpdatePreviewGuides();
 
 		// XAML hardcodes the "Both"/snap-on look as a starting point for the designer - reconcile the
@@ -256,12 +253,11 @@ public partial class MainWindow : Window
 	private async void OnSettingsClick(object? sender, RoutedEventArgs e)
 	{
 		OverlaySettings currentSettings = OverlaySettingsStore.Load();
-		var settings = new SettingsWindow(_frameLimit, _showWatermark, _smoothGpsMotion, _previewMaxWidth,
+		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion, _previewMaxWidth,
 			currentSettings.MapTileUrlTemplate, currentSettings.MapAttribution, currentSettings.MapShowAttribution,
 			currentSettings.MapApiKey, RouteIntroSettings.From(currentSettings));
 		settings.LoadExportSettings(currentSettings);
 		await settings.ShowDialog(this);
-		_frameLimit = settings.FrameLimit;
 
 		// Export options only matter at render time (RenderJob reads them from settings.json itself), so
 		// unlike the preview-affecting settings below they never need the preview reopened.

@@ -263,7 +263,12 @@ public partial class MainWindow
 
 		if (editable)
 		{
-			var removeButton = new Button { Content = "✕", Classes = { "addedWidgetRemove" }, Margin = new Thickness(8, 0, 0, 0) };
+			var removeButton = new Button
+			{
+				Content = new IconView { Data = Icons.Close, Width = 10, Height = 10 },
+				Classes = { "addedWidgetRemove" },
+				Margin = new Thickness(8, 0, 0, 0)
+			};
 			removeButton.Click += (_, _) => RemoveElementInstance(id);
 			Grid.SetColumn(removeButton, 2);
 			grid.Children.Add(removeButton);
@@ -515,6 +520,8 @@ public partial class MainWindow
 		WidgetSettingsPanelHost.Content = panel;
 		WidgetSettingsTitleRun.Text = GetWidgetLabel(element.Type);
 
+		CutsColumnScroll.IsVisible = false;
+		UpdateCutsButton();
 		SourceColumnScroll.IsVisible = false;
 		WidgetSettingsColumnScroll.IsVisible = true;
 		WidgetSettingsColumnScroll.Offset = default;
@@ -534,7 +541,7 @@ public partial class MainWindow
 	{
 		_editingElementId = null;
 		WidgetSettingsColumnScroll.IsVisible = false;
-		SourceColumnScroll.IsVisible = true;
+		SourceColumnScroll.IsVisible = !CutsColumnScroll.IsVisible;
 	}
 
 	/// <summary>
@@ -1409,7 +1416,7 @@ public partial class MainWindow
 		if (_previewPlayer.IsPlaying)
 		{
 			_previewPlayer.Pause();
-			PlayPauseButton.Content = "Play";
+			ShowPlayingState(false);
 		}
 
 		_draggingElementId = el.Id;
@@ -1475,7 +1482,7 @@ public partial class MainWindow
 		if (_previewPlayer.IsPlaying)
 		{
 			_previewPlayer.Pause();
-			PlayPauseButton.Content = "Play";
+			ShowPlayingState(false);
 		}
 
 		_resizingElementId = id;

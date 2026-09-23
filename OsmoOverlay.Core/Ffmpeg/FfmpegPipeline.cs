@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Core.Ffmpeg;
@@ -42,7 +43,7 @@ public static class FfmpegPipeline
 	}
 
 	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, bool overwrite,
-		RenderEncodeSettings encode, RenderRange renderRange, bool greenScreen = false)
+		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false)
 	{
 		SourceInfo info = segments[0].Source;
 		var (num, den) = ParseFrameRate(info.Video.FrameRate);
@@ -70,7 +71,9 @@ public static class FfmpegPipeline
 		{
 			try
 			{
-				source = AddSourceInputs(args, segments, renderRange, encode, num, den, tempFiles);
+				source = plan.Pieces.Count == 1
+					? AddSourceInputs(args, segments, plan.Pieces[0], encode, num, den, tempFiles)
+					: AddCutInputs(args, segments, plan, encode, num, den, tempFiles);
 			}
 			catch
 			{
@@ -122,16 +125,23 @@ public static class FfmpegPipeline
 		// source - this export is a compositing asset, not a finished clip, so dropping audio here
 		// (rather than muxing it in from a source the user would then have to strip back out) is fine.
 		if (source.AudioMap is not null)
-			args.AddRange(["-map", source.AudioMap, "-c:a", "copy"]);
+		{
+			args.AddRange(["-map", source.AudioMap]);
+			// Pieces joined by the concat filter are decoded audio - it can't be stream-copied across the
+			// joins, so it's re-encoded at the source's own AAC bitrate. A single piece stays a lossless copy.
+			args.AddRange(source.EncodeAudio && source.StartSource.Audio is { } audio
+				? ["-c:a", "aac", "-b:a", audio.BitRate.ToString(CultureInfo.InvariantCulture)]
+				: ["-c:a", "copy"]);
+		}
 
 		// Output-side limits: -frames:v because the lavfi color background of a green-screen render is
 		// otherwise infinite, -t so a partial render's (copied) audio stops with the picture - the video
 		// itself already ends exactly there, the overlay pipe carries exactly FrameCount frames
 		// (overlay's shortest=1).
 		if (greenScreen)
-			args.AddRange(["-frames:v", renderRange.FrameCount.ToString(CultureInfo.InvariantCulture)]);
-		if (renderRange.IsPartial)
-			args.AddRange(["-t", (renderRange.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture)]);
+			args.AddRange(["-frames:v", plan.TotalFrames.ToString(CultureInfo.InvariantCulture)]);
+		if (plan.IsPartial)
+			args.AddRange(["-t", (plan.TotalFrames * den / (double)num).ToString("R", CultureInfo.InvariantCulture)]);
 
 		// Reproduce the camera's own encode as closely as the encoder allows, not just its codec/profile:
 		// measured on Osmo Action 6 files, the camera writes near-constant bitrate (within ~5-10% of its
@@ -229,7 +239,7 @@ public static class FfmpegPipeline
 	}
 
 	/// <summary>
-	///     Adds the source video/audio inputs for `renderRange`. From the very start: the file itself, or
+	///     Adds the source video/audio inputs for a single kept `piece`. From the very start: the file itself, or
 	///     all segments through the concat demuxer. From partway in: the segment the range starts in, with a
 	///     plain -ss (the one seek verified frame-accurate - see ConcatListWriter for why concat's own
 	///     seek can't be used for video); if the range runs on into later segments, those follow as a
@@ -239,7 +249,7 @@ public static class FfmpegPipeline
 	///     nor repeats a frame, and the audio is in sync (0 ms against a single-file cut of the same span).
 	/// </summary>
 	private static SourceInputs AddSourceInputs(List<string> args, IReadOnlyList<VideoSegment> segments,
-		RenderRange renderRange, RenderEncodeSettings encode, int num, int den, List<string> tempFiles)
+		RenderPiece piece, RenderEncodeSettings encode, int num, int den, List<string> tempFiles)
 	{
 		void AddHwDecode()
 		{
@@ -251,7 +261,7 @@ public static class FfmpegPipeline
 			return s.Audio is null ? null : $"{input}:a";
 		}
 
-		if (renderRange.StartFrame == 0)
+		if (piece.SourceStartFrame == 0)
 		{
 			AddHwDecode();
 			if (segments.Count == 1)
@@ -268,8 +278,8 @@ public static class FfmpegPipeline
 			return new SourceInputs(1, "[0:v]", AudioMapFor(0, segments[0].Source), segments[0].Source);
 		}
 
-		var (first, localStartFrame) = VideoSegments.Locate(segments, renderRange.StartFrame);
-		var (last, _) = VideoSegments.Locate(segments, renderRange.StartFrame + renderRange.FrameCount - 1);
+		var (first, localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
+		var (last, _) = VideoSegments.Locate(segments, piece.SourceEndFrame - 1);
 		SourceInfo startSource = segments[first].Source;
 		var localStartSeconds = localStartFrame * den / (double)num;
 		var seek = localStartSeconds.ToString("R", CultureInfo.InvariantCulture);
@@ -294,6 +304,67 @@ public static class FfmpegPipeline
 		tempFiles.Add(audioList);
 		args.AddRange(["-itsoffset", SourceProbe.ProbeConcatStartTime(audioList), "-f", "concat", "-safe", "0", "-i", audioList]);
 		return new SourceInputs(3, mainVideo, "2:a", startSource, localStartFrame);
+	}
+
+	/// <summary>
+	///     Inputs for a plan with parts cut out of the middle. Each kept piece is opened on its own the way
+	///     AddSourceInputs opens a single one (a plain -ss into the segment it starts in, plus a concat of the
+	///     later segments it runs into), trimmed to exactly its frame count, and the pieces are joined by the
+	///     concat filter - video and audio together, so they stay in sync across every join.
+	/// </summary>
+	private static SourceInputs AddCutInputs(List<string> args, IReadOnlyList<VideoSegment> segments, RenderPlan plan,
+		RenderEncodeSettings encode, int num, int den, List<string> tempFiles)
+	{
+		var hasAudio = segments[0].Source.Audio is not null;
+		var graph = new StringBuilder();
+		var joined = new StringBuilder();
+		var input = 0;
+		SourceInfo? startSource = null;
+		long startLocalFrame = 0;
+
+		for (var p = 0; p < plan.Pieces.Count; p++)
+		{
+			RenderPiece piece = plan.Pieces[p];
+			var (first, localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
+			var (last, _) = VideoSegments.Locate(segments, piece.SourceEndFrame - 1);
+			if (p == 0)
+			{
+				startSource = segments[first].Source;
+				startLocalFrame = localStartFrame;
+			}
+
+			if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+			args.AddRange(["-ss", (localStartFrame * den / (double)num).ToString("R", CultureInfo.InvariantCulture), "-i", segments[first].InputPath]);
+			var head = input++;
+			var video = $"[{head}:v]";
+			var audio = $"[{head}:a]";
+
+			if (last > first)
+			{
+				var tailList = ConcatListWriter.Write(segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath));
+				tempFiles.Add(tailList);
+				if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+				args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
+				var tail = input++;
+				video = $"[{head}:v][{tail}:v]concat=n=2:v=1:a=0,";
+				audio = $"[{head}:a][{tail}:a]concat=n=2:v=0:a=1,";
+			}
+
+			var pieceSeconds = (piece.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture);
+			graph.Append($"{video}trim=end_frame={piece.FrameCount},setpts=PTS-STARTPTS[p{p}v];");
+			joined.Append($"[p{p}v]");
+			if (!hasAudio) continue;
+
+			graph.Append($"{audio}atrim=end={pieceSeconds},asetpts=PTS-STARTPTS[p{p}a];");
+			joined.Append($"[p{p}a]");
+		}
+
+		// Timestamps rebuilt from the frame number after the join: concat's own come out a hair off the exact
+		// frame grid, and overlay's shortest=1 then dropped the final frame (measured: 898 of 899) because
+		// it sat just past the overlay pipe's last timestamp. The pipe's are exactly N * den / num.
+		graph.Append($"{joined}concat=n={plan.Pieces.Count}:v=1:a={(hasAudio ? 1 : 0)}[cutv]{(hasAudio ? "[cuta]" : "")};" +
+		             $"[cutv]setpts=N*{den}/{num}/TB,");
+		return new SourceInputs(input, graph.ToString(), hasAudio ? "[cuta]" : null, startSource!, startLocalFrame, true);
 	}
 
 	private static void DeleteTempFiles(List<string> paths)
@@ -335,18 +406,13 @@ public static class FfmpegPipeline
 	}
 
 	/// <summary>
-	///     What AddSourceInputs set up: how many inputs precede the overlay pipe, the filter-graph source
+	///     What AddSourceInputs/AddCutInputs set up: how many inputs precede the overlay pipe, the filter-graph source
 	///     of the main video ("[0:v]" or a concat of two inputs), the -map for audio (null for none), and
 	///     the segment the output starts in plus how many frames into it (for creation_time/timecode).
 	/// </summary>
-	private sealed record SourceInputs(int InputCount, string MainVideo, string? AudioMap, SourceInfo StartSource, long LocalStartFrame = 0);
+	private sealed record SourceInputs(int InputCount, string MainVideo, string? AudioMap, SourceInfo StartSource, long LocalStartFrame = 0,
+		bool EncodeAudio = false);
 }
-
-/// <summary>
-///     Which frames of the source (on the combined timeline of all segments) to render. IsPartial is
-///     anything short of the whole recording - the output then needs an explicit end for its audio.
-/// </summary>
-public sealed record RenderRange(long StartFrame, long FrameCount, bool IsPartial);
 
 /// <summary>
 ///     Export options on top of the source-matched defaults (see OverlaySettings): NVENC preset,

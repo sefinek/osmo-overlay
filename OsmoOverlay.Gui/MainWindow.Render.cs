@@ -25,8 +25,6 @@ public partial class MainWindow
 		// compositing asset, not an alternative final output, so it shouldn't need its own UI.
 		var outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
 
-		var frameLimit = _frameLimit;
-
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
 		LogBox.ClearLog();
@@ -41,19 +39,19 @@ public partial class MainWindow
 		IReadOnlyList<string> inputPaths = _summary?.InputPaths ?? [.. _inputPaths];
 		var progress = new Progress<RenderStatus>(OnProgress);
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
-		var options = new RenderOptions(inputPaths, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
+		List<TimeRange>? cutOuts = CutOutsForRender();
+		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
-			GreenScreen: greenScreen, RangeStartSeconds: _rangeStartSeconds, RangeEndSeconds: _rangeEndSeconds);
+			GreenScreen: greenScreen, CutOuts: cutOuts);
 
 		AppendLog(greenScreen ? "Mode: green screen (HUD only, solid background, no audio)" : "Mode: normal");
 		AppendLog($"Output: {outputPath}");
-		AppendLog($"Encoder: {_detectedEncoder}, frame limit: {(frameLimit is { } fl ? fl.ToString() : "none")}" +
-		          (HasRange ? $", range: {DescribeRange()}" : ""));
+		AppendLog($"Encoder: {_detectedEncoder}, cuts: {(HasCuts ? DescribeCuts() : "none, whole recording")}");
 		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, frameLimit, _rangeStartSeconds, _rangeEndSeconds)}");
+			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, cutOuts ?? [])}");
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -108,21 +106,14 @@ public partial class MainWindow
 		GreenScreenButton.IsEnabled = true;
 	}
 
-	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, int? frameLimit,
-		double? rangeStart, double? rangeEnd)
+	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
 		parts.AddRange(inputPaths.Select(QuoteArg));
 		parts.Add("-o");
 		parts.Add(QuoteArg(outputPath));
-		if (frameLimit is { } limit)
-		{
-			parts.Add("--frames");
-			parts.Add(limit.ToString());
-		}
-
-		if (rangeStart is { } from) parts.AddRange(["--from", from.ToString("0.###", CultureInfo.InvariantCulture)]);
-		if (rangeEnd is { } to) parts.AddRange(["--to", to.ToString("0.###", CultureInfo.InvariantCulture)]);
+		foreach (TimeRange cut in cutOuts)
+			parts.AddRange(["--cut", $"{cut.StartSeconds.ToString("0.###", CultureInfo.InvariantCulture)}-{cut.EndSeconds.ToString("0.###", CultureInfo.InvariantCulture)}"]);
 
 		return string.Join(' ', parts);
 	}

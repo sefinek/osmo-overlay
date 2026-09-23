@@ -22,9 +22,11 @@ public sealed record RenderOptions(
 	string? CameraModel = null,
 	bool GreenScreen = false,
 	// Seconds on the combined timeline of all inputs, rounded to the nearest frame; null = from the
-	// start / to the end. FrameLimit still caps the frame count on top of this.
+	// start / to the end. CutOuts are removed from inside that range (see RenderPlan.Resolve), and
+	// FrameLimit still caps the frame count on top of both.
 	double? RangeStartSeconds = null,
-	double? RangeEndSeconds = null)
+	double? RangeEndSeconds = null,
+	IReadOnlyList<TimeRange>? CutOuts = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
 	{
@@ -138,7 +140,11 @@ public static class RenderJob
 
 			OverlaySettings settings = OverlaySettingsStore.Load();
 			var smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
-			List<DerivedFrame> derived = TelemetryProcessor.Process(rawFrames, smoothGps);
+			var fps = first.Source.Video.Fps;
+			RenderPlan plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
+				fps, segments.TotalFrameCount());
+			// The overlay describes the video as rendered: telemetry moved onto the output's own timeline.
+			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, smoothGps));
 			var startAltitude = derived[0].Raw.AltitudeMeters;
 			var maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
@@ -149,14 +155,9 @@ public static class RenderJob
 				$"Using encoder: {encoder}" +
 				(encoder == "libx265" ? " (NVENC unavailable - rendering on CPU)" : " (GPU)"));
 
-			var fps = first.Source.Video.Fps;
-			RenderRange renderRange = ResolveRange(options, fps, segments.TotalFrameCount());
-			var totalFrames = (int)renderRange.FrameCount;
-			var startSeconds = renderRange.StartFrame / fps;
+			var totalFrames = (int)plan.TotalFrames;
 			Report(RenderPhase.Rendering, $"Rendering {totalFrames} frames to {options.OutputPath}" +
-			                              (renderRange.IsPartial
-				                              ? $" ({FormatTime(startSeconds)} - {FormatTime(startSeconds + totalFrames / fps)} of the recording)..."
-				                              : "..."), 0, totalFrames);
+			                              (plan.IsPartial ? $" ({DescribePlan(plan, fps)} of the recording)..." : "..."), 0, totalFrames);
 
 			IReadOnlyList<OverlayElement> layout =
 				options.Layout ?? LoadActiveLayout(first.Source.Video.Width, first.Source.Video.Height);
@@ -171,10 +172,7 @@ public static class RenderJob
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
-				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.ForRecording(settings, hasGpsFix))
-			{
-				TimelineOffsetSeconds = startSeconds
-			};
+				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.ForRecording(settings, hasGpsFix));
 
 			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 			{
@@ -209,7 +207,7 @@ public static class RenderJob
 			// Green screen has no source recording in it to carry camera metadata over from.
 			// The camera's djmd/dbgi tracks are copied whole (Mp4CameraMetadata) - on a partial render they'd
 			// describe a longer recording than the video they sit next to, so only the non-track parts stay.
-			var keepTracks = !renderRange.IsPartial;
+			var keepTracks = !plan.IsPartial;
 			if (!keepTracks && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack) && settings.PreserveCameraMetadata &&
 			    !options.GreenScreen)
 				Report(RenderPhase.Rendering, "Partial render - the camera's telemetry/debug tracks aren't copied (they cover the whole recording)");
@@ -222,7 +220,7 @@ public static class RenderJob
 			var outputIsOurs = options.Overwrite || !File.Exists(options.OutputPath);
 			var succeeded = false;
 			using Process ffmpeg = FfmpegPipeline.StartRender(segments, options.OutputPath, encoder, options.Overwrite, encode,
-				renderRange, options.GreenScreen);
+				plan, options.GreenScreen);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// `using Process ffmpeg` above only releases managed handles on Dispose - it does NOT
@@ -271,7 +269,7 @@ public static class RenderJob
 					{
 						for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
 						{
-							DerivedFrame frame = TelemetryProcessor.FindNearest(derived, (renderRange.StartFrame + i) / fps);
+							DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
 							if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
 							renderer.RenderInto(frame, pixels);
 							await channel.Writer.WriteAsync(pixels, producerCt);
@@ -445,24 +443,10 @@ public static class RenderJob
 		}
 	}
 
-	internal static RenderRange ResolveRange(RenderOptions options, double fps, long sourceFrames)
+	/// <summary>"01:00.000 - 01:30.000, 02:10.000 - 05:00.000" - the kept pieces on the recording's timeline.</summary>
+	private static string DescribePlan(RenderPlan plan, double fps)
 	{
-		var start = options.RangeStartSeconds is { } startSeconds ? (long)Math.Round(startSeconds * fps) : 0;
-		var end = options.RangeEndSeconds is { } endSeconds ? (long)Math.Round(endSeconds * fps) : sourceFrames;
-		start = Math.Clamp(start, 0, sourceFrames);
-		end = Math.Clamp(end, 0, sourceFrames);
-		if (end <= start)
-			throw new InvalidOperationException(
-				$"The render range is empty ({FormatTime(start / fps)} - {FormatTime(end / fps)}) - the end must come after the start.");
-
-		var count = end - start;
-		if (options.FrameLimit is > 0 and var limit && limit < count) count = limit;
-		return new RenderRange(start, count, start > 0 || count < sourceFrames);
-	}
-
-	private static string FormatTime(double seconds)
-	{
-		return TimeSpan.FromSeconds(seconds).ToString(seconds >= 3600 ? @"h\:mm\:ss\.ff" : @"mm\:ss\.ff");
+		return string.Join(", ", plan.Pieces.Select(p => $"{TimeText.Format(p.SourceStartFrame / fps)} - {TimeText.Format(p.SourceEndFrame / fps)}"));
 	}
 
 	private static void DeleteIncompleteOutput(Process ffmpeg, string outputPath)

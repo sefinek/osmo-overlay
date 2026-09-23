@@ -27,13 +27,13 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(element.X, element.Y);
 		canvas.Scale(_scale, _scale);
 
-		// Falls back to the container's own recording-start tag + elapsed time when this frame has no
+		// Falls back to the container's own recording-start tag + time into the recording when this frame has no
 		// real GPS timestamp (see SourceInfo.ContainerCreationTimeUtc) - approximate (camera clock, not
 		// a GPS-synced one), but still far more useful than "--" for a file that never had a fix at
 		// all. The GUI signals this with a warning icon next to the checkbox (see
 		// MainWindow.RefreshElementCheckboxes) rather than marking it inside the burned-in video text.
 		DateTime? utc = frame.Raw.GpsTimestamp ??
-		                _containerRecordingStartUtc?.AddSeconds(frame.Raw.SampleTimeSeconds);
+		                _containerRecordingStartUtc?.AddSeconds(frame.Raw.RecordingTimeSeconds);
 
 		string dateText;
 		if (utc is not { } resolvedUtc)

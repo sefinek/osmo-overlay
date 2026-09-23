@@ -1,10 +1,10 @@
-using System.Globalization;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 
-string[] options = ["-o", "--frames", "--from", "--to"];
-const string usage = "Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>]\n" +
-                     "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs";
+string[] options = ["-o", "--frames", "--from", "--to", "--cut"];
+const string usage = "Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...]\n" +
+                     "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
+                     "  --cut removes that part from the video and the telemetry; repeat it for several cuts";
 
 if (args.Length == 0)
 {
@@ -17,6 +17,7 @@ var outputPath = "";
 int? frameLimit = null;
 double? rangeStart = null;
 double? rangeEnd = null;
+List<TimeRange> cutOuts = [];
 
 var i = 0;
 while (i < args.Length && !options.Contains(args[i]))
@@ -48,11 +49,15 @@ for (; i < args.Length; i++)
 		case "--frames" when int.TryParse(value, out var parsedFrameLimit) && parsedFrameLimit > 0:
 			frameLimit = parsedFrameLimit;
 			break;
-		case "--from" when TryParseTime(value, out var from):
+		case "--from" when TimeText.TryParse(value, out var from):
 			rangeStart = from;
 			break;
-		case "--to" when TryParseTime(value, out var to):
+		case "--to" when TimeText.TryParse(value, out var to):
 			rangeEnd = to;
+			break;
+		case "--cut" when value.Split('-') is [var cutFrom, var cutTo] &&
+		                  TimeText.TryParse(cutFrom, out var cutStart) && TimeText.TryParse(cutTo, out var cutEnd) && cutEnd > cutStart:
+			cutOuts.Add(new TimeRange(cutStart, cutEnd));
 			break;
 		default:
 			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'.");
@@ -79,7 +84,7 @@ var progress = new Progress<RenderStatus>(status =>
 });
 
 RenderResult result = await RenderJob.RunAsync(
-	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd), progress,
+	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts), progress,
 	CancellationToken.None);
 Console.WriteLine();
 
@@ -94,16 +99,3 @@ var doneMessage = $"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:s
 Console.WriteLine(doneMessage);
 AppLogger.Info(doneMessage);
 return 0;
-
-// Seconds ("90", "90.5") or [h:]mm:ss[.fff] ("1:30", "1:02:03.25").
-static bool TryParseTime(string text, out double seconds)
-{
-	seconds = 0;
-	foreach (var part in text.Split(':'))
-	{
-		if (!double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) || value < 0) return false;
-		seconds = seconds * 60 + value;
-	}
-
-	return text.Split(':').Length <= 3;
-}

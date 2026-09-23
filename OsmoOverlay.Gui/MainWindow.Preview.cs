@@ -1,26 +1,17 @@
 using System.Runtime.InteropServices;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
-using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace OsmoOverlay.Gui;
 
-/// <summary>Live preview: opening/closing PreviewPlayer for a loaded file, the GPS-loss scrubber strip, and the play/pause/seek transport controls.</summary>
+/// <summary>Live preview: opening/closing PreviewPlayer for a loaded file, its timeline (PreviewTimeline: scrubbing, GPS loss, cuts) and the frame display.</summary>
 public partial class MainWindow
 {
-	// Same red used elsewhere in this window for error/invalid states (e.g. the API key hint), reused
-	// here so a GPS-loss mark reads as the same "something's wrong here" signal.
-	private static readonly IBrush GpsLossBrush = Palette.Danger;
-
 	private async Task OpenPreviewAsync(FileSummary summary)
 	{
 		ClosePreview();
@@ -40,20 +31,18 @@ public partial class MainWindow
 			await _previewPlayer.OpenAsync(summary, previewWidth, previewHeight);
 			LoadOverlayPresets(summary.Video.Width, summary.Video.Height);
 
-			PreviewSlider.Maximum = _previewPlayer.Duration.TotalSeconds;
+			PreviewTimeline.Maximum = _previewPlayer.Duration.TotalSeconds;
 			PreviewPlaceholder.IsVisible = false;
-			PlayPauseButton.IsEnabled = true;
-			SetRangeStartButton.IsEnabled = true;
-			SetRangeEndButton.IsEnabled = true;
-			PreviewSlider.IsEnabled = true;
+			TransportPanel.IsEnabled = true;
+			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
+			RefreshCutViews();
+			PreviewTimeline.IsEnabled = true;
 
 			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
-			// flagging red on the scrubber, just this file's normal state (see RunGetSummaryAsync).
-			_gpsLossRanges = _hasGpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
-				? TelemetryProcessor.FindGpsLossRanges(rawFrames)
+			// flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
+			PreviewTimeline.GpsLoss = _hasGpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
+				? [.. TelemetryProcessor.FindGpsLossRanges(rawFrames).Select(r => new TimeRange(r.Start, r.End))]
 				: [];
-			DrawGpsLossMarks();
-			DrawRangeMarks();
 		}
 		catch (Exception ex)
 		{
@@ -65,46 +54,17 @@ public partial class MainWindow
 	private void ClosePreview()
 	{
 		_previewPlayer.Close();
-		PlayPauseButton.Content = "Play";
-		PlayPauseButton.IsEnabled = false;
-		SetRangeStartButton.IsEnabled = false;
-		SetRangeEndButton.IsEnabled = false;
-		PreviewSlider.IsEnabled = false;
+		ShowPlayingState(false);
+		TransportPanel.IsEnabled = false;
+		CutsEditor.Attach(0, 0);
+		PreviewTimeline.IsEnabled = false;
 
 		_previewBitmap = null;
 		PreviewImage.Source = null;
+		CutScrim.IsVisible = false;
 		PreviewPlaceholder.IsVisible = true;
 		_overlayPresetsLoaded = false;
-
-		_gpsLossRanges = [];
-		GpsLossCanvas.Children.Clear();
-	}
-
-	/// <summary>
-	///     Redraws the GPS-loss strip below PreviewSlider from _gpsLossRanges - called both when a new
-	///     file's ranges are computed and whenever GpsLossCanvas is resized (its width, needed to turn a
-	///     [Start,End] seconds range into pixels, isn't known until layout runs).
-	/// </summary>
-	private void DrawGpsLossMarks()
-	{
-		GpsLossCanvas.Children.Clear();
-
-		var width = GpsLossCanvas.Bounds.Width;
-		var duration = PreviewSlider.Maximum;
-		if (width <= 0 || duration <= 0 || _gpsLossRanges.Count == 0) return;
-
-		foreach (var (start, end) in _gpsLossRanges)
-		{
-			var x1 = width * Math.Clamp(start / duration, 0, 1);
-			var x2 = width * Math.Clamp(end / duration, 0, 1);
-			var rect = new AvaloniaRectangle
-			{
-				Width = Math.Max(2, x2 - x1), Height = 4, Fill = GpsLossBrush, RadiusX = 1, RadiusY = 1
-			};
-			Canvas.SetLeft(rect, x1);
-			Canvas.SetTop(rect, 0);
-			GpsLossCanvas.Children.Add(rect);
-		}
+		PreviewTimeline.GpsLoss = [];
 	}
 
 	private void OnPreviewFrameReady(ComposedPreviewFrame frame)
@@ -115,49 +75,59 @@ public partial class MainWindow
 
 		PreviewImage.InvalidateVisual();
 
-		if (!_sliderDragInProgress)
+		if (!_timelineScrubbing)
 		{
-			_suppressSliderEvent = true;
-			PreviewSlider.Value = frame.Position.TotalSeconds;
-			_suppressSliderEvent = false;
+			_suppressTimelineEvent = true;
+			PreviewTimeline.Value = frame.Position.TotalSeconds;
+			_suppressTimelineEvent = false;
 		}
 
-		PreviewTimeText.Text = $"{FormatTime(frame.Position)} / {FormatTime(_previewPlayer.Duration)}";
+		_previewPosition = frame.Position;
+		UpdateCutScrim(frame.Position);
+		UpdatePreviewTimeText();
 	}
 
 	private void OnPreviewPlaybackStopped()
 	{
-		PlayPauseButton.Content = "Play";
+		ShowPlayingState(false);
+		UpdatePreviewTimeText();
 	}
 
-	private static string FormatTime(TimeSpan t)
+	/// <summary>
+	///     Whole seconds while playing (milliseconds would just flicker), milliseconds while paused - that's when
+	///     frame stepping and setting a range or cut need to see exactly which frame is on screen.
+	/// </summary>
+	private void UpdatePreviewTimeText()
 	{
-		return t.ToString(@"mm\:ss");
+		var precise = !_previewPlayer.IsPlaying;
+		PreviewTimeText.Text = $"{FormatTime(_previewPosition, precise)} / {FormatTime(_previewPlayer.Duration, precise)}";
 	}
 
-	private void OnPreviewSliderValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+	private static string FormatTime(TimeSpan t, bool precise)
 	{
-		if (_suppressSliderEvent) return;
+		if (precise) return TimeText.Format(t.TotalSeconds);
+		return t.ToString(t.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss");
+	}
+
+	private void WirePreviewTimeline()
+	{
+		PreviewTimeline.ScrubStarted += () =>
+		{
+			_timelineScrubbing = true;
+			_previewPlayer.BeginScrubDrag();
+		};
+		PreviewTimeline.ScrubEnded += () =>
+		{
+			_timelineScrubbing = false;
+			_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewTimeline.Value));
+		};
+	}
+
+	private void OnPreviewTimelineValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+	{
+		if (_suppressTimelineEvent) return;
 
 		_ = _previewPlayer.RequestSeekAsync(TimeSpan.FromSeconds(e.NewValue));
 	}
 
-	private void OnPreviewSliderPointerPressed(object? sender, PointerPressedEventArgs e)
-	{
-		_sliderDragInProgress = true;
-		_previewPlayer.BeginScrubDrag();
-	}
-
-	private void OnPreviewSliderPointerReleased(object? sender, PointerReleasedEventArgs e)
-	{
-		_sliderDragInProgress = false;
-		_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewSlider.Value));
-	}
-
-	private void OnPlayPauseClick(object? sender, RoutedEventArgs e)
-	{
-		var wasPlaying = _previewPlayer.IsPlaying;
-		_previewPlayer.TogglePlayPause(TimeSpan.FromSeconds(PreviewSlider.Value));
-		if (!wasPlaying) PlayPauseButton.Content = "Pause";
-	}
 }

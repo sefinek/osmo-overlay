@@ -59,14 +59,22 @@
 			<Setter Property="Padding" Value="8,4" />
 			<Setter Property="MinHeight" Value="0" />
 		</Style>
-		<Style Selector="Path.checkIcon">
-			<Setter Property="Width" Value="10" />
-			<Setter Property="Height" Value="10" />
-			<Setter Property="Stretch" Value="Uniform" />
-			<Setter Property="StrokeThickness" Value="3" />
-			<Setter Property="StrokeLineCap" Value="Round" />
-			<Setter Property="StrokeJoin" Value="Round" />
+		<Style Selector="local|IconView.checkIcon">
+			<Setter Property="Width" Value="13" />
+			<Setter Property="Height" Value="13" />
 			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.transport">
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.iconButton">
+			<Setter Property="Padding" Value="9,0" />
+			<Setter Property="VerticalAlignment" Value="Stretch" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
 		</Style>
 		<Style Selector="TextBlock.sectionLabel">
 			<Setter Property="Margin" Value="0,8,0,2" />
@@ -153,7 +161,9 @@
 			<Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
 			<Setter Property="FontSize" Value="14" />
 			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="Margin" Value="8,0,0,0" />
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="Margin" Value="4,0,0,0" />
 			<Setter Property="Cursor" Value="Hand" />
 		</Style>
 		<Style Selector="Border.overlayListItem">
@@ -283,8 +293,12 @@
 									<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
 										<Button Grid.Column="0" Content="Add..." Click="OnAddInputFilesClick"
 										        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-										<Button Grid.Column="1" Content="↑" Click="OnMoveInputUpClick" />
-										<Button Grid.Column="2" Content="↓" Click="OnMoveInputDownClick" />
+										<Button Grid.Column="1" Classes="iconButton" Click="OnMoveInputUpClick" ToolTip.Tip="Move up">
+											<local:IconView Data="{StaticResource IconArrowUp}" Width="14" Height="14" />
+										</Button>
+										<Button Grid.Column="2" Classes="iconButton" Click="OnMoveInputDownClick" ToolTip.Tip="Move down">
+											<local:IconView Data="{StaticResource IconArrowDown}" Width="14" Height="14" />
+										</Button>
 										<Button Grid.Column="3" Content="Remove" Click="OnRemoveInputClick" />
 									</Grid>
 								</StackPanel>
@@ -356,42 +370,42 @@
 									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
 									      ColumnSpacing="8">
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
-										<StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoResolution" Margin="0" />
-											<Path Classes="checkIcon" Name="InfoResolutionCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoResolutionCheck" />
 										</StackPanel>
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Frame rate" />
-										<StackPanel Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoFrameRate" Margin="0" />
-											<Path Classes="checkIcon" Name="InfoFrameRateCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoFrameRateCheck" />
 										</StackPanel>
 
 										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Codec" />
-										<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoCodec" Margin="0" />
-											<Path Classes="checkIcon" Name="InfoCodecCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoCodecCheck" />
 										</StackPanel>
 										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
-										<StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoBitrate" Margin="0" />
-											<Path Classes="checkIcon" Name="InfoBitrateCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoBitrateCheck" />
 										</StackPanel>
 
 										<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Pixel format" />
-										<StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoPixFmt" Margin="0" />
-											<Path Classes="checkIcon" Name="InfoPixFmtCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoPixFmtCheck" />
 										</StackPanel>
 										<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Color" />
-										<StackPanel Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoColor" Margin="0" TextWrapping="Wrap" />
-											<Path Classes="checkIcon" Name="InfoColorCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoColorCheck" />
 										</StackPanel>
 									</Grid>
 
@@ -406,10 +420,10 @@
 										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Channels" />
 										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="InfoAudioChannels" />
 										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
-										<StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoAudioBitrate" Margin="0" />
-											<Path Classes="checkIcon" Name="InfoAudioBitrateCheck" />
+											<local:IconView Classes="checkIcon" Name="InfoAudioBitrateCheck" />
 										</StackPanel>
 									</Grid>
 									<TextBlock Name="InfoAudioNone" Classes="infoValue" Text="None" IsVisible="False" />
@@ -468,42 +482,42 @@
 										<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
 										      ColumnSpacing="8">
 											<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
-											<StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+											<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
 												<TextBlock Classes="infoValue" Name="OutResolution" Margin="0" />
-												<Path Classes="checkIcon" Name="OutResolutionCheck" />
+												<local:IconView Classes="checkIcon" Name="OutResolutionCheck" />
 											</StackPanel>
 											<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Frame rate" />
-											<StackPanel Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+											<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
 												<TextBlock Classes="infoValue" Name="OutFrameRate" Margin="0" />
-												<Path Classes="checkIcon" Name="OutFrameRateCheck" />
+												<local:IconView Classes="checkIcon" Name="OutFrameRateCheck" />
 											</StackPanel>
 
 											<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Codec" />
-											<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+											<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
 												<TextBlock Classes="infoValue" Name="OutCodec" Margin="0" />
-												<Path Classes="checkIcon" Name="OutCodecCheck" />
+												<local:IconView Classes="checkIcon" Name="OutCodecCheck" />
 											</StackPanel>
 											<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
-											<StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+											<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
 												<TextBlock Classes="infoValue" Name="OutBitrate" Margin="0" />
-												<Path Classes="checkIcon" Name="OutBitrateCheck" />
+												<local:IconView Classes="checkIcon" Name="OutBitrateCheck" />
 											</StackPanel>
 
 											<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Pixel format" />
-											<StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+											<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
 												<TextBlock Classes="infoValue" Name="OutPixFmt" Margin="0" />
-												<Path Classes="checkIcon" Name="OutPixFmtCheck" />
+												<local:IconView Classes="checkIcon" Name="OutPixFmtCheck" />
 											</StackPanel>
 											<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Color" />
-											<StackPanel Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+											<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
 												<TextBlock Classes="infoValue" Name="OutColor" Margin="0" TextWrapping="Wrap" />
-												<Path Classes="checkIcon" Name="OutColorCheck" />
+												<local:IconView Classes="checkIcon" Name="OutColorCheck" />
 											</StackPanel>
 										</Grid>
 
@@ -524,9 +538,14 @@
 				<ScrollViewer Name="WidgetSettingsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
 					<StackPanel Spacing="10">
 						<Grid ColumnDefinitions="Auto,*,Auto">
-							<Button Grid.Column="0" Name="WidgetSettingsBackButton" Classes="toolbar" Content="← Back"
+							<Button Grid.Column="0" Name="WidgetSettingsBackButton" Classes="toolbar"
 							        Padding="10,7" FontSize="12" HorizontalAlignment="Left"
-							        Click="OnWidgetSettingsBackClick" />
+							        Click="OnWidgetSettingsBackClick">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
+									<TextBlock Text="Back" VerticalAlignment="Center" />
+								</StackPanel>
+							</Button>
 							<TextBlock Grid.Column="1" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
 								<Run Text="WIDGET SETTINGS -" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" />
 								<Run Name="WidgetSettingsTitleRun" Text="Widget settings" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
@@ -539,6 +558,26 @@
 						<ContentControl Name="WidgetSettingsPanelHost" HorizontalContentAlignment="Stretch" />
 					</StackPanel>
 				</ScrollViewer>
+
+				<ScrollViewer Name="CutsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+					<StackPanel Spacing="10">
+						<Grid ColumnDefinitions="Auto,*,Auto">
+							<Button Grid.Column="0" Classes="toolbar" Padding="10,7" FontSize="12" HorizontalAlignment="Left"
+							        Click="OnCutsBackClick">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
+									<TextBlock Text="Back" VerticalAlignment="Center" />
+								</StackPanel>
+							</Button>
+							<TextBlock Grid.Column="1" Text="CUTS" FontSize="14" FontWeight="SemiBold"
+							           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+							<Button Grid.Column="2" Classes="toolbar" Content="Clear all" Padding="10,7" FontSize="12"
+							        HorizontalAlignment="Right" Click="OnClearCutsClick" ToolTip.Tip="Remove every cut - render the whole recording" />
+						</Grid>
+						<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
+						<local:CutEditor Name="CutsEditor" />
+					</StackPanel>
+				</ScrollViewer>
 			</Grid>
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
@@ -546,8 +585,7 @@
 					<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
 						<Button Name="ToggleGridButton" Classes="previewToolButton active"
 						        ToolTip.Tip="Grid guides">
-							<Path Width="14" Height="14" Stretch="Uniform" Stroke="{StaticResource TextPrimaryBrush}" StrokeThickness="1.3"
-							      Data="M0,4.5 L14,4.5 M0,9.5 L14,9.5 M4.5,0 L4.5,14 M9.5,0 L9.5,14" />
+							<local:IconView Data="{StaticResource IconGrid}" Width="14" Height="14" />
 							<Button.Flyout>
 								<Flyout Placement="Bottom">
 									<StackPanel Spacing="4" Width="150">
@@ -565,17 +603,25 @@
 						</Button>
 						<Button Name="ToggleSnapButton" Classes="previewToolButton active" Click="OnToggleSnapClick"
 						        ToolTip.Tip="Snap widgets to grid">
-							<Grid Width="14" Height="14">
-								<Path Stroke="{StaticResource TextPrimaryBrush}" StrokeThickness="1.2"
-								      Data="M7,0 L7,3.5 M7,10.5 L7,14 M0,7 L3.5,7 M10.5,7 L14,7" />
-								<Ellipse Width="4" Height="4" Fill="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"
-								         VerticalAlignment="Center" />
-							</Grid>
+							<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
+						</Button>
+						<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
+						        ToolTip.Tip="Cut parts out of the render">
+							<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
 						</Button>
 					</StackPanel>
 					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
 						<Grid>
 							<Image Name="PreviewImage" Stretch="Uniform" />
+							<Border Name="CutScrim" Background="{StaticResource ScrimBrush}" IsVisible="False" IsHitTestVisible="False">
+								<Border Background="{StaticResource OnVideoBrush}" BorderBrush="{StaticResource OnVideoBorderBrush}" BorderThickness="1"
+								        CornerRadius="6" Padding="14,8" HorizontalAlignment="Center" VerticalAlignment="Center">
+									<StackPanel Orientation="Horizontal" Spacing="8">
+										<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" VerticalAlignment="Center" />
+										<TextBlock Text="Cut out - not in the render" FontWeight="SemiBold" VerticalAlignment="Center" />
+									</StackPanel>
+								</Border>
+							</Border>
 							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"
 							            Spacing="8">
 								<TextBlock Text="No video loaded" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" />
@@ -605,32 +651,36 @@
 								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton" Content="⚙"
 								        IsVisible="False" Click="OnWidgetGearHoverButtonClick"
 								        ToolTip.Tip="Widget settings" />
-								<Button Name="RemoveWidgetButton" Classes="widgetHoverButton removeWidgetButton" Content="✕"
+								<Button Name="RemoveWidgetButton" Classes="widgetHoverButton removeWidgetButton"
 								        IsVisible="False" Click="OnRemoveWidgetButtonClick"
-								        ToolTip.Tip="Remove from overlay" />
+								        ToolTip.Tip="Remove from overlay">
+									<local:IconView Data="{StaticResource IconClose}" Width="9" Height="9" />
+								</Button>
 							</Canvas>
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
-						<Button Grid.Column="0" Name="PlayPauseButton" Content="Play" Click="OnPlayPauseClick"
-						        IsEnabled="False" />
-						<Grid Grid.Column="1">
-							<Canvas Name="RangeCanvas" IsHitTestVisible="False" Height="12" VerticalAlignment="Center" />
-							<Slider Name="PreviewSlider" Minimum="0" Maximum="1" IsEnabled="False"
-							        VerticalAlignment="Center" ValueChanged="OnPreviewSliderValueChanged"
-							        PointerPressed="OnPreviewSliderPointerPressed"
-							        PointerReleased="OnPreviewSliderPointerReleased" />
-							<Canvas Name="GpsLossCanvas" IsHitTestVisible="False" Height="4" VerticalAlignment="Center" />
-						</Grid>
-						<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-							<Button Name="SetRangeStartButton" Content="In" Click="OnSetRangeStartClick" IsEnabled="False"
-							        ToolTip.Tip="Start the render at the current frame (I)" />
-							<Button Name="SetRangeEndButton" Content="Out" Click="OnSetRangeEndClick" IsEnabled="False"
-							        ToolTip.Tip="End the render at the current frame, this frame included (O)" />
-							<Button Name="ClearRangeButton" Content="✕" Click="OnClearRangeClick" IsVisible="False" />
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+						<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
+							<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="Go to start (Home)">
+								<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />
+							</Button>
+							<Button Classes="transport" Click="OnPreviousFrameClick" ToolTip.Tip="Previous frame (Left)">
+								<local:IconView Data="{StaticResource IconFramePrevious}" Width="14" Height="14" />
+							</Button>
+							<Button Name="PlayPauseButton" Classes="transport" Click="OnPlayPauseClick" ToolTip.Tip="Play (Space)">
+								<local:IconView Name="PlayPauseIcon" Data="{StaticResource IconPlay}" Width="14" Height="14" />
+							</Button>
+							<Button Classes="transport" Click="OnNextFrameClick" ToolTip.Tip="Next frame (Right)">
+								<local:IconView Data="{StaticResource IconFrameNext}" Width="14" Height="14" />
+							</Button>
+							<Button Classes="transport" Click="OnGoToEndClick" ToolTip.Tip="Go to end (End)">
+								<local:IconView Data="{StaticResource IconSkipEnd}" Width="14" Height="14" />
+							</Button>
 						</StackPanel>
-						<TextBlock Grid.Column="3" Name="PreviewTimeText" Classes="infoLabel" Margin="0"
+						<local:PreviewTimeline Grid.Column="1" Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
+						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
+						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" MinWidth="150" TextAlignment="Right"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />
 					</Grid>
 				</Grid>

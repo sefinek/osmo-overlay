@@ -18,7 +18,13 @@ public sealed record TelemetryFrame(
 	// Latitude/Longitude/AltitudeMeters were carried forward by GpsForwardFill instead - not raised
 	// for the normal, much more frequent case of the GPS receiver simply not having reported a *new*
 	// fix yet at this exact video frame (see GpsInterpolation for that one).
-	bool HasGpsFix = true)
+	bool HasGpsFix = true,
+	// Set only on frames moved onto a cut render's own timeline (OutputTimeline.MapFrames), where
+	// SampleTimeSeconds becomes the time in the output video - this keeps where it was in the recording.
+	double? SourceTimeSeconds = null)
 {
 	public double GForce => Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
+
+	/// <summary>Seconds since the recording's own first frame, whichever timeline SampleTimeSeconds is on.</summary>
+	public double RecordingTimeSeconds => SourceTimeSeconds ?? SampleTimeSeconds;
 }

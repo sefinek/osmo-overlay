@@ -5,9 +5,12 @@ namespace OsmoOverlay.Core.Preview;
 
 public static class PreviewCompositor
 {
-	/// <summary>Writes into <paramref name="result" />, which must be exactly canvasWidth * canvasHeight * 4 bytes.</summary>
+	/// <summary>
+	///     Writes into <paramref name="result" />, which must be exactly canvasWidth * canvasHeight * 4 bytes.
+	///     A null overlay leaves the plain video.
+	/// </summary>
 	public static void Compose(byte[] result, int canvasWidth, int canvasHeight, byte[] videoBgra, int videoStride,
-		byte[] overlayBgra, int overlayWidth, int overlayHeight)
+		byte[]? overlayBgra, int overlayWidth, int overlayHeight)
 	{
 		var canvasInfo = new SKImageInfo(canvasWidth, canvasHeight, SKColorType.Bgra8888, SKAlphaType.Opaque);
 		var rowBytes = canvasInfo.RowBytes;
@@ -22,6 +25,8 @@ public static class PreviewCompositor
 		else
 			for (var y = 0; y < canvasHeight; y++)
 				Buffer.BlockCopy(videoBgra, y * videoStride, result, y * rowBytes, rowBytes);
+
+		if (overlayBgra is null) return;
 
 		GCHandle resultPin = GCHandle.Alloc(result, GCHandleType.Pinned);
 		GCHandle overlayPin = GCHandle.Alloc(overlayBgra, GCHandleType.Pinned);

@@ -15,7 +15,7 @@ public static class TelemetryProcessor
 	// Reference window for speed/heading/gradient, and the smoothing time constants for the
 	// on-screen pitch/G-force readouts. All expressed in seconds (not sample count) so behavior
 	// stays consistent regardless of the camera's telemetry sampling rate.
-	private const double SpeedWindowSeconds = 1.0;
+	internal const double SpeedWindowSeconds = 1.0;
 	private const double PitchTimeConstantSeconds = 0.3;
 	private const double GForceTimeConstantSeconds = 0.3;
 
@@ -24,8 +24,7 @@ public static class TelemetryProcessor
 		if (smoothGps) frames = GpsInterpolation.Apply(frames);
 
 		var result = new List<DerivedFrame>(frames.Count);
-		double cumulativeDistance = 0;
-		var lastDistanceIndex = 0;
+		var cumulativeDistances = SteppedDistances(frames);
 		var refIndex = 0;
 
 		var originLat = frames[0].Latitude;
@@ -64,14 +63,6 @@ public static class TelemetryProcessor
 					: 0;
 			var gradient = horizontalMeters > 0.5 ? verticalMeters / horizontalMeters * 100.0 : 0;
 
-			if (current.SampleTimeSeconds - frames[lastDistanceIndex].SampleTimeSeconds >= SpeedWindowSeconds)
-			{
-				TelemetryFrame prevStep = frames[lastDistanceIndex];
-				cumulativeDistance += TelemetryMath.HaversineMeters(
-					prevStep.Latitude, prevStep.Longitude, current.Latitude, current.Longitude);
-				lastDistanceIndex = i;
-			}
-
 			// AccelX tracks forward/backward tilt (true pitch), not left/right lean - confirmed by
 			// extracting frames from a controlled tilt-test recording: large AccelX swings show the
 			// camera pitching to floor/ceiling with a level horizon, while large AccelY swings show
@@ -103,11 +94,37 @@ public static class TelemetryProcessor
 			var localEast = (current.Longitude - originLon) * metersPerDegLon;
 			var localNorth = (current.Latitude - originLat) * metersPerDegLat;
 
-			result.Add(new DerivedFrame(current, speedKmh, heading, gradient, cumulativeDistance, smoothedPitch, sun,
+			result.Add(new DerivedFrame(current, speedKmh, heading, gradient, cumulativeDistances[i], smoothedPitch, sun,
 				localEast, localNorth, smoothedGForce));
 		}
 
 		return result;
+	}
+
+	/// <summary>
+	///     Running distance per frame, advanced in steps of at least SpeedWindowSeconds - summing every
+	///     sample-to-sample hop at 60 Hz would add up GPS jitter into distance never travelled. The last frame
+	///     also gets the final partial step (up to a second of travel), so the total is complete.
+	/// </summary>
+	internal static double[] SteppedDistances(IReadOnlyList<TelemetryFrame> frames)
+	{
+		var distances = new double[frames.Count];
+		double total = 0;
+		var lastStep = 0;
+		for (var i = 1; i < frames.Count; i++)
+		{
+			var isLast = i == frames.Count - 1;
+			if (frames[i].SampleTimeSeconds - frames[lastStep].SampleTimeSeconds >= SpeedWindowSeconds || isLast)
+			{
+				total += TelemetryMath.HaversineMeters(frames[lastStep].Latitude, frames[lastStep].Longitude,
+					frames[i].Latitude, frames[i].Longitude);
+				lastStep = i;
+			}
+
+			distances[i] = total;
+		}
+
+		return distances;
 	}
 
 	private static double Ema(double dt, double timeConstantSeconds)
@@ -194,18 +211,10 @@ public static class TelemetryProcessor
 			maxGForce = Math.Max(maxGForce, f.Raw.GForce);
 		}
 
-		// CumulativeDistanceMeters only advances in whole SpeedWindowSeconds steps (see Process), so the
-		// last partial step - up to a second of travel - isn't in it yet. The total adds it: from the frame
-		// where the running distance last changed to the final frame.
-		var lastStep = frames.Count - 1;
-		while (lastStep > 0 && frames[lastStep - 1].CumulativeDistanceMeters == last.CumulativeDistanceMeters) lastStep--;
-		var totalDistance = last.CumulativeDistanceMeters + TelemetryMath.HaversineMeters(
-			frames[lastStep].Raw.Latitude, frames[lastStep].Raw.Longitude, last.Raw.Latitude, last.Raw.Longitude);
-
 		return new TelemetrySummary(
 			frames.Count,
 			last.Raw.SampleTimeSeconds - first.Raw.SampleTimeSeconds,
-			totalDistance,
+			last.CumulativeDistanceMeters,
 			maxSpeed,
 			minAltitude,
 			maxAltitude,

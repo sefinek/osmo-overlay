@@ -80,11 +80,10 @@ public partial class SettingsWindow : Window
 			: "Config last updated: never";
 	}
 
-	public SettingsWindow(int? frameLimit, bool showWatermark, bool smoothGpsMotion, int previewMaxWidth,
+	public SettingsWindow(bool showWatermark, bool smoothGpsMotion, int previewMaxWidth,
 		string? mapTileUrlTemplate, string? mapAttribution, bool mapShowAttribution, string? mapApiKey,
 		RouteIntroSettings routeIntro) : this()
 	{
-		FrameLimitBox.Value = frameLimit;
 		ShowWatermarkCheck.IsChecked = showWatermark;
 		SmoothGpsMotionCheck.IsChecked = smoothGpsMotion;
 		PreviewQualityCombo.SelectedItem =
@@ -179,7 +178,6 @@ public partial class SettingsWindow : Window
 		};
 	}
 
-	public int? FrameLimit => FrameLimitBox.Value is { } v and > 0 ? (int)v : null;
 	public bool ShowWatermark => ShowWatermarkCheck.IsChecked == true;
 	public bool SmoothGpsMotion => SmoothGpsMotionCheck.IsChecked == true;
 	public int PreviewMaxWidth => (PreviewQualityCombo.SelectedItem as PreviewQualityOption ?? PreviewQualityOptions[2]).MaxWidth;

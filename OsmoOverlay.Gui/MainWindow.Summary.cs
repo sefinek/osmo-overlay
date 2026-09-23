@@ -6,7 +6,6 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Gui.Native;
-using AvaloniaPath = Avalonia.Controls.Shapes.Path;
 
 namespace OsmoOverlay.Gui;
 
@@ -16,8 +15,6 @@ public partial class MainWindow
 	// Simple check/cross tick marks (24x24 viewbox) drawn as vector geometry rather than a Unicode
 	// glyph - a ✓/✗ character can silently fall back to a different font with its own baseline,
 	// throwing off vertical alignment next to the surrounding text in a way that varies by system.
-	private static readonly Geometry CheckGeometry = Geometry.Parse("M4.5 12.75l6 6 9-13.5");
-	private static readonly Geometry CrossGeometry = Geometry.Parse("M6 18L18 6M6 6l12 12");
 
 	private async Task RunGetSummaryAsync()
 	{
@@ -29,8 +26,8 @@ public partial class MainWindow
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
 		_hasGpsFix = false;
-		// A range belongs to the recording it was set on.
-		ClearRange();
+		// Cuts belong to the recording they were set on.
+		ClearCuts();
 		_hasGpsTimestamp = false;
 		_hasContainerTime = false;
 		LogBox.ClearLog();
@@ -82,8 +79,8 @@ public partial class MainWindow
 
 				if (!_hasGpsFix)
 				{
-					// No fix anywhere isn't an "anomaly" to flag red on the scrubber - it's just this
-					// recording's normal state (e.g. filmed indoors) - see OpenPreviewAsync/DrawGpsLossMarks.
+					// No fix anywhere isn't an "anomaly" to flag on the preview timeline - it's just this
+					// recording's normal state (e.g. filmed indoors) - see OpenPreviewAsync.
 					// Still a real limitation worth flagging in the log (Warn), same amber as the GUI's
 					// own "No GPS fix" pill/tooltip elsewhere.
 					AppendLog("GPS: not present in this recording - position-based widgets (Compass, Map, " +
@@ -91,13 +88,10 @@ public partial class MainWindow
 				}
 				else
 				{
-					// Logged here from a local, not _gpsLossRanges directly - OpenPreviewAsync (called
-					// further down) starts with ClosePreview(), which resets _gpsLossRanges to [] before
-					// recomputing its own copy, so writing the field here would just get discarded.
 					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
 					if (gpsLossRanges.Count > 0)
 						AppendLog($"GPS signal lost: {gpsLossRanges.Count} range(s), {gpsLossRanges.Sum(r => r.End - r.Start):0.0}s total " +
-						          "(shown as red marks on the preview scrubber)", LogLevel.Warn);
+						          "(shown as amber marks under the preview timeline)", LogLevel.Warn);
 					else
 						AppendLog("GPS signal: no loss detected");
 				}
@@ -239,16 +233,16 @@ public partial class MainWindow
 	///     recommendedDescription is the human-readable recommended value (e.g. "at least 70 Mbps"),
 	///     used to phrase the tooltip depending on whether this field actually matches it.
 	/// </summary>
-	private static void SetCheck(AvaloniaPath path, bool? ok, string? recommendedDescription)
+	private static void SetCheck(IconView icon, bool? ok, string? recommendedDescription)
 	{
-		path.Data = ok switch { true => CheckGeometry, false => CrossGeometry, null => null };
-		path.Stroke = ok switch
+		icon.Data = ok switch { true => Icons.Check, false => Icons.Close, null => null };
+		icon.Foreground = ok switch
 		{
 			true => Palette.Success,
 			false => Palette.Danger,
 			null => null
 		};
-		ToolTip.SetTip(path, ok switch
+		ToolTip.SetTip(StatusRow(icon), ok switch
 		{
 			true => $"Nice - this is the recommended setting for your camera ({recommendedDescription}).",
 			false => $"Not the recommended setting for your camera - recommended: {recommendedDescription}.",
@@ -306,13 +300,14 @@ public partial class MainWindow
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
 	{
 		var fps = summary.Video.Fps;
-		var sourceFrames = summary.TotalFrameCount ?? (long)Math.Ceiling(summary.DurationSeconds * fps);
-		var totalFrames = PlannedFrameCount(sourceFrames, fps);
+		var totalFrames = PlannedFrameCount();
 
 		OutEncoder.Text = encoder + (encoder == "libx265" ? " (CPU)" : " (GPU)");
-		OutAudio.Text = summary.Audio is not null ? "Copied (no re-encode)" : "None";
-		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) +
-		                     (HasRange ? $" (range {DescribeRange()})" : "") + (_frameLimit is not null ? " (frame limit)" : "");
+		// Same condition FfmpegPipeline uses: pieces joined by the concat filter can't have their audio stream-copied.
+		OutAudio.Text = summary.Audio is null ? "None"
+			: _outputTimeline?.Plan.Pieces.Count > 1 ? "AAC at the source bitrate (re-encoded to join the cuts)"
+			: "Copied (no re-encode)";
+		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) + (HasCuts ? $" ({DescribeCuts()})" : "");
 
 		// Speed measured by the last full render of this same shape (RenderSpeedHistory) - there's no
 		// meaningful way to predict it before the first one, so say so instead of guessing.
@@ -401,11 +396,20 @@ public partial class MainWindow
 		OutMeasuredFileSize.Text = FormatHelper.FormatBytes(new FileInfo(outputPath).Length);
 	}
 
-	private static void SetMatchCheck(AvaloniaPath path, bool matches)
+	private static void SetMatchCheck(IconView icon, bool matches)
 	{
-		path.Data = matches ? CheckGeometry : CrossGeometry;
-		path.Stroke = matches ? Palette.Success : Palette.Danger;
-		ToolTip.SetTip(path, matches ? "Matches the source file." : "Differs from the source file.");
+		icon.Data = matches ? Icons.Check : Icons.Close;
+		icon.Foreground = matches ? Palette.Success : Palette.Danger;
+		ToolTip.SetTip(StatusRow(icon), matches ? "Matches the source file." : "Differs from the source file.");
+	}
+
+	/// <summary>
+	///     The value + icon row a status icon sits in - the tooltip goes there so it shows over the whole row,
+	///     not just the icon itself (it's only hit-testable where it actually draws).
+	/// </summary>
+	private static Control StatusRow(IconView icon)
+	{
+		return icon.Parent as Control ?? icon;
 	}
 
 	private void SetPlannedFramesVisible(bool visible)

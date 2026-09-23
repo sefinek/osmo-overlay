@@ -12,6 +12,7 @@ internal static class Palette
 	public static IBrush Danger => Brush("DangerBrush");
 	public static IBrush TextMuted => Brush("TextMutedBrush");
 	public static IBrush Stroke => Brush("StrokeBrush");
+	public static IBrush StrokeStrong => Brush("StrokeStrongBrush");
 	public static IBrush SubtleFill => Brush("SubtleFillBrush");
 
 	/// <summary>A palette color as a translucent fill, e.g. a status pill's background behind text in the same color.</summary>

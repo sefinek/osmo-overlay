@@ -23,7 +23,12 @@ public sealed class PreviewPlayer : IDisposable
 	// Composed frames in flight: the playback channel, the one being composed and the one being published.
 	private readonly FrameBufferPool _composedBuffers = new(PlaybackPrefetchFrames + 2);
 	private readonly Lock _lock = new();
+	// Telemetry on the output's timeline (see SetOutputTimeline) - what the renderer draws from.
 	private IReadOnlyList<DerivedFrame>? _derivedFrames;
+	// The same telemetry on the recording's own timeline, to re-map from when the cuts change.
+	private IReadOnlyList<DerivedFrame>? _recordingFrames;
+	private Func<IReadOnlyList<DerivedFrame>, IReadOnlyList<OverlayElement>, OverlayRenderer>? _createRenderer;
+	private OverlaySettings? _settings;
 	private bool _hasContainerTime;
 	private bool _hasGpsFix;
 	private bool _hasGpsTimestamp;
@@ -38,8 +43,11 @@ public sealed class PreviewPlayer : IDisposable
 	private CancellationTokenSource? _routeIntroPrepareCts;
 	private CancellationTokenSource? _scrubCts;
 	// Kept across Close/OpenAsync (the GUI reopens the preview for some settings changes) - only
-	// SetTimelineOffset changes it.
-	private double _timelineOffsetSeconds;
+	// SetOutputTimeline changes it. Null = the whole recording.
+	private OutputTimeline? _outputTimeline;
+	// A renderer replaced by SetOutputTimeline while playback may still hold it for one last frame -
+	// disposed on the next replacement or Close instead of right away.
+	private OverlayRenderer? _retiredRenderer;
 	private VideoFrameSource? _video;
 
 	public bool IsPlaying => _playbackCts is not null;
@@ -66,8 +74,11 @@ public sealed class PreviewPlayer : IDisposable
 		// is picked up on every open; kept as _derivedFrames so every call below uses this same
 		// smoothed list instead of falling back to the cached, unsmoothed one.
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		List<DerivedFrame> derivedFrames = TelemetryProcessor.Process(rawFrames, settings.SmoothGpsMotion);
+		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, settings.SmoothGpsMotion);
+		IReadOnlyList<DerivedFrame> derivedFrames = MapToOutput(recordingFrames);
+		_recordingFrames = recordingFrames;
 		_derivedFrames = derivedFrames;
+		_settings = settings;
 		_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
 		_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
 		_hasContainerTime = summary.ContainerRecordingStartUtc is not null;
@@ -87,14 +98,13 @@ public sealed class PreviewPlayer : IDisposable
 		IReadOnlyList<OverlayElement> layout =
 			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix,
 				_hasGpsTimestamp, _hasContainerTime);
-		var renderer = new OverlayRenderer(summary.Video.Width, summary.Video.Height,
-			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0,
+		var hasGpsFix = _hasGpsFix;
+		_createRenderer = (frames, currentLayout) => new OverlayRenderer(summary.Video.Width, summary.Video.Height,
+			frames[0].Raw.AltitudeMeters, currentLayout, frames, TelemetryProcessor.Summarize(frames).MaxSpeedKmh,
 			settings.ShowWatermark, summary.CameraModel, summary.ContainerRecordingStartUtc,
 			settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution, settings.MapApiKey,
-			RouteIntroSettings.ForRecording(settings, _hasGpsFix))
-		{
-			TimelineOffsetSeconds = _timelineOffsetSeconds
-		};
+			RouteIntroSettings.ForRecording(settings, hasGpsFix));
+		OverlayRenderer renderer = _createRenderer(derivedFrames, layout);
 
 		_video = video;
 		_renderer = renderer;
@@ -110,7 +120,13 @@ public sealed class PreviewPlayer : IDisposable
 			await Task.Run(() => DecodeSeekCore(video, renderer, derivedFrames, TimeSpan.Zero, CancellationToken.None));
 		if (first is not null) Publish(first);
 
-		if (layout.Any(e => e is MapWidgetElement { Visible: true }))
+		StartMapPreparation(renderer);
+	}
+
+	/// <summary>Map/route-intro tiles for a (new) renderer, fetched in the background - see OpenAsync.</summary>
+	private void StartMapPreparation(OverlayRenderer renderer)
+	{
+		if (renderer.Layout.Any(e => e is MapWidgetElement { Visible: true }))
 		{
 			_mapPrepareCts?.Cancel();
 			var mapCts = new CancellationTokenSource();
@@ -118,13 +134,53 @@ public sealed class PreviewPlayer : IDisposable
 			_ = PrepareMapInBackgroundAsync(renderer, mapCts.Token);
 		}
 
-		if (settings.ShowRouteIntro && _hasGpsFix)
+		if (_settings is { ShowRouteIntro: true } && _hasGpsFix)
 		{
 			_routeIntroPrepareCts?.Cancel();
 			var routeIntroCts = new CancellationTokenSource();
 			_routeIntroPrepareCts = routeIntroCts;
 			_ = PrepareRouteIntroInBackgroundAsync(renderer, routeIntroCts.Token);
 		}
+	}
+
+	/// <summary>
+	///     Shows the preview the way a cut render will come out (see OutputTimeline): inside kept pieces the
+	///     overlay is drawn from telemetry on the output's timeline (route intro at the first kept frame,
+	///     distance counting only kept parts, ...), cut-out moments show the plain video when scrubbed to and
+	///     are skipped by playback (PlaybackStretches). Null = the whole
+	///     recording. Stats like total distance are baked into the renderer, so it's rebuilt here - playback
+	///     is paused first, since it holds the renderer it started with.
+	/// </summary>
+	public void SetOutputTimeline(OutputTimeline? timeline)
+	{
+		Pause();
+
+		OverlayRenderer? renderer;
+		lock (_lock)
+		{
+			_outputTimeline = timeline;
+			if (_renderer is null || _recordingFrames is null || _createRenderer is null) return;
+
+			IReadOnlyList<DerivedFrame> frames = MapToOutput(_recordingFrames);
+			renderer = _createRenderer(frames, _renderer.Layout);
+			_retiredRenderer?.Dispose();
+			_retiredRenderer = _renderer;
+			_renderer = renderer;
+			_derivedFrames = frames;
+
+			if (_lastVideoFrame is { } videoFrame)
+			{
+				ComposedPreviewFrame? composed = Compose(renderer, frames, videoFrame, _lastPosition);
+				if (composed is not null) Publish(composed);
+			}
+		}
+
+		StartMapPreparation(renderer);
+	}
+
+	private IReadOnlyList<DerivedFrame> MapToOutput(IReadOnlyList<DerivedFrame> recordingFrames)
+	{
+		return _outputTimeline?.MapFrames(recordingFrames) is { Count: > 0 } mapped ? mapped : recordingFrames;
 	}
 
 	public void Close()
@@ -144,11 +200,15 @@ public sealed class PreviewPlayer : IDisposable
 			_video = null;
 			_renderer?.Dispose();
 			_renderer = null;
+			_retiredRenderer?.Dispose();
+			_retiredRenderer = null;
 			_lastVideoFrame = null;
 			_overlayBuffer = null;
 		}
 
 		_derivedFrames = null;
+		_recordingFrames = null;
+		_createRenderer = null;
 	}
 
 	public void TogglePlayPause(TimeSpan currentPosition)
@@ -172,7 +232,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		var cts = new CancellationTokenSource();
 		_playbackCts = cts;
-		_ = RunPlaybackAsync(_video, _renderer, _derivedFrames, fromPosition, cts);
+		List<PlaybackStretch> stretches = PlaybackStretches(_outputTimeline, fromPosition, _video.Duration, _video.Fps);
+		_ = RunPlaybackAsync(_video, _renderer, _derivedFrames, stretches, cts);
 	}
 
 	public void Pause()
@@ -319,24 +380,6 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
-	/// <summary>
-	///     Where a range render would start (OverlayRenderer.TimelineOffsetSeconds), so the preview shows the
-	///     route intro/watermark/widget timing the way that render will. Recomposes the current frame in place.
-	/// </summary>
-	public void SetTimelineOffset(double seconds)
-	{
-		lock (_lock)
-		{
-			_timelineOffsetSeconds = seconds;
-			if (_renderer is null) return;
-			_renderer.TimelineOffsetSeconds = seconds;
-
-			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
-			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) Publish(composed);
-		}
-	}
-
 	/// <summary>Mirrors SetLayout: lets Settings toggle the watermark live without reopening the file.</summary>
 	public void SetShowWatermark(bool show)
 	{
@@ -396,19 +439,18 @@ public sealed class PreviewPlayer : IDisposable
 	///     nothing needs to be discarded to "catch up" from a slow start.
 	/// </summary>
 	private async Task RunPlaybackAsync(VideoFrameSource video, OverlayRenderer renderer,
-		IReadOnlyList<DerivedFrame> frames, TimeSpan startPosition, CancellationTokenSource ownCts)
+		IReadOnlyList<DerivedFrame> frames, IReadOnlyList<PlaybackStretch> stretches, CancellationTokenSource ownCts)
 	{
 		CancellationToken ct = ownCts.Token;
 
 		try
 		{
-			using VideoPlaybackStream stream = await Task.Run(() => video.OpenPlaybackStream(startPosition, ct), ct);
 			// See HighResolutionTimer - default Windows timer resolution otherwise makes the Task.Delay
 			// below overshoot by several ms per frame, which is most of this loop's entire real-time
 			// budget on a demanding (e.g. 4K60) source.
 			using var highResTimer = new HighResolutionTimer();
 
-			var channel = Channel.CreateBounded<ComposedPreviewFrame>(
+			var channel = Channel.CreateBounded<PlaybackFrame>(
 				new BoundedChannelOptions(PlaybackPrefetchFrames) { SingleReader = true, SingleWriter = true });
 
 			// Linked, not just `ct` directly: if the consumer loop below stops for a reason that has
@@ -417,24 +459,26 @@ public sealed class PreviewPlayer : IDisposable
 			// consumer's finally would then hang too. Cancelling this in that finally, unconditionally,
 			// guarantees the producer can always be unblocked regardless of why the consumer stopped.
 			using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-			Task producer = Task.Run(
-				() => ProduceFramesAsync(stream, renderer, frames, video.Duration, channel.Writer, producerCts.Token),
+			Task<string?> producer = Task.Run(
+				() => ProduceFramesAsync(video, renderer, frames, stretches, channel.Writer, producerCts.Token),
 				producerCts.Token);
 
+			string? stoppedEarly = null;
 			try
 			{
-				// Not started until the first frame actually arrives - opening the stream and an
+				// The clock restarts on the first frame of every stretch - opening a stream and an
 				// accurate -ss seek into the middle of a segment can each take a real chunk of
-				// wall-clock time on their own, and none of that should be charged against the very
-				// first delay calculation below.
-				Stopwatch? sw = null;
-				TimeSpan clockBase = startPosition;
+				// wall-clock time on their own, and none of that should be charged against the frames
+				// after it (they'd otherwise be shown back to back to catch up).
+				Stopwatch sw = new();
+				TimeSpan clockBase = TimeSpan.Zero;
 
-				await foreach (ComposedPreviewFrame composed in channel.Reader.ReadAllAsync(ct))
+				await foreach (PlaybackFrame playbackFrame in channel.Reader.ReadAllAsync(ct))
 				{
-					if (sw is null)
+					ComposedPreviewFrame composed = playbackFrame.Composed;
+					if (playbackFrame.StartsStretch)
 					{
-						sw = Stopwatch.StartNew();
+						sw.Restart();
 						clockBase = composed.Position;
 					}
 					else
@@ -448,25 +492,19 @@ public sealed class PreviewPlayer : IDisposable
 			}
 			finally
 			{
-				// Must finish before `stream` is disposed below (`using`) - the producer may still
-				// be mid-read on it otherwise, racing the process kill/dispose against that read.
-				// Any real failure was already observed via the channel (ReadAllAsync rethrows it),
-				// so a second throw here would only be a duplicate.
+				// Any real failure was already observed via the channel (ReadAllAsync rethrows it), so
+				// a second throw here would only be a duplicate.
 				producerCts.Cancel();
 				try
 				{
-					await producer;
+					stoppedEarly = await producer;
 				}
 				catch
 				{
 				}
 			}
 
-			if (stream.Position < video.Duration - TimeSpan.FromSeconds(1))
-			{
-				var stderr = await stream.StderrTask;
-				if (!string.IsNullOrWhiteSpace(stderr)) Message?.Invoke($"ffmpeg stopped early: {stderr}");
-			}
+			if (stoppedEarly is not null) Message?.Invoke($"ffmpeg stopped early: {stoppedEarly}");
 		}
 		catch (OperationCanceledException)
 		{
@@ -485,27 +523,48 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
-	private async Task ProduceFramesAsync(VideoPlaybackStream stream, OverlayRenderer renderer,
-		IReadOnlyList<DerivedFrame> frames, TimeSpan duration, ChannelWriter<ComposedPreviewFrame> writer,
+	/// <summary>Plays the stretches one after another, one ffmpeg stream each; returns ffmpeg's stderr if a stream ended well before its stretch did.</summary>
+	private async Task<string?> ProduceFramesAsync(VideoFrameSource video, OverlayRenderer renderer,
+		IReadOnlyList<DerivedFrame> frames, IReadOnlyList<PlaybackStretch> stretches, ChannelWriter<PlaybackFrame> writer,
 		CancellationToken ct)
 	{
+		var halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
 		try
 		{
-			while (!ct.IsCancellationRequested)
+			foreach (PlaybackStretch stretch in stretches)
 			{
-				ComposedPreviewFrame? composed;
-				lock (_lock)
+				using VideoPlaybackStream stream = video.OpenPlaybackStream(stretch.Start, ct);
+				var startsStretch = true;
+				var ended = false;
+				while (!ct.IsCancellationRequested)
 				{
-					VideoFrame? videoFrame = stream.TryReadNextFrame();
-					composed = videoFrame is null ? null : Compose(renderer, frames, videoFrame, stream.Position);
+					ComposedPreviewFrame? composed = null;
+					lock (_lock)
+					{
+						VideoFrame? videoFrame = stream.TryReadNextFrame();
+						if (videoFrame is null)
+							ended = true;
+						else if (stream.Position >= stretch.End - halfFrame)
+							video.Recycle(videoFrame);
+						else
+							composed = Compose(renderer, frames, videoFrame, stream.Position);
+					}
+
+					if (composed is null) break;
+
+					// Backpressure, not held under _lock - once the channel is full this waits for the
+					// consumer to drain a slot, which can legitimately take a while (that's the pacing
+					// working as intended), and _lock is needed by SetLayout/scrub/etc. in the meantime.
+					await writer.WriteAsync(new PlaybackFrame(composed, startsStretch), ct);
+					startsStretch = false;
 				}
 
-				if (composed is null || composed.Position >= duration) break;
-
-				// Backpressure, not held under _lock - once the channel is full this waits for the
-				// consumer to drain a slot, which can legitimately take a while (that's the pacing
-				// working as intended), and _lock is needed by SetLayout/scrub/etc. in the meantime.
-				await writer.WriteAsync(composed, ct);
+				if (ended && !ct.IsCancellationRequested && stream.Position < stretch.End - TimeSpan.FromSeconds(1))
+				{
+					var stderr = await stream.StderrTask;
+					writer.TryComplete();
+					return string.IsNullOrWhiteSpace(stderr) ? null : stderr;
+				}
 			}
 
 			writer.TryComplete();
@@ -518,7 +577,35 @@ public sealed class PreviewPlayer : IDisposable
 		{
 			writer.TryComplete(ex);
 		}
+
+		return null;
 	}
+
+	/// <summary>
+	///     What Play covers from a position: the rest of the recording, or with cuts (SetOutputTimeline) only the
+	///     kept pieces from there on - the cut-out parts are skipped, the way the render leaves them out.
+	/// </summary>
+	private static List<PlaybackStretch> PlaybackStretches(OutputTimeline? timeline, TimeSpan from, TimeSpan duration, double fps)
+	{
+		if (timeline is null) return [new PlaybackStretch(from, duration)];
+
+		List<PlaybackStretch> stretches = [];
+		var position = from.TotalSeconds;
+		while (timeline.NextKeptStretch(position) is { } kept)
+		{
+			// A later piece is entered a quarter frame early: ffmpeg's -ss (millisecond precision) could round past its first frame.
+			var start = kept.Start == position ? kept.Start : kept.Start - 0.25 / fps;
+			var end = Math.Min(kept.End, duration.TotalSeconds);
+			if (end > start) stretches.Add(new PlaybackStretch(TimeSpan.FromSeconds(start), TimeSpan.FromSeconds(end)));
+			position = kept.End;
+		}
+
+		return stretches;
+	}
+
+	private sealed record PlaybackStretch(TimeSpan Start, TimeSpan End);
+
+	private readonly record struct PlaybackFrame(ComposedPreviewFrame Composed, bool StartsStretch);
 
 	private ComposedPreviewFrame? DecodeSeekCore(VideoFrameSource video, OverlayRenderer renderer,
 		IReadOnlyList<DerivedFrame> frames, TimeSpan position, CancellationToken ct)
@@ -546,13 +633,21 @@ public sealed class PreviewPlayer : IDisposable
 
 		if (frames.Count == 0) return null;
 
-		DerivedFrame frame = TelemetryProcessor.FindNearest(frames, position.TotalSeconds);
-		var overlaySize = renderer.FrameBufferSize(videoFrame.Width, videoFrame.Height);
-		if (_overlayBuffer?.Length != overlaySize) _overlayBuffer = new byte[overlaySize];
-		renderer.RenderInto(frame, _overlayBuffer, videoFrame.Width, videoFrame.Height, true);
+		// Preview positions are on the recording's timeline, the frames on the output's (see SetOutputTimeline).
+		var outputSeconds = _outputTimeline is { } timeline ? timeline.ToOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
+		byte[]? overlay = null;
+		if (outputSeconds is { } seconds)
+		{
+			DerivedFrame frame = TelemetryProcessor.FindNearest(frames, seconds);
+			var overlaySize = renderer.FrameBufferSize(videoFrame.Width, videoFrame.Height);
+			if (_overlayBuffer?.Length != overlaySize) _overlayBuffer = new byte[overlaySize];
+			renderer.RenderInto(frame, _overlayBuffer, videoFrame.Width, videoFrame.Height, true);
+			overlay = _overlayBuffer;
+		}
+
 		var composed = _composedBuffers.Rent(videoFrame.Width * videoFrame.Height * 4);
 		PreviewCompositor.Compose(composed, videoFrame.Width, videoFrame.Height, videoFrame.Bgra,
-			videoFrame.Stride, _overlayBuffer, videoFrame.Width, videoFrame.Height);
+			videoFrame.Stride, overlay, videoFrame.Width, videoFrame.Height);
 
 		return new ComposedPreviewFrame(position, composed);
 	}

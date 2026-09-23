@@ -77,14 +77,6 @@
 				<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
 					<StackPanel Margin="24,20" Spacing="20">
 						<StackPanel Spacing="6">
-							<TextBlock Text="Frame limit (optional)" Classes="infoLabel" />
-							<NumericUpDown Name="FrameLimitBox" Minimum="0" Increment="60" FormatString="0"
-							               PlaceholderText="No limit" HorizontalAlignment="Stretch" />
-							<TextBlock Classes="hint"
-							           Text="Limits how many frames get rendered on export - e.g. set 300 to render only the first few seconds instead of the whole file. Useful for quickly testing overlay changes without waiting for a full render. Leave empty to render the entire video." />
-						</StackPanel>
-
-						<StackPanel Spacing="6">
 							<TextBlock Text="Watermark" Classes="infoLabel" />
 							<CheckBox Name="ShowWatermarkCheck" Content="Show attribution watermark" />
 							<TextBlock Classes="hint"

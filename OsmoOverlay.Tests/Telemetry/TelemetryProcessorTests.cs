@@ -72,8 +72,10 @@ public sealed class TelemetryProcessorTests
 	{
 		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 30, 59.94, 20));
 
-		// Steps of >= 1 s (GPS jitter at 60 Hz would otherwise inflate it) - so it lags by up to a second of travel.
-		Assert.AreEqual(19 * 60 / 59.94 * 10, derived[^1].CumulativeDistanceMeters, 0.5);
+		// Steps of >= 1 s (GPS jitter at 60 Hz would otherwise inflate it) - so it lags by up to a second of
+		// travel, except the last frame, which gets the final partial step so the total is complete.
+		Assert.AreEqual(19 * 60 / 59.94 * 10, derived[^2].CumulativeDistanceMeters, 0.5);
+		Assert.AreEqual(10 * derived[^1].Raw.SampleTimeSeconds, derived[^1].CumulativeDistanceMeters, 0.2);
 		Assert.AreEqual(0, derived[59].CumulativeDistanceMeters, "no step before a full second has passed");
 	}
 

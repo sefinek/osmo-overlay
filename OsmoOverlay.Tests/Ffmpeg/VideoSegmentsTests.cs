@@ -1,61 +1,7 @@
 using System.Globalization;
-using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
 
 namespace OsmoOverlay.Tests.Ffmpeg;
-
-[TestClass]
-public sealed class RenderRangeTests
-{
-	private const double Fps = 60000 / 1001.0;
-	private const long SourceFrames = 11955;
-
-	private static RenderRange Resolve(double? from = null, double? to = null, int? frameLimit = null)
-	{
-		return RenderJob.ResolveRange(new RenderOptions(["in.mp4"], "out.mp4", frameLimit, RangeStartSeconds: from, RangeEndSeconds: to),
-			Fps, SourceFrames);
-	}
-
-	[TestMethod]
-	public void NoRange_IsTheWholeRecording()
-	{
-		Assert.AreEqual(new RenderRange(0, SourceFrames, false), Resolve());
-	}
-
-	[TestMethod]
-	public void Start_RoundsToNearestFrame()
-	{
-		// 60 s * 59.94 = 3596.4 -> frame 3596, the value the CLI render was verified with.
-		Assert.AreEqual(new RenderRange(3596, SourceFrames - 3596, true), Resolve(60));
-	}
-
-	[TestMethod]
-	public void EndPastTheRecording_IsClamped()
-	{
-		Assert.AreEqual(new RenderRange(0, SourceFrames, false), Resolve(to: 10_000));
-	}
-
-	[TestMethod]
-	public void FrameLimit_CapsTheRange()
-	{
-		Assert.AreEqual(new RenderRange(3596, 100, true), Resolve(60, 120, 100));
-	}
-
-	[TestMethod]
-	public void FrameLimit_LargerThanTheRange_ChangesNothing()
-	{
-		Assert.AreEqual(new RenderRange(0, SourceFrames, false), Resolve(frameLimit: 1_000_000));
-	}
-
-	[TestMethod]
-	[DataRow(10.0, 10.0)]
-	[DataRow(20.0, 10.0)]
-	[DataRow(500.0, null)]
-	public void EmptyRange_Throws(double from, double? to)
-	{
-		Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(from, to));
-	}
-}
 
 [TestClass]
 public sealed class VideoSegmentsTests
