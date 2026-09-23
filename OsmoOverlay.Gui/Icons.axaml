@@ -28,5 +28,6 @@
 
 	<!-- Preview guides -->
 	<StreamGeometry x:Key="IconGrid">M1,4.9 H15 V6.1 H1 Z M1,9.9 H15 V11.1 H1 Z M4.9,1 H6.1 V15 H4.9 Z M9.9,1 H11.1 V15 H9.9 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconStopwatch">F1 M2,9 A6,6 0 1 1 14,9 A6,6 0 1 1 2,9 Z M3.4,9 A4.6,4.6 0 1 0 12.6,9 A4.6,4.6 0 1 0 3.4,9 Z M6.2,0.6 H9.8 V2 H6.2 Z M7.3,5.2 H8.7 V9.6 H7.3 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconSnap">M7.4,1 H8.6 V5 H7.4 Z M7.4,11 H8.6 V15 H7.4 Z M1,7.4 H5 V8.6 H1 Z M11,7.4 H15 V8.6 H11 Z M6.5,8 A1.5,1.5 0 1 0 9.5,8 A1.5,1.5 0 1 0 6.5,8 Z</StreamGeometry>
 </ResourceDictionary>

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Core.Dependencies;
 
@@ -38,11 +39,15 @@ public static class DependencyInstaller
 		if (!result.Success) return result;
 
 		DependencyChecker.RefreshProcessPath();
-		return DependencyChecker.IsAvailable(tool)
-			? new InstallResult(true, $"{tool.DisplayName} installed")
-			: new InstallResult(false,
+		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, $"{tool.DisplayName} installed");
+		if (!tool.Commands.All(DependencyChecker.IsCommandAvailable))
+			return new InstallResult(false,
 				$"The package manager reports {tool.DisplayName} as installed, but {string.Join("/", tool.Commands)} " +
 				"still can't be found on PATH. Restart the app, or add its folder to PATH manually");
+
+		// The package manager's build is too old (or a static one) for the preview's libraries.
+		return new InstallResult(false, $"{tool.DisplayName} is installed, but the preview can't use it: {LibavLoader.TryLoad()}. " +
+		                                "Update it (or install a newer build) and retry");
 	}
 
 	public static async Task<InstallResult> UpgradeAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)

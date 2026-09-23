@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading.Channels;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
@@ -9,13 +10,15 @@ namespace OsmoOverlay.Core.Preview;
 
 public sealed record ComposedPreviewFrame(TimeSpan Position, byte[] Bgra);
 
+/// <summary>
+///     The live preview: decodes through LibavVideoSource and composes each frame with the overlay. Public
+///     members are called from the UI thread, and FrameReady/PlaybackStopped/Message are raised on it.
+/// </summary>
 public sealed class PreviewPlayer : IDisposable
 {
-	private const int ScrubDebounceMs = 80;
-
 	// How many decoded+composed frames the background producer is allowed to run ahead of what
 	// RunPlaybackAsync is currently pacing out - enough to absorb a transient decode hiccup (a slow
-	// disk read, a GC pause, the first frames after a fresh ffmpeg process starts) without it
+	// disk read, a GC pause, a seek into a new stretch) without it
 	// reaching the screen as a stutter, without buffering so much that a Pause feels laggy or memory
 	// use grows needlessly (each buffered frame is a full preview-resolution BGRA copy).
 	private const int PlaybackPrefetchFrames = 3;
@@ -41,14 +44,19 @@ public sealed class PreviewPlayer : IDisposable
 	private OverlayRenderer? _renderer;
 	private bool _resumeAfterScrub;
 	private CancellationTokenSource? _routeIntroPrepareCts;
-	private CancellationTokenSource? _scrubCts;
+	// Seeks, latest wins (see RequestSeek): only the newest request waits, the one decoding finishes.
+	private (TimeSpan Position, SeekAccuracy Accuracy)? _pendingSeek;
+	private bool _seekLoopRunning;
+	// Bumped by Play/Close - a seek decoded before that is dropped instead of shown.
+	private int _seekGeneration;
+	private CancellationTokenSource _seekCts = new();
 	// Kept across Close/OpenAsync (the GUI reopens the preview for some settings changes) - only
 	// SetOutputTimeline changes it. Null = the whole recording.
 	private OutputTimeline? _outputTimeline;
 	// A renderer replaced by SetOutputTimeline while playback may still hold it for one last frame -
 	// disposed on the next replacement or Close instead of right away.
 	private OverlayRenderer? _retiredRenderer;
-	private VideoFrameSource? _video;
+	private LibavVideoSource? _video;
 
 	public bool IsPlaying => _playbackCts is not null;
 	public TimeSpan Duration => _video?.Duration ?? TimeSpan.Zero;
@@ -89,11 +97,12 @@ public sealed class PreviewPlayer : IDisposable
 				.Zip(summary.SegmentDurationsSeconds, (path, duration) => new PlaybackSegment(path, duration))
 		];
 
-		// Spawning ffmpeg and decoding the first frame are both blocking; awaiting Task.Run (rather
+		// Opening the decoder and decoding the first frame are both blocking; awaiting Task.Run (rather
 		// than running the whole method inside one) lets the continuation - and the FrameReady
 		// event it raises - resume on the caller's thread (the UI thread), same as RunPlaybackAsync.
-		VideoFrameSource video = await Task.Run(() => VideoFrameSource.Open(segments,
+		LibavVideoSource video = await Task.Run(() => new LibavVideoSource(segments,
 			summary.Video.Fps, previewWidth, previewHeight));
+		AppLogger.Info($"Preview decoder: {video.DecoderDescription}");
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout =
 			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix,
@@ -117,7 +126,7 @@ public sealed class PreviewPlayer : IDisposable
 		// yet" placeholder - see DrawMapWidget/DrawRouteIntroMap), then recomposes once tiles land, same
 		// UX SetLayout already gives a live MapWidget toggle.
 		ComposedPreviewFrame? first =
-			await Task.Run(() => DecodeSeekCore(video, renderer, derivedFrames, TimeSpan.Zero, CancellationToken.None));
+			await Task.Run(() => DecodeAndCompose(video, TimeSpan.Zero, SeekAccuracy.Exact, CancellationToken.None));
 		if (first is not null) Publish(first);
 
 		StartMapPreparation(renderer);
@@ -187,16 +196,17 @@ public sealed class PreviewPlayer : IDisposable
 	{
 		_playbackCts?.Cancel();
 		_playbackCts = null;
-		_scrubCts?.Cancel();
-		_scrubCts = null;
+		CancelSeeks();
 		_mapPrepareCts?.Cancel();
 		_mapPrepareCts = null;
 		_routeIntroPrepareCts?.Cancel();
 		_routeIntroPrepareCts = null;
 		_resumeAfterScrub = false;
 
+		LibavVideoSource? video;
 		lock (_lock)
 		{
+			video = _video;
 			_video = null;
 			_renderer?.Dispose();
 			_renderer = null;
@@ -206,9 +216,21 @@ public sealed class PreviewPlayer : IDisposable
 			_overlayBuffer = null;
 		}
 
+		// Outside _lock: the in-process decoder waits for a decode still running on another thread.
+		video?.Dispose();
 		_derivedFrames = null;
 		_recordingFrames = null;
 		_createRenderer = null;
+	}
+
+	/// <summary>Drops a waiting seek and stops the one decoding - Play and Close take over from any of them.</summary>
+	private void CancelSeeks()
+	{
+		_pendingSeek = null;
+		_seekGeneration++;
+		_seekCts.Cancel();
+		_seekCts.Dispose();
+		_seekCts = new CancellationTokenSource();
 	}
 
 	public void TogglePlayPause(TimeSpan currentPosition)
@@ -228,12 +250,12 @@ public sealed class PreviewPlayer : IDisposable
 	{
 		if (_video is null || _renderer is null || _derivedFrames is null) return;
 
-		_scrubCts?.Cancel();
+		CancelSeeks();
 
 		var cts = new CancellationTokenSource();
 		_playbackCts = cts;
-		List<PlaybackStretch> stretches = PlaybackStretches(_outputTimeline, fromPosition, _video.Duration, _video.Fps);
-		_ = RunPlaybackAsync(_video, _renderer, _derivedFrames, stretches, cts);
+		List<PlaybackStretch> stretches = PlaybackStretches(_outputTimeline, fromPosition, _video.Duration);
+		_ = RunPlaybackAsync(_video, stretches, cts);
 	}
 
 	public void Pause()
@@ -254,18 +276,22 @@ public sealed class PreviewPlayer : IDisposable
 		_playbackCts = null;
 	}
 
+	/// <summary>Resumes playback if the drag interrupted it, otherwise replaces the drag's keyframes with the exact frame.</summary>
 	public void EndScrubDrag(TimeSpan currentPosition)
 	{
-		if (!_resumeAfterScrub) return;
-		_resumeAfterScrub = false;
+		if (!_resumeAfterScrub)
+		{
+			RequestSeek(currentPosition);
+			return;
+		}
 
-		if (_playbackCts is not null) return;
-		Play(currentPosition);
+		_resumeAfterScrub = false;
+		if (_playbackCts is null) Play(currentPosition);
 	}
 
 	/// <summary>
 	///     Swaps the live layout (drag/visibility edits from the GUI) and, if a frame is already
-	///     cached, instantly recomposes it - no ffmpeg round-trip, so dragging stays smooth.
+	///     cached, instantly recomposes it - no decoding, so dragging stays smooth.
 	/// </summary>
 	public void SetLayout(IReadOnlyList<OverlayElement> layout)
 	{
@@ -394,43 +420,63 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
-	public async Task RequestSeekAsync(TimeSpan position)
+	/// <summary>
+	///     Shows the frame at a position. Latest wins, with no debounce: an idle player starts decoding right away,
+	///     and while a decode runs only the newest request waits for it - so a timeline drag shows frames as fast as
+	///     they decode (Keyframe while dragging: ~15-20 ms each in-process), and frame stepping never waits on a
+	///     timer. A newer seek doesn't cancel the running decode - its frame is still worth showing until the next
+	///     one lands - only Play/Close do (CancelSeeks). Cancellation stays a plain cooperative check returning null,
+	///     not an exception: a superseded seek is expected, not exceptional.
+	/// </summary>
+	public void RequestSeek(TimeSpan position, SeekAccuracy accuracy = SeekAccuracy.Exact)
 	{
-		if (_video is null || _renderer is null || _derivedFrames is null) return;
-		VideoFrameSource video = _video;
-		OverlayRenderer renderer = _renderer;
-		IReadOnlyList<DerivedFrame> frames = _derivedFrames;
+		if (_video is null) return;
 
-		_scrubCts?.Cancel();
-		var cts = new CancellationTokenSource();
-		_scrubCts = cts;
-		CancellationToken ct = cts.Token;
+		_pendingSeek = (position, accuracy);
+		if (_seekLoopRunning) return;
 
-		// A newer seek superseding this one is expected, frequent behavior while dragging the
-		// slider, not an exceptional one - cancellation here is a plain cooperative check (see
-		// VideoFrameSource.GetFrame) rather than a thrown OperationCanceledException.
-		await Task.Delay(ScrubDebounceMs);
-		if (ct.IsCancellationRequested) return;
+		_seekLoopRunning = true;
+		_ = RunSeekLoopAsync();
+	}
 
-		ComposedPreviewFrame? composed;
+	private async Task RunSeekLoopAsync()
+	{
 		try
 		{
-			composed = await Task.Run(() => DecodeSeekCore(video, renderer, frames, position, ct));
-		}
-		catch (Exception ex)
-		{
-			Message?.Invoke($"Preview seek failed: {ex.Message}");
-			return;
-		}
+			while (_pendingSeek is { } request && _video is { } video)
+			{
+				_pendingSeek = null;
+				var (position, accuracy) = request;
+				var generation = _seekGeneration;
+				CancellationToken ct = _seekCts.Token;
 
-		if (composed is not null && !ct.IsCancellationRequested) Publish(composed);
+				ComposedPreviewFrame? composed;
+				try
+				{
+					composed = await Task.Run(() => DecodeAndCompose(video, position, accuracy, ct));
+				}
+				catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
+				{
+					if (generation == _seekGeneration) Message?.Invoke($"Preview seek failed: {ex.Message}");
+					continue;
+				}
+
+				if (composed is null) continue;
+				if (generation == _seekGeneration) Publish(composed);
+				else _composedBuffers.Return(composed.Bgra);
+			}
+		}
+		finally
+		{
+			_seekLoopRunning = false;
+		}
 	}
 
 	/// <summary>
 	///     Decode/compose and pacing/display are two separate concerns run on two separate threads,
 	///     joined by a small bounded channel (ProduceFramesAsync is the writer, the loop below is the
 	///     sole reader): the producer decodes flat-out, ahead of what's currently on screen, so a
-	///     transient decode hiccup (the first frames after a fresh ffmpeg process, a slow disk read, a
+	///     transient decode hiccup (the seek into a new stretch, a slow disk read, a
 	///     GC pause) gets absorbed by frames already sitting in the channel instead of reaching the
 	///     screen as a stutter. This replaced an earlier single-threaded decode-then-wait-then-display
 	///     loop that had no way to hide a slow frame, plus a "Stale" catch-up mechanism that silently
@@ -438,8 +484,7 @@ public sealed class PreviewPlayer : IDisposable
 	///     from the channel's bounded capacity is what keeps the producer from running away, and
 	///     nothing needs to be discarded to "catch up" from a slow start.
 	/// </summary>
-	private async Task RunPlaybackAsync(VideoFrameSource video, OverlayRenderer renderer,
-		IReadOnlyList<DerivedFrame> frames, IReadOnlyList<PlaybackStretch> stretches, CancellationTokenSource ownCts)
+	private async Task RunPlaybackAsync(LibavVideoSource video, IReadOnlyList<PlaybackStretch> stretches, CancellationTokenSource ownCts)
 	{
 		CancellationToken ct = ownCts.Token;
 
@@ -460,7 +505,7 @@ public sealed class PreviewPlayer : IDisposable
 			// guarantees the producer can always be unblocked regardless of why the consumer stopped.
 			using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			Task<string?> producer = Task.Run(
-				() => ProduceFramesAsync(video, renderer, frames, stretches, channel.Writer, producerCts.Token),
+				() => ProduceFramesAsync(video, stretches, channel.Writer, producerCts.Token),
 				producerCts.Token);
 
 			string? stoppedEarly = null;
@@ -504,7 +549,7 @@ public sealed class PreviewPlayer : IDisposable
 				}
 			}
 
-			if (stoppedEarly is not null) Message?.Invoke($"ffmpeg stopped early: {stoppedEarly}");
+			if (stoppedEarly is not null) Message?.Invoke($"Playback stopped: {stoppedEarly}");
 		}
 		catch (OperationCanceledException)
 		{
@@ -523,33 +568,33 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
-	/// <summary>Plays the stretches one after another, one ffmpeg stream each; returns ffmpeg's stderr if a stream ended well before its stretch did.</summary>
-	private async Task<string?> ProduceFramesAsync(VideoFrameSource video, OverlayRenderer renderer,
-		IReadOnlyList<DerivedFrame> frames, IReadOnlyList<PlaybackStretch> stretches, ChannelWriter<PlaybackFrame> writer,
-		CancellationToken ct)
+	/// <summary>
+	///     Plays the stretches one after another, one playback stream each; returns the decoder's error output if a
+	///     stream ended well before its stretch did. Frames are decoded outside _lock - only composing needs it, so
+	///     SetLayout, scrubbing and the rest never wait for a decode.
+	/// </summary>
+	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IReadOnlyList<PlaybackStretch> stretches,
+		ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
 	{
 		var halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
 		try
 		{
 			foreach (PlaybackStretch stretch in stretches)
 			{
-				using VideoPlaybackStream stream = video.OpenPlaybackStream(stretch.Start, ct);
+				using LibavVideoSource.PlaybackStream stream = video.OpenPlaybackStream(stretch.Start, ct);
 				var startsStretch = true;
-				var ended = false;
 				while (!ct.IsCancellationRequested)
 				{
-					ComposedPreviewFrame? composed = null;
-					lock (_lock)
+					VideoFrame? videoFrame = stream.TryReadNextFrame();
+					if (videoFrame is null) break;
+
+					if (stream.Position >= stretch.End - halfFrame)
 					{
-						VideoFrame? videoFrame = stream.TryReadNextFrame();
-						if (videoFrame is null)
-							ended = true;
-						else if (stream.Position >= stretch.End - halfFrame)
-							video.Recycle(videoFrame);
-						else
-							composed = Compose(renderer, frames, videoFrame, stream.Position);
+						video.Recycle(videoFrame);
+						break;
 					}
 
+					ComposedPreviewFrame? composed = ComposeCurrent(video, videoFrame, stream.Position);
 					if (composed is null) break;
 
 					// Backpressure, not held under _lock - once the channel is full this waits for the
@@ -559,11 +604,10 @@ public sealed class PreviewPlayer : IDisposable
 					startsStretch = false;
 				}
 
-				if (ended && !ct.IsCancellationRequested && stream.Position < stretch.End - TimeSpan.FromSeconds(1))
+				if (stream.Error is { } error)
 				{
-					var stderr = await stream.StderrTask;
 					writer.TryComplete();
-					return string.IsNullOrWhiteSpace(stderr) ? null : stderr;
+					return error;
 				}
 			}
 
@@ -585,7 +629,7 @@ public sealed class PreviewPlayer : IDisposable
 	///     What Play covers from a position: the rest of the recording, or with cuts (SetOutputTimeline) only the
 	///     kept pieces from there on - the cut-out parts are skipped, the way the render leaves them out.
 	/// </summary>
-	private static List<PlaybackStretch> PlaybackStretches(OutputTimeline? timeline, TimeSpan from, TimeSpan duration, double fps)
+	private static List<PlaybackStretch> PlaybackStretches(OutputTimeline? timeline, TimeSpan from, TimeSpan duration)
 	{
 		if (timeline is null) return [new PlaybackStretch(from, duration)];
 
@@ -593,10 +637,8 @@ public sealed class PreviewPlayer : IDisposable
 		var position = from.TotalSeconds;
 		while (timeline.NextKeptStretch(position) is { } kept)
 		{
-			// A later piece is entered a quarter frame early: ffmpeg's -ss (millisecond precision) could round past its first frame.
-			var start = kept.Start == position ? kept.Start : kept.Start - 0.25 / fps;
 			var end = Math.Min(kept.End, duration.TotalSeconds);
-			if (end > start) stretches.Add(new PlaybackStretch(TimeSpan.FromSeconds(start), TimeSpan.FromSeconds(end)));
+			if (end > kept.Start) stretches.Add(new PlaybackStretch(TimeSpan.FromSeconds(kept.Start), TimeSpan.FromSeconds(end)));
 			position = kept.End;
 		}
 
@@ -607,14 +649,24 @@ public sealed class PreviewPlayer : IDisposable
 
 	private readonly record struct PlaybackFrame(ComposedPreviewFrame Composed, bool StartsStretch);
 
-	private ComposedPreviewFrame? DecodeSeekCore(VideoFrameSource video, OverlayRenderer renderer,
-		IReadOnlyList<DerivedFrame> frames, TimeSpan position, CancellationToken ct)
+	/// <summary>Decodes outside _lock (a seek can take a while), then composes under it.</summary>
+	private ComposedPreviewFrame? DecodeAndCompose(LibavVideoSource video, TimeSpan position, SeekAccuracy accuracy, CancellationToken ct)
+	{
+		VideoFrame? videoFrame = video.GetFrame(position, accuracy, ct);
+		return videoFrame is null ? null : ComposeCurrent(video, videoFrame, position);
+	}
+
+	/// <summary>Composes with whatever renderer/telemetry is current - null (the frame recycled) once the preview was closed or reopened.</summary>
+	private ComposedPreviewFrame? ComposeCurrent(LibavVideoSource video, VideoFrame videoFrame, TimeSpan position)
 	{
 		lock (_lock)
 		{
-			VideoFrame? videoFrame = video.GetFrame(position, ct);
-			return videoFrame is null ? null : Compose(renderer, frames, videoFrame, position);
+			if (ReferenceEquals(_video, video) && _renderer is { } renderer && _derivedFrames is { } frames)
+				return Compose(renderer, frames, videoFrame, position);
 		}
+
+		video.Recycle(videoFrame);
+		return null;
 	}
 
 	private void Publish(ComposedPreviewFrame frame)

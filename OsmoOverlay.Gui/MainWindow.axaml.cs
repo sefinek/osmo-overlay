@@ -71,6 +71,7 @@ public partial class MainWindow : Window
 	private string? _selectedElementId;
 	private PreviewGridMode _gridMode;
 	private bool _snapToGuides;
+	private bool _preciseTime;
 	private string? _resizingElementId;
 	private float _resizeStartScale = 1f;
 	private double _resizeStartDistance = 1;
@@ -90,6 +91,7 @@ public partial class MainWindow : Window
 		_previewMaxWidth = settings.PreviewMaxWidth;
 		_gridMode = Enum.TryParse(settings.PreviewGridMode, out PreviewGridMode loadedGridMode) ? loadedGridMode : PreviewGridMode.Both;
 		_snapToGuides = settings.PreviewSnapToGrid;
+		_preciseTime = settings.PreviewPreciseTime;
 		_showWatermark = settings.ShowWatermark;
 		_smoothGpsMotion = settings.SmoothGpsMotion;
 
@@ -153,6 +155,7 @@ public partial class MainWindow : Window
 		// toolbar buttons with whatever was actually loaded from settings.json above.
 		ApplyGridModeButtonClasses();
 		ToggleSnapButton.Classes.Set("active", _snapToGuides);
+		TogglePreciseTimeButton.Classes.Set("active", _preciseTime);
 	}
 
 	private async void OnWindowOpened(object? sender, EventArgs e)

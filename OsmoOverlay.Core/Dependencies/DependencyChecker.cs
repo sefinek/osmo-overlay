@@ -1,3 +1,5 @@
+using OsmoOverlay.Core.Preview;
+
 namespace OsmoOverlay.Core.Dependencies;
 
 public static class DependencyChecker
@@ -10,6 +12,7 @@ public static class DependencyChecker
 	public static string? FindExecutable(string command)
 	{
 		var fileName = OperatingSystem.IsWindows() && !Path.HasExtension(command) ? command + ".exe" : command;
+		if (FromFfmpegLibraryFolder(command, fileName) is { } sameInstall) return sameInstall;
 
 		IEnumerable<string> directories = new[] { AppContext.BaseDirectory }
 			.Concat(SplitPath(Environment.GetEnvironmentVariable("PATH")));
@@ -32,6 +35,34 @@ public static class DependencyChecker
 		return null;
 	}
 
+	/// <summary>What ProcessHelper starts for a command: FFmpeg's resolved to one install (FromFfmpegLibraryFolder), anything else left to Process.Start's own lookup.</summary>
+	public static string ResolveCommand(string command)
+	{
+		return RequiredTools.Ffmpeg.Commands.Contains(command) ? FindExecutable(command) ?? command : command;
+	}
+
+	/// <summary>
+	///     FFmpeg's own commands come from the folder its shared libraries were loaded from (LibavLoader), when that
+	///     folder has them - so the render and probing run the same FFmpeg the preview decodes with, whatever order
+	///     PATH lists several builds in. On Windows Gyan's static build listed ahead of the shared one would otherwise
+	///     win: another version, and ~800 ms per start instead of ~25 ms.
+	/// </summary>
+	private static string? FromFfmpegLibraryFolder(string command, string fileName)
+	{
+		if (!RequiredTools.Ffmpeg.Commands.Contains(command) || LibavLoader.TryLoad() is not null ||
+		    LibavLoader.LibraryDirectory is not { } directory)
+			return null;
+
+		var candidate = Path.Combine(directory, fileName);
+		return IsExecutableFile(candidate) ? candidate : null;
+	}
+
+	/// <summary>The directories on this process's PATH, in order.</summary>
+	public static IEnumerable<string> SearchPath()
+	{
+		return SplitPath(Environment.GetEnvironmentVariable("PATH"));
+	}
+
 	public static bool IsCommandAvailable(string command)
 	{
 		return FindExecutable(command) is not null;
@@ -39,7 +70,7 @@ public static class DependencyChecker
 
 	public static bool IsAvailable(ExternalTool tool)
 	{
-		return tool.Commands.All(IsCommandAvailable);
+		return tool.Commands.All(IsCommandAvailable) && (!tool.NeedsSharedLibraries || LibavLoader.TryLoad() is null);
 	}
 
 	public static IReadOnlyList<ExternalTool> FindMissing(IEnumerable<ExternalTool> tools)

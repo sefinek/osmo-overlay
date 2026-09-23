@@ -9,22 +9,27 @@ public sealed record ExternalTool(
 	string PacmanPackage,
 	string BrewPackage,
 	string VersionCommand,
-	IReadOnlyList<string> VersionArgs);
+	IReadOnlyList<string> VersionArgs,
+	// The FFmpeg libraries the preview decodes with (LibavLoader) must load too - the commands alone aren't enough.
+	bool NeedsSharedLibraries = false);
 
 public static class RequiredTools
 {
-	// Gyan's full static build: a self-contained ffmpeg.exe/ffprobe.exe with every encoder (NVENC, x265...),
-	// unlike .Shared (the same build split into DLLs) or .Essentials (fewer libraries).
+	// Gyan's full build in its shared flavour: every encoder (NVENC, x265...) like the static Gyan.FFmpeg, split
+	// into DLLs - which the preview loads in-process (LibavLoader), and a 0.6 MB ffmpeg.exe that starts in
+	// ~25 ms where the 217 MB static one took ~800 ms (Defender scans the whole exe on every launch). Not
+	// .Essentials (fewer libraries). An existing static install keeps working; the preview then falls back.
 	public static readonly ExternalTool Ffmpeg = new(
 		"FFmpeg",
 		["ffmpeg", "ffprobe"],
-		"Gyan.FFmpeg",
+		"Gyan.FFmpeg.Shared",
 		"ffmpeg",
 		"ffmpeg",
 		"ffmpeg",
 		"ffmpeg",
 		"ffmpeg",
-		["-version"]);
+		["-version"],
+		true);
 
 	public static readonly ExternalTool ExifTool = new(
 		"ExifTool",

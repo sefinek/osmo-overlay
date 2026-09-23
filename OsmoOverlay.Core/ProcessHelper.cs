@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core;
@@ -31,7 +32,7 @@ internal static class ProcessHelper
 	private static ProcessStartInfo Create(string command, IEnumerable<string> args, bool notify, bool redirectStandardOutput, bool redirectStandardInput)
 	{
 		IReadOnlyCollection<string> argList = args as IReadOnlyCollection<string> ?? args.ToList();
-		var psi = new ProcessStartInfo(command)
+		var psi = new ProcessStartInfo(DependencyChecker.ResolveCommand(command))
 		{
 			RedirectStandardOutput = redirectStandardOutput,
 			RedirectStandardInput = redirectStandardInput,

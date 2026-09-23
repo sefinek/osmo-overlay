@@ -49,6 +49,8 @@ public sealed record OverlaySettings(
 	bool RouteIntroShowElevationGain = true,
 	UnitSystem RouteIntroUnits = UnitSystem.Metric,
 	bool PreviewSnapToGrid = true,
+	// The preview's time readout with milliseconds instead of whole seconds (the toolbar's stopwatch toggle).
+	bool PreviewPreciseTime = false,
 	// Mirrors the GUI's own PreviewGridMode enum (Off/Thirds/Margin/Both) as a string, since this Core
 	// project has no dependency on the Gui project to reference that enum directly.
 	string PreviewGridMode = "Both",

@@ -1,9 +1,11 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
 
@@ -93,19 +95,24 @@ public partial class MainWindow
 		UpdatePreviewTimeText();
 	}
 
-	/// <summary>
-	///     Whole seconds while playing (milliseconds would just flicker), milliseconds while paused - that's when
-	///     frame stepping and setting a range or cut need to see exactly which frame is on screen.
-	/// </summary>
-	private void UpdatePreviewTimeText()
+	/// <summary>Toolbar toggle above the preview: the time readout in whole seconds or with milliseconds (the same format the cut editor uses).</summary>
+	private void OnTogglePreciseTimeClick(object? sender, RoutedEventArgs e)
 	{
-		var precise = !_previewPlayer.IsPlaying;
-		PreviewTimeText.Text = $"{FormatTime(_previewPosition, precise)} / {FormatTime(_previewPlayer.Duration, precise)}";
+		_preciseTime = !_preciseTime;
+		TogglePreciseTimeButton.Classes.Set("active", _preciseTime);
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewPreciseTime = _preciseTime });
+		UpdatePreviewTimeText();
 	}
 
-	private static string FormatTime(TimeSpan t, bool precise)
+	/// <summary>The readout's column is Auto next to the timeline's *, so the timeline takes whatever width the text leaves.</summary>
+	private void UpdatePreviewTimeText()
 	{
-		if (precise) return TimeText.Format(t.TotalSeconds);
+		PreviewTimeText.Text = $"{FormatTime(_previewPosition)} / {FormatTime(_previewPlayer.Duration)}";
+	}
+
+	private string FormatTime(TimeSpan t)
+	{
+		if (_preciseTime) return TimeText.Format(t.TotalSeconds);
 		return t.ToString(t.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss");
 	}
 
@@ -127,7 +134,8 @@ public partial class MainWindow
 	{
 		if (_suppressTimelineEvent) return;
 
-		_ = _previewPlayer.RequestSeekAsync(TimeSpan.FromSeconds(e.NewValue));
+		// Keyframes while dragging keep up with the pointer; the exact frame follows on release (EndScrubDrag).
+		_previewPlayer.RequestSeek(TimeSpan.FromSeconds(e.NewValue), _timelineScrubbing ? SeekAccuracy.Keyframe : SeekAccuracy.Exact);
 	}
 
 }

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
 
@@ -106,13 +107,12 @@ public partial class MainWindow
 		SeekToFrame(Math.Max(0, CurrentFrame() + delta));
 	}
 
-	/// <summary>The frame on screen: the first one at/after the timeline position (see SeekToFrame), within the recording.</summary>
+	/// <summary>The frame on screen - the same rule the decoders use (PreviewFrames.IndexAt), within the recording.</summary>
 	private long CurrentFrame()
 	{
 		if (_summary is null) return 0;
 
-		var frame = (long)Math.Ceiling(PreviewTimeline.Value * _summary.Video.Fps - 0.25 - 1e-6);
-		return Math.Clamp(frame, 0, Math.Max(0, SourceFrames - 1));
+		return Math.Min(PreviewFrames.IndexAt(PreviewTimeline.Value, _summary.Video.Fps), Math.Max(0, SourceFrames - 1));
 	}
 
 	/// <summary>

@@ -605,6 +605,10 @@
 						        ToolTip.Tip="Snap widgets to grid">
 							<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
 						</Button>
+						<Button Name="TogglePreciseTimeButton" Classes="previewToolButton" Click="OnTogglePreciseTimeClick"
+						        ToolTip.Tip="Show the time with milliseconds">
+							<local:IconView Data="{StaticResource IconStopwatch}" Width="14" Height="14" />
+						</Button>
 						<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
 						        ToolTip.Tip="Cut parts out of the render">
 							<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
@@ -680,7 +684,7 @@
 						</StackPanel>
 						<local:PreviewTimeline Grid.Column="1" Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
 						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
-						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" MinWidth="150" TextAlignment="Right"
+						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />
 					</Grid>
 				</Grid>
