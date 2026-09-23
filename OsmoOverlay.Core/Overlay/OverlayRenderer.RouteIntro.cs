@@ -264,7 +264,7 @@ public sealed partial class OverlayRenderer
 		(string Label, string Value)? distance = null;
 		if (RouteIntro.ShowDistance)
 		{
-			var (value, unit) = FormatDistance(_totalDistanceMeters, RouteIntro.Units);
+			var (value, unit) = FormatDistance(_routeDistanceMeters, RouteIntro.Units);
 			distance = ("DISTANCE", $"{value} {unit}");
 		}
 

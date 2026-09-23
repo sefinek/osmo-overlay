@@ -620,17 +620,25 @@
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
 						<Button Grid.Column="0" Name="PlayPauseButton" Content="Play" Click="OnPlayPauseClick"
 						        IsEnabled="False" />
 						<Grid Grid.Column="1">
+							<Canvas Name="RangeCanvas" IsHitTestVisible="False" Height="12" VerticalAlignment="Center" />
 							<Slider Name="PreviewSlider" Minimum="0" Maximum="1" IsEnabled="False"
 							        VerticalAlignment="Center" ValueChanged="OnPreviewSliderValueChanged"
 							        PointerPressed="OnPreviewSliderPointerPressed"
 							        PointerReleased="OnPreviewSliderPointerReleased" />
 							<Canvas Name="GpsLossCanvas" IsHitTestVisible="False" Height="4" VerticalAlignment="Center" />
 						</Grid>
-						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0"
+						<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+							<Button Name="SetRangeStartButton" Content="In" Click="OnSetRangeStartClick" IsEnabled="False"
+							        ToolTip.Tip="Start the render at the current frame (I)" />
+							<Button Name="SetRangeEndButton" Content="Out" Click="OnSetRangeEndClick" IsEnabled="False"
+							        ToolTip.Tip="End the render at the current frame, this frame included (O)" />
+							<Button Name="ClearRangeButton" Content="✕" Click="OnClearRangeClick" IsVisible="False" />
+						</StackPanel>
+						<TextBlock Grid.Column="3" Name="PreviewTimeText" Classes="infoLabel" Margin="0"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />
 					</Grid>
 				</Grid>

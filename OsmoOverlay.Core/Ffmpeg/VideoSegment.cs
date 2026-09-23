@@ -32,7 +32,25 @@ public static class VideoSegments
 	/// <summary>Exact total when every segment reports its frame count, otherwise estimated from each segment's duration.</summary>
 	public static long TotalFrameCount(this IReadOnlyList<VideoSegment> segments)
 	{
-		return segments.Sum(s => s.Source.Video.FrameCount ?? (long)Math.Ceiling(s.Source.DurationSeconds * s.Source.Video.Fps));
+		return segments.Sum(FrameCount);
+	}
+
+	public static long FrameCount(this VideoSegment segment)
+	{
+		return segment.Source.Video.FrameCount ?? (long)Math.Ceiling(segment.Source.DurationSeconds * segment.Source.Video.Fps);
+	}
+
+	/// <summary>Which segment frame `frame` of the combined timeline falls in, and its frame index within that segment.</summary>
+	public static (int Index, long LocalFrame) Locate(IReadOnlyList<VideoSegment> segments, long frame)
+	{
+		for (var i = 0; i < segments.Count; i++)
+		{
+			var count = segments[i].FrameCount();
+			if (frame < count || i == segments.Count - 1) return (i, frame);
+			frame -= count;
+		}
+
+		throw new ArgumentException("No segments.", nameof(segments));
 	}
 
 	public static bool AllHaveDjmdTrack(this IReadOnlyList<VideoSegment> segments)

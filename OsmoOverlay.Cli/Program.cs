@@ -1,18 +1,25 @@
+using System.Globalization;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 
+string[] options = ["-o", "--frames", "--from", "--to"];
+const string usage = "Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>]\n" +
+                     "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs";
+
 if (args.Length == 0)
 {
-	Console.WriteLine("Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N]");
+	Console.WriteLine(usage);
 	return 1;
 }
 
 var inputPaths = new List<string>();
 var outputPath = "";
 int? frameLimit = null;
+double? rangeStart = null;
+double? rangeEnd = null;
 
 var i = 0;
-while (i < args.Length && args[i] is not ("-o" or "--frames"))
+while (i < args.Length && !options.Contains(args[i]))
 	inputPaths.Add(args[i++]);
 
 if (inputPaths.Count == 0)
@@ -23,7 +30,7 @@ if (inputPaths.Count == 0)
 
 for (; i < args.Length; i++)
 {
-	if (args[i] is not ("-o" or "--frames")) continue;
+	if (!options.Contains(args[i])) continue;
 
 	if (i + 1 >= args.Length)
 	{
@@ -31,20 +38,25 @@ for (; i < args.Length; i++)
 		return 1;
 	}
 
-	if (args[i] == "-o")
+	var option = args[i];
+	var value = args[++i];
+	switch (option)
 	{
-		outputPath = args[++i];
-	}
-	else
-	{
-		if (!int.TryParse(args[i + 1], out var parsedFrameLimit))
-		{
-			Console.Error.WriteLine($"Error: --frames expects a number, got '{args[i + 1]}'.");
+		case "-o":
+			outputPath = value;
+			break;
+		case "--frames" when int.TryParse(value, out var parsedFrameLimit) && parsedFrameLimit > 0:
+			frameLimit = parsedFrameLimit;
+			break;
+		case "--from" when TryParseTime(value, out var from):
+			rangeStart = from;
+			break;
+		case "--to" when TryParseTime(value, out var to):
+			rangeEnd = to;
+			break;
+		default:
+			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'.");
 			return 1;
-		}
-
-		frameLimit = parsedFrameLimit;
-		i++;
 	}
 }
 
@@ -66,7 +78,8 @@ var progress = new Progress<RenderStatus>(status =>
 	}
 });
 
-RenderResult result = await RenderJob.RunAsync(new RenderOptions(inputPaths, outputPath, frameLimit), progress,
+RenderResult result = await RenderJob.RunAsync(
+	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd), progress,
 	CancellationToken.None);
 Console.WriteLine();
 
@@ -81,3 +94,16 @@ var doneMessage = $"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:s
 Console.WriteLine(doneMessage);
 AppLogger.Info(doneMessage);
 return 0;
+
+// Seconds ("90", "90.5") or [h:]mm:ss[.fff] ("1:30", "1:02:03.25").
+static bool TryParseTime(string text, out double seconds)
+{
+	seconds = 0;
+	foreach (var part in text.Split(':'))
+	{
+		if (!double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) || value < 0) return false;
+		seconds = seconds * 60 + value;
+	}
+
+	return text.Split(':').Length <= 3;
+}

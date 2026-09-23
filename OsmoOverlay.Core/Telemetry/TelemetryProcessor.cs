@@ -194,10 +194,18 @@ public static class TelemetryProcessor
 			maxGForce = Math.Max(maxGForce, f.Raw.GForce);
 		}
 
+		// CumulativeDistanceMeters only advances in whole SpeedWindowSeconds steps (see Process), so the
+		// last partial step - up to a second of travel - isn't in it yet. The total adds it: from the frame
+		// where the running distance last changed to the final frame.
+		var lastStep = frames.Count - 1;
+		while (lastStep > 0 && frames[lastStep - 1].CumulativeDistanceMeters == last.CumulativeDistanceMeters) lastStep--;
+		var totalDistance = last.CumulativeDistanceMeters + TelemetryMath.HaversineMeters(
+			frames[lastStep].Raw.Latitude, frames[lastStep].Raw.Longitude, last.Raw.Latitude, last.Raw.Longitude);
+
 		return new TelemetrySummary(
 			frames.Count,
 			last.Raw.SampleTimeSeconds - first.Raw.SampleTimeSeconds,
-			last.CumulativeDistanceMeters,
+			totalDistance,
 			maxSpeed,
 			minAltitude,
 			maxAltitude,

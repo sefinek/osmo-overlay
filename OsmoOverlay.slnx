@@ -7,4 +7,5 @@
   <Project Path="OsmoOverlay.Core/OsmoOverlay.Core.csproj" />
   <Project Path="OsmoOverlay.Cli/OsmoOverlay.Cli.csproj" />
   <Project Path="OsmoOverlay.Gui/OsmoOverlay.Gui.csproj" />
+  <Project Path="OsmoOverlay.Tests/OsmoOverlay.Tests.csproj" />
 </Solution>

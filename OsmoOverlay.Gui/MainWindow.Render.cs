@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
@@ -42,16 +43,17 @@ public partial class MainWindow
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
 		var options = new RenderOptions(inputPaths, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
-			GreenScreen: greenScreen);
+			GreenScreen: greenScreen, RangeStartSeconds: _rangeStartSeconds, RangeEndSeconds: _rangeEndSeconds);
 
 		AppendLog(greenScreen ? "Mode: green screen (HUD only, solid background, no audio)" : "Mode: normal");
 		AppendLog($"Output: {outputPath}");
-		AppendLog($"Encoder: {_detectedEncoder}, frame limit: {(frameLimit is { } fl ? fl.ToString() : "none")}");
+		AppendLog($"Encoder: {_detectedEncoder}, frame limit: {(frameLimit is { } fl ? fl.ToString() : "none")}" +
+		          (HasRange ? $", range: {DescribeRange()}" : ""));
 		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, frameLimit)}");
+			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, frameLimit, _rangeStartSeconds, _rangeEndSeconds)}");
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -106,7 +108,8 @@ public partial class MainWindow
 		GreenScreenButton.IsEnabled = true;
 	}
 
-	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, int? frameLimit)
+	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, int? frameLimit,
+		double? rangeStart, double? rangeEnd)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
 		parts.AddRange(inputPaths.Select(QuoteArg));
@@ -117,6 +120,9 @@ public partial class MainWindow
 			parts.Add("--frames");
 			parts.Add(limit.ToString());
 		}
+
+		if (rangeStart is { } from) parts.AddRange(["--from", from.ToString("0.###", CultureInfo.InvariantCulture)]);
+		if (rangeEnd is { } to) parts.AddRange(["--to", to.ToString("0.###", CultureInfo.InvariantCulture)]);
 
 		return string.Join(' ', parts);
 	}

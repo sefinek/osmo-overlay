@@ -65,7 +65,7 @@ public static class MetadataStripper
 	}
 
 	/// <summary>Throws unless the output has nothing but the source's own video/audio, untouched, and no identifying tags.</summary>
-	private static void Verify(JsonNode source, JsonNode output)
+	internal static void Verify(JsonNode source, JsonNode output)
 	{
 		// Same order ffmpeg writes them in: -map 0:V first, then -map 0:a.
 		List<JsonNode> sourceKept =

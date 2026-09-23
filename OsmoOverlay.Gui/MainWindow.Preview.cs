@@ -43,6 +43,8 @@ public partial class MainWindow
 			PreviewSlider.Maximum = _previewPlayer.Duration.TotalSeconds;
 			PreviewPlaceholder.IsVisible = false;
 			PlayPauseButton.IsEnabled = true;
+			SetRangeStartButton.IsEnabled = true;
+			SetRangeEndButton.IsEnabled = true;
 			PreviewSlider.IsEnabled = true;
 
 			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
@@ -51,6 +53,7 @@ public partial class MainWindow
 				? TelemetryProcessor.FindGpsLossRanges(rawFrames)
 				: [];
 			DrawGpsLossMarks();
+			DrawRangeMarks();
 		}
 		catch (Exception ex)
 		{
@@ -64,6 +67,8 @@ public partial class MainWindow
 		_previewPlayer.Close();
 		PlayPauseButton.Content = "Play";
 		PlayPauseButton.IsEnabled = false;
+		SetRangeStartButton.IsEnabled = false;
+		SetRangeEndButton.IsEnabled = false;
 		PreviewSlider.IsEnabled = false;
 
 		_previewBitmap = null;

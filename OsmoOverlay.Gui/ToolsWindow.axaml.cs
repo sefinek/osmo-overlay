@@ -222,6 +222,75 @@ public partial class ToolsWindow : Window
 		return Regex.IsMatch(name, @"\d{8}") ? "clean.mp4" : $"{name}_clean.mp4";
 	}
 
+	private void OnConvertAudioWavClick(object? sender, RoutedEventArgs e)
+	{
+		_ = ConvertCameraAudioAsync(CameraAudioFormat.Wav);
+	}
+
+	private void OnConvertAudioM4aClick(object? sender, RoutedEventArgs e)
+	{
+		_ = ConvertCameraAudioAsync(CameraAudioFormat.M4a);
+	}
+
+	private async Task ConvertCameraAudioAsync(CameraAudioFormat format)
+	{
+		TopLevel? topLevel = GetTopLevel(this);
+		if (topLevel is null) return;
+
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = "Select the camera's .AAC audio file(s)",
+			AllowMultiple = true,
+			FileTypeFilter = [new FilePickerFileType("Camera audio") { Patterns = ["*.aac", "*.AAC"] }]
+		});
+		if (files.Count == 0) return;
+
+		List<(string Input, string Output)> jobs =
+			[.. files.Select(f => f.Path.LocalPath).Select(p => (p, CameraAudioConverter.OutputPathFor(p, format)))];
+
+		List<string> existing = [.. jobs.Where(j => File.Exists(j.Output)).Select(j => Path.GetFileName(j.Output))];
+		if (existing.Count > 0 && !await ConfirmDialog.AskAsync(this, "Replace existing files?",
+			    $"These already exist and will be replaced:\n{string.Join("\n", existing.Select(n => $"    {n}"))}",
+			    "Replace", DialogKind.Warning, "Camera microphone audio"))
+			return;
+
+		Button[] buttons = [ConvertAudioWavButton, ConvertAudioM4aButton];
+		foreach (Button b in buttons) b.IsEnabled = false;
+		Button active = format == CameraAudioFormat.Wav ? ConvertAudioWavButton : ConvertAudioM4aButton;
+		var idleContent = active.Content;
+
+		List<string> done = [];
+		try
+		{
+			foreach (var (input, output) in jobs)
+			{
+				active.Content = jobs.Count > 1 ? $"Converting {done.Count + 1}/{jobs.Count}..." : "Converting...";
+				await Task.Run(() => CameraAudioConverter.Convert(input, output, format));
+				done.Add(output);
+			}
+
+			await ConfirmDialog.ShowAsync(this, "Converted",
+				$"Saved and verified - decodes to exactly the same samples as the original:\n" +
+				string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}")) + "\n\n" +
+				"It has the same length as the video's own audio track and starts with it, so placing it at the " +
+				"start of the matching MP4 on the timeline lines it up.",
+				kind: DialogKind.Success, windowTitle: "Camera microphone audio",
+				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(done[^1]));
+		}
+		catch (Exception ex)
+		{
+			var converted = done.Count > 0 ? $"Converted before the error:\n{string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}"))}\n\n" : "";
+			await ConfirmDialog.ShowAsync(this, "Conversion failed",
+				$"{converted}Nothing was saved for the file that failed.\n\nDetails: {ex.Message}",
+				kind: DialogKind.Danger, windowTitle: "Camera microphone audio");
+		}
+		finally
+		{
+			active.Content = idleContent;
+			foreach (Button b in buttons) b.IsEnabled = true;
+		}
+	}
+
 	private void OpenCompareWindow(params string[] paths)
 	{
 		new CompareVideosWindow(paths).Show(this);

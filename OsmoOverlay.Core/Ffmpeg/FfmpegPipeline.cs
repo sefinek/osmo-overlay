@@ -41,21 +41,17 @@ public static class FfmpegPipeline
 		return _nvencConfirmed ? "hevc_nvenc" : "libx265";
 	}
 
-	public static Process StartRender(IReadOnlyList<string> inputPaths, string outputPath, SourceInfo info,
-		string encoder, bool overwrite, RenderEncodeSettings encode, double? limitSeconds = null, bool greenScreen = false,
-		long totalFrames = 0)
+	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, bool overwrite,
+		RenderEncodeSettings encode, RenderRange renderRange, bool greenScreen = false)
 	{
+		SourceInfo info = segments[0].Source;
 		var (num, den) = ParseFrameRate(info.Video.FrameRate);
 
 		var args = new List<string> { "-hide_banner", "-y" };
 		if (!overwrite) args[^1] = "-n";
 
-		if (limitSeconds is not null)
-			args.AddRange(["-t", limitSeconds.Value.ToString(CultureInfo.InvariantCulture)]);
-
-		// A single file is fed directly, exactly as before - the concat demuxer only kicks in for
-		// stitched multi-segment recordings, so the common single-file path has zero behavior change.
-		string? concatListPath = null;
+		List<string> tempFiles = [];
+		SourceInputs source;
 		if (greenScreen)
 		{
 			// A synthetic solid-color background instead of decoding/re-muxing the real source - the
@@ -68,17 +64,19 @@ public static class FfmpegPipeline
 			args.AddRange([
 				"-f", "lavfi", "-i", $"color=c={GreenScreenColor}:s={info.Video.Width}x{info.Video.Height}:r={num}/{den}"
 			]);
-		}
-		else if (inputPaths.Count == 1)
-		{
-			if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
-			args.AddRange(["-i", inputPaths[0]]);
+			source = new SourceInputs(1, "[0:v]", null, info);
 		}
 		else
 		{
-			concatListPath = ConcatListWriter.Write(inputPaths);
-			if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
-			args.AddRange(["-f", "concat", "-safe", "0", "-i", concatListPath]);
+			try
+			{
+				source = AddSourceInputs(args, segments, renderRange, encode, num, den, tempFiles);
+			}
+			catch
+			{
+				DeleteTempFiles(tempFiles);
+				throw;
+			}
 		}
 
 		args.AddRange([
@@ -111,8 +109,8 @@ public static class FfmpegPipeline
 
 		args.AddRange([
 			"-filter_complex",
-			$"[0:v]setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}[main];" +
-			$"[1:v]scale=out_color_matrix={overlayMatrix}:out_range={range},format=yuva420p10le[ovl];" +
+			$"{source.MainVideo}setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}[main];" +
+			$"[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range},format=yuva420p10le[ovl];" +
 			// shortest=1: the overlay pipe is sized from the container duration, which runs a few ms past the
 			// last video frame (audio ends later) - without it overlay's default eof_action=repeat padded the
 			// output with copies of the source's last frame (1 extra frame on a 20 s clip, 3 on a 25 min one).
@@ -123,14 +121,17 @@ public static class FfmpegPipeline
 		// No corresponding "0:a" input to map when greenScreen replaced input 0 with a silent color
 		// source - this export is a compositing asset, not a finished clip, so dropping audio here
 		// (rather than muxing it in from a source the user would then have to strip back out) is fine.
-		if (!greenScreen && info.Audio is not null)
-			args.AddRange(["-map", "0:a", "-c:a", "copy"]);
+		if (source.AudioMap is not null)
+			args.AddRange(["-map", source.AudioMap, "-c:a", "copy"]);
 
-		// Output-side limit (unlike -t above, -frames:v is only valid as an output option) on the [v]
-		// stream - needed because the lavfi color background feeding it is otherwise infinite, unlike
-		// the real source video's own natural duration the non-green-screen path relies on instead.
+		// Output-side limits: -frames:v because the lavfi color background of a green-screen render is
+		// otherwise infinite, -t so a partial render's (copied) audio stops with the picture - the video
+		// itself already ends exactly there, the overlay pipe carries exactly FrameCount frames
+		// (overlay's shortest=1).
 		if (greenScreen)
-			args.AddRange(["-frames:v", totalFrames.ToString(CultureInfo.InvariantCulture)]);
+			args.AddRange(["-frames:v", renderRange.FrameCount.ToString(CultureInfo.InvariantCulture)]);
+		if (renderRange.IsPartial)
+			args.AddRange(["-t", (renderRange.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture)]);
 
 		// Reproduce the camera's own encode as closely as the encoder allows, not just its codec/profile:
 		// measured on Osmo Action 6 files, the camera writes near-constant bitrate (within ~5-10% of its
@@ -179,10 +180,16 @@ public static class FfmpegPipeline
 		// timecode (lets an NLE line the render up against the original). Not the djmd/dbgi streams:
 		// djmd carries the GPS track and the camera's serial number, which don't belong in a video that's
 		// meant to be shared.
-		if (!greenScreen && info.ContainerCreationTimeUtc is { } createdUtc)
-			args.AddRange(["-metadata", $"creation_time={createdUtc.ToUniversalTime():yyyy-MM-ddTHH:mm:ss.ffffffZ}"]);
-		if (!greenScreen && info.Video.Timecode is { } timecode)
-			args.AddRange(["-timecode", timecode]);
+		// For a range render both are moved to the range's own first frame (see SourceInputs.LocalStartFrame).
+		if (!greenScreen && source.StartSource.ContainerCreationTimeUtc is { } createdUtc)
+		{
+			DateTime firstFrameUtc = createdUtc.ToUniversalTime().AddSeconds(source.LocalStartFrame * den / (double)num);
+			args.AddRange(["-metadata", $"creation_time={firstFrameUtc:yyyy-MM-ddTHH:mm:ss.ffffffZ}"]);
+		}
+
+		if (!greenScreen && source.StartSource.Video.Timecode is { } timecode &&
+		    SmpteTimecode.AddFrames(timecode, source.LocalStartFrame, num / (double)den) is { } startTimecode)
+			args.AddRange(["-timecode", startTimecode]);
 		if (encode.FfmpegFastStart)
 			args.AddRange(["-movflags", "+faststart"]);
 
@@ -201,25 +208,105 @@ public static class FfmpegPipeline
 
 		ProcessStartInfo psi = ProcessHelper.CreateHiddenWithStdin("ffmpeg", args);
 
-		Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+		Process process;
+		try
+		{
+			process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+		}
+		catch
+		{
+			DeleteTempFiles(tempFiles);
+			throw;
+		}
 
-		if (concatListPath is not null)
+		if (tempFiles.Count > 0)
 		{
 			process.EnableRaisingEvents = true;
-			process.Exited += (_, _) =>
-			{
-				try
-				{
-					File.Delete(concatListPath);
-				}
-				catch
-				{
-					// Best-effort: a stray temp file is harmless, not worth failing over.
-				}
-			};
+			process.Exited += (_, _) => DeleteTempFiles(tempFiles);
 		}
 
 		return process;
+	}
+
+	/// <summary>
+	///     Adds the source video/audio inputs for `renderRange`. From the very start: the file itself, or
+	///     all segments through the concat demuxer. From partway in: the segment the range starts in, with a
+	///     plain -ss (the one seek verified frame-accurate - see ConcatListWriter for why concat's own
+	///     seek can't be used for video); if the range runs on into later segments, those follow as a
+	///     concat input from their own beginnings, joined by the concat filter, and the audio comes from
+	///     an audio-only concat list (ConcatListWriter.WriteAudioOnly). Verified on real Osmo recordings:
+	///     the output's first frame is exactly the range's first frame, the segment seam neither drops
+	///     nor repeats a frame, and the audio is in sync (0 ms against a single-file cut of the same span).
+	/// </summary>
+	private static SourceInputs AddSourceInputs(List<string> args, IReadOnlyList<VideoSegment> segments,
+		RenderRange renderRange, RenderEncodeSettings encode, int num, int den, List<string> tempFiles)
+	{
+		void AddHwDecode()
+		{
+			if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+		}
+
+		string? AudioMapFor(int input, SourceInfo s)
+		{
+			return s.Audio is null ? null : $"{input}:a";
+		}
+
+		if (renderRange.StartFrame == 0)
+		{
+			AddHwDecode();
+			if (segments.Count == 1)
+			{
+				args.AddRange(["-i", segments[0].InputPath]);
+			}
+			else
+			{
+				var listPath = ConcatListWriter.Write(segments.Select(s => s.InputPath));
+				tempFiles.Add(listPath);
+				args.AddRange(["-f", "concat", "-safe", "0", "-i", listPath]);
+			}
+
+			return new SourceInputs(1, "[0:v]", AudioMapFor(0, segments[0].Source), segments[0].Source);
+		}
+
+		var (first, localStartFrame) = VideoSegments.Locate(segments, renderRange.StartFrame);
+		var (last, _) = VideoSegments.Locate(segments, renderRange.StartFrame + renderRange.FrameCount - 1);
+		SourceInfo startSource = segments[first].Source;
+		var localStartSeconds = localStartFrame * den / (double)num;
+		var seek = localStartSeconds.ToString("R", CultureInfo.InvariantCulture);
+
+		AddHwDecode();
+		args.AddRange(["-ss", seek, "-i", segments[first].InputPath]);
+		if (last == first)
+			return new SourceInputs(1, "[0:v]", AudioMapFor(0, startSource), startSource, localStartFrame);
+
+		List<string> tailPaths = [.. segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath)];
+		var tailList = ConcatListWriter.Write(tailPaths);
+		tempFiles.Add(tailList);
+		AddHwDecode();
+		args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
+		const string mainVideo = "[0:v][1:v]concat=n=2:v=1:a=0,";
+
+		if (startSource.Audio is null) return new SourceInputs(2, mainVideo, null, startSource, localStartFrame);
+		if (startSource.Audio.StreamId is not { } audioStreamId)
+			throw new InvalidOperationException("Can't locate the audio track's id in the source, needed to render a range spanning several files.");
+
+		var audioList = ConcatListWriter.WriteAudioOnly([segments[first].InputPath, .. tailPaths], audioStreamId, localStartSeconds);
+		tempFiles.Add(audioList);
+		args.AddRange(["-itsoffset", SourceProbe.ProbeConcatStartTime(audioList), "-f", "concat", "-safe", "0", "-i", audioList]);
+		return new SourceInputs(3, mainVideo, "2:a", startSource, localStartFrame);
+	}
+
+	private static void DeleteTempFiles(List<string> paths)
+	{
+		foreach (var path in paths)
+			try
+			{
+				File.Delete(path);
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+			{
+				// Best-effort: a stray temp file is harmless, not worth failing over.
+			}
 	}
 
 	/// <summary>Maps OverlaySettings' export options, see there for what each default preserves.</summary>
@@ -240,7 +327,20 @@ public static class FfmpegPipeline
 		var parts = rFrameRate.Split('/');
 		return (int.Parse(parts[0]), parts.Length > 1 ? int.Parse(parts[1]) : 1);
 	}
+
+	/// <summary>
+	///     What AddSourceInputs set up: how many inputs precede the overlay pipe, the filter-graph source
+	///     of the main video ("[0:v]" or a concat of two inputs), the -map for audio (null for none), and
+	///     the segment the output starts in plus how many frames into it (for creation_time/timecode).
+	/// </summary>
+	private sealed record SourceInputs(int InputCount, string MainVideo, string? AudioMap, SourceInfo StartSource, long LocalStartFrame = 0);
 }
+
+/// <summary>
+///     Which frames of the source (on the combined timeline of all segments) to render. IsPartial is
+///     anything short of the whole recording - the output then needs an explicit end for its audio.
+/// </summary>
+public sealed record RenderRange(long StartFrame, long FrameCount, bool IsPartial);
 
 /// <summary>
 ///     Export options on top of the source-matched defaults (see OverlaySettings): NVENC preset,

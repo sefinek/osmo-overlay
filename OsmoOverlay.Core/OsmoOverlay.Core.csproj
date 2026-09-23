@@ -32,6 +32,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NLog" Version="6.2.1" />
     <PackageReference Include="SkiaSharp" Version="4.152.1" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.152.1" />

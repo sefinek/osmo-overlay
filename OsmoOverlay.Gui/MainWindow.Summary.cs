@@ -29,6 +29,8 @@ public partial class MainWindow
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
 		_hasGpsFix = false;
+		// A range belongs to the recording it was set on.
+		ClearRange();
 		_hasGpsTimestamp = false;
 		_hasContainerTime = false;
 		LogBox.ClearLog();
@@ -305,11 +307,12 @@ public partial class MainWindow
 	{
 		var fps = summary.Video.Fps;
 		var sourceFrames = summary.TotalFrameCount ?? (long)Math.Ceiling(summary.DurationSeconds * fps);
-		var totalFrames = _frameLimit is { } limit ? Math.Min(limit, sourceFrames) : sourceFrames;
+		var totalFrames = PlannedFrameCount(sourceFrames, fps);
 
 		OutEncoder.Text = encoder + (encoder == "libx265" ? " (CPU)" : " (GPU)");
 		OutAudio.Text = summary.Audio is not null ? "Copied (no re-encode)" : "None";
-		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) + (_frameLimit is not null ? " (frame limit)" : "");
+		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) +
+		                     (HasRange ? $" (range {DescribeRange()})" : "") + (_frameLimit is not null ? " (frame limit)" : "");
 
 		// Speed measured by the last full render of this same shape (RenderSpeedHistory) - there's no
 		// meaningful way to predict it before the first one, so say so instead of guessing.

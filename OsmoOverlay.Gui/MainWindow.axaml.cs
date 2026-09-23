@@ -122,6 +122,8 @@ public partial class MainWindow : Window
 		MapZoomOutMaxBox.Minimum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
 
+		WireRangeShortcuts();
+
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
 		// Map tile progress arrives from thread-pool threads (see OverlayRenderer.BuildMapMosaicAsync).

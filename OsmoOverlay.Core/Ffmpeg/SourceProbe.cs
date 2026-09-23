@@ -41,7 +41,8 @@ public sealed record VideoInfo(
 	}
 }
 
-public sealed record AudioInfo(string CodecName, int SampleRate, int Channels, long BitRate);
+/// <summary>StreamId is the container's own track id as ffprobe reports it (e.g. "0x2") - what a concat list's exact_stream_id needs.</summary>
+public sealed record AudioInfo(string CodecName, int SampleRate, int Channels, long BitRate, string? StreamId = null);
 
 public sealed record SourceInfo(
 	VideoInfo Video,
@@ -124,7 +125,8 @@ public static partial class SourceProbe
 				audioStream["codec_name"]!.GetValue<string>(),
 				int.Parse(audioStream["sample_rate"]!.GetValue<string>()),
 				audioStream["channels"]!.GetValue<int>(),
-				ResolveAudioBitRate(audioStream, videoStream, root));
+				ResolveAudioBitRate(audioStream, videoStream, root),
+				audioStream["id"]?.GetValue<string>());
 
 		var duration = double.Parse(root["format"]!["duration"]!.GetValue<string>(), CultureInfo.InvariantCulture);
 
@@ -135,6 +137,22 @@ public static partial class SourceProbe
 			containerCreationTimeUtc = parsed;
 
 		return new SourceInfo(video, audio, hasDjmd, duration, djmdStreamIndex, containerCreationTimeUtc);
+	}
+
+	/// <summary>
+	///     The start time ffmpeg will see for a concat list input, as the exact string ffprobe prints - the
+	///     -itsoffset ConcatListWriter.WriteAudioOnly's list needs.
+	/// </summary>
+	public static string ProbeConcatStartTime(string listPath)
+	{
+		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
+			"-v", "error", "-f", "concat", "-safe", "0", "-show_entries", "format=start_time", "-of", "csv=p=0", listPath);
+
+		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		var startTime = stdout.Trim();
+		if (exitCode != 0 || !double.TryParse(startTime, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
+			throw new InvalidOperationException($"Couldn't read the start time of the audio for this range: {stderr}");
+		return startTime;
 	}
 
 	/// <summary>

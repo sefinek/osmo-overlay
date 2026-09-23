@@ -37,6 +37,9 @@ public sealed class PreviewPlayer : IDisposable
 	private bool _resumeAfterScrub;
 	private CancellationTokenSource? _routeIntroPrepareCts;
 	private CancellationTokenSource? _scrubCts;
+	// Kept across Close/OpenAsync (the GUI reopens the preview for some settings changes) - only
+	// SetTimelineOffset changes it.
+	private double _timelineOffsetSeconds;
 	private VideoFrameSource? _video;
 
 	public bool IsPlaying => _playbackCts is not null;
@@ -88,7 +91,10 @@ public sealed class PreviewPlayer : IDisposable
 			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0,
 			settings.ShowWatermark, summary.CameraModel, summary.ContainerRecordingStartUtc,
 			settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution, settings.MapApiKey,
-			RouteIntroSettings.ForRecording(settings, _hasGpsFix));
+			RouteIntroSettings.ForRecording(settings, _hasGpsFix))
+		{
+			TimelineOffsetSeconds = _timelineOffsetSeconds
+		};
 
 		_video = video;
 		_renderer = renderer;
@@ -309,6 +315,24 @@ public sealed class PreviewPlayer : IDisposable
 
 			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
 			ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
+			if (composed is not null) Publish(composed);
+		}
+	}
+
+	/// <summary>
+	///     Where a range render would start (OverlayRenderer.TimelineOffsetSeconds), so the preview shows the
+	///     route intro/watermark/widget timing the way that render will. Recomposes the current frame in place.
+	/// </summary>
+	public void SetTimelineOffset(double seconds)
+	{
+		lock (_lock)
+		{
+			_timelineOffsetSeconds = seconds;
+			if (_renderer is null) return;
+			_renderer.TimelineOffsetSeconds = seconds;
+
+			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
+			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
 			if (composed is not null) Publish(composed);
 		}
 	}
