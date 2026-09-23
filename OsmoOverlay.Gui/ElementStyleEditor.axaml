@@ -10,21 +10,21 @@
 		<TextBlock Name="TextColorLabel" Text="Text color" Classes="infoLabel" Margin="0" />
 		<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
 			<Border Grid.Column="0" Name="TextColorSwatch" Width="20" Height="20"
-			        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+			        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
 			<TextBox Grid.Column="1" Name="TextColorBox" PlaceholderText="#FFFFFF" />
 		</Grid>
 		<StackPanel Name="AccentColorPanel" Spacing="8" IsVisible="False">
 			<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
 			<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
 				<Border Grid.Column="0" Name="AccentColorSwatch" Width="20" Height="20"
-				        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+				        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
 				<TextBox Grid.Column="1" Name="AccentColorBox" PlaceholderText="#46BEFF" />
 			</Grid>
 		</StackPanel>
 		<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
 		<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
 			<Border Grid.Column="0" Name="OutlineColorSwatch" Width="20" Height="20"
-			        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
+			        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
 			<TextBox Grid.Column="1" Name="OutlineColorBox" PlaceholderText="#000000" />
 		</Grid>
 		<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />

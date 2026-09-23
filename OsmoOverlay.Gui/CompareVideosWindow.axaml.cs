@@ -17,9 +17,9 @@ public partial class CompareVideosWindow : Window
 	// DataGrid control - this repo has no DataGrid dependency, and the table's shape (a handful of
 	// fixed property rows against up to MaxFiles columns) doesn't need one.
 	private const int MaxFiles = 6;
-	private static readonly IBrush DiffBrush = new SolidColorBrush(Color.Parse("#E5A83E"));
-	private static readonly IBrush RowBandBrush = new SolidColorBrush(Color.Parse("#0AFFFFFF"));
-	private static readonly IBrush SectionDividerBrush = new SolidColorBrush(Color.Parse("#33FFFFFF"));
+	private static readonly IBrush DiffBrush = Palette.Warning;
+	private static readonly IBrush RowBandBrush = Palette.SubtleFill;
+	private static readonly IBrush SectionDividerBrush = Palette.Stroke;
 	private readonly Dictionary<string, string> _errors = [];
 
 	private readonly List<string> _paths = [];

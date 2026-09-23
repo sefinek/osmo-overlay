@@ -14,7 +14,7 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class MainWindow
 {
-	private static readonly IBrush RangeBrush = new SolidColorBrush(Color.Parse("#4C9AFF"), 0.35);
+	private static readonly IBrush RangeBrush = Palette.Tint(Palette.Accent, 0.35);
 
 	private double? _rangeStartSeconds;
 	private double? _rangeEndSeconds;

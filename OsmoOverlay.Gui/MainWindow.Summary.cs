@@ -224,10 +224,10 @@ public partial class MainWindow
 		// distinct amber "No GPS fix" state instead of lumping it in with the green case, so it isn't
 		// mistaken for a recording with real position data.
 		var hasGpsFix = summary.TelemetryFrames is { Count: > 0 } telemetryFrames && TelemetryProcessor.HasAnyGpsFix(telemetryFrames);
-		var telemetryColorHex = !summary.HasTelemetry ? "E5484D" : hasGpsFix ? "4CAF50" : "E5A83E";
+		IBrush telemetryBrush = !summary.HasTelemetry ? Palette.Danger : hasGpsFix ? Palette.Success : Palette.Warning;
 		InfoTelemetry.Text = !summary.HasTelemetry ? "Not found" : hasGpsFix ? "Detected" : "No GPS fix";
-		InfoTelemetry.Foreground = new SolidColorBrush(Color.Parse($"#{telemetryColorHex}"));
-		TelemetryPill.Background = new SolidColorBrush(Color.Parse($"#3D{telemetryColorHex}"));
+		InfoTelemetry.Foreground = telemetryBrush;
+		TelemetryPill.Background = Palette.Tint(telemetryBrush, 0.24);
 		ToolTip.SetTip(TelemetryPill, summary.HasTelemetry && !hasGpsFix
 			? "This recording never acquired a GPS fix - only accelerometer/camera-settings data was decoded. Speed, distance, elevation, map and compass are unavailable."
 			: null);
@@ -244,8 +244,8 @@ public partial class MainWindow
 		path.Data = ok switch { true => CheckGeometry, false => CrossGeometry, null => null };
 		path.Stroke = ok switch
 		{
-			true => new SolidColorBrush(Color.Parse("#4CAF50")),
-			false => new SolidColorBrush(Color.Parse("#E5484D")),
+			true => Palette.Success,
+			false => Palette.Danger,
 			null => null
 		};
 		ToolTip.SetTip(path, ok switch
@@ -404,7 +404,7 @@ public partial class MainWindow
 	private static void SetMatchCheck(AvaloniaPath path, bool matches)
 	{
 		path.Data = matches ? CheckGeometry : CrossGeometry;
-		path.Stroke = new SolidColorBrush(Color.Parse(matches ? "#4CAF50" : "#E5484D"));
+		path.Stroke = matches ? Palette.Success : Palette.Danger;
 		ToolTip.SetTip(path, matches ? "Matches the source file." : "Differs from the source file.");
 	}
 

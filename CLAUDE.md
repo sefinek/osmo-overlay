@@ -87,6 +87,7 @@ ffmpeg can't mux the camera's `djmd`/`dbgi` data tracks into MP4, so "keep camer
 ## Repo-specific conventions
 
 - `ProcessHelper.CreateHidden(command, args)` - always use this instead of manually building a `ProcessStartInfo` for external tools (ffmpeg/ffprobe/exiftool) - it hides the console window and redirects stdout/stderr consistently across the repo.
+- GUI colors live only in the `App.axaml` palette (`*Color`/`*Brush` resources). XAML references them with `{StaticResource ...Brush}`, C# through `Palette` (`Palette.cs`) - never a hex literal. Shared classes (`card`, `hint`, `infoLabel`, `sectionLabel`) are global there too; a window only adds layout overrides (margins, padding) locally. The overlay's own render colors (e.g. the `#46DC6E` trail default in `PlaceholderText`) are output content, not UI, and stay as they are.
 - `AngleMath` (`DegToRad`/`RadToDeg`/`NormalizeDegrees`) - the only place for angle conversions; don't duplicate `* Math.PI / 180.0` in new code.
 - Overlay text style: `DrawOutlined` in `OverlayRenderer` produces a thin outline + soft shadow (not a thick outline) - this is a deliberate visual decision, don't change it without an explicit request.
 

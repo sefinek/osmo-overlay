@@ -6,7 +6,7 @@
         x:Class="OsmoOverlay.Gui.DependencyPromptWindow"
         Width="480" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="#121214"
+        Background="{StaticResource WindowBackgroundBrush}"
         Title="Missing dependencies">
 
 	<StackPanel Margin="20" Spacing="14">
@@ -14,7 +14,7 @@
 		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
 		<ListBox Name="ToolList" MaxHeight="90" />
 
-		<Border Name="LogPanel" Background="#0A0A0B" CornerRadius="6" Padding="10" IsVisible="False" MaxHeight="160">
+		<Border Name="LogPanel" Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6" Padding="10" IsVisible="False" MaxHeight="160">
 			<ScrollViewer Name="LogScroll">
 				<SelectableTextBlock Name="LogBox" TextWrapping="Wrap"
 				                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />

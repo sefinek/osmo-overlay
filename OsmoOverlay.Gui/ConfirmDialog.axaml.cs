@@ -16,11 +16,11 @@ public enum DialogKind
 
 public partial class ConfirmDialog : Window
 {
-	private static readonly IBrush NeutralDotBrush = new SolidColorBrush(Color.Parse("#5A5A62"));
-	private static readonly IBrush InfoDotBrush = new SolidColorBrush(Color.Parse("#3E9EFF"));
-	private static readonly IBrush SuccessDotBrush = new SolidColorBrush(Color.Parse("#3EBE6E"));
-	private static readonly IBrush WarningDotBrush = new SolidColorBrush(Color.Parse("#E5A83E"));
-	private static readonly IBrush DangerDotBrush = new SolidColorBrush(Color.Parse("#E5484D"));
+	private static readonly IBrush NeutralDotBrush = Palette.TextMuted;
+	private static readonly IBrush InfoDotBrush = Palette.Accent;
+	private static readonly IBrush SuccessDotBrush = Palette.Success;
+	private static readonly IBrush WarningDotBrush = Palette.Warning;
+	private static readonly IBrush DangerDotBrush = Palette.Danger;
 
 	private readonly Func<Task>? _onConfirm;
 	private readonly Action? _onExtra;

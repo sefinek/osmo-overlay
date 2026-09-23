@@ -19,7 +19,7 @@ public partial class MainWindow
 {
 	// Same red used elsewhere in this window for error/invalid states (e.g. the API key hint), reused
 	// here so a GPS-loss mark reads as the same "something's wrong here" signal.
-	private static readonly IBrush GpsLossBrush = new SolidColorBrush(Color.Parse("#E5484D"));
+	private static readonly IBrush GpsLossBrush = Palette.Danger;
 
 	private async Task OpenPreviewAsync(FileSummary summary)
 	{

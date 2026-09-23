@@ -6,7 +6,7 @@
         x:Class="OsmoOverlay.Gui.ConfirmDialog"
         Width="480" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="#121214"
+        Background="{StaticResource WindowBackgroundBrush}"
         Title="Confirm">
 
 	<StackPanel Margin="20" Spacing="16">

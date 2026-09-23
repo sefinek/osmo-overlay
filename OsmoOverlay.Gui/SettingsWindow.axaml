@@ -6,20 +6,20 @@
         x:Class="OsmoOverlay.Gui.SettingsWindow"
         Width="820" Height="560" MinWidth="680" MinHeight="420"
         WindowStartupLocation="CenterOwner"
-        Background="#121214"
+        Background="{StaticResource WindowBackgroundBrush}"
         Title="Settings">
 
 	<Window.Resources>
-		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="#1B1B1E" />
-		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="#232327" />
-		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="#1F1F22" />
-		<SolidColorBrush x:Key="ExpanderHeaderBackgroundDisabled" Color="#18181A" />
-		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="#2A2A2F" />
-		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="#34343A" />
-		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="#34343A" />
-		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushDisabled" Color="#222226" />
-		<SolidColorBrush x:Key="ExpanderContentBackground" Color="#18181B" />
-		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="#2A2A2F" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{StaticResource ControlColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{StaticResource ControlPressedColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundDisabled" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushDisabled" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBackground" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="{StaticResource ControlBorderColor}" />
 		<SolidColorBrush x:Key="ExpanderChevronBackground" Color="Transparent" />
 		<SolidColorBrush x:Key="ExpanderChevronBackgroundPointerOver" Color="Transparent" />
 		<SolidColorBrush x:Key="ExpanderChevronBackgroundPressed" Color="Transparent" />
@@ -29,18 +29,10 @@
 	</Window.Resources>
 
 	<Window.Styles>
-		<Style Selector="TextBlock.infoLabel">
-			<Setter Property="Opacity" Value="0.55" />
-		</Style>
 		<Style Selector="TextBlock.sectionHeader">
 			<Setter Property="FontSize" Value="17" />
 			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="Opacity" Value="0.9" />
-		</Style>
-		<Style Selector="TextBlock.hint">
-			<Setter Property="Opacity" Value="0.4" />
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="TextWrapping" Value="Wrap" />
 		</Style>
 		<Style Selector="CheckBox, RadioButton">
 			<Setter Property="FontSize" Value="14" />
@@ -60,7 +52,7 @@
 
 	<Grid>
 		<Grid ColumnDefinitions="180,*">
-			<Border Grid.Column="0" Background="#1B1B1E" Padding="10">
+			<Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" Padding="10">
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
 					<ListBoxItem Content="General" />
 					<ListBoxItem Content="Rendering" />
@@ -192,7 +184,7 @@
 							<TextBlock Name="MapApiKeyLabel" Text="API key" Classes="infoLabel" IsVisible="False" />
 							<TextBox Name="MapApiKeyBox" IsVisible="False" PlaceholderText="Paste your API key"
 							         PasswordChar="•" LostFocus="OnMapApiKeyChanged" />
-							<TextBlock Name="MapApiKeyHint" Classes="hint" Opacity="1" Foreground="#E5484D" IsVisible="False"
+							<TextBlock Name="MapApiKeyHint" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False"
 							           Text="Doesn't look like a CARTO key - expected format: xxx_xxxx_n_&lt;24 hex chars&gt;." />
 						</StackPanel>
 
@@ -257,7 +249,7 @@
 							<TextBlock Text="Application" Classes="infoLabel" />
 							<TextBlock Name="AppVersionText" Text="OsmoOverlay" />
 							<TextBlock Name="CoreVersionText" Text="Core" />
-							<TextBlock Name="GitHubLinkText" Text="github.com/sefinek/osmo-overlay" Foreground="#4EA1F3"
+							<TextBlock Name="GitHubLinkText" Text="github.com/sefinek/osmo-overlay" Foreground="{StaticResource AccentHoverBrush}"
 							           Cursor="Hand" PointerPressed="OnGitHubLinkClick" />
 						</StackPanel>
 

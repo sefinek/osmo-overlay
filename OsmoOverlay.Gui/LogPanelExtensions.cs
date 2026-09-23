@@ -22,8 +22,8 @@ public enum LogLevel
 
 internal static class LogPanelExtensions
 {
-	private static readonly IBrush WarnBrush = new SolidColorBrush(Color.Parse("#E5A83E"));
-	private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#E5484D"));
+	private static readonly IBrush WarnBrush = Palette.Warning;
+	private static readonly IBrush ErrorBrush = Palette.Danger;
 
 	extension(SelectableTextBlock logBox)
 	{

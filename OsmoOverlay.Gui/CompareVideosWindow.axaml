@@ -7,19 +7,15 @@
         Width="900" Height="620" CanResize="True"
         WindowStartupLocation="CenterOwner"
         WindowState="Maximized"
-        Background="#121214"
+        Background="{StaticResource WindowBackgroundBrush}"
         FontSize="15"
         Title="Compare videos">
 
 	<Window.Styles>
 		<Style Selector="TextBlock.infoLabel">
-			<Setter Property="Opacity" Value="0.55" />
 			<Setter Property="Margin" Value="0,5" />
 		</Style>
 		<Style Selector="TextBlock.hint">
-			<Setter Property="Opacity" Value="0.4" />
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="TextWrapping" Value="Wrap" />
 			<Setter Property="Margin" Value="0,4,0,0" />
 		</Style>
 		<Style Selector="TextBlock.rowLabel">

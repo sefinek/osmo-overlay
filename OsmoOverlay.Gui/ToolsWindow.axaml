@@ -6,13 +6,11 @@
         x:Class="OsmoOverlay.Gui.ToolsWindow"
         Width="780" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="#121214"
+        Background="{StaticResource WindowBackgroundBrush}"
         Title="Tools">
 
 	<Window.Styles>
 		<Style Selector="Border.toolCard">
-			<Setter Property="Background" Value="#1B1B1E" />
-			<Setter Property="CornerRadius" Value="10" />
 			<Setter Property="Padding" Value="16,14" />
 		</Style>
 		<Style Selector="TextBlock.toolTitle">
@@ -22,21 +20,12 @@
 			<Setter Property="Margin" Value="0,0,0,6" />
 		</Style>
 		<Style Selector="TextBlock.hint">
-			<Setter Property="Opacity" Value="0.5" />
-			<Setter Property="FontSize" Value="12" />
-			<Setter Property="LineHeight" Value="17" />
-			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="18" />
 		</Style>
 		<Style Selector="StackPanel.toolActions">
 			<Setter Property="Orientation" Value="Horizontal" />
 			<Setter Property="Spacing" Value="8" />
 			<Setter Property="Margin" Value="0,14,0,0" />
-		</Style>
-		<Style Selector="TextBlock.sectionLabel">
-			<Setter Property="FontSize" Value="11" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="LetterSpacing" Value="1" />
-			<Setter Property="Opacity" Value="0.45" />
 		</Style>
 	</Window.Styles>
 
@@ -44,7 +33,7 @@
 		<TextBlock Classes="sectionLabel" Text="VIDEO &amp; AUDIO" />
 
 		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-			<Border Grid.Row="0" Grid.Column="0" Classes="toolCard">
+			<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
 				<DockPanel>
 					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Fix color tags" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
@@ -55,7 +44,7 @@
 				</DockPanel>
 			</Border>
 
-			<Border Grid.Row="0" Grid.Column="1" Classes="toolCard">
+			<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
 				<DockPanel>
 					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Remove metadata" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
@@ -66,7 +55,7 @@
 				</DockPanel>
 			</Border>
 
-			<Border Grid.Row="1" Grid.Column="0" Classes="toolCard">
+			<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
 				<DockPanel>
 					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Camera microphone audio (.AAC)" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
@@ -78,7 +67,7 @@
 				</DockPanel>
 			</Border>
 
-			<Border Grid.Row="1" Grid.Column="1" Classes="toolCard">
+			<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
 				<DockPanel>
 					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Compare videos" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
@@ -92,7 +81,7 @@
 
 		<TextBlock Classes="sectionLabel" Text="APP DATA" Margin="0,8,0,0" />
 
-		<Border Classes="toolCard">
+		<Border Classes="card toolCard">
 			<Grid ColumnDefinitions="*,Auto">
 				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
 				           Text="Presets, settings, map tiles, logs and the cached file analysis." />
