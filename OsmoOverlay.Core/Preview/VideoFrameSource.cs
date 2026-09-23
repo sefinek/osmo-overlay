@@ -12,6 +12,9 @@ public sealed record PlaybackSegment(string Path, double DurationSeconds);
 
 public sealed class VideoFrameSource
 {
+	// Decoded frames are composed right away, so only two are ever alive: the one being read and the last
+	// one PreviewPlayer keeps for recomposing (see PreviewPlayer.Compose, which recycles the one before).
+	private readonly FrameBufferPool _buffers = new(3);
 	private readonly int _height;
 	private readonly List<(string Path, double DurationSeconds, double StartOffsetSeconds)> _segments;
 	private readonly int _width;
@@ -37,6 +40,12 @@ public sealed class VideoFrameSource
 	public double Fps { get; }
 
 	private int FrameByteCount => _width * _height * 4;
+
+	/// <summary>Hands a frame's buffer back for reuse - the caller must not touch the frame afterwards.</summary>
+	public void Recycle(VideoFrame frame)
+	{
+		_buffers.Return(frame.Bgra);
+	}
 
 	public static VideoFrameSource Open(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height)
 	{
@@ -67,8 +76,10 @@ public sealed class VideoFrameSource
 		for (var attempt = 0; attempt < maxAttempts; attempt++)
 		{
 			var (read, buffer, stderr, cancelled) = DecodeOneFrame(path, attemptPosition, ct);
+			if (read == buffer.Length && !cancelled) return new VideoFrame(buffer, _width * 4, _width, _height);
+
+			_buffers.Return(buffer);
 			if (cancelled) return null;
-			if (read == buffer.Length) return new VideoFrame(buffer, _width * 4, _width, _height);
 
 			lastStderr = stderr;
 			if (attempt == maxAttempts - 1) break;
@@ -89,7 +100,7 @@ public sealed class VideoFrameSource
 
 		Task<string> stderrTask = process.StandardError.ReadToEndAsync(ct);
 
-		var buffer = new byte[FrameByteCount];
+		var buffer = _buffers.Rent(FrameByteCount);
 		var read = ReadFully(process.StandardOutput.BaseStream, buffer);
 		process.WaitForExit();
 
@@ -119,20 +130,20 @@ public sealed class VideoFrameSource
 		if (_segments.Count - index == 1)
 		{
 			Process single = StartFfmpeg(_segments[index].Path, local, false);
-			return new VideoPlaybackStream(single, null, start, Fps, _width, _height, null, ct);
+			return new VideoPlaybackStream(single, null, start, Fps, _width, _height, null, _buffers, ct);
 		}
 
 		if (local <= TimeSpan.Zero)
 		{
 			var listPath = ConcatListWriter.Write(_segments.Skip(index).Select(s => s.Path));
 			Process process = StartFfmpegConcat(listPath);
-			return new VideoPlaybackStream(process, null, start, Fps, _width, _height, listPath, ct);
+			return new VideoPlaybackStream(process, null, start, Fps, _width, _height, listPath, _buffers, ct);
 		}
 
 		Process firstStage = StartFfmpeg(_segments[index].Path, local, false);
 		List<(string Path, double DurationSeconds, double StartOffsetSeconds)> tail = _segments.Skip(index + 1).ToList();
 		VideoPlaybackStream.NextStageFactory nextStage = () => OpenTailStage(tail);
-		return new VideoPlaybackStream(firstStage, nextStage, start, Fps, _width, _height, null, ct);
+		return new VideoPlaybackStream(firstStage, nextStage, start, Fps, _width, _height, null, _buffers, ct);
 	}
 
 	private (Process Process, string? ConcatListPath) OpenTailStage(
@@ -269,6 +280,7 @@ public sealed class VideoPlaybackStream : IDisposable
 	/// <summary>Lazily opens the next process once the current one naturally runs out - see TryReadNextFrame.</summary>
 	internal delegate (Process Process, string? ConcatListPath) NextStageFactory();
 
+	private readonly FrameBufferPool _buffers;
 	private readonly CancellationToken _ct;
 	private readonly double _fps;
 	private readonly int _height;
@@ -289,8 +301,9 @@ public sealed class VideoPlaybackStream : IDisposable
 	// preview operation (Pause, scrub, dragging an element) would hang forever waiting on the same
 	// lock. Killing the process here unblocks the read (as an early EOF) as soon as ct is cancelled.
 	internal VideoPlaybackStream(Process process, NextStageFactory? nextStage, TimeSpan startPosition, double fps,
-		int width, int height, string? concatListPath, CancellationToken ct)
+		int width, int height, string? concatListPath, FrameBufferPool buffers, CancellationToken ct)
 	{
+		_buffers = buffers;
 		_process = process;
 		_nextStage = nextStage;
 		_stdout = process.StandardOutput.BaseStream;
@@ -346,11 +359,12 @@ public sealed class VideoPlaybackStream : IDisposable
 	/// </summary>
 	public VideoFrame? TryReadNextFrame()
 	{
-		var buffer = new byte[_width * _height * 4];
+		var buffer = _buffers.Rent(_width * _height * 4);
 		var read = VideoFrameSource.ReadFully(_stdout, buffer);
 
 		if (read < buffer.Length)
 		{
+			_buffers.Return(buffer);
 			if (_nextStage is null || _ct.IsCancellationRequested) return null;
 
 			NextStageFactory factory = _nextStage;

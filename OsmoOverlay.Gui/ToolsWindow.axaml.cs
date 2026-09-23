@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -151,6 +152,74 @@ public partial class ToolsWindow : Window
 			await ConfirmDialog.ShowAsync(this, "Fix failed",
 				$"Fixing \"{fileName}\" failed.\n\nDetails: {fixError.Message}",
 				kind: DialogKind.Danger, windowTitle: "Fix color tags");
+	}
+
+	private async void OnSelectStripFileClick(object? sender, RoutedEventArgs e)
+	{
+		TopLevel? topLevel = GetTopLevel(this);
+		if (topLevel is null) return;
+
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = "Select a video to remove metadata from",
+			AllowMultiple = false,
+			FileTypeFilter = [new FilePickerFileType("MP4/MOV video") { Patterns = ["*.mp4", "*.MP4", "*.mov", "*.MOV"] }]
+		});
+		if (files.Count == 0) return;
+
+		var inputPath = files[0].Path.LocalPath;
+		IStorageFile? target = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		{
+			Title = "Save the cleaned copy as",
+			SuggestedFileName = SuggestCleanFileName(inputPath),
+			SuggestedStartLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync(
+				Path.GetDirectoryName(inputPath) ?? ""),
+			DefaultExtension = "mp4",
+			FileTypeChoices = [new FilePickerFileType("MP4 video") { Patterns = ["*.mp4"] }]
+		});
+		if (target is null) return;
+
+		var outputPath = target.Path.LocalPath;
+		SelectStripFileButton.IsEnabled = false;
+		SelectStripFileButton.Content = "Working...";
+		try
+		{
+			MetadataStripResult result = await Task.Run(() => MetadataStripper.Strip(inputPath, outputPath));
+
+			var removed = result.Removed.Count > 0
+				? string.Join("\n", result.Removed.Select(r => $"    - {r}"))
+				: "    (nothing identifying was found)";
+			await ConfirmDialog.ShowAsync(this, "Metadata removed",
+				$"Saved a clean copy as \"{Path.GetFileName(outputPath)}\" and verified it: only picture and sound are " +
+				"left, bit-for-bit identical, with the same color profile and rotation.\n\n" +
+				$"Removed:\n{removed}\n\n" +
+				"The file name itself isn't metadata - camera file names like DJI_20260916100634 contain the recording " +
+				"date and time, so rename it before sharing if that matters.",
+				kind: DialogKind.Success, windowTitle: "Remove metadata",
+				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(outputPath),
+				extraText: "Compare files", onExtra: () => OpenCompareWindow(inputPath, outputPath));
+		}
+		catch (Exception ex)
+		{
+			await ConfirmDialog.ShowAsync(this, "Couldn't remove metadata",
+				$"No file was saved.\n\nDetails: {ex.Message}",
+				kind: DialogKind.Danger, windowTitle: "Remove metadata");
+		}
+		finally
+		{
+			SelectStripFileButton.IsEnabled = true;
+			SelectStripFileButton.Content = "Select file...";
+		}
+	}
+
+	/// <summary>
+	///     "clean.mp4" instead of "{name}_clean.mp4" when the original name looks like it carries a date
+	///     (DJI_20260916100634_0003_D) - the suggested name shouldn't undo the point of the tool.
+	/// </summary>
+	private static string SuggestCleanFileName(string inputPath)
+	{
+		var name = Path.GetFileNameWithoutExtension(inputPath);
+		return Regex.IsMatch(name, @"\d{8}") ? "clean.mp4" : $"{name}_clean.mp4";
 	}
 
 	private void OpenCompareWindow(params string[] paths)

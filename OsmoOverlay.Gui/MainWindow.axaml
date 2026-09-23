@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:core="clr-namespace:OsmoOverlay.Core.Overlay;assembly=OsmoOverlay.Core"
+        xmlns:local="using:OsmoOverlay.Gui"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="OsmoOverlay.Gui.MainWindow"
         Width="1280" Height="800" MinWidth="1000" MinHeight="640"
@@ -712,42 +713,10 @@
 												          SelectionChanged="OnDateTimeLocaleChanged" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="DateTimeFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="DateTimeScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="DateTimeTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="DateTimeTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="DateTimeOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="DateTimeOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="DateTimeOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="DateTimeStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DateTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DateTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="DateTimeAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="DateTimeAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="DateTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="DateTimeTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -772,42 +741,10 @@
 												          SelectionChanged="OnUtcTimeLocaleChanged" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="UtcTimeFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="UtcTimeScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="UtcTimeTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="UtcTimeTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="UtcTimeOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="UtcTimeOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="UtcTimeOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="UtcTimeStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="UtcTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="UtcTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="UtcTimeAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="UtcTimeAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="UtcTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="UtcTimeTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -825,48 +762,10 @@
 												         LostFocus="OnCameraInfoLabelChanged" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="CameraInfoFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="CameraInfoScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="CameraInfoTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="CameraInfoTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="CameraInfoAccentColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="CameraInfoAccentColorBox" PlaceholderText="#46BEFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="CameraInfoOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="CameraInfoOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="CameraInfoOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="CameraInfoStyle" HasAccentColor="True" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraInfoAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraInfoDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="CameraInfoAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="CameraInfoAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="CameraInfoAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="CameraInfoTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -899,22 +798,7 @@
 												</StackPanel>
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CompassAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CompassDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="CompassAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="CompassAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="CompassAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="CompassTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -984,22 +868,7 @@
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
-														<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-															<StackPanel Grid.Column="0" Spacing="8">
-																<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-																<NumericUpDown Name="MapAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-															</StackPanel>
-															<StackPanel Grid.Column="1" Spacing="8">
-																<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-																<NumericUpDown Name="MapDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-															</StackPanel>
-														</Grid>
-														<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-														<ComboBox Name="MapAnimationCombo" HorizontalAlignment="Stretch" />
-														<StackPanel Name="MapAnimationDurationPanel" Spacing="6">
-															<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-															<NumericUpDown Name="MapAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-														</StackPanel>
+														<local:ElementTimingEditor Name="MapTiming" />
 													</StackPanel>
 												</Border>
 											</StackPanel>
@@ -1023,42 +892,10 @@
 												</StackPanel>
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="SpeedFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="SpeedScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="SpeedTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="SpeedTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="SpeedOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="SpeedOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="SpeedOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="SpeedStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SpeedAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SpeedDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="SpeedAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="SpeedAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="SpeedAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="SpeedTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1071,42 +908,10 @@
 										<Border Name="PitchSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="PitchFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="PitchScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="PitchTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="PitchTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="PitchOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="PitchOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="PitchOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="PitchStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="PitchAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="PitchDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="PitchAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="PitchAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="PitchAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="PitchTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1119,42 +924,10 @@
 										<Border Name="SunSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="SunFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="SunScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="SunTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="SunTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="SunOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="SunOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="SunOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="SunStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SunAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SunDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="SunAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="SunAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="SunAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="SunTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1175,42 +948,10 @@
 												           Text="How many G's put the dot at the ring's edge - lower for a gentle ride, higher for motorsport." />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="GMeterFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="GMeterScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="GMeterTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="GMeterTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="GMeterOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="GMeterOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="GMeterOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="GMeterStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GMeterAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GMeterDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="GMeterAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="GMeterAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="GMeterAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="GMeterTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1223,42 +964,10 @@
 										<Border Name="ElapsedTimeSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="ElapsedTimeFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="ElapsedTimeScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="ElapsedTimeTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="ElapsedTimeTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="ElapsedTimeOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="ElapsedTimeOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="ElapsedTimeOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="ElapsedTimeStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElapsedTimeAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElapsedTimeDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="ElapsedTimeAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="ElapsedTimeAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="ElapsedTimeAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="ElapsedTimeTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1271,42 +980,10 @@
 										<Border Name="CameraModelSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="CameraModelFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="CameraModelScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="CameraModelTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="CameraModelTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="CameraModelOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="CameraModelOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="CameraModelOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="CameraModelStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraModelAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="CameraModelDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="CameraModelAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="CameraModelAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="CameraModelAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="CameraModelTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1337,22 +1014,7 @@
 												         LostFocus="OnTripProgressLabelChanged" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="TripProgressBarAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="TripProgressBarDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="TripProgressBarAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="TripProgressBarAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="TripProgressBarAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="TripProgressBarTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1377,48 +1039,10 @@
 												</StackPanel>
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="ElevationFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="ElevationScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="ElevationTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="ElevationTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="ElevationAccentColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="ElevationAccentColorBox" PlaceholderText="#46BEFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="ElevationOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="ElevationOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="ElevationOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="ElevationStyle" HasAccentColor="True" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElevationAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="ElevationDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="ElevationAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="ElevationAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="ElevationAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="ElevationTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1436,48 +1060,10 @@
 												         LostFocus="OnGradientLabelChanged" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="GradientFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="GradientScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="GradientTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="GradientTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="GradientAccentColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="GradientAccentColorBox" PlaceholderText="#46BEFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="GradientOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="GradientOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="GradientOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="GradientStyle" HasAccentColor="True" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GradientAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="GradientDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="GradientAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="GradientAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="GradientAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="GradientTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1502,48 +1088,10 @@
 												</StackPanel>
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<TextBlock Text="Font" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="DistanceFontCombo" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Text size" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="DistanceScaleBox" Minimum="0.4" Maximum="2.5" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" />
-												<TextBlock Text="Label color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="DistanceTextColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="DistanceTextColorBox" PlaceholderText="#FFFFFF" />
-												</Grid>
-												<TextBlock Text="Value color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="DistanceAccentColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="DistanceAccentColorBox" PlaceholderText="#46BEFF" />
-												</Grid>
-												<TextBlock Text="Outline color" Classes="infoLabel" Margin="0" />
-												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-													<Border Grid.Column="0" Name="DistanceOutlineColorSwatch" Width="20" Height="20"
-													        CornerRadius="4" BorderBrush="#40FFFFFF" BorderThickness="1" />
-													<TextBox Grid.Column="1" Name="DistanceOutlineColorBox" PlaceholderText="#000000" />
-												</Grid>
-												<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
-												<NumericUpDown Name="DistanceOutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+												<local:ElementStyleEditor Name="DistanceStyle" HasAccentColor="True" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
-												<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-													<StackPanel Grid.Column="0" Spacing="8">
-														<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DistanceAppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
-													</StackPanel>
-													<StackPanel Grid.Column="1" Spacing="8">
-														<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="DistanceDisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
-													</StackPanel>
-												</Grid>
-												<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
-												<ComboBox Name="DistanceAnimationCombo" HorizontalAlignment="Stretch" />
-												<StackPanel Name="DistanceAnimationDurationPanel" Spacing="6">
-													<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
-													<NumericUpDown Name="DistanceAnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
-												</StackPanel>
+												<local:ElementTimingEditor Name="DistanceTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>

@@ -52,12 +52,12 @@ public static partial class DependencyVersionChecker
 
 	private static string DescribeResult(string displayName, string? installed, string? latest, bool newerExists, bool canUpgrade)
 	{
-		if (installed is null) return $"{displayName}: not installed, or its version could not be read.";
-		if (latest is null) return $"{displayName}: installed {installed} (couldn't determine the latest version).";
-		if (!newerExists) return $"{displayName}: installed {installed} - up to date.";
+		if (installed is null) return $"{displayName}: not installed, or its version could not be read";
+		if (latest is null) return $"{displayName}: installed {installed} (couldn't determine the latest version)";
+		if (!newerExists) return $"{displayName}: installed {installed} - up to date";
 		return canUpgrade
-			? $"{displayName}: installed {installed}, update available ({latest})."
-			: $"{displayName}: installed {installed}, {latest} is available - not installed through the package manager, update it manually.";
+			? $"{displayName}: installed {installed}, update available ({latest})"
+			: $"{displayName}: installed {installed}, {latest} is available - not installed through the package manager, update it manually";
 	}
 
 	private static async Task<string?> GetInstalledVersionAsync(ExternalTool tool, CancellationToken ct)

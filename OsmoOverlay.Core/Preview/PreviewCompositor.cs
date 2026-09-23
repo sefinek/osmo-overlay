@@ -5,7 +5,8 @@ namespace OsmoOverlay.Core.Preview;
 
 public static class PreviewCompositor
 {
-	public static byte[] Compose(int canvasWidth, int canvasHeight, byte[] videoBgra, int videoStride,
+	/// <summary>Writes into <paramref name="result" />, which must be exactly canvasWidth * canvasHeight * 4 bytes.</summary>
+	public static void Compose(byte[] result, int canvasWidth, int canvasHeight, byte[] videoBgra, int videoStride,
 		byte[] overlayBgra, int overlayWidth, int overlayHeight)
 	{
 		var canvasInfo = new SKImageInfo(canvasWidth, canvasHeight, SKColorType.Bgra8888, SKAlphaType.Opaque);
@@ -13,7 +14,9 @@ public static class PreviewCompositor
 
 		// The video frame is the opaque base layer anyway - copying it straight into the result and drawing
 		// the overlay on top in place saves the intermediate native bitmap and its copy back out.
-		var result = new byte[canvasInfo.BytesSize];
+		if (result.Length != canvasInfo.BytesSize)
+			throw new ArgumentException($"Expected a {canvasInfo.BytesSize}-byte buffer, got {result.Length}.", nameof(result));
+
 		if (videoStride == rowBytes)
 			Buffer.BlockCopy(videoBgra, 0, result, 0, result.Length);
 		else
@@ -42,7 +45,5 @@ public static class PreviewCompositor
 			overlayPin.Free();
 			resultPin.Free();
 		}
-
-		return result;
 	}
 }

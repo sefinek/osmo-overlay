@@ -32,17 +32,17 @@ public static class DependencyInstaller
 	public static async Task<InstallResult> InstallAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
 	{
 		DependencyChecker.RefreshProcessPath();
-		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, $"{tool.DisplayName} is already installed.");
+		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, $"{tool.DisplayName} is already installed");
 
 		InstallResult result = await RunPackageManagerAsync(tool, false, onOutput, ct);
 		if (!result.Success) return result;
 
 		DependencyChecker.RefreshProcessPath();
 		return DependencyChecker.IsAvailable(tool)
-			? new InstallResult(true, $"{tool.DisplayName} installed.")
+			? new InstallResult(true, $"{tool.DisplayName} installed")
 			: new InstallResult(false,
 				$"The package manager reports {tool.DisplayName} as installed, but {string.Join("/", tool.Commands)} " +
-				"still can't be found on PATH. Restart the app, or add its folder to PATH manually.");
+				"still can't be found on PATH. Restart the app, or add its folder to PATH manually");
 	}
 
 	public static async Task<InstallResult> UpgradeAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
@@ -63,18 +63,18 @@ public static class DependencyInstaller
 		if (OperatingSystem.IsMacOS())
 		{
 			if (!DependencyChecker.IsCommandAvailable("brew"))
-				return new InstallResult(false, "Homebrew is not installed. Install it from https://brew.sh, then retry.");
+				return new InstallResult(false, "Homebrew is not installed. Install it from https://brew.sh, then retry");
 
 			var exitCode = await RunAsync(ProcessHelper.CreateHidden("brew", upgrade ? "upgrade" : "install", tool.BrewPackage),
 				onOutput, ct);
 			return exitCode == 0
-				? new InstallResult(true, $"brew {(upgrade ? "upgrade" : "install")} {tool.BrewPackage} finished.")
-				: new InstallResult(false, $"brew exited with code {exitCode}.");
+				? new InstallResult(true, $"brew {(upgrade ? "upgrade" : "install")} {tool.BrewPackage} finished")
+				: new InstallResult(false, $"brew exited with code {exitCode}");
 		}
 
 		if (OperatingSystem.IsLinux()) return await RunLinuxPackageManagerAsync(tool, upgrade, onOutput, ct);
 
-		return new InstallResult(false, "Automatic installation is not supported on this platform.");
+		return new InstallResult(false, "Automatic installation is not supported on this platform");
 	}
 
 	private static async Task<InstallResult> InstallWithWingetAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
@@ -84,8 +84,8 @@ public static class DependencyInstaller
 		// "Already installed" / "no upgrade available" still count here - InstallAsync then checks whether
 		// the tool is actually reachable, which is what matters.
 		return exitCode is 0 or Winget.PackageAlreadyInstalled or Winget.NoApplicableUpgrade
-			? new InstallResult(true, $"winget install {tool.WingetId} finished.")
-			: new InstallResult(false, $"winget exited with code 0x{exitCode:X8}.");
+			? new InstallResult(true, $"winget install {tool.WingetId} finished")
+			: new InstallResult(false, $"winget exited with code 0x{exitCode:X8}");
 	}
 
 	private static async Task<InstallResult> UpgradeWithWingetAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
@@ -93,16 +93,16 @@ public static class DependencyInstaller
 		if (await Winget.FindInstalledPackageIdAsync(tool, ct) is not { } packageId)
 			return new InstallResult(false,
 				$"{tool.DisplayName} wasn't installed through winget, so it can't be updated from here - " +
-				"update it the same way it was installed.");
+				"update it the same way it was installed");
 
 		onOutput($"Upgrading winget package {packageId}...");
 		var exitCode = await RunAsync(Winget.CreateStartInfo(false, Winget.UpgradeArgs(packageId)), onOutput, ct);
 
 		return exitCode switch
 		{
-			0 => new InstallResult(true, $"{tool.DisplayName} updated."),
-			Winget.NoApplicableUpgrade => new InstallResult(true, $"{tool.DisplayName} is already up to date."),
-			_ => new InstallResult(false, $"winget exited with code 0x{exitCode:X8}.")
+			0 => new InstallResult(true, $"{tool.DisplayName} updated"),
+			Winget.NoApplicableUpgrade => new InstallResult(true, $"{tool.DisplayName} is already up to date"),
+			_ => new InstallResult(false, $"winget exited with code 0x{exitCode:X8}")
 		};
 	}
 
@@ -116,7 +116,7 @@ public static class DependencyInstaller
 	{
 		if (FindLinuxPackageManager() is not { } manager)
 			return new InstallResult(false,
-				$"No supported package manager (apt, dnf, pacman) was found. Install {tool.DisplayName} manually.");
+				$"No supported package manager (apt, dnf, pacman) was found. Install {tool.DisplayName} manually");
 
 		List<string> steps = [];
 		if (manager.RefreshArgs is not null) steps.Add(string.Join(' ', [manager.Command, .. manager.RefreshArgs]));
@@ -132,9 +132,9 @@ public static class DependencyInstaller
 		// 126/127: pkexec's own "not authorized" / "dismissed", as opposed to the package manager failing.
 		return exitCode switch
 		{
-			0 => new InstallResult(true, $"{manager.Command} finished."),
-			126 or 127 => new InstallResult(false, "Authorization was cancelled or denied."),
-			_ => new InstallResult(false, $"{manager.Command} exited with code {exitCode}.")
+			0 => new InstallResult(true, $"{manager.Command} finished"),
+			126 or 127 => new InstallResult(false, "Authorization was cancelled or denied"),
+			_ => new InstallResult(false, $"{manager.Command} exited with code {exitCode}")
 		};
 	}
 

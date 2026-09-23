@@ -65,7 +65,7 @@ public partial class DependencyPromptWindow : Window
 		}
 
 		_installing = false;
-		AppendLog(allSucceeded ? "Done." : "Some installs failed - see log above.");
+		AppendLog(allSucceeded ? "Done" : "Some installs failed - see log above");
 		InstallButton.Content = "Retry";
 		InstallButton.IsVisible = !allSucceeded;
 		InstallButton.IsEnabled = true;

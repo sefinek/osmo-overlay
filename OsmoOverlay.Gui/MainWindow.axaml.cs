@@ -98,87 +98,21 @@ public partial class MainWindow : Window
 		UtcTimeFormatCombo.ItemsSource = DateFormatOptions;
 		UtcTimeLocaleCombo.ItemsSource = LocaleOptions;
 
-		// Every widget gets the same Appear at/Disappear at/Animation/Duration controls (see
-		// WireTiming) - unlike the type-specific settings above, there's nothing widget-specific about
-		// timing, so this is one mechanical block instead of 15 near-identical constructors' worth of
-		// per-widget code.
-		DateTimeAnimationCombo.ItemsSource = AnimationOptions;
-		UtcTimeAnimationCombo.ItemsSource = AnimationOptions;
-		ElevationAnimationCombo.ItemsSource = AnimationOptions;
-		GradientAnimationCombo.ItemsSource = AnimationOptions;
-		DistanceAnimationCombo.ItemsSource = AnimationOptions;
-		CameraInfoAnimationCombo.ItemsSource = AnimationOptions;
-		CompassAnimationCombo.ItemsSource = AnimationOptions;
-		SunAnimationCombo.ItemsSource = AnimationOptions;
-		PitchAnimationCombo.ItemsSource = AnimationOptions;
-		GMeterAnimationCombo.ItemsSource = AnimationOptions;
-		ElapsedTimeAnimationCombo.ItemsSource = AnimationOptions;
-		CameraModelAnimationCombo.ItemsSource = AnimationOptions;
-		SpeedAnimationCombo.ItemsSource = AnimationOptions;
-		MapAnimationCombo.ItemsSource = AnimationOptions;
-		TripProgressBarAnimationCombo.ItemsSource = AnimationOptions;
+		ElementTimingEditor[] timingEditors =
+		[
+			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
+			SpeedTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
+			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming
+		];
+		foreach (ElementTimingEditor timing in timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
-		WireTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel);
-		WireTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel);
-		WireTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel);
-		WireTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel);
-		WireTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel);
-		WireTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel);
-		WireTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel);
-		WireTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel);
-		WireTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel);
-		WireTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel);
-		WireTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel);
-		WireTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel);
-		WireTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel);
-		WireTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel);
-		WireTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel);
-
-		// Style (Font/Text size/Text color/Outline color/Outline width, plus Value color on the four
-		// widgets with a second accent-colored text slot) applies to the text-based widgets and every
-		// round gauge's own readout - Compass/MapWidget/TripProgressBar have no per-element text to
-		// style, so they get no Style section/WireStyle call.
-		DateTimeFontCombo.ItemsSource = FontOptions;
-		UtcTimeFontCombo.ItemsSource = FontOptions;
-		ElapsedTimeFontCombo.ItemsSource = FontOptions;
-		CameraModelFontCombo.ItemsSource = FontOptions;
-		ElevationFontCombo.ItemsSource = FontOptions;
-		GradientFontCombo.ItemsSource = FontOptions;
-		DistanceFontCombo.ItemsSource = FontOptions;
-		CameraInfoFontCombo.ItemsSource = FontOptions;
-		SpeedFontCombo.ItemsSource = FontOptions;
-		PitchFontCombo.ItemsSource = FontOptions;
-		SunFontCombo.ItemsSource = FontOptions;
-		GMeterFontCombo.ItemsSource = FontOptions;
-
-		WireStyle(DateTimeFontCombo, DateTimeScaleBox, DateTimeTextColorBox, DateTimeTextColorSwatch,
-			DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox);
-		WireStyle(UtcTimeFontCombo, UtcTimeScaleBox, UtcTimeTextColorBox, UtcTimeTextColorSwatch,
-			UtcTimeOutlineColorBox, UtcTimeOutlineColorSwatch, UtcTimeOutlineWidthBox);
-		WireStyle(ElapsedTimeFontCombo, ElapsedTimeScaleBox, ElapsedTimeTextColorBox, ElapsedTimeTextColorSwatch,
-			ElapsedTimeOutlineColorBox, ElapsedTimeOutlineColorSwatch, ElapsedTimeOutlineWidthBox);
-		WireStyle(CameraModelFontCombo, CameraModelScaleBox, CameraModelTextColorBox, CameraModelTextColorSwatch,
-			CameraModelOutlineColorBox, CameraModelOutlineColorSwatch, CameraModelOutlineWidthBox);
-		WireStyle(ElevationFontCombo, ElevationScaleBox, ElevationTextColorBox, ElevationTextColorSwatch,
-			ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox,
-			ElevationAccentColorBox, ElevationAccentColorSwatch);
-		WireStyle(GradientFontCombo, GradientScaleBox, GradientTextColorBox, GradientTextColorSwatch,
-			GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox,
-			GradientAccentColorBox, GradientAccentColorSwatch);
-		WireStyle(DistanceFontCombo, DistanceScaleBox, DistanceTextColorBox, DistanceTextColorSwatch,
-			DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox,
-			DistanceAccentColorBox, DistanceAccentColorSwatch);
-		WireStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
-			CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox,
-			CameraInfoAccentColorBox, CameraInfoAccentColorSwatch);
-		WireStyle(SpeedFontCombo, SpeedScaleBox, SpeedTextColorBox, SpeedTextColorSwatch,
-			SpeedOutlineColorBox, SpeedOutlineColorSwatch, SpeedOutlineWidthBox);
-		WireStyle(PitchFontCombo, PitchScaleBox, PitchTextColorBox, PitchTextColorSwatch,
-			PitchOutlineColorBox, PitchOutlineColorSwatch, PitchOutlineWidthBox);
-		WireStyle(SunFontCombo, SunScaleBox, SunTextColorBox, SunTextColorSwatch,
-			SunOutlineColorBox, SunOutlineColorSwatch, SunOutlineWidthBox);
-		WireStyle(GMeterFontCombo, GMeterScaleBox, GMeterTextColorBox, GMeterTextColorSwatch,
-			GMeterOutlineColorBox, GMeterOutlineColorSwatch, GMeterOutlineWidthBox);
+		// Compass/MapWidget/TripProgressBar have no text of their own to style, so no Style editor.
+		ElementStyleEditor[] styleEditors =
+		[
+			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, PitchStyle, SunStyle,
+			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle
+		];
+		foreach (ElementStyleEditor style in styleEditors) style.StyleChanged += OnElementStyleChanged;
 
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in

@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="OsmoOverlay.Gui.ElementTimingEditor">
+
+	<StackPanel Spacing="8">
+		<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+			<StackPanel Grid.Column="0" Spacing="8">
+				<TextBlock Text="Appear at (s)" Classes="infoLabel" Margin="0" />
+				<NumericUpDown Name="AppearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Start" HorizontalAlignment="Stretch" />
+			</StackPanel>
+			<StackPanel Grid.Column="1" Spacing="8">
+				<TextBlock Text="Disappear at (s)" Classes="infoLabel" Margin="0" />
+				<NumericUpDown Name="DisappearAtBox" Minimum="0" Increment="1" FormatString="0.0" PlaceholderText="Never" HorizontalAlignment="Stretch" />
+			</StackPanel>
+		</Grid>
+		<TextBlock Text="Animation" Classes="infoLabel" Margin="0" />
+		<ComboBox Name="AnimationCombo" HorizontalAlignment="Stretch" />
+		<StackPanel Name="AnimationDurationPanel" Spacing="6">
+			<TextBlock Text="Animation duration (s)" Classes="infoLabel" Margin="0" />
+			<NumericUpDown Name="AnimationDurationBox" Minimum="0.1" Maximum="5" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+		</StackPanel>
+	</StackPanel>
+</UserControl>

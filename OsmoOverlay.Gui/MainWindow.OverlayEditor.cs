@@ -31,24 +31,8 @@ public partial class MainWindow
 
 	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
 
-	private static readonly List<AnimationOption> AnimationOptions =
-	[
-		new("None (instant)", OverlayAnimationType.None),
-		new("Fade", OverlayAnimationType.Fade),
-		new("Slide up", OverlayAnimationType.SlideUp),
-		new("Slide down", OverlayAnimationType.SlideDown),
-		new("Slide left", OverlayAnimationType.SlideLeft),
-		new("Slide right", OverlayAnimationType.SlideRight)
-	];
-
-	private static readonly List<FontOption> FontOptions = BuildFontOptions();
-
-	// Hex the swatches fall back to when the box is empty/unparsable - matches OverlayRenderer's own
-	// built-in White/Accent/Shadow defaults exactly (see OverlayRenderer.TextWidgets.cs' *Of helpers), so
-	// what the swatch shows before you've typed anything is exactly what the render already uses.
-	private const string DefaultTextColorHex = "#FFFFFF";
-	private const string DefaultAccentColorHex = "#46BEFF";
-	private const string DefaultOutlineColorHex = "#000000";
+	// Trail swatch fallback when the box is empty/unparsable - matches OverlayRenderer's own built-in trail
+	// color, so what the swatch shows before you've typed anything is exactly what the render already uses.
 	private const string DefaultTrailColorHex = "#46DC6E";
 
 	// Shown in the Label box in place of a null Label - matches the fallback caption OverlayRenderer.
@@ -118,7 +102,10 @@ public partial class MainWindow
 		var editable = !IsActivePresetDefault;
 
 		HideHoverIcons();
-		if (_selectedElementId is not null && elements.All(e => e.Id != _selectedElementId)) _selectedElementId = null;
+		if (_selectedElementId is not null && !elements.Any(e => e.Id == _selectedElementId && IsTypeSupported(e.Type)))
+			_selectedElementId = null;
+		if (_editingElementId is not null && !elements.Any(e => e.Id == _editingElementId && IsTypeSupported(e.Type)))
+			CloseElementSettings();
 
 		foreach (OverlayElementType type in Enum.GetValues<OverlayElementType>())
 		{
@@ -128,17 +115,10 @@ public partial class MainWindow
 			SetWidgetAvailability(item, type, editable);
 		}
 
-		// Shown whenever the widget is actually usable but only through the container-time fallback
-		// (see OverlayRenderer.DrawTimeText) - not real GPS-recorded time, so a driving log synced
-		// against this against other GPS-timestamped data could be off by however stale the camera's
-		// own clock is.
-		var usingTimeFallback = !_hasGpsTimestamp && _hasContainerTime;
-		DateTimeFallbackWarningIcon.IsVisible = usingTimeFallback;
-		UtcTimeFallbackWarningIcon.IsVisible = usingTimeFallback;
-		var timeFallbackTip = "This recording has no GPS timestamp - showing the file's own recording-start " +
-		                      "time instead (from the camera's clock, not GPS-synced).";
-		ToolTip.SetTip(DateTimeFallbackWarningIcon, timeFallbackTip);
-		ToolTip.SetTip(UtcTimeFallbackWarningIcon, timeFallbackTip);
+		DateTimeFallbackWarningIcon.IsVisible = UsesTimeFallback(OverlayElementType.DateTimeText);
+		UtcTimeFallbackWarningIcon.IsVisible = UsesTimeFallback(OverlayElementType.UtcTimeText);
+		ToolTip.SetTip(DateTimeFallbackWarningIcon, TimeFallbackTip);
+		ToolTip.SetTip(UtcTimeFallbackWarningIcon, TimeFallbackTip);
 
 		RebuildAddedWidgetsList();
 		RefreshSelectionHighlight();
@@ -156,17 +136,38 @@ public partial class MainWindow
 		// canvas as a widget that would just render "--"/0/a placeholder.
 		void SetWidgetAvailability(Border listItem, OverlayElementType type, bool presetEditable)
 		{
-			var dataOk = OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
+			var dataOk = IsTypeSupported(type);
 			listItem.IsEnabled = presetEditable && dataOk;
-
-			ToolTip.SetTip(listItem, dataOk
-				? null
-				: type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText
-					? "This file has no GPS timestamp and no usable recording-start time, so this widget can't show a time."
-					: type == OverlayElementType.SunWidget
-						? "This file has no GPS fix or no GPS timestamp, so the sun's position can't be computed."
-						: "This file has no GPS fix, so this widget has nothing to show.");
+			ToolTip.SetTip(listItem, dataOk ? null : UnsupportedReason(type));
 		}
+	}
+
+	// Shown whenever the widget is actually usable but only through the container-time fallback
+	// (see OverlayRenderer.DrawTimeText) - not real GPS-recorded time, so a driving log synced
+	// against this against other GPS-timestamped data could be off by however stale the camera's
+	// own clock is.
+	private const string TimeFallbackTip = "This recording has no GPS timestamp - showing the file's own recording-start " +
+	                                       "time instead (from the camera's clock, not GPS-synced)";
+
+	private bool IsTypeSupported(OverlayElementType type)
+	{
+		return OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
+	}
+
+	private bool UsesTimeFallback(OverlayElementType type)
+	{
+		return type is (OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText) && !_hasGpsTimestamp && _hasContainerTime;
+	}
+
+	private static string UnsupportedReason(OverlayElementType type)
+	{
+		return type switch
+		{
+			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText =>
+				"This file has no GPS timestamp and no usable recording-start time, so this widget can't show a time",
+			OverlayElementType.SunWidget => "This file has no GPS fix or no GPS timestamp, so the sun's position can't be computed",
+			_ => "This file has no GPS fix, so this widget has nothing to show"
+		};
 	}
 
 	/// <summary>
@@ -226,7 +227,7 @@ public partial class MainWindow
 		{
 			var index = seenByType[el.Type] = seenByType.GetValueOrDefault(el.Type) + 1;
 			var name = GetWidgetLabel(el.Type) + (totalByType[el.Type] > 1 ? $" ({index})" : "");
-			AddedWidgetsList.Children.Add(BuildAddedWidgetRow(el.Id, name, editable));
+			AddedWidgetsList.Children.Add(BuildAddedWidgetRow(el, name, editable));
 		}
 
 		AddedWidgetsEmptyHint.IsVisible = visible.Count == 0;
@@ -235,27 +236,43 @@ public partial class MainWindow
 	/// <summary>
 	///     Clicking a row only selects it (highlights it on the canvas) - it does not open
 	///     settings, which stays a canvas-only action (see the class doc) so there's one consistent place
-	///     to configure a widget regardless of how many instances of its type exist.
+	///     to configure a widget regardless of how many instances of its type exist. A widget this file
+	///     has no data for stays in the preset (it comes back with a file that has the data) but isn't
+	///     drawn, so its row is dimmed, flagged with ⚠ and not selectable - only removable.
 	/// </summary>
-	private Border BuildAddedWidgetRow(string id, string name, bool editable)
+	private Border BuildAddedWidgetRow(OverlayElement element, string name, bool editable)
 	{
-		var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+		var id = element.Id;
+		var supported = IsTypeSupported(element.Type);
+		var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
 
-		var text = new TextBlock { Text = name, Classes = { "overlayListItemText" } };
+		var text = new TextBlock { Text = name, Classes = { "overlayListItemText" }, Opacity = supported ? 1 : 0.5 };
 		Grid.SetColumn(text, 0);
 		grid.Children.Add(text);
 
+		var warningTip = !supported
+			? "Not shown with this file - " + UnsupportedReason(element.Type)
+			: UsesTimeFallback(element.Type) ? TimeFallbackTip : null;
+		if (warningTip is not null)
+		{
+			var warning = new TextBlock { Text = "⚠", Classes = { "fallbackWarning" } };
+			ToolTip.SetTip(warning, warningTip);
+			Grid.SetColumn(warning, 1);
+			grid.Children.Add(warning);
+		}
+
 		if (editable)
 		{
-			var removeButton = new Button { Content = "✕", Classes = { "addedWidgetRemove" } };
+			var removeButton = new Button { Content = "✕", Classes = { "addedWidgetRemove" }, Margin = new Thickness(8, 0, 0, 0) };
 			removeButton.Click += (_, _) => RemoveElementInstance(id);
-			Grid.SetColumn(removeButton, 1);
+			Grid.SetColumn(removeButton, 2);
 			grid.Children.Add(removeButton);
 		}
 
 		var row = new Border { Classes = { "addedWidgetRow" }, Child = grid };
 		row.Classes.Set("selected", id == _selectedElementId);
-		row.PointerPressed += (_, _) => ToggleSelection(id);
+		if (supported) row.PointerPressed += (_, _) => ToggleSelection(id);
+		else row.Cursor = Cursor.Default;
 		return row;
 	}
 
@@ -273,7 +290,8 @@ public partial class MainWindow
 	/// </summary>
 	private void RefreshSelectionHighlight()
 	{
-		if (_selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el)
+		if (_selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
+		    !IsTypeSupported(el.Type))
 		{
 			SelectionHighlightBox.IsVisible = false;
 			ResizeHandle.IsVisible = false;
@@ -458,38 +476,21 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Wires a widget type's Timing/Animation controls (Appear at/Disappear at/Animation/Duration) to
-	///     whichever instance's flyout is currently open (_editingElementId) - same 4 fields for every
-	///     widget type, so this is called once per widget from the constructor instead of duplicating a
-	///     handler per widget the way the type-specific settings above do. ValueChanged/SelectionChanged
-	///     also fire when PopulateElementSettings populates these controls programmatically, but that already
-	///     sets _suppressOverlayEvents, so Apply() just no-ops in that case.
+	///     Shared by every widget's ElementTimingEditor - writes to whichever instance's settings panel is
+	///     open. _suppressOverlayEvents covers PopulateElementSettings running with a different element's
+	///     values still in flight.
 	/// </summary>
-	private void WireTiming(NumericUpDown appearBox, NumericUpDown disappearBox,
-		ComboBox animationCombo, NumericUpDown durationBox, StackPanel durationPanel)
+	private void OnElementTimingChanged(ElementTiming timing)
 	{
-		void Apply()
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		UpdateElement(id, el => el with
 		{
-			if (_suppressOverlayEvents || _editingElementId is not { } id) return;
-
-			OverlayAnimationType animation = (animationCombo.SelectedItem as AnimationOption)?.Value ?? OverlayAnimationType.None;
-			durationPanel.IsVisible = animation != OverlayAnimationType.None;
-
-			UpdateElement(id, el => el with
-			{
-				AppearAtSeconds = (double?)appearBox.Value,
-				DisappearAtSeconds = (double?)disappearBox.Value,
-				AnimationType = animation,
-				AnimationDurationSeconds = durationBox.Value is { } d
-					? (double)d
-					: OverlayRenderer.AnimationDurationSecondsDefault
-			});
-		}
-
-		appearBox.ValueChanged += (_, _) => Apply();
-		disappearBox.ValueChanged += (_, _) => Apply();
-		animationCombo.SelectionChanged += (_, _) => Apply();
-		durationBox.ValueChanged += (_, _) => Apply();
+			AppearAtSeconds = timing.AppearAtSeconds,
+			DisappearAtSeconds = timing.DisappearAtSeconds,
+			AnimationType = timing.AnimationType,
+			AnimationDurationSeconds = timing.AnimationDurationSeconds
+		});
 	}
 
 	/// <summary>
@@ -502,6 +503,8 @@ public partial class MainWindow
 	/// </summary>
 	private void OpenElementSettings(OverlayElement element)
 	{
+		if (!IsTypeSupported(element.Type)) return;
+
 		_editingElementId = element.Id;
 		PopulateElementSettings(element);
 
@@ -550,9 +553,8 @@ public partial class MainWindow
 				var x = (DateTimeTextElement)el;
 				DateTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == x.DateFormat) ?? DateFormatOptions[0];
 				DateTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == x.Locale) ?? LocaleOptions[0];
-				PopulateStyle(DateTimeFontCombo, DateTimeScaleBox, DateTimeTextColorBox, DateTimeTextColorSwatch,
-					DateTimeOutlineColorBox, DateTimeOutlineColorSwatch, DateTimeOutlineWidthBox, x);
-				PopulateTiming(DateTimeAppearAtBox, DateTimeDisappearAtBox, DateTimeAnimationCombo, DateTimeAnimationDurationBox, DateTimeAnimationDurationPanel, x);
+				DateTimeStyle.Populate(x);
+				DateTimeTiming.Populate(x);
 				break;
 			}
 
@@ -561,9 +563,8 @@ public partial class MainWindow
 				var x = (UtcTimeTextElement)el;
 				UtcTimeFormatCombo.SelectedItem = DateFormatOptions.FirstOrDefault(o => o.Format == x.DateFormat) ?? DateFormatOptions[0];
 				UtcTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == x.Locale) ?? LocaleOptions[0];
-				PopulateStyle(UtcTimeFontCombo, UtcTimeScaleBox, UtcTimeTextColorBox, UtcTimeTextColorSwatch,
-					UtcTimeOutlineColorBox, UtcTimeOutlineColorSwatch, UtcTimeOutlineWidthBox, x);
-				PopulateTiming(UtcTimeAppearAtBox, UtcTimeDisappearAtBox, UtcTimeAnimationCombo, UtcTimeAnimationDurationBox, UtcTimeAnimationDurationPanel, x);
+				UtcTimeStyle.Populate(x);
+				UtcTimeTiming.Populate(x);
 				break;
 			}
 
@@ -572,10 +573,8 @@ public partial class MainWindow
 				var x = (ElevationElement)el;
 				ElevationLabelBox.Text = x.Label ?? DefaultElevationLabel;
 				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, x.Units);
-				PopulateStyle(ElevationFontCombo, ElevationScaleBox, ElevationTextColorBox, ElevationTextColorSwatch,
-					ElevationOutlineColorBox, ElevationOutlineColorSwatch, ElevationOutlineWidthBox, x,
-					ElevationAccentColorBox, ElevationAccentColorSwatch, x.AccentColor);
-				PopulateTiming(ElevationAppearAtBox, ElevationDisappearAtBox, ElevationAnimationCombo, ElevationAnimationDurationBox, ElevationAnimationDurationPanel, x);
+				ElevationStyle.Populate(x);
+				ElevationTiming.Populate(x);
 				break;
 			}
 
@@ -583,10 +582,8 @@ public partial class MainWindow
 			{
 				var x = (GradientElement)el;
 				GradientLabelBox.Text = x.Label ?? DefaultGradientLabel;
-				PopulateStyle(GradientFontCombo, GradientScaleBox, GradientTextColorBox, GradientTextColorSwatch,
-					GradientOutlineColorBox, GradientOutlineColorSwatch, GradientOutlineWidthBox, x,
-					GradientAccentColorBox, GradientAccentColorSwatch, x.AccentColor);
-				PopulateTiming(GradientAppearAtBox, GradientDisappearAtBox, GradientAnimationCombo, GradientAnimationDurationBox, GradientAnimationDurationPanel, x);
+				GradientStyle.Populate(x);
+				GradientTiming.Populate(x);
 				break;
 			}
 
@@ -595,10 +592,8 @@ public partial class MainWindow
 				var x = (DistanceElement)el;
 				DistanceLabelBox.Text = x.Label ?? DefaultDistanceLabel;
 				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, x.Units);
-				PopulateStyle(DistanceFontCombo, DistanceScaleBox, DistanceTextColorBox, DistanceTextColorSwatch,
-					DistanceOutlineColorBox, DistanceOutlineColorSwatch, DistanceOutlineWidthBox, x,
-					DistanceAccentColorBox, DistanceAccentColorSwatch, x.AccentColor);
-				PopulateTiming(DistanceAppearAtBox, DistanceDisappearAtBox, DistanceAnimationCombo, DistanceAnimationDurationBox, DistanceAnimationDurationPanel, x);
+				DistanceStyle.Populate(x);
+				DistanceTiming.Populate(x);
 				break;
 			}
 
@@ -606,10 +601,8 @@ public partial class MainWindow
 			{
 				var x = (CameraInfoElement)el;
 				CameraInfoLabelBox.Text = x.Label ?? DefaultCameraInfoLabel;
-				PopulateStyle(CameraInfoFontCombo, CameraInfoScaleBox, CameraInfoTextColorBox, CameraInfoTextColorSwatch,
-					CameraInfoOutlineColorBox, CameraInfoOutlineColorSwatch, CameraInfoOutlineWidthBox, x,
-					CameraInfoAccentColorBox, CameraInfoAccentColorSwatch, x.AccentColor);
-				PopulateTiming(CameraInfoAppearAtBox, CameraInfoDisappearAtBox, CameraInfoAnimationCombo, CameraInfoAnimationDurationBox, CameraInfoAnimationDurationPanel, x);
+				CameraInfoStyle.Populate(x);
+				CameraInfoTiming.Populate(x);
 				break;
 			}
 
@@ -617,25 +610,23 @@ public partial class MainWindow
 			{
 				var x = (CompassElement)el;
 				PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox, CompassTrailArrowRadio, CompassTrailDotRadio, x);
-				PopulateTiming(CompassAppearAtBox, CompassDisappearAtBox, CompassAnimationCombo, CompassAnimationDurationBox, CompassAnimationDurationPanel, x);
+				CompassTiming.Populate(x);
 				break;
 			}
 
 			case OverlayElementType.SunWidget:
 			{
 				var x = (SunWidgetElement)el;
-				PopulateStyle(SunFontCombo, SunScaleBox, SunTextColorBox, SunTextColorSwatch,
-					SunOutlineColorBox, SunOutlineColorSwatch, SunOutlineWidthBox, x);
-				PopulateTiming(SunAppearAtBox, SunDisappearAtBox, SunAnimationCombo, SunAnimationDurationBox, SunAnimationDurationPanel, x);
+				SunStyle.Populate(x);
+				SunTiming.Populate(x);
 				break;
 			}
 
 			case OverlayElementType.PitchGauge:
 			{
 				var x = (PitchGaugeElement)el;
-				PopulateStyle(PitchFontCombo, PitchScaleBox, PitchTextColorBox, PitchTextColorSwatch,
-					PitchOutlineColorBox, PitchOutlineColorSwatch, PitchOutlineWidthBox, x);
-				PopulateTiming(PitchAppearAtBox, PitchDisappearAtBox, PitchAnimationCombo, PitchAnimationDurationBox, PitchAnimationDurationPanel, x);
+				PitchStyle.Populate(x);
+				PitchTiming.Populate(x);
 				break;
 			}
 
@@ -643,9 +634,8 @@ public partial class MainWindow
 			{
 				var x = (GMeterElement)el;
 				GMeterFullScaleBox.Value = (decimal)x.GMeterFullScaleG;
-				PopulateStyle(GMeterFontCombo, GMeterScaleBox, GMeterTextColorBox, GMeterTextColorSwatch,
-					GMeterOutlineColorBox, GMeterOutlineColorSwatch, GMeterOutlineWidthBox, x);
-				PopulateTiming(GMeterAppearAtBox, GMeterDisappearAtBox, GMeterAnimationCombo, GMeterAnimationDurationBox, GMeterAnimationDurationPanel, x);
+				GMeterStyle.Populate(x);
+				GMeterTiming.Populate(x);
 				break;
 			}
 
@@ -653,9 +643,8 @@ public partial class MainWindow
 			{
 				var x = (SpeedGaugeElement)el;
 				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, x.Units);
-				PopulateStyle(SpeedFontCombo, SpeedScaleBox, SpeedTextColorBox, SpeedTextColorSwatch,
-					SpeedOutlineColorBox, SpeedOutlineColorSwatch, SpeedOutlineWidthBox, x);
-				PopulateTiming(SpeedAppearAtBox, SpeedDisappearAtBox, SpeedAnimationCombo, SpeedAnimationDurationBox, SpeedAnimationDurationPanel, x);
+				SpeedStyle.Populate(x);
+				SpeedTiming.Populate(x);
 				break;
 			}
 
@@ -669,25 +658,23 @@ public partial class MainWindow
 				MapZoomOutMaxBox.IsVisible = x.MapDynamicZoom;
 				MapZoomOutMaxHint.IsVisible = x.MapDynamicZoom;
 				PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox, MapTrailArrowRadio, MapTrailDotRadio, x);
-				PopulateTiming(MapAppearAtBox, MapDisappearAtBox, MapAnimationCombo, MapAnimationDurationBox, MapAnimationDurationPanel, x);
+				MapTiming.Populate(x);
 				break;
 			}
 
 			case OverlayElementType.ElapsedTimeText:
 			{
 				var x = (ElapsedTimeTextElement)el;
-				PopulateStyle(ElapsedTimeFontCombo, ElapsedTimeScaleBox, ElapsedTimeTextColorBox, ElapsedTimeTextColorSwatch,
-					ElapsedTimeOutlineColorBox, ElapsedTimeOutlineColorSwatch, ElapsedTimeOutlineWidthBox, x);
-				PopulateTiming(ElapsedTimeAppearAtBox, ElapsedTimeDisappearAtBox, ElapsedTimeAnimationCombo, ElapsedTimeAnimationDurationBox, ElapsedTimeAnimationDurationPanel, x);
+				ElapsedTimeStyle.Populate(x);
+				ElapsedTimeTiming.Populate(x);
 				break;
 			}
 
 			case OverlayElementType.CameraModelText:
 			{
 				var x = (CameraModelTextElement)el;
-				PopulateStyle(CameraModelFontCombo, CameraModelScaleBox, CameraModelTextColorBox, CameraModelTextColorSwatch,
-					CameraModelOutlineColorBox, CameraModelOutlineColorSwatch, CameraModelOutlineWidthBox, x);
-				PopulateTiming(CameraModelAppearAtBox, CameraModelDisappearAtBox, CameraModelAnimationCombo, CameraModelAnimationDurationBox, CameraModelAnimationDurationPanel, x);
+				CameraModelStyle.Populate(x);
+				CameraModelTiming.Populate(x);
 				break;
 			}
 
@@ -697,7 +684,7 @@ public partial class MainWindow
 				SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, x.Units);
 				TripProgressToleranceBox.Value = (decimal)x.TripArrivedToleranceMeters;
 				TripProgressLabelBox.Text = x.TripArrivedLabel;
-				PopulateTiming(TripProgressBarAppearAtBox, TripProgressBarDisappearAtBox, TripProgressBarAnimationCombo, TripProgressBarAnimationDurationBox, TripProgressBarAnimationDurationPanel, x);
+				TripProgressBarTiming.Populate(x);
 				break;
 			}
 		}
@@ -715,112 +702,47 @@ public partial class MainWindow
 		RadioButton arrowRadio, RadioButton dotRadio, TrailOverlayElement element)
 	{
 		colorBox.Text = element.TrailColor ?? DefaultTrailColorHex;
-		UpdateColorSwatch(swatch, element.TrailColor, DefaultTrailColorHex);
+		ColorSwatch.Update(swatch, element.TrailColor, DefaultTrailColorHex);
 		widthBox.Value = (decimal)element.TrailWidth;
 		arrowRadio.IsChecked = element.TrailUseArrow;
 		dotRadio.IsChecked = !element.TrailUseArrow;
 	}
 
-	private static void PopulateTiming(NumericUpDown appearBox, NumericUpDown disappearBox, ComboBox animationCombo,
-		NumericUpDown durationBox, StackPanel durationPanel, OverlayElement element)
-	{
-		appearBox.Value = (decimal?)element.AppearAtSeconds;
-		disappearBox.Value = (decimal?)element.DisappearAtSeconds;
-		animationCombo.SelectedItem = AnimationOptions.FirstOrDefault(o => o.Value == element.AnimationType) ?? AnimationOptions[0];
-		durationBox.Value = (decimal)element.AnimationDurationSeconds;
-		// Set explicitly (not left to SelectionChanged above) - picking the same AnimationOption
-		// instance as already selected doesn't raise that event, which would otherwise leave a stale
-		// visibility from whichever instance's flyout was shown before.
-		durationPanel.IsVisible = element.AnimationType != OverlayAnimationType.None;
-	}
-
 	/// <summary>
-	///     Wires a text-based widget type's Style controls (Font/Text size/Text color/Outline
-	///     color/Outline width, plus Value color on the four widgets that have a second accent-colored text
-	///     slot - Elevation/Gradient/Distance/CameraInfo) to whichever instance's flyout is currently open,
-	///     same one-wiring-per-type shape as WireTiming above. `accentColorBox`/`accentColorSwatch` are
-	///     omitted for the four single-color widgets (DateTimeText/UtcTimeText/ElapsedTimeText/
-	///     CameraModelText), which have no accent-colored text to style.
+	///     Shared by every widget's ElementStyleEditor - writes to whichever instance's settings panel is open.
+	///     AccentColor only exists on LabeledStatElement, so it's only written there.
 	/// </summary>
-	private void WireStyle(ComboBox fontCombo, NumericUpDown scaleBox, TextBox textColorBox, Border textColorSwatch,
-		TextBox outlineColorBox, Border outlineColorSwatch, NumericUpDown outlineWidthBox,
-		TextBox? accentColorBox = null, Border? accentColorSwatch = null)
+	private void OnElementStyleChanged(ElementStyle style)
 	{
-		void Apply()
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		UpdateElement(id, el => el switch
 		{
-			if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+			LabeledStatElement stat => ApplyStyle(stat) with { AccentColor = style.AccentColor },
+			StyledOverlayElement styled => ApplyStyle(styled),
+			_ => el
+		});
 
-			// AccentColor only exists on LabeledStatElement (Elevation/Gradient/Distance/CameraInfo,
-			// the only callers that pass accentColorBox) - every other styled widget's `with` can only
-			// touch fields StyledOverlayElement itself declares.
-			UpdateElement(id, el => el switch
+		T ApplyStyle<T>(T element) where T : StyledOverlayElement
+		{
+			return element with
 			{
-				LabeledStatElement stat when accentColorBox is not null => stat with
-				{
-					FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
-					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : stat.Scale,
-					TextColor = NormalizeHexInput(textColorBox.Text),
-					AccentColor = NormalizeHexInput(accentColorBox.Text),
-					OutlineColor = NormalizeHexInput(outlineColorBox.Text),
-					OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : stat.OutlineWidth
-				},
-				StyledOverlayElement styled => styled with
-				{
-					FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
-					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : styled.Scale,
-					TextColor = NormalizeHexInput(textColorBox.Text),
-					OutlineColor = NormalizeHexInput(outlineColorBox.Text),
-					OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : styled.OutlineWidth
-				},
-				_ => el
-			});
-
-			UpdateColorSwatch(textColorSwatch, textColorBox.Text, DefaultTextColorHex);
-			if (accentColorSwatch is not null) UpdateColorSwatch(accentColorSwatch, accentColorBox!.Text, DefaultAccentColorHex);
-			UpdateColorSwatch(outlineColorSwatch, outlineColorBox.Text, DefaultOutlineColorHex);
+				FontFamily = style.FontFamily,
+				Scale = style.Scale is { } scale
+					? Math.Clamp(scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale)
+					: element.Scale,
+				TextColor = style.TextColor,
+				OutlineColor = style.OutlineColor,
+				OutlineWidth = style.OutlineWidth ?? element.OutlineWidth
+			};
 		}
-
-		fontCombo.SelectionChanged += (_, _) => Apply();
-		scaleBox.ValueChanged += (_, _) => Apply();
-		textColorBox.LostFocus += (_, _) => Apply();
-		outlineColorBox.LostFocus += (_, _) => Apply();
-		outlineWidthBox.ValueChanged += (_, _) => Apply();
-		if (accentColorBox is not null) accentColorBox.LostFocus += (_, _) => Apply();
-	}
-
-	/// <summary>
-	///     Counterpart to WireStyle - fills a widget instance's Style controls from its own data, same shape
-	///     as PopulateTiming/PopulateTrailControls above. `accentColor` is passed explicitly (rather than
-	///     read off `element`) since AccentColor only exists on LabeledStatElement, one level below the
-	///     StyledOverlayElement this otherwise operates on.
-	/// </summary>
-	private static void PopulateStyle(ComboBox fontCombo, NumericUpDown scaleBox, TextBox textColorBox, Border textColorSwatch,
-		TextBox outlineColorBox, Border outlineColorSwatch, NumericUpDown outlineWidthBox, StyledOverlayElement element,
-		TextBox? accentColorBox = null, Border? accentColorSwatch = null, string? accentColor = null)
-	{
-		fontCombo.SelectedItem = FontOptions.FirstOrDefault(o => o.Family == element.FontFamily) ?? FontOptions[0];
-		scaleBox.Value = (decimal)element.Scale;
-		textColorBox.Text = element.TextColor ?? DefaultTextColorHex;
-		UpdateColorSwatch(textColorSwatch, element.TextColor, DefaultTextColorHex);
-		outlineColorBox.Text = element.OutlineColor ?? DefaultOutlineColorHex;
-		UpdateColorSwatch(outlineColorSwatch, element.OutlineColor, DefaultOutlineColorHex);
-		outlineWidthBox.Value = (decimal)element.OutlineWidth;
-
-		if (accentColorBox is null) return;
-		accentColorBox.Text = accentColor ?? DefaultAccentColorHex;
-		UpdateColorSwatch(accentColorSwatch!, accentColor, DefaultAccentColorHex);
-	}
-
-	private static string? NormalizeHexInput(string? text)
-	{
-		return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 	}
 
 	private void OnCompassTrailColorChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, CompassTrailColorBox.Text);
-		UpdateColorSwatch(CompassTrailColorSwatch, CompassTrailColorBox.Text, DefaultTrailColorHex);
+		ColorSwatch.Update(CompassTrailColorSwatch, CompassTrailColorBox.Text, DefaultTrailColorHex);
 	}
 
 	private void OnCompassTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -955,7 +877,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, MapTrailColorBox.Text);
-		UpdateColorSwatch(MapTrailColorSwatch, MapTrailColorBox.Text, DefaultTrailColorHex);
+		ColorSwatch.Update(MapTrailColorSwatch, MapTrailColorBox.Text, DefaultTrailColorHex);
 	}
 
 	private void OnMapTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -971,20 +893,6 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Resolves a hand-typed hex string (e.g. "#46DC6E") to a swatch preview color, falling back to
-	///     `fallbackHex` when the text is empty or doesn't parse - matches OverlayRenderer.ResolveColor's
-	///     fail-soft policy (TrailColor/TextColor/AccentColor/OutlineColor all share it), so what the swatch
-	///     shows is exactly what the render will actually use.
-	/// </summary>
-	private static void UpdateColorSwatch(Border swatch, string? hex, string fallbackHex)
-	{
-		Color color = !string.IsNullOrWhiteSpace(hex) && Color.TryParse(hex.Trim(), out Color parsed)
-			? parsed
-			: Color.Parse(fallbackHex);
-		swatch.Background = new SolidColorBrush(color);
-	}
-
-	/// <summary>
 	///     Pulls the language list from .NET's own culture database instead of hand-maintaining one, so
 	///     it covers whatever locales the runtime supports without the GUI needing to keep up.
 	/// </summary>
@@ -994,23 +902,6 @@ public partial class MainWindow
 		options.AddRange(CultureInfo.GetCultures(CultureTypes.SpecificCultures)
 			.OrderBy(c => c.NativeName, StringComparer.Ordinal)
 			.Select(c => new LocaleOption($"{c.NativeName} ({c.Name})", c.Name)));
-		return options;
-	}
-
-	/// <summary>
-	///     Pulls the installed-font list from Avalonia's own FontManager instead of hand-maintaining one, so
-	///     it covers whatever fonts this machine actually has - the same fail-soft policy as Locale/DateFormat
-	///     applies on the render side (OverlayElementBounds.ResolveTypefaceOrFallback) if a preset picks a
-	///     family that turns out not to be installed on whatever machine later renders it.
-	/// </summary>
-	private static List<FontOption> BuildFontOptions()
-	{
-		List<FontOption> options = [new("System default", null)];
-		options.AddRange(FontManager.Current.SystemFonts
-			.Select(f => f.Name)
-			.Distinct(StringComparer.OrdinalIgnoreCase)
-			.OrderBy(n => n, StringComparer.Ordinal)
-			.Select(n => new FontOption(n, n)));
 		return options;
 	}
 
@@ -1417,7 +1308,11 @@ public partial class MainWindow
 		return best;
 	}
 
-	/// <summary>Topmost visible element whose bounds contain `pos`, or null - shared by the drag hit-test and the hover state.</summary>
+	/// <summary>
+	///     Topmost drawn element whose bounds contain `pos`, or null - shared by the drag hit-test and the hover
+	///     state. Skips widgets this file has no data for: the preview doesn't draw them (ApplyAvailability),
+	///     so they mustn't be draggable or open settings from an empty spot on the canvas.
+	/// </summary>
 	private OverlayElement? FindElementAt(Point pos)
 	{
 		if (_summary is null) return null;
@@ -1427,7 +1322,7 @@ public partial class MainWindow
 		for (var i = elements.Count - 1; i >= 0; i--)
 		{
 			OverlayElement el = elements[i];
-			if (!el.Visible) continue;
+			if (!el.Visible || !IsTypeSupported(el.Type)) continue;
 
 			SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
 			if (pos.X >= bounds.Left && pos.X <= bounds.Right && pos.Y >= bounds.Top && pos.Y <= bounds.Bottom) return el;
@@ -1483,7 +1378,7 @@ public partial class MainWindow
 		if (_summary is null || IsActivePresetDefault) return false;
 		if (e.DataTransfer.TryGetValue(WidgetDragFormat) is not { } name || !Enum.TryParse(name, out type)) return false;
 
-		return OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
+		return IsTypeSupported(type);
 	}
 
 	private void OnOverlayCanvasDragOver(object? sender, DragEventArgs e)
@@ -1743,19 +1638,4 @@ public partial class MainWindow
 		}
 	}
 
-	private sealed record AnimationOption(string Display, OverlayAnimationType Value)
-	{
-		public override string ToString()
-		{
-			return Display;
-		}
-	}
-
-	private sealed record FontOption(string Display, string? Family)
-	{
-		public override string ToString()
-		{
-			return Display;
-		}
-	}
 }

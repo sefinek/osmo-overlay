@@ -20,6 +20,8 @@ public sealed class PreviewPlayer : IDisposable
 	// use grows needlessly (each buffered frame is a full preview-resolution BGRA copy).
 	private const int PlaybackPrefetchFrames = 3;
 
+	// Composed frames in flight: the playback channel, the one being composed and the one being published.
+	private readonly FrameBufferPool _composedBuffers = new(PlaybackPrefetchFrames + 2);
 	private readonly Lock _lock = new();
 	private IReadOnlyList<DerivedFrame>? _derivedFrames;
 	private bool _hasContainerTime;
@@ -45,6 +47,7 @@ public sealed class PreviewPlayer : IDisposable
 		Close();
 	}
 
+	/// <summary>The frame's Bgra buffer is only valid for the duration of the callback - it's reused for a later frame right after, so copy out of it, don't keep it.</summary>
 	public event Action<ComposedPreviewFrame>? FrameReady;
 	public event Action? PlaybackStopped;
 	public event Action<string>? Message;
@@ -99,7 +102,7 @@ public sealed class PreviewPlayer : IDisposable
 		// UX SetLayout already gives a live MapWidget toggle.
 		ComposedPreviewFrame? first =
 			await Task.Run(() => DecodeSeekCore(video, renderer, derivedFrames, TimeSpan.Zero, CancellationToken.None));
-		if (first is not null) FrameReady?.Invoke(first);
+		if (first is not null) Publish(first);
 
 		if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 		{
@@ -214,7 +217,7 @@ public sealed class PreviewPlayer : IDisposable
 			if (_lastVideoFrame is { } videoFrame && _derivedFrames is not null)
 			{
 				ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
-				if (composed is not null) FrameReady?.Invoke(composed);
+				if (composed is not null) Publish(composed);
 			}
 		}
 
@@ -270,7 +273,7 @@ public sealed class PreviewPlayer : IDisposable
 
 			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
 			ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) FrameReady?.Invoke(composed);
+			if (composed is not null) Publish(composed);
 		}
 	}
 
@@ -306,7 +309,7 @@ public sealed class PreviewPlayer : IDisposable
 
 			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
 			ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) FrameReady?.Invoke(composed);
+			if (composed is not null) Publish(composed);
 		}
 	}
 
@@ -320,7 +323,7 @@ public sealed class PreviewPlayer : IDisposable
 
 			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
 			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) FrameReady?.Invoke(composed);
+			if (composed is not null) Publish(composed);
 		}
 	}
 
@@ -353,7 +356,7 @@ public sealed class PreviewPlayer : IDisposable
 			return;
 		}
 
-		if (composed is not null && !ct.IsCancellationRequested) FrameReady?.Invoke(composed);
+		if (composed is not null && !ct.IsCancellationRequested) Publish(composed);
 	}
 
 	/// <summary>
@@ -416,7 +419,7 @@ public sealed class PreviewPlayer : IDisposable
 						if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
 					}
 
-					FrameReady?.Invoke(composed);
+					Publish(composed);
 				}
 			}
 			finally
@@ -503,9 +506,17 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
+	private void Publish(ComposedPreviewFrame frame)
+	{
+		FrameReady?.Invoke(frame);
+		_composedBuffers.Return(frame.Bgra);
+	}
+
 	private ComposedPreviewFrame? Compose(OverlayRenderer renderer, IReadOnlyList<DerivedFrame> frames,
 		VideoFrame videoFrame, TimeSpan position)
 	{
+		// The previous frame is only ever read here, under _lock - once replaced, nothing references it.
+		if (_lastVideoFrame is { } previous && !ReferenceEquals(previous, videoFrame)) _video?.Recycle(previous);
 		_lastVideoFrame = videoFrame;
 		_lastPosition = position;
 
@@ -515,7 +526,8 @@ public sealed class PreviewPlayer : IDisposable
 		var overlaySize = renderer.FrameBufferSize(videoFrame.Width, videoFrame.Height);
 		if (_overlayBuffer?.Length != overlaySize) _overlayBuffer = new byte[overlaySize];
 		renderer.RenderInto(frame, _overlayBuffer, videoFrame.Width, videoFrame.Height, true);
-		var composed = PreviewCompositor.Compose(videoFrame.Width, videoFrame.Height, videoFrame.Bgra,
+		var composed = _composedBuffers.Rent(videoFrame.Width * videoFrame.Height * 4);
+		PreviewCompositor.Compose(composed, videoFrame.Width, videoFrame.Height, videoFrame.Bgra,
 			videoFrame.Stride, _overlayBuffer, videoFrame.Width, videoFrame.Height);
 
 		return new ComposedPreviewFrame(position, composed);

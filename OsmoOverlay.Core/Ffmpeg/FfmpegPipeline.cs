@@ -17,15 +17,28 @@ public static class FfmpegPipeline
 	// the live preview makes (VideoFrameSource).
 	private static readonly string[] HwDecodeArgs = ["-hwaccel", "auto"];
 
+	private static bool _nvencConfirmed;
+
+	/// <summary>
+	///     Probes with the same 10-bit Main10 output the render uses - some GPUs (e.g. Maxwell GM204) have HEVC
+	///     NVENC but no 10-bit support, and an 8-bit probe would pass there only for the real render to fail.
+	///     Only a success is remembered: a failure can be transient (consumer cards cap concurrent NVENC
+	///     sessions, so another app encoding at the same time makes the probe fail), worth re-probing next time.
+	/// </summary>
 	public static string SelectVideoEncoder()
 	{
+		if (_nvencConfirmed) return "hevc_nvenc";
+
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
 			"-hide_banner", "-loglevel", "error",
 			"-f", "lavfi", "-i", "color=c=black:s=256x256:d=0.1",
 			"-c:v", "hevc_nvenc",
+			"-profile:v", "main10",
+			"-pix_fmt", "yuv420p10le",
 			"-f", "null", "-");
 
-		return ProcessHelper.RunCaptured(psi).ExitCode == 0 ? "hevc_nvenc" : "libx265";
+		_nvencConfirmed = ProcessHelper.RunCaptured(psi).ExitCode == 0;
+		return _nvencConfirmed ? "hevc_nvenc" : "libx265";
 	}
 
 	public static Process StartRender(IReadOnlyList<string> inputPaths, string outputPath, SourceInfo info,
