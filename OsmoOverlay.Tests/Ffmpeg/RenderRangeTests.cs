@@ -112,4 +112,24 @@ public sealed class ConcatListWriterTests
 			File.Delete(list);
 		}
 	}
+
+	[TestMethod]
+	public void DeleteStale_RemovesOnlyOldLists()
+	{
+		var stale = ConcatListWriter.Write(["a.mp4"]);
+		var fresh = ConcatListWriter.Write(["b.mp4"]);
+		File.SetLastWriteTimeUtc(stale, DateTime.UtcNow.AddDays(-2));
+		try
+		{
+			ConcatListWriter.DeleteStale(TimeSpan.FromDays(1));
+
+			Assert.IsFalse(File.Exists(stale));
+			Assert.IsTrue(File.Exists(fresh), "a list a running render or preview may still use must stay");
+		}
+		finally
+		{
+			File.Delete(stale);
+			File.Delete(fresh);
+		}
+	}
 }

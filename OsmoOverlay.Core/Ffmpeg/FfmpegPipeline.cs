@@ -309,6 +309,12 @@ public static class FfmpegPipeline
 			}
 	}
 
+	/// <summary>Clears concat lists left in the temp folder by earlier runs that didn't exit cleanly - see ConcatListWriter.DeleteStale.</summary>
+	public static int DeleteStaleTempFiles()
+	{
+		return ConcatListWriter.DeleteStale(TimeSpan.FromDays(1));
+	}
+
 	/// <summary>Maps OverlaySettings' export options, see there for what each default preserves.</summary>
 	public static RenderEncodeSettings EncodeSettingsFrom(OverlaySettings settings, bool postProcessing)
 	{

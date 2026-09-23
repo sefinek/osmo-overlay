@@ -6,6 +6,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
+using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
@@ -162,6 +163,7 @@ public partial class MainWindow : Window
 		Opened -= OnWindowOpened;
 
 		AppendBanner();
+		_ = Task.Run(FfmpegPipeline.DeleteStaleTempFiles);
 
 		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
 		if (missing.Count == 0) return;

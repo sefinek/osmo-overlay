@@ -19,9 +19,11 @@ namespace OsmoOverlay.Core.Ffmpeg;
 /// </summary>
 internal static class ConcatListWriter
 {
+	private const string FilePrefix = "osmooverlay_concat_";
+
 	public static string Write(IEnumerable<string> paths)
 	{
-		var listPath = Path.Combine(Path.GetTempPath(), $"osmooverlay_concat_{Guid.NewGuid():N}.txt");
+		var listPath = NewListPath();
 		File.WriteAllLines(listPath, paths.Select(p => $"file '{Escape(p)}'"));
 		return listPath;
 	}
@@ -40,7 +42,7 @@ internal static class ConcatListWriter
 	/// </summary>
 	public static string WriteAudioOnly(IReadOnlyList<string> paths, string audioStreamId, double firstInpointSeconds)
 	{
-		var listPath = Path.Combine(Path.GetTempPath(), $"osmooverlay_concat_{Guid.NewGuid():N}.txt");
+		var listPath = NewListPath();
 		List<string> lines = ["ffconcat version 1.0", "stream", $"exact_stream_id {audioStreamId}"];
 		for (var i = 0; i < paths.Count; i++)
 		{
@@ -50,6 +52,35 @@ internal static class ConcatListWriter
 
 		File.WriteAllLines(listPath, lines);
 		return listPath;
+	}
+
+	/// <summary>
+	///     Lists are deleted once their ffmpeg exits (FfmpegPipeline, VideoPlaybackStream), but a crash or a
+	///     killed app skips that. Removes whatever earlier runs left behind - only lists older than
+	///     `olderThan`, so one a running render or preview still uses is never touched.
+	/// </summary>
+	public static int DeleteStale(TimeSpan olderThan)
+	{
+		var deleted = 0;
+		DateTime cutoff = DateTime.UtcNow - olderThan;
+		foreach (var path in Directory.EnumerateFiles(Path.GetTempPath(), FilePrefix + "*.txt"))
+			try
+			{
+				if (File.GetLastWriteTimeUtc(path) >= cutoff) continue;
+				File.Delete(path);
+				deleted++;
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+			{
+				// Best-effort: another instance may be using it, or it's already gone.
+			}
+
+		return deleted;
+	}
+
+	private static string NewListPath()
+	{
+		return Path.Combine(Path.GetTempPath(), $"{FilePrefix}{Guid.NewGuid():N}.txt");
 	}
 
 	private static string Escape(string path)

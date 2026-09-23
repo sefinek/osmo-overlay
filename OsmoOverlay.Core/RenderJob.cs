@@ -217,6 +217,10 @@ public static class RenderJob
 				settings.MetadataKeepDebugTrack && keepTracks, settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
 			var preserveMetadata = settings.PreserveCameraMetadata && metadataSelection.Any && !options.GreenScreen;
 			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata);
+			// Only a file this render wrote may be deleted if it fails - never one that was already there and
+			// wasn't meant to be overwritten.
+			var outputIsOurs = options.Overwrite || !File.Exists(options.OutputPath);
+			var succeeded = false;
 			using Process ffmpeg = FfmpegPipeline.StartRender(segments, options.OutputPath, encoder, options.Overwrite, encode,
 				renderRange, options.GreenScreen);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
@@ -378,11 +382,15 @@ public static class RenderJob
 					settings.FastStart && !options.GreenScreen,
 					message => Report(RenderPhase.Rendering, message, written, totalFrames));
 
+				succeeded = true;
 				return new RenderResult(true, null, sw.Elapsed);
 			}
 			finally
 			{
 				KillFfmpegIfRunning(ffmpeg);
+				// A cancelled or failed render leaves an MP4 without its moov box - unplayable, and easy to
+				// mistake for a finished file next to the source.
+				if (!succeeded && outputIsOurs) DeleteIncompleteOutput(ffmpeg, options.OutputPath);
 			}
 		}
 		catch (Exception ex)
@@ -455,6 +463,23 @@ public static class RenderJob
 	private static string FormatTime(double seconds)
 	{
 		return TimeSpan.FromSeconds(seconds).ToString(seconds >= 3600 ? @"h\:mm\:ss\.ff" : @"mm\:ss\.ff");
+	}
+
+	private static void DeleteIncompleteOutput(Process ffmpeg, string outputPath)
+	{
+		try
+		{
+			// The killed process may still hold the file for a moment.
+			ffmpeg.WaitForExit(5000);
+			if (!File.Exists(outputPath)) return;
+
+			File.Delete(outputPath);
+			AppLogger.Info($"Removed the incomplete output {outputPath}");
+		}
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+		{
+			AppLogger.Warn(ex, $"Could not remove the incomplete output {outputPath}");
+		}
 	}
 
 	private static void KillFfmpegIfRunning(Process ffmpeg)

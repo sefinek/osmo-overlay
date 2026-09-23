@@ -2,76 +2,108 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="220"
+        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="520"
         x:Class="OsmoOverlay.Gui.ToolsWindow"
-        Width="420" SizeToContent="Height" CanResize="False"
+        Width="780" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="#121214"
         Title="Tools">
 
 	<Window.Styles>
-		<Style Selector="TextBlock.infoLabel">
-			<Setter Property="Opacity" Value="0.55" />
-			<Setter Property="Margin" Value="0,5" />
+		<Style Selector="Border.toolCard">
+			<Setter Property="Background" Value="#1B1B1E" />
+			<Setter Property="CornerRadius" Value="10" />
+			<Setter Property="Padding" Value="16,14" />
+		</Style>
+		<Style Selector="TextBlock.toolTitle">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.9" />
+			<Setter Property="Margin" Value="0,0,0,6" />
 		</Style>
 		<Style Selector="TextBlock.hint">
-			<Setter Property="Opacity" Value="0.4" />
+			<Setter Property="Opacity" Value="0.5" />
 			<Setter Property="FontSize" Value="12" />
+			<Setter Property="LineHeight" Value="17" />
 			<Setter Property="TextWrapping" Value="Wrap" />
-			<Setter Property="Margin" Value="0,4,0,0" />
+		</Style>
+		<Style Selector="StackPanel.toolActions">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="8" />
+			<Setter Property="Margin" Value="0,14,0,0" />
+		</Style>
+		<Style Selector="TextBlock.sectionLabel">
+			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="LetterSpacing" Value="1" />
+			<Setter Property="Opacity" Value="0.45" />
 		</Style>
 	</Window.Styles>
 
-	<StackPanel Margin="20" Spacing="18">
-		<StackPanel Spacing="4">
-			<TextBlock Text="Fix color tags" Classes="infoLabel" Margin="0" />
-			<TextBlock Classes="hint" Margin="0,0,0,4" TextWrapping="Wrap"
-			           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. This rewrites the tag with a lossless stream copy - no re-encode." />
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Name="SelectColorTagFileButton" Content="Select file..." Click="OnSelectColorTagFileClick" />
-			</StackPanel>
-		</StackPanel>
+	<StackPanel Margin="20" Spacing="12">
+		<TextBlock Classes="sectionLabel" Text="VIDEO &amp; AUDIO" />
 
-		<StackPanel Spacing="4">
-			<TextBlock Text="Remove metadata" Classes="infoLabel" Margin="0" />
-			<TextBlock Classes="hint" Margin="0,0,0,4" TextWrapping="Wrap"
-			           Text="Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy, no re-encode)." />
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Name="SelectStripFileButton" Content="Select file..." Click="OnSelectStripFileClick" />
-			</StackPanel>
-		</StackPanel>
+		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+			<Border Grid.Row="0" Grid.Column="0" Classes="toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Fix color tags" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="SelectColorTagFileButton" Content="Select file..." Click="OnSelectColorTagFileClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. Rewrites the tag with a lossless stream copy - no re-encode." />
+				</DockPanel>
+			</Border>
 
-		<StackPanel Spacing="4">
-			<TextBlock Text="Camera microphone audio (.AAC)" Classes="infoLabel" Margin="0" />
-			<TextBlock Classes="hint" Margin="0,0,0,4" TextWrapping="Wrap"
-			           Text="With an external mic connected, the camera saves its built-in microphones as a separate .AAC file, which Vegas Pro and Audacity can't open. Converts it without any quality loss (verified sample by sample), saved next to the original. WAV works everywhere; M4A keeps the original AAC data, 10x smaller." />
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Name="ConvertAudioWavButton" Content="To WAV..." Click="OnConvertAudioWavClick" />
-				<Button Name="ConvertAudioM4aButton" Content="To M4A..." Click="OnConvertAudioM4aClick" />
-			</StackPanel>
-		</StackPanel>
+			<Border Grid.Row="0" Grid.Column="1" Classes="toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Remove metadata" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="SelectStripFileButton" Content="Select file..." Click="OnSelectStripFileClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy)." />
+				</DockPanel>
+			</Border>
 
-		<StackPanel Spacing="4">
-			<TextBlock Text="Compare videos" Classes="infoLabel" Margin="0" />
-			<TextBlock Classes="hint" Margin="0,0,0,4" TextWrapping="Wrap"
-			           Text="Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side." />
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Content="Compare..." Click="OnCompareVideosClick" />
-			</StackPanel>
-		</StackPanel>
+			<Border Grid.Row="1" Grid.Column="0" Classes="toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Camera microphone audio (.AAC)" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="ConvertAudioWavButton" Content="To WAV..." Click="OnConvertAudioWavClick" />
+						<Button Name="ConvertAudioM4aButton" Content="To M4A..." Click="OnConvertAudioM4aClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="With an external mic connected, the camera saves its built-in microphones as a separate .AAC file that Vegas Pro and Audacity can't open. Converts it without any quality loss (verified sample by sample), next to the original. WAV works everywhere; M4A keeps the original AAC data, 10x smaller." />
+				</DockPanel>
+			</Border>
 
-		<StackPanel Spacing="4">
-			<TextBlock Text="Data" Classes="infoLabel" Margin="0" />
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
-				<Button Content="Clear cache" Click="OnClearCacheClick"
-				        ToolTip.Tip="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
-			</StackPanel>
-		</StackPanel>
-
-		<Grid ColumnDefinitions="*,Auto">
-			<TextBlock Grid.Column="0" />
-			<Button Grid.Column="1" Content="Close" Classes="accent" Click="OnCloseClick" />
+			<Border Grid.Row="1" Grid.Column="1" Classes="toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Compare videos" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Content="Compare..." Click="OnCompareVideosClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side." />
+				</DockPanel>
+			</Border>
 		</Grid>
+
+		<TextBlock Classes="sectionLabel" Text="APP DATA" Margin="0,8,0,0" />
+
+		<Border Classes="toolCard">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+				           Text="Presets, settings, map tiles, logs and the cached file analysis." />
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+					<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
+					<Button Content="Clear cache" Click="OnClearCacheClick"
+					        ToolTip.Tip="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<Button HorizontalAlignment="Right" Content="Close" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
 	</StackPanel>
 </Window>
