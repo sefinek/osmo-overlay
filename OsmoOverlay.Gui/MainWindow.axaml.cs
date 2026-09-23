@@ -67,16 +67,16 @@ public partial class MainWindow : Window
 	private bool _overlayPresetsLoaded;
 	private UiPhase _phase = UiPhase.Idle;
 	private WriteableBitmap? _previewBitmap;
-	private int _previewMaxWidth = OverlaySettingsStore.Load().PreviewMaxWidth;
+	private int _previewMaxWidth;
 	private string? _selectedElementId;
-	private PreviewGridMode _gridMode = Enum.TryParse(OverlaySettingsStore.Load().PreviewGridMode, out PreviewGridMode loadedGridMode) ? loadedGridMode : PreviewGridMode.Both;
-	private bool _snapToGuides = OverlaySettingsStore.Load().PreviewSnapToGrid;
+	private PreviewGridMode _gridMode;
+	private bool _snapToGuides;
 	private string? _resizingElementId;
 	private float _resizeStartScale = 1f;
 	private double _resizeStartDistance = 1;
-	private bool _showWatermark = OverlaySettingsStore.Load().ShowWatermark;
+	private bool _showWatermark;
 	private bool _sliderDragInProgress;
-	private bool _smoothGpsMotion = OverlaySettingsStore.Load().SmoothGpsMotion;
+	private bool _smoothGpsMotion;
 	private FileSummary? _summary;
 	private bool _suppressOverlayEvents;
 	private bool _suppressSliderEvent;
@@ -85,6 +85,13 @@ public partial class MainWindow : Window
 	{
 		InitializeComponent();
 		Opened += OnWindowOpened;
+
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		_previewMaxWidth = settings.PreviewMaxWidth;
+		_gridMode = Enum.TryParse(settings.PreviewGridMode, out PreviewGridMode loadedGridMode) ? loadedGridMode : PreviewGridMode.Both;
+		_snapToGuides = settings.PreviewSnapToGrid;
+		_showWatermark = settings.ShowWatermark;
+		_smoothGpsMotion = settings.SmoothGpsMotion;
 
 		DateTimeFormatCombo.ItemsSource = DateFormatOptions;
 		DateTimeLocaleCombo.ItemsSource = LocaleOptions;
@@ -183,7 +190,8 @@ public partial class MainWindow : Window
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
-		_previewPlayer.Message += message => AppendLog(message);
+		// Map tile progress arrives from thread-pool threads (see OverlayRenderer.BuildMapMosaicAsync).
+		_previewPlayer.Message += message => Dispatcher.UIThread.Post(() => AppendLog(message));
 
 		// See AppLogger.Notified for the general contract. Concretely: ffmpeg/ffprobe/exiftool
 		// invocations (from this window, ToolsWindow, or CompareVideosWindow), one-off status lines,
@@ -219,7 +227,7 @@ public partial class MainWindow : Window
 
 		AppendBanner();
 
-		IReadOnlyList<ExternalTool> missing = await DependencyChecker.FindMissingAsync(RequiredTools.All);
+		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
 		if (missing.Count == 0) return;
 
 		await new DependencyPromptWindow(missing).ShowDialog(this);
@@ -240,7 +248,11 @@ public partial class MainWindow : Window
 		if (files.Count == 0) return;
 
 		var wasEmpty = _inputPaths.Count == 0;
-		_inputPaths.AddRange(files.Select(f => f.Path.LocalPath).OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
+		// The same file twice would get stitched (and rendered) twice.
+		_inputPaths.AddRange(files.Select(f => f.Path.LocalPath)
+			.Where(p => !_inputPaths.Contains(p, StringComparer.OrdinalIgnoreCase))
+			.Distinct(StringComparer.OrdinalIgnoreCase)
+			.OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
 		RefreshInputFilesList();
 
 		if (wasEmpty)
@@ -259,6 +271,7 @@ public partial class MainWindow : Window
 		(_inputPaths[index - 1], _inputPaths[index]) = (_inputPaths[index], _inputPaths[index - 1]);
 		RefreshInputFilesList();
 		InputFilesList.SelectedIndex = index - 1;
+		ResetAfterInputOrderChange();
 	}
 
 	private void OnMoveInputDownClick(object? sender, RoutedEventArgs e)
@@ -269,6 +282,19 @@ public partial class MainWindow : Window
 		(_inputPaths[index + 1], _inputPaths[index]) = (_inputPaths[index], _inputPaths[index + 1]);
 		RefreshInputFilesList();
 		InputFilesList.SelectedIndex = index + 1;
+		ResetAfterInputOrderChange();
+	}
+
+	/// <summary>
+	///     The loaded summary's telemetry is stitched in the old segment order - rendering it against the
+	///     reordered files would put the overlay out of sync with the video, so Get Summary has to run again.
+	/// </summary>
+	private void ResetAfterInputOrderChange()
+	{
+		if (_phase != UiPhase.SummaryReady) return;
+
+		ClosePreview();
+		SetPhase(UiPhase.Idle);
 	}
 
 	private void OnRemoveInputClick(object? sender, RoutedEventArgs e)
@@ -295,8 +321,15 @@ public partial class MainWindow : Window
 		var settings = new SettingsWindow(_frameLimit, _showWatermark, _smoothGpsMotion, _previewMaxWidth,
 			currentSettings.MapTileUrlTemplate, currentSettings.MapAttribution, currentSettings.MapShowAttribution,
 			currentSettings.MapApiKey, RouteIntroSettings.From(currentSettings));
+		settings.LoadExportSettings(currentSettings);
 		await settings.ShowDialog(this);
 		_frameLimit = settings.FrameLimit;
+
+		// Export options only matter at render time (RenderJob reads them from settings.json itself), so
+		// unlike the preview-affecting settings below they never need the preview reopened.
+		OverlaySettings beforeExportChanges = OverlaySettingsStore.Load();
+		OverlaySettings withExportChanges = settings.ApplyExportSettings(beforeExportChanges);
+		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);
 
 		if (settings.ShowWatermark != _showWatermark)
 		{
@@ -424,7 +457,10 @@ public partial class MainWindow : Window
 		ActionButton.Content = phase == UiPhase.SummaryReady ? "Render" : "Get Summary";
 		GreenScreenButton.IsVisible = phase == UiPhase.SummaryReady;
 
-		if (phase is UiPhase.LoadingSummary or UiPhase.Rendering)
+		var busy = phase is UiPhase.LoadingSummary or UiPhase.Rendering;
+		// Editing the input list mid-run would reset the phase under a running summary/render.
+		InputPanel.IsEnabled = !busy;
+		if (busy)
 			ActionButton.IsEnabled = false;
 	}
 

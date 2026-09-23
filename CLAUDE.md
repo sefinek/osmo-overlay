@@ -62,13 +62,21 @@ Every widget (regardless of type) can also have its own appear/disappear timing 
 
 ## Live preview (`PreviewPlayer` + Avalonia GUI)
 
-`PreviewPlayer` decodes frames through `VideoFrameSource` (spawns `ffmpeg` per frame request) and composites them with the overlay (`Compose`, `OverlayRenderer.Render`). Two distinct access modes:
+`PreviewPlayer` decodes frames through `VideoFrameSource` (spawns `ffmpeg` per frame request) and composites them with the overlay (`Compose`, `OverlayRenderer.RenderInto`). Two distinct access modes:
 - **Scrubbing/seek** (`RequestSeekAsync`): debounce + cooperative cancellation via checking `ct.IsCancellationRequested` (returns `null`), **not** by throwing `OperationCanceledException` - one seek superseding a previous one is a frequent, expected event, not an exceptional one, so exceptions would be needlessly costly here.
 - **Dragging an overlay element** (`SetLayout`): does NOT call ffmpeg again - it just swaps `_renderer.Layout` and recomposes the last already-decoded video frame from memory, so dragging stays smooth (dozens of updates/sec without spawning a process).
 
 `VideoFrameSource.GetFrame` retries with backoff, but **only near the end of the file** (`Duration - position <= 1s`) - ffmpeg sometimes needs more than one frame of margin before EOF, depending on keyframe layout/encoder. The retry is deliberately scoped to this case: for a genuinely broken file every position will fail, so retrying would just multiply ffmpeg spawns (and extend how long `PreviewPlayer._lock` is held, blocking playback) before the same error surfaces anyway.
 
-In the GUI (`MainWindow.axaml.cs`), the overlay element list is edited via **copy-on-write**: every change (dragging, a visibility checkbox) builds a new list (`ActiveElements.ToList()`) and swaps the reference on the preset (`ReplaceActiveElements`), instead of mutating the existing list in place - because the playback thread may be concurrently enumerating that same list inside `OverlayRenderer.Render()`. Dragging an element **pauses playback** if it's currently running (`OnOverlayCanvasPointerPressed`).
+In the GUI (`MainWindow.axaml.cs`), the overlay element list is edited via **copy-on-write**: every change (dragging, a visibility checkbox) builds a new list (`ActiveElements.ToList()`) and swaps the reference on the preset (`ReplaceActiveElements`), instead of mutating the existing list in place - because the playback thread may be concurrently enumerating that same list inside `OverlayRenderer.RenderInto()`. Dragging an element **pauses playback** if it's currently running (`OnOverlayCanvasPointerPressed`).
+
+## Render output parity
+
+The default export must match the source's own encode 1:1 (verified field by field with ffprobe against Osmo Action 6 originals): constant bitrate at the source's rate, no B-frames, GOP measured from the source's keyframes, HEVC level and tier read from the source (`SourceProbe` - tier via `trace_headers`, ffprobe doesn't report it), `hvc1` tag, exact frame count (`overlay=...:shortest=1`, `VideoInfo.FrameCount`), `creation_time` + timecode. `RenderEncodeSettings`/`OverlaySettings` export options (NVENC preset, bitrate multiplier, hardware decoding, fast start, camera metadata) may only deviate from that when the user picks a non-default value - never change the defaults.
+
+The overlay is drawn premultiplied (Skia has no fast path for unpremultiplied targets - ~10x slower) and converted to straight alpha for ffmpeg in `BgraAlpha`. The route-intro card is static and rendered once (`_routeIntroCard`).
+
+ffmpeg can't mux the camera's `djmd`/`dbgi` data tracks into MP4, so "keep camera metadata" is done after ffmpeg at the box level: `Mp4CameraMetadata` (appends the tracks + moov/udta from the source) and `Mp4FastStart` (our own faststart for that case; otherwise ffmpeg's `+faststart`). Verified: the copied tracks are byte-identical to the source and `TelemetryExtraction` reads identical frames from the render. What gets kept is chosen per part (`CameraMetadataSelection`: telemetry, debug track, thumbnails/info, serial number). The camera serial number lives in exactly one place in the whole file - the string at protobuf path f1.1.5 of the first djmd sample (next to the firmware version at f1.1.6) - and unless explicitly kept (default: not kept) the whole field is removed from the protobuf - no placeholder - with the enclosing length prefixes re-encoded; the udta `©uid` box is dropped too. Verified: 0 occurrences left, every other header field and all djmd samples byte-identical.
 
 ## Repo-specific conventions
 

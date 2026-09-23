@@ -46,6 +46,15 @@ public sealed partial class OverlayRenderer
 	private string? _preparedRouteIntroKey;
 	private List<SKPoint>? _routeIntroTrailPixels;
 
+	// The whole card (backdrop, map mosaic, route, stats) only depends on the recording as a whole, never
+	// on the current frame - drawing it from scratch every frame (a full-frame translucent fill plus
+	// resampling the entire mosaic) was by far the slowest part of a render. Rendered once per key and
+	// then just blitted; any change to size/settings/mosaic changes the key and rebuilds it.
+	private SKImage? _routeIntroCard;
+	private RouteIntroCardKey? _routeIntroCardKey;
+
+	private readonly record struct RouteIntroCardKey(int Width, int Height, RouteIntroSettings Settings, RouteMapMosaic? Mosaic);
+
 	/// <summary>See PrepareMapAsync (OverlayRenderer.Position.cs) - same shape, independent mosaic/key.</summary>
 	public async Task PrepareRouteIntroMapAsync(Action<int, int>? onTileProgress = null, CancellationToken ct = default)
 	{
@@ -78,8 +87,9 @@ public sealed partial class OverlayRenderer
 		// route (see DrawRouteIntroMap).
 		try
 		{
-			return (await RouteMapMosaic.BuildAsync(points, urlTemplate, RouteIntroMapZoomDefault, 0, ct, onTileProgress,
-				targetAspect), urlTemplate);
+			// Task.Run for the same reason as BuildMapMosaicAsync.
+			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, RouteIntroMapZoomDefault, 0, ct,
+				onTileProgress, targetAspect), ct), urlTemplate);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -123,7 +133,37 @@ public sealed partial class OverlayRenderer
 		return new SKRect(margin, margin, refWidth * 0.55f, refHeight - margin);
 	}
 
-	private void DrawRouteIntro(SKCanvas canvas, DerivedFrame frame)
+	/// <summary>Draws the cached card (see _routeIntroCard) at `alpha`, building it first if the key changed. `canvas` must be the frame canvas with only DrawFrame's output-size scale applied.</summary>
+	private void DrawRouteIntroCard(SKCanvas canvas, int outW, int outH, float alpha)
+	{
+		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic);
+		if (_routeIntroCard is null || _routeIntroCardKey != key)
+		{
+			_routeIntroCard?.Dispose();
+			using SKSurface surface = SKSurface.Create(new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Premul));
+			surface.Canvas.Clear(SKColors.Transparent);
+			surface.Canvas.Scale(outW / (float)_width, outH / (float)_height);
+			DrawRouteIntro(surface.Canvas);
+			_routeIntroCard = surface.Snapshot();
+			_routeIntroCardKey = key;
+		}
+
+		canvas.Save();
+		canvas.ResetMatrix();
+		if (alpha >= 1f)
+		{
+			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default);
+		}
+		else
+		{
+			using var paint = new SKPaint { Color = SKColors.White.WithAlpha((byte)Math.Clamp(alpha * 255f, 0, 255)) };
+			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default, paint);
+		}
+
+		canvas.Restore();
+	}
+
+	private void DrawRouteIntro(SKCanvas canvas)
 	{
 		var refWidth = _width / _scale;
 		var refHeight = _height / _scale;
@@ -137,7 +177,7 @@ public sealed partial class OverlayRenderer
 
 		SKRect mapRect = GetRouteIntroMapRect();
 		DrawRouteIntroMap(canvas, mapRect);
-		DrawRouteIntroStats(canvas, frame, mapRect.Right + margin, mapRect.Top + 30);
+		DrawRouteIntroStats(canvas, mapRect.Right + margin, mapRect.Top + 30);
 
 		canvas.Restore();
 	}
@@ -159,17 +199,17 @@ public sealed partial class OverlayRenderer
 		canvas.Save();
 		canvas.ClipRect(mapRect);
 
-		SKBitmap bitmap = _routeIntroMosaic.Bitmap;
+		SKImage mosaicImage = _routeIntroMosaic.Image;
 		// Cover (Math.Max), not contain: BuildRouteIntroMosaicAsync already padded the mosaic out to
 		// mapRect's own aspect ratio (via targetAspectRatio), so the two match up to the rounding from
 		// whole tile counts - cover here only ever trims that sub-tile rounding sliver via the ClipRect
 		// above, not the route itself.
-		var fitScale = Math.Max(mapRect.Width / bitmap.Width, mapRect.Height / bitmap.Height);
-		var drawWidth = bitmap.Width * fitScale;
-		var drawHeight = bitmap.Height * fitScale;
+		var fitScale = Math.Max(mapRect.Width / mosaicImage.Width, mapRect.Height / mosaicImage.Height);
+		var drawWidth = mosaicImage.Width * fitScale;
+		var drawHeight = mosaicImage.Height * fitScale;
 		var destRect = SKRect.Create((mapRect.Left + mapRect.Right) / 2 - drawWidth / 2,
 			(mapRect.Top + mapRect.Bottom) / 2 - drawHeight / 2, drawWidth, drawHeight);
-		canvas.DrawBitmap(bitmap, destRect, SKSamplingOptions.Default);
+		canvas.DrawImage(mosaicImage, destRect, SKSamplingOptions.Default);
 
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
@@ -220,7 +260,7 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>Units come from RouteIntro.Units (a card-level setting, see OverlaySettings.RouteIntroUnits) rather than a per-widget OverlayElement.Units - this card has no OverlayElement of its own to carry one.</summary>
-	private void DrawRouteIntroStats(SKCanvas canvas, DerivedFrame frame, float x, float startY)
+	private void DrawRouteIntroStats(SKCanvas canvas, float x, float startY)
 	{
 		(string Label, string Value)? distance = null;
 		if (RouteIntro.ShowDistance)

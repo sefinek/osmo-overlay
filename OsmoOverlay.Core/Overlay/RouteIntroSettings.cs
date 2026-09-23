@@ -28,4 +28,14 @@ public sealed record RouteIntroSettings(
 			settings.RouteIntroShowDate, settings.RouteIntroShowDuration, settings.RouteIntroShowCameraModel,
 			settings.RouteIntroShowElevationGain, settings.RouteIntroUnits);
 	}
+
+	/// <summary>
+	///     From(settings), but Disabled for a recording with no GPS fix at all - the card is a route summary
+	///     (map, distance, speeds, elevation), so without a fix it would only show "MAP UNAVAILABLE" and
+	///     zeros for its whole duration. Same availability rule OverlayDataRequirements applies to widgets.
+	/// </summary>
+	public static RouteIntroSettings ForRecording(OverlaySettings settings, bool hasGpsFix)
+	{
+		return hasGpsFix ? From(settings) : Disabled;
+	}
 }

@@ -9,33 +9,43 @@
         Background="#121214"
         Title="Settings">
 
+	<Window.Resources>
+		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="#1B1B1E" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="#232327" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="#1F1F22" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundDisabled" Color="#18181A" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="#2A2A2F" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="#34343A" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="#34343A" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushDisabled" Color="#222226" />
+		<SolidColorBrush x:Key="ExpanderContentBackground" Color="#18181B" />
+		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="#2A2A2F" />
+		<SolidColorBrush x:Key="ExpanderChevronBackground" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPressed" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrush" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPressed" Color="Transparent" />
+	</Window.Resources>
+
 	<Window.Styles>
-		<!-- No Margin on either: vertical rhythm comes entirely from the StackPanel.Spacing tiers
-		     each panel below uses (20 between sections, 6 within a section, 4 between list items) -
-		     mixing per-control margins into that would double up gaps and drift out of sync between
-		     panels, which is what made General/Map/Route intro each look subtly different before. -->
 		<Style Selector="TextBlock.infoLabel">
 			<Setter Property="Opacity" Value="0.55" />
+		</Style>
+		<Style Selector="TextBlock.sectionHeader">
+			<Setter Property="FontSize" Value="17" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.9" />
 		</Style>
 		<Style Selector="TextBlock.hint">
 			<Setter Property="Opacity" Value="0.4" />
 			<Setter Property="FontSize" Value="13" />
 			<Setter Property="TextWrapping" Value="Wrap" />
 		</Style>
-		<!-- Same FontSize/Padding as MainWindow's CheckBox.overlayItem (this window can't reach that
-		     Window.Styles-scoped class directly) - every CheckBox/RadioButton here uses it so the whole
-		     dialog reads as one row height instead of the default FluentTheme size looking taller than
-		     the app's own established checkbox-list convention. Deliberately no Height/MinHeight override
-		     here - forcing an exact Height clips the indicator glyph's bottom edge (FluentTheme's
-		     template needs more room than a tight guess gives it), so row tightness comes from the
-		     StackPanel Spacing tiers alone, same as overlayItem does. -->
 		<Style Selector="CheckBox, RadioButton">
 			<Setter Property="FontSize" Value="14" />
 			<Setter Property="Padding" Value="8,0,0,0" />
 		</Style>
-		<!-- Scoped to this window's own nav list (not every ListBox app-wide) - drops the boxed-in
-		     card look App.axaml's generic ListBox style gives every other list, since this one reads
-		     as a sidebar rail, not a bordered panel. -->
 		<Style Selector="ListBox#CategoryList">
 			<Setter Property="Background" Value="Transparent" />
 			<Setter Property="BorderThickness" Value="0" />
@@ -94,6 +104,76 @@
 							<CheckBox Name="SmoothGpsMotionCheck" Content="Smooth GPS-derived motion" />
 							<TextBlock Classes="hint"
 							           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. On by default; takes effect the next time a file/preview is opened." />
+						</StackPanel>
+
+						<StackPanel Spacing="6" Margin="0,12,0,0">
+							<TextBlock Text="Output quality" Classes="sectionHeader" />
+							<TextBlock Classes="hint"
+							           Text="By default the render matches the source file's own encoding 1:1 - same bitrate, keyframe interval, HEVC level/tier and no B-frames - so it doesn't lose quality compared to the original. The options below only change that if you pick something other than the default." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Encoder preset (NVIDIA GPU)" Classes="infoLabel" />
+							<ComboBox Name="NvencPresetCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="How much effort the GPU encoder spends per frame at the same bitrate. P7 gives the best picture and is the default; lower presets render faster at a slightly lower quality. Only applies to NVENC (hevc_nvenc) - the CPU encoder always uses its own fixed preset." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Output bitrate" Classes="infoLabel" />
+							<ComboBox Name="BitrateCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="Same as source is the default. A higher bitrate makes a bigger file but keeps the thin HUD text crisper after a platform like YouTube re-compresses the upload." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Decoding" Classes="infoLabel" />
+							<CheckBox Name="HardwareDecodingCheck" Content="Decode the source on the GPU" />
+							<TextBlock Classes="hint"
+							           Text="On by default: decoding the 4K source on the GPU is several times faster than on the CPU and produces identical frames, so it never affects quality. Turn it off only if renders fail after a graphics driver update or on an unusual GPU - ffmpeg then decodes on the CPU." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Web playback" Classes="infoLabel" />
+							<CheckBox Name="FastStartCheck" Content="Fast start (index at the beginning of the file)" />
+							<TextBlock Classes="hint"
+							           Text="Lets a browser or messenger start playing the video before it has downloaded all of it. Doesn't change the picture - it only reorders the file, which takes an extra pass over it at the end of the render (a few seconds per GB). Off by default." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Camera metadata" Classes="infoLabel" />
+							<CheckBox Name="PreserveCameraMetadataCheck" Content="Keep the camera's metadata in the rendered file"
+							          IsCheckedChanged="OnMetadataOptionChanged" />
+							<TextBlock Classes="hint"
+							           Text="Copies data the camera recorded alongside the video into the output, so DJI Mimo, exiftool or this app can still read it from the render. Off by default - pick below exactly what to keep." />
+							<Expander Name="MetadataPartsExpander" HorizontalAlignment="Stretch" CornerRadius="8">
+								<StackPanel Spacing="12">
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataTelemetryCheck" Content="Telemetry - GPS route, speed, accelerometer, exposure"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="What DJI Mimo and this app read the ride from. Includes your exact position for every frame - anyone with the file can see where it was recorded." />
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataSerialCheck" Content="Camera serial number and device ID"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="Identifies your physical camera; nothing that reads the telemetry needs it. Off by default - the field is then removed from the file entirely, not just blanked." />
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataDebugCheck" Content="Camera debug track"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="DJI's internal sensor diagnostics (~1.7 Mbps). No location in it, but no common tool reads it either." />
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataThumbnailsCheck" Content="Thumbnails and recording info"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="Cover image, camera model, shooting settings and the file's original name on the camera." />
+									</StackPanel>
+								</StackPanel>
+							</Expander>
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>
@@ -182,15 +262,15 @@
 						</StackPanel>
 
 						<StackPanel Spacing="6">
-							<TextBlock Text="Configuration" Classes="infoLabel" />
-							<TextBlock Name="ConfigLastUpdatedText" Text="Config last updated: -" />
-						</StackPanel>
-
-						<StackPanel Spacing="6">
 							<TextBlock Text="Dependencies" Classes="infoLabel" />
 							<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
 							<Button Name="CheckForUpdatesButton" Content="Check for updates" HorizontalAlignment="Left"
 							        Click="OnCheckForUpdatesClick" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Configuration" Classes="infoLabel" />
+							<TextBlock Name="ConfigLastUpdatedText" Text="Config last updated: -" />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>

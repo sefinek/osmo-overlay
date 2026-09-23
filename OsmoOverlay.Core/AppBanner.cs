@@ -13,11 +13,8 @@ public static class AppBanner
 		return
 		[
 			"==================================================",
-			"  OsmoOverlay",
-			"  Telemetry HUD burner for DJI Osmo Action footage",
-			"==================================================",
-			$"  {appLabel} v{appVersion}",
-			$"  Core v{coreVersion}",
+			$"     OsmoOverlay | {appLabel} v{appVersion} | Core v{coreVersion}",
+			" Telemetry HUD burner for DJI Osmo Action footage",
 			"=================================================="
 		];
 	}

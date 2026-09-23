@@ -44,15 +44,22 @@ public sealed partial class OverlayRenderer
 		var (offsetX, offsetY) = SlideOffset(element.AnimationType, progress);
 		if (offsetX == 0f && offsetY == 0f && !resized)
 		{
-			DrawWithAlpha(canvas, progress, draw);
+			DrawFaded(canvas, progress, draw);
 			return;
 		}
 
 		canvas.Save();
 		if (offsetX != 0f || offsetY != 0f) canvas.Translate(offsetX, offsetY);
 		if (resized) ScaleAroundAnchor(canvas, element);
-		DrawWithAlpha(canvas, progress, draw);
+		DrawFaded(canvas, progress, draw);
 		canvas.Restore();
+	}
+
+	/// <summary>Skips DrawWithAlpha's SaveLayer once fully faded in - the whole window between the two ramps.</summary>
+	private static void DrawFaded(SKCanvas canvas, float progress, Action<SKCanvas> draw)
+	{
+		if (progress >= 1f) draw(canvas);
+		else DrawWithAlpha(canvas, progress, draw);
 	}
 
 	/// <summary>

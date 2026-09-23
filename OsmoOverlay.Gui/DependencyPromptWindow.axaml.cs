@@ -8,6 +8,7 @@ namespace OsmoOverlay.Gui;
 public partial class DependencyPromptWindow : Window
 {
 	private readonly IReadOnlyList<ExternalTool> _missing;
+	private bool _installing;
 
 	public DependencyPromptWindow()
 	{
@@ -21,23 +22,16 @@ public partial class DependencyPromptWindow : Window
 		_missing = missing;
 
 		ToolList.ItemsSource = missing.Select(t => t.DisplayName).ToList();
-		MessageText.Text = "Checking for a package manager...";
-		InstallButton.IsVisible = false;
 
-		_ = InitializeAsync();
-	}
-
-	private async Task InitializeAsync()
-	{
-		// Checking for winget/brew/apt launches a process and can block for a few seconds,
-		// so it runs off the UI thread instead of in the constructor.
-		var canAutoInstall = await Task.Run(DependencyInstaller.CanAttemptAutoInstall);
-
+		var canAutoInstall = DependencyInstaller.CanAttemptAutoInstall();
 		MessageText.Text = canAutoInstall
 			? "OsmoOverlay needs the following tools to work. Install them now?"
 			: "OsmoOverlay needs the following tools, but no supported package manager was found. " +
 			  "Install them manually, then restart the app.";
 		InstallButton.IsVisible = canAutoInstall;
+
+		// Closing mid-install would leave the package manager running with nobody watching its result.
+		Closing += (_, e) => e.Cancel |= _installing;
 	}
 
 	private void OnSkipClick(object? sender, RoutedEventArgs e)
@@ -47,6 +41,7 @@ public partial class DependencyPromptWindow : Window
 
 	private async void OnInstallClick(object? sender, RoutedEventArgs e)
 	{
+		_installing = true;
 		InstallButton.IsEnabled = false;
 		SkipButton.IsEnabled = false;
 		LogPanel.IsVisible = true;
@@ -55,12 +50,25 @@ public partial class DependencyPromptWindow : Window
 		foreach (ExternalTool tool in _missing)
 		{
 			AppendLog($"Installing {tool.DisplayName}...");
-			InstallResult result = await DependencyInstaller.InstallAsync(tool, AppendLog, CancellationToken.None);
+			InstallResult result;
+			try
+			{
+				result = await DependencyInstaller.InstallAsync(tool, AppendLog, CancellationToken.None);
+			}
+			catch (Exception ex)
+			{
+				result = new InstallResult(false, ex.Message);
+			}
+
 			AppendLog(result.Message);
 			allSucceeded &= result.Success;
 		}
 
-		AppendLog(allSucceeded ? "Done. Restart the app if a tool still isn't detected." : "Some installs failed - see log above.");
+		_installing = false;
+		AppendLog(allSucceeded ? "Done." : "Some installs failed - see log above.");
+		InstallButton.Content = "Retry";
+		InstallButton.IsVisible = !allSucceeded;
+		InstallButton.IsEnabled = true;
 		SkipButton.Content = "Close";
 		SkipButton.IsEnabled = true;
 	}

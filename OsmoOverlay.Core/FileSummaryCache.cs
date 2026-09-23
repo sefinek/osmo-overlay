@@ -10,7 +10,7 @@ internal static class FileSummaryCache
 {
 	// Bump whenever telemetry extraction or derivation logic changes, so stale cache
 	// entries computed with the old logic are treated as a cache miss automatically.
-	public const int FormatVersion = 13;
+	public const int FormatVersion = 15;
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "cache");
@@ -20,7 +20,8 @@ internal static class FileSummaryCache
 	///     StaleFormatVersion is set only for that last case - a cache entry that otherwise matches this
 	///     exact file (same path/size/mtime) but was written by an older FormatVersion - so callers can
 	///     tell "never analyzed before" apart from "analyzed before, but the logic has changed since" and
-	///     report that distinctly instead of a generic cache miss.
+	///     report that distinctly instead of a generic cache miss. A stale entry is deleted right here,
+	///     before the (slow) recompute starts, so a recompute that then fails can't leave it behind.
 	/// </summary>
 	public static (FileSummary? Summary, int? StaleFormatVersion) TryLoad(IReadOnlyList<string> inputPaths)
 	{
@@ -41,7 +42,11 @@ internal static class FileSummaryCache
 					return (null, null);
 			}
 
-			if (entry.FormatVersion != FormatVersion) return (null, entry.FormatVersion);
+			if (entry.FormatVersion != FormatVersion)
+			{
+				TryDelete(cachePath);
+				return (null, entry.FormatVersion);
+			}
 
 			return (Reinflate(entry), null);
 		}
@@ -56,7 +61,7 @@ internal static class FileSummaryCache
 	{
 		if (!Directory.Exists(CacheDir)) return 0;
 
-		var files = Directory.GetFiles(CacheDir, "*.json");
+		IEnumerable<string> files = Directory.GetFiles(CacheDir, "*.json").Concat(Directory.GetFiles(CacheDir, "*.tmp"));
 		var deleted = 0;
 		foreach (var file in files)
 			try
@@ -72,7 +77,21 @@ internal static class FileSummaryCache
 		return deleted;
 	}
 
-	public static void Save(IReadOnlyList<string> inputPaths, FileSummary summary)
+	private static void TryDelete(string path)
+	{
+		try
+		{
+			File.Delete(path);
+		}
+		catch (Exception ex)
+		{
+			// Save overwrites it anyway once the recompute finishes.
+			AppLogger.Warn(ex, $"Failed to delete stale cache entry {path}");
+		}
+	}
+
+	/// <summary>False when the write failed - logged here, never thrown, since the cache is best-effort.</summary>
+	public static bool Save(IReadOnlyList<string> inputPaths, FileSummary summary)
 	{
 		try
 		{
@@ -91,11 +110,13 @@ internal static class FileSummaryCache
 			List<CachedDerivedFrame>? derivedExtras = summary.DerivedFrames?.Select(CachedDerivedFrame.From).ToList();
 			var entry = new CacheEntry(FormatVersion, files, summary with { DerivedFrames = null }, derivedExtras);
 			AtomicFile.WriteAllText(GetCachePath(inputPaths), JsonSerializer.Serialize(entry));
+			return true;
 		}
 		catch (Exception ex)
 		{
 			// Best-effort cache: a failed write should not break the summary flow.
 			AppLogger.Warn(ex, $"Failed to write cache entry for {string.Join(", ", inputPaths)}");
+			return false;
 		}
 	}
 

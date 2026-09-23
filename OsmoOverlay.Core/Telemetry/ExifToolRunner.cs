@@ -18,11 +18,8 @@ public static partial class ExifToolRunner
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden(ExifToolExe, "-Model", "-Make", "-Category", "-j", inputPath);
 
-		using Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start exiftool.");
-		var stdout = process.StandardOutput.ReadToEnd();
-		process.WaitForExit();
-
-		if (process.ExitCode != 0) return null;
+		var (exitCode, stdout, _) = ProcessHelper.RunCaptured(psi);
+		if (exitCode != 0) return null;
 
 		JsonArray? array = JsonNode.Parse(stdout)?.AsArray();
 		if (array is not { Count: > 0 }) return null;
@@ -53,13 +50,9 @@ public static partial class ExifToolRunner
 			"-AccelerometerX", "-AccelerometerY", "-AccelerometerZ",
 			inputPath);
 
-		using Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start exiftool.");
-		var stdout = process.StandardOutput.ReadToEnd();
-		var stderr = process.StandardError.ReadToEnd();
-		process.WaitForExit();
-
-		if (process.ExitCode != 0)
-			throw new InvalidOperationException($"exiftool exited with an error ({process.ExitCode}): {stderr}");
+		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		if (exitCode != 0)
+			throw new InvalidOperationException($"exiftool exited with an error ({exitCode}): {stderr}");
 
 		JsonArray array = JsonNode.Parse(stdout)?.AsArray()
 		                  ?? throw new InvalidOperationException("Empty exiftool output.");

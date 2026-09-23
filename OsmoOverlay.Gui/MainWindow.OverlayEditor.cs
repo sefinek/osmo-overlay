@@ -163,7 +163,9 @@ public partial class MainWindow
 				? null
 				: type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText
 					? "This file has no GPS timestamp and no usable recording-start time, so this widget can't show a time."
-					: "This file has no GPS fix, so this widget has nothing to show.");
+					: type == OverlayElementType.SunWidget
+						? "This file has no GPS fix or no GPS timestamp, so the sun's position can't be computed."
+						: "This file has no GPS fix, so this widget has nothing to show.");
 		}
 	}
 
@@ -197,7 +199,11 @@ public partial class MainWindow
 
 	private string GetWidgetLabel(OverlayElementType type)
 	{
-		return GetPaletteItem(type) is { Child: TextBlock { Text: { } text } } ? text : type.ToString();
+		// A palette item's child is either the label itself or a Grid holding it (plus e.g. the fallback ⚠).
+		Control? child = GetPaletteItem(type)?.Child;
+		TextBlock? label = child as TextBlock ??
+		                   (child as Panel)?.Children.OfType<TextBlock>().FirstOrDefault(t => t.Classes.Contains("overlayListItemText"));
+		return label?.Text ?? type.ToString();
 	}
 
 	/// <summary>
@@ -752,7 +758,7 @@ public partial class MainWindow
 				LabeledStatElement stat when accentColorBox is not null => stat with
 				{
 					FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
-					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, MinElementScale, MaxElementScale) : stat.Scale,
+					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : stat.Scale,
 					TextColor = NormalizeHexInput(textColorBox.Text),
 					AccentColor = NormalizeHexInput(accentColorBox.Text),
 					OutlineColor = NormalizeHexInput(outlineColorBox.Text),
@@ -761,7 +767,7 @@ public partial class MainWindow
 				StyledOverlayElement styled => styled with
 				{
 					FontFamily = (fontCombo.SelectedItem as FontOption)?.Family,
-					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, MinElementScale, MaxElementScale) : styled.Scale,
+					Scale = scaleBox.Value is { } scale ? Math.Clamp((float)scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : styled.Scale,
 					TextColor = NormalizeHexInput(textColorBox.Text),
 					OutlineColor = NormalizeHexInput(outlineColorBox.Text),
 					OutlineWidth = outlineWidthBox.Value is { } width ? (float)width : styled.OutlineWidth
@@ -1498,6 +1504,7 @@ public partial class MainWindow
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
 		if (_summary is null || IsActivePresetDefault) return;
+		if (!e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 		if (FindElementAt(pos) is not { } el) return;
 
@@ -1557,9 +1564,6 @@ public partial class MainWindow
 		if (_selectedElementId == id) RefreshSelectionHighlight();
 	}
 
-	private const float MinElementScale = 0.4f;
-	private const float MaxElementScale = 2.5f;
-
 	/// <summary>
 	///     Starts a resize drag from ResizeHandle - a corner grab at the selected widget's own
 	///     bottom-right bound, sized by the ratio of the pointer's current vs. starting distance from the
@@ -1581,7 +1585,7 @@ public partial class MainWindow
 
 		_resizingElementId = id;
 		_resizeStartScale = el.Scale;
-		_resizeStartDistance = Math.Max(Distance(pos, new Point(el.X, el.Y)), 1);
+		_resizeStartDistance = Math.Max(Point.Distance(pos, new Point(el.X, el.Y)), 1);
 		e.Pointer.Capture(OverlayDragCanvas);
 		e.Handled = true;
 		HideHoverIcons();
@@ -1597,8 +1601,8 @@ public partial class MainWindow
 		if (index < 0) return;
 
 		OverlayElement el = elements[index];
-		var distance = Distance(pos, new Point(el.X, el.Y));
-		var newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), MinElementScale, MaxElementScale);
+		var distance = Point.Distance(pos, new Point(el.X, el.Y));
+		var newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale);
 
 		elements[index] = el with { Scale = newScale };
 		ReplaceActiveElements(elements);
@@ -1606,9 +1610,19 @@ public partial class MainWindow
 		if (_selectedElementId == id) RefreshSelectionHighlight();
 	}
 
-	private static double Distance(Point a, Point b)
+	/// <summary>
+	///     Capture can be lost without a PointerReleased ever arriving (Alt+Tab, a system dialog mid-drag) -
+	///     without this the drag/resize would stay "stuck" to the pointer and the final position never saved.
+	///     The Released handler clears its state before releasing capture, so it doesn't end up here twice.
+	/// </summary>
+	private void OnOverlayCanvasPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
 	{
-		return Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+		if (_resizingElementId is null && _draggingElementId is null) return;
+
+		_resizingElementId = null;
+		_draggingElementId = null;
+		OverlayDragCanvas.Cursor = null;
+		SaveOverlayPresets();
 	}
 
 	private void OnOverlayCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)

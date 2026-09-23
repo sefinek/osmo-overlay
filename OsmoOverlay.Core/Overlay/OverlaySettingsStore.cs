@@ -51,7 +51,52 @@ public sealed record OverlaySettings(
 	bool PreviewSnapToGrid = true,
 	// Mirrors the GUI's own PreviewGridMode enum (Off/Thirds/Margin/Both) as a string, since this Core
 	// project has no dependency on the Gui project to reference that enum directly.
-	string PreviewGridMode = "Both");
+	string PreviewGridMode = "Both",
+	// Export options (see RenderEncodeSettings) - every default reproduces the source 1:1; each one only
+	// ever trades away something the user explicitly opted out of. Off by default: the camera's djmd
+	// track holds the GPS route and the camera serial number, which a video meant for sharing shouldn't
+	// carry unless asked to.
+	bool PreserveCameraMetadata = false,
+	// What PreserveCameraMetadata keeps, see CameraMetadataSelection. Serial number off by default even
+	// when the rest is kept - it identifies the physical camera and nothing in the app needs it.
+	bool MetadataKeepTelemetry = true,
+	bool MetadataKeepDebugTrack = true,
+	bool MetadataKeepThumbnails = true,
+	bool MetadataKeepSerialNumber = false,
+	string NvencPreset = "p7",
+	bool HardwareDecoding = true,
+	double OutputBitrateMultiplier = 1.0,
+	bool FastStart = false,
+	// Measured render speed (frames/s) per RenderSpeedHistory.Key - feeds the GUI's pre-render estimate.
+	Dictionary<string, double>? RenderFpsHistory = null);
+
+/// <summary>
+///     Render speed remembered per "shape" of render (resolution, frame rate, encoder, preset), from the
+///     last completed render of that shape - there's no way to predict it up front, it depends on the
+///     machine, the GPU and the footage itself.
+/// </summary>
+public static class RenderSpeedHistory
+{
+	public static string Key(int width, int height, double fps, string encoder, string nvencPreset)
+	{
+		return FormattableString.Invariant($"{width}x{height}@{fps:0.##}|{encoder}{(encoder == "hevc_nvenc" ? "|" + nvencPreset : "")}");
+	}
+
+	public static double? TryGet(string key)
+	{
+		return OverlaySettingsStore.Load().RenderFpsHistory?.TryGetValue(key, out var fps) == true ? fps : null;
+	}
+
+	public static void Record(string key, double fps)
+	{
+		if (!(fps > 0) || !double.IsFinite(fps)) return;
+
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		Dictionary<string, double> history = settings.RenderFpsHistory is { } existing ? new(existing) : [];
+		history[key] = Math.Round(fps, 2);
+		OverlaySettingsStore.Save(settings with { RenderFpsHistory = history });
+	}
+}
 
 /// <summary>
 ///     Persists OverlaySettings to one general settings.json, shared between the GUI and the CLI the

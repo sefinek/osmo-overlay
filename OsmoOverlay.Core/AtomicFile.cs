@@ -13,15 +13,43 @@ internal static class AtomicFile
 	public static void WriteAllText(string path, string contents)
 	{
 		var tempPath = TempPathFor(path);
-		File.WriteAllText(tempPath, contents);
-		File.Move(tempPath, path, true);
+		try
+		{
+			File.WriteAllText(tempPath, contents);
+			File.Move(tempPath, path, true);
+		}
+		catch
+		{
+			TryDelete(tempPath);
+			throw;
+		}
 	}
 
 	public static async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken ct)
 	{
 		var tempPath = TempPathFor(path);
-		await File.WriteAllBytesAsync(tempPath, bytes, ct);
-		File.Move(tempPath, path, true);
+		try
+		{
+			await File.WriteAllBytesAsync(tempPath, bytes, ct);
+			File.Move(tempPath, path, true);
+		}
+		catch
+		{
+			TryDelete(tempPath);
+			throw;
+		}
+	}
+
+	private static void TryDelete(string path)
+	{
+		try
+		{
+			File.Delete(path);
+		}
+		catch
+		{
+			// Best-effort: a leftover .tmp is harmless, the original exception is what matters.
+		}
 	}
 
 	private static string TempPathFor(string path)

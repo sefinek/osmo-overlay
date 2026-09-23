@@ -13,6 +13,8 @@ public sealed record ExternalTool(
 
 public static class RequiredTools
 {
+	// Gyan's full static build: a self-contained ffmpeg.exe/ffprobe.exe with every encoder (NVENC, x265...),
+	// unlike .Shared (the same build split into DLLs) or .Essentials (fewer libraries).
 	public static readonly ExternalTool Ffmpeg = new(
 		"FFmpeg",
 		["ffmpeg", "ffprobe"],

@@ -1,7 +1,9 @@
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Gui.Native;
 using AvaloniaPath = Avalonia.Controls.Shapes.Path;
@@ -22,6 +24,8 @@ public partial class MainWindow
 		if (_inputPaths.Count == 0 || _inputPaths.Any(p => !File.Exists(p)))
 			return;
 
+		List<string> inputPaths = [.. _inputPaths];
+
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
 		_hasGpsFix = false;
@@ -31,22 +35,17 @@ public partial class MainWindow
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);
-		foreach (var path in _inputPaths)
+		foreach (var path in inputPaths)
 			AppendLog($"Input: {path}");
-		AppendLog("Probing source file(s) (ffprobe)...");
-		AppendLog("Extracting telemetry (djmd stream)... falls back to exiftool if the raw layout doesn't match, unless cached.");
+
+		// Cache events arrive on the worker thread, mid-Read - posted through the same UI context the
+		// await below resumes on, so they land in the log in order and before the results.
+		SynchronizationContext? ui = SynchronizationContext.Current;
 
 		try
 		{
-			FileSummary summary = await Task.Run(() => FileSummaryReader.Read(_inputPaths));
-
-			if (summary.StaleCacheFormatVersion is { } staleVersion)
-				AppendLog($"Cache found (format v{staleVersion}) but outdated (current is v{FileSummaryReader.CurrentCacheFormatVersion}) " +
-				          "- recomputing and refreshing the cache...");
-			else
-				AppendLog(summary.FromCache
-					? "Cache hit: using cached analysis (file unchanged since last run)"
-					: "Cache miss: analysis recomputed and saved to cache");
+			FileSummary summary = await Task.Run(() => FileSummaryReader.Read(inputPaths,
+				cacheEvent => ui?.Post(_ => LogCacheEvent(cacheEvent), null)));
 
 			AppendLog(
 				$"ffprobe: {summary.Video.CodecName} {summary.Video.Profile}, {summary.Video.Width}x{summary.Video.Height}, " +
@@ -276,21 +275,65 @@ public partial class MainWindow
 		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
 	}
 
+	private void LogCacheEvent(FileSummaryCacheEvent e)
+	{
+		switch (e.Kind)
+		{
+			case FileSummaryCacheEventKind.Hit:
+				AppendLog($"Cache hit (format v{e.CurrentFormatVersion}): using the cached analysis, file unchanged since last run.");
+				return;
+			case FileSummaryCacheEventKind.Stale:
+				AppendLog($"Cache outdated: found format v{e.PreviousFormatVersion}, current is v{e.CurrentFormatVersion} " +
+				          "(telemetry logic changed since). Old cache entry deleted - generating a new one...", LogLevel.Warn);
+				break;
+			case FileSummaryCacheEventKind.Miss:
+				AppendLog("No cache for this file yet (or the file changed since) - analyzing...");
+				break;
+			case FileSummaryCacheEventKind.Saved:
+				AppendLog($"New cache saved (format v{e.CurrentFormatVersion}).");
+				return;
+			case FileSummaryCacheEventKind.SaveFailed:
+				AppendLog("Could not save the cache - see the log; the next run will analyze this file again.", LogLevel.Warn);
+				return;
+		}
+
+		AppendLog("Probing source file(s) (ffprobe)...");
+		AppendLog("Extracting telemetry (djmd stream)... falls back to exiftool if the raw layout doesn't match.");
+	}
+
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
 	{
 		var fps = summary.Video.Fps;
-		var frameLimit = _frameLimit;
-		var totalFrames = frameLimit ?? (int)Math.Ceiling(summary.DurationSeconds * fps);
-		var outDurationSeconds = frameLimit is not null ? frameLimit.Value / fps : summary.DurationSeconds;
+		var sourceFrames = summary.TotalFrameCount ?? (long)Math.Ceiling(summary.DurationSeconds * fps);
+		var totalFrames = _frameLimit is { } limit ? Math.Min(limit, sourceFrames) : sourceFrames;
 
 		OutEncoder.Text = encoder + (encoder == "libx265" ? " (CPU)" : " (GPU)");
 		OutAudio.Text = summary.Audio is not null ? "Copied (no re-encode)" : "None";
-		OutFrames.Text = $"{totalFrames} frames (~{TimeSpan.FromSeconds(outDurationSeconds):hh\\:mm\\:ss})";
+		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) + (_frameLimit is not null ? " (frame limit)" : "");
+
+		// Speed measured by the last full render of this same shape (RenderSpeedHistory) - there's no
+		// meaningful way to predict it before the first one, so say so instead of guessing.
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		OutPlanText.Text = DescribeEncodePlan(settings, encoder);
+		var key = RenderSpeedHistory.Key(summary.Video.Width, summary.Video.Height, fps, encoder, settings.NvencPreset);
+		if (RenderSpeedHistory.TryGet(key) is { } renderFps)
+		{
+			OutEstimatedTime.Text = $"~{TimeSpan.FromSeconds(totalFrames / renderFps):hh\\:mm\\:ss}";
+			ToolTip.SetTip(OutEstimatedTime,
+				$"Based on your last render at this resolution/frame rate with {encoder}: {renderFps:0.#} fps " +
+				$"({renderFps / fps:0.00}x realtime). Map tiles, settings or the footage itself can shift it a bit.");
+		}
+		else
+		{
+			OutEstimatedTime.Text = "known after the first render";
+			ToolTip.SetTip(OutEstimatedTime,
+				"Render speed depends on this machine, the GPU and the footage - it's measured during the first full render and used for the estimate from then on.");
+		}
 
 		// A changed setting (frame limit, input file) invalidates whatever was measured from a
 		// previous export, so fall back to the plan until the next render actually produces a file.
 		OutPlanText.IsVisible = true;
-		OutFrames.IsVisible = true;
+		SetPlannedFramesVisible(true);
 		OutMeasuredPanel.IsVisible = false;
 	}
 
@@ -312,7 +355,7 @@ public partial class MainWindow
 		}
 
 		OutPlanText.IsVisible = false;
-		OutFrames.IsVisible = false;
+		SetPlannedFramesVisible(false);
 		OutMeasuredPanel.IsVisible = true;
 
 		OutResolution.Text = $"{output.Video.Width}x{output.Video.Height}";
@@ -360,6 +403,40 @@ public partial class MainWindow
 		path.Data = matches ? CheckGeometry : CrossGeometry;
 		path.Stroke = new SolidColorBrush(Color.Parse(matches ? "#4CAF50" : "#E5484D"));
 		ToolTip.SetTip(path, matches ? "Matches the source file." : "Differs from the source file.");
+	}
+
+	private void SetPlannedFramesVisible(bool visible)
+	{
+		OutFrameCountLabel.IsVisible = visible;
+		OutFrameCount.IsVisible = visible;
+		OutEstimatedTimeLabel.IsVisible = visible;
+		OutEstimatedTime.IsVisible = visible;
+	}
+
+	/// <summary>
+	///     What the render will match of the source, given the current export options (see
+	///     FfmpegPipeline.StartRender) - "1:1" only while every option is at its source-matching default,
+	///     otherwise it names exactly what deviates, so the card never claims more than is true.
+	/// </summary>
+	private static string DescribeEncodePlan(OverlaySettings settings, string encoder)
+	{
+		List<string> deviations = [];
+		if (Math.Abs(settings.OutputBitrateMultiplier - 1.0) > 0.001)
+			deviations.Add($"bitrate {settings.OutputBitrateMultiplier:0.##}x the source");
+		if (encoder == "hevc_nvenc" && settings.NvencPreset != "p7")
+			deviations.Add($"faster encoder preset ({settings.NvencPreset.ToUpperInvariant()})");
+		if (encoder == "libx265")
+			deviations.Add("CPU encoder (x265) instead of the GPU");
+
+		var extras = new List<string>();
+		if (settings.PreserveCameraMetadata && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack || settings.MetadataKeepThumbnails))
+			extras.Add(settings.MetadataKeepSerialNumber ? "camera metadata kept, incl. serial number" : "camera metadata kept");
+		if (settings.FastStart) extras.Add("fast start");
+		var suffix = extras.Count > 0 ? $" ({string.Join(", ", extras)})" : "";
+
+		return deviations.Count == 0
+			? $"Encoding matches the source 1:1 - resolution, frame rate, codec/profile/level, bitrate, keyframes and color tags{suffix}."
+			: $"Matches the source except: {string.Join(", ", deviations)}{suffix}.";
 	}
 
 	private static string FormatFps(double fps)

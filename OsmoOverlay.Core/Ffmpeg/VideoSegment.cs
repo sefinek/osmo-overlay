@@ -29,6 +29,12 @@ public static class VideoSegments
 		return last.StartOffsetSeconds + last.Source.DurationSeconds;
 	}
 
+	/// <summary>Exact total when every segment reports its frame count, otherwise estimated from each segment's duration.</summary>
+	public static long TotalFrameCount(this IReadOnlyList<VideoSegment> segments)
+	{
+		return segments.Sum(s => s.Source.Video.FrameCount ?? (long)Math.Ceiling(s.Source.DurationSeconds * s.Source.Video.Fps));
+	}
+
 	public static bool AllHaveDjmdTrack(this IReadOnlyList<VideoSegment> segments)
 	{
 		return segments.All(s => s.Source.HasDjmdTrack);

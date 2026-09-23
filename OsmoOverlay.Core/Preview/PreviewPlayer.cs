@@ -27,6 +27,8 @@ public sealed class PreviewPlayer : IDisposable
 	private bool _hasGpsTimestamp;
 	private TimeSpan _lastPosition;
 	private VideoFrame? _lastVideoFrame;
+	// Overlay scratch buffer reused across every Compose call - always accessed under _lock.
+	private byte[]? _overlayBuffer;
 	private CancellationTokenSource? _mapPrepareCts;
 	private CancellationTokenSource? _playbackCts;
 	private OverlayRenderer? _renderer;
@@ -83,7 +85,7 @@ public sealed class PreviewPlayer : IDisposable
 			derivedFrames[0].Raw.AltitudeMeters, layout, derivedFrames, summary.Telemetry?.MaxSpeedKmh ?? 0,
 			settings.ShowWatermark, summary.CameraModel, summary.ContainerRecordingStartUtc,
 			settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution, settings.MapApiKey,
-			RouteIntroSettings.From(settings));
+			RouteIntroSettings.ForRecording(settings, _hasGpsFix));
 
 		_video = video;
 		_renderer = renderer;
@@ -134,6 +136,7 @@ public sealed class PreviewPlayer : IDisposable
 			_renderer?.Dispose();
 			_renderer = null;
 			_lastVideoFrame = null;
+			_overlayBuffer = null;
 		}
 
 		_derivedFrames = null;
@@ -509,9 +512,11 @@ public sealed class PreviewPlayer : IDisposable
 		if (frames.Count == 0) return null;
 
 		DerivedFrame frame = TelemetryProcessor.FindNearest(frames, position.TotalSeconds);
-		var overlayBytes = renderer.Render(frame, videoFrame.Width, videoFrame.Height);
+		var overlaySize = renderer.FrameBufferSize(videoFrame.Width, videoFrame.Height);
+		if (_overlayBuffer?.Length != overlaySize) _overlayBuffer = new byte[overlaySize];
+		renderer.RenderInto(frame, _overlayBuffer, videoFrame.Width, videoFrame.Height, premultiplied: true);
 		var composed = PreviewCompositor.Compose(videoFrame.Width, videoFrame.Height, videoFrame.Bgra,
-			videoFrame.Stride, overlayBytes, videoFrame.Width, videoFrame.Height);
+			videoFrame.Stride, _overlayBuffer, videoFrame.Width, videoFrame.Height);
 
 		return new ComposedPreviewFrame(position, composed);
 	}

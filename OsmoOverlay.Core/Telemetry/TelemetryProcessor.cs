@@ -117,6 +117,12 @@ public static class TelemetryProcessor
 
 	public static DerivedFrame FindNearest(IReadOnlyList<DerivedFrame> frames, double seconds)
 	{
+		return frames[FindIndex(frames, seconds)];
+	}
+
+	/// <summary>Index of the first frame at or after `seconds` (the last one past the end) - frames must be sorted by SampleTimeSeconds.</summary>
+	public static int FindIndex(IReadOnlyList<DerivedFrame> frames, double seconds)
+	{
 		var lo = 0;
 		var hi = frames.Count - 1;
 		while (lo < hi)
@@ -126,7 +132,7 @@ public static class TelemetryProcessor
 			else hi = mid;
 		}
 
-		return frames[lo];
+		return lo;
 	}
 
 	/// <summary>True if the recording has at least one real GPS fix anywhere - false means the camera never had a signal at all (e.g. filmed indoors), not that it was "lost".</summary>

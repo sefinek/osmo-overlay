@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace OsmoOverlay.Core.Ffmpeg;
 
@@ -15,7 +16,18 @@ public sealed record VideoInfo(
 	string? ColorTransfer,
 	string? ColorSpace,
 	string? ColorRange,
-	long BitRate)
+	long BitRate,
+	// Encoder-structure details of the source a render reproduces (see FfmpegPipeline.StartRender) -
+	// Level in ffmpeg's own units (level * 30, e.g. 156 = 5.2), 0 when unknown; HighTier/
+	// KeyframeIntervalFrames null when they couldn't be read; Timecode as the camera wrote it
+	// (e.g. "07:33:40;28").
+	int Level = 0,
+	int? KeyframeIntervalFrames = null,
+	string? Timecode = null,
+	bool? HighTier = null,
+	// The container's own frame count for this stream (nb_frames) - exact, unlike duration * fps, which
+	// the container duration (running past the last video frame to where the audio ends) overshoots.
+	long? FrameCount = null)
 {
 	public double Fps
 	{
@@ -44,20 +56,16 @@ public sealed record SourceInfo(
 	// available", not "recording started at DateTime default".
 	DateTime? ContainerCreationTimeUtc);
 
-public static class SourceProbe
+public static partial class SourceProbe
 {
 	public static SourceInfo Probe(string inputPath)
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
 			"-v", "error", "-print_format", "json", "-show_streams", "-show_format", inputPath);
 
-		using Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffprobe.");
-		var stdout = process.StandardOutput.ReadToEnd();
-		var stderr = process.StandardError.ReadToEnd();
-		process.WaitForExit();
-
-		if (process.ExitCode != 0)
-			throw new InvalidOperationException($"ffprobe exited with an error ({process.ExitCode}): {stderr}");
+		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		if (exitCode != 0)
+			throw new InvalidOperationException($"ffprobe exited with an error ({exitCode}): {stderr}");
 
 		JsonNode root = JsonNode.Parse(stdout) ?? throw new InvalidOperationException("Empty ffprobe output.");
 		JsonArray streams = root["streams"]!.AsArray();
@@ -101,7 +109,14 @@ public static class SourceProbe
 			videoStream["color_transfer"]?.GetValue<string>(),
 			videoStream["color_space"]?.GetValue<string>(),
 			videoStream["color_range"]?.GetValue<string>(),
-			ResolveVideoBitRate(videoStream, audioStream, root));
+			ResolveVideoBitRate(videoStream, audioStream, root),
+			videoStream["level"]?.GetValue<int>() ?? 0,
+			ProbeKeyframeInterval(inputPath, videoStream["r_frame_rate"]!.GetValue<string>()),
+			ResolveTimecode(videoStream, streams, root),
+			videoStream["codec_name"]?.GetValue<string>() == "hevc" ? ProbeHevcHighTier(inputPath) : null,
+			long.TryParse(videoStream["nb_frames"]?.GetValue<string>(), CultureInfo.InvariantCulture, out var frameCount) && frameCount > 0
+				? frameCount
+				: null);
 
 		AudioInfo? audio = audioStream is null
 			? null
@@ -120,6 +135,74 @@ public static class SourceProbe
 			containerCreationTimeUtc = parsed;
 
 		return new SourceInfo(video, audio, hasDjmd, duration, djmdStreamIndex, containerCreationTimeUtc);
+	}
+
+	/// <summary>
+	///     Frames between consecutive keyframes over the first few seconds (the camera uses a fixed GOP -
+	///     every 60 frames at 59.94p on an Osmo Action 6), as the median gap so one odd keyframe can't skew
+	///     it. Null if it can't be measured; best-effort, a failure here must never fail the probe itself.
+	/// </summary>
+	private static int? ProbeKeyframeInterval(string inputPath, string frameRate)
+	{
+		try
+		{
+			var parts = frameRate.Split('/');
+			var fps = parts.Length > 1
+				? double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture)
+				: double.Parse(parts[0], CultureInfo.InvariantCulture);
+			if (!(fps > 0)) return null;
+
+			ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("ffprobe",
+				"-v", "error", "-select_streams", "v:0", "-skip_frame", "nokey", "-read_intervals", "%+6",
+				"-show_entries", "frame=pts_time", "-of", "csv=p=0", inputPath);
+			var (exitCode, stdout, _) = ProcessHelper.RunCaptured(psi);
+			if (exitCode != 0) return null;
+
+			List<double> times = [.. stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+				.Select(line => double.TryParse(line, CultureInfo.InvariantCulture, out var t) ? t : double.NaN)
+				.Where(double.IsFinite)];
+			if (times.Count < 2) return null;
+
+			List<int> gaps = [.. times.Zip(times.Skip(1), (a, b) => (int)Math.Round((b - a) * fps)).Where(g => g > 0).Order()];
+			return gaps.Count > 0 ? gaps[gaps.Count / 2] : null;
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
+	///     The HEVC general_tier_flag from the stream's own parameter sets - ffprobe doesn't report it, and it
+	///     matters: the camera's 73-90 Mbps at level 5.2 is only legal in the high tier (main tier tops out at
+	///     60 Mbps there), so an encoder asked for that level at that rate refuses to start without it.
+	///     Reads the headers of a single packet; null on any failure.
+	/// </summary>
+	private static bool? ProbeHevcHighTier(string inputPath)
+	{
+		try
+		{
+			ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("ffmpeg",
+				"-hide_banner", "-loglevel", "trace", "-i", inputPath, "-map", "0:v:0", "-frames:v", "1", "-c", "copy",
+				"-bsf:v", "trace_headers", "-f", "null", "-");
+			var (_, _, stderr) = ProcessHelper.RunCaptured(psi);
+			Match match = TierFlagRegex().Match(stderr);
+			return match.Success ? match.Groups[1].Value == "1" : null;
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+	}
+
+	[GeneratedRegex(@"general_tier_flag\s+\d+\s*=\s*(\d)")]
+	private static partial Regex TierFlagRegex();
+
+	private static string? ResolveTimecode(JsonNode videoStream, JsonArray streams, JsonNode root)
+	{
+		return videoStream["tags"]?["timecode"]?.GetValue<string>()
+		       ?? streams.Select(s => s?["tags"]?["timecode"]?.GetValue<string>()).FirstOrDefault(t => t is not null)
+		       ?? root["format"]?["tags"]?["timecode"]?.GetValue<string>();
 	}
 
 	private static long ResolveVideoBitRate(JsonNode videoStream, JsonNode? audioStream, JsonNode root)

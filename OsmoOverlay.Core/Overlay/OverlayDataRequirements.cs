@@ -22,8 +22,12 @@ public static class OverlayDataRequirements
 			OverlayElementType.Compass or OverlayElementType.MapWidget or OverlayElementType.Elevation
 				or OverlayElementType.Gradient or OverlayElementType.Distance or OverlayElementType.SpeedGauge
 				or OverlayElementType.TripProgressBar => hasGpsFix,
-			// PitchGauge and SunWidget's G-force readout both come from the accelerometer alone, which
-			// is present whenever the djmd stream itself is - no GPS/timestamp dependency to gate on.
+			// The sun dot needs a real position and a real GPS timestamp (TelemetryProcessor leaves Sun at
+			// default otherwise, which would draw a fake sun on the horizon) - the container creation_time
+			// fallback DateTimeText uses isn't good enough here, it's the camera's own unsynced clock.
+			OverlayElementType.SunWidget => hasGpsFix && hasGpsTimestamp,
+			// PitchGauge and GMeter come from the accelerometer alone, which is present whenever the
+			// djmd stream itself is - no GPS/timestamp dependency to gate on.
 			_ => true
 		};
 	}

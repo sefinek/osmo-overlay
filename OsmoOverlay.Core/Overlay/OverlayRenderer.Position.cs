@@ -26,6 +26,9 @@ public sealed partial class OverlayRenderer
 	private MapMosaicKey? _preparedMapKey;
 
 	private readonly List<(double East, double North, double Lat, double Lon)> _trail = [];
+	// GetTrailPixels' projection of _trail into _trailPixelsMosaic's pixel space.
+	private readonly List<SKPoint> _trailPixels = [];
+	private RouteMapMosaic? _trailPixelsMosaic;
 	private (double East, double North)? _lastTrailPoint;
 	private int _trailCacheIndex = -1;
 
@@ -69,7 +72,11 @@ public sealed partial class OverlayRenderer
 
 		try
 		{
-			return (await RouteMapMosaic.BuildAsync(points, urlTemplate, mapElement.MapZoom, paddingTiles, ct, onTileProgress), key);
+			// Task.Run: called from the GUI thread by PreviewPlayer, and without it every tile decode/draw
+			// continuation would resume there. The key above is still set synchronously on purpose -
+			// NeedsMapPrepare reads it right after this returns its Task. onTileProgress therefore fires
+			// on a thread-pool thread.
+			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, mapElement.MapZoom, paddingTiles, ct, onTileProgress), ct), key);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -131,7 +138,7 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>
-	///     The trail shows the whole route driven so far. Scrubbing/seeking calls Render() out of
+	///     The trail shows the whole route driven so far. Scrubbing/seeking calls RenderInto() out of
 	///     chronological order, so naively appending "the current point" every call would scramble the
 	///     path once the preview jumps around - sequential progress extends the cached trail in O(1);
 	///     a jump rebuilds it once from the start instead.
@@ -140,7 +147,7 @@ public sealed partial class OverlayRenderer
 	{
 		if (_allFrames.Count == 0) return;
 
-		var index = FindFrameIndex(_allFrames, frame.Raw.SampleTimeSeconds);
+		var index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
 		if (index == _trailCacheIndex + 1)
 		{
 			AppendTrailPoint(_allFrames[index]);
@@ -164,20 +171,6 @@ public sealed partial class OverlayRenderer
 			_trail.Add((point.LocalEastMeters, point.LocalNorthMeters, frame.Raw.Latitude, frame.Raw.Longitude));
 			_lastTrailPoint = point;
 		}
-	}
-
-	private static int FindFrameIndex(IReadOnlyList<DerivedFrame> frames, double seconds)
-	{
-		var lo = 0;
-		var hi = frames.Count - 1;
-		while (lo < hi)
-		{
-			var mid = (lo + hi) / 2;
-			if (frames[mid].Raw.SampleTimeSeconds < seconds) lo = mid + 1;
-			else hi = mid;
-		}
-
-		return lo;
 	}
 
 	private static double Distance((double East, double North) a, (double East, double North) b)
@@ -319,7 +312,7 @@ public sealed partial class OverlayRenderer
 
 			var src = SKRect.Create(center.X - cropRadius, center.Y - cropRadius, cropRadius * 2, cropRadius * 2);
 			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
-			canvas.DrawBitmap(_mapMosaic.Bitmap, src, dest, SKSamplingOptions.Default);
+			canvas.DrawImage(_mapMosaic.Image, src, dest, SKSamplingOptions.Default);
 
 			DrawMapTrail(canvas, center, radius / cropRadius, trailPixels, ResolveTrailColor(element.TrailColor),
 				element.TrailWidth);
@@ -332,7 +325,7 @@ public sealed partial class OverlayRenderer
 			DrawTrailMarker(canvas, 0, 0, frame.HeadingDegrees, element.TrailUseArrow);
 
 			// Required OSM attribution is no longer crammed inside this small circle (it read poorly
-			// over busy map tiles) - Render() draws it bottom-center instead, see DrawWatermark/
+			// over busy map tiles) - RenderInto() draws it bottom-center instead, see DrawWatermark/
 			// DrawMapAttributionOnly.
 		}
 
@@ -349,10 +342,18 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private List<SKPoint> GetTrailPixels()
 	{
-		var pixels = new List<SKPoint>(_trail.Count);
-		foreach ((double East, double North, double Lat, double Lon) p in _trail)
-			pixels.Add(_mapMosaic!.GetPixel(p.Lat, p.Lon));
-		return pixels;
+		// Incremental: _trail is always (re)built from frame 0 by the same deterministic steps (see
+		// UpdateTrail), so a longer trail only ever extends a shorter one - already projected points stay
+		// valid, and only a trail that got shorter (a seek backwards) or a different mosaic invalidates them.
+		if (!ReferenceEquals(_trailPixelsMosaic, _mapMosaic) || _trailPixels.Count > _trail.Count)
+		{
+			_trailPixels.Clear();
+			_trailPixelsMosaic = _mapMosaic;
+		}
+
+		for (var i = _trailPixels.Count; i < _trail.Count; i++)
+			_trailPixels.Add(_mapMosaic!.GetPixel(_trail[i].Lat, _trail[i].Lon));
+		return _trailPixels;
 	}
 
 	/// <summary>

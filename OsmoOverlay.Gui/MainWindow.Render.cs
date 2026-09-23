@@ -34,11 +34,13 @@ public partial class MainWindow
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
 		OutMeasuredPanel.IsVisible = false;
 		OutPlanText.IsVisible = true;
-		OutFrames.IsVisible = true;
+		SetPlannedFramesVisible(true);
 
+		// The summary's own paths, not the live list - its TelemetryFrames were stitched from exactly these.
+		IReadOnlyList<string> inputPaths = _summary?.InputPaths ?? [.. _inputPaths];
 		var progress = new Progress<RenderStatus>(OnProgress);
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
-		var options = new RenderOptions(_inputPaths, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
+		var options = new RenderOptions(inputPaths, outputPath, frameLimit, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
 			GreenScreen: greenScreen);
 
@@ -49,7 +51,7 @@ public partial class MainWindow
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog($"CLI equivalent: {BuildCliCommand(outputPath, frameLimit)}");
+			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, frameLimit)}");
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -104,10 +106,10 @@ public partial class MainWindow
 		GreenScreenButton.IsEnabled = true;
 	}
 
-	private string BuildCliCommand(string outputPath, int? frameLimit)
+	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, int? frameLimit)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
-		parts.AddRange(_inputPaths.Select(QuoteArg));
+		parts.AddRange(inputPaths.Select(QuoteArg));
 		parts.Add("-o");
 		parts.Add(QuoteArg(outputPath));
 		if (frameLimit is { } limit)

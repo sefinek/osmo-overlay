@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using OsmoOverlay.Core.Logging;
 
@@ -46,6 +47,45 @@ internal static class ProcessHelper
 		else AppLogger.Info(line);
 
 		return psi;
+	}
+
+	/// <summary>
+	///     Starts `psi` (which must redirect stdout and stderr) and waits for it to exit, draining both
+	///     pipes concurrently - reading one to the end first deadlocks once the other fills its buffer.
+	/// </summary>
+	public static (int ExitCode, string Stdout, string Stderr) RunCaptured(ProcessStartInfo psi)
+	{
+		using Process process = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start {psi.FileName}.");
+		Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+		Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+		Task.WaitAll(stdoutTask, stderrTask);
+		process.WaitForExit();
+		return (process.ExitCode, stdoutTask.Result, stderrTask.Result);
+	}
+
+	/// <summary>Async RunCaptured for optional/probing commands: a command that can't be started yields exit code -1 instead of throwing.</summary>
+	public static async Task<(int ExitCode, string Stdout, string Stderr)> TryRunCapturedAsync(ProcessStartInfo psi, CancellationToken ct)
+	{
+		Process? process;
+		try
+		{
+			process = Process.Start(psi);
+		}
+		catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
+		{
+			return (-1, "", "");
+		}
+
+		if (process is null) return (-1, "", "");
+
+		using (process)
+		{
+			Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+			Task<string> stderrTask = process.StandardError.ReadToEndAsync(ct);
+			await Task.WhenAll(stdoutTask, stderrTask);
+			await process.WaitForExitAsync(ct);
+			return (process.ExitCode, stdoutTask.Result, stderrTask.Result);
+		}
 	}
 
 	/// <summary>Quotes only the args that need it, so the logged line stays readable but still pastable into a shell.</summary>

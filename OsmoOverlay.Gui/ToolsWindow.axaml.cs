@@ -27,7 +27,7 @@ public partial class ToolsWindow : Window
 			Directory.CreateDirectory(DataDir);
 			// UseShellExecute so this opens in Explorer (or the platform's file manager) rather than
 			// the CreateHidden/redirected-output pattern used elsewhere for ffmpeg/ffprobe/exiftool.
-			Process.Start(new ProcessStartInfo(DataDir) { UseShellExecute = true });
+			Process.Start(new ProcessStartInfo(DataDir) { UseShellExecute = true })?.Dispose();
 		}
 		catch (Exception ex)
 		{

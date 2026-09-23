@@ -32,20 +32,28 @@ public sealed class RouteMapMosaic : IDisposable
 	private readonly double _originWorldX;
 	private readonly double _originWorldY;
 
+	private readonly SKBitmap _bitmap;
+
 	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom)
 	{
-		Bitmap = bitmap;
+		// Drawing a mutable SKBitmap makes Skia snapshot (copy) its pixels on every single draw call - for
+		// a mosaic of up to MaxTiles tiles that's tens of MB copied per rendered frame. Frozen once here,
+		// the SKImage shares the bitmap's pixels instead.
+		bitmap.SetImmutable();
+		_bitmap = bitmap;
+		Image = SKImage.FromBitmap(bitmap);
 		_originWorldX = originWorldX;
 		_originWorldY = originWorldY;
 		Zoom = zoom;
 	}
 
-	public SKBitmap Bitmap { get; }
+	public SKImage Image { get; }
 	public int Zoom { get; }
 
 	public void Dispose()
 	{
-		Bitmap.Dispose();
+		Image.Dispose();
+		_bitmap.Dispose();
 	}
 
 	/// <summary>Pixel position of the given lat/lon within Bitmap.</summary>

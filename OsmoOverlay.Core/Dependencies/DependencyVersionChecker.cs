@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using OsmoOverlay.Core.Logging;
@@ -34,14 +32,15 @@ public static partial class DependencyVersionChecker
 		Report($"Checking {tool.DisplayName} version...", onProgress);
 
 		Task<string?> installedTask = GetInstalledVersionAsync(tool, ct);
-		Task<string?> latestTask = GetLatestVersionAsync(tool, ct);
+		Task<(string? Version, bool CanUpgrade)> latestTask = GetLatestVersionAsync(tool, ct);
 		await Task.WhenAll(installedTask, latestTask);
 
 		var installed = installedTask.Result;
-		var latest = latestTask.Result;
-		var updateAvailable = IsOlder(installed, latest);
+		var (latest, canUpgrade) = latestTask.Result;
+		var newerExists = IsOlder(installed, latest);
+		var updateAvailable = newerExists && canUpgrade;
 
-		Report(DescribeResult(tool.DisplayName, installed, latest, updateAvailable), onProgress);
+		Report(DescribeResult(tool.DisplayName, installed, latest, newerExists, canUpgrade), onProgress);
 		return new ToolVersionInfo(tool, installed, latest, updateAvailable);
 	}
 
@@ -51,18 +50,19 @@ public static partial class DependencyVersionChecker
 		onProgress?.Invoke(message);
 	}
 
-	private static string DescribeResult(string displayName, string? installed, string? latest, bool updateAvailable)
+	private static string DescribeResult(string displayName, string? installed, string? latest, bool newerExists, bool canUpgrade)
 	{
 		if (installed is null) return $"{displayName}: not installed, or its version could not be read.";
 		if (latest is null) return $"{displayName}: installed {installed} (couldn't determine the latest version).";
-		return updateAvailable
+		if (!newerExists) return $"{displayName}: installed {installed} - up to date.";
+		return canUpgrade
 			? $"{displayName}: installed {installed}, update available ({latest})."
-			: $"{displayName}: installed {installed} - up to date.";
+			: $"{displayName}: installed {installed}, {latest} is available - not installed through the package manager, update it manually.";
 	}
 
 	private static async Task<string?> GetInstalledVersionAsync(ExternalTool tool, CancellationToken ct)
 	{
-		var (exitCode, stdout, stderr) = await RunAsync(tool.VersionCommand, tool.VersionArgs, ct);
+		var (exitCode, stdout, stderr) = await RunAsync(tool.VersionCommand, [.. tool.VersionArgs], ct);
 		if (exitCode != 0) return null;
 
 		// exiftool's -ver prints a bare number on stdout; ffmpeg's -version prints a sentence on stdout,
@@ -70,24 +70,25 @@ public static partial class DependencyVersionChecker
 		return ExtractVersionNumber(stdout) ?? ExtractVersionNumber(stderr);
 	}
 
-	private static Task<string?> GetLatestVersionAsync(ExternalTool tool, CancellationToken ct)
+	/// <summary>
+	///     CanUpgrade is false only when it's known that DependencyInstaller.UpgradeAsync couldn't reach the
+	///     installed copy (Windows: the tool on PATH doesn't come from winget) - the newer version is still
+	///     reported, just without offering an Update button that would fail.
+	/// </summary>
+	private static async Task<(string? Version, bool CanUpgrade)> GetLatestVersionAsync(ExternalTool tool, CancellationToken ct)
 	{
-		if (OperatingSystem.IsWindows()) return GetLatestFromWingetAsync(tool, ct);
-		if (OperatingSystem.IsMacOS()) return GetLatestFromBrewAsync(tool, ct);
-		if (OperatingSystem.IsLinux()) return GetLatestFromLinuxPackageManagerAsync(tool, ct);
-		return Task.FromResult<string?>(null);
+		if (OperatingSystem.IsWindows()) return await GetLatestFromWingetAsync(tool, ct);
+		if (OperatingSystem.IsMacOS()) return (await GetLatestFromBrewAsync(tool, ct), true);
+		if (OperatingSystem.IsLinux()) return (await GetLatestFromLinuxPackageManagerAsync(tool, ct), true);
+		return (null, false);
 	}
 
-	private static async Task<string?> GetLatestFromWingetAsync(ExternalTool tool, CancellationToken ct)
+	private static async Task<(string? Version, bool CanUpgrade)> GetLatestFromWingetAsync(ExternalTool tool, CancellationToken ct)
 	{
-		if (!DependencyChecker.IsCommandAvailable("winget")) return null;
+		if (!DependencyChecker.IsCommandAvailable("winget")) return (null, false);
 
-		var (exitCode, stdout, _) = await RunAsync("winget",
-			["show", "--id", tool.WingetId, "-e", "--accept-source-agreements"], ct);
-		if (exitCode != 0) return null;
-
-		var versionLine = stdout.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("Version:"));
-		return versionLine is null ? null : ExtractVersionNumber(versionLine);
+		var installedId = await Winget.FindInstalledPackageIdAsync(tool, ct);
+		return (await Winget.GetLatestVersionAsync(installedId ?? tool.WingetId, ct), installedId is not null);
 	}
 
 	private static async Task<string?> GetLatestFromBrewAsync(ExternalTool tool, CancellationToken ct)
@@ -154,29 +155,8 @@ public static partial class DependencyVersionChecker
 		       installedVersion < latestVersion;
 	}
 
-	private static async Task<(int ExitCode, string StdOut, string StdErr)> RunAsync(string command, IReadOnlyList<string> args, CancellationToken ct)
+	private static Task<(int ExitCode, string Stdout, string Stderr)> RunAsync(string command, string[] args, CancellationToken ct)
 	{
-		ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet(command, args.ToArray());
-
-		Process? process;
-		try
-		{
-			process = Process.Start(psi);
-		}
-		catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
-		{
-			return (-1, "", "");
-		}
-
-		if (process is null) return (-1, "", "");
-
-		using (process)
-		{
-			Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
-			Task<string> stderrTask = process.StandardError.ReadToEndAsync(ct);
-			await Task.WhenAll(stdoutTask, stderrTask);
-			await process.WaitForExitAsync(ct);
-			return (process.ExitCode, stdoutTask.Result, stderrTask.Result);
-		}
+		return ProcessHelper.TryRunCapturedAsync(ProcessHelper.CreateHiddenQuiet(command, args), ct);
 	}
 }

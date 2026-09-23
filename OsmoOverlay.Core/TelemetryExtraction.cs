@@ -41,6 +41,7 @@ public static class TelemetryExtraction
 		{
 			TelemetryExtractionResult result = Extract(segment.InputPath, segment.Source);
 			cameraModel ??= result.CameraModel;
+			if (result.Frames.Count == 0) continue;
 
 			var offsetFrames = new List<TelemetryFrame>(result.Frames.Count);
 			foreach (TelemetryFrame frame in result.Frames)
@@ -52,11 +53,35 @@ public static class TelemetryExtraction
 			combinedFrames.AddRange(offsetFrames);
 
 			TelemetryFrame last = offsetFrames[^1];
-			if (last.Latitude != 0 || last.Longitude != 0)
+			if (!IsNullIsland(last))
 				lastKnownFix = (last.Latitude, last.Longitude, last.AltitudeMeters);
 		}
 
+		BackfillBeforeFirstFix(combinedFrames);
 		return new TelemetryExtractionResult(combinedFrames, cameraModel);
+	}
+
+	/// <summary>
+	///     A recording that starts before the GPS receiver has its first fix (the camera was just powered
+	///     on, or started indoors) otherwise keeps GpsForwardFill's (0,0) sentinel for that whole leading
+	///     run - and TelemetryProcessor would then take Null Island as the route origin, add the (0,0) to
+	///     first-fix hop to the cumulative distance, and hand the map/route-intro a bounding box spanning
+	///     half the globe. Holding the first real fix backwards instead is the same "hold, don't snap to
+	///     (0,0)" policy GpsForwardFill applies going forward. HasGpsFix stays false on those frames, so
+	///     FindGpsLossRanges still reports them. No-op for a recording with no fix at all.
+	/// </summary>
+	private static void BackfillBeforeFirstFix(List<TelemetryFrame> frames)
+	{
+		var firstFixIndex = frames.FindIndex(f => !IsNullIsland(f));
+		if (firstFixIndex <= 0) return;
+
+		BridgeLeadingGpsGap(frames,
+			(frames[firstFixIndex].Latitude, frames[firstFixIndex].Longitude, frames[firstFixIndex].AltitudeMeters));
+	}
+
+	private static bool IsNullIsland(TelemetryFrame frame)
+	{
+		return frame.Latitude == 0 && frame.Longitude == 0;
 	}
 
 	/// <summary>
@@ -71,7 +96,7 @@ public static class TelemetryExtraction
 		for (var i = 0; i < frames.Count; i++)
 		{
 			TelemetryFrame frame = frames[i];
-			if (frame.Latitude != 0 || frame.Longitude != 0) break;
+			if (!IsNullIsland(frame)) break;
 
 			frames[i] = frame with
 			{

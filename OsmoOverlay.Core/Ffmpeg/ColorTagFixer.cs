@@ -101,20 +101,9 @@ public static class ColorTagFixer
 			"-colorspace", "bt709",
 			resolvedOutput);
 
-		using Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
-
-		// ffmpeg writes its progress/stats to stderr while copying; reading stdout to completion
-		// before touching stderr (as opposed to draining both concurrently) deadlocks once ffmpeg
-		// fills the stderr pipe buffer and blocks on writing to it - the process then never exits,
-		// so WaitForExit() below would hang forever even though the output file is already complete.
-		Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
-		Task<string> stderrTask = process.StandardError.ReadToEndAsync();
-		process.WaitForExit();
-		var stdout = stdoutTask.GetAwaiter().GetResult();
-		var stderr = stderrTask.GetAwaiter().GetResult();
-
-		if (process.ExitCode != 0)
-			throw new InvalidOperationException($"ffmpeg exited with an error ({process.ExitCode}): {stderr}{stdout}");
+		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		if (exitCode != 0)
+			throw new InvalidOperationException($"ffmpeg exited with an error ({exitCode}): {stderr}{stdout}");
 
 		SourceInfo after = SourceProbe.Probe(resolvedOutput);
 		return new ColorTagFixResult(beforeStatus, ColorTagStatus.From(after.Video), resolvedOutput);

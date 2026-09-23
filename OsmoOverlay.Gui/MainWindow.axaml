@@ -131,9 +131,6 @@
 			<Setter Property="Background" Value="#26FFFFFF" />
 			<Setter Property="Margin" Value="0,10,0,2" />
 		</Style>
-		<!-- Groups related fields inside a widget's settings flyout (e.g. "Zoom & framing" vs. "Trail
-		     style") into their own visually separated card, instead of one long undifferentiated list of
-		     label/control pairs. -->
 		<Style Selector="Border.settingsGroup">
 			<Setter Property="Background" Value="#18181B" />
 			<Setter Property="BorderBrush" Value="#22FFFFFF" />
@@ -148,9 +145,6 @@
 			<Setter Property="LetterSpacing" Value="0.6" />
 			<Setter Property="Margin" Value="0,0,0,2" />
 		</Style>
-		<!-- A quieter, tinted alternative to a plain dim TextBlock for a note that isn't a per-field
-		     hint (e.g. "this is shared across every map widget, not per-instance") - reads as an aside
-		     rather than another setting in the list. -->
 		<Style Selector="Border.calloutInfo">
 			<Setter Property="Background" Value="#15212E" />
 			<Setter Property="BorderBrush" Value="#2A4258" />
@@ -168,7 +162,7 @@
 			<Setter Property="Foreground" Value="#E5A83E" />
 			<Setter Property="FontSize" Value="14" />
 			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="Margin" Value="4,0" />
+			<Setter Property="Margin" Value="8,0,0,0" />
 			<Setter Property="Cursor" Value="Hand" />
 		</Style>
 		<Style Selector="Border.overlayListItem">
@@ -289,7 +283,7 @@
 									<TextBlock Classes="cardTitleText" Text="SOURCE" />
 								</StackPanel>
 
-								<StackPanel Spacing="4">
+								<StackPanel Name="InputPanel" Spacing="4">
 									<TextBlock Text="Input file(s)" Classes="infoLabel" Margin="0" />
 									<TextBlock Text="Add several segments of the same auto-split recording to stitch them into one render"
 									           Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
@@ -329,9 +323,6 @@
 									<Button Grid.Column="0" Name="ActionButton" Content="Get Summary" Click="OnActionClick"
 									        Classes="accent" IsEnabled="False" HorizontalAlignment="Stretch"
 									        HorizontalContentAlignment="Center" />
-									<!-- Only meaningful (and visible) once ActionButton itself means "Render", not "Get
-								     Summary" - see SetPhase. Renders just the HUD layer over a solid green-screen
-								     background instead of the actual source video, for compositing elsewhere. -->
 									<Button Grid.Column="1" Name="GreenScreenButton" Content="Green Screen"
 									        Click="OnGreenScreenRenderClick" IsEnabled="False" IsVisible="False"
 									        HorizontalContentAlignment="Center"
@@ -465,16 +456,19 @@
 									<StackPanel Classes="cardTitle">
 										<TextBlock Classes="cardTitleText" Text="OUTPUT" />
 									</StackPanel>
-									<Grid ColumnDefinitions="Auto,*,24,Auto,*" ColumnSpacing="8">
-										<TextBlock Grid.Column="0" Classes="infoLabel" Text="Encoder" />
-										<TextBlock Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
-										<TextBlock Grid.Column="3" Classes="infoLabel" Text="Audio" />
-										<TextBlock Grid.Column="4" Classes="infoValue" Name="OutAudio" />
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Encoder" />
+										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Audio" />
+										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutAudio" />
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Frames" Name="OutFrameCountLabel" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutFrameCount" />
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Est. render time" Name="OutEstimatedTimeLabel" />
+										<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="OutEstimatedTime" />
 									</Grid>
 
-									<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,4,0,0"
-									           Text="Resolution, frame rate and codec match the source file." />
-									<TextBlock Name="OutFrames" Classes="infoLabel" Margin="0,6,0,0" />
+									<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,6,0,0" FontSize="11" Opacity="0.6"
+									           TextWrapping="Wrap" />
 
 									<StackPanel Name="OutMeasuredPanel" Spacing="4" IsVisible="False">
 										<TextBlock Text="MEASURED (EXPORTED FILE)" Classes="sectionLabel" />
@@ -601,11 +595,9 @@
 							        PointerPressed="OnOverlayCanvasPointerPressed"
 							        PointerMoved="OnOverlayCanvasPointerMoved"
 							        PointerReleased="OnOverlayCanvasPointerReleased"
+							        PointerCaptureLost="OnOverlayCanvasPointerCaptureLost"
 							        DragDrop.DragOver="OnOverlayCanvasDragOver"
 							        DragDrop.Drop="OnOverlayCanvasDrop">
-								<!-- Rule-of-thirds + safe-margin guides, editor-only - never part of the actual
-								     render (see UpdatePreviewGuides). IsHitTestVisible="False" throughout so they
-								     can't intercept drag/hover/drop. -->
 								<Line Name="PreviewGridVLine1" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
 								<Line Name="PreviewGridVLine2" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
 								<Line Name="PreviewGridHLine1" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
@@ -617,8 +609,6 @@
 								         PointerPressed="OnResizeHandlePointerPressed"
 								         ToolTip.Tip="Drag to resize" />
 
-								<!-- Hover cluster shown over whichever visible widget the pointer is over (see
-								     UpdateHoverState) - gear opens its settings, ✕ removes it from the overlay. -->
 								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton" Content="⚙"
 								        IsVisible="False" Click="OnWidgetGearHoverButtonClick"
 								        ToolTip.Tip="Widget settings" />
@@ -637,11 +627,6 @@
 							        VerticalAlignment="Center" ValueChanged="OnPreviewSliderValueChanged"
 							        PointerPressed="OnPreviewSliderPointerPressed"
 							        PointerReleased="OnPreviewSliderPointerReleased" />
-							<!-- Overlaid directly on the scrubber's own track (same cell, drawn after the
-							     Slider so it paints on top) instead of as a separate strip underneath - reads
-							     as part of the scrubber itself, matching how a media player usually marks
-							     ranges on the seek bar. Not hit-test visible, so it can't interfere with
-							     dragging the slider beneath it. See TelemetryProcessor.FindGpsLossRanges. -->
 							<Canvas Name="GpsLossCanvas" IsHitTestVisible="False" Height="4" VerticalAlignment="Center" />
 						</Grid>
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0"
@@ -711,10 +696,12 @@
 										<Border Grid.Column="0" Name="DateTimeListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.DateTimeText}"
 										        PointerPressed="OnWidgetItemPointerPressed">
-											<TextBlock Classes="overlayListItemText" Text="Date &amp; time" />
+											<Grid ColumnDefinitions="*,Auto">
+												<TextBlock Classes="overlayListItemText" Text="Date &amp; time" />
+												<TextBlock Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning"
+												           Text="⚠" IsVisible="False" />
+											</Grid>
 										</Border>
-										<TextBlock Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning"
-										           Text="⚠" IsVisible="False" />
 										<Border Name="DateTimeSettingsPanel" Grid.Column="2" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
 												<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
@@ -769,10 +756,12 @@
 										<Border Grid.Column="0" Name="UtcTimeListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.UtcTimeText}"
 										        PointerPressed="OnWidgetItemPointerPressed">
-											<TextBlock Classes="overlayListItemText" Text="UTC time" />
+											<Grid ColumnDefinitions="*,Auto">
+												<TextBlock Classes="overlayListItemText" Text="UTC time" />
+												<TextBlock Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning"
+												           Text="⚠" IsVisible="False" />
+											</Grid>
 										</Border>
-										<TextBlock Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning"
-										           Text="⚠" IsVisible="False" />
 										<Border Name="UtcTimeSettingsPanel" Grid.Column="2" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
 												<TextBlock Text="Format" Classes="infoLabel" Margin="0" />

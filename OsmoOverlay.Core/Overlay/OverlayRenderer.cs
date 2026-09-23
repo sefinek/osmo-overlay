@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
@@ -6,7 +7,7 @@ using SkiaSharp;
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
-///     Core: renderer state (fonts, cached paints), construction/disposal, and the per-frame Render()
+///     Core: renderer state (fonts, cached paints), construction/disposal, and the per-frame RenderInto()
 ///     dispatch that switches on each visible OverlayElement's type. The actual per-widget drawing
 ///     code lives in sibling partial-class files grouped by widget family: OverlayRenderer.Position.cs
 ///     (Compass + MapWidget + the shared route trail), OverlayRenderer.Gauges.cs (SpeedGauge +
@@ -64,7 +65,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKFont _routeIntroValueFont;
 
 	// Fixed-style paints (color/width never change frame to frame) reused across widgets, cached once
-	// here the same way fonts already are above - Render() runs once per output frame, so allocating
+	// here the same way fonts already are above - RenderInto() runs once per output frame, so allocating
 	// these fresh per widget per frame (as this file used to) is pure per-frame GC churn for a value
 	// that's always identical.
 	private readonly SKPaint _panelFillPaint;
@@ -88,7 +89,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	// these can't be assigned once at construction - instead their properties are overwritten right
 	// before each draw and the same instances are reused, avoiding a fresh SKPaint (and, for the blur
 	// variants, a fresh native blur kernel) on every single piece of HUD text drawn every frame. Safe
-	// because Render() is only ever called sequentially for a given instance - see RenderJob's single
+	// because RenderInto() is only ever called sequentially for a given instance - see RenderJob's single
 	// render loop - never concurrently.
 	private readonly SKPaint _outlineShadowPaint;
 	private readonly SKPaint _outlineStrokePaint;
@@ -245,16 +246,51 @@ public sealed partial class OverlayRenderer : IDisposable
 				typeface.Dispose();
 		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
+		_routeIntroCard?.Dispose();
 	}
 
-	public byte[] Render(DerivedFrame frame, int? outputWidth = null, int? outputHeight = null)
+	public int FrameBufferSize(int? outputWidth = null, int? outputHeight = null)
 	{
-		UpdateTrail(frame);
+		return (outputWidth ?? _width) * (outputHeight ?? _height) * 4;
+	}
 
+	/// <summary>
+	///     Draws straight into `destination` (BGRA, at least FrameBufferSize bytes) instead of a fresh native
+	///     bitmap copied out afterwards - at 4K that's two ~33 MB allocations per frame saved, which lets
+	///     RenderJob recycle a handful of buffers for the whole render.
+	///     Always drawn premultiplied: Skia only has fast raster paths for a premultiplied target - measured
+	///     at 4K, blitting an image into an unpremultiplied bitmap took ~30 ms vs ~2.4 ms, and every other
+	///     primitive was ~10x slower too. `premultiplied: false` (what ffmpeg's bgra input expects) converts
+	///     afterwards, which is far cheaper since almost every overlay pixel is fully transparent or opaque.
+	/// </summary>
+	public void RenderInto(DerivedFrame frame, byte[] destination, int? outputWidth = null, int? outputHeight = null,
+		bool premultiplied = false)
+	{
 		var outW = outputWidth ?? _width;
 		var outH = outputHeight ?? _height;
+		var info = new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Premul);
+		if (destination.Length < info.BytesSize)
+			throw new ArgumentException($"Destination buffer is {destination.Length} bytes, {info.BytesSize} needed.", nameof(destination));
 
-		using var bitmap = new SKBitmap(new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Unpremul));
+		UpdateTrail(frame);
+
+		GCHandle pin = GCHandle.Alloc(destination, GCHandleType.Pinned);
+		try
+		{
+			using var bitmap = new SKBitmap();
+			bitmap.InstallPixels(info, pin.AddrOfPinnedObject(), info.RowBytes);
+			DrawFrame(bitmap, frame, outW, outH);
+		}
+		finally
+		{
+			pin.Free();
+		}
+
+		if (!premultiplied) BgraAlpha.Unpremultiply(destination, info.BytesSize, outW);
+	}
+
+	private void DrawFrame(SKBitmap bitmap, DerivedFrame frame, int outW, int outH)
+	{
 		using var canvas = new SKCanvas(bitmap);
 		canvas.Clear(SKColors.Transparent);
 		canvas.Scale(outW / (float)_width, outH / (float)_height);
@@ -283,7 +319,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			if (crossfadeT is { } t)
 			{
-				DrawWithAlpha(canvas, 1 - t, c => DrawRouteIntro(c, frame));
+				DrawRouteIntroCard(canvas, outW, outH, 1 - t);
 				string? widgetsAttribution = null;
 				DrawWithAlpha(canvas, t, c => widgetsAttribution = DrawWidgets(c, frame));
 				// The card's own attribution is about to disappear along with it - once the widgets
@@ -293,7 +329,7 @@ public sealed partial class OverlayRenderer : IDisposable
 			}
 			else
 			{
-				DrawRouteIntro(canvas, frame);
+				DrawRouteIntroCard(canvas, outW, outH, 1f);
 				mapAttribution = routeIntroMapAttribution();
 			}
 		}
@@ -319,8 +355,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			DrawMapAttributionOnly(canvas, mapAttribution, watermarkAnchorX, watermarkAlign);
 		}
-
-		return bitmap.Bytes;
 	}
 
 	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see Render's mapAttribution.</summary>

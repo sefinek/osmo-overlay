@@ -35,6 +35,11 @@ public static class OverlayElementBounds
 	public const float SpeedFontSize = 115f;
 	public const float SpeedUnitFontSize = 38f;
 
+	// Per-widget OverlayElement.Scale range - enforced by the GUI's resize handle/scale box and when a
+	// preset file is loaded or imported, so a hand-edited value can't render a widget inverted or invisible.
+	public const float MinElementScale = 0.4f;
+	public const float MaxElementScale = 2.5f;
+
 	public const float ProgressBarWidth = 760f;
 	public const float ProgressBarHeight = 60f;
 

@@ -14,15 +14,14 @@ namespace OsmoOverlay.Core.Mapping;
 /// </summary>
 public static class MapTileFetcher
 {
-	// Named after the source, not "Default" - OverlayPreset.CreateDefault actually points new Map
-	// widgets at SatelliteUrlTemplate below. Used as the lower-level fallback wherever an
-	// OverlayElement's own MapTileUrlTemplate is null (see MainWindow.TileProviderOptions).
+	// Named after the source, not "Default" - OverlaySettings defaults to SatelliteUrlTemplate below.
+	// Used as the lower-level fallback wherever OverlaySettings.MapTileUrlTemplate is null (see
+	// MainWindow.TileProviderOptions).
 	public const string OpenStreetMapUrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 	public const string OpenStreetMapAttribution = "© OpenStreetMap contributors";
 
-	// OverlayPreset.CreateDefault points a brand-new preset's Map widget at this (rather than
-	// OpenStreetMapUrlTemplate) - satellite imagery reads better than a street map over HUD-style
-	// overlays at a glance. Shared here (not just duplicated in the GUI's provider list) so Core
+	// OverlaySettings.MapTileUrlTemplate defaults to this (rather than OpenStreetMapUrlTemplate) -
+	// satellite imagery reads better than a street map over HUD-style overlays at a glance. Shared here (not just duplicated in the GUI's provider list) so Core
 	// and the GUI can't drift on what "the satellite option" actually points to.
 	public const string SatelliteUrlTemplate =
 		"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -70,10 +69,28 @@ public static class MapTileFetcher
 			{
 				var bytes = await Http.GetByteArrayAsync(url, ct);
 
-				Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-				await AtomicFile.WriteAllBytesAsync(cachePath, bytes, ct);
+				// Decoded before caching - a provider answering 200 with an error page/JSON instead of an
+				// image must count as a failed attempt, not get written to disk as a "tile" forever.
+				SKBitmap bitmap = SKBitmap.Decode(bytes)
+				                  ?? throw new InvalidDataException($"Tile response ({bytes.Length} bytes) is not a decodable image.");
 
-				return SKBitmap.Decode(bytes);
+				try
+				{
+					Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+					await AtomicFile.WriteAllBytesAsync(cachePath, bytes, ct);
+				}
+				catch (Exception ex) when (ex is not OperationCanceledException)
+				{
+					// The tile itself is fine - a failed cache write only means it's fetched again next time.
+					AppLogger.Warn(ex, $"Failed to cache map tile z={zoom} x={x} y={y}");
+				}
+				catch
+				{
+					bitmap.Dispose();
+					throw;
+				}
+
+				return bitmap;
 			}
 			catch (Exception ex) when (ex is not OperationCanceledException)
 			{

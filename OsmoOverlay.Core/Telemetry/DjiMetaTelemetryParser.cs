@@ -11,7 +11,7 @@ namespace OsmoOverlay.Core.Telemetry;
 ///     not expose most of these, and reading two tools per file is slower than decoding these bytes
 ///     ourselves. Field mapping below was reverse-engineered and cross-checked against exiftool's own
 ///     per-frame output across an entire real recording (33654/33654 samples, zero mismatches) for a
-///     DJI Osmo Action 6. exiftool remains the fallback (see FileSummaryReader.Read) in case a
+///     DJI Osmo Action 6. exiftool remains the fallback (see TelemetryExtraction.Extract) in case a
 ///     different camera/firmware lays the stream out differently.
 ///     Wire format, one top-level field-3 message per sample:
 ///     f3
@@ -38,7 +38,7 @@ namespace OsmoOverlay.Core.Telemetry;
 /// </summary>
 public static class DjiMetaTelemetryParser
 {
-	public static byte[] ExtractRawStream(string inputPath, int streamIndex)
+	public static ReadOnlyMemory<byte> ExtractRawStream(string inputPath, int streamIndex)
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
 			"-v", "error", "-i", inputPath, "-map", $"0:{streamIndex}", "-c", "copy", "-f", "data", "pipe:1");
@@ -55,10 +55,12 @@ public static class DjiMetaTelemetryParser
 			throw new InvalidOperationException(
 				$"ffmpeg exited with an error ({process.ExitCode}) extracting the djmd stream: {stderrTask.Result}");
 
-		return stdout.ToArray();
+		// The underlying buffer instead of ToArray() - the djmd stream of a long recording runs to tens of
+		// MB, no point copying all of it once more just to parse it.
+		return stdout.GetBuffer().AsMemory(0, (int)stdout.Length);
 	}
 
-	public static TelemetryExtractionResult Parse(byte[] rawData, double fps)
+	public static TelemetryExtractionResult Parse(ReadOnlyMemory<byte> rawData, double fps)
 	{
 		List<RawRecord> records = ParseRawRecords(rawData);
 		if (records.Count == 0)
@@ -93,7 +95,7 @@ public static class DjiMetaTelemetryParser
 		return new TelemetryExtractionResult(frames, cameraModel);
 	}
 
-	private static List<RawRecord> ParseRawRecords(byte[] rawData)
+	private static List<RawRecord> ParseRawRecords(ReadOnlyMemory<byte> rawData)
 	{
 		var records = new List<RawRecord>();
 		foreach ((var fieldNumber, var wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(rawData))
@@ -238,10 +240,10 @@ public static class DjiMetaTelemetryParser
 					pos += 8;
 					break;
 				case 2:
-					var length = (int)ReadVarint(data.Span, ref pos);
-					if (pos + length > data.Length) yield break;
-					yield return (fieldNumber, wireType, data.Slice(pos, length), 0);
-					pos += length;
+					var length = ReadVarint(data.Span, ref pos);
+					if (length > (ulong)(data.Length - pos)) yield break;
+					yield return (fieldNumber, wireType, data.Slice(pos, (int)length), 0);
+					pos += (int)length;
 					break;
 				case 5:
 					if (pos + 4 > data.Length) yield break;

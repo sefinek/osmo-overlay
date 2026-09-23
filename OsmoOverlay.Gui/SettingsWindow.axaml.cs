@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 
@@ -43,10 +44,28 @@ public partial class SettingsWindow : Window
 		TileProviderOption.Custom
 	];
 
+	private static readonly List<ChoiceOption<string>> NvencPresetOptions =
+	[
+		new("P7 - best quality (default)", "p7"),
+		new("P6", "p6"),
+		new("P5 - faster", "p5"),
+		new("P4 - fastest reasonable", "p4")
+	];
+
+	private static readonly List<ChoiceOption<double>> BitrateOptions =
+	[
+		new("Same as source (default)", 1.0),
+		new("1.25x source", 1.25),
+		new("1.5x source", 1.5),
+		new("2x source", 2.0)
+	];
+
 	public SettingsWindow()
 	{
 		InitializeComponent();
 		PreviewQualityCombo.ItemsSource = PreviewQualityOptions;
+		NvencPresetCombo.ItemsSource = NvencPresetOptions;
+		BitrateCombo.ItemsSource = BitrateOptions;
 		MapProviderCombo.ItemsSource = TileProviderOptions;
 
 		var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
@@ -100,6 +119,64 @@ public partial class SettingsWindow : Window
 		RouteIntroCameraModelCheck.IsChecked = routeIntro.ShowCameraModel;
 		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
 		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
+	}
+
+	/// <summary>Fills the export options (Rendering category) - kept separate from the constructor's already long parameter list.</summary>
+	public void LoadExportSettings(OverlaySettings settings)
+	{
+		NvencPresetCombo.SelectedItem = NvencPresetOptions.FirstOrDefault(o => o.Value == settings.NvencPreset) ?? NvencPresetOptions[0];
+		BitrateCombo.SelectedItem = BitrateOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.OutputBitrateMultiplier) < 0.001)
+		                            ?? BitrateOptions[0];
+		HardwareDecodingCheck.IsChecked = settings.HardwareDecoding;
+		FastStartCheck.IsChecked = settings.FastStart;
+		MetadataTelemetryCheck.IsChecked = settings.MetadataKeepTelemetry;
+		MetadataSerialCheck.IsChecked = settings.MetadataKeepSerialNumber;
+		MetadataDebugCheck.IsChecked = settings.MetadataKeepDebugTrack;
+		MetadataThumbnailsCheck.IsChecked = settings.MetadataKeepThumbnails;
+		PreserveCameraMetadataCheck.IsChecked = settings.PreserveCameraMetadata;
+		UpdateMetadataOptionsEnabled();
+	}
+
+	private void OnMetadataOptionChanged(object? sender, RoutedEventArgs e)
+	{
+		UpdateMetadataOptionsEnabled();
+	}
+
+	/// <summary>
+	///     The parts only apply while the master checkbox is on, and the serial number/device ID only exist
+	///     inside the telemetry track and the thumbnails/info block - with neither kept there's nothing for
+	///     that checkbox to keep or remove.
+	/// </summary>
+	private void UpdateMetadataOptionsEnabled()
+	{
+		var enabled = PreserveCameraMetadataCheck.IsChecked == true;
+		MetadataSerialCheck.IsEnabled = enabled &&
+		                                (MetadataTelemetryCheck.IsChecked == true || MetadataThumbnailsCheck.IsChecked == true);
+
+		List<string> kept = [];
+		if (MetadataTelemetryCheck.IsChecked == true) kept.Add("telemetry");
+		if (MetadataSerialCheck is { IsChecked: true, IsEnabled: true }) kept.Add("serial number");
+		if (MetadataDebugCheck.IsChecked == true) kept.Add("debug track");
+		if (MetadataThumbnailsCheck.IsChecked == true) kept.Add("thumbnails");
+		var summary = kept.Count > 0 ? string.Join(", ", kept) : "nothing selected";
+		MetadataPartsExpander.Header = $"What to keep: {summary}";
+		MetadataPartsExpander.IsEnabled = enabled;
+	}
+
+	public OverlaySettings ApplyExportSettings(OverlaySettings settings)
+	{
+		return settings with
+		{
+			NvencPreset = (NvencPresetCombo.SelectedItem as ChoiceOption<string> ?? NvencPresetOptions[0]).Value,
+			OutputBitrateMultiplier = (BitrateCombo.SelectedItem as ChoiceOption<double> ?? BitrateOptions[0]).Value,
+			HardwareDecoding = HardwareDecodingCheck.IsChecked == true,
+			FastStart = FastStartCheck.IsChecked == true,
+			PreserveCameraMetadata = PreserveCameraMetadataCheck.IsChecked == true,
+			MetadataKeepTelemetry = MetadataTelemetryCheck.IsChecked == true,
+			MetadataKeepSerialNumber = MetadataSerialCheck.IsChecked == true,
+			MetadataKeepDebugTrack = MetadataDebugCheck.IsChecked == true,
+			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true
+		};
 	}
 
 	public int? FrameLimit => FrameLimitBox.Value is { } v and > 0 ? (int)v : null;
@@ -175,21 +252,33 @@ public partial class SettingsWindow : Window
 		CheckForUpdatesButton.IsEnabled = false;
 		CheckForUpdatesButton.Content = "Checking...";
 
-		// Off the UI thread: each tool spawns a process (ffmpeg -version, winget/brew/apt-cache show),
-		// which can take a couple of seconds combined.
-		IReadOnlyList<ToolVersionInfo> statuses =
-			await Task.Run(() => DependencyVersionChecker.CheckAllAsync(RequiredTools.All, CancellationToken.None));
+		try
+		{
+			// Off the UI thread: each tool spawns a process (ffmpeg -version, winget/brew/apt-cache show),
+			// which can take a couple of seconds combined.
+			IReadOnlyList<ToolVersionInfo> statuses =
+				await Task.Run(() => DependencyVersionChecker.CheckAllAsync(RequiredTools.All, CancellationToken.None));
 
-		List<ToolVersionInfo> present = [.. statuses.Where(s => s.InstalledVersion is not null)];
-		DependencyStatusRows.Populate(DependencyStatusGrid, present);
-
-		CheckForUpdatesButton.Content = "Check for updates";
-		CheckForUpdatesButton.IsEnabled = true;
+			List<ToolVersionInfo> present = [.. statuses.Where(s => s.InstalledVersion is not null)];
+			DependencyStatusRows.Populate(DependencyStatusGrid, present);
+		}
+		finally
+		{
+			CheckForUpdatesButton.Content = "Check for updates";
+			CheckForUpdatesButton.IsEnabled = true;
+		}
 	}
 
 	private void OnGitHubLinkClick(object? sender, PointerPressedEventArgs e)
 	{
-		Process.Start(new ProcessStartInfo("https://github.com/sefinek/osmo-overlay") { UseShellExecute = true });
+		try
+		{
+			Process.Start(new ProcessStartInfo("https://github.com/sefinek/osmo-overlay") { UseShellExecute = true })?.Dispose();
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Warn(ex, "Could not open the GitHub page in a browser");
+		}
 	}
 
 	/// <summary>
@@ -276,5 +365,14 @@ public partial class SettingsWindow : Window
 		{
 			return Display;
 		}
+	}
+}
+
+/// <summary>A labelled value for a settings ComboBox - ToString is what the ComboBox displays.</summary>
+internal sealed record ChoiceOption<T>(string Label, T Value)
+{
+	public override string ToString()
+	{
+		return Label;
 	}
 }

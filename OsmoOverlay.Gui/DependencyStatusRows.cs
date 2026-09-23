@@ -42,7 +42,16 @@ internal static class DependencyStatusRows
 		button.IsEnabled = false;
 		AppLogger.Notify($"Updating {status.Tool.DisplayName}...");
 
-		InstallResult result = await DependencyInstaller.UpgradeAsync(status.Tool, AppLogger.Notify, CancellationToken.None);
+		InstallResult result;
+		try
+		{
+			result = await DependencyInstaller.UpgradeAsync(status.Tool, AppLogger.Notify, CancellationToken.None);
+		}
+		catch (Exception ex)
+		{
+			result = new InstallResult(false, ex.Message);
+		}
+
 		AppLogger.Notify(result.Message);
 
 		button.Content = result.Success ? "Updated" : "Retry";

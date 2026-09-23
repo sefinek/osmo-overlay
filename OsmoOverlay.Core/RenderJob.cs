@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Channels;
@@ -71,6 +72,7 @@ public static class RenderJob
 	// is a full native-resolution BGRA frame (tens of MB at 4K), so this stays modest - just enough
 	// to overlap render and encode, not to buffer a meaningful chunk of the render in memory.
 	private const int RenderPrefetchFrames = 3;
+	private const int MinFramesForSpeedHistory = 600;
 
 	public static Task<RenderResult> RunAsync(RenderOptions options, IProgress<RenderStatus>? progress,
 		CancellationToken ct)
@@ -144,7 +146,7 @@ public static class RenderJob
 				(encoder == "libx265" ? " (NVENC unavailable - rendering on CPU)" : " (GPU)"));
 
 			var fps = first.Source.Video.Fps;
-			var totalFrames = options.FrameLimit ?? (int)Math.Ceiling(segments.TotalDurationSeconds() * fps);
+			var totalFrames = options.FrameLimit ?? (int)segments.TotalFrameCount();
 			double? limitSeconds = options.FrameLimit is not null ? options.FrameLimit.Value / fps : null;
 			Report(RenderPhase.Rendering, $"Rendering {totalFrames} frames to {options.OutputPath}...", 0, totalFrames);
 
@@ -161,7 +163,7 @@ public static class RenderJob
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
-				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.From(settings));
+				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.ForRecording(settings, hasGpsFix));
 
 			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 			{
@@ -193,13 +195,18 @@ public static class RenderJob
 				}
 			}
 
+			// Green screen has no source recording in it to carry camera metadata over from.
+			var metadataSelection = new CameraMetadataSelection(settings.MetadataKeepTelemetry, settings.MetadataKeepDebugTrack,
+				settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
+			var preserveMetadata = settings.PreserveCameraMetadata && metadataSelection.Any && !options.GreenScreen;
+			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata);
 			using Process ffmpeg = FfmpegPipeline.StartRender(options.InputPaths, options.OutputPath, first.Source, encoder,
-				options.Overwrite, limitSeconds, options.GreenScreen, totalFrames);
+				options.Overwrite, encode, limitSeconds, options.GreenScreen, totalFrames);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// `using Process ffmpeg` above only releases managed handles on Dispose - it does NOT
 			// terminate the OS process. Every path out of the try below - including one that has
-			// nothing to do with cancellation, e.g. a genuine exception thrown by renderer.Render() -
+			// nothing to do with cancellation, e.g. a genuine exception thrown by renderer.RenderInto() -
 			// must still guarantee ffmpeg.exe is dead before this method returns; otherwise it's
 			// orphaned running against a closed stdin, and for a green-screen render (infinite main
 			// input, see FfmpegPipeline.StartRender) that can mean forever, not just "a while".
@@ -218,7 +225,7 @@ public static class RenderJob
 				// throttled by however fast the encoder drains its input) are two different bottlenecks -
 				// running them on separate threads lets one overlap the other instead of strictly
 				// alternating "render a frame, then sit idle waiting for ffmpeg to catch up, repeat".
-				// Render() itself stays strictly sequential - see its own doc comment, its cached paint
+				// RenderInto() itself stays strictly sequential - see its own doc comment, its cached paint
 				// objects aren't safe to call concurrently - only this one producer thread ever calls it.
 				var channel = Channel.CreateBounded<byte[]>(
 					new BoundedChannelOptions(RenderPrefetchFrames) { SingleReader = true, SingleWriter = true });
@@ -232,6 +239,11 @@ public static class RenderJob
 				using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 				CancellationToken producerCt = producerCts.Token;
 
+				// Frame buffers go back here once written to ffmpeg - the bounded channel caps how many are
+				// ever in flight, so a render allocates only a handful of them instead of one per frame.
+				var freeBuffers = new ConcurrentQueue<byte[]>();
+				var frameBufferSize = renderer.FrameBufferSize();
+
 				Task producer = Task.Run(async () =>
 				{
 					try
@@ -239,7 +251,8 @@ public static class RenderJob
 						for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
 						{
 							DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
-							var pixels = renderer.Render(frame);
+							if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
+							renderer.RenderInto(frame, pixels);
 							await channel.Writer.WriteAsync(pixels, producerCt);
 						}
 
@@ -256,15 +269,19 @@ public static class RenderJob
 				}, producerCt);
 
 				var written = 0;
+				var rate = new RenderRateEstimator(fps);
 				try
 				{
 					await foreach (var pixels in channel.Reader.ReadAllAsync(ct))
 					{
 						stdin.Write(pixels, 0, pixels.Length);
+						freeBuffers.Enqueue(pixels);
 						written++;
+						rate.Add(written);
 
 						if (written % 60 == 0)
-							Report(RenderPhase.Rendering, $"Frame {written}/{totalFrames}", written, totalFrames);
+							Report(RenderPhase.Rendering, $"Frame {written}/{totalFrames}{rate.Describe(written, totalFrames)}",
+								written, totalFrames);
 					}
 
 					stdin.Flush();
@@ -334,6 +351,16 @@ public static class RenderJob
 					return new RenderResult(false, message, sw.Elapsed);
 				}
 
+				// Short renders are dominated by the route intro and ffmpeg's spin-up, not representative of
+				// a full one - only a render long enough to reach steady state updates the estimate.
+				if (written >= MinFramesForSpeedHistory && rate.AverageFps(written) is { } averageFps)
+					RenderSpeedHistory.Record(RenderSpeedHistory.Key(first.Source.Video.Width, first.Source.Video.Height, fps,
+						encoder, encode.NvencPreset), averageFps);
+
+				PostProcess(options.OutputPath, options.InputPaths, preserveMetadata ? metadataSelection : null,
+					settings.FastStart && !options.GreenScreen,
+					message => Report(RenderPhase.Rendering, message, written, totalFrames));
+
 				return new RenderResult(true, null, sw.Elapsed);
 			}
 			finally
@@ -349,6 +376,47 @@ public static class RenderJob
 			// the GUI's on-screen panel.
 			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}: {ex.Message}");
 			return new RenderResult(false, ex.Message, sw.Elapsed);
+		}
+	}
+
+	/// <summary>
+	///     Edits of the finished file ffmpeg can't do itself - see Mp4CameraMetadata/Mp4FastStart. Each step
+	///     is best-effort: the video itself is already complete and correct at this point, so a failure is
+	///     logged and the render still counts as successful (both steps leave the file intact on failure).
+	/// </summary>
+	private static void PostProcess(string outputPath, IReadOnlyList<string> inputPaths, CameraMetadataSelection? metadata,
+		bool fastStart, Action<string> report)
+	{
+		var preserveMetadata = metadata is not null;
+		if (metadata is not null)
+		{
+			List<string> parts = [];
+			if (metadata.Telemetry) parts.Add(metadata.SerialNumber ? "telemetry" : "telemetry (serial number removed)");
+			if (metadata.DebugTrack) parts.Add("debug track");
+			if (metadata.ThumbnailsAndInfo) parts.Add("thumbnails/info");
+			report($"Copying camera metadata into the output: {string.Join(", ", parts)}...");
+			try
+			{
+				Mp4CameraMetadata.CopyInto(outputPath, inputPaths, metadata);
+			}
+			catch (Exception ex)
+			{
+				AppLogger.Warn(ex, "Could not copy the camera metadata into the render - the video itself is fine, it just won't carry it");
+			}
+		}
+
+		// Without preserveMetadata, ffmpeg already wrote the file fast-start itself (-movflags +faststart).
+		if (fastStart && preserveMetadata)
+		{
+			report("Moving the file index to the front (fast start)...");
+			try
+			{
+				Mp4FastStart.Apply(outputPath);
+			}
+			catch (Exception ex)
+			{
+				AppLogger.Warn(ex, "Could not apply fast start to the render - the video itself is fine");
+			}
 		}
 	}
 
@@ -370,5 +438,54 @@ public static class RenderJob
 	{
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(width, height);
 		return presets.First(p => p.Id == activeId).Elements;
+	}
+}
+
+/// <summary>
+///     Render speed and time-left from a sliding window of recent progress rather than the average since
+///     the start - the first seconds (ffmpeg spin-up, encoder lookahead filling, cold caches) run at a
+///     very different pace than the rest, and a whole-run average would keep dragging the estimate
+///     toward that for the entire render.
+/// </summary>
+internal sealed class RenderRateEstimator(double sourceFps)
+{
+	private const double WindowSeconds = 10;
+	private const double WarmupSeconds = 3;
+
+	private readonly Queue<(double Seconds, int Frames)> _samples = new();
+	private readonly Stopwatch _clock = new();
+
+	public void Add(int framesWritten)
+	{
+		if (!_clock.IsRunning) _clock.Start();
+
+		var now = _clock.Elapsed.TotalSeconds;
+		_samples.Enqueue((now, framesWritten));
+		while (_samples.Count > 2 && now - _samples.Peek().Seconds > WindowSeconds)
+			_samples.Dequeue();
+	}
+
+	/// <summary>Frames per second over the whole render so far (from the first frame written) - what's remembered for the next estimate.</summary>
+	public double? AverageFps(int framesWritten)
+	{
+		var seconds = _clock.Elapsed.TotalSeconds;
+		return seconds > 0 ? framesWritten / seconds : null;
+	}
+
+	/// <summary>" - 41.3 fps (0.69x realtime) - 00:12:05 left", or " - estimating time left..." during the first few seconds.</summary>
+	public string Describe(int framesWritten, int totalFrames)
+	{
+		if (_clock.Elapsed.TotalSeconds < WarmupSeconds || _samples.Count < 2) return " - estimating time left...";
+
+		(double Seconds, int Frames) oldest = _samples.Peek();
+		var span = _clock.Elapsed.TotalSeconds - oldest.Seconds;
+		if (span <= 0) return "";
+
+		var fps = (framesWritten - oldest.Frames) / span;
+		if (fps <= 0) return "";
+
+		var left = TimeSpan.FromSeconds(Math.Max(totalFrames - framesWritten, 0) / fps);
+		var realtime = sourceFps > 0 ? $" ({fps / sourceFps:0.00}x realtime)" : "";
+		return $" - {fps:0.0} fps{realtime} - {left:hh\\:mm\\:ss} left";
 	}
 }
