@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Avalonia;
@@ -10,6 +11,7 @@ using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
@@ -28,8 +30,8 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 {
-	private const double RulerHeight = 22;
-	private const double VideoTrackHeight = 50;
+	private const double RulerHeight = 26;
+	private const double VideoTrackHeight = 64;
 	private const double AudioTrackHeight = VideoTrackHeight;
 	private const double TrackGap = 2;
 	private const double StripeSpacing = 7;
@@ -43,6 +45,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double CompactTrackHeight = 6;
 	private const double CompactCutHeight = 16;
 	private const double CompactSelectionHeight = 24;
+	// Generated content redraws the tracks layer at most this often: after a zoom step every tile wants a new
+	// thumbnail, one every ~15 ms, and a full layer redraw per thumbnail kept the UI thread busy for half a second.
+	private static readonly TimeSpan ContentRefreshInterval = TimeSpan.FromMilliseconds(100);
 
 	private static readonly double[] TickSteps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
 
@@ -52,7 +57,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen TickPen = new Pen(Palette.TextMuted);
 	private static readonly IPen MinorTickPen = new Pen(Palette.Stroke);
 	private static readonly IBrush LabelBrush = Palette.TextMuted;
-	private static readonly IBrush WaveformBrush = Palette.Tint(Palette.Accent, 0.85);
+	private static readonly ISolidColorBrush WaveformBrush = (ISolidColorBrush)Palette.Tint(Palette.Accent, 0.85);
 	private static readonly IPen WaveformCenterPen = new Pen(Palette.Tint(Palette.Accent, 0.3));
 	private static readonly IBrush PlayedBrush = Palette.Accent;
 	private static readonly IBrush GpsLossBrush = Palette.Warning;
@@ -82,7 +87,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private bool _scrubbing;
 	private bool _attached;
 	private bool _animating;
-	private bool _refreshPosted;
+	private int _refreshPosted;
+	private long _lastContentRefresh;
 	private TimeSpan? _lastAnimationFrame;
 	private double _stripeOffset;
 	private double? _hoverX;
@@ -97,8 +103,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	// the view or the generated content changes. Playback moves the playhead every frame; repainting the thumbnails
 	// and a waveform column per pixel on each of those made the preview stutter.
 	private RenderTargetBitmap? _tracksLayer;
+	// Kept until the next layer is drawn, not disposed right after DrawImage took it.
+	private WriteableBitmap? _waveformBitmap;
 	private (double Start, double PixelsPerSecond, Size Size, double Scaling, int Version) _tracksLayerKey;
 	private int _contentVersion;
+	private double _probeFilmstripMs;
+	private double _probeWaveformMs;
+	private int _probeNewBitmaps;
 
 	static PreviewTimeline()
 	{
@@ -257,8 +268,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	public override void Render(DrawingContext context)
 	{
+		var probe = Stopwatch.StartNew();
 		if (_expanded) RenderExpanded(context);
 		else RenderCompact(context);
+		if (_expanded && probe.Elapsed.TotalMilliseconds > 4)
+			AppLogger.Info($"[timeline probe] Render {probe.Elapsed.TotalMilliseconds:F1} ms (zoom {_zoom:F2}, {Bounds.Width:F0} px)");
 	}
 
 	private void RenderCompact(DrawingContext context)
@@ -299,9 +313,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		(double, double, Size, double, int) key = (ViewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
 		if (_tracksLayer is null || _tracksLayerKey != key)
 		{
+			var probe = Stopwatch.StartNew();
 			_tracksLayer?.Dispose();
 			_tracksLayer = RenderTracksLayer(scaling, width, videoTop, audioTop);
 			_tracksLayerKey = key;
+			AppLogger.Info($"[timeline probe] tracks layer {probe.Elapsed.TotalMilliseconds:F1} ms " +
+			               $"(filmstrip {_probeFilmstripMs:F1}, waveform {_probeWaveformMs:F1}, new bitmaps {_probeNewBitmaps})");
 		}
 
 		context.DrawImage(_tracksLayer, new Rect(Bounds.Size));
@@ -320,8 +337,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private RenderTargetBitmap RenderTracksLayer(double scaling, double width, double videoTop, double audioTop)
 	{
 		var pixels = new PixelSize(Math.Max(1, (int)Math.Ceiling(Bounds.Width * scaling)), Math.Max(1, (int)Math.Ceiling(Bounds.Height * scaling)));
-		var layer = new RenderTargetBitmap(pixels, new Vector(96 * scaling, 96 * scaling));
+		// At 96 DPI with the display scale pushed by hand: a bitmap at 96 * scaling DPI was drawn as only its top-left
+		// 1/scaling part blown up (at 125% the tracks came out 1.25x too big, the audio lane and the end cut off).
+		var layer = new RenderTargetBitmap(pixels, new Vector(96, 96));
 		using DrawingContext context = layer.CreateDrawingContext();
+		using DrawingContext.PushedState scale = context.PushTransform(Matrix.CreateScale(scaling, scaling));
 
 		context.FillRectangle(RulerBrush, new Rect(0, 0, width, RulerHeight));
 		context.FillRectangle(TrackBrush, new Rect(0, videoTop, width, VideoTrackHeight));
@@ -329,8 +349,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (Duration <= 0 || PixelsPerSecond <= 0) return layer;
 
 		DrawRuler(context, width);
+		var part = Stopwatch.StartNew();
+		_probeNewBitmaps = 0;
 		DrawFilmstrip(context, videoTop, width);
-		DrawWaveform(context, audioTop, width);
+		_probeFilmstripMs = part.Elapsed.TotalMilliseconds;
+		part.Restart();
+		DrawWaveform(context, audioTop, width, scaling);
+		_probeWaveformMs = part.Elapsed.TotalMilliseconds;
 
 		foreach (TimeRange loss in _gpsLoss)
 		{
@@ -352,12 +377,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		{
 			var x = Math.Round(X(t)) + 0.5;
 			var isMajor = Math.Abs(t / major - Math.Round(t / major)) < 1e-6;
-			context.DrawLine(isMajor ? TickPen : MinorTickPen, new Point(x, isMajor ? 8 : 14), new Point(x, RulerHeight - 3));
+			context.DrawLine(isMajor ? TickPen : MinorTickPen, new Point(x, isMajor ? 9 : 17), new Point(x, RulerHeight - 3));
 			if (!isMajor) continue;
 
 			var label = new FormattedText(FormatRulerTime(t, major), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-				LabelTypeface, 10, LabelBrush);
-			context.DrawText(label, new Point(x + 3, 1));
+				LabelTypeface, 11, LabelBrush);
+			context.DrawText(label, new Point(x + 3, 2));
 		}
 	}
 
@@ -385,11 +410,22 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			if (x >= endX) break;
 
 			var dest = new Rect(x + 1, top + 2, tileWidth - 2, tileHeight);
-			if (Thumbnail(TileSlot(tile, tileWidth)) is { } bitmap)
+			var slot = TileSlot(tile, tileWidth);
+			if ((Thumbnail(slot) ?? StandIn(slot, tileWidth)) is { } bitmap)
 				context.DrawImage(bitmap, new Rect(bitmap.Size), dest);
 			else
 				context.FillRectangle(PlaceholderBrush, dest);
 		}
+	}
+
+	/// <summary>
+	///     Until a tile's own thumbnail is generated, the nearest one already generated within the tile's span - a zoom
+	///     step moves every tile to another second, and a strip of placeholders flashed on each one.
+	/// </summary>
+	private Bitmap? StandIn(int slot, double tileWidth)
+	{
+		if (_thumbnails?.NearestGenerated(slot, (int)Math.Ceiling(tileWidth / PixelsPerSecond)) is not { } nearest) return null;
+		return Thumbnail(nearest);
 	}
 
 	private int TileSlot(int tile, double tileWidth)
@@ -407,42 +443,71 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			PixelFormat.Bgra8888, AlphaFormat.Opaque);
 		using (ILockedFramebuffer buffer = bitmap.Lock()) Marshal.Copy(bgra, 0, buffer.Address, bgra.Length);
 		_thumbnailBitmaps[slot] = bitmap;
+		_probeNewBitmaps++;
 		return bitmap;
 	}
 
-	/// <summary>One vertical line per pixel column, as tall as the loudest sample under it (in dB, see Level) - one lane per channel, mirrored around its middle.</summary>
-	private void DrawWaveform(DrawingContext context, double top, double width)
+	/// <summary>
+	///     One column per device pixel, as tall as the loudest sample under it (in dB, see AudioWaveform.DisplayLevel) - one
+	///     lane per channel, mirrored around its middle. Filled straight into a bitmap: the same columns as a geometry of one
+	///     figure each took Skia 250-370 ms to fill on a 2000 px wide timeline, on every scroll or zoom step.
+	/// </summary>
+	private void DrawWaveform(DrawingContext context, double top, double width, double scaling)
 	{
 		if (_waveform is not { } waveform) return;
 
-		var lanes = Math.Min(2, waveform.Channels);
-		var laneHeight = AudioTrackHeight / lanes;
 		var endX = Math.Min(width, X(Duration));
+		var pixelWidth = (int)Math.Ceiling(endX * scaling);
+		var pixelHeight = (int)Math.Round(AudioTrackHeight * scaling);
+		if (pixelWidth <= 0 || pixelHeight <= 0) return;
+
+		var lanes = Math.Min(2, waveform.Channels);
+		var laneHeight = (double)pixelHeight / lanes;
+		var pixels = new int[pixelWidth * pixelHeight];
+		Color color = WaveformBrush.Color;
+		var opacity = color.A / 255.0 * WaveformBrush.Opacity;
+		for (var px = 0; px < pixelWidth; px++)
+		{
+			var from = (int)(TimeAt(px / scaling) * AudioWaveform.BucketsPerSecond);
+			var to = Math.Max(from + 1, (int)(TimeAt((px + 1) / scaling) * AudioWaveform.BucketsPerSecond));
+			for (var lane = 0; lane < lanes; lane++)
+			{
+				var middle = laneHeight * (lane + 0.5);
+				var level = AudioWaveform.DisplayLevel(waveform.Peak(lane, from, to), waveform.LoudestPeak);
+				var half = Math.Max(0.5 * scaling, level * (laneHeight / 2 - scaling));
+				var firstRow = Math.Max(0, (int)Math.Floor(middle - half));
+				var lastRow = Math.Min(pixelHeight - 1, (int)Math.Ceiling(middle + half) - 1);
+				for (var y = firstRow; y <= lastRow; y++)
+				{
+					// The end rows only partly covered, so the edge stays as smooth as the antialiased figures were.
+					var coverage = Math.Clamp(half - Math.Abs(y + 0.5 - middle) + 0.5, 0, 1);
+					pixels[y * pixelWidth + px] = Premultiplied(color, opacity * coverage);
+				}
+			}
+		}
+
+		_waveformBitmap?.Dispose();
+		_waveformBitmap = new WriteableBitmap(new PixelSize(pixelWidth, pixelHeight), new Vector(96, 96), PixelFormat.Bgra8888,
+			AlphaFormat.Premul);
+		using (ILockedFramebuffer buffer = _waveformBitmap.Lock())
+		{
+			for (var y = 0; y < pixelHeight; y++)
+				Marshal.Copy(pixels, y * pixelWidth, buffer.Address + y * buffer.RowBytes, pixelWidth);
+		}
+
+		context.DrawImage(_waveformBitmap, new Rect(_waveformBitmap.Size), new Rect(0, top, pixelWidth / scaling, pixelHeight / scaling));
 		for (var lane = 0; lane < lanes; lane++)
 		{
-			var middle = top + laneHeight * (lane + 0.5);
-			context.DrawGeometry(WaveformBrush, null, WaveformLane(waveform, lane, middle, laneHeight, endX));
+			var middle = top + laneHeight * (lane + 0.5) / scaling;
 			context.DrawLine(WaveformCenterPen, new Point(0, middle), new Point(endX, middle));
 		}
 	}
 
-	private StreamGeometry WaveformLane(AudioWaveform waveform, int lane, double middle, double laneHeight, double endX)
+	/// <summary>A BGRA pixel of this color at this alpha (0-1), premultiplied.</summary>
+	private static int Premultiplied(Color color, double alpha)
 	{
-		var geometry = new StreamGeometry();
-		using StreamGeometryContext stream = geometry.Open();
-		for (var x = 0; x < endX; x++)
-		{
-			var from = (int)(TimeAt(x) * AudioWaveform.BucketsPerSecond);
-			var to = Math.Max(from + 1, (int)(TimeAt(x + 1) * AudioWaveform.BucketsPerSecond));
-			var half = Math.Max(0.5, AudioWaveform.DisplayLevel(waveform.Peak(lane, from, to), waveform.LoudestPeak) * (laneHeight / 2 - 1));
-			stream.BeginFigure(new Point(x, middle - half));
-			stream.LineTo(new Point(x + 1, middle - half));
-			stream.LineTo(new Point(x + 1, middle + half));
-			stream.LineTo(new Point(x, middle + half));
-			stream.EndFigure(true);
-		}
-
-		return geometry;
+		return (int)((uint)Math.Round(alpha * 255) << 24 | (uint)Math.Round(color.R * alpha) << 16 |
+		             (uint)Math.Round(color.G * alpha) << 8 | (uint)Math.Round(color.B * alpha));
 	}
 
 	/// <summary>The cut being resized is drawn where its edge is dragged to; the selected one gets a stronger border.</summary>
@@ -550,21 +615,41 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		_thumbnails.Request(Enumerable.Range(firstTile, Math.Max(0, lastTile - firstTile + 1)).Select(t => TileSlot(t, tileWidth)));
 	}
 
-	/// <summary>The generators report from their own threads; several reports collapse into one redraw.</summary>
+	/// <summary>The generators report from their own threads; reports collapse into one redraw per ContentRefreshInterval.</summary>
 	private void PostRefresh()
 	{
-		if (_refreshPosted) return;
+		if (Interlocked.Exchange(ref _refreshPosted, 1) == 1) return;
 
-		_refreshPosted = true;
 		Dispatcher.UIThread.Post(() =>
 		{
-			_refreshPosted = false;
-			_contentVersion++;
-			InvalidateVisual();
+			TimeSpan wait = ContentRefreshInterval - TimeSpan.FromMilliseconds(Environment.TickCount64 - _lastContentRefresh);
+			if (wait <= TimeSpan.Zero) RefreshContent();
+			else DispatcherTimer.RunOnce(RefreshContent, wait, DispatcherPriority.Background);
 		}, DispatcherPriority.Background);
 	}
 
+	private void RefreshContent()
+	{
+		_lastContentRefresh = Environment.TickCount64;
+		Volatile.Write(ref _refreshPosted, 0);
+		_contentVersion++;
+		InvalidateVisual();
+	}
+
 	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+	{
+		var probe = Stopwatch.StartNew();
+		try
+		{
+			OnPointerWheelChangedCore(e);
+		}
+		finally
+		{
+			AppLogger.Info($"[timeline probe] wheel delta {e.Delta.Y:F2} handled in {probe.Elapsed.TotalMilliseconds:F1} ms, zoom {_zoom:F2}");
+		}
+	}
+
+	private void OnPointerWheelChangedCore(PointerWheelEventArgs e)
 	{
 		base.OnPointerWheelChanged(e);
 		if (!_expanded || Duration <= 0) return;
@@ -744,6 +829,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		_attached = false;
 		_tracksLayer?.Dispose();
 		_tracksLayer = null;
+		_waveformBitmap?.Dispose();
+		_waveformBitmap = null;
 	}
 
 	/// <summary>Runs on the render loop's frames only while there is a cut to draw.</summary>

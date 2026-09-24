@@ -51,6 +51,23 @@ public sealed class TimelineThumbnails : IDisposable
 		}
 	}
 
+	/// <summary>The generated slot nearest to this one, at most maxDistance away (the earlier one on a tie); null when none is.</summary>
+	public int? NearestGenerated(int slot, int maxDistance)
+	{
+		lock (_lock)
+		{
+			if (_thumbnails.ContainsKey(slot)) return slot;
+
+			for (var distance = 1; distance <= maxDistance; distance++)
+			{
+				if (_thumbnails.ContainsKey(slot - distance)) return slot - distance;
+				if (_thumbnails.ContainsKey(slot + distance)) return slot + distance;
+			}
+
+			return null;
+		}
+	}
+
 	/// <summary>Replaces what's waiting to be generated with these slots, in this order (the ones already done are skipped).</summary>
 	public void Request(IEnumerable<int> slots)
 	{
@@ -72,8 +89,10 @@ public sealed class TimelineThumbnails : IDisposable
 				await _wake.WaitAsync(ct);
 				while (NextWanted() is { } slot)
 				{
+					var probe = System.Diagnostics.Stopwatch.StartNew();
 					VideoFrame? frame = _source.GetFrame(TimeSpan.FromSeconds(slot), SeekAccuracy.Keyframe, ct);
 					if (frame is null) return;
+					AppLogger.Info($"[timeline probe] thumbnail {slot} in {probe.Elapsed.TotalMilliseconds:F1} ms");
 
 					var copy = frame.Bgra.ToArray();
 					_source.Recycle(frame);
