@@ -197,9 +197,47 @@
 			<Setter Property="MaxWidth" Value="380" />
 		</Style>
 
+		<!-- Scrollbars beside the content, not over it: Fluent's auto-hiding bars overlay the content and, expanded
+		     on hover, covered the right edge of the cards. Without auto-hide the theme keeps the content presenter
+		     in its own cell and the bar in the Auto column next to it (collapsed when there's nothing to scroll). -->
+		<Style Selector="ScrollViewer">
+			<Setter Property="AllowAutoHide" Value="False" />
+		</Style>
+		<Style Selector="ScrollViewer /template/ ScrollBar#PART_VerticalScrollBar">
+			<Setter Property="Margin" Value="4,0,0,0" />
+		</Style>
+		<Style Selector="ScrollViewer /template/ ScrollBar#PART_HorizontalScrollBar">
+			<Setter Property="Margin" Value="0,4,0,0" />
+		</Style>
+
+		<!-- A slim bar: just the thumb on a transparent track, no arrow buttons. -->
+		<Style Selector="ScrollBar">
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="MinHeight" Value="0" />
+		</Style>
+		<Style Selector="ScrollBar:vertical">
+			<Setter Property="Width" Value="6" />
+		</Style>
+		<Style Selector="ScrollBar:horizontal">
+			<Setter Property="Height" Value="6" />
+		</Style>
+		<Style Selector="ScrollBar /template/ Grid#Root">
+			<Setter Property="Background" Value="Transparent" />
+		</Style>
+		<Style Selector="ScrollBar /template/ Rectangle#TrackRect">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+		<Style Selector="ScrollBar /template/ RepeatButton#PART_LineUpButton">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+		<Style Selector="ScrollBar /template/ RepeatButton#PART_LineDownButton">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+
 		<Style Selector="ScrollBar /template/ Thumb">
 			<Setter Property="Background" Value="{StaticResource ControlBorderHoverBrush}" />
-			<Setter Property="CornerRadius" Value="8" />
+			<Setter Property="CornerRadius" Value="3" />
+			<Setter Property="RenderTransform" Value="none" />
 		</Style>
 		<Style Selector="ScrollBar /template/ Thumb:pointerover">
 			<Setter Property="Background" Value="{StaticResource StrokeStrongBrush}" />
