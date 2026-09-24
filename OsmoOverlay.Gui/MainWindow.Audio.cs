@@ -72,7 +72,7 @@ public partial class MainWindow
 	private void UpdateAudioPanel()
 	{
 		AudioPanel.IsEnabled = _previewPlayer.HasAudio;
-		ToolTip.SetTip(AudioPanel, _previewPlayer.HasAudio || PreviewImage.Source is null
+		ToolTip.SetTip(AudioPanel, _previewPlayer.HasAudio || _previewFrameSize is null
 			? null
 			: "No sound: this recording has no audio track, or there's no playback device");
 	}

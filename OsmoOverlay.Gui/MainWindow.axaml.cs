@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
@@ -66,7 +65,8 @@ public partial class MainWindow : Window
 	// closes the race at the source.
 	private bool _overlayPresetsLoaded;
 	private UiPhase _phase = UiPhase.Idle;
-	private WriteableBitmap? _previewBitmap;
+	// The preview's frame size in pixels - null while no recording is open in the preview.
+	private PixelSize? _previewFrameSize;
 	private int _previewMaxWidth;
 	private string? _selectedElementId;
 	private PreviewGridMode _gridMode;
@@ -136,6 +136,8 @@ public partial class MainWindow : Window
 		WirePreviewShortcuts();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
+		_previewPlayer.PlaybackStarted += OnPreviewPlaybackStarted;
+		PreviewVideo.PlaybackFrameShown += OnPlaybackFrameShown;
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
 		// Map tile progress arrives from thread-pool threads (see OverlayRenderer.BuildMapMosaicAsync).
 		_previewPlayer.Message += message => Dispatcher.UIThread.Post(() => AppendLog(message));

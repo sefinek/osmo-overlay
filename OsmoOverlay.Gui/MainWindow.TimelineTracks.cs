@@ -9,7 +9,7 @@ using OsmoOverlay.Core.Preview;
 namespace OsmoOverlay.Gui;
 
 /// <summary>
-///     The timeline's filmstrip and waveform (PreviewTimeline) and the scrollbar under it. The generators belong to the
+///     The expanded timeline's filmstrip and waveform (ExpandedTimeline) and the scrollbar under it. The generators belong to the
 ///     loaded recording, not to the preview: reopening the preview (quality, settings) keeps what they already made.
 /// </summary>
 public partial class MainWindow
@@ -23,26 +23,23 @@ public partial class MainWindow
 
 	private void WireTimelineTracks()
 	{
-		PreviewTimeline.ViewChanged += SyncTimelineScrollBar;
+		ExpandedTimeline.ViewChanged += SyncTimelineScrollBar;
 		Closed += (_, _) => ReleaseTimelineTracks();
 		SetTimelineExpanded(OverlaySettingsStore.Load().PreviewTimelineExpanded, false);
 	}
 
 	private void OnToggleTimelineClick(object? sender, RoutedEventArgs e)
 	{
-		SetTimelineExpanded(!PreviewTimeline.Expanded, true);
+		SetTimelineExpanded(!TimelineCard.IsVisible, true);
 	}
 
 	/// <summary>
-	///     One timeline control, moved between the transport row (compact) and the log's place under the window
-	///     (expanded) - the bottom row then shrinks to the timeline's height, leaving the rest to the preview.
+	///     The expanded timeline in the log's place under the window, next to the compact one that always stays in the
+	///     transport row (see Timelines) - the bottom row then shrinks to the timeline's height, leaving the rest to the
+	///     preview.
 	/// </summary>
 	private void SetTimelineExpanded(bool expanded, bool save)
 	{
-		if (PreviewTimeline.Parent is Border oldHost) oldHost.Child = null;
-		(expanded ? ExpandedTimelineHost : CompactTimelineHost).Child = PreviewTimeline;
-		PreviewTimeline.Expanded = expanded;
-
 		TimelineCard.IsVisible = expanded;
 		LogCard.IsVisible = !expanded;
 		RootGrid.RowDefinitions[1].Height = expanded ? GridLength.Auto : new GridLength(230);
@@ -55,24 +52,24 @@ public partial class MainWindow
 	/// <summary>A render's progress is in the log - it takes the timeline's place back while rendering.</summary>
 	private void ShowLogForRender()
 	{
-		if (PreviewTimeline.Expanded) SetTimelineExpanded(false, false);
+		if (TimelineCard.IsVisible) SetTimelineExpanded(false, false);
 	}
 
 	private void OnTimelineScroll(object? sender, ScrollEventArgs e)
 	{
-		PreviewTimeline.ScrollTo(e.NewValue);
+		ExpandedTimeline.ScrollTo(e.NewValue);
 	}
 
 	private void SyncTimelineScrollBar()
 	{
-		var duration = PreviewTimeline.Maximum - PreviewTimeline.Minimum;
-		var visible = PreviewTimeline.ViewLength;
+		var duration = ExpandedTimeline.Maximum - ExpandedTimeline.Minimum;
+		var visible = ExpandedTimeline.ViewLength;
 		TimelineScrollBar.IsVisible = duration > 0 && visible < duration - 1e-3;
 		TimelineScrollBar.Maximum = Math.Max(0, duration - visible);
 		TimelineScrollBar.ViewportSize = visible;
 		TimelineScrollBar.LargeChange = visible * 0.9;
 		TimelineScrollBar.SmallChange = visible * 0.1;
-		TimelineScrollBar.Value = PreviewTimeline.ViewStart;
+		TimelineScrollBar.Value = ExpandedTimeline.ViewStart;
 	}
 
 	/// <summary>With the preview: starts the generators for a newly loaded recording, or hands the timeline the ones it already has.</summary>
@@ -81,7 +78,7 @@ public partial class MainWindow
 		var aspect = (double)summary.Video.Width / summary.Video.Height;
 		if (ReferenceEquals(_timelineTracksFor, summary))
 		{
-			PreviewTimeline.SetSources(_timelineThumbnails, _timelineWaveform, summary.Video.Fps, aspect);
+			ExpandedTimeline.SetSources(_timelineThumbnails, _timelineWaveform, summary.Video.Fps, aspect);
 			return;
 		}
 
@@ -112,12 +109,12 @@ public partial class MainWindow
 
 		_timelineThumbnails = thumbnails;
 		_timelineWaveform = waveform;
-		PreviewTimeline.SetSources(thumbnails, waveform, summary.Video.Fps, aspect);
+		ExpandedTimeline.SetSources(thumbnails, waveform, summary.Video.Fps, aspect);
 	}
 
 	private void ReleaseTimelineTracks()
 	{
-		PreviewTimeline.SetSources(null, null, 0, 0);
+		ExpandedTimeline.SetSources(null, null, 0, 0);
 		_timelineThumbnails?.Dispose();
 		_timelineWaveform?.Dispose();
 		_timelineThumbnails = null;

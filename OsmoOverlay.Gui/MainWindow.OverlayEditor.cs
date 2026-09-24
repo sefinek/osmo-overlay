@@ -1132,12 +1132,12 @@ public partial class MainWindow
 	private (double Scale, double OffsetX, double OffsetY, double RenderedWidth, double RenderedHeight, double FullResScale)?
 		GetPreviewTransform()
 	{
-		if (_summary is null || _previewBitmap is null) return null;
+		if (_summary is null || _previewFrameSize is not { } frameSize) return null;
 
 		var controlWidth = OverlayDragCanvas.Bounds.Width;
 		var controlHeight = OverlayDragCanvas.Bounds.Height;
-		var bitmapWidth = _previewBitmap.PixelSize.Width;
-		var bitmapHeight = _previewBitmap.PixelSize.Height;
+		var bitmapWidth = frameSize.Width;
+		var bitmapHeight = frameSize.Height;
 		if (controlWidth <= 0 || controlHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0) return null;
 
 		// The preview bitmap is a uniformly downscaled copy of the full render resolution.

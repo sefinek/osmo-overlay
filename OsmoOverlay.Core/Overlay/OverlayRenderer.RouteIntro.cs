@@ -108,9 +108,12 @@ public sealed partial class OverlayRenderer
 
 		_routeIntroMosaic?.Dispose();
 		_routeIntroMosaic = mosaic;
-		_routeIntroTrailPixels = mosaic is null
-			? null
-			: [.. _allFrames.Select(f => mosaic.GetPixel(f.Raw.Latitude, f.Raw.Longitude))];
+		_routeIntroTrailPixels = mosaic is null ? null : ProjectRoute(mosaic);
+	}
+
+	private List<SKPoint> ProjectRoute(RouteMapMosaic mosaic)
+	{
+		return [.. _allFrames.Select(f => mosaic.GetPixel(f.Raw.Latitude, f.Raw.Longitude))];
 	}
 
 	/// <summary>See NeedsMapPrepare - lets a live-preview caller know a fresh fetch is worth making.</summary>

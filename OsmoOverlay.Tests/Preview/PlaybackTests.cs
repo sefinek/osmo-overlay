@@ -13,7 +13,7 @@ public sealed class PlaybackPlanTests
 	private static readonly OutputTimeline Cut =
 		new(new RenderPlan([new RenderPiece(100, 100), new RenderPiece(300, 100)], true), Fps);
 
-	private static (double, double)[] Seconds(IEnumerable<PreviewPlayer.PlaybackStretch> stretches)
+	private static (double, double)[] Seconds(IEnumerable<PlaybackStretch> stretches)
 	{
 		return [.. stretches.Select(s => (s.Start.TotalSeconds, s.End.TotalSeconds))];
 	}
@@ -21,7 +21,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void NoCuts_PlaysToTheEnd()
 	{
-		PreviewPlayer.PlaybackPlan plan = PreviewPlayer.PlanPlayback(null, TimeSpan.FromSeconds(3), Duration, false, null);
+		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(3), Duration, false, null);
 
 		CollectionAssert.AreEqual(new[] { (3.0, 10.0) }, Seconds(plan.First));
 		Assert.AreEqual(0, plan.Repeat.Count);
@@ -30,7 +30,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Cuts_AreSkipped()
 	{
-		PreviewPlayer.PlaybackPlan plan = PreviewPlayer.PlanPlayback(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
+		PlaybackPlan plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
 
 		CollectionAssert.AreEqual(new[] { (3.0, 4.0), (6.0, 8.0) }, Seconds(plan.First));
 	}
@@ -38,7 +38,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Loop_FinishesFromThePositionThenRepeatsTheRange()
 	{
-		PreviewPlayer.PlaybackPlan plan = PreviewPlayer.PlanPlayback(Cut, TimeSpan.FromSeconds(3), Duration, true, new TimeRange(2.5, 7));
+		PlaybackPlan plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, true, new TimeRange(2.5, 7));
 
 		CollectionAssert.AreEqual(new[] { (3.0, 4.0), (6.0, 7.0) }, Seconds(plan.First));
 		CollectionAssert.AreEqual(new[] { (2.5, 4.0), (6.0, 7.0) }, Seconds(plan.Repeat));
@@ -48,7 +48,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Loop_FromOutsideTheRange_StartsAtItsStart()
 	{
-		PreviewPlayer.PlaybackPlan plan = PreviewPlayer.PlanPlayback(null, TimeSpan.FromSeconds(9), Duration, true, new TimeRange(1, 2));
+		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(9), Duration, true, new TimeRange(1, 2));
 
 		CollectionAssert.AreEqual(new[] { (1.0, 2.0) }, Seconds(plan.First));
 	}
@@ -56,20 +56,40 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Loop_WithoutRange_RepeatsTheWholeRecording()
 	{
-		PreviewPlayer.PlaybackPlan plan = PreviewPlayer.PlanPlayback(null, TimeSpan.FromSeconds(4), Duration, true, null);
+		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(4), Duration, true, null);
 
 		CollectionAssert.AreEqual(new[] { (0.0, 10.0) }, Seconds(plan.Repeat));
+	}
+
+	[TestMethod]
+	public void StretchesFrom_StartsPartWayIntoTheStretchAtThatPlayTime()
+	{
+		PlaybackPlan plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
+
+		// Play time 0-1 is 3-4 s, 1-3 is 6-8 s.
+		CollectionAssert.AreEqual(new[] { (3.5, 4.0), (6.0, 8.0) }, Seconds(plan.StretchesFrom(0.5)));
+		CollectionAssert.AreEqual(new[] { (7.0, 8.0) }, Seconds(plan.StretchesFrom(2)));
+		Assert.AreEqual(0, plan.StretchesFrom(3).Count(), "past the end of a plan that doesn't loop");
+	}
+
+	[TestMethod]
+	public void StretchesFrom_WhileLooping_GoesOnIntoTheRepeats()
+	{
+		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(1.5), Duration, true, new TimeRange(1, 2));
+
+		// Play time 0-0.5 is the first pass (1.5-2 s), then 1 s per repeat.
+		CollectionAssert.AreEqual(new[] { (1.25, 2.0), (1.0, 2.0) }, Seconds(plan.StretchesFrom(0.75).Take(2)));
 	}
 
 	[TestMethod]
 	public void FrameStep_ShowsAtMostAboutSixtyFramesASecond()
 	{
 		const double osmoFps = 60000 / 1001.0;
-		Assert.AreEqual(1, PreviewPlayer.FrameStep(0.25, osmoFps));
-		Assert.AreEqual(1, PreviewPlayer.FrameStep(1, osmoFps));
-		Assert.AreEqual(2, PreviewPlayer.FrameStep(2, osmoFps));
-		Assert.AreEqual(4, PreviewPlayer.FrameStep(4, osmoFps));
-		Assert.AreEqual(1, PreviewPlayer.FrameStep(2, 30), "30 fps at 2x is still 60 shown frames a second");
+		Assert.AreEqual(1, PlaybackSession.FrameStep(0.25, osmoFps));
+		Assert.AreEqual(1, PlaybackSession.FrameStep(1, osmoFps));
+		Assert.AreEqual(2, PlaybackSession.FrameStep(2, osmoFps));
+		Assert.AreEqual(4, PlaybackSession.FrameStep(4, osmoFps));
+		Assert.AreEqual(1, PlaybackSession.FrameStep(2, 30), "30 fps at 2x is still 60 shown frames a second");
 	}
 }
 
@@ -116,7 +136,21 @@ public sealed class PlaybackClockTests
 	}
 
 	[TestMethod]
-	public void Audio_IsWhatWasPushedMinusQueuedAndLatency()
+	public void Stopwatch_SetRate_ChangesPaceFromWhereItIs()
+	{
+		double wall = 0;
+		var clock = new PlaybackClock(null, 48000, 1, () => wall);
+		clock.Start(0);
+		wall = 2;
+
+		clock.SetRate(4);
+		wall = 2.5;
+
+		Assert.AreEqual(4, clock.Now, 1e-9);
+	}
+
+	[TestMethod]
+	public void Audio_IsWhatWasPushedMinusQueuedAndLatency_PlusHalfABuffer()
 	{
 		var audio = new FakeAudio { QueuedSeconds = 0.25, DeviceLatencySeconds = 0.01 };
 		var clock = new PlaybackClock(audio, 48000, 1, () => 0);
@@ -125,7 +159,8 @@ public sealed class PlaybackClockTests
 		clock.AddPushed(48000 * 2);
 
 		Assert.IsTrue(audio.Started);
-		Assert.AreEqual(1.74, clock.Now, 1e-9);
+		// The device's position lags what's heard by up to one buffer - half of one on average.
+		Assert.AreEqual(1.745, clock.Now, 1e-9);
 	}
 
 	[TestMethod]
@@ -153,6 +188,50 @@ public sealed class PlaybackClockTests
 
 		Assert.IsFalse(clock.FollowsAudio);
 		Assert.AreEqual(5, clock.Now, 1e-9);
+	}
+
+	[TestMethod]
+	public void Audio_TakenABufferAtATime_StillTicksEvenly()
+	{
+		const double buffer = 0.01;
+		const double display = 1 / 60.0;
+		double wall = 0;
+		var audio = new FakeAudio { DeviceLatencySeconds = buffer };
+		var clock = new PlaybackClock(audio, 48000, 1, () => wall);
+		clock.AddPushed(48000 * 10);
+
+		double? previous = null;
+		for (var i = 0; i < 180; i++)
+		{
+			wall = i * display;
+			// The device took whole buffers up to now: its position steps every 10 ms, the heard sound doesn't.
+			var taken = Math.Floor(wall / buffer) * buffer;
+			audio.QueuedSeconds = 10 - buffer - taken;
+			var now = clock.Now;
+
+			if (i >= 60)
+			{
+				// Read at 60 Hz, 10 ms steps are only ever caught at three phases, so "half a buffer behind" is off by a
+				// couple of ms here - a constant, far below what A/V sync notices. What matters is the even pace.
+				Assert.AreEqual(wall, now, 0.003, $"reading {i}");
+				Assert.AreEqual(display, now - previous!.Value, 0.0005, $"step {i}");
+			}
+
+			previous = now;
+		}
+	}
+
+	[TestMethod]
+	public void RestartAudio_CarriesOnFromThePlayTimeAtTheNewTempo()
+	{
+		var audio = new FakeAudio();
+		var clock = new PlaybackClock(audio, 48000, 1, () => 0);
+		clock.AddPushed(48000 * 5);
+
+		clock.RestartAudio(4, 2);
+		clock.AddPushed(48000);
+
+		Assert.AreEqual(6, clock.AudioPosition!.Value, 1e-9);
 	}
 
 	[TestMethod]
@@ -184,23 +263,44 @@ public sealed class CatchUpTests
 	[TestMethod]
 	public void OnTimeOrSilent_DecodesOn()
 	{
-		Assert.AreEqual(0, PreviewPlayer.CatchUpFrames(null, 1, Fps), "no sound to fall behind");
-		Assert.AreEqual(0, PreviewPlayer.CatchUpFrames(1, 2, Fps), "ahead of the sound");
-		Assert.AreEqual(0, PreviewPlayer.CatchUpFrames(2.05, 2, Fps), "late, but not late enough to be dropped");
+		Assert.AreEqual(0, PlaybackSession.CatchUpFrames(null, 1, Fps, 1, 1), "no sound to fall behind");
+		Assert.AreEqual(0, PlaybackSession.CatchUpFrames(1, 2, Fps, 1, 1), "ahead of the sound");
+		Assert.AreEqual(0, PlaybackSession.CatchUpFrames(2, 2, Fps, 1, 1), "due right now");
 	}
 
 	[TestMethod]
-	public void Behind_SkipsPastTheSoundWithAMargin()
+	public void SlightlyBehind_SkipsAStep_RatherThanConvertAFrameAlreadyLate()
 	{
-		// 0.5 s behind: 30 frames to reach the sound plus ~6 for the margin.
-		var frames = PreviewPlayer.CatchUpFrames(2.5, 2, Fps);
-		Assert.IsTrue(frames is 36 or 37, $"{frames}");
+		Assert.AreEqual(1, PlaybackSession.CatchUpFrames(2.04, 2, Fps, 1, 1));
+	}
+
+	[TestMethod]
+	public void Behind_SpreadsTheSkipOverReads_InProportionToTheLateness()
+	{
+		// 0.5 s behind is five times the threshold: five more steps this read, of the ~39 frames it takes in all.
+		Assert.AreEqual(5, PlaybackSession.CatchUpFrames(2.5, 2, Fps, 1, 1));
+		Assert.AreEqual(20, PlaybackSession.CatchUpFrames(2.5, 2, Fps, 1, 4));
+	}
+
+	[TestMethod]
+	public void Behind_NeverSkipsPastTheLead()
+	{
+		// 0.15 s behind with a big step: all it takes is 0.15 s to the sound plus the 0.15 s lead - 18 frames.
+		var frames = PlaybackSession.CatchUpFrames(2.15, 2, Fps, 1, 30);
+		Assert.IsTrue(frames is 18 or 19, $"{frames}");
+	}
+
+	[TestMethod]
+	public void SpedUp_LatenessIsRealTime()
+	{
+		Assert.AreEqual(4, PlaybackSession.CatchUpFrames(2.16, 2, Fps, 4, 4), "0.16 s of play time is 40 ms at 4x: one step");
+		Assert.AreEqual(8, PlaybackSession.CatchUpFrames(2.6, 2, Fps, 4, 4), "150 ms real time behind: two steps");
 	}
 
 	[TestMethod]
 	public void FarBehind_SkipsAtMostTwoSecondsPerRead()
 	{
-		Assert.AreEqual(120, PreviewPlayer.CatchUpFrames(30, 2, Fps));
+		Assert.AreEqual(120, PlaybackSession.CatchUpFrames(30, 2, Fps, 1, 1));
 	}
 }
 

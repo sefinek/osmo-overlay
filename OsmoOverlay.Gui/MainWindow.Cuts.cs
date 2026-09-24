@@ -52,13 +52,16 @@ public partial class MainWindow
 			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { RouteAcrossCuts = join });
 			_previewPlayer.SetRouteAcrossCuts(join);
 		};
-		PreviewTimeline.SelectionDragged += OnTimelineSelectionDragged;
-		PreviewTimeline.CutResized += OnTimelineCutResized;
-		PreviewTimeline.CutClicked += index =>
+		foreach (PreviewTimeline timeline in Timelines)
 		{
-			_selectedCut = index;
-			PreviewTimeline.SelectedCut = index;
-		};
+			timeline.SelectionDragged += OnTimelineSelectionDragged;
+			timeline.CutResized += OnTimelineCutResized;
+			timeline.CutClicked += index =>
+			{
+				_selectedCut = index;
+				foreach (PreviewTimeline other in Timelines) other.SelectedCut = index;
+			};
+		}
 		CutsEditor.SeekRequested += SeekToFrame;
 	}
 
@@ -73,7 +76,7 @@ public partial class MainWindow
 
 		CloseElementSettings();
 		// Cutting is done on the timeline - the expanded one shows where each cut falls.
-		if (!PreviewTimeline.Expanded) SetTimelineExpanded(true, false);
+		if (!TimelineCard.IsVisible) SetTimelineExpanded(true, false);
 		SourceColumnScroll.IsVisible = false;
 		CutsColumnScroll.IsVisible = true;
 		CutsColumnScroll.Offset = default;
@@ -224,7 +227,7 @@ public partial class MainWindow
 	{
 		// Indices into the old list mean nothing after a change.
 		_selectedCut = null;
-		PreviewTimeline.SelectedCut = null;
+		foreach (PreviewTimeline timeline in Timelines) timeline.SelectedCut = null;
 		OutputTimeline? previous = _outputTimeline;
 		_outputTimeline = BuildOutputTimeline();
 		// Rebuilds the preview's renderer - skipped when nothing was cut before or after.
@@ -242,14 +245,16 @@ public partial class MainWindow
 		ShowSelection();
 		UpdateCutsButton();
 		UpdateCutScrim(_previewPosition);
-		PreviewTimeline.Cuts = _summary is null ? [] : CutList.ToTimeRanges(CutList.Normalize(_cuts, SourceFrames), _summary.Video.Fps);
+		IReadOnlyList<TimeRange> cuts = _summary is null ? [] : CutList.ToTimeRanges(CutList.Normalize(_cuts, SourceFrames), _summary.Video.Fps);
+		foreach (PreviewTimeline timeline in Timelines) timeline.Cuts = cuts;
 	}
 
 	private void ShowSelection()
 	{
 		SyncLoop();
 		FrameRange? selection = _summary is null ? null : Selection;
-		PreviewTimeline.Selection = selection?.ToTimeRange(_summary!.Video.Fps);
+		TimeRange? range = selection?.ToTimeRange(_summary!.Video.Fps);
+		foreach (PreviewTimeline timeline in Timelines) timeline.Selection = range;
 		CutsEditor.ShowSelection(selection is { } s ? DescribeSelection(s) : null, selection is not null);
 	}
 
@@ -307,7 +312,7 @@ public partial class MainWindow
 	/// <summary>Dims the preview while the frame on screen is one the render leaves out.</summary>
 	private void UpdateCutScrim(TimeSpan position)
 	{
-		CutScrim.IsVisible = PreviewImage.Source is not null && _outputTimeline is { } timeline &&
+		CutScrim.IsVisible = _previewFrameSize is not null && _outputTimeline is { } timeline &&
 		                     timeline.ToOutputSeconds(position.TotalSeconds) is null;
 	}
 }

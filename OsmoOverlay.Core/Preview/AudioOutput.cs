@@ -102,6 +102,15 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 		}
 	}
 
+	/// <summary>Drops what's queued but keeps the device playing - the sound restarting somewhere else (a speed change).</summary>
+	public void Clear()
+	{
+		lock (_lock)
+		{
+			if (!_disposed) SDL3.SDL_ClearAudioStream(_stream);
+		}
+	}
+
 	public void Stop()
 	{
 		lock (_lock)

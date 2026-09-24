@@ -58,10 +58,10 @@ public partial class MainWindow
 	/// <summary>The zoom Fit shows at the view's current size - zooming out past it snaps back to Fit.</summary>
 	private double FitZoom()
 	{
-		if (_summary is null || _previewBitmap is null) return 0;
+		if (_summary is null || _previewFrameSize is not { } frameSize) return 0;
 
-		var bitmapWidth = _previewBitmap.PixelSize.Width;
-		var fitScale = Math.Min(OverlayDragCanvas.Bounds.Width / bitmapWidth, OverlayDragCanvas.Bounds.Height / _previewBitmap.PixelSize.Height);
+		var bitmapWidth = frameSize.Width;
+		var fitScale = Math.Min(OverlayDragCanvas.Bounds.Width / bitmapWidth, OverlayDragCanvas.Bounds.Height / frameSize.Height);
 		return fitScale * RenderScaling * bitmapWidth / _summary.Video.Width;
 	}
 
@@ -91,14 +91,15 @@ public partial class MainWindow
 		ClampPreviewPan();
 		if (GetPreviewTransform() is { } t)
 		{
-			PreviewImage.Width = t.RenderedWidth;
-			PreviewImage.Height = t.RenderedHeight;
-			Canvas.SetLeft(PreviewImage, t.OffsetX);
-			Canvas.SetTop(PreviewImage, t.OffsetY);
+			PreviewVideo.Width = t.RenderedWidth;
+			PreviewVideo.Height = t.RenderedHeight;
+			Canvas.SetLeft(PreviewVideo, t.OffsetX);
+			Canvas.SetTop(PreviewVideo, t.OffsetY);
 		}
 
 		UpdatePreviewGuides();
 		RefreshSelectionHighlight();
+		UpdateDisplayStatus();
 		WidgetGearHoverButton.IsVisible = false;
 		RemoveWidgetButton.IsVisible = false;
 	}

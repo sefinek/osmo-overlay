@@ -35,22 +35,20 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly int _height;
 	private readonly float _scale;
 
-	// Per-file data the whole render depends on, handed in once at construction.
-	private readonly IReadOnlyList<DerivedFrame> _allFrames;
 	private readonly string? _cameraModel;
 	private readonly DateTime? _containerRecordingStartUtc;
-	private readonly double _startAltitude;
-	private readonly double _observedMaxSpeedKmh;
-	// Cached once from _allFrames rather than recomputed on every one of DrawRouteIntro's per-frame
-	// calls during the whole route-intro card - the source data (cumulative distance, sample time,
-	// altitude) is already fully known as soon as the frame list is handed in, and none of these
-	// change from one frame to the next.
-	private readonly double _totalDistanceMeters;
-	private readonly double _totalDurationSeconds;
-	private readonly double _totalElevationGainMeters;
-	private readonly double _avgSpeedKmh;
+
+	// The telemetry the whole render draws from - handed in at construction, replaced by SetFrames when the preview's
+	// cuts change. Everything below it is computed once from it (ApplyFrames) rather than on every frame.
+	private IReadOnlyList<DerivedFrame> _allFrames = [];
+	private double _startAltitude;
+	private double _observedMaxSpeedKmh;
+	private double _totalDistanceMeters;
+	private double _totalDurationSeconds;
+	private double _totalElevationGainMeters;
+	private double _avgSpeedKmh;
 	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
-	private readonly double _trailSpeedScaleKmh;
+	private double _trailSpeedScaleKmh;
 
 	private readonly SKTypeface _hudTypeface;
 	private readonly SKFont _dateFont;
@@ -128,25 +126,9 @@ public sealed partial class OverlayRenderer : IDisposable
 		_height = height;
 		_scale = OverlayElementBounds.GetScale(width, height);
 
-		_allFrames = allFrames;
 		_cameraModel = cameraModel;
 		_containerRecordingStartUtc = containerRecordingStartUtc;
-		_startAltitude = startAltitude;
-		_observedMaxSpeedKmh = observedMaxSpeedKmh;
-		_totalDistanceMeters = allFrames.Count > 0 ? allFrames[^1].CumulativeDistanceMeters : 0;
-		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
-		// Sum of positive altitude deltas only (a simple running climb total, not the true barometric
-		// "elevation gain" a dedicated sensor would give) - GPS altitude jitter means this reads a bit
-		// high on flat ground, but it's the only altitude source this app has.
-		_totalElevationGainMeters = 0;
-		for (var i = 1; i < allFrames.Count; i++)
-		{
-			var delta = allFrames[i].Raw.AltitudeMeters - allFrames[i - 1].Raw.AltitudeMeters;
-			if (delta > 0) _totalElevationGainMeters += delta;
-		}
-
-		_avgSpeedKmh = _totalDurationSeconds > 0 ? _totalDistanceMeters / _totalDurationSeconds * 3.6 : 0;
-		_trailSpeedScaleKmh = ComputeTrailSpeedScale(allFrames);
+		ApplyFrames(allFrames, startAltitude, observedMaxSpeedKmh);
 
 		Layout = layout;
 		ShowWatermark = showWatermark;
@@ -276,6 +258,51 @@ public sealed partial class OverlayRenderer : IDisposable
 		_routeIntroCard?.Dispose();
 	}
 
+	/// <summary>
+	///     Swaps the telemetry for another set of the same recording - the preview's, when its cuts change (see
+	///     OutputTimeline) - keeping fonts, paints and the map mosaics, so the map doesn't drop back to its placeholder
+	///     while tiles are stitched again. The trail and the route-intro card start over from the new frames; the map
+	///     widget's mosaic stays as long as MapMosaicCoversRoute, the route intro's until a new one is applied.
+	/// </summary>
+	public void SetFrames(IReadOnlyList<DerivedFrame> allFrames, double startAltitude, double observedMaxSpeedKmh)
+	{
+		ApplyFrames(allFrames, startAltitude, observedMaxSpeedKmh);
+
+		_trail.Clear();
+		_trailPixels.Clear();
+		_trailCacheIndex = -1;
+		DisposeRoutes(_compassRoutes);
+		DisposeRoutes(_mapRoutes);
+		_routeIntroCard?.Dispose();
+		_routeIntroCard = null;
+		if (_routeIntroMosaic is { } mosaic) _routeIntroTrailPixels = ProjectRoute(mosaic);
+	}
+
+	/// <summary>False once SetFrames brought in route points outside what the map widget's mosaic was built around.</summary>
+	public bool MapMosaicCoversRoute =>
+		_mapMosaic is not { } mosaic || mosaic.Route.Contains(GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))));
+
+	private void ApplyFrames(IReadOnlyList<DerivedFrame> allFrames, double startAltitude, double observedMaxSpeedKmh)
+	{
+		_allFrames = allFrames;
+		_startAltitude = startAltitude;
+		_observedMaxSpeedKmh = observedMaxSpeedKmh;
+		_totalDistanceMeters = allFrames.Count > 0 ? allFrames[^1].CumulativeDistanceMeters : 0;
+		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
+		// Sum of positive altitude deltas only (a simple running climb total, not the true barometric
+		// "elevation gain" a dedicated sensor would give) - GPS altitude jitter means this reads a bit
+		// high on flat ground, but it's the only altitude source this app has.
+		_totalElevationGainMeters = 0;
+		for (var i = 1; i < allFrames.Count; i++)
+		{
+			var delta = allFrames[i].Raw.AltitudeMeters - allFrames[i - 1].Raw.AltitudeMeters;
+			if (delta > 0) _totalElevationGainMeters += delta;
+		}
+
+		_avgSpeedKmh = _totalDurationSeconds > 0 ? _totalDistanceMeters / _totalDurationSeconds * 3.6 : 0;
+		_trailSpeedScaleKmh = ComputeTrailSpeedScale(allFrames);
+	}
+
 	public int FrameBufferSize(int? outputWidth = null, int? outputHeight = null)
 	{
 		return (outputWidth ?? _width) * (outputHeight ?? _height) * 4;
@@ -306,7 +333,9 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			using var bitmap = new SKBitmap();
 			bitmap.InstallPixels(info, pin.AddrOfPinnedObject(), info.RowBytes);
-			DrawFrame(bitmap, frame, outW, outH);
+			using var canvas = new SKCanvas(bitmap);
+			canvas.Clear(SKColors.Transparent);
+			DrawFrame(canvas, frame, outW, outH);
 		}
 		finally
 		{
@@ -316,10 +345,36 @@ public sealed partial class OverlayRenderer : IDisposable
 		if (!premultiplied) BgraAlpha.Unpremultiply(destination, info.BytesSize, outW);
 	}
 
-	private void DrawFrame(SKBitmap bitmap, DerivedFrame frame, int outW, int outH)
+	/// <summary>
+	///     Draws the overlay straight onto an opaque BGRA frame (width * 4 bytes a row) - the preview's video - rather
+	///     than into a transparent buffer blended over it afterwards: the same pixels (source-over is associative),
+	///     without clearing and blending a whole frame's worth of mostly transparent overlay.
+	/// </summary>
+	public void RenderOnto(DerivedFrame frame, byte[] bgra, int width, int height)
 	{
-		using var canvas = new SKCanvas(bitmap);
-		canvas.Clear(SKColors.Transparent);
+		// Opaque pixels read the same premultiplied or not; Premul is what Skia has its fast paths for.
+		var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+		if (bgra.Length < info.BytesSize)
+			throw new ArgumentException($"Frame buffer is {bgra.Length} bytes, {info.BytesSize} needed.", nameof(bgra));
+
+		UpdateTrail(frame);
+
+		GCHandle pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
+		try
+		{
+			using var bitmap = new SKBitmap();
+			bitmap.InstallPixels(info, pin.AddrOfPinnedObject(), info.RowBytes);
+			using var canvas = new SKCanvas(bitmap);
+			DrawFrame(canvas, frame, width, height);
+		}
+		finally
+		{
+			pin.Free();
+		}
+	}
+
+	private void DrawFrame(SKCanvas canvas, DerivedFrame frame, int outW, int outH)
+	{
 		canvas.Scale(outW / (float)_width, outH / (float)_height);
 
 		var sampleTime = frame.Raw.SampleTimeSeconds;

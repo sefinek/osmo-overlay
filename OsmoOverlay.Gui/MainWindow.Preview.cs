@@ -1,10 +1,7 @@
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
@@ -27,28 +24,28 @@ public partial class MainWindow
 			var previewWidth = (int)(summary.Video.Width * scale) & ~1;
 			var previewHeight = (int)(summary.Video.Height * scale) & ~1;
 
-			_previewBitmap = new WriteableBitmap(new PixelSize(previewWidth, previewHeight), new Vector(96, 96),
-				PixelFormat.Bgra8888, AlphaFormat.Opaque);
-			PreviewImage.Source = _previewBitmap;
+			_previewFrameSize = new PixelSize(previewWidth, previewHeight);
 			ApplyPreviewLayout();
 
 			await _previewPlayer.OpenAsync(summary, previewWidth, previewHeight);
 			LoadOverlayPresets(summary.Video.Width, summary.Video.Height);
 
-			PreviewTimeline.Maximum = _previewPlayer.Duration.TotalSeconds;
+			foreach (PreviewTimeline timeline in Timelines) timeline.Maximum = _previewPlayer.Duration.TotalSeconds;
 			PreviewPlaceholder.IsVisible = false;
+			UpdatePreviewStatus();
 			TransportPanel.IsEnabled = true;
 			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
 			RefreshCutViews();
-			PreviewTimeline.IsEnabled = true;
+			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;
 			UpdateAudioPanel();
 			_ = LoadTimelineTracksAsync(summary);
 
 			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
 			// flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
-			PreviewTimeline.GpsLoss = _hasGpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
+			IReadOnlyList<TimeRange> gpsLoss = _hasGpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
 				? [.. TelemetryProcessor.FindGpsLossRanges(rawFrames).Select(r => new TimeRange(r.Start, r.End))]
 				: [];
+			foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = gpsLoss;
 		}
 		catch (Exception ex)
 		{
@@ -63,41 +60,65 @@ public partial class MainWindow
 		ShowPlayingState(false);
 		TransportPanel.IsEnabled = false;
 		CutsEditor.Attach(0, 0);
-		PreviewTimeline.IsEnabled = false;
+		foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = false;
 		UpdateAudioPanel();
 
-		_previewBitmap = null;
-		PreviewImage.Source = null;
+		_previewFrameSize = null;
+		PreviewVideo.Clear();
+		UpdatePreviewStatus();
 		CutScrim.IsVisible = false;
 		PreviewPlaceholder.IsVisible = true;
 		_overlayPresetsLoaded = false;
-		PreviewTimeline.GpsLoss = [];
+		foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = [];
 	}
 
+	/// <summary>A still (paused, seeking) - played frames go to PreviewVideo on the render thread, see OnPlaybackFrameShown.</summary>
 	private void OnPreviewFrameReady(ComposedPreviewFrame frame)
 	{
-		if (_previewBitmap is null) return;
+		if (_previewFrameSize is null) return;
 
-		using (ILockedFramebuffer fb = _previewBitmap.Lock()) Marshal.Copy(frame.Bgra, 0, fb.Address, frame.Bgra.Length);
+		PreviewVideo.ShowStill(frame);
+		ShowPreviewPosition(frame.Position);
+	}
 
-		PreviewImage.InvalidateVisual();
+	/// <summary>
+	///     The newest played frame reached the screen. Posted from the render thread, so it can land just after playback
+	///     stopped - the still decoded for the pause brings the position then.
+	/// </summary>
+	private void OnPlaybackFrameShown(TimeSpan position, double framesPerSecond)
+	{
+		if (!_previewPlayer.IsPlaying) return;
 
+		ShowPreviewPosition(position);
+		ShowPlaybackFps(framesPerSecond);
+	}
+
+	private void OnPreviewPlaybackStarted()
+	{
+		PreviewVideo.StartPlayback(_previewPlayer.Frames);
+		ResetPlaybackFps();
+	}
+
+	private void ShowPreviewPosition(TimeSpan position)
+	{
 		if (!_timelineScrubbing)
 		{
 			_suppressTimelineEvent = true;
-			PreviewTimeline.Value = frame.Position.TotalSeconds;
+			PreviewTimeline.Value = position.TotalSeconds;
 			_suppressTimelineEvent = false;
 		}
 
-		_previewPosition = frame.Position;
-		UpdateCutScrim(frame.Position);
+		_previewPosition = position;
+		UpdateCutScrim(position);
 		UpdatePreviewTimeText();
+		UpdateFrameStatus(position);
 	}
 
 	private void OnPreviewPlaybackStopped()
 	{
 		ShowPlayingState(false);
 		UpdatePreviewTimeText();
+		ResetPlaybackFps();
 	}
 
 	// Width-based (not "720p" height labels): _previewMaxWidth caps the preview by width (OpenPreviewAsync), and a
@@ -172,22 +193,38 @@ public partial class MainWindow
 		return t.ToString(t.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss");
 	}
 
+	/// <summary>
+	///     The compact timeline in the transport row stays there, and the expanded one (in the log's place, see
+	///     SetTimelineExpanded) shows the same: whatever describes the recording goes to both. The compact one holds the
+	///     position everything reads (PreviewTimeline.Value); the expanded one follows it and hands a drag back to it.
+	/// </summary>
+	private PreviewTimeline[] Timelines => [PreviewTimeline, ExpandedTimeline];
+
 	private void WirePreviewTimeline()
 	{
-		PreviewTimeline.ScrubStarted += () =>
+		foreach (PreviewTimeline timeline in Timelines)
 		{
-			_timelineScrubbing = true;
-			_previewPlayer.BeginScrubDrag();
-		};
-		PreviewTimeline.ScrubEnded += () =>
-		{
-			_timelineScrubbing = false;
-			_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewTimeline.Value));
-		};
+			timeline.ScrubStarted += () =>
+			{
+				_timelineScrubbing = true;
+				_previewPlayer.BeginScrubDrag();
+			};
+			timeline.ScrubEnded += () =>
+			{
+				_timelineScrubbing = false;
+				_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewTimeline.Value));
+			};
+		}
+	}
+
+	private void OnExpandedTimelineValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+	{
+		PreviewTimeline.Value = e.NewValue;
 	}
 
 	private void OnPreviewTimelineValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
 	{
+		ExpandedTimeline.Value = e.NewValue;
 		if (_suppressTimelineEvent) return;
 
 		// Keyframes while dragging keep up with the pointer; the exact frame follows on release (EndScrubDrag).

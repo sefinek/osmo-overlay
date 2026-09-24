@@ -34,7 +34,7 @@ public sealed class RouteMapMosaic : IDisposable
 
 	private readonly SKBitmap _bitmap;
 
-	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom)
+	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route)
 	{
 		// Drawing a mutable SKBitmap makes Skia snapshot (copy) its pixels on every single draw call - for
 		// a mosaic of up to MaxTiles tiles that's tens of MB copied per rendered frame. Frozen once here,
@@ -45,10 +45,14 @@ public sealed class RouteMapMosaic : IDisposable
 		_originWorldX = originWorldX;
 		_originWorldY = originWorldY;
 		Zoom = zoom;
+		Route = route;
 	}
 
 	public SKImage Image { get; }
 	public int Zoom { get; }
+
+	/// <summary>The bounding box of the points the mosaic was built around - its padding counts on it.</summary>
+	public GeoBounds Route { get; }
 
 	public void Dispose()
 	{
@@ -212,6 +216,29 @@ public sealed class RouteMapMosaic : IDisposable
 
 		var originWorldX = minTileX * (double)WebMercator.TileSize;
 		var originWorldY = minTileY * (double)WebMercator.TileSize;
-		return new RouteMapMosaic(bitmap, originWorldX, originWorldY, zoom);
+		return new RouteMapMosaic(bitmap, originWorldX, originWorldY, zoom, new GeoBounds(minLat, maxLat, minLon, maxLon));
+	}
+}
+
+/// <summary>A latitude/longitude bounding box.</summary>
+public readonly record struct GeoBounds(double MinLat, double MaxLat, double MinLon, double MaxLon)
+{
+	public static GeoBounds Of(IEnumerable<(double Lat, double Lon)> points)
+	{
+		double minLat = double.MaxValue, maxLat = double.MinValue, minLon = double.MaxValue, maxLon = double.MinValue;
+		foreach (var (lat, lon) in points)
+		{
+			minLat = Math.Min(minLat, lat);
+			maxLat = Math.Max(maxLat, lat);
+			minLon = Math.Min(minLon, lon);
+			maxLon = Math.Max(maxLon, lon);
+		}
+
+		return new GeoBounds(minLat, maxLat, minLon, maxLon);
+	}
+
+	public bool Contains(GeoBounds other)
+	{
+		return other.MinLat >= MinLat && other.MaxLat <= MaxLat && other.MinLon >= MinLon && other.MaxLon <= MaxLon;
 	}
 }

@@ -41,7 +41,15 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	private long _lastReturned = -1;
 	private bool _disposed;
 
-	public LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height)
+	public LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height) : this(segments, fps, width, height, null)
+	{
+	}
+
+	/// <param name="buffers">
+	///     Where frame buffers come from and go back to (Recycle) - the preview shares one with everything its frames
+	///     pass through; null for a pool of this source's own.
+	/// </param>
+	internal LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, FrameBufferPool? buffers)
 	{
 		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException($"The preview can't decode video: {failure}");
 
@@ -49,7 +57,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		_width = width;
 		_height = height;
 		_backStepFrames = (int)Math.Clamp(BackStepCacheBytes / ((long)width * height * 4), 2, BackStepFrames);
-		_buffers = new FrameBufferPool(_backStepFrames + 6);
+		_buffers = buffers ?? new FrameBufferPool(_backStepFrames + 6);
 
 		_segments = new List<Segment>(segments.Count);
 		double offset = 0;
@@ -308,8 +316,30 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		/// <summary>Position of the frame TryReadNextFrame returned last, on the recording's timeline.</summary>
 		public TimeSpan Position { get; private set; }
 
+		/// <summary>Position of the frame decoded next, on the recording's timeline.</summary>
+		public TimeSpan NextPosition => TimeSpan.FromSeconds(_next / _source.Fps);
+
 		/// <summary>Why the stream stopped early, if a decode failed.</summary>
 		public string? Error { get; private set; }
+
+		/// <summary>Decodes past frames without converting them. False at the end of the recording (or once cancelled or failed).</summary>
+		public bool Skip(int frames)
+		{
+			if (_ct.IsCancellationRequested || Error is not null) return false;
+
+			try
+			{
+				lock (_source._lock)
+				{
+					return !_source._disposed && SkipLocked(frames);
+				}
+			}
+			catch (InvalidOperationException ex)
+			{
+				Error = ex.Message;
+				return false;
+			}
+		}
 
 		/// <summary>The next frame, or null at the end of the recording (or once cancelled or failed).</summary>
 		/// <param name="step">1 = every frame; N = decode N frames and return only the last (fast playback).</param>
@@ -321,13 +351,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			{
 				lock (_source._lock)
 				{
-					if (_source._disposed) return null;
-
-					for (var i = 1; i < step; i++)
-					{
-						if (!_source.SkipNext(_next, _ct)) return null;
-						_next = _source._nextFrame;
-					}
+					if (_source._disposed || !SkipLocked(step - 1)) return null;
 
 					(VideoFrame Frame, long Index)? decoded = _source.DecodeNext(_next, _ct);
 					if (decoded is not { } frame) return null;
@@ -342,6 +366,18 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				Error = ex.Message;
 				return null;
 			}
+		}
+
+		/// <summary>Under the source's lock.</summary>
+		private bool SkipLocked(int frames)
+		{
+			for (var i = 0; i < frames; i++)
+			{
+				if (_ct.IsCancellationRequested || !_source.SkipNext(_next, _ct)) return false;
+				_next = _source._nextFrame;
+			}
+
+			return true;
 		}
 	}
 
@@ -410,29 +446,33 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				_sws->threads = 0;
 			}
 
-			if (_scaled->buf[0] is null || _scaled->width != width || _scaled->height != height)
-			{
-				ffmpeg.av_frame_unref(_scaled);
-				_scaled->width = width;
-				_scaled->height = height;
-				_scaled->format = (int)AVPixelFormat.AV_PIX_FMT_BGRA;
-				LibavStreamDecoder.Check(ffmpeg.av_frame_get_buffer(_scaled, 0), "allocate the preview frame");
-			}
-
-			_scaled->color_range = AVColorRange.AVCOL_RANGE_JPEG;
-			LibavStreamDecoder.Check(ffmpeg.sws_scale_frame(_sws, _scaled, source), "convert the frame");
-
+			// swscale writes straight into `destination`: the frame borrows it (pinned for the call) through a buffer
+			// whose free callback does nothing, instead of converting into a frame of its own and copying that over.
 			var rowBytes = width * 4;
-			var stride = _scaled->linesize[0];
 			fixed (byte* target = destination)
 			{
-				if (stride == rowBytes)
-					Buffer.MemoryCopy(_scaled->data[0], target, destination.Length, (long)rowBytes * height);
-				else
-					for (var y = 0; y < height; y++)
-						Buffer.MemoryCopy(_scaled->data[0] + (long)y * stride, target + (long)y * rowBytes, rowBytes, rowBytes);
+				try
+				{
+					_scaled->width = width;
+					_scaled->height = height;
+					_scaled->format = (int)AVPixelFormat.AV_PIX_FMT_BGRA;
+					_scaled->color_range = AVColorRange.AVCOL_RANGE_JPEG;
+					_scaled->buf[0] = ffmpeg.av_buffer_create(target, (ulong)destination.Length, BorrowedBuffer, null, 0);
+					if (_scaled->buf[0] is null) throw new InvalidOperationException("FFmpeg could not wrap the preview frame.");
+					_scaled->data[0] = target;
+					_scaled->linesize[0] = rowBytes;
+					LibavStreamDecoder.Check(ffmpeg.sws_scale_frame(_sws, _scaled, source), "convert the frame");
+					if (_scaled->data[0] != target) throw new InvalidOperationException("swscale converted into a frame of its own.");
+				}
+				finally
+				{
+					ffmpeg.av_frame_unref(_scaled);
+				}
 			}
 		}
+
+		// Kept in a static field so the delegate FFmpeg calls back into is never collected.
+		private static readonly av_buffer_create_free BorrowedBuffer = (_, _) => { };
 
 		public void Dispose()
 		{

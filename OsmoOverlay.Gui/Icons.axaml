@@ -40,4 +40,8 @@
 	<StreamGeometry x:Key="IconTimeline">F1 M0.8,3 H15.2 V13 H0.8 Z M2,4.1 H3.4 V5.3 H2 Z M5.3,4.1 H6.7 V5.3 H5.3 Z M8.6,4.1 H10 V5.3 H8.6 Z M11.9,4.1 H13.3 V5.3 H11.9 Z M2,10.7 H3.4 V11.9 H2 Z M5.3,10.7 H6.7 V11.9 H5.3 Z M8.6,10.7 H10 V11.9 H8.6 Z M11.9,10.7 H13.3 V11.9 H11.9 Z M2,6.5 H14 V9.5 H2 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconLoop">M3,5 H11 V3 L14,6 L11,9 V7 H5 V9 H3 Z M13,11 H5 V13 L2,10 L5,7 V9 H11 V7 H13 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconSnap">M7.4,1 H8.6 V5 H7.4 Z M7.4,11 H8.6 V15 H7.4 Z M1,7.4 H5 V8.6 H1 Z M11,7.4 H15 V8.6 H11 Z M6.5,8 A1.5,1.5 0 1 0 9.5,8 A1.5,1.5 0 1 0 6.5,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconFile">M3,1 H9.8 L13,4.2 V15 H3 Z M4.2,2.2 V13.8 H11.8 V5.2 H8.8 V2.2 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconMonitor">M1,2 H15 V11.6 H1 Z M2.2,3.2 V10.4 H13.8 V3.2 Z M7.4,11.6 H8.6 V13.2 H7.4 Z M4.6,13.2 H11.4 V14.4 H4.6 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconFrameCurrent">M1,1 H5 V2.2 H2.2 V5 H1 Z M11,1 H15 V5 H13.8 V2.2 H11 Z M1,11 H2.2 V13.8 H5 V15 H1 Z M13.8,11 H15 V15 H11 V13.8 H13.8 Z M5,5 H11 V11 H5 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconDisplay">M1,1 H5 V2.2 H2.2 V5 H1 Z M11,1 H15 V5 H13.8 V2.2 H11 Z M1,11 H2.2 V13.8 H5 V15 H1 Z M13.8,11 H15 V15 H11 V13.8 H13.8 Z M4.4,4.4 H11.6 V11.6 H4.4 Z M5.6,5.6 V10.4 H10.4 V5.6 Z</StreamGeometry>
 </ResourceDictionary>

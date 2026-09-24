@@ -92,15 +92,18 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 
 	/// <summary>
 	///     The first hardware decoder this platform has that also supports the codec. With hw_device_ctx set,
-	///     libavcodec's default get_format picks the matching hardware format itself.
+	///     libavcodec's default get_format picks the matching hardware format itself. CUDA goes first where there
+	///     is an NVIDIA GPU: measured on a 4K HEVC 10-bit Osmo file (RTX 4070), decoding plus the download to
+	///     the CPU ran at 188 fps through CUDA against 109 through D3D11VA, with bit-identical frames; without an
+	///     NVIDIA GPU creating the CUDA device just fails and the next one is tried.
 	/// </summary>
 	private static string? AttachHardwareDevice(AVCodecContext* codec, AVCodec* decoder)
 	{
 		AVHWDeviceType[] candidates = OperatingSystem.IsWindows()
-			? [AVHWDeviceType.AV_HWDEVICE_TYPE_D3D11VA, AVHWDeviceType.AV_HWDEVICE_TYPE_CUDA, AVHWDeviceType.AV_HWDEVICE_TYPE_DXVA2]
+			? [AVHWDeviceType.AV_HWDEVICE_TYPE_CUDA, AVHWDeviceType.AV_HWDEVICE_TYPE_D3D11VA, AVHWDeviceType.AV_HWDEVICE_TYPE_DXVA2]
 			: OperatingSystem.IsMacOS()
 				? [AVHWDeviceType.AV_HWDEVICE_TYPE_VIDEOTOOLBOX]
-				: [AVHWDeviceType.AV_HWDEVICE_TYPE_VAAPI, AVHWDeviceType.AV_HWDEVICE_TYPE_CUDA];
+				: [AVHWDeviceType.AV_HWDEVICE_TYPE_CUDA, AVHWDeviceType.AV_HWDEVICE_TYPE_VAAPI];
 
 		foreach (AVHWDeviceType type in candidates)
 		{

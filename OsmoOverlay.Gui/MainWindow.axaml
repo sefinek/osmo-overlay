@@ -32,6 +32,23 @@
 			<Setter Property="Margin" Value="0,5" />
 			<Setter Property="TextWrapping" Value="Wrap" />
 		</Style>
+		<Style Selector="StackPanel.previewStatus">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="6" />
+			<Setter Property="Background" Value="Transparent" />
+		</Style>
+		<Style Selector="StackPanel.previewStatus > local|IconView">
+			<Setter Property="Width" Value="12" />
+			<Setter Property="Height" Value="12" />
+			<Setter Property="Opacity" Value="0.55" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="StackPanel.previewStatus > TextBlock">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontFeatures" Value="+tnum" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
 		<Style Selector="Border.pill">
 			<Setter Property="CornerRadius" Value="10" />
 			<Setter Property="Padding" Value="10,2" />
@@ -593,7 +610,7 @@
 			</Grid>
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
-				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+				<Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="8">
 					<Grid Grid.Row="0">
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
 							<ComboBox Name="PreviewQualityCombo" VerticalAlignment="Center" MinWidth="150"
@@ -659,7 +676,7 @@
 					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
 						<Grid>
 							<Canvas>
-								<Image Name="PreviewImage" Stretch="Fill" />
+								<local:VideoView Name="PreviewVideo" />
 							</Canvas>
 							<Border Name="CutScrim" Background="{StaticResource ScrimBrush}" IsVisible="False" IsHitTestVisible="False">
 								<Border Background="{StaticResource OnVideoBrush}" BorderBrush="{StaticResource OnVideoBorderBrush}" BorderThickness="1"
@@ -735,13 +752,32 @@
 							          SelectionChanged="OnSpeedChanged"
 							          ToolTip.Tip="Playback speed - J slower, K pause, L play / faster. The sound keeps its pitch." />
 						</StackPanel>
-						<Border Grid.Column="1" Name="CompactTimelineHost" VerticalAlignment="Center">
-							<local:PreviewTimeline Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
-							                       ValueChanged="OnPreviewTimelineValueChanged" />
-						</Border>
+						<local:PreviewTimeline Grid.Column="1" Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
+						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />
 					</Grid>
+
+					<StackPanel Grid.Row="3" Name="PreviewStatusBar" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center" IsVisible="False">
+						<StackPanel Classes="previewStatus" ToolTip.Tip="Recording - the source video's resolution and frame rate">
+							<local:IconView Data="{StaticResource IconFile}" />
+							<TextBlock Name="StatusSourceText" />
+						</StackPanel>
+						<StackPanel Classes="previewStatus"
+						            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar)">
+							<local:IconView Data="{StaticResource IconMonitor}" />
+							<TextBlock Name="StatusPreviewText" />
+						</StackPanel>
+						<StackPanel Classes="previewStatus" ToolTip.Tip="Current frame - the number of the frame at the cursor">
+							<local:IconView Data="{StaticResource IconFrameCurrent}" />
+							<TextBlock Name="StatusFrameText" MinWidth="50" />
+						</StackPanel>
+						<StackPanel Classes="previewStatus"
+						            ToolTip.Tip="Display - the preview's size on screen, and while playing the frames a second that reach it (amber when fewer than the playback speed calls for)">
+							<local:IconView Data="{StaticResource IconDisplay}" />
+							<TextBlock Name="StatusDisplayText" MinWidth="118" />
+						</StackPanel>
+					</StackPanel>
 				</Grid>
 			</Border>
 
@@ -1224,7 +1260,10 @@
 
 		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
 			<StackPanel Spacing="2">
-				<Border Name="ExpandedTimelineHost" CornerRadius="4" ClipToBounds="True" />
+				<Border CornerRadius="4" ClipToBounds="True">
+					<local:PreviewTimeline Name="ExpandedTimeline" Expanded="True" Minimum="0" Maximum="1" IsEnabled="False"
+					                       ValueChanged="OnExpandedTimelineValueChanged" />
+				</Border>
 				<ScrollBar Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False" IsVisible="False"
 				           Scroll="OnTimelineScroll" />
 			</StackPanel>
