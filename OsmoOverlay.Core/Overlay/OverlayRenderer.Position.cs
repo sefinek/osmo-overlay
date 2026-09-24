@@ -194,8 +194,8 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(cx, cy, OverlayElementBounds.CompassRadius, _panelFillPaint);
 		canvas.DrawCircle(cx, cy, OverlayElementBounds.CompassRadius, _ringStroke3White160);
 
-		DrawTrail(canvas, cx, cy, frame, element);
-		DrawTrailMarker(canvas, cx, cy, frame.HeadingDegrees, element.TrailUseArrow);
+		SKPoint marker = DrawTrail(canvas, cx, cy, frame, element);
+		DrawTrailMarker(canvas, marker.X, marker.Y, frame.HeadingDegrees, element.TrailUseArrow);
 
 		DrawOutlined(canvas, "N", cx, cy - OverlayElementBounds.CompassRadius + 46, _labelFont, White,
 			SKTextAlign.Center);
@@ -208,22 +208,37 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
-	private void DrawTrail(SKCanvas canvas, float cx, float cy, DerivedFrame frame, TrailOverlayElement element)
+	/// <summary>
+	///     Fits the whole trail plus the current position into the dial: centered on their bounding box, not on the
+	///     current position, so a route that went off to one side fills the dial instead of half of it. The marker
+	///     therefore moves around the dial; the fit radius leaves room for the heading arrow inside the rim.
+	///     Returns where the marker goes.
+	/// </summary>
+	private SKPoint DrawTrail(SKCanvas canvas, float cx, float cy, DerivedFrame frame, TrailOverlayElement element)
 	{
-		if (_trail.Count < 2) return;
+		if (_trail.Count < 2) return new SKPoint(cx, cy);
 
-		(double East, double North) currentPos = (frame.LocalEastMeters, frame.LocalNorthMeters);
-		var maxDist = 5.0;
+		double minE = frame.LocalEastMeters, maxE = minE, minN = frame.LocalNorthMeters, maxN = minN;
 		foreach (var p in _trail)
 		{
-			var dist = Distance((p.East, p.North), currentPos);
-			if (dist > maxDist) maxDist = dist;
+			minE = Math.Min(minE, p.East);
+			maxE = Math.Max(maxE, p.East);
+			minN = Math.Min(minN, p.North);
+			maxN = Math.Max(maxN, p.North);
 		}
 
-		var scale = OverlayElementBounds.CompassRadius * 0.82 / maxDist;
-		List<SKPoint> points = [.. _trail.Select(p => new SKPoint(cx + (float)((p.East - frame.LocalEastMeters) * scale),
-			cy - (float)((p.North - frame.LocalNorthMeters) * scale)))];
+		(double East, double North) center = ((minE + maxE) / 2, (minN + maxN) / 2);
+		var maxDist = Math.Max(5.0, Distance((frame.LocalEastMeters, frame.LocalNorthMeters), center));
+		foreach (var p in _trail)
+			maxDist = Math.Max(maxDist, Distance((p.East, p.North), center));
+
+		var scale = (OverlayElementBounds.CompassRadius - 50) / maxDist;
+		SKPoint ToDial(double east, double north) =>
+			new(cx + (float)((east - center.East) * scale), cy - (float)((north - center.North) * scale));
+
+		List<SKPoint> points = [.. _trail.Select(p => ToDial(p.East, p.North))];
 		DrawTrailRoute(canvas, points, element);
+		return ToDial(frame.LocalEastMeters, frame.LocalNorthMeters);
 	}
 
 	private void DrawTrailRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, TrailOverlayElement element)
