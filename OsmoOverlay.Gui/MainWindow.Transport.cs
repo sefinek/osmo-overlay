@@ -137,6 +137,7 @@ public partial class MainWindow
 		if ((direction > 0 ? TimelineMarkers.Next(markers, current) : TimelineMarkers.Previous(markers, current)) is { } target)
 			SeekToFrame(target);
 	}
+
 	private bool _suppressSpeedEvent;
 
 	private void WireSpeed()
