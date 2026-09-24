@@ -42,6 +42,27 @@ public static class CutList
 		return Normalize([.. cuts, cut], totalFrames);
 	}
 
+	/// <summary>
+	///     The normalized list with its index-th cut replaced by one with new edges (dragged on the timeline) - an edge
+	///     dragged past the other one swaps them, a cut shrunk to nothing is removed, one dragged over its neighbours
+	///     merges with them.
+	/// </summary>
+	public static List<FrameRange> Resize(IEnumerable<FrameRange> cuts, int index, long start, long end, long totalFrames)
+	{
+		List<FrameRange> normalized = Normalize(cuts, totalFrames);
+		if (index < 0 || index >= normalized.Count) return normalized;
+
+		normalized[index] = new FrameRange(Math.Min(start, end), Math.Max(start, end));
+		return Normalize(normalized, totalFrames);
+	}
+
+	public static List<FrameRange> Remove(IEnumerable<FrameRange> cuts, int index, long totalFrames)
+	{
+		List<FrameRange> normalized = Normalize(cuts, totalFrames);
+		if (index >= 0 && index < normalized.Count) normalized.RemoveAt(index);
+		return normalized;
+	}
+
 	public static long RemovedFrames(IEnumerable<FrameRange> cuts, long totalFrames)
 	{
 		return Normalize(cuts, totalFrames).Sum(c => c.Length);

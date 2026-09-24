@@ -1,5 +1,6 @@
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
 
@@ -24,6 +25,8 @@ public partial class MainWindow
 	// The selection's first and last frame, both included; a missing side means the start/end of the recording.
 	private long? _markIn;
 	private long? _markOut;
+	// A cut clicked on the timeline - an index into the normalized cuts, which Delete removes.
+	private int? _selectedCut;
 
 	private bool HasCuts => _outputTimeline is not null;
 
@@ -43,6 +46,19 @@ public partial class MainWindow
 			ApplyCuts(false);
 		};
 		CutsEditor.CutRequested += ApplyCutAction;
+		CutsEditor.ShowRouteJoin(OverlaySettingsStore.Load().RouteAcrossCuts);
+		CutsEditor.RouteJoinChanged += join =>
+		{
+			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { RouteAcrossCuts = join });
+			_previewPlayer.SetRouteAcrossCuts(join);
+		};
+		PreviewTimeline.SelectionDragged += OnTimelineSelectionDragged;
+		PreviewTimeline.CutResized += OnTimelineCutResized;
+		PreviewTimeline.CutClicked += index =>
+		{
+			_selectedCut = index;
+			PreviewTimeline.SelectedCut = index;
+		};
 		CutsEditor.SeekRequested += SeekToFrame;
 	}
 
@@ -118,6 +134,59 @@ public partial class MainWindow
 		}
 	}
 
+	/// <summary>Shift+drag or a selection edge dragged on the timeline - live, as the In/Out marks (Out is the last frame inside).</summary>
+	private void OnTimelineSelectionDragged(double start, double end)
+	{
+		if (_summary is null) return;
+
+		var fps = _summary.Video.Fps;
+		var first = (long)Math.Round(start * fps);
+		var afterLast = (long)Math.Round(end * fps);
+		if (afterLast <= first) return;
+
+		_markIn = first;
+		_markOut = afterLast - 1;
+		ShowSelection();
+	}
+
+	/// <summary>A cut's edge dragged on the timeline, applied on release like any other change to the cuts.</summary>
+	private void OnTimelineCutResized(int index, double start, double end)
+	{
+		if (_summary is null) return;
+
+		var fps = _summary.Video.Fps;
+		List<FrameRange> cuts = CutList.Resize(_cuts, index, (long)Math.Round(start * fps), (long)Math.Round(end * fps), SourceFrames);
+		if (CutList.RemovesEverything(cuts, SourceFrames))
+		{
+			ReportCutsEverything();
+			ApplyCuts();
+			return;
+		}
+
+		_cuts = cuts;
+		ApplyCuts();
+	}
+
+	/// <summary>Delete: the cut clicked on the timeline if there is one, else - like X - cuts the selection out.</summary>
+	private void DeleteSelectedCutOrCutSelection()
+	{
+		if (_summary is null) return;
+		if (_selectedCut is not { } index)
+		{
+			ApplyCutAction(CutAction.CutSelection);
+			return;
+		}
+
+		_cuts = CutList.Remove(_cuts, index, SourceFrames);
+		ApplyCuts();
+	}
+
+	private void ReportCutsEverything()
+	{
+		CutsEditor.ShowError(CutsEverythingMessage);
+		if (!CutsColumnScroll.IsVisible) AppendLog(CutsEverythingMessage, LogLevel.Warn);
+	}
+
 	private void CutSelection()
 	{
 		if (Selection is not { } selection) return;
@@ -125,8 +194,7 @@ public partial class MainWindow
 		List<FrameRange> cuts = CutList.Add(_cuts, selection, SourceFrames);
 		if (CutList.RemovesEverything(cuts, SourceFrames))
 		{
-			CutsEditor.ShowError(CutsEverythingMessage);
-			if (!CutsColumnScroll.IsVisible) AppendLog(CutsEverythingMessage, LogLevel.Warn);
+			ReportCutsEverything();
 			return;
 		}
 
@@ -154,6 +222,9 @@ public partial class MainWindow
 	/// <param name="showInEditor">False when the edit came from the editor itself - rewriting its fields would move the caret.</param>
 	private void ApplyCuts(bool showInEditor = true)
 	{
+		// Indices into the old list mean nothing after a change.
+		_selectedCut = null;
+		PreviewTimeline.SelectedCut = null;
 		OutputTimeline? previous = _outputTimeline;
 		_outputTimeline = BuildOutputTimeline();
 		// Rebuilds the preview's renderer - skipped when nothing was cut before or after.
@@ -176,6 +247,7 @@ public partial class MainWindow
 
 	private void ShowSelection()
 	{
+		SyncLoop();
 		FrameRange? selection = _summary is null ? null : Selection;
 		PreviewTimeline.Selection = selection?.ToTimeRange(_summary!.Video.Fps);
 		CutsEditor.ShowSelection(selection is { } s ? DescribeSelection(s) : null, selection is not null);

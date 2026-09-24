@@ -37,10 +37,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double MinMajorTickPixels = 90;
 	private const double MaxPixelsPerFrame = 24;
 	private const double WheelZoomStep = 1.25;
-	// The waveform is drawn in decibels, this far down from the recording's own loudest peak (which reaches the
-	// track's full height): camera audio often peaks around -30 dBFS, which a linear or full-scale view draws as a
-	// thin line.
-	private const double WaveformRangeDb = 48;
+	private const double EdgeGrabPixels = 5;
+	private const double SnapPixels = 6;
 	private const double CompactThumbRadius = 7;
 	private const double CompactTrackHeight = 6;
 	private const double CompactCutHeight = 16;
@@ -67,6 +65,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IBrush PlayheadBrush = Palette.TextPrimary;
 	private static readonly IPen HoverPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.35));
 	private static readonly Typeface LabelTypeface = new(FontFamily.Default);
+	private static readonly IPen SelectedCutBorder = new Pen(Palette.Danger, 2);
+	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
+	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
 
 	private readonly Dictionary<int, Bitmap> _thumbnailBitmaps = [];
 	private IReadOnlyList<TimeRange> _cuts = [];
@@ -86,6 +87,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private TimeSpan? _lastAnimationFrame;
 	private double _stripeOffset;
 	private double? _hoverX;
+	private DragMode _drag;
+	private int _dragCut;
+	private double _dragAnchor;
+	// A cut edge being dragged is drawn here until the release applies it (CutResized).
+	private TimeRange? _dragPreview;
+	private int? _selectedCut;
 	private bool _expanded;
 	// The tracks' static part (ruler, filmstrip, waveform, GPS loss) drawn once into a bitmap and redrawn only when
 	// the view or the generated content changes. Playback moves the playhead every frame; repainting the thumbnails
@@ -102,13 +109,35 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	public PreviewTimeline()
 	{
-		Cursor = new Cursor(StandardCursorType.Hand);
-		ToolTip.SetTip(this, "Click or drag to move the playhead · Wheel: zoom · Shift+wheel: scroll · Double-click the ruler: fit");
+		Cursor = HandCursor;
+		ToolTip.SetTip(this, "Click or drag: move the playhead · Shift+drag: select · Drag a cut's or the selection's edge to change it · " +
+		                     "Click a cut, then Delete: remove it · Up/Down: previous/next marker · Wheel: zoom · Shift+wheel: scroll · " +
+		                     "Double-click the ruler: fit");
 	}
 
 	/// <summary>A drag on the timeline began / ended - Value keeps changing (ValueChanged) in between.</summary>
 	public event Action? ScrubStarted;
 	public event Action? ScrubEnded;
+
+	/// <summary>Shift+drag, or an edge of the selection dragged: its start and end in seconds (end exclusive), while dragging.</summary>
+	public event Action<double, double>? SelectionDragged;
+
+	/// <summary>An edge of a cut was dragged: the cut's index in Cuts and its new start and end in seconds, on release.</summary>
+	public event Action<int, double, double>? CutResized;
+
+	/// <summary>A click: the index of the cut under it in Cuts, or null outside every cut.</summary>
+	public event Action<int?>? CutClicked;
+
+	/// <summary>The cut drawn as selected (Delete removes it) - an index into Cuts.</summary>
+	public int? SelectedCut
+	{
+		get => _selectedCut;
+		set
+		{
+			_selectedCut = value;
+			InvalidateVisual();
+		}
+	}
 
 	/// <summary>The visible stretch changed (zoom, scroll, resize) - see ViewStart/ViewLength.</summary>
 	public event Action? ViewChanged;
@@ -250,7 +279,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			context.DrawRectangle(GpsLossBrush, null, new Rect(x1, middle + CompactTrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
 		}
 
-		foreach (TimeRange cut in _cuts) DrawCut(context, cut, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
+		DrawCuts(context, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
 		if (_selection is { } selection)
 			DrawSelection(context, selection, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2);
 
@@ -282,7 +311,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		// Played so far, along the ruler's bottom edge.
 		context.FillRectangle(PlayedBrush, new Rect(0, RulerHeight - 2, Math.Max(0, X(Value)), 2));
 
-		foreach (TimeRange cut in _cuts) DrawCut(context, cut, videoTop, bottom);
+		DrawCuts(context, videoTop, bottom);
 		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
 
 		if (_hoverX is { } hover) context.DrawLine(HoverPen, new Point(hover, 0), new Point(hover, bottom));
@@ -400,15 +429,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private StreamGeometry WaveformLane(AudioWaveform waveform, int lane, double middle, double laneHeight, double endX)
 	{
-		// Silence (or nothing decoded yet) keeps a -60 dBFS reference instead of blowing up the noise floor.
-		var loudestDb = 20 * Math.Log10(Math.Max(waveform.LoudestPeak, 0.001f));
 		var geometry = new StreamGeometry();
 		using StreamGeometryContext stream = geometry.Open();
 		for (var x = 0; x < endX; x++)
 		{
 			var from = (int)(TimeAt(x) * AudioWaveform.BucketsPerSecond);
 			var to = Math.Max(from + 1, (int)(TimeAt(x + 1) * AudioWaveform.BucketsPerSecond));
-			var half = Math.Max(0.5, Level(waveform.Peak(lane, from, to), loudestDb) * (laneHeight / 2 - 1));
+			var half = Math.Max(0.5, AudioWaveform.DisplayLevel(waveform.Peak(lane, from, to), waveform.LoudestPeak) * (laneHeight / 2 - 1));
 			stream.BeginFigure(new Point(x, middle - half), true);
 			stream.LineTo(new Point(x + 1, middle - half));
 			stream.LineTo(new Point(x + 1, middle + half));
@@ -419,13 +446,19 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		return geometry;
 	}
 
-	/// <summary>0-1 on the decibel scale from WaveformRangeDb below the loudest peak up to it.</summary>
-	private static double Level(float peak, double loudestDb)
+	/// <summary>The cut being resized is drawn where its edge is dragged to; the selected one gets a stronger border.</summary>
+	private void DrawCuts(DrawingContext context, double top, double bottom)
 	{
-		return peak <= 0 ? 0 : Math.Clamp((20 * Math.Log10(peak) - loudestDb + WaveformRangeDb) / WaveformRangeDb, 0, 1);
+		for (var i = 0; i < _cuts.Count; i++)
+		{
+			TimeRange cut = _drag is DragMode.CutStart or DragMode.CutEnd && i == _dragCut && _dragPreview is { } preview
+				? new TimeRange(Math.Min(preview.StartSeconds, preview.EndSeconds), Math.Max(preview.StartSeconds, preview.EndSeconds))
+				: _cuts[i];
+			DrawCut(context, cut, top, bottom, i == _selectedCut);
+		}
 	}
 
-	private void DrawCut(DrawingContext context, TimeRange cut, double top, double bottom)
+	private void DrawCut(DrawingContext context, TimeRange cut, double top, double bottom, bool selected)
 	{
 		var (x1, x2) = Span(cut, 3);
 		var band = new Rect(x1, top, x2 - x1, bottom - top);
@@ -438,7 +471,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 				context.DrawLine(CutStripe, new Point(x, band.Bottom), new Point(x + band.Height, band.Top));
 		}
 
-		context.DrawRectangle(null, CutBorder, band.Deflate(0.5));
+		context.DrawRectangle(null, selected ? SelectedCutBorder : CutBorder, band.Deflate(selected ? 1 : 0.5));
 	}
 
 	private void DrawSelection(DrawingContext context, TimeRange selection, double top, double bottom)
@@ -558,8 +591,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnPointerPressed(e);
 		PointerPoint point = e.GetCurrentPoint(this);
-		if (!point.Properties.IsLeftButtonPressed) return;
+		if (!point.Properties.IsLeftButtonPressed || Duration <= 0) return;
 
+		var x = point.Position.X;
 		if (_expanded && e.ClickCount == 2 && point.Position.Y < RulerHeight)
 		{
 			SetView(1, 0);
@@ -568,17 +602,56 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 
 		e.Pointer.Capture(this);
+		e.Handled = true;
+		if (EdgeAt(x) is { } edge)
+		{
+			(_drag, _dragCut) = edge;
+			return;
+		}
+
+		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+		{
+			_drag = DragMode.NewSelection;
+			_dragAnchor = Snap(ValueAt(x));
+			return;
+		}
+
+		_drag = DragMode.Scrub;
 		_scrubbing = true;
 		ScrubStarted?.Invoke();
-		Value = ValueAt(point.Position.X);
-		e.Handled = true;
+		Value = ValueAt(x);
+		CutClicked?.Invoke(CutIndexAt(Value));
 	}
 
 	protected override void OnPointerMoved(PointerEventArgs e)
 	{
 		base.OnPointerMoved(e);
 		var x = e.GetPosition(this).X;
-		if (_scrubbing) Value = ValueAt(x);
+		var time = Snap(ValueAt(x));
+		switch (_drag)
+		{
+			case DragMode.Scrub:
+				Value = ValueAt(x);
+				break;
+			case DragMode.NewSelection:
+				SelectionDragged?.Invoke(Math.Min(_dragAnchor, time), Math.Max(_dragAnchor, time));
+				break;
+			case DragMode.SelectionStart when _selection is { } selection:
+				SelectionDragged?.Invoke(Math.Min(time, selection.EndSeconds), Math.Max(time, selection.EndSeconds));
+				break;
+			case DragMode.SelectionEnd when _selection is { } selection:
+				SelectionDragged?.Invoke(Math.Min(time, selection.StartSeconds), Math.Max(time, selection.StartSeconds));
+				break;
+			case DragMode.CutStart or DragMode.CutEnd when _dragCut < _cuts.Count:
+				TimeRange cut = _cuts[_dragCut];
+				_dragPreview = _drag == DragMode.CutStart ? cut with { StartSeconds = time } : cut with { EndSeconds = time };
+				InvalidateVisual();
+				break;
+			default:
+				Cursor = EdgeAt(x) is null ? HandCursor : ResizeCursor;
+				break;
+		}
+
 		if (!_expanded) return;
 
 		_hoverX = x;
@@ -595,21 +668,68 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	protected override void OnPointerReleased(PointerReleasedEventArgs e)
 	{
 		base.OnPointerReleased(e);
-		if (!_scrubbing) return;
+		if (_drag == DragMode.None) return;
 
-		// Cleared before releasing the capture - OnPointerCaptureLost must not end the scrub a second time.
-		_scrubbing = false;
+		// Ended before releasing the capture - OnPointerCaptureLost must not end the drag a second time.
+		EndDrag(true);
 		e.Pointer.Capture(null);
-		ScrubEnded?.Invoke();
 	}
 
 	protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
 	{
 		base.OnPointerCaptureLost(e);
-		if (!_scrubbing) return;
+		EndDrag(false);
+	}
 
-		_scrubbing = false;
-		ScrubEnded?.Invoke();
+	/// <param name="commit">False when the capture was lost - a cut edge dragged then snaps back instead of applying.</param>
+	private void EndDrag(bool commit)
+	{
+		DragMode drag = _drag;
+		_drag = DragMode.None;
+		if (drag == DragMode.Scrub)
+		{
+			_scrubbing = false;
+			ScrubEnded?.Invoke();
+		}
+		else if (drag is DragMode.CutStart or DragMode.CutEnd && _dragPreview is { } resized)
+		{
+			_dragPreview = null;
+			if (commit) CutResized?.Invoke(_dragCut, Math.Min(resized.StartSeconds, resized.EndSeconds), Math.Max(resized.StartSeconds, resized.EndSeconds));
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>A selection or cut edge within grabbing distance of x - the selection's first, it's the one being worked on.</summary>
+	private (DragMode Mode, int Cut)? EdgeAt(double x)
+	{
+		if (_selection is { } selection)
+		{
+			if (Math.Abs(X(selection.StartSeconds) - x) <= EdgeGrabPixels) return (DragMode.SelectionStart, -1);
+			if (Math.Abs(X(selection.EndSeconds) - x) <= EdgeGrabPixels) return (DragMode.SelectionEnd, -1);
+		}
+
+		for (var i = 0; i < _cuts.Count; i++)
+		{
+			if (Math.Abs(X(_cuts[i].StartSeconds) - x) <= EdgeGrabPixels) return (DragMode.CutStart, i);
+			if (Math.Abs(X(_cuts[i].EndSeconds) - x) <= EdgeGrabPixels) return (DragMode.CutEnd, i);
+		}
+
+		return null;
+	}
+
+	private int? CutIndexAt(double seconds)
+	{
+		for (var i = 0; i < _cuts.Count; i++)
+			if (seconds >= _cuts[i].StartSeconds && seconds < _cuts[i].EndSeconds)
+				return i;
+
+		return null;
+	}
+
+	/// <summary>Dragged edges catch the playhead when they come close to it - the usual way to line a cut up with the frame on screen.</summary>
+	private double Snap(double seconds)
+	{
+		return Math.Abs(X(seconds) - X(Value)) <= SnapPixels ? Value : seconds;
 	}
 
 	protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -650,5 +770,16 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		_lastAnimationFrame = time;
 		InvalidateVisual();
 		topLevel.RequestAnimationFrame(OnAnimationFrame);
+	}
+
+	private enum DragMode
+	{
+		None,
+		Scrub,
+		NewSelection,
+		SelectionStart,
+		SelectionEnd,
+		CutStart,
+		CutEnd
 	}
 }

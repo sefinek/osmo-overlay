@@ -53,6 +53,8 @@ public sealed record OverlaySettings(
 	bool PreviewPreciseTime = false,
 	// The expanded timeline (filmstrip + waveform) in the log's place under the window, instead of the compact track.
 	bool PreviewTimelineExpanded = false,
+	// How the drawn routes cross a part cut out of the render (see RouteJoin).
+	RouteJoin RouteAcrossCuts = RouteJoin.Gap,
 	// Preview sound: muted until the user turns it up, the volume 0-1 remembered either way.
 	bool PreviewAudioMuted = true,
 	double PreviewAudioVolume = 0.8,

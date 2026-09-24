@@ -9,7 +9,7 @@ namespace OsmoOverlay.Core.Preview;
 ///     paused; Stop also drops whatever is still queued, so a pause is silent at once. Thread-safe; a no-op after
 ///     Dispose.
 /// </summary>
-public sealed unsafe class AudioOutput : IDisposable
+public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 {
 	private static readonly Lock InitGate = new();
 	private static bool _sdlAudioReady;

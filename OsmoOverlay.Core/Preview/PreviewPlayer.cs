@@ -74,6 +74,7 @@ public sealed class PreviewPlayer : IDisposable
 	private float _audioGain;
 	// Kept across Close/OpenAsync like the output timeline - a view toggle, not part of the file.
 	private bool _showOverlay = true;
+	private RouteJoin _routeAcrossCuts = OverlaySettingsStore.Load().RouteAcrossCuts;
 	// What a full-resolution snapshot needs to open its own decoder (RenderSnapshotPngAsync).
 	private IReadOnlyList<PlaybackSegment>? _segments;
 	private int _videoWidth;
@@ -83,8 +84,13 @@ public sealed class PreviewPlayer : IDisposable
 	public bool IsPlaying => _playbackCts is not null;
 	public bool HasAudio => _audioOutput is not null;
 
-	/// <summary>1 = real time. Anything else plays silent - sped-up or slowed-down sound is noise, not a preview of the render.</summary>
+	/// <summary>1 = real time. Other speeds keep the sound, tempo-changed without changing its pitch (AudioTempo).</summary>
 	public double PlaybackRate { get; private set; } = 1;
+
+	/// <summary>Playback starts over at the end - of LoopRange when set, else of the recording (see SetLoop).</summary>
+	public bool Loop { get; private set; }
+
+	public TimeRange? LoopRange { get; private set; }
 	public TimeSpan Duration => _video?.Duration ?? TimeSpan.Zero;
 
 	public void Dispose()
@@ -151,7 +157,7 @@ public sealed class PreviewPlayer : IDisposable
 			frames[0].Raw.AltitudeMeters, currentLayout, frames, TelemetryProcessor.Summarize(frames).MaxSpeedKmh,
 			settings.ShowWatermark, summary.CameraModel, summary.ContainerRecordingStartUtc,
 			settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution, settings.MapApiKey,
-			RouteIntroSettings.ForRecording(settings, hasGpsFix));
+			RouteIntroSettings.ForRecording(settings, hasGpsFix)) { RouteAcrossCuts = _routeAcrossCuts };
 		OverlayRenderer renderer = _createRenderer(derivedFrames, layout);
 
 		_video = video;
@@ -312,9 +318,29 @@ public sealed class PreviewPlayer : IDisposable
 		if (rate <= 0 || rate == PlaybackRate) return;
 
 		PlaybackRate = rate;
+		RestartIfPlaying();
+	}
+
+	/// <summary>
+	///     Loops playback over a range of the recording (the In/Out selection) or, with none, the whole of it - cut-out
+	///     parts are skipped as always. Applies to a running playback right away, like SetPlaybackRate.
+	/// </summary>
+	public void SetLoop(bool loop, TimeRange? range)
+	{
+		if (loop == Loop && range == LoopRange) return;
+
+		// A new range only matters to a playback that loops (or did until now).
+		var affectsPlayback = loop || Loop;
+		Loop = loop;
+		LoopRange = range;
+		if (affectsPlayback) RestartIfPlaying();
+	}
+
+	/// <summary>Replaces a running playback with one from where it is - without PlaybackStopped, to the GUI it's the same playback.</summary>
+	private void RestartIfPlaying()
+	{
 		if (_playbackCts is not { } running) return;
 
-		// Replaced without PlaybackStopped - to the GUI this is still the same playback.
 		running.Cancel();
 		_playbackCts = null;
 		Play(_lastPosition);
@@ -351,8 +377,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		var cts = new CancellationTokenSource();
 		_playbackCts = cts;
-		List<PlaybackStretch> stretches = PlaybackStretches(_outputTimeline, fromPosition, _video.Duration);
-		_playbackRun = RunPlaybackAsync(_playbackRun, _video, _audioSource, _audioOutput, stretches, PlaybackRate, cts);
+		PlaybackPlan plan = PlanPlayback(_outputTimeline, fromPosition, _video.Duration, Loop, LoopRange);
+		_playbackRun = RunPlaybackAsync(_playbackRun, _video, _audioSource, _audioOutput, plan, PlaybackRate, cts);
 	}
 
 	public void Pause()
@@ -503,6 +529,22 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
+	/// <summary>How the drawn routes cross a cut - applies to the frame on screen right away, like SetShowWatermark.</summary>
+	public void SetRouteAcrossCuts(RouteJoin join)
+	{
+		lock (_lock)
+		{
+			_routeAcrossCuts = join;
+			if (_renderer is null) return;
+
+			_renderer.RouteAcrossCuts = join;
+			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
+
+			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
+			if (composed is not null) Publish(composed);
+		}
+	}
+
 	/// <summary>Shows the plain video (false) or the video with the overlay - recomposes the frame on screen right away.</summary>
 	public void SetShowOverlay(bool show)
 	{
@@ -628,7 +670,7 @@ public sealed class PreviewPlayer : IDisposable
 	///     nothing needs to be discarded to "catch up" from a slow start.
 	/// </summary>
 	private async Task RunPlaybackAsync(Task previousRun, LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput,
-		IReadOnlyList<PlaybackStretch> stretches, double rate, CancellationTokenSource ownCts)
+		PlaybackPlan plan, double rate, CancellationTokenSource ownCts)
 	{
 		CancellationToken ct = ownCts.Token;
 
@@ -653,13 +695,13 @@ public sealed class PreviewPlayer : IDisposable
 			// guarantees the producer can always be unblocked regardless of why the consumer stopped.
 			using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			Task<string?> producer = Task.Run(
-				() => ProduceFramesAsync(video, stretches, FrameStep(rate, video.Fps), channel.Writer, producerCts.Token),
+				() => ProduceFramesAsync(video, plan.Stretches(), FrameStep(rate, video.Fps), channel.Writer, producerCts.Token),
 				producerCts.Token);
 
 			PlaybackClock clock = new(audioOutput, audioSource?.SampleRate ?? 1, rate);
 			audioOutput?.Stop();
 			Task feeder = clock.FollowsAudio && audioSource is not null && audioOutput is not null
-				? Task.Run(() => FeedAudioAsync(audioSource, audioOutput, clock, stretches, producerCts.Token), producerCts.Token)
+				? Task.Run(() => FeedAudioAsync(audioSource, audioOutput, clock, plan.Stretches(), rate, producerCts.Token), producerCts.Token)
 				: Task.CompletedTask;
 
 			string? stoppedEarly = null;
@@ -738,11 +780,11 @@ public sealed class PreviewPlayer : IDisposable
 	}
 
 	/// <summary>
-	///     Plays the stretches one after another, one playback stream each; returns the decoder's error output if a
-	///     stream ended well before its stretch did. Frames are decoded outside _lock - only composing needs it, so
-	///     SetLayout, scrubbing and the rest never wait for a decode.
+	///     Plays the stretches one after another (endlessly while looping), one playback stream each; returns the
+	///     decoder's error output if a stream ended well before its stretch did. Frames are decoded outside _lock - only
+	///     composing needs it, so SetLayout, scrubbing and the rest never wait for a decode.
 	/// </summary>
-	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IReadOnlyList<PlaybackStretch> stretches, int step,
+	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IEnumerable<PlaybackStretch> stretches, int step,
 		ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
 	{
 		var halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
@@ -803,45 +845,74 @@ public sealed class PreviewPlayer : IDisposable
 	///     Frames decoded per frame shown: sped up, only every Nth is converted and shown, so the screen stays at the
 	///     source's frame rate, at most ~60 a second, instead of asking for 240 converted frames a second at 4x.
 	/// </summary>
-	private static int FrameStep(double rate, double fps)
+	internal static int FrameStep(double rate, double fps)
 	{
 		return Math.Max(1, (int)Math.Ceiling(rate * fps / 60 - 1e-9));
 	}
 
 	/// <summary>
-	///     What Play covers from a position: the rest of the recording, or with cuts (SetOutputTimeline) only the
-	///     kept pieces from there on - the cut-out parts are skipped, the way the render leaves them out.
+	///     What Play covers from a position: up to the end (of the loop range, or of the recording), with cuts
+	///     (SetOutputTimeline) only the kept pieces - skipped the way the render leaves them out. Looping, the same range
+	///     from its start follows over and over; a position outside the loop range starts at its start.
 	/// </summary>
-	private static List<PlaybackStretch> PlaybackStretches(OutputTimeline? timeline, TimeSpan from, TimeSpan duration)
+	internal static PlaybackPlan PlanPlayback(OutputTimeline? timeline, TimeSpan from, TimeSpan duration, bool loop, TimeRange? loopRange)
 	{
-		if (timeline is null) return [new PlaybackStretch(from, duration)];
+		var start = loop && loopRange is { } range ? Math.Max(0, range.StartSeconds) : 0;
+		var end = loop && loopRange is { } limit ? Math.Min(limit.EndSeconds, duration.TotalSeconds) : duration.TotalSeconds;
+		var first = from.TotalSeconds;
+		if (loop && (first < start || first >= end)) first = start;
+
+		return new PlaybackPlan(Stretches(timeline, first, end), loop ? Stretches(timeline, start, end) : []);
+	}
+
+	private static List<PlaybackStretch> Stretches(OutputTimeline? timeline, double from, double end)
+	{
+		if (timeline is null) return end > from ? [new PlaybackStretch(TimeSpan.FromSeconds(from), TimeSpan.FromSeconds(end))] : [];
 
 		List<PlaybackStretch> stretches = [];
-		var position = from.TotalSeconds;
-		while (timeline.NextKeptStretch(position) is { } kept)
+		var position = from;
+		while (timeline.NextKeptStretch(position) is { } kept && kept.Start < end)
 		{
-			var end = Math.Min(kept.End, duration.TotalSeconds);
-			if (end > kept.Start) stretches.Add(new PlaybackStretch(TimeSpan.FromSeconds(kept.Start), TimeSpan.FromSeconds(end)));
+			var stretchEnd = Math.Min(kept.End, end);
+			if (stretchEnd > kept.Start) stretches.Add(new PlaybackStretch(TimeSpan.FromSeconds(kept.Start), TimeSpan.FromSeconds(stretchEnd)));
 			position = kept.End;
 		}
 
 		return stretches;
 	}
 
-	private sealed record PlaybackStretch(TimeSpan Start, TimeSpan End);
+	internal sealed record PlaybackStretch(TimeSpan Start, TimeSpan End);
+
+	/// <summary>First what's left from the starting position, then - looping - Repeat over and over.</summary>
+	internal sealed record PlaybackPlan(IReadOnlyList<PlaybackStretch> First, IReadOnlyList<PlaybackStretch> Repeat)
+	{
+		public IEnumerable<PlaybackStretch> Stretches()
+		{
+			foreach (PlaybackStretch stretch in First) yield return stretch;
+			if (Repeat.Count == 0) yield break;
+
+			while (true)
+				foreach (PlaybackStretch stretch in Repeat)
+					yield return stretch;
+		}
+	}
 
 	/// <summary>PlayTime: seconds on the play timeline (PlaybackClock) - the stretches back to back, from 0.</summary>
 	private readonly record struct PlaybackFrame(ComposedPreviewFrame Composed, double PlayTime, bool StartsStretch);
 
 	/// <summary>
 	///     Pushes the stretches' audio back to back, AudioQueueSeconds ahead of the device - the same joins the render
-	///     makes, so the cut parts are skipped in the sound too. Tells the clock how much went out, and when it's done.
+	///     makes, so the cut parts are skipped in the sound too - tempo-changed at any speed but 1x. Tells the clock how
+	///     much went out, and when it's done (or failed, which hands the clock to its stopwatch).
 	/// </summary>
 	private static async Task FeedAudioAsync(LibavAudioSource source, AudioOutput output, PlaybackClock clock,
-		IReadOnlyList<PlaybackStretch> stretches, CancellationToken ct)
+		IEnumerable<PlaybackStretch> stretches, double rate, CancellationToken ct)
 	{
+		AudioTempo? tempo = null;
 		try
 		{
+			if (rate != 1) tempo = new AudioTempo(rate, source.SampleRate, source.Channels);
+
 			foreach (PlaybackStretch stretch in stretches)
 			{
 				source.Seek(stretch.Start.TotalSeconds);
@@ -853,8 +924,13 @@ public sealed class PreviewPlayer : IDisposable
 				}
 			}
 		}
+		catch (InvalidOperationException ex)
+		{
+			AppLogger.Warn(ex, "Preview audio stopped");
+		}
 		finally
 		{
+			tempo?.Dispose();
 			clock.AudioFinished();
 		}
 
@@ -863,6 +939,7 @@ public sealed class PreviewPlayer : IDisposable
 			ReadOnlySpan<float> samples = source.Read(end);
 			if (samples.IsEmpty) return false;
 
+			if (tempo is not null) samples = tempo.Process(samples);
 			output.Push(samples);
 			clock.AddPushed(samples.Length / source.Channels);
 			return true;

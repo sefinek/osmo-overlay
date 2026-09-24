@@ -71,6 +71,15 @@ public sealed class OutputTimelineTests
 	}
 
 	[TestMethod]
+	public void MapFrames_MarksOnlyTheFirstFrameAfterACut()
+	{
+		List<DerivedFrame> mapped = Timeline(new TimeRange(20, 30), new TimeRange(40, 45)).MapFrames(Recording());
+
+		var marked = mapped.Select((f, i) => (f, i)).Where(x => x.f.StartsAfterCut).Select(x => x.i).ToArray();
+		CollectionAssert.AreEqual(new[] { 100, 200 }, marked, "the first frames at 30 s and 45 s - not the start of the output");
+	}
+
+	[TestMethod]
 	public void NextKeptStretch_InsideAPiece_ContinuesFromThere()
 	{
 		Assert.AreEqual((15.0, 20.0), Timeline(new TimeRange(20, 30)).NextKeptStretch(15));

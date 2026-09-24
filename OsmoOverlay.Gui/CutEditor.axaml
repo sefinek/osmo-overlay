@@ -39,6 +39,12 @@
 			<StackPanel Name="CutRows" Spacing="6" />
 		</StackPanel>
 
+		<StackPanel Spacing="6">
+			<TextBlock Text="Route on the map across a cut" Classes="infoLabel" Margin="0" />
+			<ComboBox Name="RouteJoinCombo" HorizontalAlignment="Stretch" SelectionChanged="OnRouteJoinChanged"
+			          ToolTip.Tip="The telemetry either side of a cut sits side by side, so a plain line would cut straight across whatever the removed part went around. Applies to the compass trail, the map and the route intro." />
+		</StackPanel>
+
 		<TextBlock Name="ErrorText" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False" />
 		<TextBlock Classes="hint"
 		           Text="Mark only what gets removed - everything else is rendered. Select a part with I and O, cut it out with X, repeat for every part. Times can also be typed as 1:30 or 1:30.250; click a cut's number to jump to it. Cut parts are left out of the video and of the telemetry: the route intro starts with the first kept frame, and distance, elapsed time and the route stats count only what stays in. Playback in the preview skips them." />

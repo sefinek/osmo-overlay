@@ -11,6 +11,15 @@ public sealed class AudioWaveform : IDisposable
 {
 	public const int BucketsPerSecond = 100;
 
+	// Drawn in decibels, this far down from the recording's own loudest peak (which reaches the full height): camera
+	// audio often peaks around -30 dBFS, which a linear or full-scale view draws as a thin line.
+	private const double DisplayRangeDb = 48;
+
+	// Silence (or nothing decoded yet) keeps a -60 dBFS reference, and nothing below -72 dBFS is drawn at all - otherwise
+	// a near-silent recording's noise floor would fill the track.
+	private const float QuietestReference = 0.001f;
+	private const double DisplayFloorDb = -72;
+
 	private readonly LibavAudioSource _source;
 	private readonly float[][] _peaks;
 	private readonly CancellationTokenSource _cts = new();
@@ -43,6 +52,16 @@ public sealed class AudioWaveform : IDisposable
 	{
 		LibavAudioSource? source = LibavAudioSource.TryOpen(segments);
 		return source is null ? null : new AudioWaveform(source, segments.Sum(s => s.DurationSeconds));
+	}
+
+	/// <summary>How tall to draw a peak, 0-1: decibels from DisplayRangeDb below the loudest peak (never below DisplayFloorDb) up to it.</summary>
+	public static double DisplayLevel(float peak, float loudestPeak)
+	{
+		if (peak <= 0) return 0;
+
+		var loudestDb = 20 * Math.Log10(Math.Max(loudestPeak, QuietestReference));
+		var floorDb = Math.Max(loudestDb - DisplayRangeDb, DisplayFloorDb);
+		return Math.Clamp((20 * Math.Log10(peak) - floorDb) / (loudestDb - floorDb), 0, 1);
 	}
 
 	/// <summary>0-1 peak of a channel over buckets [from, to).</summary>

@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using OsmoOverlay.Core;
 using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
@@ -55,7 +56,11 @@ public partial class MainWindow
 			Key.End => GoToEnd,
 			Key.I => () => ApplyCutAction(CutAction.MarkIn),
 			Key.O => () => ApplyCutAction(CutAction.MarkOut),
-			Key.X or Key.Delete => () => ApplyCutAction(CutAction.CutSelection),
+			Key.X => () => ApplyCutAction(CutAction.CutSelection),
+			Key.Delete => DeleteSelectedCutOrCutSelection,
+			Key.Up => () => JumpToMarker(-1),
+			Key.Down => () => JumpToMarker(1),
+			Key.Q => ToggleLoop,
 			Key.J => () => StepSpeed(-1),
 			Key.K => PausePlayback,
 			Key.L => () => StepSpeed(1),
@@ -95,6 +100,43 @@ public partial class MainWindow
 	}
 
 	private static readonly double[] PlaybackRates = [0.25, 0.5, 1, 2, 4];
+	private bool _loopEnabled;
+
+	private void OnLoopClick(object? sender, RoutedEventArgs e)
+	{
+		ToggleLoop();
+	}
+
+	private void ToggleLoop()
+	{
+		_loopEnabled = !_loopEnabled;
+		LoopButton.Classes.Set("active", _loopEnabled);
+		ToolTip.SetTip(LoopButton, _loopEnabled
+			? "Looping (Q to stop) - the In/Out selection, or the whole recording without one"
+			: "Loop playback (Q) - the In/Out selection, or the whole recording without one");
+		SyncLoop();
+	}
+
+	/// <summary>The player loops the current In/Out selection - called again whenever the selection changes.</summary>
+	private void SyncLoop()
+	{
+		TimeRange? range = _summary is not null && Selection is { } selection ? selection.ToTimeRange(_summary.Video.Fps) : null;
+		_previewPlayer.SetLoop(_loopEnabled, range);
+	}
+
+	/// <summary>Up/Down: to the previous/next edge of a cut, the selection or a GPS loss, or the start/end (TimelineMarkers).</summary>
+	private void JumpToMarker(int direction)
+	{
+		if (_summary is null) return;
+
+		var fps = _summary.Video.Fps;
+		IEnumerable<FrameRange> gpsLoss = PreviewTimeline.GpsLoss.Select(r =>
+			new FrameRange((long)Math.Round(r.StartSeconds * fps), (long)Math.Round(r.EndSeconds * fps)));
+		SortedSet<long> markers = TimelineMarkers.Collect(SourceFrames, CutList.Normalize(_cuts, SourceFrames), Selection, gpsLoss);
+		var current = CurrentFrame();
+		if ((direction > 0 ? TimelineMarkers.Next(markers, current) : TimelineMarkers.Previous(markers, current)) is { } target)
+			SeekToFrame(target);
+	}
 	private bool _suppressSpeedEvent;
 
 	private void WireSpeed()

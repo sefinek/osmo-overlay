@@ -72,6 +72,13 @@
 			<Setter Property="HorizontalContentAlignment" Value="Center" />
 			<Setter Property="VerticalContentAlignment" Value="Center" />
 		</Style>
+		<Style Selector="Button.transport.active">
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+		</Style>
+		<Style Selector="Button.transport.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
 		<Style Selector="Button.iconButton">
 			<Setter Property="Padding" Value="9,0" />
 			<Setter Property="VerticalAlignment" Value="Stretch" />
@@ -720,9 +727,13 @@
 							<Button Classes="transport" Click="OnGoToEndClick" ToolTip.Tip="Go to end (End)">
 								<local:IconView Data="{StaticResource IconSkipEnd}" Width="14" Height="14" />
 							</Button>
+							<Button Name="LoopButton" Classes="transport" Click="OnLoopClick"
+							        ToolTip.Tip="Loop playback (Q) - the In/Out selection, or the whole recording without one">
+								<local:IconView Data="{StaticResource IconLoop}" Width="14" Height="14" />
+							</Button>
 							<ComboBox Name="SpeedCombo" Width="74" FontSize="12" Padding="8,4" VerticalAlignment="Center" Margin="4,0,0,0"
 							          SelectionChanged="OnSpeedChanged"
-							          ToolTip.Tip="Playback speed - J slower, K pause, L play / faster. Silent at any speed but 1x." />
+							          ToolTip.Tip="Playback speed - J slower, K pause, L play / faster. The sound keeps its pitch." />
 						</StackPanel>
 						<Border Grid.Column="1" Name="CompactTimelineHost" VerticalAlignment="Center">
 							<local:PreviewTimeline Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"

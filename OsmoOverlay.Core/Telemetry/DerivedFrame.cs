@@ -10,4 +10,6 @@ public sealed record DerivedFrame(
 	SunPosition Sun,
 	double LocalEastMeters,
 	double LocalNorthMeters,
-	double SmoothedGForce);
+	double SmoothedGForce,
+	// Set by OutputTimeline.MapFrames on the first frame after a cut - where a drawn route must not simply carry on (RouteJoin).
+	bool StartsAfterCut = false);

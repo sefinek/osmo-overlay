@@ -206,6 +206,9 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// <summary>Mutable so the GUI can toggle/reconfigure it live from Settings without recreating the renderer.</summary>
 	public RouteIntroSettings RouteIntro { get; set; }
 
+	/// <summary>How the drawn routes cross a cut - mutable like the above, the cut editor switches it live.</summary>
+	public RouteJoin RouteAcrossCuts { get; set; }
+
 	public void Dispose()
 	{
 		_hudTypeface.Dispose();

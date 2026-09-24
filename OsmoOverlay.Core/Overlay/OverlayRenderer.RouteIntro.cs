@@ -52,7 +52,7 @@ public sealed partial class OverlayRenderer
 	private SKImage? _routeIntroCard;
 	private RouteIntroCardKey? _routeIntroCardKey;
 
-	private readonly record struct RouteIntroCardKey(int Width, int Height, RouteIntroSettings Settings, RouteMapMosaic? Mosaic);
+	private readonly record struct RouteIntroCardKey(int Width, int Height, RouteIntroSettings Settings, RouteMapMosaic? Mosaic, RouteJoin RouteAcrossCuts);
 
 	/// <summary>See PrepareMapAsync (OverlayRenderer.Position.cs) - same shape, independent mosaic/key.</summary>
 	public async Task PrepareRouteIntroMapAsync(Action<int, int>? onTileProgress = null, CancellationToken ct = default)
@@ -135,7 +135,7 @@ public sealed partial class OverlayRenderer
 	/// <summary>Draws the cached card (see _routeIntroCard) at `alpha`, building it first if the key changed. `canvas` must be the frame canvas with only DrawFrame's output-size scale applied.</summary>
 	private void DrawRouteIntroCard(SKCanvas canvas, int outW, int outH, float alpha)
 	{
-		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic);
+		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic, RouteAcrossCuts);
 		if (_routeIntroCard is null || _routeIntroCardKey != key)
 		{
 			_routeIntroCard?.Dispose();
@@ -212,30 +212,8 @@ public sealed partial class OverlayRenderer
 
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
-			var builder = new SKPathBuilder();
-			var started = false;
-			foreach (SKPoint p in pixels)
-			{
-				var px = destRect.Left + p.X * fitScale;
-				var py = destRect.Top + p.Y * fitScale;
-				if (!started)
-				{
-					builder.MoveTo(px, py);
-					started = true;
-				}
-				else
-				{
-					builder.LineTo(px, py);
-				}
-			}
-
-			using SKPath path = builder.Detach();
-			using var trailPaint = new SKPaint
-			{
-				Color = TrailColor, IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 6,
-				StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round
-			};
-			canvas.DrawPath(path, trailPaint);
+			List<SKPoint> points = [.. pixels.Select(p => new SKPoint(destRect.Left + p.X * fitScale, destRect.Top + p.Y * fitScale))];
+			DrawRoute(canvas, points, i => _allFrames[i].StartsAfterCut, TrailColor, 6);
 		}
 
 		canvas.Restore();

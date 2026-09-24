@@ -95,7 +95,8 @@ public sealed class OutputTimeline
 				output.Add(frame with
 				{
 					Raw = frame.Raw with { SampleTimeSeconds = outputSeconds, SourceTimeSeconds = frame.Raw.RecordingTimeSeconds },
-					CumulativeDistanceMeters = distanceBefore + distances[i]
+					CumulativeDistanceMeters = distanceBefore + distances[i],
+					StartsAfterCut = i == 0 && output.Count > 0
 				});
 			}
 

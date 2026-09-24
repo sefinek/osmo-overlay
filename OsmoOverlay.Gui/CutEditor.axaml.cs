@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
 
@@ -39,7 +40,34 @@ public partial class CutEditor : UserControl
 		_applyDelay.Tick += (_, _) => Flush();
 	}
 
+	private static readonly (RouteJoin Join, string Label)[] RouteJoins =
+	[
+		(RouteJoin.Gap, "Break it - resume after the cut"),
+		(RouteJoin.Dashed, "Dashed line across the cut"),
+		(RouteJoin.Straight, "Straight line, as if nothing was cut")
+	];
+
+	private bool _populatingRouteJoin;
+
 	public event Action<List<FrameRange>>? CutsEdited;
+
+	/// <summary>The route-across-cuts setting picked here (saved and applied by MainWindow).</summary>
+	public event Action<RouteJoin>? RouteJoinChanged;
+
+	public void ShowRouteJoin(RouteJoin join)
+	{
+		_populatingRouteJoin = true;
+		RouteJoinCombo.ItemsSource ??= RouteJoins.Select(r => r.Label).ToList();
+		RouteJoinCombo.SelectedIndex = Math.Max(0, Array.FindIndex(RouteJoins, r => r.Join == join));
+		_populatingRouteJoin = false;
+	}
+
+	private void OnRouteJoinChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_populatingRouteJoin || RouteJoinCombo.SelectedIndex < 0) return;
+
+		RouteJoinChanged?.Invoke(RouteJoins[RouteJoinCombo.SelectedIndex].Join);
+	}
 	public event Action<CutAction>? CutRequested;
 	public event Action<long>? SeekRequested;
 

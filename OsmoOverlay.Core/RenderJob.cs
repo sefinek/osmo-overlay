@@ -172,7 +172,10 @@ public static class RenderJob
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
-				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.ForRecording(settings, hasGpsFix));
+				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.ForRecording(settings, hasGpsFix))
+			{
+				RouteAcrossCuts = settings.RouteAcrossCuts
+			};
 
 			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 			{

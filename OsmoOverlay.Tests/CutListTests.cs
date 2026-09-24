@@ -35,6 +35,36 @@ public sealed class CutListTests
 	}
 
 	[TestMethod]
+	public void Resize_MovesOneCutsEdges()
+	{
+		CollectionAssert.AreEqual(new[] { R(100, 250), R(400, 500) }, CutList.Resize([R(100, 200), R(400, 500)], 0, 100, 250, Total));
+	}
+
+	[TestMethod]
+	public void Resize_EdgeDraggedPastTheOther_Swaps()
+	{
+		CollectionAssert.AreEqual(new[] { R(50, 100) }, CutList.Resize([R(100, 200)], 0, 100, 50, Total));
+	}
+
+	[TestMethod]
+	public void Resize_OverANeighbour_Merges()
+	{
+		CollectionAssert.AreEqual(new[] { R(100, 500) }, CutList.Resize([R(100, 200), R(400, 500)], 0, 100, 420, Total));
+	}
+
+	[TestMethod]
+	public void Resize_ToNothing_RemovesTheCut()
+	{
+		CollectionAssert.AreEqual(new[] { R(400, 500) }, CutList.Resize([R(100, 200), R(400, 500)], 0, 150, 150, Total));
+	}
+
+	[TestMethod]
+	public void Remove_DropsTheIndexedCut()
+	{
+		CollectionAssert.AreEqual(new[] { R(100, 200) }, CutList.Remove([R(400, 500), R(100, 200)], 1, Total));
+	}
+
+	[TestMethod]
 	public void RemovedFrames_CountsOverlapOnce()
 	{
 		Assert.AreEqual(250, CutList.RemovedFrames([R(100, 200), R(150, 300), R(900, 950)], Total));
