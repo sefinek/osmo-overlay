@@ -11,6 +11,9 @@ internal static class Palette
 	public static IBrush Warning => Brush("WarningBrush");
 	public static IBrush Danger => Brush("DangerBrush");
 	public static IBrush TextMuted => Brush("TextMutedBrush");
+	public static IBrush TextPrimary => Brush("TextPrimaryBrush");
+	public static IBrush Control => Brush("ControlBrush");
+	public static IBrush SurfaceSunken => Brush("SurfaceSunkenBrush");
 	public static IBrush Stroke => Brush("StrokeBrush");
 	public static IBrush StrokeStrong => Brush("StrokeStrongBrush");
 	public static IBrush SubtleFill => Brush("SubtleFillBrush");

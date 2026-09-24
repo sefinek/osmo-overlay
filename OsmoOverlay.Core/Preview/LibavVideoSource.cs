@@ -18,11 +18,17 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	private const int MaxOpenSessions = 2;
 	// Decoding on at ~150+ fps beats a seek plus the keyframe run-up for a target up to this far ahead.
 	private const double DecodeAheadSeconds = 1.0;
-	// Frames before a one-frame back step that the same decode pass keeps, so the next steps back need no decoding.
+	// A keyframe request only decodes on this far - past it a keyframe seek (~15 ms) is cheaper, and one keyframe per
+	// second (the timeline's thumbnails, a drag) would otherwise decode a whole second of frames each time.
+	private const int KeyframeDecodeAheadFrames = 6;
+	// Frames before a one-frame back step that the same decode pass keeps, so the next steps back need no decoding -
+	// at most this many, and at most BackStepCacheBytes of them (a full-resolution 4K preview frame is 33 MB).
 	private const int BackStepFrames = 15;
+	private const long BackStepCacheBytes = 160L * 1024 * 1024;
 
 	private readonly Lock _lock = new();
-	private readonly FrameBufferPool _buffers = new(BackStepFrames + 6);
+	private readonly FrameBufferPool _buffers;
+	private readonly int _backStepFrames;
 	private readonly List<Segment> _segments;
 	private readonly List<DecoderSession> _sessions = [];
 	private readonly Dictionary<long, byte[]> _backStepCache = [];
@@ -42,6 +48,8 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		Fps = fps;
 		_width = width;
 		_height = height;
+		_backStepFrames = (int)Math.Clamp(BackStepCacheBytes / ((long)width * height * 4), 2, BackStepFrames);
+		_buffers = new FrameBufferPool(_backStepFrames + 6);
 
 		_segments = new List<Segment>(segments.Count);
 		double offset = 0;
@@ -118,7 +126,8 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		Segment segment = _segments[segmentIndex];
 		DecoderSession session = SessionFor(segmentIndex);
 
-		var decodeOn = ReferenceEquals(session, _positioned) && target >= _nextFrame && target - _nextFrame <= DecodeAheadSeconds * Fps;
+		var aheadLimit = accuracy == SeekAccuracy.Keyframe ? KeyframeDecodeAheadFrames : DecodeAheadSeconds * Fps;
+		var decodeOn = ReferenceEquals(session, _positioned) && target >= _nextFrame && target - _nextFrame <= aheadLimit;
 		if (!decodeOn)
 		{
 			var backStep = target == _lastReturned - 1;
@@ -138,7 +147,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				return (Returned(Convert(session), keyframe), keyframe);
 			}
 
-			if (backStep) return DecodeTo(session, segment, target, target - BackStepFrames, ct);
+			if (backStep) return DecodeTo(session, segment, target, target - _backStepFrames, ct);
 		}
 
 		return DecodeTo(session, segment, target, long.MaxValue, ct);
@@ -198,6 +207,22 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		_positioned = nextSession;
 		_nextFrame = next.StartFrame;
 		return DecodeTo(nextSession, next, next.StartFrame, long.MaxValue, ct);
+	}
+
+	/// <summary>Decodes past the next frame without converting it - fast playback shows only every Nth. False at the end of the recording.</summary>
+	private bool SkipNext(long expected, CancellationToken ct)
+	{
+		if (_positioned is { } session && _nextFrame == expected && session.Receive())
+		{
+			_nextFrame = _segments[session.SegmentIndex].StartFrame + session.FrameIndex() + 1;
+			return true;
+		}
+
+		// Not positioned there, or at a file's end: DecodeNext seeks or crosses into the next file.
+		if (DecodeNext(expected, ct) is not { } decoded) return false;
+
+		Recycle(decoded.Frame);
+		return true;
 	}
 
 	private VideoFrame Returned(VideoFrame frame, long index)
@@ -281,7 +306,8 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		public string? Error { get; private set; }
 
 		/// <summary>The next frame, or null at the end of the recording (or once cancelled or failed).</summary>
-		public VideoFrame? TryReadNextFrame()
+		/// <param name="step">1 = every frame; N = decode N frames and return only the last (fast playback).</param>
+		public VideoFrame? TryReadNextFrame(int step = 1)
 		{
 			if (_ct.IsCancellationRequested || Error is not null) return null;
 
@@ -290,6 +316,12 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				lock (_source._lock)
 				{
 					if (_source._disposed) return null;
+
+					for (var i = 1; i < step; i++)
+					{
+						if (!_source.SkipNext(_next, _ct)) return null;
+						_next = _source._nextFrame;
+					}
 
 					var decoded = _source.DecodeNext(_next, _ct);
 					if (decoded is not { } frame) return null;

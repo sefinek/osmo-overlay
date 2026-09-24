@@ -65,6 +65,7 @@
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
 		<Style Selector="Button.transport">
+			<Setter Property="Focusable" Value="False" />
 			<Setter Property="Width" Value="32" />
 			<Setter Property="Height" Value="32" />
 			<Setter Property="Padding" Value="0" />
@@ -98,6 +99,7 @@
 			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
 		</Style>
 		<Style Selector="Button.previewToolButton">
+			<Setter Property="Focusable" Value="False" />
 			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
 			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
 			<Setter Property="Opacity" Value="0.7" />
@@ -157,14 +159,17 @@
 			<Setter Property="TextWrapping" Value="Wrap" />
 			<Setter Property="LineHeight" Value="18" />
 		</Style>
-		<Style Selector="TextBlock.fallbackWarning">
-			<Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-			<Setter Property="FontSize" Value="14" />
+		<Style Selector="Border.fallbackWarning">
 			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="Background" Value="Transparent" />
 			<Setter Property="Padding" Value="4,2" />
 			<Setter Property="Margin" Value="4,0,0,0" />
 			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.fallbackWarning > local|IconView">
+			<Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+			<Setter Property="Width" Value="13" />
+			<Setter Property="Height" Value="13" />
 		</Style>
 		<Style Selector="Border.overlayListItem">
 			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
@@ -271,7 +276,7 @@
 		</Style>
 	</Window.Styles>
 
-	<Grid Margin="14" RowDefinitions="*,230" RowSpacing="10">
+	<Grid Name="RootGrid" Margin="14" RowDefinitions="*,230" RowSpacing="10">
 
 		<Grid Grid.Row="0" ColumnDefinitions="550,*,260" ColumnSpacing="10">
 
@@ -583,9 +588,14 @@
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
 				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
 					<Grid Grid.Row="0">
-						<ComboBox Name="PreviewQualityCombo" HorizontalAlignment="Left" VerticalAlignment="Center" MinWidth="150"
-						          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewQualityChanged"
-						          ToolTip.Tip="Preview quality - how sharp the live preview is. Lower decodes faster; the exported video always renders at the source's full resolution." />
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
+							<ComboBox Name="PreviewQualityCombo" VerticalAlignment="Center" MinWidth="150"
+							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewQualityChanged"
+							          ToolTip.Tip="Preview quality - how sharp the live preview is. Lower decodes faster; the exported video always renders at the source's full resolution." />
+							<ComboBox Name="PreviewZoomCombo" VerticalAlignment="Center" MinWidth="80"
+							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewZoomChanged"
+							          ToolTip.Tip="Preview zoom - 100% is one source pixel per screen pixel. Ctrl+wheel zooms at the pointer, the middle mouse button pans. Pixel-peeping wants the Full resolution preview quality." />
+						</StackPanel>
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
 							<Button Name="ToggleGridButton" Classes="previewToolButton active"
 							        ToolTip.Tip="Grid guides">
@@ -609,9 +619,21 @@
 							        ToolTip.Tip="Snap widgets to grid">
 								<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
 							</Button>
+							<Button Name="ToggleOverlayButton" Classes="previewToolButton active" Click="OnToggleOverlayClick"
+							        ToolTip.Tip="Show the overlay (H) - off shows the plain footage">
+								<local:IconView Data="{StaticResource IconEye}" Width="14" Height="14" />
+							</Button>
+							<Button Name="SnapshotButton" Classes="previewToolButton" Click="OnSnapshotClick"
+							        ToolTip.Tip="Save the frame on screen as a PNG, at full resolution">
+								<local:IconView Data="{StaticResource IconCamera}" Width="14" Height="14" />
+							</Button>
 							<Button Name="TogglePreciseTimeButton" Classes="previewToolButton" Click="OnTogglePreciseTimeClick"
 							        ToolTip.Tip="Show the time with milliseconds">
 								<local:IconView Data="{StaticResource IconStopwatch}" Width="14" Height="14" />
+							</Button>
+							<Button Name="ToggleTimelineButton" Classes="previewToolButton" Click="OnToggleTimelineClick"
+							        ToolTip.Tip="Timeline with thumbnails and audio waveform, in place of the log">
+								<local:IconView Data="{StaticResource IconTimeline}" Width="14" Height="14" />
 							</Button>
 							<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
 							        ToolTip.Tip="Cut parts out of the render">
@@ -629,7 +651,9 @@
 					</Grid>
 					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
 						<Grid>
-							<Image Name="PreviewImage" Stretch="Uniform" />
+							<Canvas>
+								<Image Name="PreviewImage" Stretch="Fill" />
+							</Canvas>
 							<Border Name="CutScrim" Background="{StaticResource ScrimBrush}" IsVisible="False" IsHitTestVisible="False">
 								<Border Background="{StaticResource OnVideoBrush}" BorderBrush="{StaticResource OnVideoBorderBrush}" BorderThickness="1"
 								        CornerRadius="6" Padding="14,8" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -665,9 +689,11 @@
 								         PointerPressed="OnResizeHandlePointerPressed"
 								         ToolTip.Tip="Drag to resize" />
 
-								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton" Content="⚙"
+								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton"
 								        IsVisible="False" Click="OnWidgetGearHoverButtonClick"
-								        ToolTip.Tip="Widget settings" />
+								        ToolTip.Tip="Widget settings">
+									<local:IconView Data="{StaticResource IconGear}" Width="11" Height="11" />
+								</Button>
 								<Button Name="RemoveWidgetButton" Classes="widgetHoverButton removeWidgetButton"
 								        IsVisible="False" Click="OnRemoveWidgetButtonClick"
 								        ToolTip.Tip="Remove from overlay">
@@ -694,9 +720,14 @@
 							<Button Classes="transport" Click="OnGoToEndClick" ToolTip.Tip="Go to end (End)">
 								<local:IconView Data="{StaticResource IconSkipEnd}" Width="14" Height="14" />
 							</Button>
+							<ComboBox Name="SpeedCombo" Width="74" FontSize="12" Padding="8,4" VerticalAlignment="Center" Margin="4,0,0,0"
+							          SelectionChanged="OnSpeedChanged"
+							          ToolTip.Tip="Playback speed - J slower, K pause, L play / faster. Silent at any speed but 1x." />
 						</StackPanel>
-						<local:PreviewTimeline Grid.Column="1" Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
-						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
+						<Border Grid.Column="1" Name="CompactTimelineHost" VerticalAlignment="Center">
+							<local:PreviewTimeline Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
+							                       ValueChanged="OnPreviewTimelineValueChanged" />
+						</Border>
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />
 					</Grid>
@@ -749,7 +780,7 @@
 
 							<StackPanel Spacing="10">
 								<TextBlock Text="WIDGETS" Classes="sectionLabel" Margin="0" />
-								<TextBlock Text="Drag a widget from the palette below onto the preview to add it - drag it there to reposition, hover it and use ⚙ for settings or ✕ to remove it."
+								<TextBlock Text="Drag a widget from the palette below onto the preview to add it - drag it there to reposition, hover it and use the gear for its settings or the cross to remove it."
 								           Classes="infoLabel" Margin="0,-6,0,0" FontSize="12" TextWrapping="Wrap" />
 
 								<TextBlock Text="ON OVERLAY" Classes="sectionLabel" Margin="0,6,0,0" />
@@ -766,8 +797,9 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<Grid ColumnDefinitions="*,Auto">
 												<TextBlock Classes="overlayListItemText" Text="Date &amp; time" />
-												<TextBlock Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning"
-												           Text="⚠" IsVisible="False" />
+												<Border Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning" IsVisible="False">
+													<local:IconView Data="{StaticResource IconWarning}" />
+												</Border>
 											</Grid>
 										</Border>
 										<Border Name="DateTimeSettingsPanel" Grid.Column="2" IsVisible="False">
@@ -794,8 +826,9 @@
 										        PointerPressed="OnWidgetItemPointerPressed">
 											<Grid ColumnDefinitions="*,Auto">
 												<TextBlock Classes="overlayListItemText" Text="UTC time" />
-												<TextBlock Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning"
-												           Text="⚠" IsVisible="False" />
+												<Border Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning" IsVisible="False">
+													<local:IconView Data="{StaticResource IconWarning}" />
+												</Border>
 											</Grid>
 										</Border>
 										<Border Name="UtcTimeSettingsPanel" Grid.Column="2" IsVisible="False">
@@ -1169,6 +1202,14 @@
 				</Grid>
 			</Border>
 		</Grid>
+
+		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
+			<StackPanel Spacing="2">
+				<Border Name="ExpandedTimelineHost" CornerRadius="4" ClipToBounds="True" />
+				<ScrollBar Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False" IsVisible="False"
+				           Scroll="OnTimelineScroll" />
+			</StackPanel>
+		</Border>
 
 		<Border Grid.Row="1" Classes="card" Name="LogCard">
 			<Border Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6" Padding="10">

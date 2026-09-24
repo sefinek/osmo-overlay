@@ -6,17 +6,17 @@ namespace OsmoOverlay.Core.Preview;
 ///     Where playback is, in seconds on the play timeline (the kept stretches back to back, from 0). While sound plays
 ///     it is the audio device's position - video follows the sound, the way players keep A/V in sync (audio can't be
 ///     sped up or slowed down, video frames can be held or dropped) - and a stopwatch otherwise: without an audio
-///     track or device, and once the audio has run out. Now is read by the pacing loop only; the audio feeder reports
-///     pushed samples from its own thread.
+///     track or device, at any speed but 1x (the stopwatch then runs that much faster or slower), and once the audio
+///     has run out. Now is read by the pacing loop only; the audio feeder reports pushed samples from its own thread.
 /// </summary>
-internal sealed class PlaybackClock(AudioOutput? audio, int sampleRate)
+internal sealed class PlaybackClock(AudioOutput? audio, int sampleRate, double rate)
 {
 	private readonly Stopwatch _stopwatch = new();
 	private double _stopwatchBase;
 	private long _pushedFrames;
 	private volatile bool _audioFinished;
 
-	public bool FollowsAudio { get; private set; } = audio is not null;
+	public bool FollowsAudio { get; private set; } = audio is not null && rate == 1;
 
 	public double Now
 	{
@@ -34,7 +34,7 @@ internal sealed class PlaybackClock(AudioOutput? audio, int sampleRate)
 				_stopwatch.Restart();
 			}
 
-			return _stopwatchBase + _stopwatch.Elapsed.TotalSeconds;
+			return _stopwatchBase + _stopwatch.Elapsed.TotalSeconds * rate;
 		}
 	}
 

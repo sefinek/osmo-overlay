@@ -51,4 +51,22 @@ public static class PreviewCompositor
 			resultPin.Free();
 		}
 	}
+
+	/// <summary>An opaque BGRA frame (Compose's result) as a lossless PNG.</summary>
+	public static byte[] EncodePng(byte[] bgra, int width, int height)
+	{
+		var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
+		GCHandle pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
+		try
+		{
+			using var pixmap = new SKPixmap(info, pin.AddrOfPinnedObject(), info.RowBytes);
+			using SKData png = pixmap.Encode(SKEncodedImageFormat.Png, 100)
+			                   ?? throw new InvalidOperationException("The frame couldn't be encoded as PNG.");
+			return png.ToArray();
+		}
+		finally
+		{
+			pin.Free();
+		}
+	}
 }

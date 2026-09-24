@@ -14,7 +14,7 @@ namespace OsmoOverlay.Gui;
 ///     The Overlay card: preset management, the widget palette (drag onto the preview canvas to add -
 ///     several instances of the same type are allowed, see AddElementInstance), the "on overlay" list of
 ///     what's currently placed, and dragging/removing/configuring elements on the preview canvas itself.
-///     A widget's settings open only from the canvas (the ⚙ shown on hover, next to ✕ to remove) - the
+///     A widget's settings open only from the canvas (the gear shown on hover, next to the remove button) - the
 ///     palette and "on overlay" list are for adding/reviewing/selecting, not editing.
 /// </summary>
 public partial class MainWindow
@@ -200,7 +200,7 @@ public partial class MainWindow
 
 	private string GetWidgetLabel(OverlayElementType type)
 	{
-		// A palette item's child is either the label itself or a Grid holding it (plus e.g. the fallback ⚠).
+		// A palette item's child is either the label itself or a Grid holding it (plus e.g. the fallback warning icon).
 		Control? child = GetPaletteItem(type)?.Child;
 		TextBlock? label = child as TextBlock ??
 		                   (child as Panel)?.Children.OfType<TextBlock>().FirstOrDefault(t => t.Classes.Contains("overlayListItemText"));
@@ -238,7 +238,7 @@ public partial class MainWindow
 	///     settings, which stays a canvas-only action (see the class doc) so there's one consistent place
 	///     to configure a widget regardless of how many instances of its type exist. A widget this file
 	///     has no data for stays in the preset (it comes back with a file that has the data) but isn't
-	///     drawn, so its row is dimmed, flagged with ⚠ and not selectable - only removable.
+	///     drawn, so its row is dimmed, flagged with the warning icon and not selectable - only removable.
 	/// </summary>
 	private Border BuildAddedWidgetRow(OverlayElement element, string name, bool editable)
 	{
@@ -255,7 +255,7 @@ public partial class MainWindow
 			: UsesTimeFallback(element.Type) ? TimeFallbackTip : null;
 		if (warningTip is not null)
 		{
-			var warning = new TextBlock { Text = "⚠", Classes = { "fallbackWarning" } };
+			var warning = new Border { Classes = { "fallbackWarning" }, Child = new IconView { Data = Icons.Warning } };
 			ToolTip.SetTip(warning, warningTip);
 			Grid.SetColumn(warning, 1);
 			grid.Children.Add(warning);
@@ -1103,8 +1103,9 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     PreviewImage uses Stretch="Uniform", which letterboxes the bitmap inside the control - this is
-	///     the shared scale/offset math for converting between a point on the canvas control and a pixel
+	///     Where the preview image sits in the canvas - fitted (letterboxed) or zoomed and panned
+	///     (MainWindow.PreviewZoom.cs; ApplyPreviewLayout places the image by this) - and the shared
+	///     scale/offset math for converting between a point on the canvas control and a pixel
 	///     in the full-res video, used both directions: mapping a click/drag/drop to a render position
 	///     (MapCanvasPointToFullRes) and placing UI - the hover icons, selection box, guide lines - back
 	///     over a position in the full-res frame (MapFullResPointToCanvas).
@@ -1120,13 +1121,15 @@ public partial class MainWindow
 		var bitmapHeight = _previewBitmap.PixelSize.Height;
 		if (controlWidth <= 0 || controlHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0) return null;
 
-		var scale = Math.Min(controlWidth / bitmapWidth, controlHeight / bitmapHeight);
-		var renderedWidth = bitmapWidth * scale;
-		var renderedHeight = bitmapHeight * scale;
-		var offsetX = (controlWidth - renderedWidth) / 2;
-		var offsetY = (controlHeight - renderedHeight) / 2;
 		// The preview bitmap is a uniformly downscaled copy of the full render resolution.
 		var fullResScale = _summary.Video.Width / (double)bitmapWidth;
+		var scale = _previewZoom is { } zoom
+			? zoom * fullResScale / RenderScaling
+			: Math.Min(controlWidth / bitmapWidth, controlHeight / bitmapHeight);
+		var renderedWidth = bitmapWidth * scale;
+		var renderedHeight = bitmapHeight * scale;
+		var offsetX = (controlWidth - renderedWidth) / 2 + _previewPan.X;
+		var offsetY = (controlHeight - renderedHeight) / 2 + _previewPan.Y;
 
 		return (scale, offsetX, offsetY, renderedWidth, renderedHeight, fullResScale);
 	}
@@ -1140,6 +1143,14 @@ public partial class MainWindow
 		if (localX < 0 || localY < 0 || localX > t.RenderedWidth || localY > t.RenderedHeight) return null;
 
 		return new Point(localX / t.Scale * t.FullResScale, localY / t.Scale * t.FullResScale);
+	}
+
+	/// <summary>Like MapCanvasPointToFullRes, also for a point outside the image (the zoom's pivot).</summary>
+	private Point? MapCanvasPointToFullResUnclamped(Point canvasPoint)
+	{
+		if (GetPreviewTransform() is not { } t) return null;
+
+		return new Point((canvasPoint.X - t.OffsetX) / t.Scale * t.FullResScale, (canvasPoint.Y - t.OffsetY) / t.Scale * t.FullResScale);
 	}
 
 	private Point? MapFullResPointToCanvas(double fullResX, double fullResY)
@@ -1405,6 +1416,7 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
+		if (TryStartPreviewPan(e)) return;
 		if (_summary is null || IsActivePresetDefault) return;
 		if (!e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
@@ -1436,6 +1448,7 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerMoved(object? sender, PointerEventArgs e)
 	{
+		if (ContinuePreviewPan(e)) return;
 		if (_resizingElementId is { } resizingId)
 		{
 			UpdateResize(resizingId, e);
@@ -1519,6 +1532,7 @@ public partial class MainWindow
 	/// </summary>
 	private void OnOverlayCanvasPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
 	{
+		_panning = false;
 		if (_resizingElementId is null && _draggingElementId is null) return;
 
 		_resizingElementId = null;
@@ -1529,6 +1543,7 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
 	{
+		if (EndPreviewPan(e)) return;
 		if (_resizingElementId is not null)
 		{
 			_resizingElementId = null;
@@ -1586,7 +1601,7 @@ public partial class MainWindow
 		return new Rect(Canvas.GetLeft(control), Canvas.GetTop(control), control.Bounds.Width, control.Bounds.Height);
 	}
 
-	/// <summary>Positions the ⚙/✕ pair at a widget's top-right corner, gear to the left of remove.</summary>
+	/// <summary>Positions the gear/remove pair at a widget's top-right corner, gear to the left of remove.</summary>
 	private void ShowHoverIconsFor(OverlayElement element)
 	{
 		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);

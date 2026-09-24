@@ -56,6 +56,8 @@ public partial class MainWindow
 		}
 
 		CloseElementSettings();
+		// Cutting is done on the timeline - the expanded one shows where each cut falls.
+		if (!PreviewTimeline.Expanded) SetTimelineExpanded(true, false);
 		SourceColumnScroll.IsVisible = false;
 		CutsColumnScroll.IsVisible = true;
 		CutsColumnScroll.Offset = default;

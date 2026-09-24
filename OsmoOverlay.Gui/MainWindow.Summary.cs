@@ -26,8 +26,9 @@ public partial class MainWindow
 		ClosePreview();
 		SetPhase(UiPhase.LoadingSummary);
 		_hasGpsFix = false;
-		// Cuts belong to the recording they were set on.
+		// Cuts, thumbnails and the waveform belong to the recording they were made for.
 		ClearCuts();
+		ReleaseTimelineTracks();
 		_hasGpsTimestamp = false;
 		_hasContainerTime = false;
 		LogBox.ClearLog();
@@ -99,7 +100,7 @@ public partial class MainWindow
 				if (!_hasGpsTimestamp)
 					AppendLog(_hasContainerTime
 						? "GPS timestamp: not present in this recording - Date & time / UTC time fall back to the " +
-						  "file's own recording-start time instead (approximate, not GPS-synced; flagged with ⚠ in the widget list)"
+						  "file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)"
 						: "GPS timestamp: not present in this recording, and no usable recording-start time either - " +
 						  "Date & time / UTC time are unavailable and greyed out", LogLevel.Warn);
 

@@ -47,6 +47,11 @@ public sealed class PreviewPlayer : IDisposable
 	private byte[]? _overlayBuffer;
 	private CancellationTokenSource? _mapPrepareCts;
 	private CancellationTokenSource? _playbackCts;
+	// The last playback run - the next one waits for it to finish, so two runs never share the decoders or the
+	// audio device (the old one's final AudioOutput.Stop would otherwise clear the new one's sound).
+	private Task _playbackRun = Task.CompletedTask;
+	// Bumped by every OpenAsync/Close - an open that was overtaken while it awaited drops what it opened.
+	private int _openGeneration;
 	private OverlayRenderer? _renderer;
 	private bool _resumeAfterScrub;
 	private CancellationTokenSource? _routeIntroPrepareCts;
@@ -67,9 +72,19 @@ public sealed class PreviewPlayer : IDisposable
 	private LibavAudioSource? _audioSource;
 	private AudioOutput? _audioOutput;
 	private float _audioGain;
+	// Kept across Close/OpenAsync like the output timeline - a view toggle, not part of the file.
+	private bool _showOverlay = true;
+	// What a full-resolution snapshot needs to open its own decoder (RenderSnapshotPngAsync).
+	private IReadOnlyList<PlaybackSegment>? _segments;
+	private int _videoWidth;
+	private int _videoHeight;
+	private double _fps;
 
 	public bool IsPlaying => _playbackCts is not null;
 	public bool HasAudio => _audioOutput is not null;
+
+	/// <summary>1 = real time. Anything else plays silent - sped-up or slowed-down sound is noise, not a preview of the render.</summary>
+	public double PlaybackRate { get; private set; } = 1;
 	public TimeSpan Duration => _video?.Duration ?? TimeSpan.Zero;
 
 	public void Dispose()
@@ -85,6 +100,7 @@ public sealed class PreviewPlayer : IDisposable
 	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight)
 	{
 		Close();
+		var generation = _openGeneration;
 
 		if (summary.TelemetryFrames is not { Count: > 0 } rawFrames)
 			throw new InvalidOperationException("File has no telemetry to preview.");
@@ -102,19 +118,29 @@ public sealed class PreviewPlayer : IDisposable
 		_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
 		_hasContainerTime = summary.ContainerRecordingStartUtc is not null;
 
-		List<PlaybackSegment> segments =
-		[
-			.. summary.InputPaths
-				.Zip(summary.SegmentDurationsSeconds, (path, duration) => new PlaybackSegment(path, duration))
-		];
+		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
+		_segments = segments;
+		_videoWidth = summary.Video.Width;
+		_videoHeight = summary.Video.Height;
+		_fps = summary.Video.Fps;
 
 		// Opening the decoder and decoding the first frame are both blocking; awaiting Task.Run (rather
 		// than running the whole method inside one) lets the continuation - and the FrameReady
 		// event it raises - resume on the caller's thread (the UI thread), same as RunPlaybackAsync.
 		LibavVideoSource video = await Task.Run(() => new LibavVideoSource(segments,
 			summary.Video.Fps, previewWidth, previewHeight));
+		(LibavAudioSource? audioSource, AudioOutput? audioOutput) = await Task.Run(() => OpenAudio(segments));
+		if (generation != _openGeneration)
+		{
+			video.Dispose();
+			audioOutput?.Dispose();
+			audioSource?.Dispose();
+			return;
+		}
+
 		AppLogger.Info($"Preview decoder: {video.DecoderDescription}");
-		(_audioSource, _audioOutput) = await Task.Run(() => OpenAudio(segments));
+		_audioSource = audioSource;
+		_audioOutput = audioOutput;
 		_audioOutput?.SetGain(_audioGain);
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout =
@@ -138,8 +164,17 @@ public sealed class PreviewPlayer : IDisposable
 		// "frozen". The first frame now shows immediately (Map/RouteIntro drawing their normal "no data
 		// yet" placeholder - see DrawMapWidget/DrawRouteIntroMap), then recomposes once tiles land, same
 		// UX SetLayout already gives a live MapWidget toggle.
-		ComposedPreviewFrame? first =
-			await Task.Run(() => DecodeAndCompose(video, TimeSpan.Zero, SeekAccuracy.Exact, CancellationToken.None));
+		ComposedPreviewFrame? first;
+		try
+		{
+			first = await Task.Run(() => DecodeAndCompose(video, TimeSpan.Zero, SeekAccuracy.Exact, CancellationToken.None));
+		}
+		catch (ObjectDisposedException) when (generation != _openGeneration)
+		{
+			// Closed while the first frame decoded.
+			return;
+		}
+
 		if (first is not null) Publish(first);
 
 		StartMapPreparation(renderer);
@@ -207,6 +242,7 @@ public sealed class PreviewPlayer : IDisposable
 
 	public void Close()
 	{
+		_openGeneration++;
 		_playbackCts?.Cancel();
 		_playbackCts = null;
 		CancelSeeks();
@@ -270,6 +306,20 @@ public sealed class PreviewPlayer : IDisposable
 		return (null, null);
 	}
 
+	/// <summary>Applies to a running playback right away (it carries on from where it is at the new speed), else to the next Play.</summary>
+	public void SetPlaybackRate(double rate)
+	{
+		if (rate <= 0 || rate == PlaybackRate) return;
+
+		PlaybackRate = rate;
+		if (_playbackCts is not { } running) return;
+
+		// Replaced without PlaybackStopped - to the GUI this is still the same playback.
+		running.Cancel();
+		_playbackCts = null;
+		Play(_lastPosition);
+	}
+
 	/// <summary>Drops a waiting seek and stops the one decoding - Play and Close take over from any of them.</summary>
 	private void CancelSeeks()
 	{
@@ -302,7 +352,7 @@ public sealed class PreviewPlayer : IDisposable
 		var cts = new CancellationTokenSource();
 		_playbackCts = cts;
 		List<PlaybackStretch> stretches = PlaybackStretches(_outputTimeline, fromPosition, _video.Duration);
-		_ = RunPlaybackAsync(_video, _audioSource, _audioOutput, stretches, cts);
+		_playbackRun = RunPlaybackAsync(_playbackRun, _video, _audioSource, _audioOutput, stretches, PlaybackRate, cts);
 	}
 
 	public void Pause()
@@ -453,6 +503,52 @@ public sealed class PreviewPlayer : IDisposable
 		}
 	}
 
+	/// <summary>Shows the plain video (false) or the video with the overlay - recomposes the frame on screen right away.</summary>
+	public void SetShowOverlay(bool show)
+	{
+		lock (_lock)
+		{
+			_showOverlay = show;
+			if (_renderer is null || _lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
+
+			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
+			if (composed is not null) Publish(composed);
+		}
+	}
+
+	/// <summary>
+	///     The frame at a position as a PNG at the recording's full resolution, with the overlay exactly as the render
+	///     draws it there - none where the position is cut out or while the overlay is hidden. Decoded by a decoder of
+	///     its own at full size, so the running preview isn't disturbed.
+	/// </summary>
+	public async Task<byte[]> RenderSnapshotPngAsync(TimeSpan position)
+	{
+		if (_segments is not { } segments) throw new InvalidOperationException("No recording is open.");
+
+		var (width, height, fps) = (_videoWidth, _videoHeight, _fps);
+		return await Task.Run(() =>
+		{
+			using var source = new LibavVideoSource(segments, fps, width, height);
+			VideoFrame frame = source.GetFrame(position, SeekAccuracy.Exact, CancellationToken.None)
+			                   ?? throw new InvalidOperationException("The frame couldn't be decoded.");
+
+			byte[]? overlay = null;
+			lock (_lock)
+			{
+				if (_showOverlay && _renderer is { } renderer && _derivedFrames is { Count: > 0 } frames &&
+				    OutputSeconds(position) is { } seconds)
+				{
+					overlay = new byte[renderer.FrameBufferSize(width, height)];
+					renderer.RenderInto(TelemetryProcessor.FindNearest(frames, seconds), overlay, width, height, true);
+				}
+			}
+
+			var composed = new byte[width * height * 4];
+			PreviewCompositor.Compose(composed, width, height, frame.Bgra, frame.Stride, overlay, width, height);
+			return PreviewCompositor.EncodePng(composed, width, height);
+		});
+	}
+
 	/// <summary>Mirrors SetLayout: lets Settings toggle the watermark live without reopening the file.</summary>
 	public void SetShowWatermark(bool show)
 	{
@@ -531,13 +627,17 @@ public sealed class PreviewPlayer : IDisposable
 	///     from the channel's bounded capacity is what keeps the producer from running away, and
 	///     nothing needs to be discarded to "catch up" from a slow start.
 	/// </summary>
-	private async Task RunPlaybackAsync(LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput,
-		IReadOnlyList<PlaybackStretch> stretches, CancellationTokenSource ownCts)
+	private async Task RunPlaybackAsync(Task previousRun, LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput,
+		IReadOnlyList<PlaybackStretch> stretches, double rate, CancellationTokenSource ownCts)
 	{
 		CancellationToken ct = ownCts.Token;
 
 		try
 		{
+			// Already cancelled by whoever started this one - only its cleanup is left, a few milliseconds.
+			await previousRun;
+			ct.ThrowIfCancellationRequested();
+
 			// See HighResolutionTimer - default Windows timer resolution otherwise makes the Task.Delay
 			// below overshoot by several ms per frame, which is most of this loop's entire real-time
 			// budget on a demanding (e.g. 4K60) source.
@@ -553,12 +653,12 @@ public sealed class PreviewPlayer : IDisposable
 			// guarantees the producer can always be unblocked regardless of why the consumer stopped.
 			using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			Task<string?> producer = Task.Run(
-				() => ProduceFramesAsync(video, stretches, channel.Writer, producerCts.Token),
+				() => ProduceFramesAsync(video, stretches, FrameStep(rate, video.Fps), channel.Writer, producerCts.Token),
 				producerCts.Token);
 
-			PlaybackClock clock = new(audioOutput, audioSource?.SampleRate ?? 1);
+			PlaybackClock clock = new(audioOutput, audioSource?.SampleRate ?? 1, rate);
 			audioOutput?.Stop();
-			Task feeder = audioSource is not null && audioOutput is not null
+			Task feeder = clock.FollowsAudio && audioSource is not null && audioOutput is not null
 				? Task.Run(() => FeedAudioAsync(audioSource, audioOutput, clock, stretches, producerCts.Token), producerCts.Token)
 				: Task.CompletedTask;
 
@@ -642,7 +742,7 @@ public sealed class PreviewPlayer : IDisposable
 	///     stream ended well before its stretch did. Frames are decoded outside _lock - only composing needs it, so
 	///     SetLayout, scrubbing and the rest never wait for a decode.
 	/// </summary>
-	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IReadOnlyList<PlaybackStretch> stretches,
+	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IReadOnlyList<PlaybackStretch> stretches, int step,
 		ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
 	{
 		var halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
@@ -658,7 +758,7 @@ public sealed class PreviewPlayer : IDisposable
 				playOffset += (stretch.End - stretch.Start).TotalSeconds;
 				while (!ct.IsCancellationRequested)
 				{
-					VideoFrame? videoFrame = stream.TryReadNextFrame();
+					VideoFrame? videoFrame = stream.TryReadNextFrame(step);
 					if (videoFrame is null) break;
 
 					if (stream.Position >= stretch.End - halfFrame)
@@ -700,6 +800,15 @@ public sealed class PreviewPlayer : IDisposable
 	}
 
 	/// <summary>
+	///     Frames decoded per frame shown: sped up, only every Nth is converted and shown, so the screen stays at the
+	///     source's frame rate, at most ~60 a second, instead of asking for 240 converted frames a second at 4x.
+	/// </summary>
+	private static int FrameStep(double rate, double fps)
+	{
+		return Math.Max(1, (int)Math.Ceiling(rate * fps / 60 - 1e-9));
+	}
+
+	/// <summary>
 	///     What Play covers from a position: the rest of the recording, or with cuts (SetOutputTimeline) only the
 	///     kept pieces from there on - the cut-out parts are skipped, the way the render leaves them out.
 	/// </summary>
@@ -738,6 +847,7 @@ public sealed class PreviewPlayer : IDisposable
 				source.Seek(stretch.Start.TotalSeconds);
 				while (true)
 				{
+					ct.ThrowIfCancellationRequested();
 					while (output.QueuedSeconds > AudioQueueSeconds) await Task.Delay(10, ct);
 					if (!PushNext(stretch.End.TotalSeconds)) break;
 				}
@@ -795,10 +905,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		if (frames.Count == 0) return null;
 
-		// Preview positions are on the recording's timeline, the frames on the output's (see SetOutputTimeline).
-		var outputSeconds = _outputTimeline is { } timeline ? timeline.ToOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
 		byte[]? overlay = null;
-		if (outputSeconds is { } seconds)
+		if (_showOverlay && OutputSeconds(position) is { } seconds)
 		{
 			DerivedFrame frame = TelemetryProcessor.FindNearest(frames, seconds);
 			var overlaySize = renderer.FrameBufferSize(videoFrame.Width, videoFrame.Height);
@@ -812,5 +920,11 @@ public sealed class PreviewPlayer : IDisposable
 			videoFrame.Stride, overlay, videoFrame.Width, videoFrame.Height);
 
 		return new ComposedPreviewFrame(position, composed);
+	}
+
+	/// <summary>Preview positions are on the recording's timeline, the telemetry on the output's (see SetOutputTimeline) - null where cut out.</summary>
+	private double? OutputSeconds(TimeSpan position)
+	{
+		return _outputTimeline is { } timeline ? timeline.ToOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
 	}
 }

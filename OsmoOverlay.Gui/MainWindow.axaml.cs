@@ -130,6 +130,9 @@ public partial class MainWindow : Window
 		WirePreviewTimeline();
 		WireAudio();
 		WirePreviewQuality();
+		WireSpeed();
+		WireTimelineTracks();
+		WirePreviewZoom();
 		WirePreviewShortcuts();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
@@ -153,7 +156,7 @@ public partial class MainWindow : Window
 		// The rule-of-thirds/safe-margin guide lines are positioned in absolute canvas pixels, so a
 		// window resize (which resizes OverlayDragCanvas itself, independent of when a new preview
 		// bitmap loads) needs to redraw them.
-		OverlayDragCanvas.SizeChanged += (_, _) => UpdatePreviewGuides();
+		OverlayDragCanvas.SizeChanged += (_, _) => ApplyPreviewLayout();
 
 		// XAML hardcodes the "Both"/snap-on look as a starting point for the designer - reconcile the
 		// toolbar buttons with whatever was actually loaded from settings.json above.

@@ -27,6 +27,7 @@ public partial class MainWindow
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
+		ShowLogForRender();
 		LogBox.ClearLog();
 		AppendBanner();
 		Progress.Value = 0;

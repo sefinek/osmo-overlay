@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="160"
@@ -12,8 +13,8 @@
 	<StackPanel Margin="20" Spacing="16">
 		<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
 			<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" VerticalAlignment="Center">
-				<TextBlock Name="KindGlyph" FontSize="13" FontWeight="Bold" Foreground="White"
-				           HorizontalAlignment="Center" VerticalAlignment="Center" />
+				<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
+				                HorizontalAlignment="Center" VerticalAlignment="Center" />
 			</Border>
 			<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
 		</StackPanel>

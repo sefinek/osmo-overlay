@@ -4,7 +4,14 @@ namespace OsmoOverlay.Core.Preview;
 public sealed record VideoFrame(byte[] Bgra, int Stride, int Width, int Height);
 
 /// <summary>One physical file on the combined preview timeline.</summary>
-public sealed record PlaybackSegment(string Path, double DurationSeconds);
+public sealed record PlaybackSegment(string Path, double DurationSeconds)
+{
+	/// <summary>A loaded recording's files, in order - what every preview decoder opens.</summary>
+	public static List<PlaybackSegment> Of(FileSummary summary)
+	{
+		return [.. summary.InputPaths.Zip(summary.SegmentDurationsSeconds, (path, duration) => new PlaybackSegment(path, duration))];
+	}
+}
 
 public enum SeekAccuracy
 {

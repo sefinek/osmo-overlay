@@ -51,6 +51,8 @@ public sealed record OverlaySettings(
 	bool PreviewSnapToGrid = true,
 	// The preview's time readout with milliseconds instead of whole seconds (the toolbar's stopwatch toggle).
 	bool PreviewPreciseTime = false,
+	// The expanded timeline (filmstrip + waveform) in the log's place under the window, instead of the compact track.
+	bool PreviewTimelineExpanded = false,
 	// Preview sound: muted until the user turns it up, the volume 0-1 remembered either way.
 	bool PreviewAudioMuted = true,
 	double PreviewAudioVolume = 0.8,

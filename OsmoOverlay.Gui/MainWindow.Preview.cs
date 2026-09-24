@@ -30,6 +30,7 @@ public partial class MainWindow
 			_previewBitmap = new WriteableBitmap(new PixelSize(previewWidth, previewHeight), new Vector(96, 96),
 				PixelFormat.Bgra8888, AlphaFormat.Opaque);
 			PreviewImage.Source = _previewBitmap;
+			ApplyPreviewLayout();
 
 			await _previewPlayer.OpenAsync(summary, previewWidth, previewHeight);
 			LoadOverlayPresets(summary.Video.Width, summary.Video.Height);
@@ -41,6 +42,7 @@ public partial class MainWindow
 			RefreshCutViews();
 			PreviewTimeline.IsEnabled = true;
 			UpdateAudioPanel();
+			_ = LoadTimelineTracksAsync(summary);
 
 			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
 			// flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).

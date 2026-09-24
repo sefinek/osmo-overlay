@@ -46,7 +46,7 @@ public partial class ConfirmDialog : Window
 		ConfirmButton.Content = confirmText;
 		ConfirmButton.Classes.Add(ButtonClassFor(kind));
 		KindDot.Background = DotBrushFor(kind);
-		KindGlyph.Text = GlyphFor(kind);
+		KindIcon.Data = IconFor(kind);
 		_onConfirm = onConfirm;
 		_workingText = workingText;
 		_onSecondary = onSecondary;
@@ -115,15 +115,14 @@ public partial class ConfirmDialog : Window
 		};
 	}
 
-	private static string GlyphFor(DialogKind kind)
+	private static Geometry IconFor(DialogKind kind)
 	{
 		return kind switch
 		{
-			DialogKind.Success => "✓",
-			DialogKind.Warning => "!",
-			DialogKind.Danger => "✕",
-			DialogKind.Info => "i",
-			_ => "i"
+			DialogKind.Success => Icons.Check,
+			DialogKind.Warning => Icons.Exclamation,
+			DialogKind.Danger => Icons.Close,
+			_ => Icons.Info
 		};
 	}
 

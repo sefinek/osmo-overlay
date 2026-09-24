@@ -1,49 +1,98 @@
+using System.Globalization;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Rendering;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
 
 /// <summary>
-///     The preview's timeline: scrubbing (Value in recording seconds, like a Slider) plus everything marked on
-///     the recording - the parts cut out of the render (red, hatched, the stripes slowly moving), the In/Out
-///     selection about to be cut (bracketed) and GPS signal loss (a thin strip under the track). One control
-///     so all of them share one seconds-to-pixels mapping with the thumb - bands on a Canvas behind a Slider
-///     never lined up exactly with its inset track.
+///     The preview's timeline, in two forms of one control (MainWindow moves it between the transport row and the
+///     bottom panel, see Expanded): compact, a slider-like track with the same marks, and expanded, NLE style: a ruler,
+///     the video as a filmstrip of thumbnails (TimelineThumbnails) and the
+///     audio as a waveform per channel (AudioWaveform), with everything marked on the recording drawn across the
+///     tracks on one seconds-to-pixels mapping - the parts cut out of the render (red, hatched, the stripes slowly
+///     moving), the In/Out selection about to be cut (bracketed), GPS signal loss (amber, under the ruler) and the
+///     playhead. Value is the playhead in recording seconds, like a Slider: a click or drag anywhere scrubs.
+///     Zoom: the wheel zooms around the pointer, Shift+wheel scrolls, a double-click on the ruler fits the whole
+///     recording; while playing, the view pages along with the playhead. ViewChanged reports the visible stretch
+///     for the scrollbar under it.
 /// </summary>
 public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 {
-	private const double ThumbRadius = 7;
-	// The thumb stays whole at 0 and at Maximum.
-	private const double Inset = ThumbRadius;
-	private const double TrackHeight = 6;
-	private const double CutHeight = 16;
-	private const double SelectionHeight = 24;
+	private const double RulerHeight = 22;
+	private const double VideoTrackHeight = 50;
+	private const double AudioTrackHeight = VideoTrackHeight;
+	private const double TrackGap = 2;
 	private const double StripeSpacing = 7;
 	private const double StripePixelsPerSecond = 8;
+	private const double MinMajorTickPixels = 90;
+	private const double MaxPixelsPerFrame = 24;
+	private const double WheelZoomStep = 1.25;
+	// The waveform is drawn in decibels, this far down from the recording's own loudest peak (which reaches the
+	// track's full height): camera audio often peaks around -30 dBFS, which a linear or full-scale view draws as a
+	// thin line.
+	private const double WaveformRangeDb = 48;
+	private const double CompactThumbRadius = 7;
+	private const double CompactTrackHeight = 6;
+	private const double CompactCutHeight = 16;
+	private const double CompactSelectionHeight = 24;
 
-	private static readonly IBrush TrackBrush = Palette.StrokeStrong;
+	private static readonly double[] TickSteps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
+
+	private static readonly IBrush RulerBrush = Palette.Control;
+	private static readonly IBrush TrackBrush = Palette.SubtleFill;
+	private static readonly IBrush PlaceholderBrush = Palette.Control;
+	private static readonly IPen TickPen = new Pen(Palette.TextMuted);
+	private static readonly IPen MinorTickPen = new Pen(Palette.Stroke);
+	private static readonly IBrush LabelBrush = Palette.TextMuted;
+	private static readonly IBrush WaveformBrush = Palette.Tint(Palette.Accent, 0.85);
+	private static readonly IPen WaveformCenterPen = new Pen(Palette.Tint(Palette.Accent, 0.3));
 	private static readonly IBrush PlayedBrush = Palette.Accent;
 	private static readonly IBrush GpsLossBrush = Palette.Warning;
-	private static readonly IBrush CutFill = Palette.Tint(Palette.Danger, 0.22);
-	private static readonly IPen CutBorder = new Pen(Palette.Tint(Palette.Danger, 0.85));
-	private static readonly IPen CutStripe = new Pen(Palette.Tint(Palette.Danger, 0.65), 2);
-	private static readonly IBrush SelectionFill = Palette.Tint(Palette.Accent, 0.2);
+	private static readonly IBrush CutFill = Palette.Tint(Palette.SurfaceSunken, 0.6);
+	private static readonly IPen CutBorder = new Pen(Palette.Tint(Palette.Danger, 0.9));
+	private static readonly IPen CutStripe = new Pen(Palette.Tint(Palette.Danger, 0.55), 2);
+	private static readonly IBrush SelectionFill = Palette.Tint(Palette.Accent, 0.18);
 	private static readonly IPen SelectionBracket = new Pen(Palette.Accent, 2);
-	private static readonly IBrush ThumbBrush = Palette.Accent;
+	private static readonly IPen PlayheadPen = new Pen(Palette.TextPrimary, 1.5);
+	private static readonly IBrush PlayheadBrush = Palette.TextPrimary;
+	private static readonly IPen HoverPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.35));
+	private static readonly Typeface LabelTypeface = new(FontFamily.Default);
 
+	private readonly Dictionary<int, Bitmap> _thumbnailBitmaps = [];
 	private IReadOnlyList<TimeRange> _cuts = [];
 	private IReadOnlyList<TimeRange> _gpsLoss = [];
 	private TimeRange? _selection;
+	private TimelineThumbnails? _thumbnails;
+	private AudioWaveform? _waveform;
+	private double _fps = 30;
+	private double _thumbnailAspect = 16.0 / 9;
+	// Zoom as a multiple of "the whole recording fits", so a resize keeps what's visible; the view's left edge in seconds.
+	private double _zoom = 1;
+	private double _viewStart;
 	private bool _scrubbing;
 	private bool _attached;
 	private bool _animating;
+	private bool _refreshPosted;
 	private TimeSpan? _lastAnimationFrame;
 	private double _stripeOffset;
+	private double? _hoverX;
+	private bool _expanded;
+	// The tracks' static part (ruler, filmstrip, waveform, GPS loss) drawn once into a bitmap and redrawn only when
+	// the view or the generated content changes. Playback moves the playhead every frame; repainting the thumbnails
+	// and a waveform column per pixel on each of those made the preview stutter.
+	private RenderTargetBitmap? _tracksLayer;
+	private (double Start, double PixelsPerSecond, Size Size, double Scaling, int Version) _tracksLayerKey;
+	private int _contentVersion;
 
 	static PreviewTimeline()
 	{
@@ -54,11 +103,41 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	public PreviewTimeline()
 	{
 		Cursor = new Cursor(StandardCursorType.Hand);
+		ToolTip.SetTip(this, "Click or drag to move the playhead · Wheel: zoom · Shift+wheel: scroll · Double-click the ruler: fit");
 	}
 
 	/// <summary>A drag on the timeline began / ended - Value keeps changing (ValueChanged) in between.</summary>
 	public event Action? ScrubStarted;
 	public event Action? ScrubEnded;
+
+	/// <summary>The visible stretch changed (zoom, scroll, resize) - see ViewStart/ViewLength.</summary>
+	public event Action? ViewChanged;
+
+	/// <summary>False: the compact track (whole recording, no zoom). True: ruler, filmstrip, waveform, zoom.</summary>
+	public bool Expanded
+	{
+		get => _expanded;
+		set
+		{
+			if (_expanded == value) return;
+
+			_expanded = value;
+			_hoverX = null;
+			InvalidateMeasure();
+			SetView(value ? _zoom : 1, value ? _viewStart : 0);
+		}
+	}
+
+	// The compact track keeps the thumb whole at 0 and at Maximum.
+	private double Inset => _expanded ? 0 : CompactThumbRadius;
+
+	public double ViewStart => _viewStart;
+	public double ViewLength => PixelsPerSecond > 0 ? Math.Max(0, Bounds.Width - 2 * Inset) / PixelsPerSecond : Duration;
+
+	private double Duration => Math.Max(0, Maximum - Minimum);
+	private double FitPixelsPerSecond => Duration > 0 ? Math.Max(0, Bounds.Width - 2 * Inset) / Duration : 0;
+	private double PixelsPerSecond => FitPixelsPerSecond * _zoom;
+	private double MaxZoom => FitPixelsPerSecond > 0 ? Math.Max(1, _fps * MaxPixelsPerFrame / FitPixelsPerSecond) : 1;
 
 	public IReadOnlyList<TimeRange> Cuts
 	{
@@ -77,6 +156,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_gpsLoss = value;
+			_contentVersion++;
 			InvalidateVisual();
 		}
 	}
@@ -91,6 +171,36 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	/// <summary>The recording the tracks show - both sources are owned (and disposed) by the caller. Null clears the tracks.</summary>
+	public void SetSources(TimelineThumbnails? thumbnails, AudioWaveform? waveform, double fps, double aspect)
+	{
+		if (_thumbnails is not null) _thumbnails.Updated -= PostRefresh;
+		if (_waveform is not null) _waveform.Updated -= PostRefresh;
+
+		foreach (Bitmap bitmap in _thumbnailBitmaps.Values) bitmap.Dispose();
+		_thumbnailBitmaps.Clear();
+
+		_thumbnails = thumbnails;
+		_waveform = waveform;
+		_contentVersion++;
+		_fps = fps > 0 ? fps : 30;
+		_thumbnailAspect = aspect > 0 ? aspect : 16.0 / 9;
+		if (_thumbnails is not null) _thumbnails.Updated += PostRefresh;
+		if (_waveform is not null) _waveform.Updated += PostRefresh;
+
+		_zoom = 1;
+		_viewStart = 0;
+		ViewChanged?.Invoke();
+		RequestVisibleThumbnails();
+		InvalidateVisual();
+	}
+
+	/// <summary>Scrolls the view so it starts at this time (the scrollbar under the timeline).</summary>
+	public void ScrollTo(double start)
+	{
+		SetView(_zoom, start);
+	}
+
 	/// <summary>The whole control takes the pointer, not just what's drawn - a click between the marks still scrubs.</summary>
 	public bool HitTest(Point point)
 	{
@@ -99,57 +209,244 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override Size MeasureOverride(Size availableSize)
 	{
-		return new Size(0, SelectionHeight + 4);
+		return new Size(0, _expanded ? RulerHeight + TrackGap + VideoTrackHeight + TrackGap + AudioTrackHeight : CompactSelectionHeight + 4);
+	}
+
+	protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+	{
+		base.OnPropertyChanged(change);
+		if (change.Property == BoundsProperty || change.Property == MaximumProperty)
+		{
+			SetView(_zoom, _viewStart);
+		}
+		else if (change.Property == ValueProperty && !_scrubbing && _expanded)
+		{
+			// Playing past the view's edge pages along, keeping a little of what was just played in sight.
+			var x = X(Value);
+			if (x > Bounds.Width - 12 || x < 0) SetView(_zoom, Value - ViewLength * 0.1);
+		}
 	}
 
 	public override void Render(DrawingContext context)
 	{
-		var height = Bounds.Height;
-		var middle = height / 2;
+		if (_expanded) RenderExpanded(context);
+		else RenderCompact(context);
+	}
+
+	private void RenderCompact(DrawingContext context)
+	{
+		var middle = Bounds.Height / 2;
 		var trackWidth = Math.Max(0, Bounds.Width - 2 * Inset);
+		var track = new Rect(Inset, middle - CompactTrackHeight / 2, trackWidth, CompactTrackHeight);
 		using DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
 
-		context.DrawRectangle(TrackBrush, null, new Rect(Inset, middle - TrackHeight / 2, trackWidth, TrackHeight), TrackHeight / 2, TrackHeight / 2);
+		context.DrawRectangle(Palette.StrokeStrong, null, track, CompactTrackHeight / 2, CompactTrackHeight / 2);
 		// The part already played, up to the thumb - under the cuts and the selection, which stay readable on top.
-		context.DrawRectangle(PlayedBrush, null, new Rect(Inset, middle - TrackHeight / 2, X(Value) - Inset, TrackHeight), TrackHeight / 2, TrackHeight / 2);
+		context.DrawRectangle(PlayedBrush, null, track.WithWidth(Math.Max(0, X(Value) - Inset)), CompactTrackHeight / 2, CompactTrackHeight / 2);
 
 		foreach (TimeRange loss in _gpsLoss)
 		{
 			var (x1, x2) = Span(loss, 3);
-			context.DrawRectangle(GpsLossBrush, null, new Rect(x1, middle + TrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
+			context.DrawRectangle(GpsLossBrush, null, new Rect(x1, middle + CompactTrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
 		}
 
-		foreach (TimeRange cut in _cuts) DrawCut(context, cut, middle);
+		foreach (TimeRange cut in _cuts) DrawCut(context, cut, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
+		if (_selection is { } selection)
+			DrawSelection(context, selection, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2);
 
-		if (_selection is { } selection) DrawSelection(context, selection, middle);
-
-		context.DrawEllipse(ThumbBrush, null, new Point(X(Value), middle), ThumbRadius, ThumbRadius);
+		context.DrawEllipse(PlayedBrush, null, new Point(X(Value), middle), CompactThumbRadius, CompactThumbRadius);
 	}
 
-	private void DrawCut(DrawingContext context, TimeRange cut, double middle)
+	private void RenderExpanded(DrawingContext context)
+	{
+		var width = Bounds.Width;
+		using DrawingContext.PushedState clip = context.PushClip(new Rect(Bounds.Size));
+		using DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
+
+		var videoTop = RulerHeight + TrackGap;
+		var audioTop = videoTop + VideoTrackHeight + TrackGap;
+		var bottom = audioTop + AudioTrackHeight;
+
+		var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+		(double, double, Size, double, int) key = (_viewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
+		if (_tracksLayer is null || _tracksLayerKey != key)
+		{
+			_tracksLayer?.Dispose();
+			_tracksLayer = RenderTracksLayer(scaling, width, videoTop, audioTop);
+			_tracksLayerKey = key;
+		}
+
+		context.DrawImage(_tracksLayer, new Rect(Bounds.Size));
+		if (Duration <= 0 || PixelsPerSecond <= 0) return;
+
+		// Played so far, along the ruler's bottom edge.
+		context.FillRectangle(PlayedBrush, new Rect(0, RulerHeight - 2, Math.Max(0, X(Value)), 2));
+
+		foreach (TimeRange cut in _cuts) DrawCut(context, cut, videoTop, bottom);
+		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
+
+		if (_hoverX is { } hover) context.DrawLine(HoverPen, new Point(hover, 0), new Point(hover, bottom));
+		DrawPlayhead(context, bottom);
+	}
+
+	private RenderTargetBitmap RenderTracksLayer(double scaling, double width, double videoTop, double audioTop)
+	{
+		var pixels = new PixelSize(Math.Max(1, (int)Math.Ceiling(Bounds.Width * scaling)), Math.Max(1, (int)Math.Ceiling(Bounds.Height * scaling)));
+		var layer = new RenderTargetBitmap(pixels, new Vector(96 * scaling, 96 * scaling));
+		using DrawingContext context = layer.CreateDrawingContext();
+
+		context.FillRectangle(RulerBrush, new Rect(0, 0, width, RulerHeight));
+		context.FillRectangle(TrackBrush, new Rect(0, videoTop, width, VideoTrackHeight));
+		context.FillRectangle(TrackBrush, new Rect(0, audioTop, width, AudioTrackHeight));
+		if (Duration <= 0 || PixelsPerSecond <= 0) return layer;
+
+		DrawRuler(context, width);
+		DrawFilmstrip(context, videoTop, width);
+		DrawWaveform(context, audioTop, width);
+
+		foreach (TimeRange loss in _gpsLoss)
+		{
+			var (x1, x2) = Span(loss, 3);
+			context.FillRectangle(GpsLossBrush, new Rect(x1, RulerHeight - 3, x2 - x1, 3));
+		}
+
+		return layer;
+	}
+
+	private void DrawRuler(DrawingContext context, double width)
+	{
+		var major = TickSteps.FirstOrDefault(step => step * PixelsPerSecond >= MinMajorTickPixels, TickSteps[^1]);
+		var minor = major / (major is 2 or 0.2 or 120 ? 4 : 5);
+		var first = Math.Floor(_viewStart / minor) * minor;
+		var last = Math.Min(Duration, _viewStart + ViewLength);
+
+		for (var t = first; t <= last + minor / 2; t += minor)
+		{
+			var x = Math.Round(X(t)) + 0.5;
+			var isMajor = Math.Abs(t / major - Math.Round(t / major)) < 1e-6;
+			context.DrawLine(isMajor ? TickPen : MinorTickPen, new Point(x, isMajor ? 8 : 14), new Point(x, RulerHeight - 3));
+			if (!isMajor) continue;
+
+			var label = new FormattedText(FormatRulerTime(t, major), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+				LabelTypeface, 10, LabelBrush);
+			context.DrawText(label, new Point(x + 3, 1));
+		}
+	}
+
+	private static string FormatRulerTime(double seconds, double step)
+	{
+		if (step < 1) return TimeText.Format(seconds);
+
+		TimeSpan time = TimeSpan.FromSeconds(Math.Round(seconds));
+		return time.ToString(time.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss", CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>Tiles on a grid fixed to the timeline (not the view), so they don't swim while scrolling; each shows the thumbnail of the second at its middle.</summary>
+	private void DrawFilmstrip(DrawingContext context, double top, double width)
+	{
+		var tileHeight = VideoTrackHeight - 4;
+		var tileWidth = Math.Round(tileHeight * _thumbnailAspect);
+		var viewLeft = _viewStart * PixelsPerSecond;
+		var firstTile = (int)Math.Floor(viewLeft / tileWidth);
+		var endX = Math.Min(width, X(Duration));
+
+		using DrawingContext.PushedState clip = context.PushClip(new Rect(0, top, endX, VideoTrackHeight));
+		for (var tile = firstTile;; tile++)
+		{
+			var x = tile * tileWidth - viewLeft;
+			if (x >= endX) break;
+
+			var dest = new Rect(x + 1, top + 2, tileWidth - 2, tileHeight);
+			if (Thumbnail(TileSlot(tile, tileWidth)) is { } bitmap)
+				context.DrawImage(bitmap, new Rect(bitmap.Size), dest);
+			else
+				context.FillRectangle(PlaceholderBrush, dest);
+		}
+	}
+
+	private int TileSlot(int tile, double tileWidth)
+	{
+		return (int)Math.Floor((tile + 0.5) * tileWidth / PixelsPerSecond);
+	}
+
+	private Bitmap? Thumbnail(int slot)
+	{
+		if (_thumbnails is null) return null;
+		if (_thumbnailBitmaps.TryGetValue(slot, out Bitmap? cached)) return cached;
+		if (_thumbnails.TryGet(slot) is not { } bgra) return null;
+
+		var bitmap = new WriteableBitmap(new PixelSize(_thumbnails.Width, _thumbnails.Height), new Vector(96, 96),
+			PixelFormat.Bgra8888, AlphaFormat.Opaque);
+		using (ILockedFramebuffer buffer = bitmap.Lock()) Marshal.Copy(bgra, 0, buffer.Address, bgra.Length);
+		_thumbnailBitmaps[slot] = bitmap;
+		return bitmap;
+	}
+
+	/// <summary>One vertical line per pixel column, as tall as the loudest sample under it (in dB, see Level) - one lane per channel, mirrored around its middle.</summary>
+	private void DrawWaveform(DrawingContext context, double top, double width)
+	{
+		if (_waveform is not { } waveform) return;
+
+		var lanes = Math.Min(2, waveform.Channels);
+		var laneHeight = AudioTrackHeight / lanes;
+		var endX = Math.Min(width, X(Duration));
+		for (var lane = 0; lane < lanes; lane++)
+		{
+			var middle = top + laneHeight * (lane + 0.5);
+			context.DrawGeometry(WaveformBrush, null, WaveformLane(waveform, lane, middle, laneHeight, endX));
+			context.DrawLine(WaveformCenterPen, new Point(0, middle), new Point(endX, middle));
+		}
+	}
+
+	private StreamGeometry WaveformLane(AudioWaveform waveform, int lane, double middle, double laneHeight, double endX)
+	{
+		// Silence (or nothing decoded yet) keeps a -60 dBFS reference instead of blowing up the noise floor.
+		var loudestDb = 20 * Math.Log10(Math.Max(waveform.LoudestPeak, 0.001f));
+		var geometry = new StreamGeometry();
+		using StreamGeometryContext stream = geometry.Open();
+		for (var x = 0; x < endX; x++)
+		{
+			var from = (int)(TimeAt(x) * AudioWaveform.BucketsPerSecond);
+			var to = Math.Max(from + 1, (int)(TimeAt(x + 1) * AudioWaveform.BucketsPerSecond));
+			var half = Math.Max(0.5, Level(waveform.Peak(lane, from, to), loudestDb) * (laneHeight / 2 - 1));
+			stream.BeginFigure(new Point(x, middle - half), true);
+			stream.LineTo(new Point(x + 1, middle - half));
+			stream.LineTo(new Point(x + 1, middle + half));
+			stream.LineTo(new Point(x, middle + half));
+			stream.EndFigure(true);
+		}
+
+		return geometry;
+	}
+
+	/// <summary>0-1 on the decibel scale from WaveformRangeDb below the loudest peak up to it.</summary>
+	private static double Level(float peak, double loudestDb)
+	{
+		return peak <= 0 ? 0 : Math.Clamp((20 * Math.Log10(peak) - loudestDb + WaveformRangeDb) / WaveformRangeDb, 0, 1);
+	}
+
+	private void DrawCut(DrawingContext context, TimeRange cut, double top, double bottom)
 	{
 		var (x1, x2) = Span(cut, 3);
-		var band = new Rect(x1, middle - CutHeight / 2, x2 - x1, CutHeight);
-		context.DrawRectangle(CutFill, null, band, 2, 2);
+		var band = new Rect(x1, top, x2 - x1, bottom - top);
+		context.FillRectangle(CutFill, band);
 
-		using (context.PushClip(new RoundedRect(band, 2)))
+		using (context.PushClip(band))
 		{
 			// Diagonal stripes (the usual "removed" hatching), shifted by the animation offset.
 			for (var x = band.Left - band.Height - StripeSpacing + _stripeOffset; x < band.Right; x += StripeSpacing)
 				context.DrawLine(CutStripe, new Point(x, band.Bottom), new Point(x + band.Height, band.Top));
 		}
 
-		context.DrawRectangle(null, CutBorder, band.Deflate(0.5), 2, 2);
+		context.DrawRectangle(null, CutBorder, band.Deflate(0.5));
 	}
 
-	private void DrawSelection(DrawingContext context, TimeRange selection, double middle)
+	private void DrawSelection(DrawingContext context, TimeRange selection, double top, double bottom)
 	{
 		var (x1, x2) = Span(selection, 2);
-		var top = middle - SelectionHeight / 2;
-		var bottom = middle + SelectionHeight / 2;
-		context.DrawRectangle(SelectionFill, null, new Rect(x1, top, x2 - x1, SelectionHeight), 2, 2);
+		context.FillRectangle(SelectionFill, new Rect(x1, top, x2 - x1, bottom - top));
 
-		const double tick = 5;
+		const double tick = 6;
 		foreach (var (x, direction) in new[] { (x1 + 1, 1.0), (x2 - 1, -1.0) })
 		{
 			context.DrawLine(SelectionBracket, new Point(x, top), new Point(x, bottom));
@@ -158,11 +455,34 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	private void DrawPlayhead(DrawingContext context, double bottom)
+	{
+		var x = Math.Round(X(Value)) + 0.5;
+		if (x < -6 || x > Bounds.Width + 6) return;
+
+		context.DrawLine(PlayheadPen, new Point(x, 0), new Point(x, bottom));
+		var handle = new StreamGeometry();
+		using (StreamGeometryContext stream = handle.Open())
+		{
+			stream.BeginFigure(new Point(x - 6, 0), true);
+			stream.LineTo(new Point(x + 6, 0));
+			stream.LineTo(new Point(x + 6, 6));
+			stream.LineTo(new Point(x, 12));
+			stream.LineTo(new Point(x - 6, 6));
+			stream.EndFigure(true);
+		}
+
+		context.DrawGeometry(PlayheadBrush, null, handle);
+	}
+
 	private double X(double seconds)
 	{
-		var range = Maximum - Minimum;
-		var fraction = range > 0 ? Math.Clamp((seconds - Minimum) / range, 0, 1) : 0;
-		return Inset + fraction * Math.Max(0, Bounds.Width - 2 * Inset);
+		return Inset + (seconds - Minimum - _viewStart) * PixelsPerSecond;
+	}
+
+	private double TimeAt(double x)
+	{
+		return PixelsPerSecond > 0 ? _viewStart + (x - Inset) / PixelsPerSecond : 0;
 	}
 
 	/// <summary>A range in pixels, at least minWidth wide so a one-frame cut still shows.</summary>
@@ -174,27 +494,102 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private double ValueAt(double x)
 	{
-		var trackWidth = Bounds.Width - 2 * Inset;
-		var fraction = trackWidth > 0 ? Math.Clamp((x - Inset) / trackWidth, 0, 1) : 0;
-		return Minimum + fraction * (Maximum - Minimum);
+		return Math.Clamp(Minimum + TimeAt(x), Minimum, Maximum);
+	}
+
+	/// <summary>Clamps zoom and scroll to the recording, then redraws and asks for the thumbnails now in view.</summary>
+	private void SetView(double zoom, double start)
+	{
+		_zoom = Math.Clamp(zoom, 1, MaxZoom);
+		_viewStart = Math.Clamp(start, 0, Math.Max(0, Duration - ViewLength));
+		RequestVisibleThumbnails();
+		InvalidateVisual();
+		ViewChanged?.Invoke();
+	}
+
+	private void RequestVisibleThumbnails()
+	{
+		if (!_expanded || _thumbnails is null || PixelsPerSecond <= 0) return;
+
+		var tileWidth = Math.Round((VideoTrackHeight - 4) * _thumbnailAspect);
+		var viewLeft = _viewStart * PixelsPerSecond;
+		var firstTile = (int)Math.Floor(viewLeft / tileWidth);
+		var lastTile = (int)Math.Ceiling((viewLeft + Bounds.Width) / tileWidth);
+		_thumbnails.Request(Enumerable.Range(firstTile, Math.Max(0, lastTile - firstTile + 1)).Select(t => TileSlot(t, tileWidth)));
+	}
+
+	/// <summary>The generators report from their own threads; several reports collapse into one redraw.</summary>
+	private void PostRefresh()
+	{
+		if (_refreshPosted) return;
+
+		_refreshPosted = true;
+		Dispatcher.UIThread.Post(() =>
+		{
+			_refreshPosted = false;
+			_contentVersion++;
+			InvalidateVisual();
+		}, DispatcherPriority.Background);
+	}
+
+	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+	{
+		base.OnPointerWheelChanged(e);
+		if (!_expanded || Duration <= 0) return;
+
+		var x = e.GetPosition(this).X;
+		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift) || Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y))
+		{
+			var delta = Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y) ? e.Delta.X : e.Delta.Y;
+			SetView(_zoom, _viewStart - delta * ViewLength * 0.1);
+		}
+		else
+		{
+			// Zooms around the time under the pointer, which stays where it is.
+			var anchor = TimeAt(x);
+			var zoom = Math.Clamp(_zoom * Math.Pow(WheelZoomStep, e.Delta.Y), 1, MaxZoom);
+			SetView(zoom, anchor - x / (FitPixelsPerSecond * zoom));
+		}
+
+		e.Handled = true;
 	}
 
 	protected override void OnPointerPressed(PointerPressedEventArgs e)
 	{
 		base.OnPointerPressed(e);
-		if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+		PointerPoint point = e.GetCurrentPoint(this);
+		if (!point.Properties.IsLeftButtonPressed) return;
+
+		if (_expanded && e.ClickCount == 2 && point.Position.Y < RulerHeight)
+		{
+			SetView(1, 0);
+			e.Handled = true;
+			return;
+		}
 
 		e.Pointer.Capture(this);
 		_scrubbing = true;
 		ScrubStarted?.Invoke();
-		Value = ValueAt(e.GetPosition(this).X);
+		Value = ValueAt(point.Position.X);
 		e.Handled = true;
 	}
 
 	protected override void OnPointerMoved(PointerEventArgs e)
 	{
 		base.OnPointerMoved(e);
-		if (_scrubbing) Value = ValueAt(e.GetPosition(this).X);
+		var x = e.GetPosition(this).X;
+		if (_scrubbing) Value = ValueAt(x);
+		if (!_expanded) return;
+
+		_hoverX = x;
+		InvalidateVisual();
+	}
+
+	protected override void OnPointerExited(PointerEventArgs e)
+	{
+		base.OnPointerExited(e);
+		_hoverX = null;
+		InvalidateVisual();
 	}
 
 	protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -228,6 +623,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnDetachedFromVisualTree(e);
 		_attached = false;
+		_tracksLayer?.Dispose();
+		_tracksLayer = null;
 	}
 
 	/// <summary>Runs on the render loop's frames only while there is a cut to draw.</summary>

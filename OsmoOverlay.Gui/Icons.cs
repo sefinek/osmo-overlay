@@ -10,6 +10,9 @@ internal static class Icons
 	public static Geometry Pause => Get("IconPause");
 	public static Geometry Close => Get("IconClose");
 	public static Geometry Check => Get("IconCheck");
+	public static Geometry Warning => Get("IconWarning");
+	public static Geometry Exclamation => Get("IconExclamation");
+	public static Geometry Info => Get("IconInfo");
 	public static Geometry Cut => Get("IconCut");
 	public static Geometry Volume => Get("IconVolume");
 	public static Geometry VolumeMuted => Get("IconVolumeMuted");

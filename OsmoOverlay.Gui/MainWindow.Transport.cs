@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -7,17 +8,21 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     Preview transport - go to start/end, frame step, play/pause - and every preview keyboard shortcut, NLE
-///     style: Space play/pause, Left/Right one frame, Home/End, I/O mark the start/end of a part to cut out and X/Delete cuts it (MainWindow.Cuts.cs), M mutes (MainWindow.Audio.cs).
+///     style: Space play/pause, Left/Right one frame, Home/End, I/O mark the start/end of a part to cut out and X/Delete cuts it (MainWindow.Cuts.cs), M mutes (MainWindow.Audio.cs), H hides the overlay (MainWindow.PreviewTools.cs).
 /// </summary>
 public partial class MainWindow
 {
 	private void WirePreviewShortcuts()
 	{
-		// Tunnel: Space must reach play/pause before a focused button treats it as its own click.
+		// Tunnel: Space must reach play/pause before a focused button treats it as its own click - on the key's
+		// release too, which is when a button clicks.
 		AddHandler(KeyDownEvent, OnPreviewSpaceKeyDown, RoutingStrategies.Tunnel);
+		AddHandler(KeyUpEvent, OnPreviewSpaceKeyUp, RoutingStrategies.Tunnel);
 		// Bubble: a focused list or number box keeps its own arrow/Home/End handling.
 		KeyDown += OnPreviewShortcutKeyDown;
 	}
+
+	private bool _spaceTookPlayback;
 
 	private bool PreviewShortcutsActive => TransportPanel.IsEnabled && FocusManager?.GetFocusedElement() is not TextBox;
 
@@ -26,6 +31,15 @@ public partial class MainWindow
 		if (e.Key != Key.Space || e.KeyModifiers != KeyModifiers.None || !PreviewShortcutsActive) return;
 
 		TogglePlayback();
+		_spaceTookPlayback = true;
+		e.Handled = true;
+	}
+
+	private void OnPreviewSpaceKeyUp(object? sender, KeyEventArgs e)
+	{
+		if (e.Key != Key.Space || !_spaceTookPlayback) return;
+
+		_spaceTookPlayback = false;
 		e.Handled = true;
 	}
 
@@ -42,7 +56,11 @@ public partial class MainWindow
 			Key.I => () => ApplyCutAction(CutAction.MarkIn),
 			Key.O => () => ApplyCutAction(CutAction.MarkOut),
 			Key.X or Key.Delete => () => ApplyCutAction(CutAction.CutSelection),
+			Key.J => () => StepSpeed(-1),
+			Key.K => PausePlayback,
+			Key.L => () => StepSpeed(1),
 			Key.M => ToggleMute,
+			Key.H => ToggleOverlay,
 			_ => null
 		};
 		if (action is null) return;
@@ -74,6 +92,62 @@ public partial class MainWindow
 	private void OnGoToEndClick(object? sender, RoutedEventArgs e)
 	{
 		GoToEnd();
+	}
+
+	private static readonly double[] PlaybackRates = [0.25, 0.5, 1, 2, 4];
+	private bool _suppressSpeedEvent;
+
+	private void WireSpeed()
+	{
+		_suppressSpeedEvent = true;
+		SpeedCombo.ItemsSource = PlaybackRates.Select(FormatRate).ToList();
+		SpeedCombo.SelectedIndex = Array.IndexOf(PlaybackRates, 1.0);
+		_suppressSpeedEvent = false;
+	}
+
+	private static string FormatRate(double rate)
+	{
+		return $"{rate.ToString("0.##", CultureInfo.InvariantCulture)}x";
+	}
+
+	private void OnSpeedChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressSpeedEvent || SpeedCombo.SelectedIndex < 0) return;
+
+		_previewPlayer.SetPlaybackRate(PlaybackRates[SpeedCombo.SelectedIndex]);
+	}
+
+	/// <summary>
+	///     NLE-style J/L: L starts playing at 1x, or speeds up if already playing; J slows down. No reverse play - decoding
+	///     backwards means re-seeking for every frame, which a 4K HEVC stream can't do at playback speed.
+	/// </summary>
+	private void StepSpeed(int direction)
+	{
+		var current = Array.IndexOf(PlaybackRates, _previewPlayer.PlaybackRate);
+		if (direction > 0 && !_previewPlayer.IsPlaying)
+		{
+			SetSpeed(Array.IndexOf(PlaybackRates, 1.0));
+			TogglePlayback();
+			return;
+		}
+
+		SetSpeed(Math.Clamp(current + direction, 0, PlaybackRates.Length - 1));
+	}
+
+	private void SetSpeed(int index)
+	{
+		_suppressSpeedEvent = true;
+		SpeedCombo.SelectedIndex = index;
+		_suppressSpeedEvent = false;
+		_previewPlayer.SetPlaybackRate(PlaybackRates[index]);
+	}
+
+	private void PausePlayback()
+	{
+		if (!_previewPlayer.IsPlaying) return;
+
+		_previewPlayer.Pause();
+		ShowPlayingState(false);
 	}
 
 	private void TogglePlayback()
