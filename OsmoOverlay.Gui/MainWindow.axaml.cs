@@ -316,7 +316,8 @@ public partial class MainWindow : Window
 			RouteIntroShowDuration = settings.RouteIntro.ShowDuration,
 			RouteIntroShowCameraModel = settings.RouteIntro.ShowCameraModel,
 			RouteIntroShowElevationGain = settings.RouteIntro.ShowElevationGain,
-			RouteIntroUnits = settings.RouteIntro.Units
+			RouteIntroUnits = settings.RouteIntro.Units,
+			RouteIntroColorBySpeed = settings.RouteIntro.ColorBySpeed
 		};
 		if (updatedSettings != beforeMapAndRouteIntroChanges)
 		{

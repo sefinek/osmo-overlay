@@ -398,6 +398,11 @@ public partial class MainWindow
 		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailColor = trimmed } : el);
 	}
 
+	private void SetElementTrailColorBySpeed(string id, bool bySpeed)
+	{
+		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailColorBySpeed = bySpeed } : el);
+	}
+
 	private void SetElementTrailWidth(string id, float width)
 	{
 		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailWidth = width } : el);
@@ -616,7 +621,7 @@ public partial class MainWindow
 			case OverlayElementType.Compass:
 			{
 				var x = (CompassElement)el;
-				PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailWidthBox, CompassTrailArrowRadio, CompassTrailDotRadio, x);
+				PopulateTrailControls(CompassTrailColorBox, CompassTrailColorSwatch, CompassTrailBySpeedCheck, CompassTrailWidthBox, CompassTrailArrowRadio, CompassTrailDotRadio, x);
 				CompassTiming.Populate(x);
 				break;
 			}
@@ -664,7 +669,7 @@ public partial class MainWindow
 				MapZoomOutMaxLabel.IsVisible = x.MapDynamicZoom;
 				MapZoomOutMaxBox.IsVisible = x.MapDynamicZoom;
 				MapZoomOutMaxHint.IsVisible = x.MapDynamicZoom;
-				PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailWidthBox, MapTrailArrowRadio, MapTrailDotRadio, x);
+				PopulateTrailControls(MapTrailColorBox, MapTrailColorSwatch, MapTrailBySpeedCheck, MapTrailWidthBox, MapTrailArrowRadio, MapTrailDotRadio, x);
 				MapTiming.Populate(x);
 				break;
 			}
@@ -705,11 +710,12 @@ public partial class MainWindow
 		imperial.IsChecked = units == UnitSystem.Imperial;
 	}
 
-	private static void PopulateTrailControls(TextBox colorBox, Border swatch, NumericUpDown widthBox,
+	private static void PopulateTrailControls(TextBox colorBox, Border swatch, CheckBox bySpeedCheck, NumericUpDown widthBox,
 		RadioButton arrowRadio, RadioButton dotRadio, TrailOverlayElement element)
 	{
 		colorBox.Text = element.TrailColor ?? DefaultTrailColorHex;
 		ColorSwatch.Update(swatch, element.TrailColor, DefaultTrailColorHex);
+		bySpeedCheck.IsChecked = element.TrailColorBySpeed;
 		widthBox.Value = (decimal)element.TrailWidth;
 		arrowRadio.IsChecked = element.TrailUseArrow;
 		dotRadio.IsChecked = !element.TrailUseArrow;
@@ -750,6 +756,12 @@ public partial class MainWindow
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, CompassTrailColorBox.Text);
 		ColorSwatch.Update(CompassTrailColorSwatch, CompassTrailColorBox.Text, DefaultTrailColorHex);
+	}
+
+	private void OnCompassTrailBySpeedChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SetElementTrailColorBySpeed(id, CompassTrailBySpeedCheck.IsChecked == true);
 	}
 
 	private void OnCompassTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -885,6 +897,12 @@ public partial class MainWindow
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, MapTrailColorBox.Text);
 		ColorSwatch.Update(MapTrailColorSwatch, MapTrailColorBox.Text, DefaultTrailColorHex);
+	}
+
+	private void OnMapTrailBySpeedChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SetElementTrailColorBySpeed(id, MapTrailBySpeedCheck.IsChecked == true);
 	}
 
 	private void OnMapTrailWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)

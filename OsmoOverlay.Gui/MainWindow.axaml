@@ -896,6 +896,10 @@
 													<TextBox Grid.Column="1" Name="CompassTrailColorBox" PlaceholderText="#46DC6E"
 													         LostFocus="OnCompassTrailColorChanged" />
 												</Grid>
+												<CheckBox Name="CompassTrailBySpeedCheck" Content="Color by speed"
+												          Click="OnCompassTrailBySpeedChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+												           Text="Trail color when slow, through yellow and orange to red at the recording's top speed." />
 												<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
 												<NumericUpDown Name="CompassTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
 												               FormatString="0.0" HorizontalAlignment="Stretch"
@@ -962,6 +966,10 @@
 															<TextBox Grid.Column="1" Name="MapTrailColorBox" PlaceholderText="#46DC6E"
 															         LostFocus="OnMapTrailColorChanged" />
 														</Grid>
+														<CheckBox Name="MapTrailBySpeedCheck" Content="Color by speed"
+														          Click="OnMapTrailBySpeedChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														           Text="Trail color when slow, through yellow and orange to red at the recording's top speed." />
 														<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
 														<NumericUpDown Name="MapTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
 														               FormatString="0.0" HorizontalAlignment="Stretch"

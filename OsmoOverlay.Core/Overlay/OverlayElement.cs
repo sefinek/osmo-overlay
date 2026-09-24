@@ -212,6 +212,8 @@ public sealed record GMeterElement : StyledOverlayElement
 public abstract record TrailOverlayElement : OverlayElement
 {
 	public string? TrailColor { get; init; }
+	// Colors the route by the speed it was travelled at - TrailColor while slow, warming to red (SpeedColorScale).
+	public bool TrailColorBySpeed { get; init; } = true;
 	public float TrailWidth { get; init; } = 4.5f;
 	public bool TrailUseArrow { get; init; } = true;
 }

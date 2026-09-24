@@ -103,6 +103,7 @@ public partial class SettingsWindow : Window
 		RouteIntroCameraModelCheck.IsChecked = routeIntro.ShowCameraModel;
 		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
 		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
+		RouteIntroColorBySpeedCheck.IsChecked = routeIntro.ColorBySpeed;
 	}
 
 	/// <summary>Fills the export options (Rendering category) - kept separate from the constructor's already long parameter list.</summary>
@@ -185,7 +186,8 @@ public partial class SettingsWindow : Window
 		RouteIntroDurationCheck.IsChecked == true,
 		RouteIntroCameraModelCheck.IsChecked == true,
 		RouteIntroElevationGainCheck.IsChecked == true,
-		RouteIntroImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+		RouteIntroImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric,
+		RouteIntroColorBySpeedCheck.IsChecked == true);
 
 	/// <summary>
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)

@@ -26,7 +26,7 @@ public sealed partial class OverlayRenderer
 	private MapMosaicKey? _preparedMapKey;
 
 	// AfterCut: the first point after a part cut out of the render - DrawRoute joins it per RouteAcrossCuts.
-	private readonly List<(double East, double North, double Lat, double Lon, bool AfterCut)> _trail = [];
+	private readonly List<(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut)> _trail = [];
 	// GetTrailPixels' projection of _trail into _trailPixelsMosaic's pixel space.
 	private readonly List<SKPoint> _trailPixels = [];
 	private RouteMapMosaic? _trailPixelsMosaic;
@@ -170,7 +170,7 @@ public sealed partial class OverlayRenderer
 		// The first point after a cut is always kept, however close - it's where the route resumes.
 		if (frame.StartsAfterCut || _lastTrailPoint is not { } last || Distance(last, point) >= TrailMinStepMeters)
 		{
-			_trail.Add((point.LocalEastMeters, point.LocalNorthMeters, frame.Raw.Latitude, frame.Raw.Longitude, frame.StartsAfterCut));
+			_trail.Add((point.LocalEastMeters, point.LocalNorthMeters, frame.Raw.Latitude, frame.Raw.Longitude, frame.SpeedKmh, frame.StartsAfterCut));
 			_lastTrailPoint = point;
 		}
 	}
@@ -223,26 +223,64 @@ public sealed partial class OverlayRenderer
 		var scale = OverlayElementBounds.CompassRadius * 0.82 / maxDist;
 		List<SKPoint> points = [.. _trail.Select(p => new SKPoint(cx + (float)((p.East - frame.LocalEastMeters) * scale),
 			cy - (float)((p.North - frame.LocalNorthMeters) * scale)))];
-		DrawRoute(canvas, points, i => _trail[i].AfterCut, ResolveTrailColor(element.TrailColor), element.TrailWidth);
+		DrawTrailRoute(canvas, points, element);
+	}
+
+	private void DrawTrailRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, TrailOverlayElement element)
+	{
+		DrawRoute(canvas, points, i => _trail[i].AfterCut, ResolveTrailColor(element.TrailColor), element.TrailWidth,
+			element.TrailColorBySpeed ? i => _trail[i].SpeedKmh : null);
+	}
+
+	/// <summary>
+	///     Where a route colored by speed turns full red: the recording's 98th-percentile speed rather than its
+	///     max, so one GPS speed spike can't push the whole rest of the route into green. The 5 km/h floor keeps
+	///     a clip spent standing around from lighting up red at walking pace.
+	/// </summary>
+	private static double ComputeTrailSpeedScale(IReadOnlyList<DerivedFrame> frames)
+	{
+		if (frames.Count == 0) return 5;
+		double[] speeds = [.. frames.Select(f => f.SpeedKmh).Where(double.IsFinite)];
+		if (speeds.Length == 0) return 5;
+		Array.Sort(speeds);
+		return Math.Max(speeds[(int)((speeds.Length - 1) * 0.98)], 5);
 	}
 
 	/// <summary>
 	///     A route through points, the one place every drawn route (compass trail, map widget, route intro) goes
 	///     through: solid where it was travelled, and across a cut (afterCut: the point is the first after one) as
-	///     RouteAcrossCuts says - broken off, dashed, or straight on.
+	///     RouteAcrossCuts says - broken off, dashed, or straight on. With speedKmh, each travelled segment takes
+	///     its SpeedColorScale color (`color` while slow, warming to red): segments are grouped into one path per color bucket (at
+	///     most SpeedColorScale.Buckets draws, not one per segment - a long trail has thousands), drawn slow to
+	///     fast so the faster parts stay on top where the route crosses itself. A dashed join then goes white,
+	///     nothing was travelled there at a known speed.
 	/// </summary>
-	private void DrawRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, Func<int, bool> afterCut, SKColor color, float width)
+	private void DrawRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, Func<int, bool> afterCut, SKColor color, float width,
+		Func<int, double>? speedKmh = null)
 	{
 		if (points.Count < 2) return;
 
 		var solid = new SKPathBuilder();
+		var byBucket = speedKmh is null ? null : new SKPathBuilder?[SpeedColorScale.Buckets];
+		var bucketColors = speedKmh is null ? null : SpeedColorScale.Colors(color);
+		var lastBucket = -1;
 		SKPathBuilder? dashed = null;
 		solid.MoveTo(points[0]);
 		for (var i = 1; i < points.Count; i++)
 		{
 			if (!afterCut(i) || RouteAcrossCuts == RouteJoin.Straight)
 			{
-				solid.LineTo(points[i]);
+				if (byBucket is null)
+				{
+					solid.LineTo(points[i]);
+					continue;
+				}
+
+				var bucket = SpeedColorScale.Bucket((speedKmh!(i - 1) + speedKmh(i)) / 2 / _trailSpeedScaleKmh);
+				var path = byBucket[bucket] ??= new SKPathBuilder();
+				if (bucket != lastBucket) path.MoveTo(points[i - 1]);
+				path.LineTo(points[i]);
+				lastBucket = bucket;
 				continue;
 			}
 
@@ -254,6 +292,7 @@ public sealed partial class OverlayRenderer
 			}
 
 			solid.MoveTo(points[i]);
+			lastBucket = -1;
 		}
 
 		using var paint = new SKPaint
@@ -261,11 +300,27 @@ public sealed partial class OverlayRenderer
 			Color = color, IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = width,
 			StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round
 		};
-		using (SKPath path = solid.Detach()) canvas.DrawPath(path, paint);
+		if (byBucket is null)
+		{
+			using SKPath path = solid.Detach();
+			canvas.DrawPath(path, paint);
+		}
+		else
+		{
+			for (var b = 0; b < byBucket.Length; b++)
+			{
+				if (byBucket[b] is not { } builder) continue;
+				paint.Color = bucketColors![b];
+				using SKPath path = builder.Detach();
+				canvas.DrawPath(path, paint);
+			}
+		}
+
 		if (dashed is null) return;
 
+		var dashColor = byBucket is null ? color : White;
 		paint.StrokeCap = SKStrokeCap.Butt;
-		paint.Color = color.WithAlpha((byte)(color.Alpha * 0.85f));
+		paint.Color = dashColor.WithAlpha((byte)(dashColor.Alpha * 0.85f));
 		using SKPathEffect dash = SKPathEffect.CreateDash([Math.Max(6, width * 3), Math.Max(5, width * 2.5f)], 0);
 		paint.PathEffect = dash;
 		using SKPath dashedPath = dashed.Detach();
@@ -342,7 +397,7 @@ public sealed partial class OverlayRenderer
 
 			var mapScale = radius / cropRadius;
 			List<SKPoint> points = [.. trailPixels.Select(p => new SKPoint((p.X - center.X) * mapScale, (p.Y - center.Y) * mapScale))];
-			DrawRoute(canvas, points, i => _trail[i].AfterCut, ResolveTrailColor(element.TrailColor), element.TrailWidth);
+			DrawTrailRoute(canvas, points, element);
 
 			canvas.Restore();
 

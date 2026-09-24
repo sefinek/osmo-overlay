@@ -213,7 +213,8 @@ public sealed partial class OverlayRenderer
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
 			List<SKPoint> points = [.. pixels.Select(p => new SKPoint(destRect.Left + p.X * fitScale, destRect.Top + p.Y * fitScale))];
-			DrawRoute(canvas, points, i => _allFrames[i].StartsAfterCut, TrailColor, 6);
+			DrawRoute(canvas, points, i => _allFrames[i].StartsAfterCut, TrailColor, 6,
+				RouteIntro.ColorBySpeed ? i => _allFrames[i].SpeedKmh : null);
 		}
 
 		canvas.Restore();

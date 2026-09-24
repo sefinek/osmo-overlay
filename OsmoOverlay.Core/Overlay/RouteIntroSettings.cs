@@ -16,17 +16,18 @@ public sealed record RouteIntroSettings(
 	bool ShowDuration,
 	bool ShowCameraModel,
 	bool ShowElevationGain,
-	UnitSystem Units)
+	UnitSystem Units,
+	bool ColorBySpeed)
 {
 	public static readonly RouteIntroSettings Disabled =
-		new(false, 0, false, false, false, false, false, false, false, UnitSystem.Metric);
+		new(false, 0, false, false, false, false, false, false, false, UnitSystem.Metric, false);
 
 	public static RouteIntroSettings From(OverlaySettings settings)
 	{
 		return new RouteIntroSettings(settings.ShowRouteIntro, settings.RouteIntroDurationSeconds,
 			settings.RouteIntroShowDistance, settings.RouteIntroShowMaxSpeed, settings.RouteIntroShowAvgSpeed,
 			settings.RouteIntroShowDate, settings.RouteIntroShowDuration, settings.RouteIntroShowCameraModel,
-			settings.RouteIntroShowElevationGain, settings.RouteIntroUnits);
+			settings.RouteIntroShowElevationGain, settings.RouteIntroUnits, settings.RouteIntroColorBySpeed);
 	}
 
 	/// <summary>

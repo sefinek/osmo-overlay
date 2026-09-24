@@ -48,6 +48,8 @@ public sealed record OverlaySettings(
 	bool RouteIntroShowCameraModel = false,
 	bool RouteIntroShowElevationGain = true,
 	UnitSystem RouteIntroUnits = UnitSystem.Metric,
+	// The overview map's route colored by speed like the compass/map widgets' TrailColorBySpeed - off here by default.
+	bool RouteIntroColorBySpeed = false,
 	bool PreviewSnapToGrid = true,
 	// The preview's time readout with milliseconds instead of whole seconds (the toolbar's stopwatch toggle).
 	bool PreviewPreciseTime = false,

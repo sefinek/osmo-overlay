@@ -200,6 +200,13 @@
 							</StackPanel>
 
 							<StackPanel Spacing="6">
+								<TextBlock Text="Route" Classes="infoLabel" />
+								<CheckBox Name="RouteIntroColorBySpeedCheck" Content="Color the route by speed" />
+								<TextBlock Classes="hint"
+								           Text="Green when slow, through yellow and orange to red at the recording's top speed." />
+							</StackPanel>
+
+							<StackPanel Spacing="6">
 								<TextBlock Name="RouteIntroStatsLabel" Text="Stats to show" Classes="infoLabel" />
 								<StackPanel Spacing="2">
 									<CheckBox Name="RouteIntroDistanceCheck" Content="Total distance" />

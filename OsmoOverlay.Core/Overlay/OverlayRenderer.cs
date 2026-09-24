@@ -49,6 +49,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly double _totalDurationSeconds;
 	private readonly double _totalElevationGainMeters;
 	private readonly double _avgSpeedKmh;
+	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
+	private readonly double _trailSpeedScaleKmh;
 
 	private readonly SKTypeface _hudTypeface;
 	private readonly SKFont _dateFont;
@@ -138,6 +140,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		}
 
 		_avgSpeedKmh = _totalDurationSeconds > 0 ? _totalDistanceMeters / _totalDurationSeconds * 3.6 : 0;
+		_trailSpeedScaleKmh = ComputeTrailSpeedScale(allFrames);
 
 		Layout = layout;
 		ShowWatermark = showWatermark;
