@@ -43,7 +43,7 @@ public sealed class OverlayRendererTests
 			new SpeedGaugeElement { X = 520, Y = 200 }
 		];
 		return new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, layout, frames,
-			TelemetryProcessor.Summarize(frames).MaxSpeedKmh, showWatermark: false);
+			TelemetryProcessor.Summarize(frames).MaxSpeedKmh, false);
 	}
 
 	[TestMethod]

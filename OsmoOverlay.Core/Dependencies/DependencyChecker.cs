@@ -42,19 +42,29 @@ public static class DependencyChecker
 	}
 
 	/// <summary>
-	///     FFmpeg's own commands come from the folder its shared libraries were loaded from (LibavLoader), when that
-	///     folder has them - so the render and probing run the same FFmpeg the preview decodes with, whatever order
-	///     PATH lists several builds in. On Windows Gyan's static build listed ahead of the shared one would otherwise
-	///     win: another version, and ~800 ms per start instead of ~25 ms.
+	///     FFmpeg's own commands come from the install its shared libraries are loaded from (LibavLoader) - the
+	///     same folder (Windows builds keep the DLLs next to the exe) or, for a lib folder, the bin folder beside it
+	///     (Homebrew's /opt/homebrew/lib and /bin) - so the render and probing run the same FFmpeg the preview
+	///     decodes with, whatever order PATH lists several builds in. On Windows Gyan's static build listed ahead of
+	///     the shared one would otherwise win: another version, and ~800 ms per start instead of ~25 ms. Only looks
+	///     the folder up rather than loading the libraries, so the CLI doesn't bind them just to start ffmpeg.
+	///     On Linux the libraries come from the system loader's paths, and PATH decides.
 	/// </summary>
 	private static string? FromFfmpegLibraryFolder(string command, string fileName)
 	{
-		if (!RequiredTools.Ffmpeg.Commands.Contains(command) || LibavLoader.TryLoad() is not null ||
-		    LibavLoader.LibraryDirectory is not { } directory)
-			return null;
+		if (!RequiredTools.Ffmpeg.Commands.Contains(command)) return null;
 
-		var candidate = Path.Combine(directory, fileName);
-		return IsExecutableFile(candidate) ? candidate : null;
+		var directory = LibavLoader.IsLoaded ? LibavLoader.LibraryDirectory : LibavLoader.FindLibraryDirectory();
+		if (directory is null) return null;
+
+		var sameFolder = Path.Combine(directory, fileName);
+		if (IsExecutableFile(sameFolder)) return sameFolder;
+
+		directory = Path.TrimEndingDirectorySeparator(directory);
+		if (Path.GetFileName(directory) != "lib" || Path.GetDirectoryName(directory) is not { } prefix) return null;
+
+		var besideLib = Path.Combine(prefix, "bin", fileName);
+		return IsExecutableFile(besideLib) ? besideLib : null;
 	}
 
 	/// <summary>The directories on this process's PATH, in order.</summary>

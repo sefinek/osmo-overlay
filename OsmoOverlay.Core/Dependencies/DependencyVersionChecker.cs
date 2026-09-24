@@ -4,7 +4,10 @@ using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Dependencies;
 
-public sealed record ToolVersionInfo(ExternalTool Tool, string? InstalledVersion, string? LatestVersion, bool UpdateAvailable);
+/// <param name="LatestVersion">The newest version this app can use (within ExternalTool.SupportedMajorVersion) - what Update installs.</param>
+/// <param name="UnsupportedVersion">A newer major than the app supports, when one is out - never offered as an update.</param>
+public sealed record ToolVersionInfo(ExternalTool Tool, string? InstalledVersion, string? LatestVersion, bool UpdateAvailable,
+	string? UnsupportedVersion);
 
 public static partial class DependencyVersionChecker
 {
@@ -32,16 +35,44 @@ public static partial class DependencyVersionChecker
 		Report($"Checking {tool.DisplayName} version...", onProgress);
 
 		Task<string?> installedTask = GetInstalledVersionAsync(tool, ct);
-		Task<(string? Version, bool CanUpgrade)> latestTask = GetLatestVersionAsync(tool, ct);
-		await Task.WhenAll(installedTask, latestTask);
+		Task<(IReadOnlyList<string> Versions, bool CanUpgrade)> availableTask = GetAvailableVersionsAsync(tool, ct);
+		await Task.WhenAll(installedTask, availableTask);
 
 		var installed = installedTask.Result;
-		var (latest, canUpgrade) = latestTask.Result;
+		var (available, canUpgrade) = availableTask.Result;
+		var latest = PickLatest(available, tool.SupportedMajorVersion);
+		var newest = PickLatest(available, null);
+		var unsupported = tool.SupportedMajorVersion is { } major && MajorOf(newest) > major ? newest : null;
 		var newerExists = IsOlder(installed, latest);
 		var updateAvailable = newerExists && canUpgrade;
 
 		Report(DescribeResult(tool.DisplayName, installed, latest, newerExists, canUpgrade), onProgress);
-		return new ToolVersionInfo(tool, installed, latest, updateAvailable);
+		if (unsupported is not null)
+			Report($"{tool.DisplayName} {unsupported} is out, but this version of OsmoOverlay supports only {tool.SupportedMajorVersion}.x", onProgress);
+		return new ToolVersionInfo(tool, installed, latest, updateAvailable, unsupported);
+	}
+
+	/// <summary>The newest of `versions` within `major` (any when null); null when none is.</summary>
+	internal static string? PickLatest(IEnumerable<string> versions, int? major)
+	{
+		string? best = null;
+		Version? bestVersion = null;
+		foreach (var text in versions)
+		{
+			if (!Version.TryParse(text, out Version? version) || (major is not null && version.Major != major) ||
+			    (bestVersion is not null && version <= bestVersion))
+				continue;
+
+			best = text;
+			bestVersion = version;
+		}
+
+		return best;
+	}
+
+	private static int? MajorOf(string? version)
+	{
+		return Version.TryParse(version, out Version? parsed) ? parsed.Major : null;
 	}
 
 	private static void Report(string message, Action<string>? onProgress)
@@ -71,24 +102,33 @@ public static partial class DependencyVersionChecker
 	}
 
 	/// <summary>
-	///     CanUpgrade is false only when it's known that DependencyInstaller.UpgradeAsync couldn't reach the
-	///     installed copy (Windows: the tool on PATH doesn't come from winget) - the newer version is still
-	///     reported, just without offering an Update button that would fail.
+	///     The versions the package manager offers - every one winget has, only the latest from brew and the Linux
+	///     managers (so there a newer major hides an older compatible release). CanUpgrade is false only when
+	///     it's known that DependencyInstaller.UpgradeAsync couldn't reach the installed copy (Windows: the tool on
+	///     PATH doesn't come from winget) - the newer version is still reported, just without offering an Update
+	///     button that would fail.
 	/// </summary>
-	private static async Task<(string? Version, bool CanUpgrade)> GetLatestVersionAsync(ExternalTool tool, CancellationToken ct)
+	private static async Task<(IReadOnlyList<string> Versions, bool CanUpgrade)> GetAvailableVersionsAsync(ExternalTool tool,
+		CancellationToken ct)
 	{
-		if (OperatingSystem.IsWindows()) return await GetLatestFromWingetAsync(tool, ct);
-		if (OperatingSystem.IsMacOS()) return (await GetLatestFromBrewAsync(tool, ct), true);
-		if (OperatingSystem.IsLinux()) return (await GetLatestFromLinuxPackageManagerAsync(tool, ct), true);
-		return (null, false);
+		if (OperatingSystem.IsWindows()) return await GetVersionsFromWingetAsync(tool, ct);
+		if (OperatingSystem.IsMacOS()) return (Single(await GetLatestFromBrewAsync(tool, ct)), true);
+		if (OperatingSystem.IsLinux()) return (Single(await GetLatestFromLinuxPackageManagerAsync(tool, ct)), true);
+		return ([], false);
 	}
 
-	private static async Task<(string? Version, bool CanUpgrade)> GetLatestFromWingetAsync(ExternalTool tool, CancellationToken ct)
+	private static IReadOnlyList<string> Single(string? version)
 	{
-		if (!DependencyChecker.IsCommandAvailable("winget")) return (null, false);
+		return version is null ? [] : [version];
+	}
+
+	private static async Task<(IReadOnlyList<string> Versions, bool CanUpgrade)> GetVersionsFromWingetAsync(ExternalTool tool,
+		CancellationToken ct)
+	{
+		if (!DependencyChecker.IsCommandAvailable("winget")) return ([], false);
 
 		var installedId = await Winget.FindInstalledPackageIdAsync(tool, ct);
-		return (await Winget.GetLatestVersionAsync(installedId ?? tool.WingetId, ct), installedId is not null);
+		return (await Winget.GetAvailableVersionsAsync(installedId ?? tool.WingetId, ct), installedId is not null);
 	}
 
 	private static async Task<string?> GetLatestFromBrewAsync(ExternalTool tool, CancellationToken ct)

@@ -1,3 +1,5 @@
+using OsmoOverlay.Core.Preview;
+
 namespace OsmoOverlay.Core.Dependencies;
 
 public sealed record ExternalTool(
@@ -11,14 +13,16 @@ public sealed record ExternalTool(
 	string VersionCommand,
 	IReadOnlyList<string> VersionArgs,
 	// The FFmpeg libraries the preview decodes with (LibavLoader) must load too - the commands alone aren't enough.
-	bool NeedsSharedLibraries = false);
+	bool NeedsSharedLibraries = false,
+	// Install/update never goes past this major - a newer one wouldn't load (LibavLoader.SupportedMajorVersion).
+	int? SupportedMajorVersion = null);
 
 public static class RequiredTools
 {
 	// Gyan's full build in its shared flavour: every encoder (NVENC, x265...) like the static Gyan.FFmpeg, split
 	// into DLLs - which the preview loads in-process (LibavLoader), and a 0.6 MB ffmpeg.exe that starts in
 	// ~25 ms where the 217 MB static one took ~800 ms (Defender scans the whole exe on every launch). Not
-	// .Essentials (fewer libraries). An existing static install keeps working; the preview then falls back.
+	// .Essentials (fewer libraries). A static build alone counts as missing: it has no libraries to load.
 	public static readonly ExternalTool Ffmpeg = new(
 		"FFmpeg",
 		["ffmpeg", "ffprobe"],
@@ -29,7 +33,8 @@ public static class RequiredTools
 		"ffmpeg",
 		"ffmpeg",
 		["-version"],
-		true);
+		true,
+		LibavLoader.SupportedMajorVersion);
 
 	public static readonly ExternalTool ExifTool = new(
 		"ExifTool",

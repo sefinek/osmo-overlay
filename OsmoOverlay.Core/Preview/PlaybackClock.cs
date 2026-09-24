@@ -76,7 +76,10 @@ internal sealed class PlaybackClock
 	{
 		get
 		{
-			lock (_lock) return _followsAudio;
+			lock (_lock)
+			{
+				return _followsAudio;
+			}
 		}
 	}
 
@@ -120,19 +123,28 @@ internal sealed class PlaybackClock
 	{
 		get
 		{
-			lock (_lock) return _followsAudio && !_audioFinished ? Math.Max(0, DevicePosition(out _)) : null;
+			lock (_lock)
+			{
+				return _followsAudio && !_audioFinished ? Math.Max(0, DevicePosition(out _)) : null;
+			}
 		}
 	}
 
 	/// <summary>Sample frames of (tempo-changed) sound pushed to the device.</summary>
 	public void AddPushed(int sampleFrames)
 	{
-		lock (_lock) _pushedFrames += sampleFrames;
+		lock (_lock)
+		{
+			_pushedFrames += sampleFrames;
+		}
 	}
 
 	public void AudioFinished()
 	{
-		lock (_lock) _audioFinished = true;
+		lock (_lock)
+		{
+			_audioFinished = true;
+		}
 	}
 
 	/// <summary>With the first frame: the device starts playing what's already queued, or the stopwatch starts.</summary>

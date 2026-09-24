@@ -151,7 +151,7 @@ public sealed class PreviewPlayer : IDisposable
 	public void Close()
 	{
 		_openGeneration++;
-		StopSession(raiseStopped: false, restoreStill: false);
+		StopSession(false, false);
 		CancelSeeks();
 		_mapPrepareCts?.Cancel();
 		_mapPrepareCts = null;
@@ -220,7 +220,7 @@ public sealed class PreviewPlayer : IDisposable
 	{
 		if (_recording is not { } recording) return;
 
-		StopSession(raiseStopped: false, restoreStill: false);
+		StopSession(false, false);
 		CancelSeeks();
 		// The still is from before playback - it'd be the wrong frame to put an edit on until the stop decodes the
 		// frame on screen again (StopSession).
@@ -243,7 +243,7 @@ public sealed class PreviewPlayer : IDisposable
 		if (!ReferenceEquals(_session, session)) return;
 
 		if (session.Error is { } error) Message?.Invoke($"Playback stopped: {error}");
-		StopSession(raiseStopped: true);
+		StopSession(true);
 	}
 
 	private async Task StartWhenFreeAsync(PlaybackSession session, Task sessionsStopped)
@@ -254,7 +254,7 @@ public sealed class PreviewPlayer : IDisposable
 
 	public void Pause()
 	{
-		StopSession(raiseStopped: true);
+		StopSession(true);
 	}
 
 	/// <summary>
@@ -302,7 +302,7 @@ public sealed class PreviewPlayer : IDisposable
 		if (!IsPlaying) return;
 
 		_resumeAfterScrub = true;
-		StopSession(raiseStopped: false, restoreStill: false);
+		StopSession(false, false);
 	}
 
 	/// <summary>Resumes playback if the drag interrupted it, otherwise replaces the drag's keyframes with the exact frame.</summary>

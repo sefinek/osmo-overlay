@@ -267,7 +267,7 @@ public partial class MainWindow : Window
 		OverlaySettings currentSettings = OverlaySettingsStore.Load();
 		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion,
 			currentSettings.MapTileUrlTemplate, currentSettings.MapAttribution, currentSettings.MapShowAttribution,
-			currentSettings.MapApiKey, RouteIntroSettings.From(currentSettings));
+			currentSettings.MapApiKey, RouteIntroSettings.From(currentSettings)) { IsRendering = () => _phase == UiPhase.Rendering };
 		settings.LoadExportSettings(currentSettings);
 		await settings.ShowDialog(this);
 

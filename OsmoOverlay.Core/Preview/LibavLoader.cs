@@ -15,8 +15,20 @@ public static class LibavLoader
 	private static readonly Lock Gate = new();
 	private static bool _loaded;
 
+	/// <summary>The FFmpeg major FFmpeg.AutoGen's bindings target (its package major) - no other one loads.</summary>
+	public static int SupportedMajorVersion { get; } = typeof(ffmpeg).Assembly.GetName().Version!.Major;
+
 	/// <summary>Where the libraries were loaded from once TryLoad succeeded; null for the system loader's paths (Linux).</summary>
 	public static string? LibraryDirectory { get; private set; }
+
+	/// <summary>True once TryLoad succeeded - the libraries then stay mapped (and on Windows locked) until the process exits.</summary>
+	public static bool IsLoaded
+	{
+		get
+		{
+			lock (Gate) return _loaded;
+		}
+	}
 
 	/// <summary>
 	///     Null once the libraries are bound, else why they can't be. A success is final; a failure is looked at
@@ -34,12 +46,21 @@ public static class LibavLoader
 		}
 	}
 
+	/// <summary>
+	///     The folder TryLoad takes (or took) the libraries from, found without binding them - just the file lookup;
+	///     null when none has them (on Linux: left to the system loader).
+	/// </summary>
+	public static string? FindLibraryDirectory()
+	{
+		var avcodec = AvcodecFileName();
+		return CandidateDirectories().FirstOrDefault(d => File.Exists(Path.Combine(d, avcodec)));
+	}
+
 	private static string? Load()
 	{
-		var avcodec = LibraryFileName("avcodec", ffmpeg.LibraryVersionMap["avcodec"]);
-		var directory = CandidateDirectories().FirstOrDefault(d => File.Exists(Path.Combine(d, avcodec)));
+		var directory = FindLibraryDirectory();
 		if (directory is null && !OperatingSystem.IsLinux())
-			return $"{avcodec} was not found - it comes with the FFmpeg {typeof(ffmpeg).Assembly.GetName().Version?.Major} shared build" +
+			return $"{AvcodecFileName()} was not found - it comes with the FFmpeg {SupportedMajorVersion} shared build" +
 			       (OperatingSystem.IsWindows() ? $" (winget install {RequiredTools.Ffmpeg.WingetId})" : "");
 
 		try
@@ -59,6 +80,11 @@ public static class LibavLoader
 		{
 			return $"the FFmpeg libraries couldn't be loaded: {ex.Message}";
 		}
+	}
+
+	private static string AvcodecFileName()
+	{
+		return LibraryFileName("avcodec", ffmpeg.LibraryVersionMap["avcodec"]);
 	}
 
 	private static string LibraryFileName(string name, int major)

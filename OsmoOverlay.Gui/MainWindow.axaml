@@ -610,7 +610,7 @@
 			</Grid>
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
-				<Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="8">
+				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
 					<Grid Grid.Row="0">
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
 							<ComboBox Name="PreviewQualityCombo" VerticalAlignment="Center" MinWidth="150"
@@ -727,7 +727,7 @@
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="6">
 						<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
 							<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="Go to start (Home)">
 								<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />
@@ -756,28 +756,28 @@
 						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" />
+						<StackPanel Grid.Row="1" Grid.ColumnSpan="3" Name="PreviewStatusBar" Margin="0,8,0,0" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center"
+						            VerticalAlignment="Center" IsVisible="False">
+							<StackPanel Classes="previewStatus" ToolTip.Tip="Recording - the source video's resolution and frame rate">
+								<local:IconView Data="{StaticResource IconFile}" />
+								<TextBlock Name="StatusSourceText" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus"
+							            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar)">
+								<local:IconView Data="{StaticResource IconMonitor}" />
+								<TextBlock Name="StatusPreviewText" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus" ToolTip.Tip="Current frame - the number of the frame at the cursor">
+								<local:IconView Data="{StaticResource IconFrameCurrent}" />
+								<TextBlock Name="StatusFrameText" MinWidth="50" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus"
+							            ToolTip.Tip="Display - the preview's size on screen, and while playing the frames a second that reach it (amber when fewer than the playback speed calls for)">
+								<local:IconView Data="{StaticResource IconDisplay}" />
+								<TextBlock Name="StatusDisplayText" MinWidth="118" />
+							</StackPanel>
+						</StackPanel>
 					</Grid>
-
-					<StackPanel Grid.Row="3" Name="PreviewStatusBar" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center" IsVisible="False">
-						<StackPanel Classes="previewStatus" ToolTip.Tip="Recording - the source video's resolution and frame rate">
-							<local:IconView Data="{StaticResource IconFile}" />
-							<TextBlock Name="StatusSourceText" />
-						</StackPanel>
-						<StackPanel Classes="previewStatus"
-						            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar)">
-							<local:IconView Data="{StaticResource IconMonitor}" />
-							<TextBlock Name="StatusPreviewText" />
-						</StackPanel>
-						<StackPanel Classes="previewStatus" ToolTip.Tip="Current frame - the number of the frame at the cursor">
-							<local:IconView Data="{StaticResource IconFrameCurrent}" />
-							<TextBlock Name="StatusFrameText" MinWidth="50" />
-						</StackPanel>
-						<StackPanel Classes="previewStatus"
-						            ToolTip.Tip="Display - the preview's size on screen, and while playing the frames a second that reach it (amber when fewer than the playback speed calls for)">
-							<local:IconView Data="{StaticResource IconDisplay}" />
-							<TextBlock Name="StatusDisplayText" MinWidth="118" />
-						</StackPanel>
-					</StackPanel>
 				</Grid>
 			</Border>
 

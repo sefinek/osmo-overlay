@@ -67,16 +67,19 @@ public sealed partial class OverlayRenderer
 		var (value, unit) = element.Units == UnitSystem.Imperial
 			? (F(meters * MetersToFeet, "0"), "FT")
 			: (F(meters, "0"), "M");
-		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);	}
+		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);
+	}
 
 	private void DrawGradient(SKCanvas canvas, DerivedFrame frame, GradientElement element)
 	{
-		DrawStat(canvas, element, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");	}
+		DrawStat(canvas, element, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");
+	}
 
 	private void DrawDistance(SKCanvas canvas, DerivedFrame frame, DistanceElement element)
 	{
 		var (distanceValue, distanceUnit) = FormatDistance(frame.CumulativeDistanceMeters, element.Units);
-		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);	}
+		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);
+	}
 
 	private static (string Value, string Unit) FormatDistance(double meters, UnitSystem units)
 	{

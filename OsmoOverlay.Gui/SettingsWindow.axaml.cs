@@ -48,6 +48,9 @@ public partial class SettingsWindow : Window
 		new("2x source", 2.0)
 	];
 
+	/// <summary>Whether the main window is rendering - an FFmpeg update that restarts the app is held off until it isn't.</summary>
+	public Func<bool> IsRendering { get; init; } = () => false;
+
 	public SettingsWindow()
 	{
 		InitializeComponent();
@@ -243,7 +246,7 @@ public partial class SettingsWindow : Window
 				await Task.Run(() => DependencyVersionChecker.CheckAllAsync(RequiredTools.All, CancellationToken.None));
 
 			List<ToolVersionInfo> present = [.. statuses.Where(s => s.InstalledVersion is not null)];
-			DependencyStatusRows.Populate(DependencyStatusGrid, present);
+			DependencyStatusRows.Populate(this, DependencyStatusGrid, present, IsRendering);
 		}
 		finally
 		{

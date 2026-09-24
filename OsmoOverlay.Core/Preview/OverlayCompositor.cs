@@ -17,7 +17,6 @@ internal sealed class OverlayCompositor : IDisposable
 {
 	private readonly Lock _lock = new();
 	private readonly FrameBufferPool _pool;
-	private readonly OverlayRenderer _renderer;
 	private readonly IReadOnlyList<DerivedFrame> _recordingFrames;
 	private readonly OverlayAvailability _availability;
 	private IReadOnlyList<DerivedFrame> _frames;
@@ -37,14 +36,14 @@ internal sealed class OverlayCompositor : IDisposable
 		_showOverlay = showOverlay;
 		_pool = pool;
 		_frames = MapToOutput(timeline);
-		_renderer = createRenderer(_frames);
+		Renderer = createRenderer(_frames);
 	}
 
 	/// <summary>
 	///     For the map fetches, which read the layout and telemetry on the UI thread before going off to the network:
 	///     only the UI thread changes those, and only through this class. Anything else goes through Change.
 	/// </summary>
-	public OverlayRenderer Renderer => _renderer;
+	public OverlayRenderer Renderer { get; }
 
 	/// <summary>The same filter every layout reaching the renderer goes through - a widget this file can't feed stays off.</summary>
 	public IReadOnlyList<OverlayElement> Filter(IReadOnlyList<OverlayElement> layout)
@@ -69,7 +68,7 @@ internal sealed class OverlayCompositor : IDisposable
 		{
 			if (_disposed) return null;
 
-			change(_renderer);
+			change(Renderer);
 			return RecomposeLocked();
 		}
 	}
@@ -92,7 +91,7 @@ internal sealed class OverlayCompositor : IDisposable
 
 			_timeline = timeline;
 			_frames = MapToOutput(timeline);
-			_renderer.SetFrames(_frames, _frames[0].Raw.AltitudeMeters, TelemetryProcessor.Summarize(_frames).MaxSpeedKmh);
+			Renderer.SetFrames(_frames, _frames[0].Raw.AltitudeMeters, TelemetryProcessor.Summarize(_frames).MaxSpeedKmh);
 			return RecomposeLocked();
 		}
 	}
@@ -154,7 +153,7 @@ internal sealed class OverlayCompositor : IDisposable
 	{
 		if (!_showOverlay || OutputSeconds(position) is not { } seconds) return;
 
-		_renderer.RenderOnto(TelemetryProcessor.FindNearest(_frames, seconds), bgra, width, height);
+		Renderer.RenderOnto(TelemetryProcessor.FindNearest(_frames, seconds), bgra, width, height);
 	}
 
 	/// <summary>Preview positions are on the recording's timeline, the telemetry on the output's - null where cut out.</summary>
@@ -175,7 +174,7 @@ internal sealed class OverlayCompositor : IDisposable
 			if (_disposed) return;
 
 			_disposed = true;
-			_renderer.Dispose();
+			Renderer.Dispose();
 			if (_still is { } still) _pool.Return(still.Bgra);
 			_still = null;
 		}

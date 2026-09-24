@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -44,6 +45,13 @@ public partial class MainWindow
 		LogCard.IsVisible = !expanded;
 		RootGrid.RowDefinitions[1].Height = expanded ? GridLength.Auto : new GridLength(230);
 		ToggleTimelineButton.Classes.Set("active", expanded);
+
+		// The expanded timeline takes over seeking, so the compact one makes room for the status strip.
+		PreviewTimeline.IsVisible = !expanded;
+		Grid.SetRow(PreviewStatusBar, expanded ? 0 : 1);
+		Grid.SetColumn(PreviewStatusBar, expanded ? 1 : 0);
+		Grid.SetColumnSpan(PreviewStatusBar, expanded ? 1 : 3);
+		PreviewStatusBar.Margin = expanded ? default : new Thickness(0, 8, 0, 0);
 		SyncTimelineScrollBar();
 
 		if (save) OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewTimelineExpanded = expanded });

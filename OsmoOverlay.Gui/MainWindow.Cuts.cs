@@ -62,6 +62,7 @@ public partial class MainWindow
 				foreach (PreviewTimeline other in Timelines) other.SelectedCut = index;
 			};
 		}
+
 		CutsEditor.SeekRequested += SeekToFrame;
 	}
 
@@ -253,7 +254,7 @@ public partial class MainWindow
 	{
 		SyncLoop();
 		FrameRange? selection = _summary is null ? null : Selection;
-		TimeRange? range = selection?.ToTimeRange(_summary!.Video.Fps);
+		var range = selection?.ToTimeRange(_summary!.Video.Fps);
 		foreach (PreviewTimeline timeline in Timelines) timeline.Selection = range;
 		CutsEditor.ShowSelection(selection is { } s ? DescribeSelection(s) : null, selection is not null);
 	}

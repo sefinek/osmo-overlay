@@ -13,27 +13,29 @@ internal static partial class Winget
 	private const string Source = "winget";
 	private const string PortablePackageDirSuffix = "_Microsoft.Winget.Source_8wekyb3d8bbwe";
 
-	// winget's output is localized ("Version:" / "Wersja:"), but `show` always lists the version as the
-	// first "key: x.y.z" line, so match on that shape instead of the label.
-	[GeneratedRegex(@"^\s*[^:\s][^:]*:\s*(\d+(?:\.\d+)+)\s*$", RegexOptions.Multiline)]
-	private static partial Regex FirstVersionFieldRegex();
+	// `show --versions` lists one version per line under a localized header ("Version" / "Wersja", then
+	// dashes), so match lines that are nothing but a version instead of the label.
+	[GeneratedRegex(@"^\s*(\d+(?:\.\d+)+)\s*$", RegexOptions.Multiline)]
+	private static partial Regex VersionLineRegex();
 
-	public static string[] InstallArgs(string packageId)
+	/// <summary>A null version means the latest winget has.</summary>
+	public static string[] InstallArgs(string packageId, string? version)
 	{
-		return ["install", .. ManageArgs(packageId)];
+		return ["install", .. ManageArgs(packageId, version)];
 	}
 
-	public static string[] UpgradeArgs(string packageId)
+	/// <inheritdoc cref="InstallArgs" />
+	public static string[] UpgradeArgs(string packageId, string? version)
 	{
-		return ["upgrade", .. ManageArgs(packageId)];
+		return ["upgrade", .. ManageArgs(packageId, version)];
 	}
 
-	private static string[] ManageArgs(string packageId)
+	private static string[] ManageArgs(string packageId, string? version)
 	{
 		return
 		[
-			"--id", packageId, "--exact", "--source", Source, "--silent", "--disable-interactivity",
-			"--accept-package-agreements", "--accept-source-agreements"
+			"--id", packageId, "--exact", .. version is null ? Array.Empty<string>() : ["--version", version],
+			"--source", Source, "--silent", "--disable-interactivity", "--accept-package-agreements", "--accept-source-agreements"
 		];
 	}
 
@@ -65,15 +67,18 @@ internal static partial class Winget
 		return exitCode == 0 && stdout.Contains(tool.WingetId, StringComparison.OrdinalIgnoreCase) ? tool.WingetId : null;
 	}
 
-	public static async Task<string?> GetLatestVersionAsync(string packageId, CancellationToken ct)
+	/// <summary>Every version winget offers for the package; empty when they can't be read.</summary>
+	public static async Task<IReadOnlyList<string>> GetAvailableVersionsAsync(string packageId, CancellationToken ct)
 	{
 		var (exitCode, stdout, _) = await ProcessHelper.TryRunCapturedAsync(
-			CreateStartInfo(true, "show", "--id", packageId, "--exact", "--source", Source,
+			CreateStartInfo(true, "show", "--id", packageId, "--exact", "--source", Source, "--versions",
 				"--disable-interactivity", "--accept-source-agreements"), ct);
-		if (exitCode != 0) return null;
+		return exitCode == 0 ? ParseVersionList(stdout) : [];
+	}
 
-		Match match = FirstVersionFieldRegex().Match(stdout);
-		return match.Success ? match.Groups[1].Value : null;
+	internal static IReadOnlyList<string> ParseVersionList(string showVersionsOutput)
+	{
+		return VersionLineRegex().Matches(showVersionsOutput).Select(m => m.Groups[1].Value).ToList();
 	}
 
 	private static string? PackageIdFromPortablePath(string executable)

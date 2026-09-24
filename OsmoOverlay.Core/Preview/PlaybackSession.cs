@@ -7,13 +7,13 @@ namespace OsmoOverlay.Core.Preview;
 /// <summary>
 ///     One playback, from Play to Pause or the end: a pipeline of its own threads feeding the presentation.
 ///     - Decoding (DecodeAsync) walks the plan's stretches on the preview's decoder, every FrameStep-th frame converted,
-///       and once it falls behind the sound decodes past frames without converting them (CatchUpFrames).
+///     and once it falls behind the sound decodes past frames without converting them (CatchUpFrames).
 ///     - Composing (ComposeAsync) draws the overlay onto each decoded frame, dropping ones the sound has already passed
-///       - on its own thread, so decoding the next frame and drawing the overlay on this one overlap.
+///     - on its own thread, so decoding the next frame and drawing the overlay on this one overlap.
 ///     - Feeding the sound (FeedAudioAsync) pushes the same stretches' audio ahead of the device.
 ///     - Presenting (TakeDueFrame) is driven by the display: the GUI's render thread asks once per refresh (through
-///       PlaybackFrameSource) and gets the frame due by then. Nothing waits on a timer, and the UI thread isn't
-///       involved, so frames land on the display's own refresh whatever the UI is busy with.
+///     PlaybackFrameSource) and gets the frame due by then. Nothing waits on a timer, and the UI thread isn't
+///     involved, so frames land on the display's own refresh whatever the UI is busy with.
 ///     Small bounded channels join the stages, so each runs at most a few frames ahead and a Pause is immediate.
 ///     Frame buffers come from and go back to the preview's shared FrameBufferPool.
 /// </summary>
@@ -439,7 +439,10 @@ internal sealed class PlaybackSession
 				finally
 				{
 					// Before it's disposed - SetRate must not cancel a source that's gone.
-					lock (_audioRestartLock) _audioStretchCts = null;
+					lock (_audioRestartLock)
+					{
+						_audioStretchCts = null;
+					}
 				}
 			}
 		}

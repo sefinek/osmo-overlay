@@ -153,13 +153,9 @@ public sealed partial class OverlayRenderer
 		canvas.Save();
 		canvas.ResetMatrix();
 		if (alpha >= 1f)
-		{
 			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default);
-		}
 		else
-		{
 			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default, AlphaPaint(alpha));
-		}
 
 		canvas.Restore();
 	}
