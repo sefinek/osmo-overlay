@@ -35,9 +35,9 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     The expanded timeline in the log's place under the window, next to the compact one that always stays in the
-	///     transport row (see Timelines) - the bottom row then shrinks to the timeline's height, leaving the rest to the
-	///     preview.
+	///     The expanded timeline in the log's place under the window - the bottom row then shrinks to its height, leaving
+	///     the rest to the preview. The compact one (still the one holding the position, see Timelines) is hidden meanwhile
+	///     and the status strip takes its place in the transport row.
 	/// </summary>
 	private void SetTimelineExpanded(bool expanded, bool save)
 	{

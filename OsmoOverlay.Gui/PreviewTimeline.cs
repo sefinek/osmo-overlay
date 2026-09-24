@@ -16,8 +16,9 @@ using OsmoOverlay.Core.Preview;
 namespace OsmoOverlay.Gui;
 
 /// <summary>
-///     The preview's timeline, in two forms of one control (MainWindow moves it between the transport row and the
-///     bottom panel, see Expanded): compact, a slider-like track with the same marks, and expanded, NLE style: a ruler,
+///     The preview's timeline, in two forms of one control (MainWindow has one of each - the compact one in the
+///     transport row, the expanded one in the bottom panel, see Expanded): compact, a slider-like track with the same
+///     marks, and expanded, NLE style: a ruler,
 ///     the video as a filmstrip of thumbnails (TimelineThumbnails) and the
 ///     audio as a waveform per channel (AudioWaveform), with everything marked on the recording drawn across the
 ///     tracks on one seconds-to-pixels mapping - the parts cut out of the render (red, hatched, the stripes slowly
