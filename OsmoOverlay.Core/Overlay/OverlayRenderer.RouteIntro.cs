@@ -155,8 +155,7 @@ public sealed partial class OverlayRenderer
 		}
 		else
 		{
-			using var paint = new SKPaint { Color = SKColors.White.WithAlpha((byte)Math.Clamp(alpha * 255f, 0, 255)) };
-			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default, paint);
+			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default, AlphaPaint(alpha));
 		}
 
 		canvas.Restore();
@@ -212,9 +211,12 @@ public sealed partial class OverlayRenderer
 
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
-			List<SKPoint> points = [.. pixels.Select(p => new SKPoint(destRect.Left + p.X * fitScale, destRect.Top + p.Y * fitScale))];
-			DrawRoute(canvas, points, i => _allFrames[i].StartsAfterCut, TrailColor, 6,
-				RouteIntro.ColorBySpeed ? i => _allFrames[i].SpeedKmh : null);
+			// Drawn once per card (see DrawRouteIntroCard), so it's built right here and dropped again.
+			using var route = new RouteGeometry(RouteAcrossCuts, RouteIntro.ColorBySpeed, _trailSpeedScaleKmh);
+			for (var i = 0; i < pixels.Count; i++)
+				route.Add(pixels[i], _allFrames[i].SpeedKmh, _allFrames[i].StartsAfterCut);
+
+			DrawRoute(canvas, route, SKMatrix.CreateScaleTranslation(fitScale, fitScale, destRect.Left, destRect.Top), TrailColor, 6);
 		}
 
 		canvas.Restore();

@@ -97,6 +97,12 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _outlineStrokePaint;
 	private readonly SKPaint _outlineFillPaint;
 	private readonly SKPaint _panelShadowPaint;
+	// Recolored/resized per route by RouteGeometry.Draw, and set to a layer's or image's opacity by AlphaPaint.
+	private readonly SKPaint _routeStrokePaint;
+	private readonly SKPaint _routeDashPaint;
+	private readonly SKPaint _alphaPaint = new();
+	private readonly SKPath _headingArrow = CreateHeadingArrow();
+	private readonly Dictionary<float, SKPathEffect> _dashEffects = [];
 
 	// Blur mask filters keyed by sigma (font.Size * 0.04 for text shadows, radius * 0.12 for panel
 	// shadows) - both draw from a small, closed set of font sizes/widget radii fixed at construction
@@ -191,6 +197,14 @@ public sealed partial class OverlayRenderer : IDisposable
 		_outlineStrokePaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
 		_outlineFillPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
 		_panelShadowPaint = new SKPaint { Color = new SKColor(0, 0, 0, 120), IsAntialias = true, Style = SKPaintStyle.Fill };
+		_routeStrokePaint = new SKPaint
+		{
+			IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round
+		};
+		_routeDashPaint = new SKPaint
+		{
+			IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Butt, StrokeJoin = SKStrokeJoin.Round
+		};
 	}
 
 	/// <summary>Mutable so the GUI editor can reposition/toggle elements without rebuilding fonts.</summary>
@@ -243,6 +257,13 @@ public sealed partial class OverlayRenderer : IDisposable
 		_outlineStrokePaint.Dispose();
 		_outlineFillPaint.Dispose();
 		_panelShadowPaint.Dispose();
+		_routeStrokePaint.Dispose();
+		_routeDashPaint.Dispose();
+		_alphaPaint.Dispose();
+		_headingArrow.Dispose();
+		foreach (SKPathEffect effect in _dashEffects.Values) effect.Dispose();
+		DisposeRoutes(_compassRoutes);
+		DisposeRoutes(_mapRoutes);
 		foreach (SKMaskFilter filter in _blurMaskFilters.Values) filter.Dispose();
 		foreach (SKFont font in _fontCache.Values) font.Dispose();
 		// A family that isn't installed on this machine resolves to _hudTypeface itself (see
@@ -326,8 +347,10 @@ public sealed partial class OverlayRenderer : IDisposable
 			if (crossfadeT is { } t)
 			{
 				DrawRouteIntroCard(canvas, outW, outH, 1 - t);
-				string? widgetsAttribution = null;
-				DrawWithAlpha(canvas, t, c => widgetsAttribution = DrawWidgets(c, frame));
+				// The widgets fade in as one flattened group, not each on its own.
+				var saveCount = canvas.SaveLayer(AlphaPaint(t));
+				var widgetsAttribution = DrawWidgets(canvas, frame);
+				canvas.RestoreToCount(saveCount);
 				// The card's own attribution is about to disappear along with it - once the widgets
 				// underneath are visible at all, their attribution requirement (if any) is what matters
 				// going forward.
@@ -367,79 +390,80 @@ public sealed partial class OverlayRenderer : IDisposable
 	private string? DrawWidgets(SKCanvas canvas, DerivedFrame frame)
 	{
 		string? mapAttribution = null;
+		var sampleTime = frame.Raw.SampleTimeSeconds;
 
 		foreach (OverlayElement element in Layout)
 		{
 			if (!element.Visible) continue;
 
-			DrawElement(canvas, element, frame.Raw.SampleTimeSeconds, c =>
+			var progress = ElementProgress(element, sampleTime);
+			if (progress <= 0f) continue;
+
+			var saveCount = BeginElement(canvas, element, progress);
+			switch (element)
 			{
-				switch (element.Type)
-				{
-					case OverlayElementType.DateTimeText:
-						DrawDateTime(c, frame, (TimeTextElementBase)element);
-						break;
-					case OverlayElementType.UtcTimeText:
-						DrawUtcTime(c, frame, (TimeTextElementBase)element);
-						break;
-					case OverlayElementType.Elevation:
-						DrawElevation(c, frame, (ElevationElement)element);
-						break;
-					case OverlayElementType.Gradient:
-						DrawGradient(c, frame, (GradientElement)element);
-						break;
-					case OverlayElementType.Distance:
-						DrawDistance(c, frame, (DistanceElement)element);
-						break;
-					case OverlayElementType.Compass:
-						DrawCompass(c, frame, (CompassElement)element);
-						break;
-					case OverlayElementType.SunWidget:
-						DrawSunWidget(c, frame, (SunWidgetElement)element);
-						break;
-					case OverlayElementType.PitchGauge:
-						DrawPitchGauge(c, (PitchGaugeElement)element, frame.PitchDegrees);
-						break;
-					case OverlayElementType.MapWidget:
-						DrawMapWidget(c, frame, (MapWidgetElement)element);
-						if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
-						break;
-					case OverlayElementType.SpeedGauge:
-						DrawSpeedGauge(c, (SpeedGaugeElement)element, frame.SpeedKmh);
-						break;
-					case OverlayElementType.CameraInfo:
-						DrawCameraInfo(c, frame, (CameraInfoElement)element);
-						break;
-					case OverlayElementType.ElapsedTimeText:
-						DrawElapsedTime(c, frame, (ElapsedTimeTextElement)element);
-						break;
-					case OverlayElementType.CameraModelText:
-						DrawCameraModel(c, (CameraModelTextElement)element);
-						break;
-					case OverlayElementType.GMeter:
-						DrawGMeter(c, frame, (GMeterElement)element);
-						break;
-					case OverlayElementType.TripProgressBar:
-						DrawTripProgressBar(c, frame, (TripProgressBarElement)element);
-						break;
-				}
-			});
+				case DateTimeTextElement dateTime:
+					DrawTimeText(canvas, frame, dateTime, true);
+					break;
+				case UtcTimeTextElement utcTime:
+					DrawTimeText(canvas, frame, utcTime, false);
+					break;
+				case ElevationElement elevation:
+					DrawElevation(canvas, frame, elevation);
+					break;
+				case GradientElement gradient:
+					DrawGradient(canvas, frame, gradient);
+					break;
+				case DistanceElement distance:
+					DrawDistance(canvas, frame, distance);
+					break;
+				case CompassElement compass:
+					DrawCompass(canvas, frame, compass);
+					break;
+				case SunWidgetElement sun:
+					DrawSunWidget(canvas, frame, sun);
+					break;
+				case PitchGaugeElement pitch:
+					DrawPitchGauge(canvas, pitch, frame.PitchDegrees);
+					break;
+				case MapWidgetElement map:
+					DrawMapWidget(canvas, frame, map);
+					if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
+					break;
+				case SpeedGaugeElement speed:
+					DrawSpeedGauge(canvas, speed, frame.SpeedKmh);
+					break;
+				case CameraInfoElement cameraInfo:
+					DrawCameraInfo(canvas, frame, cameraInfo);
+					break;
+				case ElapsedTimeTextElement elapsed:
+					DrawElapsedTime(canvas, frame, elapsed);
+					break;
+				case CameraModelTextElement cameraModel:
+					DrawCameraModel(canvas, cameraModel);
+					break;
+				case GMeterElement gMeter:
+					DrawGMeter(canvas, frame, gMeter);
+					break;
+				case TripProgressBarElement tripProgress:
+					DrawTripProgressBar(canvas, frame, tripProgress);
+					break;
+			}
+
+			canvas.RestoreToCount(saveCount);
 		}
 
 		return mapAttribution;
 	}
 
 	/// <summary>
-	///     Group opacity for the route-intro crossfade (see Render): SaveLayer/Restore composites
-	///     everything `draw` does as one flattened group at `alpha`, rather than needing every widget
-	///     it calls into to accept and thread through an opacity parameter of its own.
+	///     The shared paint for drawing something at an opacity (a SaveLayer group, the route-intro card's image) -
+	///     Skia copies a paint's state when it's used, so the one instance serves every call in turn.
 	/// </summary>
-	private static void DrawWithAlpha(SKCanvas canvas, float alpha, Action<SKCanvas> draw)
+	private SKPaint AlphaPaint(float alpha)
 	{
-		using var paint = new SKPaint { Color = SKColors.White.WithAlpha((byte)Math.Clamp(alpha * 255f, 0, 255)) };
-		canvas.SaveLayer(paint);
-		draw(canvas);
-		canvas.Restore();
+		_alphaPaint.Color = SKColors.White.WithAlpha((byte)Math.Clamp(alpha * 255f, 0, 255));
+		return _alphaPaint;
 	}
 
 	/// <summary>

@@ -24,7 +24,8 @@ public sealed partial class OverlayRenderer
 	private double WatermarkFadeOutEndSeconds =>
 		RouteIntro.Enabled ? RouteIntro.DurationSeconds : WatermarkDurationSeconds;
 
-	private static readonly string WatermarkVersion = FormatVersion(typeof(OverlayRenderer).Assembly.GetName().Version);
+	private static readonly string WatermarkSubtitle =
+		$"github.com/sefinek/osmo-overlay  •  v{FormatVersion(typeof(OverlayRenderer).Assembly.GetName().Version)}";
 
 	/// <summary>
 	///     Bottom-center attribution watermark, full opacity from frame 0 then fading out (see
@@ -45,8 +46,7 @@ public sealed partial class OverlayRenderer
 		canvas.Scale(_scale, _scale);
 
 		DrawOutlined(canvas, "Made with OsmoOverlay", 0, -WatermarkLineGap, _watermarkTitleFont, White, align, alpha);
-		DrawOutlined(canvas, $"github.com/sefinek/osmo-overlay  •  v{WatermarkVersion}", 0, 0, _watermarkSubtitleFont,
-			Accent, align, alpha);
+		DrawOutlined(canvas, WatermarkSubtitle, 0, 0, _watermarkSubtitleFont, Accent, align, alpha);
 
 		canvas.Restore();
 	}

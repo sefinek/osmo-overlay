@@ -2,7 +2,7 @@ using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
 
-/// <summary>Per-widget appear/disappear timing and animation (see OverlayElement.AppearAtSeconds etc.) - the generic wrapper DrawWidgets routes every widget's draw call through.</summary>
+/// <summary>Per-widget placement, appear/disappear timing and animation (see OverlayElement.AppearAtSeconds etc.) - BeginElement is what DrawWidgets sets every widget's draw up with.</summary>
 public sealed partial class OverlayRenderer
 {
 	public const double AnimationDurationSecondsDefault = 0.6;
@@ -13,64 +13,21 @@ public sealed partial class OverlayRenderer
 	private const float SlideDistance = 90f;
 
 	/// <summary>
-	///     Gates and (for Fade/Slide types) fades `draw` by the element's AppearAtSeconds/
-	///     DisappearAtSeconds/AnimationType - skipped entirely (draw called directly, no SaveLayer) for
-	///     the common case of a widget with none of this set, so the overwhelming majority of renders pay
-	///     zero cost for a feature they don't use.
+	///     Sets the canvas up for one widget and returns the save count to restore it to: the origin on the widget's
+	///     anchor (element.X/Y, so every widget draws around (0, 0)), scaled by the resolution's scale times the
+	///     widget's own element.Scale (pivoted on the anchor, so resizing never shifts it), slid and faded by
+	///     `progress` (ElementProgress). The fade's SaveLayer only exists while a widget is fading in or out - a
+	///     widget with no timing set, or between its two ramps, draws straight onto the frame.
 	/// </summary>
-	private void DrawElement(SKCanvas canvas, OverlayElement element, double sampleTimeSeconds, Action<SKCanvas> draw)
+	private int BeginElement(SKCanvas canvas, OverlayElement element, float progress)
 	{
-		var resized = element.Scale != 1f;
-
-		if (element.AppearAtSeconds is null && element.DisappearAtSeconds is null &&
-		    element.AnimationType == OverlayAnimationType.None)
-		{
-			if (!resized)
-			{
-				draw(canvas);
-				return;
-			}
-
-			canvas.Save();
-			ScaleAroundAnchor(canvas, element);
-			draw(canvas);
-			canvas.Restore();
-			return;
-		}
-
-		var progress = ElementProgress(element, sampleTimeSeconds);
-		if (progress <= 0f) return;
-
+		var saveCount = canvas.Save();
 		var (offsetX, offsetY) = SlideOffset(element.AnimationType, progress);
-		if (offsetX == 0f && offsetY == 0f && !resized)
-		{
-			DrawFaded(canvas, progress, draw);
-			return;
-		}
-
-		canvas.Save();
-		if (offsetX != 0f || offsetY != 0f) canvas.Translate(offsetX, offsetY);
-		if (resized) ScaleAroundAnchor(canvas, element);
-		DrawFaded(canvas, progress, draw);
-		canvas.Restore();
-	}
-
-	/// <summary>Skips DrawWithAlpha's SaveLayer once fully faded in - the whole window between the two ramps.</summary>
-	private static void DrawFaded(SKCanvas canvas, float progress, Action<SKCanvas> draw)
-	{
-		if (progress >= 1f) draw(canvas);
-		else DrawWithAlpha(canvas, progress, draw);
-	}
-
-	/// <summary>
-	///     Scales everything `draw` renders by element.Scale, pivoted on the widget's own anchor
-	///     (element.X, element.Y) so resizing never shifts its position.
-	/// </summary>
-	private static void ScaleAroundAnchor(SKCanvas canvas, OverlayElement element)
-	{
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(element.Scale, element.Scale);
-		canvas.Translate(-element.X, -element.Y);
+		canvas.Translate(element.X + offsetX, element.Y + offsetY);
+		var scale = _scale * element.Scale;
+		canvas.Scale(scale, scale);
+		if (progress < 1f) canvas.SaveLayer(AlphaPaint(progress));
+		return saveCount;
 	}
 
 	/// <summary>
@@ -83,6 +40,9 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private static float ElementProgress(OverlayElement element, double sampleTimeSeconds)
 	{
+		if (element.AppearAtSeconds is null && element.DisappearAtSeconds is null && element.AnimationType == OverlayAnimationType.None)
+			return 1f;
+
 		var appearAt = element.AppearAtSeconds ?? 0;
 		var disappearAt = element.DisappearAtSeconds ?? double.PositiveInfinity;
 

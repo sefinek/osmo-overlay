@@ -291,7 +291,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	///     Play right after stepping to a frame starts without any seek). If something did move it in between, the
 	///     next read seeks back to where this stream is.
 	/// </summary>
-	public sealed class PlaybackStream : IDisposable
+	public sealed class PlaybackStream
 	{
 		private readonly LibavVideoSource _source;
 		private readonly CancellationToken _ct;
@@ -342,10 +342,6 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				Error = ex.Message;
 				return null;
 			}
-		}
-
-		public void Dispose()
-		{
 		}
 	}
 

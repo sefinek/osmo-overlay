@@ -1,9 +1,9 @@
+using System.Diagnostics;
 using System.Threading.Channels;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
-using MapMosaicKey = (string Url, int Zoom, double MaxZoomOutFactor);
 
 namespace OsmoOverlay.Core.Preview;
 
@@ -28,6 +28,9 @@ public sealed class PreviewPlayer : IDisposable
 
 	// With the audio clock, a frame this late is dropped instead of shown - the video catches up with the sound.
 	private const double LateFrameSeconds = 0.1;
+
+	// Late frames are still shown this often - a slow overlay makes playback choppy instead of freezing the picture.
+	private const double MaxFrozenSeconds = 0.25;
 
 	// Composed frames in flight: the playback channel, the one being composed and the one being published.
 	private readonly FrameBufferPool _composedBuffers = new(PlaybackPrefetchFrames + 2);
@@ -74,7 +77,8 @@ public sealed class PreviewPlayer : IDisposable
 	private float _audioGain;
 	// Kept across Close/OpenAsync like the output timeline - a view toggle, not part of the file.
 	private bool _showOverlay = true;
-	private RouteJoin _routeAcrossCuts = OverlaySettingsStore.Load().RouteAcrossCuts;
+	// Read from the settings on every open (the GUI saves it before calling SetRouteAcrossCuts).
+	private RouteJoin _routeAcrossCuts;
 	// What a full-resolution snapshot needs to open its own decoder (RenderSnapshotPngAsync).
 	private IReadOnlyList<PlaybackSegment>? _segments;
 	private int _videoWidth;
@@ -120,6 +124,7 @@ public sealed class PreviewPlayer : IDisposable
 		_recordingFrames = recordingFrames;
 		_derivedFrames = derivedFrames;
 		_settings = settings;
+		_routeAcrossCuts = settings.RouteAcrossCuts;
 		_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
 		_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
 		_hasContainerTime = summary.ContainerRecordingStartUtc is not null;
@@ -181,7 +186,7 @@ public sealed class PreviewPlayer : IDisposable
 			return;
 		}
 
-		if (first is not null) Publish(first);
+		Publish(first);
 
 		StartMapPreparation(renderer);
 	}
@@ -189,21 +194,32 @@ public sealed class PreviewPlayer : IDisposable
 	/// <summary>Map/route-intro tiles for a (new) renderer, fetched in the background - see OpenAsync.</summary>
 	private void StartMapPreparation(OverlayRenderer renderer)
 	{
-		if (renderer.Layout.Any(e => e is MapWidgetElement { Visible: true }))
-		{
-			_mapPrepareCts?.Cancel();
-			var mapCts = new CancellationTokenSource();
-			_mapPrepareCts = mapCts;
-			_ = PrepareMapInBackgroundAsync(renderer, mapCts.Token);
-		}
+		if (renderer.Layout.Any(e => e is MapWidgetElement { Visible: true })) StartMapWidgetPreparation(renderer);
 
 		if (_settings is { ShowRouteIntro: true } && _hasGpsFix)
-		{
-			_routeIntroPrepareCts?.Cancel();
-			var routeIntroCts = new CancellationTokenSource();
-			_routeIntroPrepareCts = routeIntroCts;
-			_ = PrepareRouteIntroInBackgroundAsync(renderer, routeIntroCts.Token);
-		}
+			_ = PrepareMosaicAsync(renderer, static (r, progress, ct) => r.BuildRouteIntroMosaicAsync(progress, ct),
+				static (r, mosaic, key) => r.ApplyRouteIntroMapMosaic(mosaic, key), "Fetching route overview map",
+				"Route overview map failed", Restart(ref _routeIntroPrepareCts));
+	}
+
+	/// <summary>
+	///     A fetch already in flight for a previous key is cancelled first (e.g. the zoom NumericUpDown fires
+	///     ValueChanged per click/held arrow with no debounce) - otherwise an older, slower fetch could finish after
+	///     a newer one and clobber it. ApplyMapMosaic's own key check covers whatever is already past cancelling.
+	/// </summary>
+	private void StartMapWidgetPreparation(OverlayRenderer renderer)
+	{
+		_ = PrepareMosaicAsync(renderer, static (r, progress, ct) => r.BuildMapMosaicAsync(progress, ct),
+			static (r, mosaic, key) => r.ApplyMapMosaic(mosaic, key), "Fetching map tiles", "Map preview failed",
+			Restart(ref _mapPrepareCts));
+	}
+
+	/// <summary>Cancels what the previous source's token started and hands out a fresh token.</summary>
+	private static CancellationToken Restart(ref CancellationTokenSource? cts)
+	{
+		cts?.Cancel();
+		cts = new CancellationTokenSource();
+		return cts.Token;
 	}
 
 	/// <summary>
@@ -219,6 +235,7 @@ public sealed class PreviewPlayer : IDisposable
 		Pause();
 
 		OverlayRenderer? renderer;
+		ComposedPreviewFrame? composed;
 		lock (_lock)
 		{
 			_outputTimeline = timeline;
@@ -230,14 +247,10 @@ public sealed class PreviewPlayer : IDisposable
 			_retiredRenderer = _renderer;
 			_renderer = renderer;
 			_derivedFrames = frames;
-
-			if (_lastVideoFrame is { } videoFrame)
-			{
-				ComposedPreviewFrame? composed = Compose(renderer, frames, videoFrame, _lastPosition);
-				if (composed is not null) Publish(composed);
-			}
+			composed = RecomposeLocked();
 		}
 
+		Publish(composed);
 		StartMapPreparation(renderer);
 	}
 
@@ -424,46 +437,33 @@ public sealed class PreviewPlayer : IDisposable
 		layout = OverlayDataRequirements.ApplyAvailability(layout, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
 
 		OverlayRenderer? renderer;
+		ComposedPreviewFrame? composed;
 		lock (_lock)
 		{
 			if (_renderer is null) return;
 			renderer = _renderer;
 			renderer.Layout = layout;
-
-			if (_lastVideoFrame is { } videoFrame && _derivedFrames is not null)
-			{
-				ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
-				if (composed is not null) Publish(composed);
-			}
+			composed = RecomposeLocked();
 		}
 
-		if (renderer.NeedsMapPrepare(layout))
-		{
-			// Cancel any fetch already in flight for a previous key (e.g. the zoom NumericUpDown fires
-			// ValueChanged per click/held-arrow with no debounce) - without this, an older, slower fetch
-			// could finish after a newer one and clobber it. ApplyMapMosaic's own key check is a second,
-			// belt-and-suspenders line of defense for whatever's already past the cancellation point.
-			_mapPrepareCts?.Cancel();
-			var cts = new CancellationTokenSource();
-			_mapPrepareCts = cts;
-			_ = PrepareMapInBackgroundAsync(renderer, cts.Token);
-		}
+		Publish(composed);
+		if (renderer.NeedsMapPrepare(layout)) StartMapWidgetPreparation(renderer);
 	}
 
 	/// <summary>
-	///     Fetches map tiles for a newly-added/changed Map widget without blocking scrubbing or
-	///     playback for however long that takes - the network fetch runs outside _lock (see
-	///     OverlayRenderer.BuildMapMosaicAsync), and only the quick swap into the renderer + a
-	///     recompose of the current frame happens inside it.
+	///     Fetches a map mosaic for a renderer without blocking scrubbing or playback for however long that takes -
+	///     the network fetch runs outside _lock (see OverlayRenderer.BuildMapMosaicAsync), only the quick swap into
+	///     the renderer and a recompose of the frame on screen happen inside it.
 	/// </summary>
-	private async Task PrepareMapInBackgroundAsync(OverlayRenderer renderer, CancellationToken ct)
+	private async Task PrepareMosaicAsync<TKey>(OverlayRenderer renderer,
+		Func<OverlayRenderer, Action<int, int>, CancellationToken, Task<(RouteMapMosaic?, TKey)>> build,
+		Action<OverlayRenderer, RouteMapMosaic?, TKey> apply, string progressText, string failureText, CancellationToken ct)
 	{
 		RouteMapMosaic? mosaic;
-		MapMosaicKey? key;
+		TKey key;
 		try
 		{
-			(mosaic, key) = await renderer.BuildMapMosaicAsync(
-				(fetched, total) => Message?.Invoke($"Fetching map tiles: {fetched}/{total}"), ct);
+			(mosaic, key) = await build(renderer, (fetched, total) => Message?.Invoke($"{progressText}: {fetched}/{total}"), ct);
 		}
 		catch (OperationCanceledException)
 		{
@@ -471,91 +471,55 @@ public sealed class PreviewPlayer : IDisposable
 		}
 		catch (Exception ex)
 		{
-			Message?.Invoke($"Map preview failed: {ex.Message}");
+			Message?.Invoke($"{failureText}: {ex.Message}");
 			return;
 		}
 
+		ComposedPreviewFrame? composed;
 		lock (_lock)
 		{
 			if (!ReferenceEquals(_renderer, renderer))
 			{
-				// The file was closed/reopened while this fetch was in flight - this result belongs to
-				// a renderer nobody references anymore.
+				// Closed, reopened or rebuilt for new cuts while this fetch was in flight - nobody draws with that
+				// renderer any more.
 				mosaic?.Dispose();
 				return;
 			}
 
-			renderer.ApplyMapMosaic(mosaic, key);
-
-			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
-			ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) Publish(composed);
-		}
-	}
-
-	/// <summary>Same shape as PrepareMapInBackgroundAsync, for the route-intro overview mosaic instead of MapWidget's.</summary>
-	private async Task PrepareRouteIntroInBackgroundAsync(OverlayRenderer renderer, CancellationToken ct)
-	{
-		RouteMapMosaic? mosaic;
-		string? key;
-		try
-		{
-			(mosaic, key) = await renderer.BuildRouteIntroMosaicAsync(
-				(fetched, total) => Message?.Invoke($"Fetching route overview map: {fetched}/{total}"), ct);
-		}
-		catch (OperationCanceledException)
-		{
-			return;
-		}
-		catch (Exception ex)
-		{
-			Message?.Invoke($"Route overview map failed: {ex.Message}");
-			return;
+			apply(renderer, mosaic, key);
+			composed = RecomposeLocked();
 		}
 
-		lock (_lock)
-		{
-			if (!ReferenceEquals(_renderer, renderer))
-			{
-				mosaic?.Dispose();
-				return;
-			}
-
-			renderer.ApplyRouteIntroMapMosaic(mosaic, key);
-
-			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
-			ComposedPreviewFrame? composed = Compose(renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) Publish(composed);
-		}
+		Publish(composed);
 	}
 
 	/// <summary>How the drawn routes cross a cut - applies to the frame on screen right away, like SetShowWatermark.</summary>
 	public void SetRouteAcrossCuts(RouteJoin join)
 	{
+		ComposedPreviewFrame? composed;
 		lock (_lock)
 		{
 			_routeAcrossCuts = join;
 			if (_renderer is null) return;
 
 			_renderer.RouteAcrossCuts = join;
-			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
-
-			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) Publish(composed);
+			composed = RecomposeLocked();
 		}
+
+		Publish(composed);
 	}
 
 	/// <summary>Shows the plain video (false) or the video with the overlay - recomposes the frame on screen right away.</summary>
 	public void SetShowOverlay(bool show)
 	{
+		ComposedPreviewFrame? composed;
 		lock (_lock)
 		{
 			_showOverlay = show;
-			if (_renderer is null || _lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
-
-			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) Publish(composed);
+			composed = RecomposeLocked();
 		}
+
+		Publish(composed);
 	}
 
 	/// <summary>
@@ -594,15 +558,15 @@ public sealed class PreviewPlayer : IDisposable
 	/// <summary>Mirrors SetLayout: lets Settings toggle the watermark live without reopening the file.</summary>
 	public void SetShowWatermark(bool show)
 	{
+		ComposedPreviewFrame? composed;
 		lock (_lock)
 		{
 			if (_renderer is null) return;
 			_renderer.ShowWatermark = show;
-
-			if (_lastVideoFrame is not { } videoFrame || _derivedFrames is null) return;
-			ComposedPreviewFrame? composed = Compose(_renderer, _derivedFrames, videoFrame, _lastPosition);
-			if (composed is not null) Publish(composed);
+			composed = RecomposeLocked();
 		}
+
+		Publish(composed);
 	}
 
 	/// <summary>
@@ -666,8 +630,9 @@ public sealed class PreviewPlayer : IDisposable
 	///     screen as a stutter. This replaced an earlier single-threaded decode-then-wait-then-display
 	///     loop that had no way to hide a slow frame, plus a "Stale" catch-up mechanism that silently
 	///     dropped a whole burst of frames after any slow open/seek - both are gone now; backpressure
-	///     from the channel's bounded capacity is what keeps the producer from running away, and
-	///     nothing needs to be discarded to "catch up" from a slow start.
+	///     from the channel's bounded capacity is what keeps the producer from running away. Only when
+	///     the producer falls behind the sound itself does it skip frames (CatchUpFrames), and a frame
+	///     is shown at least every MaxFrozenSeconds even while they arrive late.
 	/// </summary>
 	private async Task RunPlaybackAsync(Task previousRun, LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput,
 		PlaybackPlan plan, double rate, CancellationTokenSource ownCts)
@@ -694,11 +659,11 @@ public sealed class PreviewPlayer : IDisposable
 			// consumer's finally would then hang too. Cancelling this in that finally, unconditionally,
 			// guarantees the producer can always be unblocked regardless of why the consumer stopped.
 			using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+			PlaybackClock clock = new(audioOutput, audioSource?.SampleRate ?? 1, rate);
 			Task<string?> producer = Task.Run(
-				() => ProduceFramesAsync(video, plan.Stretches(), FrameStep(rate, video.Fps), channel.Writer, producerCts.Token),
+				() => ProduceFramesAsync(video, plan.Stretches(), FrameStep(rate, video.Fps), clock, channel.Writer, producerCts.Token),
 				producerCts.Token);
 
-			PlaybackClock clock = new(audioOutput, audioSource?.SampleRate ?? 1, rate);
 			audioOutput?.Stop();
 			Task feeder = clock.FollowsAudio && audioSource is not null && audioOutput is not null
 				? Task.Run(() => FeedAudioAsync(audioSource, audioOutput, clock, plan.Stretches(), rate, producerCts.Token), producerCts.Token)
@@ -708,6 +673,7 @@ public sealed class PreviewPlayer : IDisposable
 			try
 			{
 				var started = false;
+				var lastShown = Stopwatch.GetTimestamp();
 				await foreach (PlaybackFrame playbackFrame in channel.Reader.ReadAllAsync(ct))
 				{
 					ComposedPreviewFrame composed = playbackFrame.Composed;
@@ -726,13 +692,15 @@ public sealed class PreviewPlayer : IDisposable
 					{
 						await Task.Delay(TimeSpan.FromSeconds(delay), ct);
 					}
-					else if (clock.FollowsAudio && delay < -LateFrameSeconds)
+					else if (clock.FollowsAudio && delay < -LateFrameSeconds &&
+					         Stopwatch.GetElapsedTime(lastShown).TotalSeconds < MaxFrozenSeconds)
 					{
 						_composedBuffers.Return(composed.Bgra);
 						continue;
 					}
 
 					Publish(composed);
+					lastShown = Stopwatch.GetTimestamp();
 				}
 			}
 			finally
@@ -785,7 +753,7 @@ public sealed class PreviewPlayer : IDisposable
 	///     composing needs it, so SetLayout, scrubbing and the rest never wait for a decode.
 	/// </summary>
 	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IEnumerable<PlaybackStretch> stretches, int step,
-		ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
+		PlaybackClock clock, ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
 	{
 		TimeSpan halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
 		// Where each stretch starts on the play timeline - the stretches back to back, the way the audio is pushed.
@@ -794,13 +762,18 @@ public sealed class PreviewPlayer : IDisposable
 		{
 			foreach (PlaybackStretch stretch in stretches)
 			{
-				using LibavVideoSource.PlaybackStream stream = video.OpenPlaybackStream(stretch.Start, ct);
+				LibavVideoSource.PlaybackStream stream = video.OpenPlaybackStream(stretch.Start, ct);
 				var startsStretch = true;
 				var playStart = playOffset;
 				playOffset += (stretch.End - stretch.Start).TotalSeconds;
 				while (!ct.IsCancellationRequested)
 				{
-					VideoFrame? videoFrame = stream.TryReadNextFrame(step);
+					// The first frame of a stretch is where the sound resumes too - only later ones can fall behind it.
+					var catchUp = startsStretch
+						? 0
+						: CatchUpFrames(clock.AudioPosition,
+							playStart + (stream.Position - stretch.Start).TotalSeconds + step / video.Fps, video.Fps);
+					VideoFrame? videoFrame = stream.TryReadNextFrame(step + catchUp);
 					if (videoFrame is null) break;
 
 					if (stream.Position >= stretch.End - halfFrame)
@@ -839,6 +812,24 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	///     Frames to decode past without converting or composing them, so the next one shown isn't already late. With
+	///     the sound as the clock, a frame over LateFrameSeconds late is dropped anyway - a producer that still
+	///     composed every one of them (a heavy overlay, a GC pause) could never catch up again, and the picture froze
+	///     while the sound played on. Aims a little ahead of the sound, since skipping takes time too; at most two
+	///     seconds of frames per read, so a read never blocks for long.
+	/// </summary>
+	/// <param name="nextPlayTime">Where the frame read next sits on the play timeline.</param>
+	internal static int CatchUpFrames(double? audioPosition, double nextPlayTime, double fps)
+	{
+		if (audioPosition is not { } now) return 0;
+
+		var late = now - nextPlayTime;
+		if (late <= LateFrameSeconds) return 0;
+
+		return (int)Math.Min(Math.Ceiling((late + LateFrameSeconds) * fps), Math.Ceiling(fps * 2));
 	}
 
 	/// <summary>
@@ -966,10 +957,24 @@ public sealed class PreviewPlayer : IDisposable
 		return null;
 	}
 
-	private void Publish(ComposedPreviewFrame frame)
+	/// <summary>
+	///     Hands a composed frame to the GUI and takes its buffer back. Never under _lock: the GUI copies the whole
+	///     frame out in FrameReady, and the decode thread's ComposeCurrent shouldn't wait for that.
+	/// </summary>
+	private void Publish(ComposedPreviewFrame? frame)
 	{
+		if (frame is null) return;
+
 		FrameReady?.Invoke(frame);
 		_composedBuffers.Return(frame.Bgra);
+	}
+
+	/// <summary>The frame on screen composed again with what's current now - under _lock; null before anything was decoded.</summary>
+	private ComposedPreviewFrame? RecomposeLocked()
+	{
+		return _renderer is { } renderer && _lastVideoFrame is { } videoFrame && _derivedFrames is { } frames
+			? Compose(renderer, frames, videoFrame, _lastPosition)
+			: null;
 	}
 
 	private ComposedPreviewFrame? Compose(OverlayRenderer renderer, IReadOnlyList<DerivedFrame> frames,

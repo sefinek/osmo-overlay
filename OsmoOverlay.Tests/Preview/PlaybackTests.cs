@@ -154,6 +154,54 @@ public sealed class PlaybackClockTests
 		Assert.IsFalse(clock.FollowsAudio);
 		Assert.AreEqual(5, clock.Now, 1e-9);
 	}
+
+	[TestMethod]
+	public void AudioPosition_IsTheSoundsPosition_WithoutHandingOver()
+	{
+		var audio = new FakeAudio { QueuedSeconds = 0.5 };
+		var clock = new PlaybackClock(audio, 48000, 1, () => 0);
+		clock.AddPushed(48000 * 3);
+
+		Assert.AreEqual(2.5, clock.AudioPosition!.Value, 1e-9);
+
+		clock.AudioFinished();
+		Assert.IsNull(clock.AudioPosition);
+		Assert.IsTrue(clock.FollowsAudio, "only Now hands the clock over to the stopwatch");
+	}
+
+	[TestMethod]
+	public void AudioPosition_IsNullWithoutSound()
+	{
+		Assert.IsNull(new PlaybackClock(null, 48000, 1, () => 0).AudioPosition);
+	}
+}
+
+[TestClass]
+public sealed class CatchUpTests
+{
+	private const double Fps = 60;
+
+	[TestMethod]
+	public void OnTimeOrSilent_DecodesOn()
+	{
+		Assert.AreEqual(0, PreviewPlayer.CatchUpFrames(null, 1, Fps), "no sound to fall behind");
+		Assert.AreEqual(0, PreviewPlayer.CatchUpFrames(1, 2, Fps), "ahead of the sound");
+		Assert.AreEqual(0, PreviewPlayer.CatchUpFrames(2.05, 2, Fps), "late, but not late enough to be dropped");
+	}
+
+	[TestMethod]
+	public void Behind_SkipsPastTheSoundWithAMargin()
+	{
+		// 0.5 s behind: 30 frames to reach the sound plus ~6 for the margin.
+		var frames = PreviewPlayer.CatchUpFrames(2.5, 2, Fps);
+		Assert.IsTrue(frames is 36 or 37, $"{frames}");
+	}
+
+	[TestMethod]
+	public void FarBehind_SkipsAtMostTwoSecondsPerRead()
+	{
+		Assert.AreEqual(120, PreviewPlayer.CatchUpFrames(30, 2, Fps));
+	}
 }
 
 [TestClass]

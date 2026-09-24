@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
@@ -25,13 +26,23 @@ public sealed partial class OverlayRenderer
 	private RouteMapMosaic? _mapMosaic;
 	private MapMosaicKey? _preparedMapKey;
 
-	// AfterCut: the first point after a part cut out of the render - DrawRoute joins it per RouteAcrossCuts.
-	private readonly List<(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut)> _trail = [];
+	private static readonly string[] CardinalNames = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+	private readonly List<TrailPoint> _trail = [];
+	// The trail's bounding box in local meters, grown with every point AppendTrailPoint keeps.
+	private double _trailMinEast, _trailMaxEast, _trailMinNorth, _trailMaxNorth;
 	// GetTrailPixels' projection of _trail into _trailPixelsMosaic's pixel space.
 	private readonly List<SKPoint> _trailPixels = [];
 	private RouteMapMosaic? _trailPixelsMosaic;
-	private (double East, double North)? _lastTrailPoint;
 	private int _trailCacheIndex = -1;
+
+	// The trail's drawn routes, extended as the trail grows (SyncRoute) - the compass's in local meters, the map's in
+	// its mosaic's pixels. Indexed [colorBySpeed ? 1 : 0]: every Compass/MapWidget instance picks that on its own.
+	private readonly RouteGeometry?[] _compassRoutes = new RouteGeometry?[2];
+	private readonly RouteGeometry?[] _mapRoutes = new RouteGeometry?[2];
+
+	/// <summary>AfterCut: the first point after a part cut out of the render - the route joins it per RouteAcrossCuts.</summary>
+	private readonly record struct TrailPoint(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut);
 
 	/// <summary>
 	///     Fetches every map tile the route needs and stitches them into one in-memory mosaic, so
@@ -156,7 +167,6 @@ public sealed partial class OverlayRenderer
 		else if (index != _trailCacheIndex)
 		{
 			_trail.Clear();
-			_lastTrailPoint = null;
 			for (var i = 0; i <= index; i++)
 				AppendTrailPoint(_allFrames[i]);
 		}
@@ -166,46 +176,46 @@ public sealed partial class OverlayRenderer
 
 	private void AppendTrailPoint(DerivedFrame frame)
 	{
-		(double LocalEastMeters, double LocalNorthMeters) point = (frame.LocalEastMeters, frame.LocalNorthMeters);
+		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
 		// The first point after a cut is always kept, however close - it's where the route resumes.
-		if (frame.StartsAfterCut || _lastTrailPoint is not { } last || Distance(last, point) >= TrailMinStepMeters)
+		if (!frame.StartsAfterCut && _trail.Count > 0)
 		{
-			_trail.Add((point.LocalEastMeters, point.LocalNorthMeters, frame.Raw.Latitude, frame.Raw.Longitude, frame.SpeedKmh, frame.StartsAfterCut));
-			_lastTrailPoint = point;
+			TrailPoint last = _trail[^1];
+			double dx = east - last.East, dy = north - last.North;
+			if (dx * dx + dy * dy < TrailMinStepMeters * TrailMinStepMeters) return;
 		}
-	}
 
-	private static double Distance((double East, double North) a, (double East, double North) b)
-	{
-		double dx = a.East - b.East, dy = a.North - b.North;
-		return Math.Sqrt(dx * dx + dy * dy);
+		if (_trail.Count == 0)
+		{
+			(_trailMinEast, _trailMaxEast, _trailMinNorth, _trailMaxNorth) = (east, east, north, north);
+		}
+		else
+		{
+			_trailMinEast = Math.Min(_trailMinEast, east);
+			_trailMaxEast = Math.Max(_trailMaxEast, east);
+			_trailMinNorth = Math.Min(_trailMinNorth, north);
+			_trailMaxNorth = Math.Max(_trailMaxNorth, north);
+		}
+
+		_trail.Add(new TrailPoint(east, north, frame.Raw.Latitude, frame.Raw.Longitude, frame.SpeedKmh, frame.StartsAfterCut));
 	}
 
 	private void DrawCompass(SKCanvas canvas, DerivedFrame frame, CompassElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-		const float cx = 0;
-		const float cy = 0;
+		const float radius = OverlayElementBounds.CompassRadius;
 
-		DrawPanelShadow(canvas, cx, cy, OverlayElementBounds.CompassRadius);
+		DrawPanelShadow(canvas, 0, 0, radius);
 
-		canvas.DrawCircle(cx, cy, OverlayElementBounds.CompassRadius, _panelFillPaint);
-		canvas.DrawCircle(cx, cy, OverlayElementBounds.CompassRadius, _ringStroke3White160);
+		canvas.DrawCircle(0, 0, radius, _panelFillPaint);
+		canvas.DrawCircle(0, 0, radius, _ringStroke3White160);
 
-		SKPoint marker = DrawTrail(canvas, cx, cy, frame, element);
+		SKPoint marker = DrawTrail(canvas, frame, element);
 		DrawTrailMarker(canvas, marker.X, marker.Y, frame.HeadingDegrees, element.TrailUseArrow);
 
-		DrawOutlined(canvas, "N", cx, cy - OverlayElementBounds.CompassRadius + 46, _labelFont, White,
-			SKTextAlign.Center);
+		DrawOutlined(canvas, "N", 0, -radius + 46, _labelFont, White, SKTextAlign.Center);
 
-		var headingText =
-			$"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
-		DrawOutlined(canvas, headingText, cx + OverlayElementBounds.CompassRadius * 0.55f,
-			cy + OverlayElementBounds.CompassRadius * 0.7f, _labelFont, White, SKTextAlign.Right);
-
-		canvas.Restore();
+		var headingText = $"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
+		DrawOutlined(canvas, headingText, radius * 0.55f, radius * 0.7f, _labelFont, White, SKTextAlign.Right);
 	}
 
 	/// <summary>
@@ -214,37 +224,80 @@ public sealed partial class OverlayRenderer
 	///     therefore moves around the dial; the fit radius leaves room for the heading arrow inside the rim.
 	///     Returns where the marker goes.
 	/// </summary>
-	private SKPoint DrawTrail(SKCanvas canvas, float cx, float cy, DerivedFrame frame, TrailOverlayElement element)
+	private SKPoint DrawTrail(SKCanvas canvas, DerivedFrame frame, TrailOverlayElement element)
 	{
-		if (_trail.Count < 2) return new SKPoint(cx, cy);
+		if (_trail.Count < 2) return SKPoint.Empty;
 
-		double minE = frame.LocalEastMeters, maxE = minE, minN = frame.LocalNorthMeters, maxN = minN;
-		foreach (var p in _trail)
-		{
-			minE = Math.Min(minE, p.East);
-			maxE = Math.Max(maxE, p.East);
-			minN = Math.Min(minN, p.North);
-			maxN = Math.Max(maxN, p.North);
-		}
+		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
+		var centerEast = (Math.Min(_trailMinEast, east) + Math.Max(_trailMaxEast, east)) / 2;
+		var centerNorth = (Math.Min(_trailMinNorth, north) + Math.Max(_trailMaxNorth, north)) / 2;
 
-		(double East, double North) center = ((minE + maxE) / 2, (minN + maxN) / 2);
-		var maxDist = Math.Max(5.0, Distance((frame.LocalEastMeters, frame.LocalNorthMeters), center));
-		foreach (var p in _trail)
-			maxDist = Math.Max(maxDist, Distance((p.East, p.North), center));
+		var maxDistSq = Math.Max(5.0 * 5.0, DistanceSq(east, north, centerEast, centerNorth));
+		foreach (TrailPoint p in CollectionsMarshal.AsSpan(_trail))
+			maxDistSq = Math.Max(maxDistSq, DistanceSq(p.East, p.North, centerEast, centerNorth));
 
-		var scale = (OverlayElementBounds.CompassRadius - 50) / maxDist;
-		SKPoint ToDial(double east, double north) =>
-			new(cx + (float)((east - center.East) * scale), cy - (float)((north - center.North) * scale));
-
-		List<SKPoint> points = [.. _trail.Select(p => ToDial(p.East, p.North))];
-		DrawTrailRoute(canvas, points, element);
-		return ToDial(frame.LocalEastMeters, frame.LocalNorthMeters);
+		var scale = (OverlayElementBounds.CompassRadius - 50) / Math.Sqrt(maxDistSq);
+		// North up: local meters (y growing north) onto the dial (y growing down).
+		var toDial = SKMatrix.CreateScaleTranslation((float)scale, (float)-scale, (float)(-centerEast * scale),
+			(float)(centerNorth * scale));
+		DrawTrailRoute(canvas, _compassRoutes, null, toDial, element);
+		return new SKPoint((float)((east - centerEast) * scale), (float)(-(north - centerNorth) * scale));
 	}
 
-	private void DrawTrailRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, TrailOverlayElement element)
+	private static double DistanceSq(double x1, double y1, double x2, double y2)
 	{
-		DrawRoute(canvas, points, i => _trail[i].AfterCut, ResolveTrailColor(element.TrailColor), element.TrailWidth,
-			element.TrailColorBySpeed ? i => _trail[i].SpeedKmh : null);
+		double dx = x1 - x2, dy = y1 - y2;
+		return dx * dx + dy * dy;
+	}
+
+	/// <param name="pixels">The trail in the map mosaic's pixels (GetTrailPixels), or null for the compass's local meters.</param>
+	private void DrawTrailRoute(SKCanvas canvas, RouteGeometry?[] routes, List<SKPoint>? pixels, SKMatrix toCanvas,
+		TrailOverlayElement element)
+	{
+		var devicePixelsPerUnit = RouteGeometry.UniformScale(canvas.TotalMatrix) * RouteGeometry.UniformScale(toCanvas);
+		RouteGeometry route = SyncRoute(routes, pixels, element.TrailColorBySpeed, 0.5 / devicePixelsPerUnit);
+		DrawRoute(canvas, route, toCanvas, ResolveTrailColor(element.TrailColor), element.TrailWidth);
+	}
+
+	/// <summary>
+	///     Extends the cached route by the trail points added since it was last drawn. The trail is always the same
+	///     deterministic function of the frames up to the current one (see UpdateTrail), so a longer trail only
+	///     ever extends a shorter one - only a shorter trail (a seek backwards), another RouteAcrossCuts or another
+	///     level of detail starts it over. A new map mosaic drops the map's routes in GetTrailPixels.
+	///     `wantedStep` (half a device pixel, in the route's units) becomes a power of two the route keeps while
+	///     the wanted step stays within [step, 4 * step) - the dial's and the dynamic map zoom's scale drift a little
+	///     every frame, and rebuilding the route each time it crossed a boundary would cost more than it saves.
+	/// </summary>
+	private RouteGeometry SyncRoute(RouteGeometry?[] routes, List<SKPoint>? pixels, bool colorBySpeed, double wantedStep)
+	{
+		ref RouteGeometry? route = ref routes[colorBySpeed ? 1 : 0];
+		var step = route?.MinStep ?? 0;
+		if (!(wantedStep >= step && wantedStep < step * 4) && double.IsFinite(wantedStep) && wantedStep > 0)
+			step = (float)Math.Pow(2, Math.Floor(Math.Log2(wantedStep)));
+
+		if (route is not null && (route.Join != RouteAcrossCuts || route.Count > _trail.Count || route.MinStep != step))
+		{
+			route.Dispose();
+			route = null;
+		}
+
+		route ??= new RouteGeometry(RouteAcrossCuts, colorBySpeed, _trailSpeedScaleKmh, step);
+		for (var i = route.Count; i < _trail.Count; i++)
+		{
+			TrailPoint p = _trail[i];
+			route.Add(pixels?[i] ?? new SKPoint((float)p.East, (float)p.North), p.SpeedKmh, p.AfterCut);
+		}
+
+		return route;
+	}
+
+	private static void DisposeRoutes(RouteGeometry?[] routes)
+	{
+		for (var i = 0; i < routes.Length; i++)
+		{
+			routes[i]?.Dispose();
+			routes[i] = null;
+		}
 	}
 
 	/// <summary>
@@ -262,84 +315,23 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>
-	///     A route through points, the one place every drawn route (compass trail, map widget, route intro) goes
-	///     through: solid where it was travelled, and across a cut (afterCut: the point is the first after one) as
-	///     RouteAcrossCuts says - broken off, dashed, or straight on. With speedKmh, each travelled segment takes
-	///     its SpeedColorScale color (`color` while slow, warming to red): segments are grouped into one path per color bucket (at
-	///     most SpeedColorScale.Buckets draws, not one per segment - a long trail has thousands), drawn slow to
-	///     fast so the faster parts stay on top where the route crosses itself. A dashed join then goes white,
-	///     nothing was travelled there at a known speed.
+	///     The one place every drawn route (compass trail, map widget, route intro) goes through - see RouteGeometry
+	///     for how it's built and how a cut is crossed. `width` is in canvas pixels whatever `toCanvas` scales by.
 	/// </summary>
-	private void DrawRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, Func<int, bool> afterCut, SKColor color, float width,
-		Func<int, double>? speedKmh = null)
+	private void DrawRoute(SKCanvas canvas, RouteGeometry route, SKMatrix toCanvas, SKColor color, float width)
 	{
-		if (points.Count < 2) return;
+		_routeDashPaint.PathEffect = GetDashEffect(width);
+		route.Draw(canvas, toCanvas, color, width, _routeStrokePaint, _routeDashPaint);
+	}
 
-		var solid = new SKPathBuilder();
-		var byBucket = speedKmh is null ? null : new SKPathBuilder?[SpeedColorScale.Buckets];
-		var bucketColors = speedKmh is null ? null : SpeedColorScale.Colors(color);
-		var lastBucket = -1;
-		SKPathBuilder? dashed = null;
-		solid.MoveTo(points[0]);
-		for (var i = 1; i < points.Count; i++)
-		{
-			if (!afterCut(i) || RouteAcrossCuts == RouteJoin.Straight)
-			{
-				if (byBucket is null)
-				{
-					solid.LineTo(points[i]);
-					continue;
-				}
+	/// <summary>The dashes of a join across a cut at a route width - cached like the blur filters, a layout uses only a few widths.</summary>
+	private SKPathEffect GetDashEffect(float width)
+	{
+		if (_dashEffects.TryGetValue(width, out SKPathEffect? effect)) return effect;
 
-				var bucket = SpeedColorScale.Bucket((speedKmh!(i - 1) + speedKmh(i)) / 2 / _trailSpeedScaleKmh);
-				var path = byBucket[bucket] ??= new SKPathBuilder();
-				if (bucket != lastBucket) path.MoveTo(points[i - 1]);
-				path.LineTo(points[i]);
-				lastBucket = bucket;
-				continue;
-			}
-
-			if (RouteAcrossCuts == RouteJoin.Dashed)
-			{
-				dashed ??= new SKPathBuilder();
-				dashed.MoveTo(points[i - 1]);
-				dashed.LineTo(points[i]);
-			}
-
-			solid.MoveTo(points[i]);
-			lastBucket = -1;
-		}
-
-		using var paint = new SKPaint
-		{
-			Color = color, IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = width,
-			StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round
-		};
-		if (byBucket is null)
-		{
-			using SKPath path = solid.Detach();
-			canvas.DrawPath(path, paint);
-		}
-		else
-		{
-			for (var b = 0; b < byBucket.Length; b++)
-			{
-				if (byBucket[b] is not { } builder) continue;
-				paint.Color = bucketColors![b];
-				using SKPath path = builder.Detach();
-				canvas.DrawPath(path, paint);
-			}
-		}
-
-		if (dashed is null) return;
-
-		var dashColor = byBucket is null ? color : White;
-		paint.StrokeCap = SKStrokeCap.Butt;
-		paint.Color = dashColor.WithAlpha((byte)(dashColor.Alpha * 0.85f));
-		using SKPathEffect dash = SKPathEffect.CreateDash([Math.Max(6, width * 3), Math.Max(5, width * 2.5f)], 0);
-		paint.PathEffect = dash;
-		using SKPath dashedPath = dashed.Detach();
-		canvas.DrawPath(dashedPath, paint);
+		effect = SKPathEffect.CreateDash([Math.Max(6, width * 3), Math.Max(5, width * 2.5f)], 0);
+		_dashEffects[width] = effect;
+		return effect;
 	}
 
 	/// <summary>
@@ -376,9 +368,6 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private void DrawMapWidget(SKCanvas canvas, DerivedFrame frame, MapWidgetElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		const float radius = OverlayElementBounds.MapRadius;
 
 		DrawPanelShadow(canvas, 0, 0, radius);
@@ -392,9 +381,7 @@ public sealed partial class OverlayRenderer
 		else
 		{
 			canvas.Save();
-			var clipBuilder = new SKPathBuilder();
-			clipBuilder.AddCircle(0, 0, radius);
-			using (SKPath clipPath = clipBuilder.Detach()) canvas.ClipPath(clipPath, antialias: true);
+			canvas.ClipRoundRect(new SKRoundRect(SKRect.Create(-radius, -radius, radius * 2, radius * 2), radius), antialias: true);
 
 			SKPoint center = _mapMosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
 			// Computed once and shared with GetMapZoomFactor (when dynamic zoom needs it) and the trail
@@ -411,8 +398,8 @@ public sealed partial class OverlayRenderer
 			canvas.DrawImage(_mapMosaic.Image, src, dest, SKSamplingOptions.Default);
 
 			var mapScale = radius / cropRadius;
-			List<SKPoint> points = [.. trailPixels.Select(p => new SKPoint((p.X - center.X) * mapScale, (p.Y - center.Y) * mapScale))];
-			DrawTrailRoute(canvas, points, element);
+			var toWidget = SKMatrix.CreateScaleTranslation(mapScale, mapScale, -center.X * mapScale, -center.Y * mapScale);
+			DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
 
 			canvas.Restore();
 
@@ -427,8 +414,6 @@ public sealed partial class OverlayRenderer
 		}
 
 		canvas.DrawCircle(0, 0, radius, _ringStroke3White160);
-
-		canvas.Restore();
 	}
 
 	/// <summary>
@@ -442,10 +427,16 @@ public sealed partial class OverlayRenderer
 		// Incremental: _trail is always (re)built from frame 0 by the same deterministic steps (see
 		// UpdateTrail), so a longer trail only ever extends a shorter one - already projected points stay
 		// valid, and only a trail that got shorter (a seek backwards) or a different mosaic invalidates them.
-		if (!ReferenceEquals(_trailPixelsMosaic, _mapMosaic) || _trailPixels.Count > _trail.Count)
+		if (!ReferenceEquals(_trailPixelsMosaic, _mapMosaic))
 		{
 			_trailPixels.Clear();
 			_trailPixelsMosaic = _mapMosaic;
+			// Another mosaic places the same points at other pixels.
+			DisposeRoutes(_mapRoutes);
+		}
+		else if (_trailPixels.Count > _trail.Count)
+		{
+			_trailPixels.RemoveRange(_trail.Count, _trailPixels.Count - _trail.Count);
 		}
 
 		for (var i = _trailPixels.Count; i < _trail.Count; i++)
@@ -476,31 +467,34 @@ public sealed partial class OverlayRenderer
 
 	private void DrawHeadingArrow(SKCanvas canvas, float cx, float cy, double headingDegrees)
 	{
-		var rad = AngleMath.DegToRad(headingDegrees);
-		float len = 42;
-		var tipX = cx + (float)(Math.Sin(rad) * len);
-		var tipY = cy - (float)(Math.Cos(rad) * len);
-		var leftX = cx + (float)(Math.Sin(rad + 2.5) * len * 0.55);
-		var leftY = cy - (float)(Math.Cos(rad + 2.5) * len * 0.55);
-		var rightX = cx + (float)(Math.Sin(rad - 2.5) * len * 0.55);
-		var rightY = cy - (float)(Math.Cos(rad - 2.5) * len * 0.55);
+		canvas.Save();
+		canvas.Translate(cx, cy);
+		// Clockwise from north, the way a heading turns on screen (y grows down).
+		canvas.RotateDegrees((float)headingDegrees);
+		canvas.DrawPath(_headingArrow, _dotFillAccent);
+		canvas.DrawPath(_headingArrow, _blackStroke3);
+		canvas.Restore();
+	}
 
-		var builder = new SKPathBuilder();
-		builder.MoveTo(tipX, tipY);
-		builder.LineTo(leftX, leftY);
-		builder.LineTo(cx, cy);
-		builder.LineTo(rightX, rightY);
+	/// <summary>The heading arrow pointing north around (0, 0), built once - DrawHeadingArrow rotates it.</summary>
+	private static SKPath CreateHeadingArrow()
+	{
+		const double length = 42;
+		const double wingAngle = 2.5;
+		const double wingLength = length * 0.55;
+
+		using var builder = new SKPathBuilder();
+		builder.MoveTo(0, (float)-length);
+		builder.LineTo((float)(Math.Sin(wingAngle) * wingLength), (float)(-Math.Cos(wingAngle) * wingLength));
+		builder.LineTo(0, 0);
+		builder.LineTo((float)(Math.Sin(-wingAngle) * wingLength), (float)(-Math.Cos(-wingAngle) * wingLength));
 		builder.Close();
-
-		using SKPath path = builder.Detach();
-		canvas.DrawPath(path, _dotFillAccent);
-		canvas.DrawPath(path, _blackStroke3);
+		return builder.Detach();
 	}
 
 	private static string CardinalDirection(double heading)
 	{
-		string[] names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 		var index = (int)Math.Round(AngleMath.NormalizeDegrees(heading) / 45.0) % 8;
-		return names[index];
+		return CardinalNames[index];
 	}
 }

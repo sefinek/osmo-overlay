@@ -20,7 +20,7 @@ internal interface IAudioClockSource
 ///     sped up or slowed down, video frames can be held or dropped). At a speed other than 1x the pushed sound is
 ///     already tempo-changed (AudioTempo), so a second of it is `rate` seconds of the play timeline. Without an audio
 ///     track or device, and once the audio has run out, a stopwatch running `rate` times real time. Now is read by the
-///     pacing loop only; the audio feeder reports pushed samples from its own thread.
+///     pacing loop only, AudioPosition by the decode thread too; the audio feeder reports pushed samples from its own thread.
 /// </summary>
 internal sealed class PlaybackClock
 {
@@ -32,6 +32,7 @@ internal sealed class PlaybackClock
 	private double _stopwatchStart;
 	private long _pushedFrames;
 	private volatile bool _audioFinished;
+	private volatile bool _followsAudio;
 
 	public PlaybackClock(IAudioClockSource? audio, int sampleRate, double rate) : this(audio, sampleRate, rate, WallClock())
 	{
@@ -44,28 +45,47 @@ internal sealed class PlaybackClock
 		_sampleRate = sampleRate;
 		_rate = rate;
 		_wallSeconds = wallSeconds;
-		FollowsAudio = audio is not null;
+		_followsAudio = audio is not null;
 	}
 
-	public bool FollowsAudio { get; private set; }
+	public bool FollowsAudio => _followsAudio;
 
 	public double Now
 	{
 		get
 		{
-			if (FollowsAudio)
+			if (_followsAudio)
 			{
-				var queued = _audio!.QueuedSeconds;
-				var played = (Interlocked.Read(ref _pushedFrames) / (double)_sampleRate - queued - _audio.DeviceLatencySeconds) * _rate;
+				var played = PlayedAudioSeconds(out var queued);
 				if (!_audioFinished || queued > 0) return Math.Max(0, played);
 
 				// The sound ran out (the track ends before the video, or failed): carry on from here on the stopwatch.
-				FollowsAudio = false;
+				_followsAudio = false;
 				Rebase(Math.Max(0, played));
 			}
 
 			return _stopwatchBase + (_wallSeconds() - _stopwatchStart) * _rate;
 		}
+	}
+
+	/// <summary>
+	///     Where the sound is, for the decode thread to tell how far behind it runs - null while the clock doesn't
+	///     follow the sound (the stopwatch is rebased by the pacing loop per stretch, so only that loop reads it).
+	///     Unlike Now, never switches the clock over, so it's safe to read from any thread.
+	/// </summary>
+	public double? AudioPosition
+	{
+		get
+		{
+			if (!_followsAudio || _audioFinished) return null;
+			return Math.Max(0, PlayedAudioSeconds(out _));
+		}
+	}
+
+	private double PlayedAudioSeconds(out double queued)
+	{
+		queued = _audio!.QueuedSeconds;
+		return (Interlocked.Read(ref _pushedFrames) / (double)_sampleRate - queued - _audio.DeviceLatencySeconds) * _rate;
 	}
 
 	/// <summary>Sample frames of (tempo-changed) sound pushed to the device.</summary>
@@ -82,7 +102,7 @@ internal sealed class PlaybackClock
 	/// <summary>With the first frame: the device starts playing what's already queued, or the stopwatch starts.</summary>
 	public void Start(double playTime)
 	{
-		if (FollowsAudio) _audio!.Start();
+		if (_followsAudio) _audio!.Start();
 		else Rebase(playTime);
 	}
 
@@ -93,7 +113,7 @@ internal sealed class PlaybackClock
 	/// </summary>
 	public void Rebase(double playTime)
 	{
-		if (FollowsAudio) return;
+		if (_followsAudio) return;
 
 		_stopwatchBase = playTime;
 		_stopwatchStart = _wallSeconds();

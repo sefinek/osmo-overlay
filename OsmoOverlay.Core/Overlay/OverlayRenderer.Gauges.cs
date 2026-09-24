@@ -85,9 +85,6 @@ public sealed partial class OverlayRenderer
 
 	private void DrawSunWidget(SKCanvas canvas, DerivedFrame frame, SunWidgetElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		const float cx = 0;
 		const float cy = 0;
 
@@ -111,15 +108,10 @@ public sealed partial class OverlayRenderer
 		DrawOutlined(canvas, gText, cx, cy + OverlayElementBounds.SunRadius + OverlayElementBounds.LabelBelowRadiusOffset,
 			TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element), SKTextAlign.Center,
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	private void DrawPitchGauge(SKCanvas canvas, PitchGaugeElement element, double pitchDegrees)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		const float cx = 0;
 		const float cy = 0;
 
@@ -140,15 +132,10 @@ public sealed partial class OverlayRenderer
 
 		DrawOutlined(canvas, $"{F(pitchDegrees, "0")}°", cx, cy + 16, TextFont(element, OverlayElementBounds.LabelFontSize),
 			TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	private void DrawGMeter(SKCanvas canvas, DerivedFrame frame, GMeterElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		const float cx = 0;
 		const float cy = 0;
 		const float radius = OverlayElementBounds.GMeterRadius;
@@ -173,8 +160,6 @@ public sealed partial class OverlayRenderer
 		DrawOutlined(canvas, $"{F(magnitude, "0.00")}G", cx, cy + radius + OverlayElementBounds.LabelBelowRadiusOffset,
 			TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element), SKTextAlign.Center,
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	/// <summary>
@@ -203,9 +188,6 @@ public sealed partial class OverlayRenderer
 
 	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		float cx = 0;
 		float cy = 0;
 
@@ -250,8 +232,6 @@ public sealed partial class OverlayRenderer
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", cx, cy + radius - 30, speedUnitFont, textColor, SKTextAlign.Center,
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	/// <summary>
@@ -262,10 +242,6 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private void DrawTripProgressBar(SKCanvas canvas, DerivedFrame frame, TripProgressBarElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-
 		const float halfWidth = OverlayElementBounds.ProgressBarWidth / 2f;
 		const float trackHeight = 14f;
 
@@ -306,7 +282,5 @@ public sealed partial class OverlayRenderer
 			var (remainingValue, remainingUnit) = FormatDistance(remainingMeters, element.Units);
 			DrawOutlined(canvas, $"{remainingValue} {remainingUnit} LEFT", halfWidth, -26, _smallFont, White, SKTextAlign.Right);
 		}
-
-		canvas.Restore();
 	}
 }

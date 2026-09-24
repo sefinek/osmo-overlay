@@ -10,23 +10,12 @@ public sealed partial class OverlayRenderer
 	private const double MetersToFeet = 3.28084;
 	private const double MilesInMeters = 1609.344;
 
-	private void DrawDateTime(SKCanvas canvas, DerivedFrame frame, TimeTextElementBase element)
-	{
-		DrawTimeText(canvas, frame, element, true);
-	}
-
-	private void DrawUtcTime(SKCanvas canvas, DerivedFrame frame, TimeTextElementBase element)
-	{
-		DrawTimeText(canvas, frame, element, false);
-	}
+	// (Locale, DateFormat) pairs already reported as invalid - a bad one would otherwise log once per frame.
+	private readonly HashSet<(string?, string?)> _reportedTimeFormats = [];
 
 	/// <summary>Shared by DateTimeText (local time) and UtcTimeText (raw UTC, no conversion) - both use the same DateFormat/Locale fields.</summary>
 	private void DrawTimeText(SKCanvas canvas, DerivedFrame frame, TimeTextElementBase element, bool toLocal)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-
 		// Falls back to the container's own recording-start tag + time into the recording when this frame has no
 		// real GPS timestamp (see SourceInfo.ContainerCreationTimeUtc) - approximate (camera clock, not
 		// a GPS-synced one), but still far more useful than "--" for a file that never had a fix at
@@ -46,7 +35,8 @@ public sealed partial class OverlayRenderer
 			// A hand-edited/shared preset can carry an invalid Locale or DateFormat string - fail soft
 			// (fall back to the default) instead of throwing out of Render and aborting the whole export,
 			// same "one bad user-editable field" policy as the map widget's placeholder fallback.
-			if (!OverlayTimeFormatting.TryFormat(shown, element.DateFormat, element.Locale, out dateText))
+			if (!OverlayTimeFormatting.TryFormat(shown, element.DateFormat, element.Locale, out dateText) &&
+			    _reportedTimeFormats.Add((element.Locale, element.DateFormat)))
 				AppLogger.Warn($"Time widget: invalid Locale/DateFormat ('{element.Locale}' / '{element.DateFormat}') - using default.");
 
 			if (!toLocal) dateText += "  UTC";
@@ -54,68 +44,39 @@ public sealed partial class OverlayRenderer
 
 		DrawOutlined(canvas, dateText, 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	/// <summary>Time since the recording's own frame 0 (SampleTimeSeconds), not a wall-clock reading - a stopwatch, distinct from DateTimeText/UtcTimeText.</summary>
 	private void DrawElapsedTime(SKCanvas canvas, DerivedFrame frame, ElapsedTimeTextElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-
 		var text = OverlayTimeFormatting.FormatElapsed(frame.Raw.SampleTimeSeconds);
 		DrawOutlined(canvas, text, 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	/// <summary>Static per-recording text (FileSummary.CameraModel) - same value on every frame, so unlike the other widgets nothing here depends on `frame`.</summary>
 	private void DrawCameraModel(SKCanvas canvas, CameraModelTextElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-
 		DrawOutlined(canvas, _cameraModel ?? "--", 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	private void DrawElevation(SKCanvas canvas, DerivedFrame frame, ElevationElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		var meters = frame.Raw.AltitudeMeters - _startAltitude;
 		var (value, unit) = element.Units == UnitSystem.Imperial
 			? (F(meters * MetersToFeet, "0"), "FT")
 			: (F(meters, "0"), "M");
-		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);
-		canvas.Restore();
-	}
+		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);	}
 
 	private void DrawGradient(SKCanvas canvas, DerivedFrame frame, GradientElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-		DrawStat(canvas, element, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");
-		canvas.Restore();
-	}
+		DrawStat(canvas, element, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");	}
 
 	private void DrawDistance(SKCanvas canvas, DerivedFrame frame, DistanceElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
 		var (distanceValue, distanceUnit) = FormatDistance(frame.CumulativeDistanceMeters, element.Units);
-		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);
-		canvas.Restore();
-	}
+		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);	}
 
 	private static (string Value, string Unit) FormatDistance(double meters, UnitSystem units)
 	{
@@ -145,10 +106,6 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private void DrawCameraInfo(SKCanvas canvas, DerivedFrame frame, CameraInfoElement element)
 	{
-		canvas.Save();
-		canvas.Translate(element.X, element.Y);
-		canvas.Scale(_scale, _scale);
-
 		SKFont labelFont = TextFont(element, OverlayElementBounds.LabelFontSize);
 		SKFont smallFont = TextFont(element, OverlayElementBounds.SmallFontSize);
 		SKColor textColor = TextColorOf(element);
@@ -165,8 +122,6 @@ public sealed partial class OverlayRenderer
 		DrawOutlined(canvas, FormatShutter(frame.Raw.ShutterSeconds), 0, 102, smallFont, accentColor,
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 		DrawOutlined(canvas, colorTempText, 0, 146, smallFont, accentColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
-
-		canvas.Restore();
 	}
 
 	/// <summary>Shutter speed as photographers read it (a "1/500" fraction) above 1s, plain seconds below - "1/0.5" would be nonsense.</summary>
