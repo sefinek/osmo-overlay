@@ -7,7 +7,7 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     Preview transport - go to start/end, frame step, play/pause - and every preview keyboard shortcut, NLE
-///     style: Space play/pause, Left/Right one frame, Home/End, I/O mark the start/end of a part to cut out and X/Delete cuts it (MainWindow.Cuts.cs).
+///     style: Space play/pause, Left/Right one frame, Home/End, I/O mark the start/end of a part to cut out and X/Delete cuts it (MainWindow.Cuts.cs), M mutes (MainWindow.Audio.cs).
 /// </summary>
 public partial class MainWindow
 {
@@ -42,6 +42,7 @@ public partial class MainWindow
 			Key.I => () => ApplyCutAction(CutAction.MarkIn),
 			Key.O => () => ApplyCutAction(CutAction.MarkOut),
 			Key.X or Key.Delete => () => ApplyCutAction(CutAction.CutSelection),
+			Key.M => ToggleMute,
 			_ => null
 		};
 		if (action is null) return;

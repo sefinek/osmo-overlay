@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Threading.Channels;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
@@ -22,6 +21,13 @@ public sealed class PreviewPlayer : IDisposable
 	// reaching the screen as a stutter, without buffering so much that a Pause feels laggy or memory
 	// use grows needlessly (each buffered frame is a full preview-resolution BGRA copy).
 	private const int PlaybackPrefetchFrames = 3;
+
+	// Audio decoded ahead of the device - enough to ride out a slow read, short enough that a Pause is silent at once
+	// (AudioOutput.Stop drops it anyway).
+	private const double AudioQueueSeconds = 0.25;
+
+	// With the audio clock, a frame this late is dropped instead of shown - the video catches up with the sound.
+	private const double LateFrameSeconds = 0.1;
 
 	// Composed frames in flight: the playback channel, the one being composed and the one being published.
 	private readonly FrameBufferPool _composedBuffers = new(PlaybackPrefetchFrames + 2);
@@ -57,8 +63,13 @@ public sealed class PreviewPlayer : IDisposable
 	// disposed on the next replacement or Close instead of right away.
 	private OverlayRenderer? _retiredRenderer;
 	private LibavVideoSource? _video;
+	// Both null when the recording has no audio track or there's no playback device - playback is then silent.
+	private LibavAudioSource? _audioSource;
+	private AudioOutput? _audioOutput;
+	private float _audioGain;
 
 	public bool IsPlaying => _playbackCts is not null;
+	public bool HasAudio => _audioOutput is not null;
 	public TimeSpan Duration => _video?.Duration ?? TimeSpan.Zero;
 
 	public void Dispose()
@@ -103,6 +114,8 @@ public sealed class PreviewPlayer : IDisposable
 		LibavVideoSource video = await Task.Run(() => new LibavVideoSource(segments,
 			summary.Video.Fps, previewWidth, previewHeight));
 		AppLogger.Info($"Preview decoder: {video.DecoderDescription}");
+		(_audioSource, _audioOutput) = await Task.Run(() => OpenAudio(segments));
+		_audioOutput?.SetGain(_audioGain);
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout =
 			OverlayDataRequirements.ApplyAvailability(presets.First(p => p.Id == activeId).Elements, _hasGpsFix,
@@ -216,11 +229,45 @@ public sealed class PreviewPlayer : IDisposable
 			_overlayBuffer = null;
 		}
 
-		// Outside _lock: the in-process decoder waits for a decode still running on another thread.
+		// Outside _lock: the decoders wait for a decode still running on another thread.
 		video?.Dispose();
+		_audioOutput?.Dispose();
+		_audioOutput = null;
+		_audioSource?.Dispose();
+		_audioSource = null;
 		_derivedFrames = null;
 		_recordingFrames = null;
 		_createRenderer = null;
+	}
+
+	/// <summary>0-1 on a perceptual (squared) curve, so the slider's middle sounds like half as loud; applies right away, also mid-playback.</summary>
+	public void SetAudioVolume(double volume, bool muted)
+	{
+		_audioGain = muted ? 0 : (float)(Math.Clamp(volume, 0, 1) * Math.Clamp(volume, 0, 1));
+		_audioOutput?.SetGain(_audioGain);
+	}
+
+	/// <summary>The audio track and the playback device, or (null, null) - the preview then plays without sound.</summary>
+	private static (LibavAudioSource?, AudioOutput?) OpenAudio(IReadOnlyList<PlaybackSegment> segments)
+	{
+		LibavAudioSource? source;
+		try
+		{
+			source = LibavAudioSource.TryOpen(segments);
+		}
+		catch (InvalidOperationException ex)
+		{
+			AppLogger.Warn(ex, "Preview audio unavailable - the audio track couldn't be opened");
+			return (null, null);
+		}
+
+		if (source is null) return (null, null);
+
+		AudioOutput? output = AudioOutput.TryOpen(source.SampleRate, source.Channels);
+		if (output is not null) return (source, output);
+
+		source.Dispose();
+		return (null, null);
 	}
 
 	/// <summary>Drops a waiting seek and stops the one decoding - Play and Close take over from any of them.</summary>
@@ -255,7 +302,7 @@ public sealed class PreviewPlayer : IDisposable
 		var cts = new CancellationTokenSource();
 		_playbackCts = cts;
 		List<PlaybackStretch> stretches = PlaybackStretches(_outputTimeline, fromPosition, _video.Duration);
-		_ = RunPlaybackAsync(_video, stretches, cts);
+		_ = RunPlaybackAsync(_video, _audioSource, _audioOutput, stretches, cts);
 	}
 
 	public void Pause()
@@ -484,7 +531,8 @@ public sealed class PreviewPlayer : IDisposable
 	///     from the channel's bounded capacity is what keeps the producer from running away, and
 	///     nothing needs to be discarded to "catch up" from a slow start.
 	/// </summary>
-	private async Task RunPlaybackAsync(LibavVideoSource video, IReadOnlyList<PlaybackStretch> stretches, CancellationTokenSource ownCts)
+	private async Task RunPlaybackAsync(LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput,
+		IReadOnlyList<PlaybackStretch> stretches, CancellationTokenSource ownCts)
 	{
 		CancellationToken ct = ownCts.Token;
 
@@ -508,28 +556,38 @@ public sealed class PreviewPlayer : IDisposable
 				() => ProduceFramesAsync(video, stretches, channel.Writer, producerCts.Token),
 				producerCts.Token);
 
+			PlaybackClock clock = new(audioOutput, audioSource?.SampleRate ?? 1);
+			audioOutput?.Stop();
+			Task feeder = audioSource is not null && audioOutput is not null
+				? Task.Run(() => FeedAudioAsync(audioSource, audioOutput, clock, stretches, producerCts.Token), producerCts.Token)
+				: Task.CompletedTask;
+
 			string? stoppedEarly = null;
 			try
 			{
-				// The clock restarts on the first frame of every stretch - opening a stream and an
-				// accurate -ss seek into the middle of a segment can each take a real chunk of
-				// wall-clock time on their own, and none of that should be charged against the frames
-				// after it (they'd otherwise be shown back to back to catch up).
-				Stopwatch sw = new();
-				TimeSpan clockBase = TimeSpan.Zero;
-
+				var started = false;
 				await foreach (PlaybackFrame playbackFrame in channel.Reader.ReadAllAsync(ct))
 				{
 					ComposedPreviewFrame composed = playbackFrame.Composed;
-					if (playbackFrame.StartsStretch)
+					if (!started)
 					{
-						sw.Restart();
-						clockBase = composed.Position;
+						clock.Start(playbackFrame.PlayTime);
+						started = true;
 					}
-					else
+					else if (playbackFrame.StartsStretch)
 					{
-						TimeSpan delay = composed.Position - clockBase - sw.Elapsed;
-						if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
+						clock.Rebase(playbackFrame.PlayTime);
+					}
+
+					var delay = playbackFrame.PlayTime - clock.Now;
+					if (delay > 0)
+					{
+						await Task.Delay(TimeSpan.FromSeconds(delay), ct);
+					}
+					else if (clock.FollowsAudio && delay < -LateFrameSeconds)
+					{
+						_composedBuffers.Return(composed.Bgra);
+						continue;
 					}
 
 					Publish(composed);
@@ -547,6 +605,17 @@ public sealed class PreviewPlayer : IDisposable
 				catch
 				{
 				}
+
+				try
+				{
+					await feeder;
+				}
+				catch
+				{
+				}
+
+				// After the feeder has stopped, so nothing it pushed last is left queued for the next Play.
+				audioOutput?.Stop();
 			}
 
 			if (stoppedEarly is not null) Message?.Invoke($"Playback stopped: {stoppedEarly}");
@@ -577,12 +646,16 @@ public sealed class PreviewPlayer : IDisposable
 		ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
 	{
 		var halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
+		// Where each stretch starts on the play timeline - the stretches back to back, the way the audio is pushed.
+		double playOffset = 0;
 		try
 		{
 			foreach (PlaybackStretch stretch in stretches)
 			{
 				using LibavVideoSource.PlaybackStream stream = video.OpenPlaybackStream(stretch.Start, ct);
 				var startsStretch = true;
+				var playStart = playOffset;
+				playOffset += (stretch.End - stretch.Start).TotalSeconds;
 				while (!ct.IsCancellationRequested)
 				{
 					VideoFrame? videoFrame = stream.TryReadNextFrame();
@@ -600,7 +673,8 @@ public sealed class PreviewPlayer : IDisposable
 					// Backpressure, not held under _lock - once the channel is full this waits for the
 					// consumer to drain a slot, which can legitimately take a while (that's the pacing
 					// working as intended), and _lock is needed by SetLayout/scrub/etc. in the meantime.
-					await writer.WriteAsync(new PlaybackFrame(composed, startsStretch), ct);
+					var playTime = playStart + (stream.Position - stretch.Start).TotalSeconds;
+					await writer.WriteAsync(new PlaybackFrame(composed, playTime, startsStretch), ct);
 					startsStretch = false;
 				}
 
@@ -647,7 +721,43 @@ public sealed class PreviewPlayer : IDisposable
 
 	private sealed record PlaybackStretch(TimeSpan Start, TimeSpan End);
 
-	private readonly record struct PlaybackFrame(ComposedPreviewFrame Composed, bool StartsStretch);
+	/// <summary>PlayTime: seconds on the play timeline (PlaybackClock) - the stretches back to back, from 0.</summary>
+	private readonly record struct PlaybackFrame(ComposedPreviewFrame Composed, double PlayTime, bool StartsStretch);
+
+	/// <summary>
+	///     Pushes the stretches' audio back to back, AudioQueueSeconds ahead of the device - the same joins the render
+	///     makes, so the cut parts are skipped in the sound too. Tells the clock how much went out, and when it's done.
+	/// </summary>
+	private static async Task FeedAudioAsync(LibavAudioSource source, AudioOutput output, PlaybackClock clock,
+		IReadOnlyList<PlaybackStretch> stretches, CancellationToken ct)
+	{
+		try
+		{
+			foreach (PlaybackStretch stretch in stretches)
+			{
+				source.Seek(stretch.Start.TotalSeconds);
+				while (true)
+				{
+					while (output.QueuedSeconds > AudioQueueSeconds) await Task.Delay(10, ct);
+					if (!PushNext(stretch.End.TotalSeconds)) break;
+				}
+			}
+		}
+		finally
+		{
+			clock.AudioFinished();
+		}
+
+		bool PushNext(double end)
+		{
+			ReadOnlySpan<float> samples = source.Read(end);
+			if (samples.IsEmpty) return false;
+
+			output.Push(samples);
+			clock.AddPushed(samples.Length / source.Channels);
+			return true;
+		}
+	}
 
 	/// <summary>Decodes outside _lock (a seek can take a while), then composes under it.</summary>
 	private ComposedPreviewFrame? DecodeAndCompose(LibavVideoSource video, TimeSpan position, SeekAccuracy accuracy, CancellationToken ct)

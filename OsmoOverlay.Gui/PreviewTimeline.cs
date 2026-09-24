@@ -17,15 +17,17 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 {
-	private const double Inset = 8;
+	private const double ThumbRadius = 7;
+	// The thumb stays whole at 0 and at Maximum.
+	private const double Inset = ThumbRadius;
 	private const double TrackHeight = 6;
 	private const double CutHeight = 16;
 	private const double SelectionHeight = 24;
-	private const double ThumbRadius = 7;
 	private const double StripeSpacing = 7;
 	private const double StripePixelsPerSecond = 8;
 
 	private static readonly IBrush TrackBrush = Palette.StrokeStrong;
+	private static readonly IBrush PlayedBrush = Palette.Accent;
 	private static readonly IBrush GpsLossBrush = Palette.Warning;
 	private static readonly IBrush CutFill = Palette.Tint(Palette.Danger, 0.22);
 	private static readonly IPen CutBorder = new Pen(Palette.Tint(Palette.Danger, 0.85));
@@ -107,7 +109,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		var trackWidth = Math.Max(0, Bounds.Width - 2 * Inset);
 		using DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
 
-		context.DrawRectangle(TrackBrush, null, new Rect(Inset, middle - TrackHeight / 2, trackWidth, TrackHeight), 3, 3);
+		context.DrawRectangle(TrackBrush, null, new Rect(Inset, middle - TrackHeight / 2, trackWidth, TrackHeight), TrackHeight / 2, TrackHeight / 2);
+		// The part already played, up to the thumb - under the cuts and the selection, which stay readable on top.
+		context.DrawRectangle(PlayedBrush, null, new Rect(Inset, middle - TrackHeight / 2, X(Value) - Inset, TrackHeight), TrackHeight / 2, TrackHeight / 2);
 
 		foreach (TimeRange loss in _gpsLoss)
 		{

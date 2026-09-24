@@ -582,38 +582,51 @@
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
 				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
-					<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
-						<Button Name="ToggleGridButton" Classes="previewToolButton active"
-						        ToolTip.Tip="Grid guides">
-							<local:IconView Data="{StaticResource IconGrid}" Width="14" Height="14" />
-							<Button.Flyout>
-								<Flyout Placement="Bottom">
-									<StackPanel Spacing="4" Width="150">
-										<Button Name="GridModeOffButton" Classes="toolbar" Content="Off"
-										        Click="OnGridModeClick" />
-										<Button Name="GridModeThirdsButton" Classes="toolbar" Content="Rule of thirds"
-										        Click="OnGridModeClick" />
-										<Button Name="GridModeMarginButton" Classes="toolbar" Content="Safe margin"
-										        Click="OnGridModeClick" />
-										<Button Name="GridModeBothButton" Classes="toolbar active" Content="Thirds + margin"
-										        Click="OnGridModeClick" />
-									</StackPanel>
-								</Flyout>
-							</Button.Flyout>
-						</Button>
-						<Button Name="ToggleSnapButton" Classes="previewToolButton active" Click="OnToggleSnapClick"
-						        ToolTip.Tip="Snap widgets to grid">
-							<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
-						</Button>
-						<Button Name="TogglePreciseTimeButton" Classes="previewToolButton" Click="OnTogglePreciseTimeClick"
-						        ToolTip.Tip="Show the time with milliseconds">
-							<local:IconView Data="{StaticResource IconStopwatch}" Width="14" Height="14" />
-						</Button>
-						<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
-						        ToolTip.Tip="Cut parts out of the render">
-							<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
-						</Button>
-					</StackPanel>
+					<Grid Grid.Row="0">
+						<ComboBox Name="PreviewQualityCombo" HorizontalAlignment="Left" VerticalAlignment="Center" MinWidth="150"
+						          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewQualityChanged"
+						          ToolTip.Tip="Preview quality - how sharp the live preview is. Lower decodes faster; the exported video always renders at the source's full resolution." />
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+							<Button Name="ToggleGridButton" Classes="previewToolButton active"
+							        ToolTip.Tip="Grid guides">
+								<local:IconView Data="{StaticResource IconGrid}" Width="14" Height="14" />
+								<Button.Flyout>
+									<Flyout Placement="Bottom">
+										<StackPanel Spacing="4" Width="150">
+											<Button Name="GridModeOffButton" Classes="toolbar" Content="Off"
+											        Click="OnGridModeClick" />
+											<Button Name="GridModeThirdsButton" Classes="toolbar" Content="Rule of thirds"
+											        Click="OnGridModeClick" />
+											<Button Name="GridModeMarginButton" Classes="toolbar" Content="Safe margin"
+											        Click="OnGridModeClick" />
+											<Button Name="GridModeBothButton" Classes="toolbar active" Content="Thirds + margin"
+											        Click="OnGridModeClick" />
+										</StackPanel>
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+							<Button Name="ToggleSnapButton" Classes="previewToolButton active" Click="OnToggleSnapClick"
+							        ToolTip.Tip="Snap widgets to grid">
+								<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
+							</Button>
+							<Button Name="TogglePreciseTimeButton" Classes="previewToolButton" Click="OnTogglePreciseTimeClick"
+							        ToolTip.Tip="Show the time with milliseconds">
+								<local:IconView Data="{StaticResource IconStopwatch}" Width="14" Height="14" />
+							</Button>
+							<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
+							        ToolTip.Tip="Cut parts out of the render">
+								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
+							</Button>
+						</StackPanel>
+						<StackPanel Name="AudioPanel" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" IsEnabled="False"
+						            ToolTip.ShowOnDisabled="True">
+							<Button Name="MuteButton" Classes="previewToolButton" Click="OnMuteClick" ToolTip.Tip="Unmute (M)">
+								<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" Width="14" Height="14" />
+							</Button>
+							<Slider Name="VolumeSlider" Minimum="0" Maximum="1" Width="90" VerticalAlignment="Center"
+							        ValueChanged="OnVolumeChanged" ToolTip.Tip="Preview volume" />
+						</StackPanel>
+					</Grid>
 					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
 						<Grid>
 							<Image Name="PreviewImage" Stretch="Uniform" />
@@ -664,7 +677,7 @@
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
 						<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
 							<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="Go to start (Home)">
 								<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />

@@ -92,6 +92,8 @@ public partial class MainWindow : Window
 		_gridMode = Enum.TryParse(settings.PreviewGridMode, out PreviewGridMode loadedGridMode) ? loadedGridMode : PreviewGridMode.Both;
 		_snapToGuides = settings.PreviewSnapToGrid;
 		_preciseTime = settings.PreviewPreciseTime;
+		_audioMuted = settings.PreviewAudioMuted;
+		_audioVolume = settings.PreviewAudioVolume;
 		_showWatermark = settings.ShowWatermark;
 		_smoothGpsMotion = settings.SmoothGpsMotion;
 
@@ -126,6 +128,8 @@ public partial class MainWindow : Window
 
 		WireCuts();
 		WirePreviewTimeline();
+		WireAudio();
+		WirePreviewQuality();
 		WirePreviewShortcuts();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
@@ -256,7 +260,7 @@ public partial class MainWindow : Window
 	private async void OnSettingsClick(object? sender, RoutedEventArgs e)
 	{
 		OverlaySettings currentSettings = OverlaySettingsStore.Load();
-		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion, _previewMaxWidth,
+		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion,
 			currentSettings.MapTileUrlTemplate, currentSettings.MapAttribution, currentSettings.MapShowAttribution,
 			currentSettings.MapApiKey, RouteIntroSettings.From(currentSettings));
 		settings.LoadExportSettings(currentSettings);
@@ -287,19 +291,10 @@ public partial class MainWindow : Window
 			needsPreviewReopen = true;
 		}
 
-		// Also can't be swapped live - it's the resolution VideoFrameSource decodes ffmpeg output at
-		// (MainWindow.OpenPreviewAsync), baked into the running preview's decoder process and bitmap.
-		if (settings.PreviewMaxWidth != _previewMaxWidth)
-		{
-			_previewMaxWidth = settings.PreviewMaxWidth;
-			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewMaxWidth = _previewMaxWidth });
-			needsPreviewReopen = true;
-		}
-
-		// Same "baked in at OpenAsync, no live-swap path" category as SmoothGpsMotion/PreviewMaxWidth
+		// Same "baked in at OpenAsync, no live-swap path" category as SmoothGpsMotion
 		// above - the map tile source and route-intro card are both fetched/laid out when the preview
 		// (or a render) starts, not per frame. Reloaded fresh (not the pre-dialog currentSettings)
-		// since the ShowWatermark/SmoothGpsMotion/PreviewMaxWidth blocks above may have already saved
+		// since the ShowWatermark/SmoothGpsMotion blocks above may have already saved
 		// their own changes to disk; OverlaySettings' structural equality then does this whole group's
 		// change-detection in one comparison instead of one `if` per field.
 		OverlaySettings beforeMapAndRouteIntroChanges = OverlaySettingsStore.Load();
@@ -326,8 +321,7 @@ public partial class MainWindow : Window
 			needsPreviewReopen = true;
 		}
 
-		if (needsPreviewReopen && _summary is { HasTelemetry: true } summary && _phase == UiPhase.SummaryReady)
-			await OpenPreviewAsync(summary);
+		if (needsPreviewReopen) await ReopenPreviewAsync();
 
 		if (_summary is not null && _phase == UiPhase.SummaryReady)
 			PopulateOutputInfo(_summary, _detectedEncoder);

@@ -51,6 +51,9 @@ public sealed record OverlaySettings(
 	bool PreviewSnapToGrid = true,
 	// The preview's time readout with milliseconds instead of whole seconds (the toolbar's stopwatch toggle).
 	bool PreviewPreciseTime = false,
+	// Preview sound: muted until the user turns it up, the volume 0-1 remembered either way.
+	bool PreviewAudioMuted = true,
+	double PreviewAudioVolume = 0.8,
 	// Mirrors the GUI's own PreviewGridMode enum (Off/Thirds/Margin/Both) as a string, since this Core
 	// project has no dependency on the Gui project to reference that enum directly.
 	string PreviewGridMode = "Both",

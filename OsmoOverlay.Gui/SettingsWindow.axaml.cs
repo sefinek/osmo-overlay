@@ -14,18 +14,6 @@ namespace OsmoOverlay.Gui;
 
 public partial class SettingsWindow : Window
 {
-	// Width-based (not "480p"/"720p" height labels) since PreviewMaxWidth caps the preview by width
-	// (MainWindow.OpenPreviewAsync) - labelling it any other way would need a height that depends on
-	// the source's own aspect ratio, which this dialog doesn't know.
-	private static readonly List<PreviewQualityOption> PreviewQualityOptions =
-	[
-		new("Low (640px wide - fastest)", 640),
-		new("Medium (960px wide)", 960),
-		new("High (1280px wide - default)", 1280),
-		new("Very high (1920px wide)", 1920),
-		new("Full resolution (native - slowest)", int.MaxValue)
-	];
-
 	// Curated tile sources with their required attribution text, filled in when picked (see
 	// OnMapProviderChanged). "{api_key}" is this app's own placeholder token (see
 	// OverlayRenderer.ResolveUrlTemplate), baked into whichever position a provider's URL expects it
@@ -63,7 +51,6 @@ public partial class SettingsWindow : Window
 	public SettingsWindow()
 	{
 		InitializeComponent();
-		PreviewQualityCombo.ItemsSource = PreviewQualityOptions;
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
 		MapProviderCombo.ItemsSource = TileProviderOptions;
@@ -80,14 +67,12 @@ public partial class SettingsWindow : Window
 			: "Config last updated: never";
 	}
 
-	public SettingsWindow(bool showWatermark, bool smoothGpsMotion, int previewMaxWidth,
+	public SettingsWindow(bool showWatermark, bool smoothGpsMotion,
 		string? mapTileUrlTemplate, string? mapAttribution, bool mapShowAttribution, string? mapApiKey,
 		RouteIntroSettings routeIntro) : this()
 	{
 		ShowWatermarkCheck.IsChecked = showWatermark;
 		SmoothGpsMotionCheck.IsChecked = smoothGpsMotion;
-		PreviewQualityCombo.SelectedItem =
-			PreviewQualityOptions.FirstOrDefault(o => o.MaxWidth == previewMaxWidth) ?? PreviewQualityOptions[2];
 
 		var effectiveUrl = mapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
 		TileProviderOption provider = TileProviderOptions.FirstOrDefault(p => !p.IsCustom && p.UrlTemplate == effectiveUrl)
@@ -180,7 +165,6 @@ public partial class SettingsWindow : Window
 
 	public bool ShowWatermark => ShowWatermarkCheck.IsChecked == true;
 	public bool SmoothGpsMotion => SmoothGpsMotionCheck.IsChecked == true;
-	public int PreviewMaxWidth => (PreviewQualityCombo.SelectedItem as PreviewQualityOption ?? PreviewQualityOptions[2]).MaxWidth;
 
 	public string? MapTileUrlTemplate =>
 		MapProviderCombo.SelectedItem is TileProviderOption { IsCustom: true }
@@ -208,7 +192,7 @@ public partial class SettingsWindow : Window
 	///     - switching category just swaps which one is visible instead of reparenting content.
 	///     CategoryList's SelectedIndex="0" in XAML fires this event during InitializeComponent, before
 	///     the panel fields further down the visual tree have been assigned yet - harmless to skip then,
-	///     since GeneralPanel is already the one visible by default in XAML (every other panel starts
+	///     since RenderingPanel is already the one visible by default in XAML (every other panel starts
 	///     with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
 	/// </summary>
 	// Set once the About tab has triggered its own automatic check, so switching back to it later
@@ -218,16 +202,15 @@ public partial class SettingsWindow : Window
 
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (GeneralPanel is null || RenderingPanel is null || MapPanel is null || RouteIntroPanel is null || AboutPanel is null)
+		if (RenderingPanel is null || MapPanel is null || RouteIntroPanel is null || AboutPanel is null)
 			return;
 
-		GeneralPanel.IsVisible = CategoryList.SelectedIndex == 0;
-		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 1;
-		MapPanel.IsVisible = CategoryList.SelectedIndex == 2;
-		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 3;
-		AboutPanel.IsVisible = CategoryList.SelectedIndex == 4;
+		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 0;
+		MapPanel.IsVisible = CategoryList.SelectedIndex == 1;
+		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
+		AboutPanel.IsVisible = CategoryList.SelectedIndex == 3;
 
-		if (CategoryList.SelectedIndex == 4 && !_dependencyCheckStarted)
+		if (CategoryList.SelectedIndex == 3 && !_dependencyCheckStarted)
 		{
 			_dependencyCheckStarted = true;
 			_ = RunDependencyCheckAsync();
@@ -347,13 +330,6 @@ public partial class SettingsWindow : Window
 		RouteIntroOptionsPanel.IsEnabled = ShowRouteIntroCheck.IsChecked == true;
 	}
 
-	private sealed record PreviewQualityOption(string Display, int MaxWidth)
-	{
-		public override string ToString()
-		{
-			return Display;
-		}
-	}
 
 	private sealed record TileProviderOption(string Display, string UrlTemplate, string Attribution, bool IsCustom = false, bool IsCarto = false)
 	{

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
@@ -39,6 +40,7 @@ public partial class MainWindow
 			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
 			RefreshCutViews();
 			PreviewTimeline.IsEnabled = true;
+			UpdateAudioPanel();
 
 			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
 			// flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
@@ -60,6 +62,7 @@ public partial class MainWindow
 		TransportPanel.IsEnabled = false;
 		CutsEditor.Attach(0, 0);
 		PreviewTimeline.IsEnabled = false;
+		UpdateAudioPanel();
 
 		_previewBitmap = null;
 		PreviewImage.Source = null;
@@ -93,6 +96,57 @@ public partial class MainWindow
 	{
 		ShowPlayingState(false);
 		UpdatePreviewTimeText();
+	}
+
+	// Width-based (not "720p" height labels): _previewMaxWidth caps the preview by width (OpenPreviewAsync), and a
+	// height would depend on the recording's aspect ratio.
+	private static readonly List<PreviewQualityOption> PreviewQualityOptions =
+	[
+		new("Low · 640 px", 640),
+		new("Medium · 960 px", 960),
+		new("High · 1280 px", 1280),
+		new("Very high · 1920 px", 1920),
+		new("Full resolution", int.MaxValue)
+	];
+
+	private bool _suppressPreviewQualityEvent;
+
+	private void WirePreviewQuality()
+	{
+		_suppressPreviewQualityEvent = true;
+		PreviewQualityCombo.ItemsSource = PreviewQualityOptions;
+		PreviewQualityCombo.SelectedItem = PreviewQualityOptions.FirstOrDefault(o => o.MaxWidth == _previewMaxWidth) ?? PreviewQualityOptions[2];
+		_suppressPreviewQualityEvent = false;
+	}
+
+	/// <summary>The decoder and the preview bitmap are sized at open, so a new quality reopens the preview - where it was.</summary>
+	private async void OnPreviewQualityChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressPreviewQualityEvent || PreviewQualityCombo.SelectedItem is not PreviewQualityOption option ||
+		    option.MaxWidth == _previewMaxWidth)
+			return;
+
+		_previewMaxWidth = option.MaxWidth;
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewMaxWidth = _previewMaxWidth });
+		await ReopenPreviewAsync();
+	}
+
+	/// <summary>Reopens the preview for a setting baked in at open (quality, GPS smoothing, map/route intro), back at the same moment of the recording.</summary>
+	private async Task ReopenPreviewAsync()
+	{
+		if (_summary is not { HasTelemetry: true } summary || _phase != UiPhase.SummaryReady) return;
+
+		var position = PreviewTimeline.Value;
+		await OpenPreviewAsync(summary);
+		if (PreviewTimeline.IsEnabled && position > 0) PreviewTimeline.Value = position;
+	}
+
+	private sealed record PreviewQualityOption(string Display, int MaxWidth)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
 	}
 
 	/// <summary>Toolbar toggle above the preview: the time readout in whole seconds or with milliseconds (the same format the cut editor uses).</summary>

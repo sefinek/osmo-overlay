@@ -54,7 +54,6 @@
 		<Grid ColumnDefinitions="180,*">
 			<Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" Padding="10">
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
-					<ListBoxItem Content="General" />
 					<ListBoxItem Content="Rendering" />
 					<ListBoxItem Content="Map" />
 					<ListBoxItem Content="Route intro" />
@@ -63,18 +62,7 @@
 			</Border>
 
 			<Grid Grid.Column="1">
-				<ScrollViewer Name="GeneralPanel" VerticalScrollBarVisibility="Auto">
-					<StackPanel Margin="24,20" Spacing="20">
-						<StackPanel Spacing="6">
-							<TextBlock Text="Preview quality" Classes="infoLabel" />
-							<ComboBox Name="PreviewQualityCombo" HorizontalAlignment="Stretch" />
-							<TextBlock Classes="hint"
-							           Text="How sharp the live preview looks while scrubbing/playing - lower is faster (less to decode per frame), higher is sharper but slower. Never affects the exported video, which always renders at the source's full resolution regardless of this setting. Takes effect the next time a file/preview is opened." />
-						</StackPanel>
-					</StackPanel>
-				</ScrollViewer>
-
-				<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+				<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
 					<StackPanel Margin="24,20" Spacing="20">
 						<StackPanel Spacing="6">
 							<TextBlock Text="Watermark" Classes="infoLabel" />

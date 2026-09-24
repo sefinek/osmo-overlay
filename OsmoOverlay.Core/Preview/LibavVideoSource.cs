@@ -7,7 +7,7 @@ namespace OsmoOverlay.Core.Preview;
 ///     Each segment's file is opened once and kept open, so a seek is a demuxer seek plus decoding from the keyframe -
 ///     no process spawn and no re-reading of the file's index, which made the former ffmpeg process per seek take
 ///     1.3-1.7 s on a 4K Osmo file.
-///     Decodes on the GPU where there is a decoder for it (DecoderSession.Open), else multi-threaded in software.
+///     Decodes on the GPU where there is a decoder for it (LibavStreamDecoder.Open), else multi-threaded in software.
 ///     The decoder remembers where it is: the next frame (stepping, playback) just decodes on, a frame shortly
 ///     ahead decodes forward without seeking, and stepping backwards one frame at a time is served from the frames
 ///     leading up to it, decoded in the same pass (BackStepFrames). One lock serializes all decoding - the
@@ -311,192 +311,61 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		}
 	}
 
-	/// <summary>One open file: demuxer, decoder and the conversion to BGRA at the preview size.</summary>
+	/// <summary>One open file's video: the shared decoder plus the conversion to BGRA at the preview size.</summary>
 	private sealed class DecoderSession : IDisposable
 	{
-		private readonly AVFormatContext* _format;
-		private readonly AVCodecContext* _codec;
-		private readonly AVPacket* _packet;
+		private readonly LibavStreamDecoder _decoder;
+		private readonly double _fps;
 		private readonly AVFrame* _transfer;
 		private readonly AVFrame* _scaled;
-		private readonly int _stream;
-		private readonly double _timeBase;
-		private readonly long _startPts;
-		private readonly double _fps;
-		// Two frames taking turns, so the last decoded one survives a receive that hits the end of the file.
-		private AVFrame* _frame;
-		private AVFrame* _spare;
 		private SwsContext* _sws;
-		private bool _draining;
 
-		private DecoderSession(AVFormatContext* format, AVCodecContext* codec, int stream, int segmentIndex, double fps, string? hardware)
+		private DecoderSession(LibavStreamDecoder decoder, int segmentIndex, double fps)
 		{
-			_format = format;
-			_codec = codec;
-			_stream = stream;
+			_decoder = decoder;
 			_fps = fps;
 			SegmentIndex = segmentIndex;
-			Hardware = hardware;
-
-			AVStream* videoStream = format->streams[stream];
-			_timeBase = ffmpeg.av_q2d(videoStream->time_base);
-			_startPts = videoStream->start_time == ffmpeg.AV_NOPTS_VALUE ? 0 : videoStream->start_time;
-
-			_packet = ffmpeg.av_packet_alloc();
-			_frame = ffmpeg.av_frame_alloc();
-			_spare = ffmpeg.av_frame_alloc();
 			_transfer = ffmpeg.av_frame_alloc();
 			_scaled = ffmpeg.av_frame_alloc();
 		}
 
 		public int SegmentIndex { get; }
-		public string? Hardware { get; }
-		public bool HasFrame { get; private set; }
+		public string? Hardware => _decoder.Hardware;
+		public bool HasFrame => _decoder.HasFrame;
 
 		public static DecoderSession Open(string path, int segmentIndex, double fps)
 		{
-			AVFormatContext* format = null;
-			AVCodecContext* codec = null;
-			try
-			{
-				Check(ffmpeg.avformat_open_input(&format, path, null, null), $"open {path}");
-
-				AVCodec* decoder = null;
-				var stream = ffmpeg.av_find_best_stream(format, AVMediaType.AVMEDIA_TYPE_VIDEO, -1, -1, &decoder, 0);
-				Check(stream, $"find the video stream of {path}");
-				// The camera's audio, djmd/dbgi telemetry and timecode tracks are never needed here - discarded
-				// streams aren't handed back by av_read_frame at all.
-				for (var i = 0; i < format->nb_streams; i++)
-					if (i != stream)
-						format->streams[i]->discard = AVDiscard.AVDISCARD_ALL;
-
-				codec = ffmpeg.avcodec_alloc_context3(decoder);
-				Check(ffmpeg.avcodec_parameters_to_context(codec, format->streams[stream]->codecpar), "set up the decoder");
-				codec->pkt_timebase = format->streams[stream]->time_base;
-
-				var hardware = AttachHardwareDevice(codec, decoder);
-				if (hardware is null)
-				{
-					codec->thread_count = 0;
-					codec->thread_type = ffmpeg.FF_THREAD_FRAME | ffmpeg.FF_THREAD_SLICE;
-				}
-
-				Check(ffmpeg.avcodec_open2(codec, decoder, null), "open the decoder");
-				return new DecoderSession(format, codec, stream, segmentIndex, fps, hardware);
-			}
-			catch
-			{
-				if (codec is not null) ffmpeg.avcodec_free_context(&codec);
-				if (format is not null) ffmpeg.avformat_close_input(&format);
-				throw;
-			}
-		}
-
-		/// <summary>
-		///     The first hardware decoder this platform has that also supports the codec. With hw_device_ctx set,
-		///     libavcodec's default get_format picks the matching hardware format itself.
-		/// </summary>
-		private static string? AttachHardwareDevice(AVCodecContext* codec, AVCodec* decoder)
-		{
-			AVHWDeviceType[] candidates = OperatingSystem.IsWindows()
-				? [AVHWDeviceType.AV_HWDEVICE_TYPE_D3D11VA, AVHWDeviceType.AV_HWDEVICE_TYPE_CUDA, AVHWDeviceType.AV_HWDEVICE_TYPE_DXVA2]
-				: OperatingSystem.IsMacOS()
-					? [AVHWDeviceType.AV_HWDEVICE_TYPE_VIDEOTOOLBOX]
-					: [AVHWDeviceType.AV_HWDEVICE_TYPE_VAAPI, AVHWDeviceType.AV_HWDEVICE_TYPE_CUDA];
-
-			foreach (AVHWDeviceType type in candidates)
-			{
-				if (!SupportsDevice(decoder, type)) continue;
-
-				AVBufferRef* device = null;
-				if (ffmpeg.av_hwdevice_ctx_create(&device, type, null, null, 0) < 0) continue;
-
-				codec->hw_device_ctx = ffmpeg.av_buffer_ref(device);
-				ffmpeg.av_buffer_unref(&device);
-				return ffmpeg.av_hwdevice_get_type_name(type);
-			}
-
-			return null;
-		}
-
-		private static bool SupportsDevice(AVCodec* decoder, AVHWDeviceType type)
-		{
-			for (var i = 0;; i++)
-			{
-				AVCodecHWConfig* config = ffmpeg.avcodec_get_hw_config(decoder, i);
-				if (config is null) return false;
-				if (config->device_type == type && (config->methods & (int)AvCodecHwConfigMethod.AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) != 0)
-					return true;
-			}
+			LibavStreamDecoder decoder = LibavStreamDecoder.Open(path, AVMediaType.AVMEDIA_TYPE_VIDEO, true)
+			                             ?? throw new InvalidOperationException($"{path} has no video stream.");
+			return new DecoderSession(decoder, segmentIndex, fps);
 		}
 
 		/// <summary>To the keyframe at or before the frame; the frames up to it still have to be decoded.</summary>
 		public void Seek(long localFrame)
 		{
-			var timestamp = _startPts + (long)Math.Round(localFrame / _fps / _timeBase);
-			Check(ffmpeg.av_seek_frame(_format, _stream, timestamp, ffmpeg.AVSEEK_FLAG_BACKWARD), "seek");
-			ffmpeg.avcodec_flush_buffers(_codec);
-			_draining = false;
-			HasFrame = false;
+			_decoder.Seek(localFrame / _fps);
 		}
 
-		/// <summary>Decodes the next frame; false at the end of the file (the previous frame stays available).</summary>
 		public bool Receive()
 		{
-			while (true)
-			{
-				var result = ffmpeg.avcodec_receive_frame(_codec, _spare);
-				if (result == 0)
-				{
-					AVFrame* decoded = _spare;
-					_spare = _frame;
-					_frame = decoded;
-					HasFrame = true;
-					return true;
-				}
-
-				if (result == ffmpeg.AVERROR_EOF || _draining) return false;
-				if (result != ffmpeg.AVERROR(ffmpeg.EAGAIN)) Check(result, "decode");
-
-				result = ffmpeg.av_read_frame(_format, _packet);
-				if (result == ffmpeg.AVERROR_EOF)
-				{
-					// Draining hands out the frames the decoder still holds, then the end of the file.
-					ffmpeg.avcodec_send_packet(_codec, null);
-					_draining = true;
-					continue;
-				}
-
-				Check(result, "read");
-				try
-				{
-					result = ffmpeg.avcodec_send_packet(_codec, _packet);
-					// A damaged packet costs its own frame, not the whole preview.
-					if (result < 0 && result != ffmpeg.AVERROR(ffmpeg.EAGAIN) && result != ffmpeg.AVERROR_INVALIDDATA) Check(result, "decode");
-				}
-				finally
-				{
-					ffmpeg.av_packet_unref(_packet);
-				}
-			}
+			return _decoder.Receive();
 		}
 
 		/// <summary>The current frame's index within this file.</summary>
 		public long FrameIndex()
 		{
-			var pts = _frame->best_effort_timestamp != ffmpeg.AV_NOPTS_VALUE ? _frame->best_effort_timestamp : _frame->pts;
-			return (long)Math.Round((pts - _startPts) * _timeBase * _fps);
+			return (long)Math.Round(_decoder.FrameSeconds() * _fps);
 		}
 
 		/// <summary>The current frame as BGRA at the given size, converted with the frame's own color matrix and range.</summary>
 		public void ConvertInto(byte[] destination, int width, int height)
 		{
-			AVFrame* source = _frame;
+			AVFrame* source = _decoder.Frame;
 			if (source->hw_frames_ctx is not null)
 			{
 				ffmpeg.av_frame_unref(_transfer);
-				Check(ffmpeg.av_hwframe_transfer_data(_transfer, source, 0), "copy the frame from the GPU");
-				Check(ffmpeg.av_frame_copy_props(_transfer, source), "copy the frame's properties");
+				LibavStreamDecoder.Check(ffmpeg.av_hwframe_transfer_data(_transfer, source, 0), "copy the frame from the GPU");
+				LibavStreamDecoder.Check(ffmpeg.av_frame_copy_props(_transfer, source), "copy the frame's properties");
 				source = _transfer;
 			}
 
@@ -513,11 +382,11 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				_scaled->width = width;
 				_scaled->height = height;
 				_scaled->format = (int)AVPixelFormat.AV_PIX_FMT_BGRA;
-				Check(ffmpeg.av_frame_get_buffer(_scaled, 0), "allocate the preview frame");
+				LibavStreamDecoder.Check(ffmpeg.av_frame_get_buffer(_scaled, 0), "allocate the preview frame");
 			}
 
 			_scaled->color_range = AVColorRange.AVCOL_RANGE_JPEG;
-			Check(ffmpeg.sws_scale_frame(_sws, _scaled, source), "convert the frame");
+			LibavStreamDecoder.Check(ffmpeg.sws_scale_frame(_sws, _scaled, source), "convert the frame");
 
 			var rowBytes = width * 4;
 			var stride = _scaled->linesize[0];
@@ -533,33 +402,13 @@ public sealed unsafe class LibavVideoSource : IDisposable
 
 		public void Dispose()
 		{
-			AVFrame* frame = _frame;
-			AVFrame* spare = _spare;
 			AVFrame* transfer = _transfer;
 			AVFrame* scaled = _scaled;
-			AVPacket* packet = _packet;
-			AVCodecContext* codec = _codec;
-			AVFormatContext* format = _format;
 			SwsContext* sws = _sws;
-
-			ffmpeg.av_frame_free(&frame);
-			ffmpeg.av_frame_free(&spare);
 			ffmpeg.av_frame_free(&transfer);
 			ffmpeg.av_frame_free(&scaled);
-			ffmpeg.av_packet_free(&packet);
 			ffmpeg.sws_free_context(&sws);
-			ffmpeg.avcodec_free_context(&codec);
-			ffmpeg.avformat_close_input(&format);
-		}
-
-		private static void Check(int result, string action)
-		{
-			if (result >= 0) return;
-
-			const int size = 256;
-			var message = stackalloc byte[size];
-			ffmpeg.av_strerror(result, message, size);
-			throw new InvalidOperationException($"FFmpeg could not {action}: {new string((sbyte*)message)}");
+			_decoder.Dispose();
 		}
 	}
 }
