@@ -410,7 +410,12 @@ public static class FfmpegPipeline
 	///     of the main video ("[0:v]" or a concat of two inputs), the -map for audio (null for none), and
 	///     the segment the output starts in plus how many frames into it (for creation_time/timecode).
 	/// </summary>
-	private sealed record SourceInputs(int InputCount, string MainVideo, string? AudioMap, SourceInfo StartSource, long LocalStartFrame = 0,
+	private sealed record SourceInputs(
+		int InputCount,
+		string MainVideo,
+		string? AudioMap,
+		SourceInfo StartSource,
+		long LocalStartFrame = 0,
 		bool EncodeAudio = false);
 }
 

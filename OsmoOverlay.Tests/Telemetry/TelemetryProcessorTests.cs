@@ -38,7 +38,7 @@ public sealed class TelemetryProcessorTests
 	[TestMethod]
 	public void Speed_PrefersGpsMeasuredSpeed_OverPosition()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(0, 0, 10, 3, gpsSpeedMs: 12.5));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(0, 0, 10, 3, 12.5));
 
 		Assert.AreEqual(45, derived[^1].SpeedKmh, 1e-9);
 	}

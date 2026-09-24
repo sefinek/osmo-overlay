@@ -270,7 +270,7 @@ public partial class ToolsWindow : Window
 			}
 
 			await ConfirmDialog.ShowAsync(this, "Converted",
-				$"Saved and verified - decodes to exactly the same samples as the original:\n" +
+				"Saved and verified - decodes to exactly the same samples as the original:\n" +
 				string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}")) + "\n\n" +
 				"It has the same length as the video's own audio track and starts with it, so placing it at the " +
 				"start of the matching MP4 on the timeline lines it up.",

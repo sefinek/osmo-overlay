@@ -45,14 +45,19 @@ public sealed class TimelineThumbnails : IDisposable
 	/// <summary>BGRA, Width x Height - null until generated.</summary>
 	public byte[]? TryGet(int slot)
 	{
-		lock (_lock) return _thumbnails.GetValueOrDefault(slot);
+		lock (_lock)
+		{
+			return _thumbnails.GetValueOrDefault(slot);
+		}
 	}
 
 	/// <summary>Replaces what's waiting to be generated with these slots, in this order (the ones already done are skipped).</summary>
 	public void Request(IEnumerable<int> slots)
 	{
 		lock (_lock)
+		{
 			_wanted = new Queue<int>(slots.Where(s => s >= 0 && s < Count && !_thumbnails.ContainsKey(s)).Distinct());
+		}
 
 		if (_wake.CurrentCount == 0) _wake.Release();
 	}
@@ -72,7 +77,11 @@ public sealed class TimelineThumbnails : IDisposable
 
 					var copy = frame.Bgra.ToArray();
 					_source.Recycle(frame);
-					lock (_lock) _thumbnails[slot] = copy;
+					lock (_lock)
+					{
+						_thumbnails[slot] = copy;
+					}
+
 					Updated?.Invoke();
 				}
 			}

@@ -211,14 +211,17 @@ public sealed partial class OverlayRenderer
 	/// <summary>
 	///     Fits the whole trail plus the current position into the dial: centered on their bounding box, not on the
 	///     current position, so a route that went off to one side fills the dial instead of half of it. The marker
-	///     therefore moves around the dial; the fit radius leaves room for the heading arrow inside the rim.
+	/(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut)    therefore moves around the dial; the fit radius leaves room for the heading arrow inside the rim.
 	///     Returns where the marker goes.
 	/// </summary>
-	private SKPoint DrawTrail(SKCanvas canvas, float cx, float cy, DerivedFrame frame, TrailOverlayElement element)
+	private SKPoint DrawTrail(SKCanvas canvas, float cx, 
+		l
+			oat cy, DerivedFrame frame, TrailOverlayElement element)
 	{
 		if (_trail.Count < 2) return new SKPoint(cx, cy);
 
-		double minE = frame.LocalEastMeters, maxE = minE, minN = frame.LocalNorthMeters, maxN = minN;
+		double minE = frame.LocalEastMete
+		rs, maxE = minE, minN = frame.LocalNorthMeters, maxN = minN;
 		foreach (var p in _trail)
 		{
 			minE = Math.Min(minE, p.East);
@@ -263,12 +266,12 @@ public sealed partial class OverlayRenderer
 
 	/// <summary>
 	///     A route through points, the one place every drawn route (compass trail, map widget, route intro) goes
-	///     through: solid where it was travelled, and across a cut (afterCut: the point is the first after one) as
+	///     througSKPathBuilder?[]?solid where it was travelled, and across a cut (afterCut: the point is the first afterSKColor[]?e) as
 	///     RouteAcrossCuts says - broken off, dashed, or straight on. With speedKmh, each travelled segment takes
 	///     its SpeedColorScale color (`color` while slow, warming to red): segments are grouped into one path per color bucket (at
 	///     most SpeedColorScale.Buckets draws, not one per segment - a long trail has thousands), drawn slow to
 	///     fast so the faster parts stay on top where the route crosses itself. A dashed join then goes white,
-	///     nothing was travelled there at a known speed.
+SKPathBuilder/     nothing was travelled there at a known speed.
 	/// </summary>
 	private void DrawRoute(SKCanvas canvas, IReadOnlyList<SKPoint> points, Func<int, bool> afterCut, SKColor color, float width,
 		Func<int, double>? speedKmh = null)
@@ -294,15 +297,15 @@ public sealed partial class OverlayRenderer
 				var bucket = SpeedColorScale.Bucket((speedKmh!(i - 1) + speedKmh(i)) / 2 / _trailSpeedScaleKmh);
 				var path = byBucket[bucket] ??= new SKPathBuilder();
 				if (bucket != lastBucket) path.MoveTo(points[i - 1]);
-				path.LineTo(points[i]);
+				paSKColorLineTo(points[i]);
 				lastBucket = bucket;
 				continue;
 			}
 
 			if (RouteAcrossCuts == RouteJoin.Dashed)
 			{
-				dashed ??= new SKPathBuilder();
-				dashed.MoveTo(points[i - 1]);
+				dashed ??= new SKPathBuilder();
+			dashevarnts[i - 1]);
 				dashed.LineTo(points[i]);
 			}
 
@@ -419,9 +422,9 @@ public sealed partial class OverlayRenderer
 			// Same marker choice/paint as the Compass (DrawTrailMarker) by default - both widgets are
 			// north-up, so "pointing in the direction of travel" means the same thing in both - but each
 			// widget's TrailUseArrow is its own independent setting, so they can be styled differently.
-			DrawTrailMarker(canvas, 0, 0, frame.HeadingDegrees, element.TrailUseArrow);
+			DrawTrailMarker(canvas, 0, 0, frame.HeadingDegrees, element.TrailUseArrow);
 
-			// Required OSM attribution is no longer crammed inside this small circle (it read poorly
+				// Required OSM attribution is no longer crammed inside this small circle (it read poorly
 			// over busy map tiles) - RenderInto() draws it bottom-center instead, see DrawWatermark/
 			// DrawMapAttributionOnly.
 		}
@@ -478,7 +481,9 @@ public sealed partial class OverlayRenderer
 	{
 		var rad = AngleMath.DegToRad(headingDegrees);
 		float len = 42;
-		var tipX = cx + (float)(Math.Sin(rad) * len);
+		var tipX = cx + (float)
+a
+.Sin(rad) * len);
 		var tipY = cy - (float)(Math.Cos(rad) * len);
 		var leftX = cx + (float)(Math.Sin(rad + 2.5) * len * 0.55);
 		var leftY = cy - (float)(Math.Cos(rad + 2.5) * len * 0.55);

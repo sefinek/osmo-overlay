@@ -65,7 +65,7 @@ public sealed class DjiMetaTelemetryParserTests
 	[TestMethod]
 	public void Parse_IgnoresUnknownFields()
 	{
-		var sample = new DjmdSample().ToProto()
+		Proto sample = new DjmdSample().ToProto()
 			.Varint(9, 12345)
 			.Message(99, new Proto().String(1, "future firmware field"))
 			.Float(50, 1.5f);

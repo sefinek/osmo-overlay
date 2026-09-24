@@ -193,5 +193,4 @@ public partial class MainWindow
 		// Keyframes while dragging keep up with the pointer; the exact frame follows on release (EndScrubDrag).
 		_previewPlayer.RequestSeek(TimeSpan.FromSeconds(e.NewValue), _timelineScrubbing ? SeekAccuracy.Keyframe : SeekAccuracy.Exact);
 	}
-
 }

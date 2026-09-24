@@ -146,8 +146,8 @@ public static class MetadataStripper
 	{
 		return (stream["side_data_list"] as JsonArray)?
 			.FirstOrDefault(d => Str(d, "side_data_type") == "Display Matrix") is { } matrix
-			? Str(matrix, "rotation")
-			: null;
+				? Str(matrix, "rotation")
+				: null;
 	}
 
 	private static IEnumerable<JsonNode> Streams(JsonNode root)

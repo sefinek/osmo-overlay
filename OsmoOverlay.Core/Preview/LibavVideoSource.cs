@@ -65,7 +65,10 @@ public sealed unsafe class LibavVideoSource : IDisposable
 
 		// Opened up front: a broken file or a decoder that won't start should fail here, where the caller can
 		// still fall back, not on the first seek.
-		lock (_lock) SessionFor(0);
+		lock (_lock)
+		{
+			SessionFor(0);
+		}
 	}
 
 	public TimeSpan Duration { get; }
@@ -76,7 +79,10 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	{
 		get
 		{
-			lock (_lock) return _sessions.Count > 0 ? _sessions[0].Hardware ?? "software" : "not opened";
+			lock (_lock)
+			{
+				return _sessions.Count > 0 ? _sessions[0].Hardware ?? "software" : "not opened";
+			}
 		}
 	}
 
@@ -323,7 +329,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 						_next = _source._nextFrame;
 					}
 
-					var decoded = _source.DecodeNext(_next, _ct);
+					(VideoFrame Frame, long Index)? decoded = _source.DecodeNext(_next, _ct);
 					if (decoded is not { } frame) return null;
 
 					_next = frame.Index + 1;

@@ -39,9 +39,9 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 		List<RenderPiece> pieces = [];
 		var cursor = start;
 		foreach (var (cutStart, cutEnd) in (cutOuts ?? [])
-			         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds)))
-			         .Where(c => c.End > c.Start)
-			         .OrderBy(c => c.Start))
+		         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds)))
+		         .Where(c => c.End > c.Start)
+		         .OrderBy(c => c.Start))
 		{
 			if (cutEnd <= cursor) continue;
 			if (cutStart >= end) break;

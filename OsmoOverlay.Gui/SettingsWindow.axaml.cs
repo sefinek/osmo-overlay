@@ -332,7 +332,6 @@ public partial class SettingsWindow : Window
 		RouteIntroOptionsPanel.IsEnabled = ShowRouteIntroCheck.IsChecked == true;
 	}
 
-
 	private sealed record TileProviderOption(string Display, string UrlTemplate, string Attribution, bool IsCustom = false, bool IsCarto = false)
 	{
 		public static readonly TileProviderOption Custom = new("Custom...", "", "", true);

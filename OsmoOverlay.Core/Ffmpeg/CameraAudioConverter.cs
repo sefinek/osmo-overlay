@@ -39,8 +39,10 @@ public static class CameraAudioConverter
 		var partialPath = outputPath + ".partial";
 		try
 		{
-			Run("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", inputPath, "-map", "0:a:0", "-fflags", "+bitexact",
-				.. formatArgs, partialPath]);
+			Run("ffmpeg", [
+				"-hide_banner", "-loglevel", "error", "-y", "-i", inputPath, "-map", "0:a:0", "-fflags", "+bitexact",
+				.. formatArgs, partialPath
+			]);
 
 			if (DecodedHash(inputPath) != DecodedHash(partialPath))
 				throw new InvalidOperationException("Verification failed: the converted audio doesn't decode to the same samples as the source.");

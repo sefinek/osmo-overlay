@@ -105,7 +105,7 @@ public partial class MainWindow
 
 	private void ClampPreviewPan()
 	{
-		var pan = _previewPan;
+		Vector pan = _previewPan;
 		_previewPan = default;
 		if (_previewZoom is null || GetPreviewTransform() is not { } t) return;
 

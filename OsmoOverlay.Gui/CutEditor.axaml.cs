@@ -68,6 +68,7 @@ public partial class CutEditor : UserControl
 
 		RouteJoinChanged?.Invoke(RouteJoins[RouteJoinCombo.SelectedIndex].Join);
 	}
+
 	public event Action<CutAction>? CutRequested;
 	public event Action<long>? SeekRequested;
 
@@ -230,7 +231,7 @@ public partial class CutEditor : UserControl
 		List<FrameRange> parsed = [];
 		for (var i = 0; i < _rows.Count; i++)
 		{
-			var (fromBox, toBox) = _rows[i];
+			(TextBox fromBox, TextBox toBox) = _rows[i];
 			var name = $"Cut {i + 1}";
 			if (ReadFrame(fromBox.Text, $"{name}: From", out var start) is { } fromError) return fromError;
 			if (ReadFrame(toBox.Text, $"{name}: To", out var end) is { } toError) return toError;

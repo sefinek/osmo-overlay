@@ -1,7 +1,6 @@
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using OsmoOverlay.Core;
-using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Gui;
 
@@ -28,7 +27,7 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var position = TimeSpan.FromSeconds(PreviewTimeline.Value);
+		TimeSpan position = TimeSpan.FromSeconds(PreviewTimeline.Value);
 		var source = _summary.InputPaths[0];
 		var suggestedName = $"{Path.GetFileNameWithoutExtension(source)}_{TimeText.Format(position.TotalSeconds).Replace(':', '-')}.png";
 

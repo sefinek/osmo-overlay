@@ -79,7 +79,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private double _thumbnailAspect = 16.0 / 9;
 	// Zoom as a multiple of "the whole recording fits", so a resize keeps what's visible; the view's left edge in seconds.
 	private double _zoom = 1;
-	private double _viewStart;
 	private bool _scrubbing;
 	private bool _attached;
 	private bool _animating;
@@ -153,14 +152,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			_expanded = value;
 			_hoverX = null;
 			InvalidateMeasure();
-			SetView(value ? _zoom : 1, value ? _viewStart : 0);
+			SetView(value ? _zoom : 1, value ? ViewStart : 0);
 		}
 	}
 
 	// The compact track keeps the thumb whole at 0 and at Maximum.
 	private double Inset => _expanded ? 0 : CompactThumbRadius;
 
-	public double ViewStart => _viewStart;
+	public double ViewStart { get; private set; }
 	public double ViewLength => PixelsPerSecond > 0 ? Math.Max(0, Bounds.Width - 2 * Inset) / PixelsPerSecond : Duration;
 
 	private double Duration => Math.Max(0, Maximum - Minimum);
@@ -218,7 +217,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (_waveform is not null) _waveform.Updated += PostRefresh;
 
 		_zoom = 1;
-		_viewStart = 0;
+		ViewStart = 0;
 		ViewChanged?.Invoke();
 		RequestVisibleThumbnails();
 		InvalidateVisual();
@@ -246,7 +245,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		base.OnPropertyChanged(change);
 		if (change.Property == BoundsProperty || change.Property == MaximumProperty)
 		{
-			SetView(_zoom, _viewStart);
+			SetView(_zoom, ViewStart);
 		}
 		else if (change.Property == ValueProperty && !_scrubbing && _expanded)
 		{
@@ -297,7 +296,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		var bottom = audioTop + AudioTrackHeight;
 
 		var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
-		(double, double, Size, double, int) key = (_viewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
+		(double, double, Size, double, int) key = (ViewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
 		if (_tracksLayer is null || _tracksLayerKey != key)
 		{
 			_tracksLayer?.Dispose();
@@ -346,8 +345,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		var major = TickSteps.FirstOrDefault(step => step * PixelsPerSecond >= MinMajorTickPixels, TickSteps[^1]);
 		var minor = major / (major is 2 or 0.2 or 120 ? 4 : 5);
-		var first = Math.Floor(_viewStart / minor) * minor;
-		var last = Math.Min(Duration, _viewStart + ViewLength);
+		var first = Math.Floor(ViewStart / minor) * minor;
+		var last = Math.Min(Duration, ViewStart + ViewLength);
 
 		for (var t = first; t <= last + minor / 2; t += minor)
 		{
@@ -375,7 +374,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		var tileHeight = VideoTrackHeight - 4;
 		var tileWidth = Math.Round(tileHeight * _thumbnailAspect);
-		var viewLeft = _viewStart * PixelsPerSecond;
+		var viewLeft = ViewStart * PixelsPerSecond;
 		var firstTile = (int)Math.Floor(viewLeft / tileWidth);
 		var endX = Math.Min(width, X(Duration));
 
@@ -436,7 +435,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			var from = (int)(TimeAt(x) * AudioWaveform.BucketsPerSecond);
 			var to = Math.Max(from + 1, (int)(TimeAt(x + 1) * AudioWaveform.BucketsPerSecond));
 			var half = Math.Max(0.5, AudioWaveform.DisplayLevel(waveform.Peak(lane, from, to), waveform.LoudestPeak) * (laneHeight / 2 - 1));
-			stream.BeginFigure(new Point(x, middle - half), true);
+			stream.BeginFigure(new Point(x, middle - half));
 			stream.LineTo(new Point(x + 1, middle - half));
 			stream.LineTo(new Point(x + 1, middle + half));
 			stream.LineTo(new Point(x, middle + half));
@@ -497,7 +496,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		var handle = new StreamGeometry();
 		using (StreamGeometryContext stream = handle.Open())
 		{
-			stream.BeginFigure(new Point(x - 6, 0), true);
+			stream.BeginFigure(new Point(x - 6, 0));
 			stream.LineTo(new Point(x + 6, 0));
 			stream.LineTo(new Point(x + 6, 6));
 			stream.LineTo(new Point(x, 12));
@@ -510,12 +509,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private double X(double seconds)
 	{
-		return Inset + (seconds - Minimum - _viewStart) * PixelsPerSecond;
+		return Inset + (seconds - Minimum - ViewStart) * PixelsPerSecond;
 	}
 
 	private double TimeAt(double x)
 	{
-		return PixelsPerSecond > 0 ? _viewStart + (x - Inset) / PixelsPerSecond : 0;
+		return PixelsPerSecond > 0 ? ViewStart + (x - Inset) / PixelsPerSecond : 0;
 	}
 
 	/// <summary>A range in pixels, at least minWidth wide so a one-frame cut still shows.</summary>
@@ -534,7 +533,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private void SetView(double zoom, double start)
 	{
 		_zoom = Math.Clamp(zoom, 1, MaxZoom);
-		_viewStart = Math.Clamp(start, 0, Math.Max(0, Duration - ViewLength));
+		ViewStart = Math.Clamp(start, 0, Math.Max(0, Duration - ViewLength));
 		RequestVisibleThumbnails();
 		InvalidateVisual();
 		ViewChanged?.Invoke();
@@ -545,7 +544,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (!_expanded || _thumbnails is null || PixelsPerSecond <= 0) return;
 
 		var tileWidth = Math.Round((VideoTrackHeight - 4) * _thumbnailAspect);
-		var viewLeft = _viewStart * PixelsPerSecond;
+		var viewLeft = ViewStart * PixelsPerSecond;
 		var firstTile = (int)Math.Floor(viewLeft / tileWidth);
 		var lastTile = (int)Math.Ceiling((viewLeft + Bounds.Width) / tileWidth);
 		_thumbnails.Request(Enumerable.Range(firstTile, Math.Max(0, lastTile - firstTile + 1)).Select(t => TileSlot(t, tileWidth)));
@@ -574,7 +573,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift) || Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y))
 		{
 			var delta = Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y) ? e.Delta.X : e.Delta.Y;
-			SetView(_zoom, _viewStart - delta * ViewLength * 0.1);
+			SetView(_zoom, ViewStart - delta * ViewLength * 0.1);
 		}
 		else
 		{

@@ -67,7 +67,7 @@ public sealed class AudioWaveform : IDisposable
 	/// <summary>0-1 peak of a channel over buckets [from, to).</summary>
 	public float Peak(int channel, int from, int to)
 	{
-		float[] peaks = _peaks[channel];
+		var peaks = _peaks[channel];
 		to = Math.Min(to, Math.Min(_available, peaks.Length));
 		var peak = 0f;
 		for (var i = Math.Max(0, from); i < to; i++)

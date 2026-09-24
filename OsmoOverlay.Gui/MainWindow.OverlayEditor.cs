@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using OsmoOverlay.Core.Overlay;
 using SkiaSharp;
@@ -156,7 +155,7 @@ public partial class MainWindow
 
 	private bool UsesTimeFallback(OverlayElementType type)
 	{
-		return type is (OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText) && !_hasGpsTimestamp && _hasContainerTime;
+		return type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText && !_hasGpsTimestamp && _hasContainerTime;
 	}
 
 	private static string UnsupportedReason(OverlayElementType type)
@@ -252,7 +251,9 @@ public partial class MainWindow
 
 		var warningTip = !supported
 			? "Not shown with this file - " + UnsupportedReason(element.Type)
-			: UsesTimeFallback(element.Type) ? TimeFallbackTip : null;
+			: UsesTimeFallback(element.Type)
+				? TimeFallbackTip
+				: null;
 		if (warningTip is not null)
 		{
 			var warning = new Border { Classes = { "fallbackWarning" }, Child = new IconView { Data = Icons.Warning } };
@@ -1677,5 +1678,4 @@ public partial class MainWindow
 			return Display;
 		}
 	}
-
 }

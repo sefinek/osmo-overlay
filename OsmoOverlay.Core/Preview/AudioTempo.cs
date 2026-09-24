@@ -1,3 +1,4 @@
+using System.Globalization;
 using FFmpeg.AutoGen;
 
 namespace OsmoOverlay.Core.Preview;
@@ -78,7 +79,7 @@ public sealed unsafe class AudioTempo : IDisposable
 			rate /= 0.5;
 		}
 
-		stages.Add($"atempo={rate.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture)}");
+		stages.Add($"atempo={rate.ToString("0.######", CultureInfo.InvariantCulture)}");
 		return string.Join(',', stages);
 	}
 

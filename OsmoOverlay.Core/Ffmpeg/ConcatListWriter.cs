@@ -33,12 +33,12 @@ internal static class ConcatListWriter
 	///     mid-segment and continues into the next ones gets its audio as a stream copy. Two things verified
 	///     on real Osmo recordings that this depends on:
 	///     - the `stream`/exact_stream_id directive: without it the list also carries the camera's thumbnail
-	///       stream, whose start time (shifted by -inpoint) drags the whole input's start time back, so an
-	///       output -t cut every audio packet
+	///     stream, whose start time (shifted by -inpoint) drags the whole input's start time back, so an
+	///     output -t cut every audio packet
 	///     - the demuxer still emits the packets from the preceding video keyframe on (~0.35 s before
-	///       inpoint, at negative timestamps); the caller must pass the list's probed start time as
-	///       -itsoffset so those stay negative and the MP4 edit list hides them, otherwise audio leads
-	///       the picture by exactly that much
+	///     inpoint, at negative timestamps); the caller must pass the list's probed start time as
+	///     -itsoffset so those stay negative and the MP4 edit list hides them, otherwise audio leads
+	///     the picture by exactly that much
 	/// </summary>
 	public static string WriteAudioOnly(IReadOnlyList<string> paths, string audioStreamId, double firstInpointSeconds)
 	{

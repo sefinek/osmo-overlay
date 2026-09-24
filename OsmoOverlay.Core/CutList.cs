@@ -27,12 +27,10 @@ public static class CutList
 			         .Select(c => new FrameRange(Math.Clamp(c.Start, 0, totalFrames), Math.Clamp(c.End, 0, totalFrames)))
 			         .Where(c => c.Length > 0)
 			         .OrderBy(c => c.Start))
-		{
 			if (merged.Count > 0 && cut.Start <= merged[^1].End)
 				merged[^1] = merged[^1] with { End = Math.Max(merged[^1].End, cut.End) };
 			else
 				merged.Add(cut);
-		}
 
 		return merged;
 	}

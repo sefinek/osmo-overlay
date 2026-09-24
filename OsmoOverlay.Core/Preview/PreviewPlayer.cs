@@ -631,7 +631,7 @@ public sealed class PreviewPlayer : IDisposable
 			while (_pendingSeek is { } request && _video is { } video)
 			{
 				_pendingSeek = null;
-				var (position, accuracy) = request;
+				(TimeSpan position, SeekAccuracy accuracy) = request;
 				var generation = _seekGeneration;
 				CancellationToken ct = _seekCts.Token;
 
@@ -787,7 +787,7 @@ public sealed class PreviewPlayer : IDisposable
 	private async Task<string?> ProduceFramesAsync(LibavVideoSource video, IEnumerable<PlaybackStretch> stretches, int step,
 		ChannelWriter<PlaybackFrame> writer, CancellationToken ct)
 	{
-		var halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
+		TimeSpan halfFrame = TimeSpan.FromSeconds(0.5 / video.Fps);
 		// Where each stretch starts on the play timeline - the stretches back to back, the way the audio is pushed.
 		double playOffset = 0;
 		try

@@ -15,7 +15,6 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	private readonly double _timeBase;
 	private readonly long _startPts;
 	// Two frames taking turns, so the last decoded one survives a receive that hits the end of the file.
-	private AVFrame* _frame;
 	private AVFrame* _spare;
 	private bool _draining;
 
@@ -31,14 +30,14 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 		_startPts = avStream->start_time == ffmpeg.AV_NOPTS_VALUE ? 0 : avStream->start_time;
 
 		_packet = ffmpeg.av_packet_alloc();
-		_frame = ffmpeg.av_frame_alloc();
+		Frame = ffmpeg.av_frame_alloc();
 		_spare = ffmpeg.av_frame_alloc();
 	}
 
 	public AVCodecContext* Codec { get; }
 
 	/// <summary>The frame Receive decoded last - valid until the next Receive or Seek.</summary>
-	public AVFrame* Frame => _frame;
+	public AVFrame* Frame { get; private set; }
 
 	public bool HasFrame { get; private set; }
 
@@ -148,8 +147,8 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 			if (result == 0)
 			{
 				AVFrame* decoded = _spare;
-				_spare = _frame;
-				_frame = decoded;
+				_spare = Frame;
+				Frame = decoded;
 				HasFrame = true;
 				return true;
 			}
@@ -183,13 +182,13 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	/// <summary>When the current frame starts, in seconds from the start of this file's stream.</summary>
 	public double FrameSeconds()
 	{
-		var pts = _frame->best_effort_timestamp != ffmpeg.AV_NOPTS_VALUE ? _frame->best_effort_timestamp : _frame->pts;
+		var pts = Frame->best_effort_timestamp != ffmpeg.AV_NOPTS_VALUE ? Frame->best_effort_timestamp : Frame->pts;
 		return (pts - _startPts) * _timeBase;
 	}
 
 	public void Dispose()
 	{
-		AVFrame* frame = _frame;
+		AVFrame* frame = Frame;
 		AVFrame* spare = _spare;
 		AVPacket* packet = _packet;
 		AVCodecContext* codec = Codec;

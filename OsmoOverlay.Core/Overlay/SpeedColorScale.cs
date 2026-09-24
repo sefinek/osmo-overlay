@@ -45,8 +45,8 @@ internal static class SpeedColorScale
 			var t = b / (double)(Buckets - 1);
 			var i = 1;
 			while (i < stops.Length - 1 && t > stops[i].At) i++;
-			var (fromAt, from) = stops[i - 1];
-			var (toAt, to) = stops[i];
+			(var fromAt, SKColor from) = stops[i - 1];
+			(var toAt, SKColor to) = stops[i];
 			colors[b] = Mix(from, to, (t - fromAt) / (toAt - fromAt));
 		}
 
