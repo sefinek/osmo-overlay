@@ -11,7 +11,6 @@ using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
-using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
@@ -36,6 +35,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double TrackGap = 2;
 	private const double StripeSpacing = 7;
 	private const double StripePixelsPerSecond = 8;
+	// The stripes move 8 px a second - ~30 steps a second is smooth, redrawing on every display refresh (144-280 Hz,
+	// both timelines, paused or not) only kept the UI thread busy next to playback.
+	private static readonly TimeSpan StripeFrameInterval = TimeSpan.FromMilliseconds(33);
+	// Bitmaps made from the generator's pixels (which it keeps for the whole recording): a few screens' worth, the
+	// least recently drawn dropped past this - otherwise every second ever shown stayed in memory twice.
+	private const int MaxThumbnailBitmaps = 240;
 	private const double MinMajorTickPixels = 90;
 	private const double MaxPixelsPerFrame = 24;
 	private const double WheelZoomStep = 1.25;
@@ -74,7 +79,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
 
-	private readonly Dictionary<int, Bitmap> _thumbnailBitmaps = [];
+	private readonly Dictionary<int, CachedThumbnail> _thumbnailBitmaps = [];
+	private long _thumbnailUse;
+	private readonly Stopwatch _stripeClock = Stopwatch.StartNew();
+	private DispatcherTimer? _stripeTimer;
 	private IReadOnlyList<TimeRange> _cuts = [];
 	private IReadOnlyList<TimeRange> _gpsLoss = [];
 	private TimeRange? _selection;
@@ -86,10 +94,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private double _zoom = 1;
 	private bool _scrubbing;
 	private bool _attached;
-	private bool _animating;
 	private int _refreshPosted;
 	private long _lastContentRefresh;
-	private TimeSpan? _lastAnimationFrame;
 	private double _stripeOffset;
 	private double? _hoverX;
 	private DragMode _drag;
@@ -107,9 +113,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private WriteableBitmap? _waveformBitmap;
 	private (double Start, double PixelsPerSecond, Size Size, double Scaling, int Version) _tracksLayerKey;
 	private int _contentVersion;
-	private double _probeFilmstripMs;
-	private double _probeWaveformMs;
-	private int _probeNewBitmaps;
 
 	static PreviewTimeline()
 	{
@@ -185,7 +188,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		{
 			_cuts = value;
 			InvalidateVisual();
-			StartStripeAnimation();
+			UpdateStripeAnimation();
 		}
 	}
 
@@ -216,7 +219,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (_thumbnails is not null) _thumbnails.Updated -= PostRefresh;
 		if (_waveform is not null) _waveform.Updated -= PostRefresh;
 
-		foreach (Bitmap bitmap in _thumbnailBitmaps.Values) bitmap.Dispose();
+		foreach (CachedThumbnail cached in _thumbnailBitmaps.Values) cached.Bitmap.Dispose();
 		_thumbnailBitmaps.Clear();
 
 		_thumbnails = thumbnails;
@@ -268,11 +271,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	public override void Render(DrawingContext context)
 	{
-		var probe = Stopwatch.StartNew();
 		if (_expanded) RenderExpanded(context);
 		else RenderCompact(context);
-		if (_expanded && probe.Elapsed.TotalMilliseconds > 4)
-			AppLogger.Info($"[timeline probe] Render {probe.Elapsed.TotalMilliseconds:F1} ms (zoom {_zoom:F2}, {Bounds.Width:F0} px)");
 	}
 
 	private void RenderCompact(DrawingContext context)
@@ -313,12 +313,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		(double, double, Size, double, int) key = (ViewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
 		if (_tracksLayer is null || _tracksLayerKey != key)
 		{
-			var probe = Stopwatch.StartNew();
 			_tracksLayer?.Dispose();
 			_tracksLayer = RenderTracksLayer(scaling, width, videoTop, audioTop);
 			_tracksLayerKey = key;
-			AppLogger.Info($"[timeline probe] tracks layer {probe.Elapsed.TotalMilliseconds:F1} ms " +
-			               $"(filmstrip {_probeFilmstripMs:F1}, waveform {_probeWaveformMs:F1}, new bitmaps {_probeNewBitmaps})");
 		}
 
 		context.DrawImage(_tracksLayer, new Rect(Bounds.Size));
@@ -349,13 +346,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (Duration <= 0 || PixelsPerSecond <= 0) return layer;
 
 		DrawRuler(context, width);
-		var part = Stopwatch.StartNew();
-		_probeNewBitmaps = 0;
 		DrawFilmstrip(context, videoTop, width);
-		_probeFilmstripMs = part.Elapsed.TotalMilliseconds;
-		part.Restart();
 		DrawWaveform(context, audioTop, width, scaling);
-		_probeWaveformMs = part.Elapsed.TotalMilliseconds;
 
 		foreach (TimeRange loss in _gpsLoss)
 		{
@@ -436,15 +428,36 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private Bitmap? Thumbnail(int slot)
 	{
 		if (_thumbnails is null) return null;
-		if (_thumbnailBitmaps.TryGetValue(slot, out Bitmap? cached)) return cached;
+		if (_thumbnailBitmaps.TryGetValue(slot, out CachedThumbnail? cached))
+		{
+			cached.LastUse = ++_thumbnailUse;
+			return cached.Bitmap;
+		}
+
 		if (_thumbnails.TryGet(slot) is not { } bgra) return null;
 
 		var bitmap = new WriteableBitmap(new PixelSize(_thumbnails.Width, _thumbnails.Height), new Vector(96, 96),
 			PixelFormat.Bgra8888, AlphaFormat.Opaque);
-		using (ILockedFramebuffer buffer = bitmap.Lock()) Marshal.Copy(bgra, 0, buffer.Address, bgra.Length);
-		_thumbnailBitmaps[slot] = bitmap;
-		_probeNewBitmaps++;
+		using (ILockedFramebuffer buffer = bitmap.Lock())
+		{
+			var rowBytes = _thumbnails.Width * 4;
+			for (var y = 0; y < _thumbnails.Height; y++)
+				Marshal.Copy(bgra, y * rowBytes, buffer.Address + y * buffer.RowBytes, rowBytes);
+		}
+
+		if (_thumbnailBitmaps.Count >= MaxThumbnailBitmaps) EvictThumbnailBitmaps();
+		_thumbnailBitmaps[slot] = new CachedThumbnail(bitmap) { LastUse = ++_thumbnailUse };
 		return bitmap;
+	}
+
+	/// <summary>Drops the least recently drawn quarter - the tiles of the layer being drawn were all used just now, so none of them.</summary>
+	private void EvictThumbnailBitmaps()
+	{
+		foreach (var (slot, cached) in _thumbnailBitmaps.OrderBy(p => p.Value.LastUse).Take(MaxThumbnailBitmaps / 4).ToList())
+		{
+			cached.Bitmap.Dispose();
+			_thumbnailBitmaps.Remove(slot);
+		}
 	}
 
 	/// <summary>
@@ -638,19 +651,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
 	{
-		var probe = Stopwatch.StartNew();
-		try
-		{
-			OnPointerWheelChangedCore(e);
-		}
-		finally
-		{
-			AppLogger.Info($"[timeline probe] wheel delta {e.Delta.Y:F2} handled in {probe.Elapsed.TotalMilliseconds:F1} ms, zoom {_zoom:F2}");
-		}
-	}
-
-	private void OnPointerWheelChangedCore(PointerWheelEventArgs e)
-	{
 		base.OnPointerWheelChanged(e);
 		if (!_expanded || Duration <= 0) return;
 
@@ -820,42 +820,53 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnAttachedToVisualTree(e);
 		_attached = true;
-		StartStripeAnimation();
+		UpdateStripeAnimation();
 	}
 
 	protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
 	{
 		base.OnDetachedFromVisualTree(e);
 		_attached = false;
+		UpdateStripeAnimation();
 		_tracksLayer?.Dispose();
 		_tracksLayer = null;
 		_waveformBitmap?.Dispose();
 		_waveformBitmap = null;
 	}
 
-	/// <summary>Runs on the render loop's frames only while there is a cut to draw.</summary>
-	private void StartStripeAnimation()
+	/// <summary>The stripes' timer runs only while there is a cut to draw on a timeline in the window.</summary>
+	private void UpdateStripeAnimation()
 	{
-		if (_animating || !_attached || _cuts.Count == 0 || TopLevel.GetTopLevel(this) is not { } topLevel) return;
+		var needed = _attached && _cuts.Count > 0;
+		if (needed == _stripeTimer is not null) return;
 
-		_animating = true;
-		_lastAnimationFrame = null;
-		topLevel.RequestAnimationFrame(OnAnimationFrame);
+		if (needed)
+		{
+			_stripeTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = StripeFrameInterval };
+			_stripeTimer.Tick += OnStripeFrame;
+			_stripeTimer.Start();
+		}
+		else
+		{
+			_stripeTimer!.Stop();
+			_stripeTimer.Tick -= OnStripeFrame;
+			_stripeTimer = null;
+		}
 	}
 
-	private void OnAnimationFrame(TimeSpan time)
+	/// <summary>The offset follows the clock, not the ticks, so a late tick doesn't slow the stripes down; a hidden timeline (the compact one while the expanded one shows, or the reverse) isn't redrawn.</summary>
+	private void OnStripeFrame(object? sender, EventArgs e)
 	{
-		if (!_attached || _cuts.Count == 0 || TopLevel.GetTopLevel(this) is not { } topLevel)
-		{
-			_animating = false;
-			return;
-		}
+		if (!IsEffectivelyVisible) return;
 
-		if (_lastAnimationFrame is { } last)
-			_stripeOffset = (_stripeOffset + (time - last).TotalSeconds * StripePixelsPerSecond) % StripeSpacing;
-		_lastAnimationFrame = time;
+		_stripeOffset = _stripeClock.Elapsed.TotalSeconds * StripePixelsPerSecond % StripeSpacing;
 		InvalidateVisual();
-		topLevel.RequestAnimationFrame(OnAnimationFrame);
+	}
+
+	private sealed class CachedThumbnail(Bitmap bitmap)
+	{
+		public Bitmap Bitmap { get; } = bitmap;
+		public long LastUse { get; set; }
 	}
 
 	private enum DragMode

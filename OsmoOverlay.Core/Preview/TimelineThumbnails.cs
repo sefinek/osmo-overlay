@@ -89,10 +89,8 @@ public sealed class TimelineThumbnails : IDisposable
 				await _wake.WaitAsync(ct);
 				while (NextWanted() is { } slot)
 				{
-					var probe = System.Diagnostics.Stopwatch.StartNew();
 					VideoFrame? frame = _source.GetFrame(TimeSpan.FromSeconds(slot), SeekAccuracy.Keyframe, ct);
 					if (frame is null) return;
-					AppLogger.Info($"[timeline probe] thumbnail {slot} in {probe.Elapsed.TotalMilliseconds:F1} ms");
 
 					var copy = frame.Bgra.ToArray();
 					_source.Recycle(frame);
