@@ -8,19 +8,29 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 ![](.github/OsmoOverlay_ru8MsYzI.jpg)
 
 ## Features
-- **No quality loss** - the export matches the camera's original 1:1 (codec, 10-bit, bitrate, timecode).
-- **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance. No DJI Mimo needed.
-- **15 widgets** - including a speedometer, map, compass with route, tilt, G-meter, elevation, distance, date and time.
-- **Drag-and-drop editor** - position, size, fonts, colors, appear animations. Presets you can export and share.
-- **Live preview** - with sound, playback speed control, looping and a timeline with thumbnails.
-- **Cutting** - remove parts of the recording in the app. Distance, stats and the route account for the cuts.
-- **Privacy** - the camera's serial number and GPS track aren't included in the export unless you want them.
-- **Green screen export** - just the HUD, for compositing in another editor.
-- **Tools** - color tag fix, metadata removal, camera microphone audio conversion, video comparison.
-- **Windows, Linux and macOS** - on x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable; Linux and macOS are experimental.
+- **No quality loss** - export settings are taken from the source, so the video matches the camera original 1:1 (codec, 10-bit color, bitrate, timecode).
+- **Rendered on your computer, not your phone** - unlike the overlay in DJI Mimo: no drop in image and audio quality, no long wait with the phone unlocked and the app open, no phone as hot as an oven.
+- **Joins split recordings** - the camera splits long recordings into files of about 25 minutes, and OsmoOverlay joins them into one video without breaking the route.
+- **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance.
+- **15 widgets** - including a speedometer, map, compass with route, tilt, G-meter, altitude, distance, and date and time. Metric or imperial units.
+- **Route card** - an optional summary at the start of the video: the whole route on a map, distance, speeds, elevation gain and ride time.
+- **Satellite or standard map** - several built-in map sources or your own tile server.
+- **Drag-and-drop editor** - position, size, fonts, colors, appear and disappear animations. Presets can be exported and shared.
+- **Live preview** - with sound, playback speed control, looping, a timeline with thumbnails and saving a frame as a full-resolution PNG.
+- **Cutting** - remove parts of a recording right in the app. Distance, stats and the route only count what's left.
+- **Recording settings check** - shows whether the footage was recorded with the settings recommended for your camera.
+- **Privacy** - the camera's serial number and GPS track don't end up in the rendered MP4 unless you turn that on.
+- **HUD-only export on a green screen** - for editing in another program.
+- **Tools** (no re-encoding, no quality loss):
+  - **Remove metadata** - a copy that's safe to share: no GPS track, camera serial number, recording date, timecode or thumbnail.
+  - **Camera microphone audio** - with an external microphone connected, the camera saves audio from its built-in microphones to a separate .AAC file that neither Vegas Pro nor Audacity opens by default. Converts to WAV or M4A.
+  - **Color tag fix** - Vegas Pro can leave out the color space tag (Rec.709) when exporting to MP4, so some players show wrong colors. Highly recommended after rendering in Vegas Pro.
+  - **Compare videos** - resolution, codec, color tags, bitrate and telemetry of up to 6 files side by side.
+- **Automatic updates** - the app checks for new versions by itself, and on Windows (when installed with the installer) updates with one click.
+- **Windows, Linux and macOS** - x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable, Linux and macOS are experimental.
 
 ## Supported cameras
-Currently only the DJI Osmo Action 6 is supported. Unfortunately I don't own any other DJI cameras, so I can't test or add support for them. Recordings from other models may work, but this hasn't been verified.
+Only the DJI Osmo Action 6 is currently supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for the Action 6.
 
 ## Important information
 Do not add the overlay in the DJI Mimo app. Doing so will slightly reduce the quality of your footage.
@@ -38,8 +48,9 @@ Do not add the overlay in the DJI Mimo app. Doing so will slightly reduce the qu
 This application fully preserves the source codec and other original video properties, so it has absolutely no impact on the final quality after export.
 
 ## Good to know
-- Telemetry data (GPS data, as well as your camera's serial number) is stored directly in the MP4 file. Be careful who you share it with.
-- The same resolution doesn't mean the same quality - the codec, color depth and bitrate matter too.
+- The camera has no GPS module of its own, only an accelerometer. To get the route, map, speed and distance, record with the DJI GPS Bluetooth Remote Controller paired with the camera, or use your phone's GPS through DJI Mimo (though that one can behave oddly). Before you start recording, wait until the remote gets a satellite fix. Without GPS data, the widgets that need it are disabled.
+- GPS data and the camera's serial number are stored directly in the MP4 file. Be careful who you share it with.
+- The same resolution doesn't mean the same quality - codec, color depth and bitrate matter too.
 
 ## Download
 Every release comes in two variants for each platform:
