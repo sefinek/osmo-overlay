@@ -51,8 +51,8 @@ public sealed record OverlaySettings(
 	// The overview map's route colored by speed like the compass/map widgets' TrailColorBySpeed - off here by default.
 	bool RouteIntroColorBySpeed = false,
 	bool PreviewSnapToGrid = true,
-	// The preview's time readout with milliseconds instead of whole seconds (the toolbar's stopwatch toggle).
-	bool PreviewPreciseTime = false,
+	// The preview's time readout - the GUI's PreviewTimeFormat as a string, like PreviewGridMode below.
+	string PreviewTimeFormat = "Seconds",
 	// The expanded timeline (filmstrip + waveform) in the log's place under the window, instead of the compact track.
 	bool PreviewTimelineExpanded = false,
 	// How the drawn routes cross a part cut out of the render (see RouteJoin).
@@ -83,7 +83,17 @@ public sealed record OverlaySettings(
 	// An app release the user declined at startup - not offered there again (Settings' About tab still does).
 	string? SkippedAppUpdate = null,
 	// The GUI's scale on top of the system's display scaling, applied at startup (see the GUI's UiScale).
-	double InterfaceScale = 1.0);
+	double InterfaceScale = 1.0,
+	// Off: the main window always starts maximized. On: it comes back as MainWindowPlacement left it.
+	bool RestoreWindowPlacement = true,
+	WindowPlacement? MainWindowPlacement = null);
+
+/// <summary>
+///     The main window's last normal (not maximized) bounds and whether it was maximized. X/Y are the window's position
+///     in physical pixels, null (and Width/Height 0) when it was never in its normal state; Width/Height are its client
+///     size in layout units without the interface scale, so a changed scale sizes the window with it.
+/// </summary>
+public sealed record WindowPlacement(int? X, int? Y, double Width, double Height, bool Maximized);
 
 /// <summary>
 ///     Render speed remembered per "shape" of render (resolution, frame rate, encoder, preset), from the

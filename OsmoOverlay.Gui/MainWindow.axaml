@@ -652,9 +652,14 @@
 							        ToolTip.Tip="Save the frame on screen as a PNG, at full resolution">
 								<local:IconView Data="{StaticResource IconCamera}" Width="14" Height="14" />
 							</Button>
-							<Button Name="TogglePreciseTimeButton" Classes="previewToolButton" Click="OnTogglePreciseTimeClick"
-							        ToolTip.Tip="Show the time with milliseconds">
+							<Button Name="TimeFormatButton" Classes="previewToolButton"
+							        ToolTip.Tip="Time format - minutes and seconds, milliseconds or timecode. Clicking the time readout switches it too.">
 								<local:IconView Data="{StaticResource IconStopwatch}" Width="14" Height="14" />
+								<Button.Flyout>
+									<Flyout Placement="Bottom">
+										<StackPanel Name="TimeFormatMenu" Spacing="4" Width="170" />
+									</Flyout>
+								</Button.Flyout>
 							</Button>
 							<Button Name="ToggleTimelineButton" Classes="previewToolButton" Click="OnToggleTimelineClick"
 							        ToolTip.Tip="Timeline with thumbnails and audio waveform, in place of the log">
@@ -756,7 +761,8 @@
 						<local:PreviewTimeline Grid.Column="1" Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
 						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
-						           VerticalAlignment="Center" Text="00:00 / 00:00" />
+						           VerticalAlignment="Center" Text="00:00 / 00:00" Background="Transparent" Cursor="Hand"
+						           PointerPressed="OnPreviewTimeTextPressed" ToolTip.Tip="Click to switch the time format" />
 						<StackPanel Grid.Row="1" Grid.ColumnSpan="3" Name="PreviewStatusBar" Margin="0,8,0,0" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center"
 						            VerticalAlignment="Center" IsVisible="False">
 							<StackPanel Classes="previewStatus" ToolTip.Tip="Recording - the source video's resolution and frame rate">

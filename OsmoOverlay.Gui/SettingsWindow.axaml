@@ -240,6 +240,19 @@
 							<TextBlock Classes="hint"
 							           Text="Scales the whole app on top of your system's display scaling. Needs a restart - with no file loaded the app restarts on its own when you close Settings." />
 						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Time format" Classes="infoLabel" />
+							<ComboBox Name="TimeFormatCombo" HorizontalAlignment="Stretch" SelectionChanged="OnTimeFormatChanged" />
+							<TextBlock Name="TimeFormatHint" Classes="hint" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Main window" Classes="infoLabel" />
+							<CheckBox Name="RestoreWindowPlacementCheck" Content="Open where it was closed" />
+							<TextBlock Classes="hint"
+							           Text="Brings back the window's size, position and screen, maximized or not. Off, it always starts maximized." />
+						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>
 

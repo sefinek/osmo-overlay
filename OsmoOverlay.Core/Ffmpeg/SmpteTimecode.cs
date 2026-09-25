@@ -28,6 +28,14 @@ public static class SmpteTimecode
 		return Format((((frameNumber + frames) % framesPerDay) + framesPerDay) % framesPerDay, nominal, drop, dropFrame);
 	}
 
+	/// <summary>Frame `frame` counted from 00:00:00:00 - drop-frame at the NTSC rates, as an NLE numbers its own timeline.</summary>
+	public static string? FromFrame(long frame, double fps)
+	{
+		var nominal = (int)Math.Round(fps);
+		var dropFrame = nominal > 0 && nominal % 30 == 0 && Math.Abs(fps - nominal) > 0.001;
+		return AddFrames(dropFrame ? "00:00:00;00" : "00:00:00:00", frame, fps);
+	}
+
 	private static string Format(long frameNumber, int nominal, int drop, bool dropFrame)
 	{
 		if (drop > 0)

@@ -73,7 +73,7 @@ public partial class MainWindow : Window
 	private string? _selectedElementId;
 	private PreviewGridMode _gridMode;
 	private bool _snapToGuides;
-	private bool _preciseTime;
+	private PreviewTimeFormat _timeFormat;
 	private string? _resizingElementId;
 	private float _resizeStartScale = 1f;
 	private double _resizeStartDistance = 1;
@@ -90,10 +90,11 @@ public partial class MainWindow : Window
 		Opened += OnWindowOpened;
 
 		OverlaySettings settings = OverlaySettingsStore.Load();
+		RestorePlacement(settings);
 		_previewMaxWidth = settings.PreviewMaxWidth;
 		_gridMode = Enum.TryParse(settings.PreviewGridMode, out PreviewGridMode loadedGridMode) ? loadedGridMode : PreviewGridMode.Both;
 		_snapToGuides = settings.PreviewSnapToGrid;
-		_preciseTime = settings.PreviewPreciseTime;
+		_timeFormat = PreviewTimeFormats.Parse(settings.PreviewTimeFormat);
 		_audioMuted = settings.PreviewAudioMuted;
 		_audioVolume = settings.PreviewAudioVolume;
 		_showWatermark = settings.ShowWatermark;
@@ -166,7 +167,7 @@ public partial class MainWindow : Window
 		// toolbar buttons with whatever was actually loaded from settings.json above.
 		ApplyGridModeButtonClasses();
 		ToggleSnapButton.Classes.Set("active", _snapToGuides);
-		TogglePreciseTimeButton.Classes.Set("active", _preciseTime);
+		BuildTimeFormatMenu();
 	}
 
 	private async void OnWindowOpened(object? sender, EventArgs e)
@@ -312,6 +313,7 @@ public partial class MainWindow : Window
 		OverlaySettings withExportChanges = settings.ApplyExportSettings(beforeExportChanges);
 		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);
 		var interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
+		SetTimeFormat(PreviewTimeFormats.Parse(withExportChanges.PreviewTimeFormat), false);
 
 		if (settings.ShowWatermark != _showWatermark)
 		{
@@ -482,6 +484,7 @@ public partial class MainWindow : Window
 
 	protected override void OnClosed(EventArgs e)
 	{
+		SavePlacement();
 		_previewPlayer.Dispose();
 		base.OnClosed(e);
 	}

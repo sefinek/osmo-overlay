@@ -39,6 +39,21 @@ public sealed class SmpteTimecodeTests
 	}
 
 	[TestMethod]
+	[DataRow(0L, Ntsc60, "00:00:00;00")]
+	// Minute 0 is a tenth minute, so it keeps every frame; the next ones drop theirs.
+	[DataRow(3600L, Ntsc60, "00:01:00;04")]
+	[DataRow(1800L, Ntsc30, "00:01:00;02")]
+	[DataRow(35964L, Ntsc60, "00:10:00;00")]
+	[DataRow(1500L, 25.0, "00:01:00:00")]
+	[DataRow(3600L, 60.0, "00:01:00:00")]
+	// 23.976 has no drop-frame variant - counted at a nominal 24.
+	[DataRow(1440L, 24000 / 1001.0, "00:01:00:00")]
+	public void FromFrame(long frame, double fps, string expected)
+	{
+		Assert.AreEqual(expected, SmpteTimecode.FromFrame(frame, fps));
+	}
+
+	[TestMethod]
 	public void AddFrames_IsAdditive_AcrossDropFrameMinutes()
 	{
 		// Adding in two steps must land where one step does - catches an off-by-drop at minute boundaries.

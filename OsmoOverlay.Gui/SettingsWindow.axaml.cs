@@ -68,6 +68,7 @@ public partial class SettingsWindow : Window
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
+		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
 		MapProviderCombo.ItemsSource = TileProviderOptions;
 
 		var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
@@ -138,6 +139,24 @@ public partial class SettingsWindow : Window
 		UpdateMetadataOptionsEnabled();
 		InterfaceScaleCombo.SelectedItem = InterfaceScaleOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.InterfaceScale) < 0.001)
 		                                   ?? InterfaceScaleOptions[1];
+		PreviewTimeFormat timeFormat = PreviewTimeFormats.Parse(settings.PreviewTimeFormat);
+		TimeFormatCombo.SelectedItem = PreviewTimeFormats.Options.First(o => o.Value == timeFormat);
+		RestoreWindowPlacementCheck.IsChecked = settings.RestoreWindowPlacement;
+	}
+
+	private void OnTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (TimeFormatCombo.SelectedItem is not ChoiceOption<PreviewTimeFormat> option) return;
+
+		TimeFormatHint.Text = option.Value switch
+		{
+			PreviewTimeFormat.Milliseconds => "The time readout next to the timeline, e.g. 01:23.456 - the format the cut editor uses.",
+			PreviewTimeFormat.Timecode =>
+				"The time readout next to the timeline as hours:minutes:seconds:frames from 00:00:00:00, e.g. 00:01:23:12 - drop-frame (;) at 29.97 and 59.94 fps, as an NLE numbers its timeline.",
+			PreviewTimeFormat.CameraTimecode =>
+				"The time readout next to the timeline as the timecode the camera wrote, the one an NLE shows as the clip's own - e.g. 09:59:56;00. A recording without one counts from 00:00:00:00.",
+			_ => "The time readout next to the timeline, e.g. 01:23. Clicking the readout switches between the formats."
+		};
 	}
 
 	private void OnMetadataOptionChanged(object? sender, RoutedEventArgs e)
@@ -179,7 +198,9 @@ public partial class SettingsWindow : Window
 			MetadataKeepSerialNumber = MetadataSerialCheck.IsChecked == true,
 			MetadataKeepDebugTrack = MetadataDebugCheck.IsChecked == true,
 			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true,
-			InterfaceScale = (InterfaceScaleCombo.SelectedItem as ChoiceOption<double> ?? InterfaceScaleOptions[1]).Value
+			InterfaceScale = (InterfaceScaleCombo.SelectedItem as ChoiceOption<double> ?? InterfaceScaleOptions[1]).Value,
+			PreviewTimeFormat = (TimeFormatCombo.SelectedItem as ChoiceOption<PreviewTimeFormat> ?? PreviewTimeFormats.Options[0]).Value.ToString(),
+			RestoreWindowPlacement = RestoreWindowPlacementCheck.IsChecked == true
 		};
 	}
 

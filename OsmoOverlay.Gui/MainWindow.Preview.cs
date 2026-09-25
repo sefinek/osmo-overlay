@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
@@ -172,25 +173,59 @@ public partial class MainWindow
 		}
 	}
 
-	/// <summary>Toolbar toggle above the preview: the time readout in whole seconds or with milliseconds (the same format the cut editor uses).</summary>
-	private void OnTogglePreciseTimeClick(object? sender, RoutedEventArgs e)
+	/// <summary>The time format flyout's entries, one per PreviewTimeFormats option (the format in the button's Tag).</summary>
+	private void BuildTimeFormatMenu()
 	{
-		_preciseTime = !_preciseTime;
-		TogglePreciseTimeButton.Classes.Set("active", _preciseTime);
-		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewPreciseTime = _preciseTime });
+		foreach (ChoiceOption<PreviewTimeFormat> option in PreviewTimeFormats.Options)
+		{
+			var button = new Button { Classes = { "toolbar" }, Content = option.Label, Tag = option.Value };
+			button.Click += (_, _) =>
+			{
+				TimeFormatButton.Flyout?.Hide();
+				SetTimeFormat(option.Value);
+			};
+			TimeFormatMenu.Children.Add(button);
+		}
+
+		ApplyTimeFormatButtonClasses();
+	}
+
+	private void OnPreviewTimeTextPressed(object? sender, PointerPressedEventArgs e)
+	{
+		if (!e.GetCurrentPoint(PreviewTimeText).Properties.IsLeftButtonPressed) return;
+
+		SetTimeFormat(PreviewTimeFormats.Next(_timeFormat));
+		e.Handled = true;
+	}
+
+	private void SetTimeFormat(PreviewTimeFormat format, bool save = true)
+	{
+		if (format == _timeFormat) return;
+
+		_timeFormat = format;
+		ApplyTimeFormatButtonClasses();
+		if (save) OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewTimeFormat = format.ToString() });
 		UpdatePreviewTimeText();
+	}
+
+	private void ApplyTimeFormatButtonClasses()
+	{
+		foreach (Button button in TimeFormatMenu.Children.OfType<Button>())
+			button.Classes.Set("active", button.Tag is PreviewTimeFormat format && format == _timeFormat);
+		TimeFormatButton.Classes.Set("active", _timeFormat != PreviewTimeFormat.Seconds);
 	}
 
 	/// <summary>The readout's column is Auto next to the timeline's *, so the timeline takes whatever width the text leaves.</summary>
 	private void UpdatePreviewTimeText()
 	{
-		PreviewTimeText.Text = $"{FormatTime(_previewPosition)} / {FormatTime(_previewPlayer.Duration)}";
+		PreviewTimeText.Text = $"{FormatTime(_previewPosition, FrameAt(_previewPosition.TotalSeconds))} / {FormatTime(_previewPlayer.Duration, SourceFrames)}";
 	}
 
-	private string FormatTime(TimeSpan t)
+	private string FormatTime(TimeSpan time, long frame)
 	{
-		if (_preciseTime) return TimeText.Format(t.TotalSeconds);
-		return t.ToString(t.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss");
+		return _summary is null
+			? PreviewTimeFormats.Format(PreviewTimeFormat.Seconds, time, 0, 0, null)
+			: PreviewTimeFormats.Format(_timeFormat, time, frame, _summary.Video.Fps, _summary.Video.Timecode);
 	}
 
 	/// <summary>

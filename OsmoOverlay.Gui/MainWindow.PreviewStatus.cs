@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using Avalonia.Controls;
-using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
 
@@ -37,8 +36,7 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var frame = Math.Min(PreviewFrames.IndexAt(position.TotalSeconds, _summary.Video.Fps), Math.Max(0, SourceFrames - 1));
-		StatusFrameText.Text = frame.ToString("N0", CultureInfo.InvariantCulture);
+		StatusFrameText.Text = FrameAt(position.TotalSeconds).ToString("N0", CultureInfo.InvariantCulture);
 	}
 
 	private void ShowPlaybackFps(double framesPerSecond)

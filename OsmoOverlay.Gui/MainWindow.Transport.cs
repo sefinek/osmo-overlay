@@ -225,12 +225,18 @@ public partial class MainWindow
 		SeekToFrame(Math.Max(0, CurrentFrame() + delta));
 	}
 
-	/// <summary>The frame on screen - the same rule the decoders use (PreviewFrames.IndexAt), within the recording.</summary>
+	/// <summary>The frame on screen.</summary>
 	private long CurrentFrame()
+	{
+		return FrameAt(PreviewTimeline.Value);
+	}
+
+	/// <summary>The frame shown at `seconds` - the same rule the decoders use (PreviewFrames.IndexAt), within the recording.</summary>
+	private long FrameAt(double seconds)
 	{
 		if (_summary is null) return 0;
 
-		return Math.Min(PreviewFrames.IndexAt(PreviewTimeline.Value, _summary.Video.Fps), Math.Max(0, SourceFrames - 1));
+		return Math.Min(PreviewFrames.IndexAt(seconds, _summary.Video.Fps), Math.Max(0, SourceFrames - 1));
 	}
 
 	/// <summary>
