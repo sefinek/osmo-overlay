@@ -21,12 +21,15 @@ public partial class MainWindow
 	private TimelineThumbnails? _timelineThumbnails;
 	private AudioWaveform? _timelineWaveform;
 	private FileSummary? _timelineTracksFor;
+	// The user's choice (remembered in OverlaySettings) - shown only while there's a recording to show on it.
+	private bool _timelineWanted;
 
 	private void WireTimelineTracks()
 	{
 		ExpandedTimeline.ViewChanged += SyncTimelineScrollBar;
 		Closed += (_, _) => ReleaseTimelineTracks();
-		SetTimelineExpanded(OverlaySettingsStore.Load().PreviewTimelineExpanded, false);
+		_timelineWanted = OverlaySettingsStore.Load().PreviewTimelineExpanded;
+		SetTimelineExpanded(_timelineWanted, false);
 	}
 
 	private void OnToggleTimelineClick(object? sender, RoutedEventArgs e)
@@ -37,10 +40,19 @@ public partial class MainWindow
 	/// <summary>
 	///     The expanded timeline in the log's place under the window - the bottom row then shrinks to its height, leaving
 	///     the rest to the preview. The compact one (still the one holding the position, see Timelines) is hidden meanwhile
-	///     and the status strip takes its place in the transport row.
+	///     and the status strip takes its place in the transport row. Without a loaded recording (no file yet, a summary or
+	///     a render running, no telemetry so no preview) it would be empty, so the log shows instead.
 	/// </summary>
 	private void SetTimelineExpanded(bool expanded, bool save)
 	{
+		if (save)
+		{
+			_timelineWanted = expanded;
+			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewTimelineExpanded = expanded });
+		}
+
+		expanded &= _phase == UiPhase.SummaryReady && _summary?.HasTelemetry == true;
+
 		TimelineCard.IsVisible = expanded;
 		LogCard.IsVisible = !expanded;
 		RootGrid.RowDefinitions[1].Height = expanded ? GridLength.Auto : new GridLength(230);
@@ -53,14 +65,6 @@ public partial class MainWindow
 		Grid.SetColumnSpan(PreviewStatusBar, expanded ? 1 : 3);
 		PreviewStatusBar.Margin = expanded ? default : new Thickness(0, 8, 0, 0);
 		SyncTimelineScrollBar();
-
-		if (save) OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewTimelineExpanded = expanded });
-	}
-
-	/// <summary>A render's progress is in the log - it takes the timeline's place back while rendering.</summary>
-	private void ShowLogForRender()
-	{
-		if (TimelineCard.IsVisible) SetTimelineExpanded(false, false);
 	}
 
 	private void OnTimelineScroll(object? sender, ScrollEventArgs e)

@@ -8,6 +8,7 @@
         Width="480" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
         Title="Confirm">
 
 	<StackPanel Margin="20" Spacing="16">

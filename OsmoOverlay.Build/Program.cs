@@ -10,7 +10,7 @@ const string usage = """
                        --rid <rid>           Runtime identifier to build; repeatable or comma-separated.
                                              Default: win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64
                        --flavor <flavor>     self-contained, framework-dependent or all (default: all)
-                       --version <version>   Overrides <Version> from OsmoOverlay.Gui.csproj
+                       --version <version>   Overrides <Version> from Directory.Build.props
                        --output <dir>        Output directory (default: artifacts)
                        --skip-tests          Don't run OsmoOverlay.Tests first
                        --no-archive          Keep the published folders instead of zip/tar.gz archives
@@ -74,7 +74,7 @@ if (flavors.Count == 0) flavors.AddRange([Flavor.SelfContained, Flavor.Framework
 var root = FindRepoRoot();
 var guiProject = Path.Combine(root, "OsmoOverlay.Gui", "OsmoOverlay.Gui.csproj");
 var cliProject = Path.Combine(root, "OsmoOverlay.Cli", "OsmoOverlay.Cli.csproj");
-var version = versionOverride ?? XDocument.Load(guiProject).Descendants("Version").First().Value;
+var version = versionOverride ?? XDocument.Load(Path.Combine(root, "Directory.Build.props")).Descendants("Version").First().Value;
 var displayVersion = ShortVersion(version);
 var outputDir = Path.GetFullPath(outputArg ?? Path.Combine(root, "artifacts"));
 Directory.CreateDirectory(outputDir);
@@ -121,7 +121,7 @@ string Package(string rid, Flavor flavor)
 
 	Publish(guiProject, rid, flavor, publishDir);
 	Publish(cliProject, rid, flavor, publishDir);
-	if (isMac) WriteInfoPlist(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
+	if (isMac) WriteAppBundle(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
 
 	if (!archive) return packageDir;
 
@@ -148,8 +148,12 @@ void Publish(string project, string rid, Flavor flavor, string destination)
 	Dotnet([.. arguments]);
 }
 
-void WriteInfoPlist(string contentsDir)
+void WriteAppBundle(string contentsDir)
 {
+	var resourcesDir = Path.Combine(contentsDir, "Resources");
+	Directory.CreateDirectory(resourcesDir);
+	File.Copy(Path.Combine(root, "OsmoOverlay.Gui", "Assets", "OsmoOverlay.icns"), Path.Combine(resourcesDir, "OsmoOverlay.icns"));
+
 	var plist = $"""
 	             <?xml version="1.0" encoding="UTF-8"?>
 	             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -159,6 +163,7 @@ void WriteInfoPlist(string contentsDir)
 	               <key>CFBundleDisplayName</key><string>OsmoOverlay</string>
 	               <key>CFBundleIdentifier</key><string>com.sefinek.osmooverlay</string>
 	               <key>CFBundleExecutable</key><string>OsmoOverlay</string>
+	               <key>CFBundleIconFile</key><string>OsmoOverlay.icns</string>
 	               <key>CFBundlePackageType</key><string>APPL</string>
 	               <key>CFBundleShortVersionString</key><string>{displayVersion}</string>
 	               <key>CFBundleVersion</key><string>{version}</string>

@@ -9,6 +9,7 @@
         WindowState="Maximized"
         Background="{StaticResource WindowBackgroundBrush}"
         FontSize="15"
+        Icon="/Assets/OsmoOverlay.ico"
         Title="Compare videos">
 
 	<Window.Styles>

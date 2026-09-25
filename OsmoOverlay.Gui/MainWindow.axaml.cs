@@ -375,7 +375,13 @@ public partial class MainWindow : Window
 
 	private void SetPhase(UiPhase phase)
 	{
+		UiPhase previous = _phase;
 		_phase = phase;
+
+		// The log while there's no recording on the timeline or a render runs; a freshly loaded summary brings back
+		// the user's choice. After a render the log stays, showing how it went.
+		if (phase != UiPhase.SummaryReady) SetTimelineExpanded(false, false);
+		else if (previous == UiPhase.LoadingSummary) SetTimelineExpanded(_timelineWanted, false);
 
 		var summaryVisible = phase is UiPhase.SummaryReady or UiPhase.Rendering;
 		SummaryPanel.IsVisible = summaryVisible;

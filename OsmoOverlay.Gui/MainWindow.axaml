@@ -10,6 +10,7 @@
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
         Title="OsmoOverlay - DJI Osmo Action Telemetry HUD Renderer">
 
 	<Window.Styles>
