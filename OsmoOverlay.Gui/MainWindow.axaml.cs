@@ -58,6 +58,9 @@ public partial class MainWindow : Window
 	private bool _hasGpsTimestamp = true;
 	private string? _hoveredElementId;
 	private TimeSpan _previewPosition;
+	// The frame at _previewPosition (FrameAt) - the time readout and the status strip both show it.
+	private long _previewFrame;
+	private (PreviewTimeFormat Format, TimeSpan Duration, FileSummary? Summary, string Text)? _timeEndText;
 	private List<OverlayPreset> _overlayPresets = [];
 	// Guards a real race: SetPhase(SummaryReady) can run before LoadOverlayPresets (an earlier await
 	// in OpenPreviewAsync) has populated _overlayPresets. Without this, the Overlay panel's "New"/
@@ -307,8 +310,8 @@ public partial class MainWindow : Window
 		settings.LoadExportSettings(currentSettings);
 		await settings.ShowDialog(this);
 
-		// Export options only matter at render time (RenderJob reads them from settings.json itself), so
-		// unlike the preview-affecting settings below they never need the preview reopened.
+		// Export options only matter at render time (RenderJob reads them from settings.json itself) and the Interface
+		// ones apply at startup or live (the time format), so unlike the settings below they never reopen the preview.
 		OverlaySettings beforeExportChanges = OverlaySettingsStore.Load();
 		OverlaySettings withExportChanges = settings.ApplyExportSettings(beforeExportChanges);
 		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);

@@ -110,9 +110,10 @@ public partial class MainWindow
 		}
 
 		_previewPosition = position;
+		_previewFrame = FrameAt(position.TotalSeconds);
 		UpdateCutScrim(position);
 		UpdatePreviewTimeText();
-		UpdateFrameStatus(position);
+		UpdateFrameStatus();
 	}
 
 	private void OnPreviewPlaybackStopped()
@@ -215,10 +216,17 @@ public partial class MainWindow
 		TimeFormatButton.Classes.Set("active", _timeFormat != PreviewTimeFormat.Seconds);
 	}
 
-	/// <summary>The readout's column is Auto next to the timeline's *, so the timeline takes whatever width the text leaves.</summary>
+	/// <summary>
+	///     The readout's column is Auto next to the timeline's *, so the timeline takes whatever width the text leaves.
+	///     Runs for every frame shown while playing - the end of the recording is formatted once per recording and format.
+	/// </summary>
 	private void UpdatePreviewTimeText()
 	{
-		PreviewTimeText.Text = $"{FormatTime(_previewPosition, FrameAt(_previewPosition.TotalSeconds))} / {FormatTime(_previewPlayer.Duration, SourceFrames)}";
+		TimeSpan duration = _previewPlayer.Duration;
+		if (_timeEndText is not { } end || end.Format != _timeFormat || end.Duration != duration || !ReferenceEquals(end.Summary, _summary))
+			_timeEndText = end = (_timeFormat, duration, _summary, FormatTime(duration, SourceFrames));
+
+		PreviewTimeText.Text = $"{FormatTime(_previewPosition, _previewFrame)} / {end.Text}";
 	}
 
 	private string FormatTime(TimeSpan time, long frame)

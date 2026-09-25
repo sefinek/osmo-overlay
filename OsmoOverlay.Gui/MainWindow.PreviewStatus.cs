@@ -32,11 +32,11 @@ public partial class MainWindow
 		UpdateDisplayStatus();
 	}
 
-	private void UpdateFrameStatus(TimeSpan position)
+	private void UpdateFrameStatus()
 	{
 		if (_summary is null) return;
 
-		StatusFrameText.Text = FrameAt(position.TotalSeconds).ToString("N0", CultureInfo.InvariantCulture);
+		StatusFrameText.Text = _previewFrame.ToString("N0", CultureInfo.InvariantCulture);
 	}
 
 	private void ShowPlaybackFps(double framesPerSecond)
