@@ -42,9 +42,6 @@ public sealed class AudioWaveform : IDisposable
 	/// <summary>The highest peak of any channel decoded so far, 0-1.</summary>
 	public float LoudestPeak => _loudest;
 
-	/// <summary>Buckets computed so far, from the start - the rest reads as silence until then.</summary>
-	public int AvailableBuckets => _available;
-
 	public event Action? Updated;
 
 	/// <summary>Null when the recording has no audio track. Blocking - opens the first file.</summary>

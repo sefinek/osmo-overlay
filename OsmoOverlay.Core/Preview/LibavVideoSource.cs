@@ -249,14 +249,14 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	{
 		var buffer = _buffers.Rent(_width * _height * 4);
 		session.ConvertInto(buffer, _width, _height);
-		return new VideoFrame(buffer, _width * 4, _width, _height);
+		return new VideoFrame(buffer, _width, _height);
 	}
 
 	private VideoFrame Copy(byte[] source)
 	{
 		var buffer = _buffers.Rent(source.Length);
 		Buffer.BlockCopy(source, 0, buffer, 0, source.Length);
-		return new VideoFrame(buffer, _width * 4, _width, _height);
+		return new VideoFrame(buffer, _width, _height);
 	}
 
 	private (int Segment, long LocalFrame) Locate(long frame)

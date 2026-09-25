@@ -1,7 +1,7 @@
 namespace OsmoOverlay.Core.Preview;
 
-/// <summary>One decoded preview frame, BGRA at the preview size.</summary>
-public sealed record VideoFrame(byte[] Bgra, int Stride, int Width, int Height);
+/// <summary>One decoded preview frame, BGRA (Width * 4 bytes a row) at the preview size.</summary>
+public sealed record VideoFrame(byte[] Bgra, int Width, int Height);
 
 /// <summary>One physical file on the combined preview timeline.</summary>
 public sealed record PlaybackSegment(string Path, double DurationSeconds)

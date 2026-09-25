@@ -116,12 +116,6 @@ public sealed partial class OverlayRenderer
 		return [.. _allFrames.Select(f => mosaic.GetPixel(f.Raw.Latitude, f.Raw.Longitude))];
 	}
 
-	/// <summary>See NeedsMapPrepare - lets a live-preview caller know a fresh fetch is worth making.</summary>
-	public bool NeedsRouteIntroMapPrepare()
-	{
-		return RouteIntro.Enabled && _preparedRouteIntroKey != ResolveUrlTemplate();
-	}
-
 	/// <summary>
 	///     Single source of truth for the map card's rect, read both when drawing it and (via
 	///     BuildRouteIntroMosaicAsync) when deciding what aspect ratio to fetch the mosaic at - the two
