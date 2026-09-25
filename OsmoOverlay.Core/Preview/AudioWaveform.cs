@@ -86,6 +86,7 @@ public sealed class AudioWaveform : IDisposable
 			var samplesPerBucket = (double)_source.SampleRate / BucketsPerSecond;
 			long sampleFrame = 0;
 			var lastUpdate = Environment.TickCount64;
+			var started = lastUpdate;
 
 			_source.Seek(0);
 			while (!ct.IsCancellationRequested)
@@ -114,6 +115,9 @@ public sealed class AudioWaveform : IDisposable
 			}
 
 			_available = _peaks[0].Length;
+			if (!ct.IsCancellationRequested)
+				AppLogger.Info($"Timeline waveform: {_peaks[0].Length / (double)BucketsPerSecond:F0} s of audio in " +
+				               $"{(Environment.TickCount64 - started) / 1000.0:F1} s");
 			Updated?.Invoke();
 		}
 		catch (InvalidOperationException ex)
