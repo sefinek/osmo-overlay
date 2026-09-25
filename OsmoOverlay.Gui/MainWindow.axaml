@@ -1192,6 +1192,15 @@
 													<RadioButton Name="ElevationImperialRadio" Content="Imperial"
 													             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
 												</StackPanel>
+												<TextBlock Text="Shows" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ElevationFromStartRadio" Content="Change from start"
+													             GroupName="ElevationReference" Click="OnElevationReferenceChanged"
+													             ToolTip.Tip="How much higher or lower than where the video starts" />
+													<RadioButton Name="ElevationSeaLevelRadio" Content="Above sea level"
+													             GroupName="ElevationReference" Click="OnElevationReferenceChanged"
+													             ToolTip.Tip="The altitude the camera's GPS reports" />
+												</StackPanel>
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
 												<local:ElementStyleEditor Name="ElevationStyle" HasAccentColor="True" />

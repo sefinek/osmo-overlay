@@ -119,10 +119,22 @@ public abstract record LabeledStatElement : StyledOverlayElement
 	public string? Label { get; init; }
 }
 
+/// <summary>
+///     Reference: the GPS altitude itself, or the change since the render's first frame. New widgets get SeaLevel
+///     (OverlayPreset.CreateDefault - what "ELEVATION" reads as); the property's own default stays Start, which is
+///     what a preset saved before this existed has no field for and always showed.
+/// </summary>
 public sealed record ElevationElement : LabeledStatElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Elevation;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+	public ElevationReference Reference { get; init; } = ElevationReference.Start;
+}
+
+public enum ElevationReference
+{
+	Start,
+	SeaLevel
 }
 
 /// <summary>No Units - OverlayRenderer.DrawGradient always shows a plain percentage, unit-agnostic.</summary>

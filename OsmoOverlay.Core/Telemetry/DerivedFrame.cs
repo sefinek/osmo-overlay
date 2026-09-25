@@ -11,5 +11,6 @@ public sealed record DerivedFrame(
 	double LocalEastMeters,
 	double LocalNorthMeters,
 	double SmoothedGForce,
-	// Set by OutputTimeline.MapFrames on the first frame after a cut - where a drawn route must not simply carry on (RouteJoin).
+	// The first frame after a cut (OutputTimeline.MapFrames) or after a gap between files (TelemetryFrame.StartsAfterGap) -
+	// where a drawn route must not simply carry on (RouteJoin).
 	bool StartsAfterCut = false);

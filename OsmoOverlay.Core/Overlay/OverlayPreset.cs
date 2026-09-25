@@ -45,7 +45,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		List<OverlayElement> elements =
 		[
 			new DateTimeTextElement { X = statsX, Y = dateY },
-			new ElevationElement { X = statsX, Y = elevationY },
+			new ElevationElement { X = statsX, Y = elevationY, Reference = ElevationReference.SeaLevel },
 			new GradientElement { X = statsX, Y = gradientY },
 			new DistanceElement { X = statsX, Y = distanceY },
 			// Off by default - most users only need one clock; UTC is an opt-in extra for syncing

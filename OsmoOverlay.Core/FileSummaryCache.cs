@@ -10,7 +10,7 @@ internal static class FileSummaryCache
 {
 	// Bump whenever telemetry extraction or derivation logic changes, so stale cache
 	// entries computed with the old logic are treated as a cache miss automatically.
-	public const int FormatVersion = 17;
+	public const int FormatVersion = 18;
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "cache");
@@ -176,7 +176,7 @@ internal static class FileSummaryCache
 		public DerivedFrame ToDerivedFrame(TelemetryFrame raw)
 		{
 			return new DerivedFrame(raw, SpeedKmh, HeadingDegrees, GradientPercent, CumulativeDistanceMeters,
-				PitchDegrees, Sun, LocalEastMeters, LocalNorthMeters, SmoothedGForce);
+				PitchDegrees, Sun, LocalEastMeters, LocalNorthMeters, SmoothedGForce, raw.StartsAfterGap);
 		}
 	}
 }

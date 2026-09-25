@@ -21,7 +21,10 @@ public sealed record TelemetryFrame(
 	bool HasGpsFix = true,
 	// Set only on frames moved onto a cut render's own timeline (OutputTimeline.MapFrames), where
 	// SampleTimeSeconds becomes the time in the output video - this keeps where it was in the recording.
-	double? SourceTimeSeconds = null)
+	double? SourceTimeSeconds = null,
+	// First frame of a file recorded after the camera had stopped (TelemetryExtraction.ExtractCombined) - next
+	// to the previous file on the timeline but not in time, so speed, distance and the route don't run across it.
+	bool StartsAfterGap = false)
 {
 	public double GForce => Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
 

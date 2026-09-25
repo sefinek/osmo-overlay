@@ -586,6 +586,8 @@ public partial class MainWindow
 				var x = (ElevationElement)el;
 				ElevationLabelBox.Text = x.Label ?? DefaultElevationLabel;
 				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, x.Units);
+				ElevationFromStartRadio.IsChecked = x.Reference == ElevationReference.Start;
+				ElevationSeaLevelRadio.IsChecked = x.Reference == ElevationReference.SeaLevel;
 				ElevationStyle.Populate(x);
 				ElevationTiming.Populate(x);
 				break;
@@ -823,6 +825,13 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementUnits(id, ElevationImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnElevationReferenceChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		var reference = ElevationSeaLevelRadio.IsChecked == true ? ElevationReference.SeaLevel : ElevationReference.Start;
+		UpdateElement(id, el => el is ElevationElement x ? x with { Reference = reference } : el);
 	}
 
 	private void OnGradientLabelChanged(object? sender, RoutedEventArgs e)

@@ -6,6 +6,10 @@ namespace OsmoOverlay.Core;
 
 public static class TelemetryExtraction
 {
+	// Files the camera split one recording into follow each other within a frame by the GPS clock (measured
+	// 0.1 s off at most); a file starting this much later than the previous one ended was recorded after a stop.
+	private const double GapToleranceSeconds = 2.0;
+
 	public static TelemetryExtractionResult Extract(string inputPath, SourceInfo source)
 	{
 		if (source.DjmdStreamIndex is { } djmdStreamIndex)
@@ -36,6 +40,7 @@ public static class TelemetryExtraction
 		var combinedFrames = new List<TelemetryFrame>();
 		string? cameraModel = null;
 		(double Lat, double Lon, double AltitudeMeters)? lastKnownFix = null;
+		(DateTime? GpsStart, double Offset)? previous = null;
 
 		foreach (VideoSegment segment in segments)
 		{
@@ -50,6 +55,17 @@ public static class TelemetryExtraction
 			if (lastKnownFix is { } fix)
 				BridgeLeadingGpsGap(offsetFrames, fix);
 
+			DateTime? gpsStart = GpsStartUtc(result.Frames);
+			if (previous is { } before && GapSeconds(before.GpsStart, before.Offset, gpsStart, segment.StartOffsetSeconds) is { } gap &&
+			    gap > GapToleranceSeconds)
+			{
+				offsetFrames[0] = offsetFrames[0] with { StartsAfterGap = true };
+				AppLogger.Info($"{Path.GetFileName(segment.InputPath)} starts {gap:F1} s after the previous file ended (a stop, not a split) - " +
+				               "speed, distance and the route don't run across it");
+			}
+
+			previous = (gpsStart, segment.StartOffsetSeconds);
+
 			combinedFrames.AddRange(offsetFrames);
 
 			TelemetryFrame last = offsetFrames[^1];
@@ -59,6 +75,29 @@ public static class TelemetryExtraction
 
 		BackfillBeforeFirstFix(combinedFrames);
 		return new TelemetryExtractionResult(combinedFrames, cameraModel);
+	}
+
+	/// <summary>
+	///     When a file's first frame was recorded, by the GPS clock: the first frame the GPS time (whole seconds) ticks
+	///     over on is at that second, less the frame's own time in the file. Null without a tick (no GPS time).
+	/// </summary>
+	internal static DateTime? GpsStartUtc(IReadOnlyList<TelemetryFrame> frames)
+	{
+		DateTime? last = null;
+		foreach (TelemetryFrame frame in frames)
+		{
+			if (frame.GpsTimestamp is not { } timestamp) continue;
+			if (last is { } seen && timestamp != seen) return timestamp.AddSeconds(-frame.SampleTimeSeconds);
+			last = timestamp;
+		}
+
+		return null;
+	}
+
+	/// <summary>How much later a file started than the previous one ended, in seconds - null when either has no GPS time.</summary>
+	internal static double? GapSeconds(DateTime? previousStart, double previousOffset, DateTime? start, double offset)
+	{
+		return previousStart is { } before && start is { } after ? (after - before).TotalSeconds - (offset - previousOffset) : null;
 	}
 
 	/// <summary>

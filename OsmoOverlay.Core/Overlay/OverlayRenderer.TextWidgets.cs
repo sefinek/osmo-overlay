@@ -63,7 +63,7 @@ public sealed partial class OverlayRenderer
 
 	private void DrawElevation(SKCanvas canvas, DerivedFrame frame, ElevationElement element)
 	{
-		var meters = frame.Raw.AltitudeMeters - _startAltitude;
+		var meters = element.Reference == ElevationReference.SeaLevel ? frame.Raw.AltitudeMeters : frame.Raw.AltitudeMeters - _startAltitude;
 		var (value, unit) = element.Units == UnitSystem.Imperial
 			? (F(meters * MetersToFeet, "0"), "FT")
 			: (F(meters, "0"), "M");

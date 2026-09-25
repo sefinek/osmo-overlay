@@ -32,6 +32,12 @@ public static class GpsInterpolation
 		{
 			TelemetryFrame current = result[i];
 			TelemetryFrame previous = result[i - 1];
+			if (current.StartsAfterGap)
+			{
+				anchorIndex = i;
+				continue;
+			}
+
 			if (IsSamePosition(current, previous)) continue;
 
 			InterpolateRun(result, anchorIndex, i);

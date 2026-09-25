@@ -39,6 +39,7 @@ public static class TelemetryProcessor
 		{
 			TelemetryFrame current = frames[i];
 
+			if (current.StartsAfterGap) refIndex = i;
 			while (refIndex < i && current.SampleTimeSeconds - frames[refIndex].SampleTimeSeconds > SpeedWindowSeconds)
 				refIndex++;
 			TelemetryFrame reference = frames[refIndex];
@@ -75,7 +76,7 @@ public static class TelemetryProcessor
 			// Raw per-sample accelerometer readings are inherently noisy (vibration, bumps), so the
 			// live HUD gauges show an exponential moving average instead of the instantaneous value.
 			var frameDt = i > 0 ? current.SampleTimeSeconds - frames[i - 1].SampleTimeSeconds : 0;
-			if (i == 0)
+			if (i == 0 || current.StartsAfterGap)
 			{
 				smoothedPitch = rawPitch;
 				smoothedGForce = current.GForce;
@@ -95,7 +96,7 @@ public static class TelemetryProcessor
 			var localNorth = (current.Latitude - originLat) * metersPerDegLat;
 
 			result.Add(new DerivedFrame(current, speedKmh, heading, gradient, cumulativeDistances[i], smoothedPitch, sun,
-				localEast, localNorth, smoothedGForce));
+				localEast, localNorth, smoothedGForce, current.StartsAfterGap));
 		}
 
 		return result;
@@ -104,7 +105,8 @@ public static class TelemetryProcessor
 	/// <summary>
 	///     Running distance per frame, advanced in steps of at least SpeedWindowSeconds - summing every
 	///     sample-to-sample hop at 60 Hz would add up GPS jitter into distance never travelled. The last frame
-	///     also gets the final partial step (up to a second of travel), so the total is complete.
+	///     also gets the final partial step (up to a second of travel), so the total is complete. Nothing is added
+	///     across a gap between files (StartsAfterGap): what was travelled while the camera was off isn't in the video.
 	/// </summary>
 	internal static double[] SteppedDistances(IReadOnlyList<TelemetryFrame> frames)
 	{
@@ -113,6 +115,17 @@ public static class TelemetryProcessor
 		var lastStep = 0;
 		for (var i = 1; i < frames.Count; i++)
 		{
+			if (frames[i].StartsAfterGap)
+			{
+				// The partial step up to the previous file's last frame, like the recording's own last frame gets.
+				total += TelemetryMath.HaversineMeters(frames[lastStep].Latitude, frames[lastStep].Longitude,
+					frames[i - 1].Latitude, frames[i - 1].Longitude);
+				distances[i - 1] = total;
+				lastStep = i;
+				distances[i] = total;
+				continue;
+			}
+
 			var isLast = i == frames.Count - 1;
 			if (frames[i].SampleTimeSeconds - frames[lastStep].SampleTimeSeconds >= SpeedWindowSeconds || isLast)
 			{
