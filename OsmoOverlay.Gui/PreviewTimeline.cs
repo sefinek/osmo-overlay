@@ -310,7 +310,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		var audioTop = videoTop + VideoTrackHeight + TrackGap;
 		var bottom = audioTop + AudioTrackHeight;
 
-		var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+		var scaling = UiScale.DeviceScaling(TopLevel.GetTopLevel(this));
 		(double, double, Size, double, int) key = (ViewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
 		if (_tracksLayer is null || _tracksLayerKey != key)
 		{

@@ -1149,7 +1149,7 @@ public partial class MainWindow
 		// The preview bitmap is a uniformly downscaled copy of the full render resolution.
 		var fullResScale = _summary.Video.Width / (double)bitmapWidth;
 		var scale = _previewZoom is { } zoom
-			? zoom * fullResScale / RenderScaling
+			? zoom * fullResScale / UiScale.DeviceScaling(this)
 			: Math.Min(controlWidth / bitmapWidth, controlHeight / bitmapHeight);
 		var renderedWidth = bitmapWidth * scale;
 		var renderedHeight = bitmapHeight * scale;

@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 using OsmoOverlay.Core.Preview;
 
@@ -111,7 +110,7 @@ public static class DependencyInstaller
 
 	private static string BuildUpgradeAfterExitScript(ExternalTool tool, string packageId, string? version)
 	{
-		var (appPath, appArgs) = CurrentAppCommand();
+		var (appPath, appArgs) = AppCommand.Current();
 		var wingetArgs = string.Join(' ', Winget.UpgradeArgs(packageId, version).Select(PowerShellLiteral));
 		var relaunch = $"Start-Process -FilePath {PowerShellLiteral(appPath)}" +
 		               (appArgs.Length == 0 ? "" : $" -ArgumentList {string.Join(',', appArgs.Select(PowerShellLiteral))}");
@@ -127,16 +126,6 @@ public static class DependencyInstaller
 			"    Read-Host 'Press Enter to start OsmoOverlay again'",
 			"}",
 			relaunch);
-	}
-
-	/// <summary>What starts this app again: its own executable, or `dotnet app.dll` when it runs through the muxer.</summary>
-	private static (string Path, string[] Args) CurrentAppCommand()
-	{
-		var processPath = Environment.ProcessPath ?? throw new InvalidOperationException("The app's executable path is unknown");
-		return Path.GetFileNameWithoutExtension(processPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase) &&
-		       Assembly.GetEntryAssembly()?.Location is { Length: > 0 } entryAssembly
-			? (processPath, [entryAssembly])
-			: (processPath, []);
 	}
 
 	private static string PowerShellLiteral(string value)

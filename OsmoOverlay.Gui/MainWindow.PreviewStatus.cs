@@ -67,7 +67,8 @@ public partial class MainWindow
 			return;
 		}
 
-		var size = $"{Math.Round(t.RenderedWidth * RenderScaling)}x{Math.Round(t.RenderedHeight * RenderScaling)}";
+		var scaling = UiScale.DeviceScaling(this);
+		var size = $"{Math.Round(t.RenderedWidth * scaling)}x{Math.Round(t.RenderedHeight * scaling)}";
 		var measured = _previewPlayer.IsPlaying && double.IsFinite(_playbackFps);
 		StatusDisplayText.Text = measured ? string.Create(CultureInfo.InvariantCulture, $"{size}; {_playbackFps:0.000}") : size;
 

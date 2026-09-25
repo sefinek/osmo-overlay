@@ -81,7 +81,9 @@ public sealed record OverlaySettings(
 	// Measured render speed (frames/s) per RenderSpeedHistory.Key - feeds the GUI's pre-render estimate.
 	Dictionary<string, double>? RenderFpsHistory = null,
 	// An app release the user declined at startup - not offered there again (Settings' About tab still does).
-	string? SkippedAppUpdate = null);
+	string? SkippedAppUpdate = null,
+	// The GUI's scale on top of the system's display scaling, applied at startup (see the GUI's UiScale).
+	double InterfaceScale = 1.0);
 
 /// <summary>
 ///     Render speed remembered per "shape" of render (resolution, frame rate, encoder, preset), from the

@@ -10,6 +10,7 @@ internal class Program
 	{
 		// Held while the app runs - the installer's AppMutex, so an update waits for the app to close.
 		using var appMutex = new Mutex(false, AppUpdates.MutexName);
+		UiScale.Initialize();
 		BuildAvaloniaApp()
 			.StartWithClassicDesktopLifetime(args);
 	}

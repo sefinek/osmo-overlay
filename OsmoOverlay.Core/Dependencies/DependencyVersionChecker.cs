@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using OsmoOverlay.Core.Logging;
@@ -154,7 +155,7 @@ public static partial class DependencyVersionChecker
 	{
 		if (DependencyChecker.IsCommandAvailable("apt-cache"))
 		{
-			var (exitCode, stdout, _) = await RunAsync("apt-cache", ["policy", tool.AptPackage], ct);
+			var (exitCode, stdout, _) = await RunUntranslatedAsync("apt-cache", ["policy", tool.AptPackage], ct);
 			if (exitCode != 0) return null;
 
 			var candidateLine = stdout.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("Candidate:"));
@@ -163,7 +164,7 @@ public static partial class DependencyVersionChecker
 
 		if (DependencyChecker.IsCommandAvailable("dnf"))
 		{
-			var (exitCode, stdout, _) = await RunAsync("dnf", ["--cacheonly", "list", "available", tool.DnfPackage], ct);
+			var (exitCode, stdout, _) = await RunUntranslatedAsync("dnf", ["--cacheonly", "list", "available", tool.DnfPackage], ct);
 			if (exitCode != 0) return null;
 
 			return ExtractVersionNumber(stdout);
@@ -171,7 +172,7 @@ public static partial class DependencyVersionChecker
 
 		if (DependencyChecker.IsCommandAvailable("pacman"))
 		{
-			var (exitCode, stdout, _) = await RunAsync("pacman", ["-Si", tool.PacmanPackage], ct);
+			var (exitCode, stdout, _) = await RunUntranslatedAsync("pacman", ["-Si", tool.PacmanPackage], ct);
 			if (exitCode != 0) return null;
 
 			var versionLine = stdout.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("Version"));
@@ -198,5 +199,13 @@ public static partial class DependencyVersionChecker
 	private static Task<(int ExitCode, string Stdout, string Stderr)> RunAsync(string command, string[] args, CancellationToken ct)
 	{
 		return ProcessHelper.TryRunCapturedAsync(ProcessHelper.CreateHiddenQuiet(command, args), ct);
+	}
+
+	/// <summary>The labels parsed out of apt-cache's/pacman's output ("Candidate:", "Version") are translated under a non-English locale.</summary>
+	private static Task<(int ExitCode, string Stdout, string Stderr)> RunUntranslatedAsync(string command, string[] args, CancellationToken ct)
+	{
+		ProcessStartInfo startInfo = ProcessHelper.CreateHiddenQuiet(command, args);
+		startInfo.Environment["LC_ALL"] = "C";
+		return ProcessHelper.TryRunCapturedAsync(startInfo, ct);
 	}
 }

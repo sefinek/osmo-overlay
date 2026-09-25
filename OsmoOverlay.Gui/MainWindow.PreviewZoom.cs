@@ -49,7 +49,7 @@ public partial class MainWindow
 	{
 		if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || GetPreviewTransform() is not { } t) return;
 
-		var current = t.Scale * RenderScaling / t.FullResScale;
+		var current = t.Scale * UiScale.DeviceScaling(this) / t.FullResScale;
 		var zoom = current * Math.Pow(WheelZoomStep, e.Delta.Y);
 		SetPreviewZoom(zoom <= FitZoom() ? null : Math.Min(zoom, MaxPreviewZoom), e.GetPosition(OverlayDragCanvas));
 		e.Handled = true;
@@ -62,7 +62,7 @@ public partial class MainWindow
 
 		var bitmapWidth = frameSize.Width;
 		var fitScale = Math.Min(OverlayDragCanvas.Bounds.Width / bitmapWidth, OverlayDragCanvas.Bounds.Height / frameSize.Height);
-		return fitScale * RenderScaling * bitmapWidth / _summary.Video.Width;
+		return fitScale * UiScale.DeviceScaling(this) * bitmapWidth / _summary.Video.Width;
 	}
 
 	/// <param name="anchor">The canvas point that stays over the same spot of the frame; null = the view's middle.</param>

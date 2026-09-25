@@ -49,6 +49,16 @@ public partial class SettingsWindow : Window
 		new("2x source", 2.0)
 	];
 
+	private static readonly List<ChoiceOption<double>> InterfaceScaleOptions =
+	[
+		new("75%", 0.75),
+		new("100% (default)", 1.0),
+		new("125%", 1.25),
+		new("150%", 1.5),
+		new("175%", 1.75),
+		new("200%", 2.0)
+	];
+
 	/// <summary>Whether the main window is rendering - an FFmpeg update that restarts the app is held off until it isn't.</summary>
 	public Func<bool> IsRendering { get; init; } = () => false;
 
@@ -57,6 +67,7 @@ public partial class SettingsWindow : Window
 		InitializeComponent();
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
+		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
 		MapProviderCombo.ItemsSource = TileProviderOptions;
 
 		var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
@@ -125,6 +136,8 @@ public partial class SettingsWindow : Window
 		MetadataThumbnailsCheck.IsChecked = settings.MetadataKeepThumbnails;
 		PreserveCameraMetadataCheck.IsChecked = settings.PreserveCameraMetadata;
 		UpdateMetadataOptionsEnabled();
+		InterfaceScaleCombo.SelectedItem = InterfaceScaleOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.InterfaceScale) < 0.001)
+		                                   ?? InterfaceScaleOptions[1];
 	}
 
 	private void OnMetadataOptionChanged(object? sender, RoutedEventArgs e)
@@ -165,7 +178,8 @@ public partial class SettingsWindow : Window
 			MetadataKeepTelemetry = MetadataTelemetryCheck.IsChecked == true,
 			MetadataKeepSerialNumber = MetadataSerialCheck.IsChecked == true,
 			MetadataKeepDebugTrack = MetadataDebugCheck.IsChecked == true,
-			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true
+			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true,
+			InterfaceScale = (InterfaceScaleCombo.SelectedItem as ChoiceOption<double> ?? InterfaceScaleOptions[1]).Value
 		};
 	}
 
@@ -209,15 +223,16 @@ public partial class SettingsWindow : Window
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (RenderingPanel is null || MapPanel is null || RouteIntroPanel is null || AboutPanel is null)
+		if (RenderingPanel is null || MapPanel is null || RouteIntroPanel is null || InterfacePanel is null || AboutPanel is null)
 			return;
 
 		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 0;
 		MapPanel.IsVisible = CategoryList.SelectedIndex == 1;
 		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
-		AboutPanel.IsVisible = CategoryList.SelectedIndex == 3;
+		InterfacePanel.IsVisible = CategoryList.SelectedIndex == 3;
+		AboutPanel.IsVisible = CategoryList.SelectedIndex == 4;
 
-		if (CategoryList.SelectedIndex == 3 && !_updatesShown)
+		if (CategoryList.SelectedIndex == 4 && !_updatesShown)
 		{
 			_updatesShown = true;
 			_ = ShowUpdatesAsync(UpdateChecks.Latest);

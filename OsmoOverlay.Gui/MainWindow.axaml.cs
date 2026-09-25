@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -309,6 +311,7 @@ public partial class MainWindow : Window
 		OverlaySettings beforeExportChanges = OverlaySettingsStore.Load();
 		OverlaySettings withExportChanges = settings.ApplyExportSettings(beforeExportChanges);
 		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);
+		var interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
 
 		if (settings.ShowWatermark != _showWatermark)
 		{
@@ -364,6 +367,30 @@ public partial class MainWindow : Window
 
 		if (_summary is not null && _phase == UiPhase.SummaryReady)
 			PopulateOutputInfo(_summary, _detectedEncoder);
+
+		if (interfaceScaleChanged)
+		{
+			// UiScale applies only at startup - with nothing loaded there's nothing to lose by restarting right away.
+			if (_inputPaths.Count == 0) RestartApp();
+			else AppLogger.Notify("The new interface scale applies after restarting the app");
+		}
+	}
+
+	private static void RestartApp()
+	{
+		try
+		{
+			var (path, args) = AppCommand.Current();
+			Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = false });
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Error(ex, $"Could not restart the app: {ex.Message}");
+			return;
+		}
+
+		AppLogger.Info("Restarting to apply the new interface scale");
+		(Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
 	}
 
 	private async void OnToolsClick(object? sender, RoutedEventArgs e)

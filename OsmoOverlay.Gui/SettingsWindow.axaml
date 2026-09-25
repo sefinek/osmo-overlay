@@ -58,6 +58,7 @@
 					<ListBoxItem Content="Rendering" />
 					<ListBoxItem Content="Map" />
 					<ListBoxItem Content="Route intro" />
+					<ListBoxItem Content="Interface" />
 					<ListBoxItem Content="About" />
 				</ListBox>
 			</Border>
@@ -227,6 +228,17 @@
 									<RadioButton Name="RouteIntroImperialRadio" Content="Imperial" GroupName="RouteIntroUnits" />
 								</StackPanel>
 							</StackPanel>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="InterfacePanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Interface scale" Classes="infoLabel" />
+							<ComboBox Name="InterfaceScaleCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="Scales the whole app on top of your system's display scaling. Needs a restart - with no file loaded the app restarts on its own when you close Settings." />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>
