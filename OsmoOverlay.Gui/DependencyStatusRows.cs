@@ -43,12 +43,40 @@ internal static class DependencyStatusRows
 			}, i, 1);
 			AddCell(grid, new TextBlock { Text = LatestText(status), Opacity = 0.6 }, i, 2);
 
-			if (!status.UpdateAvailable) continue;
-
-			var updateButton = new Button { Content = "Update" };
-			updateButton.Click += async (_, _) => await OnUpdateClickAsync(owner, status, updateButton, isRendering);
-			AddCell(grid, updateButton, i, 3);
+			if (status.InstalledVersion is null && DependencyInstaller.CanAttemptAutoInstall())
+			{
+				var installButton = new Button { Content = "Install" };
+				installButton.Click += async (_, _) => await OnInstallClickAsync(status.Tool, installButton);
+				AddCell(grid, installButton, i, 3);
+			}
+			else if (status.UpdateAvailable)
+			{
+				var updateButton = new Button { Content = "Update" };
+				updateButton.Click += async (_, _) => await OnUpdateClickAsync(owner, status, updateButton, isRendering);
+				AddCell(grid, updateButton, i, 3);
+			}
 		}
+	}
+
+	// The optional tools aren't asked about at startup, so a missing one is installed from here.
+	private static async Task OnInstallClickAsync(ExternalTool tool, Button button)
+	{
+		button.IsEnabled = false;
+		AppLogger.Notify($"Installing {tool.DisplayName}...");
+
+		InstallResult result;
+		try
+		{
+			result = await DependencyInstaller.InstallAsync(tool, AppLogger.Notify, CancellationToken.None);
+		}
+		catch (Exception ex)
+		{
+			result = new InstallResult(false, ex.Message);
+		}
+
+		AppLogger.Notify(result.Message);
+		button.Content = result.Success ? "Installed" : "Retry";
+		button.IsEnabled = !result.Success;
 	}
 
 	private static string LatestText(ToolVersionInfo status)

@@ -13,7 +13,7 @@
 	<StackPanel Margin="20" Spacing="14">
 		<TextBlock Text="Missing dependencies" FontSize="16" FontWeight="SemiBold" />
 		<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
-		<ListBox Name="ToolList" MaxHeight="90" />
+		<StackPanel Name="ToolPanel" Spacing="6" />
 
 		<Border Name="LogPanel" Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6" Padding="10" IsVisible="False" MaxHeight="160">
 			<ScrollViewer Name="LogScroll">

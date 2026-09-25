@@ -7,27 +7,39 @@ namespace OsmoOverlay.Gui;
 
 public partial class DependencyPromptWindow : Window
 {
-	private readonly IReadOnlyList<ExternalTool> _missing;
+	// Every missing tool with its checkbox - a required one can't be unticked.
+	private readonly List<(ExternalTool Tool, CheckBox Check)> _tools = [];
 	private bool _installing;
 
 	public DependencyPromptWindow()
 	{
 		InitializeComponent();
-		_missing = [];
 	}
 
 	public DependencyPromptWindow(IReadOnlyList<ExternalTool> missing)
 	{
 		InitializeComponent();
-		_missing = missing;
-
-		ToolList.ItemsSource = missing.Select(t => t.DisplayName).ToList();
 
 		var canAutoInstall = DependencyInstaller.CanAttemptAutoInstall();
+		foreach (ExternalTool tool in missing.OrderBy(t => t.IsOptional))
+		{
+			var check = new CheckBox
+			{
+				Content = tool.IsOptional ? $"{tool.DisplayName} (optional)" : $"{tool.DisplayName} (required)",
+				IsChecked = true,
+				IsEnabled = tool.IsOptional && canAutoInstall
+			};
+			_tools.Add((tool, check));
+			ToolPanel.Children.Add(check);
+		}
+
+		var optionalNote = missing.Any(t => t.IsOptional)
+			? " ExifTool is optional - it's only used for cameras whose telemetry OsmoOverlay can't read on its own."
+			: "";
 		MessageText.Text = canAutoInstall
-			? "OsmoOverlay needs the following tools to work. Install them now?"
-			: "OsmoOverlay needs the following tools, but no supported package manager was found. " +
-			  "Install them manually, then restart the app.";
+			? "OsmoOverlay needs the tools below to work. Install them now?" + optionalNote
+			: "OsmoOverlay needs the tools below, but no supported package manager was found. " +
+			  "Install them manually, then restart the app." + optionalNote;
 		InstallButton.IsVisible = canAutoInstall;
 
 		// Closing mid-install would leave the package manager running with nobody watching its result.
@@ -46,8 +58,10 @@ public partial class DependencyPromptWindow : Window
 		SkipButton.IsEnabled = false;
 		LogPanel.IsVisible = true;
 
+		foreach ((_, CheckBox check) in _tools) check.IsEnabled = false;
+
 		var allSucceeded = true;
-		foreach (ExternalTool tool in _missing)
+		foreach ((ExternalTool tool, _) in _tools.Where(t => t.Check.IsChecked == true))
 		{
 			AppendLog($"Installing {tool.DisplayName}...");
 			InstallResult result;

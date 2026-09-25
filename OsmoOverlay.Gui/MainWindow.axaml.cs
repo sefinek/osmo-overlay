@@ -174,8 +174,9 @@ public partial class MainWindow : Window
 		AppendBanner();
 		_ = Task.Run(FfmpegPipeline.DeleteStaleTempFiles);
 
+		// Only a missing required tool brings the prompt up - it then offers the missing optional ones alongside.
 		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
-		if (missing.Count > 0) await new DependencyPromptWindow(missing).ShowDialog(this);
+		if (missing.Any(t => !t.IsOptional)) await new DependencyPromptWindow(missing).ShowDialog(this);
 
 		await OfferAppUpdateAsync(await UpdateChecks.Latest);
 	}

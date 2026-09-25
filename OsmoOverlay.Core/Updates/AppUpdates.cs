@@ -28,7 +28,7 @@ public static class AppUpdates
 	private const string InstallerGuid = "285212C3-78F8-4A92-AE19-52D33596D266";
 
 	// The installer's AppMutex - the GUI holds it while running, so setup knows to wait for it to close.
-	public const string MutexName = "OsmoOverlay-" + InstallerGuid;
+	public const string MutexName = @"Global\OsmoOverlay-" + InstallerGuid;
 
 	private const string LatestReleaseApi = "https://api.github.com/repos/sefinek/osmo-overlay/releases/latest";
 

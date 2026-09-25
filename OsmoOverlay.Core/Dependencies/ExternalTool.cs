@@ -15,7 +15,10 @@ public sealed record ExternalTool(
 	// The FFmpeg libraries the preview decodes with (LibavLoader) must load too - the commands alone aren't enough.
 	bool NeedsSharedLibraries = false,
 	// Install/update never goes past this major - a newer one wouldn't load (LibavLoader.SupportedMajorVersion).
-	int? SupportedMajorVersion = null);
+	int? SupportedMajorVersion = null,
+	// Not asked about at startup - the app works without it; it's installed from Settings' About tab or the startup
+	// prompt when that shows for a required tool anyway.
+	bool IsOptional = false);
 
 public static class RequiredTools
 {
@@ -45,7 +48,8 @@ public static class RequiredTools
 		"perl-image-exiftool",
 		"exiftool",
 		"exiftool",
-		["-ver"]);
+		["-ver"],
+		IsOptional: true);
 
 	public static IReadOnlyList<ExternalTool> All { get; } = [Ffmpeg, ExifTool];
 }

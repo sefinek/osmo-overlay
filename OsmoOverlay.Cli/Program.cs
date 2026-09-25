@@ -1,16 +1,22 @@
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 
 string[] options = ["-o", "--frames", "--from", "--to", "--cut"];
 const string usage = "Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...]\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
-                     "  --cut removes that part from the video and the telemetry; repeat it for several cuts";
+                     "  --cut removes that part from the video and the telemetry; repeat it for several cuts\n" +
+                     "       OsmoOverlay.Cli --install-dependencies [ffmpeg] [exiftool]\n" +
+                     "  installs the listed tools (default: ffmpeg) through the system's package manager, if they're missing";
 
 if (args.Length == 0)
 {
 	Console.WriteLine(usage);
 	return 1;
 }
+
+if (args[0] == "--install-dependencies")
+	return await InstallDependenciesAsync(args[1..]);
 
 var inputPaths = new List<string>();
 var outputPath = "";
@@ -99,3 +105,35 @@ var doneMessage = $"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:s
 Console.WriteLine(doneMessage);
 AppLogger.Info(doneMessage);
 return 0;
+
+// Run by the Windows installer (OsmoOverlay.iss) - the same install path the GUI's dependency prompt takes, so it only
+// installs what's missing and keeps FFmpeg on the major the preview supports.
+static async Task<int> InstallDependenciesAsync(string[] names)
+{
+	List<ExternalTool> tools = names.Length == 0
+		? [RequiredTools.Ffmpeg]
+		: [.. RequiredTools.All.Where(t => names.Contains(t.DisplayName, StringComparer.OrdinalIgnoreCase))];
+	if (tools.Count != Math.Max(1, names.Length))
+	{
+		Console.Error.WriteLine($"Error: unknown tool - expected {string.Join(" or ", RequiredTools.All.Select(t => t.DisplayName.ToLowerInvariant()))}");
+		return 1;
+	}
+
+	IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(tools);
+	if (missing.Count == 0)
+	{
+		Console.WriteLine("All dependencies are already installed");
+		return 0;
+	}
+
+	var failed = false;
+	foreach (ExternalTool tool in missing)
+	{
+		Console.WriteLine($"Installing {tool.DisplayName}...");
+		InstallResult result = await DependencyInstaller.InstallAsync(tool, Console.WriteLine, CancellationToken.None);
+		Console.WriteLine(result.Message);
+		failed |= !result.Success;
+	}
+
+	return failed ? 1 : 0;
+}

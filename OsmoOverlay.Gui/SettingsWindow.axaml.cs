@@ -243,8 +243,7 @@ public partial class SettingsWindow : Window
 		try
 		{
 			UpdateCheckResult result = await check;
-			DependencyStatusRows.Populate(this, DependencyStatusGrid, [.. result.Dependencies.Where(s => s.InstalledVersion is not null)],
-				IsRendering);
+			DependencyStatusRows.Populate(this, DependencyStatusGrid, result.Dependencies, IsRendering);
 			ShowAppUpdate(result);
 		}
 		finally

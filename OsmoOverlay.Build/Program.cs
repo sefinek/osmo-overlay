@@ -87,6 +87,7 @@ var cliProject = Path.Combine(root, "OsmoOverlay.Cli", "OsmoOverlay.Cli.csproj")
 var version = versionOverride ?? XDocument.Load(Path.Combine(root, "Directory.Build.props")).Descendants("Version").First().Value;
 var displayVersion = ShortVersion(version);
 var outputDir = Path.GetFullPath(outputArg ?? Path.Combine(root, "artifacts"));
+var buildDir = Path.Combine(root, "artifacts", ".build");
 Directory.CreateDirectory(outputDir);
 
 var iscc = installer && rids.Any(r => InstallerArchitecture(r) is not null) && flavors.Contains(Flavor.SelfContained) ? FindIscc() : null;
@@ -98,6 +99,7 @@ var stopwatch = Stopwatch.StartNew();
 
 try
 {
+	Clean();
 	if (!skipTests) Run("dotnet", "test", "--project", Path.Combine(root, "OsmoOverlay.Tests"), "-c", "Release");
 
 	List<string> produced = [];
@@ -118,6 +120,10 @@ catch (Exception ex) when (ex is BuildFailedException or IOException or Unauthor
 	Console.Error.WriteLine($"\nBuild failed: {ex.Message}");
 	return 1;
 }
+finally
+{
+	TryDelete(buildDir);
+}
 
 List<string> Package(string rid, Flavor flavor)
 {
@@ -130,9 +136,6 @@ List<string> Package(string rid, Flavor flavor)
 	var buildInstaller = iscc is not null && flavor == Flavor.SelfContained && InstallerArchitecture(rid) is not null;
 
 	Console.WriteLine($"\n=== {name}");
-	DeleteIfExists(packageDir);
-	DeleteIfExists(archivePath);
-	if (buildInstaller) DeleteIfExists(installerPath);
 
 	var isMac = rid.StartsWith("osx-", StringComparison.Ordinal);
 	var publishDir = isMac ? Path.Combine(packageDir, "OsmoOverlay.app", "Contents", "MacOS") : packageDir;
@@ -199,7 +202,7 @@ void Publish(string project, string rid, Flavor flavor, string destination)
 		"publish", project, "-c", "Release", "-r", rid, "-o", destination,
 		"--self-contained", flavor == Flavor.SelfContained ? "true" : "false",
 		"-p:UseArtifactsOutput=true",
-		$"-p:ArtifactsPath={Path.Combine(root, "artifacts", ".build")}",
+		$"-p:ArtifactsPath={buildDir}",
 		"-p:AppendRuntimeIdentifierToOutputPath=true",
 		"-p:DebugType=none"
 	];
@@ -287,10 +290,44 @@ void Run(string command, params string[] arguments)
 		throw new BuildFailedException($"{Path.GetFileNameWithoutExtension(command)} {arguments[0]} exited with code {process.ExitCode}.");
 }
 
+// Every build starts from nothing: the Release outputs (Debug is left alone - a build or a running copy from the IDE
+// isn't touched), the packaging's own bin/obj, and every package an earlier run left in the output folder, of any
+// version. Only OsmoOverlay-* is removed there, since --output can point at a folder holding anything else.
+void Clean()
+{
+	Console.WriteLine("Cleaning...");
+	Run("dotnet", "clean", Path.Combine(root, "OsmoOverlay.slnx"), "-c", "Release", "-v", "q", "-nologo");
+
+	DeleteIfExists(buildDir);
+	foreach (var path in Directory.EnumerateFileSystemEntries(outputDir, "OsmoOverlay-*"))
+		DeleteIfExists(path);
+}
+
+// After the build the intermediate folder is only dead weight (hundreds of MB across the RIDs); a leftover file still in
+// use shouldn't turn a finished build into a failed one.
+static void TryDelete(string path)
+{
+	try
+	{
+		if (Directory.Exists(path)) Directory.Delete(path, true);
+	}
+	catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+	{
+		Console.WriteLine($"Could not remove {path}: {ex.Message}");
+	}
+}
+
 static void DeleteIfExists(string path)
 {
-	if (Directory.Exists(path)) Directory.Delete(path, true);
-	else if (File.Exists(path)) File.Delete(path);
+	try
+	{
+		if (Directory.Exists(path)) Directory.Delete(path, true);
+		else if (File.Exists(path)) File.Delete(path);
+	}
+	catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+	{
+		throw new BuildFailedException($"Can't delete {path} - it's in use (a running setup or app?). Close it and try again.");
+	}
 }
 
 static string FindRepoRoot()
