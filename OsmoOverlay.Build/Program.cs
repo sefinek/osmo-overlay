@@ -1,0 +1,260 @@
+using System.Diagnostics;
+using System.Formats.Tar;
+using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Xml.Linq;
+
+const string usage = """
+                     Usage: dotnet run --project OsmoOverlay.Build -- [options]
+
+                       --rid <rid>           Runtime identifier to build; repeatable or comma-separated.
+                                             Default: win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64
+                       --flavor <flavor>     self-contained, framework-dependent or all (default: all)
+                       --version <version>   Overrides <Version> from OsmoOverlay.Gui.csproj
+                       --output <dir>        Output directory (default: artifacts)
+                       --skip-tests          Don't run OsmoOverlay.Tests first
+                       --no-archive          Keep the published folders instead of zip/tar.gz archives
+                     """;
+
+string[] defaultRids = ["win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64"];
+
+List<string> rids = [];
+List<Flavor> flavors = [];
+string? versionOverride = null;
+string? outputArg = null;
+var skipTests = false;
+var archive = true;
+
+for (var i = 0; i < args.Length; i++)
+{
+	string Value()
+	{
+		return i + 1 < args.Length ? args[++i] : throw new ArgumentException($"{args[i]} needs a value.");
+	}
+
+	switch (args[i])
+	{
+		case "--rid":
+			rids.AddRange(Value().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+			break;
+		case "--flavor":
+			var flavor = Value();
+			flavors.AddRange(flavor switch
+			{
+				"self-contained" => [Flavor.SelfContained],
+				"framework-dependent" => [Flavor.FrameworkDependent],
+				"all" => [Flavor.SelfContained, Flavor.FrameworkDependent],
+				_ => throw new ArgumentException($"Unknown flavor '{flavor}'.")
+			});
+			break;
+		case "--version":
+			versionOverride = Value();
+			break;
+		case "--output":
+			outputArg = Value();
+			break;
+		case "--skip-tests":
+			skipTests = true;
+			break;
+		case "--no-archive":
+			archive = false;
+			break;
+		case "-h" or "--help":
+			Console.WriteLine(usage);
+			return 0;
+		default:
+			Console.Error.WriteLine($"Unknown option '{args[i]}'.\n\n{usage}");
+			return 1;
+	}
+}
+
+if (rids.Count == 0) rids.AddRange(defaultRids);
+if (flavors.Count == 0) flavors.AddRange([Flavor.SelfContained, Flavor.FrameworkDependent]);
+
+var root = FindRepoRoot();
+var guiProject = Path.Combine(root, "OsmoOverlay.Gui", "OsmoOverlay.Gui.csproj");
+var cliProject = Path.Combine(root, "OsmoOverlay.Cli", "OsmoOverlay.Cli.csproj");
+var version = versionOverride ?? XDocument.Load(guiProject).Descendants("Version").First().Value;
+var displayVersion = ShortVersion(version);
+var outputDir = Path.GetFullPath(outputArg ?? Path.Combine(root, "artifacts"));
+Directory.CreateDirectory(outputDir);
+
+Console.WriteLine($"OsmoOverlay {displayVersion}: {string.Join(", ", rids)} ({string.Join(", ", flavors.Select(Suffix))}) -> {outputDir}");
+var stopwatch = Stopwatch.StartNew();
+
+try
+{
+	if (!skipTests) Dotnet("test", "--project", Path.Combine(root, "OsmoOverlay.Tests"), "-c", "Release");
+
+	List<string> produced = [];
+	foreach (var rid in rids)
+	foreach (Flavor flavor in flavors)
+		produced.Add(Package(rid, flavor));
+
+	if (archive) WriteChecksums(produced);
+
+	Console.WriteLine($"\nDone in {stopwatch.Elapsed:mm\\:ss}:");
+	foreach (var path in produced)
+		Console.WriteLine($"  {Path.GetFileName(path)}{(archive ? $" ({new FileInfo(path).Length / 1024.0 / 1024.0:0.0} MB)" : "")}");
+	return 0;
+}
+catch (Exception ex) when (ex is BuildFailedException or IOException or UnauthorizedAccessException)
+{
+	Console.Error.WriteLine($"\nBuild failed: {ex.Message}");
+	return 1;
+}
+
+string Package(string rid, Flavor flavor)
+{
+	var name = $"OsmoOverlay-{displayVersion}-{rid}-{Suffix(flavor)}";
+	var packageDir = Path.Combine(outputDir, name);
+	var isWindows = rid.StartsWith("win-", StringComparison.Ordinal);
+	var archivePath = Path.Combine(outputDir, name + (isWindows ? ".zip" : ".tar.gz"));
+
+	Console.WriteLine($"\n=== {name}");
+	DeleteIfExists(packageDir);
+	DeleteIfExists(archivePath);
+
+	// On macOS the GUI ships as an app bundle; the CLI sits next to it inside Contents/MacOS, sharing its libraries.
+	var isMac = rid.StartsWith("osx-", StringComparison.Ordinal);
+	var publishDir = isMac ? Path.Combine(packageDir, "OsmoOverlay.app", "Contents", "MacOS") : packageDir;
+
+	Publish(guiProject, rid, flavor, publishDir);
+	Publish(cliProject, rid, flavor, publishDir);
+	if (isMac) WriteInfoPlist(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
+
+	if (!archive) return packageDir;
+
+	if (isWindows) ZipFile.CreateFromDirectory(packageDir, archivePath, CompressionLevel.SmallestSize, true);
+	else WriteTarGz(packageDir, archivePath);
+	Directory.Delete(packageDir, true);
+	return archivePath;
+}
+
+void Publish(string project, string rid, Flavor flavor, string destination)
+{
+	List<string> arguments =
+	[
+		"publish", project, "-c", "Release", "-r", rid, "-o", destination,
+		"--self-contained", flavor == Flavor.SelfContained ? "true" : "false",
+		// bin/obj of their own, per RID: the projects' own obj/project.assets.json is restored without RIDs
+		// whenever an open IDE feels like it, which breaks a publish mid-run (NETSDK1047).
+		"-p:UseArtifactsOutput=true",
+		$"-p:ArtifactsPath={Path.Combine(root, "artifacts", ".build")}",
+		"-p:AppendRuntimeIdentifierToOutputPath=true",
+		"-p:DebugType=none"
+	];
+	if (versionOverride is not null) arguments.Add($"-p:Version={versionOverride}");
+	Dotnet([.. arguments]);
+}
+
+void WriteInfoPlist(string contentsDir)
+{
+	var plist = $"""
+	             <?xml version="1.0" encoding="UTF-8"?>
+	             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+	             <plist version="1.0">
+	             <dict>
+	               <key>CFBundleName</key><string>OsmoOverlay</string>
+	               <key>CFBundleDisplayName</key><string>OsmoOverlay</string>
+	               <key>CFBundleIdentifier</key><string>com.sefinek.osmooverlay</string>
+	               <key>CFBundleExecutable</key><string>OsmoOverlay</string>
+	               <key>CFBundlePackageType</key><string>APPL</string>
+	               <key>CFBundleShortVersionString</key><string>{displayVersion}</string>
+	               <key>CFBundleVersion</key><string>{version}</string>
+	               <key>NSHighResolutionCapable</key><true/>
+	             </dict>
+	             </plist>
+	             """;
+	File.WriteAllText(Path.Combine(contentsDir, "Info.plist"), plist);
+}
+
+// tar.gz rather than zip for Linux/macOS: a zip written on Windows carries no Unix permissions, so the
+// executables would come out without +x.
+static void WriteTarGz(string sourceDir, string archivePath)
+{
+	using FileStream file = File.Create(archivePath);
+	using var gzip = new GZipStream(file, CompressionLevel.SmallestSize);
+	using var tar = new TarWriter(gzip, TarEntryFormat.Pax);
+	AddDirectory(tar, sourceDir, Path.GetFileName(sourceDir));
+}
+
+static void AddDirectory(TarWriter tar, string directory, string entryName)
+{
+	const UnixFileMode executable = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+	                                UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+	                                UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
+	const UnixFileMode regular = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead;
+
+	tar.WriteEntry(new PaxTarEntry(TarEntryType.Directory, entryName + "/") { Mode = executable });
+
+	foreach (var subdirectory in Directory.GetDirectories(directory).Order(StringComparer.Ordinal))
+		AddDirectory(tar, subdirectory, $"{entryName}/{Path.GetFileName(subdirectory)}");
+
+	foreach (var path in Directory.GetFiles(directory).Order(StringComparer.Ordinal))
+	{
+		var fileName = Path.GetFileName(path);
+		using FileStream data = File.OpenRead(path);
+		tar.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, $"{entryName}/{fileName}")
+		{
+			Mode = fileName is "OsmoOverlay" or "OsmoOverlay.Cli" or "createdump" ? executable : regular,
+			ModificationTime = File.GetLastWriteTimeUtc(path),
+			DataStream = data
+		});
+	}
+}
+
+void WriteChecksums(IEnumerable<string> archives)
+{
+	var checksumPath = Path.Combine(outputDir, $"OsmoOverlay-{displayVersion}-SHA256SUMS.txt");
+	File.WriteAllLines(checksumPath, archives.Select(path =>
+	{
+		using FileStream stream = File.OpenRead(path);
+		return $"{Convert.ToHexStringLower(SHA256.HashData(stream))}  {Path.GetFileName(path)}";
+	}));
+}
+
+void Dotnet(params string[] arguments)
+{
+	var psi = new ProcessStartInfo("dotnet") { UseShellExecute = false, WorkingDirectory = root };
+	foreach (var argument in arguments) psi.ArgumentList.Add(argument);
+
+	using Process process = Process.Start(psi) ?? throw new BuildFailedException("Could not start dotnet.");
+	process.WaitForExit();
+	if (process.ExitCode != 0) throw new BuildFailedException($"dotnet {arguments[0]} exited with code {process.ExitCode}.");
+}
+
+static void DeleteIfExists(string path)
+{
+	if (Directory.Exists(path)) Directory.Delete(path, true);
+	else if (File.Exists(path)) File.Delete(path);
+}
+
+static string FindRepoRoot()
+{
+	for (DirectoryInfo? dir = new(Directory.GetCurrentDirectory()); dir is not null; dir = dir.Parent)
+		if (File.Exists(Path.Combine(dir.FullName, "OsmoOverlay.slnx")))
+			return dir.FullName;
+
+	throw new BuildFailedException("OsmoOverlay.slnx not found - run from inside the repository.");
+}
+
+// "0.1.0.0" -> "0.1.0": the fourth part is never used for releases.
+static string ShortVersion(string version)
+{
+	var parts = version.Split('.');
+	return parts.Length == 4 && parts[3] == "0" ? string.Join('.', parts[..3]) : version;
+}
+
+static string Suffix(Flavor flavor)
+{
+	return flavor == Flavor.SelfContained ? "self-contained" : "framework-dependent";
+}
+
+internal enum Flavor
+{
+	SelfContained,
+	FrameworkDependent
+}
+
+internal sealed class BuildFailedException(string message) : Exception(message);

@@ -6,11 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 OsmoOverlay burns a telemetry HUD (speed, heading, tilt, sun, stats) onto footage from DJI Osmo Action cameras without any loss of source quality/codec (see README.md - re-encoding in DJI Mimo degrades quality; this application does not).
 
-Four projects in one `.slnx` (net10.0):
+Five projects in one `.slnx` (net10.0):
 - `OsmoOverlay.Core` - all the logic: telemetry extraction, telemetry processing, overlay renderer (SkiaSharp), ffmpeg pipeline, video preview. No dependency on GUI/CLI.
 - `OsmoOverlay.Cli` - thin console wrapper around `RenderJob`.
 - `OsmoOverlay.Gui` - Avalonia, overlay editor + live preview + running the render.
 - `OsmoOverlay.Tests` - MSTest unit tests of Core's pure logic (see Build).
+- `OsmoOverlay.Build` - release packaging tool, no reference to the others (see Build).
 
 ## Build
 
@@ -21,6 +22,8 @@ dotnet build OsmoOverlay.Gui
 ```
 
 Building the whole `.slnx` also works, but build Core/Cli separately when you're only verifying logic changes - it's faster and doesn't require closing the GUI.
+
+Release packages: `dotnet run --project OsmoOverlay.Build` (`-- --help` for options: `--rid`, `--flavor`, `--version`, `--output`, `--skip-tests`, `--no-archive`). Runs the tests, then publishes GUI + CLI together into one folder per RID (win-x64/arm64, linux-x64/arm64, osx-x64/arm64 by default), each both self-contained and framework-dependent, into `artifacts/` (git-ignored): zip for Windows, tar.gz for Linux/macOS (written by the tool itself so the executables keep +x - a zip made on Windows carries no Unix modes), plus a SHA256SUMS file. On macOS the GUI is an `OsmoOverlay.app` bundle with the CLI inside `Contents/MacOS`. Every RID is cross-published from any host (no AOT); `AppendRuntimeIdentifierToOutputPath=true` is passed so RIDs don't share an intermediate folder. The .app isn't signed or notarized. FFmpeg isn't bundled - it stays an external dependency (see below). Linux-musl RIDs aren't in the defaults: ppy.SDL3-CS ships no musl build, so the preview would play silent there.
 
 Unit tests: `dotnet test --project OsmoOverlay.Tests` (MSTest.Sdk on Microsoft.Testing.Platform - `global.json` opts `dotnet test` into it, required on the .NET 10 SDK). They cover pure logic only, with synthetic data - never a real recording: the djmd protobuf decoder (`Proto` in `DjmdBuilder.cs` writes samples per the parser's documented layout), telemetry processing, timecode math, render-range resolution, time text parsing, the cut output timeline (`OutputTimeline`: mapped frames, distance, kept stretches), `MetadataStripper.Verify` on hand-made ffprobe JSON, concat lists and segment lookup, gaps between files (detection by the GPS clock, nothing run across them), widget data requirements, route geometry across cuts, the speed color scale, `OverlayRenderer.SetFrames`, cut lists and timeline markers, playback plans (cuts, loops) and frame steps, `PlaybackClock` (fake audio device and wall clock through `IAudioClockSource`), the atempo chain, the waveform's dB scale, and winget's version list with the supported-major pick. Core exposes internals to them via `InternalsVisibleTo`. Anything touching ffmpeg/ffprobe (render, preview, stripping, audio conversion) is still verified by an actual build plus running the CLI against a real file, or rendering `OverlayRenderer` straight to a PNG via SkiaSharp (bypassing the GUI) for visual changes.
 
