@@ -4,8 +4,8 @@
     <AssemblyName>OsmoOverlay.Tests</AssemblyName>
     <RootNamespace>OsmoOverlay.Tests</RootNamespace>
 
-    <Title>OsmoOverlay Tests</Title>
-    <FileDescription>Unit tests for OsmoOverlay.Core.</FileDescription>
+    <AssemblyTitle>OsmoOverlay Tests</AssemblyTitle>
+    <Description>Unit tests for OsmoOverlay.Core.</Description>
   </PropertyGroup>
 
   <ItemGroup>

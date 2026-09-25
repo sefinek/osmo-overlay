@@ -93,7 +93,7 @@ The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/
 
 Many Linux distributions still ship an older FFmpeg - the preview needs version 9.x.
 
-[ExifTool](https://exiftool.org) is optional. It's only used as a fallback for cameras whose telemetry format the app can't read on its own.
+[ExifTool](https://exiftool.org) is optional. It's only used as a fallback for cameras whose telemetry format the app can't read on its own, and can be installed from *Settings* → *About*.
 
 ## Building from source
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).

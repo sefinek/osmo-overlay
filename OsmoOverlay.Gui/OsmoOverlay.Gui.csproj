@@ -9,8 +9,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\OsmoOverlay.ico</ApplicationIcon>
 
-    <Title>OsmoOverlay</Title>
-    <FileDescription>HUD overlay renderer for DJI Osmo Action series footage.</FileDescription>
+    <AssemblyTitle>OsmoOverlay</AssemblyTitle>
+    <Description>HUD overlay renderer for DJI Osmo Action series footage.</Description>
   </PropertyGroup>
 
   <ItemGroup>

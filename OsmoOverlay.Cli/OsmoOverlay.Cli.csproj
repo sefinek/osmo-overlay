@@ -7,8 +7,8 @@
     <RootNamespace>OsmoOverlay.Cli</RootNamespace>
     <ApplicationIcon>Assets\OsmoOverlay.Cli.ico</ApplicationIcon>
 
-    <Title>OsmoOverlay CLI</Title>
-    <FileDescription>Command-line renderer for OsmoOverlay.</FileDescription>
+    <AssemblyTitle>OsmoOverlay CLI</AssemblyTitle>
+    <Description>Command-line renderer for OsmoOverlay.</Description>
   </PropertyGroup>
 
   <ItemGroup>

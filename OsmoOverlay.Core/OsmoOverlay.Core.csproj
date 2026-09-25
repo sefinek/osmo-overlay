@@ -6,8 +6,8 @@
     <AssemblyName>OsmoOverlay.Core</AssemblyName>
     <RootNamespace>OsmoOverlay.Core</RootNamespace>
 
-    <Title>OsmoOverlay Core</Title>
-    <FileDescription>Telemetry extraction, HUD rendering and ffmpeg pipeline for DJI Osmo Action series footage.</FileDescription>
+    <AssemblyTitle>OsmoOverlay Core</AssemblyTitle>
+    <Description>Telemetry extraction, HUD rendering and ffmpeg pipeline for DJI Osmo Action series footage.</Description>
   </PropertyGroup>
 
   <ItemGroup>

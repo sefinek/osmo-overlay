@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  INNO_SETUP_URL: https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe
+  INNO_SETUP_SHA256: 0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Read the version
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props)
+          [[ $version =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.0$ ]] && version=${BASH_REMATCH[1]}
+          tag="v$version"
+          if gh release view "$tag" > /dev/null 2>&1 || git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "::error::$tag already has a release or a tag - bump <Version> in Directory.Build.props"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Inno Setup 7
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+          Invoke-WebRequest $env:INNO_SETUP_URL -OutFile $installer
+          if ((Get-FileHash $installer -Algorithm SHA256).Hash -ne $env:INNO_SETUP_SHA256) { throw 'Inno Setup download hash mismatch' }
+          Start-Process $installer -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$env:RUNNER_TEMP\InnoSetup7" -Wait
+          if (-not (Test-Path "$env:RUNNER_TEMP\InnoSetup7\ISCC.exe")) { throw 'ISCC.exe not found after installing Inno Setup' }
+
+      - name: Build packages
+        run: dotnet run --project OsmoOverlay.Build -- --iscc "${{ runner.temp }}\InnoSetup7\ISCC.exe"
+
+      - name: Create draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "$TAG" artifacts/OsmoOverlay-* --draft --target "$GITHUB_SHA" --title "OsmoOverlay $VERSION" --generate-notes
