@@ -114,7 +114,7 @@ public static class RenderJob
 
 			if (!segments.AllHaveDjmdTrack())
 				return new RenderResult(false,
-					$"{first.InputPath} has no 'djmd' telemetry stream - this is likely a proxy/preview file, not an original DJI Osmo Action recording.",
+					$"{first.InputPath} has no 'djmd' telemetry stream - this is likely a proxy/preview file, not an original DJI Osmo Action recording",
 					sw.Elapsed);
 
 			if (!options.Overwrite && File.Exists(options.OutputPath))
@@ -125,7 +125,7 @@ public static class RenderJob
 			if (options.TelemetryFrames is { Count: > 0 })
 			{
 				rawFrames = options.TelemetryFrames;
-				Report(RenderPhase.ExtractingTelemetry, $"Using {rawFrames.Count} previously extracted telemetry samples.");
+				Report(RenderPhase.ExtractingTelemetry, $"Using {rawFrames.Count} previously extracted telemetry samples");
 			}
 			else
 			{
@@ -134,8 +134,8 @@ public static class RenderJob
 				rawFrames = extraction.Frames;
 				cameraModel ??= extraction.CameraModel;
 				if (rawFrames.Count == 0)
-					return new RenderResult(false, "No telemetry samples found in the file(s).", sw.Elapsed);
-				Report(RenderPhase.ExtractingTelemetry, $"Extracted {rawFrames.Count} telemetry samples.");
+					return new RenderResult(false, "No telemetry samples found in the file(s)", sw.Elapsed);
+				Report(RenderPhase.ExtractingTelemetry, $"Extracted {rawFrames.Count} telemetry samples");
 			}
 
 			OverlaySettings settings = OverlaySettingsStore.Load();
@@ -188,7 +188,7 @@ public static class RenderJob
 				}
 				catch (OperationCanceledException)
 				{
-					return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
+					return new RenderResult(false, "Cancelled by user", sw.Elapsed);
 				}
 			}
 
@@ -203,7 +203,7 @@ public static class RenderJob
 				}
 				catch (OperationCanceledException)
 				{
-					return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
+					return new RenderResult(false, "Cancelled by user", sw.Elapsed);
 				}
 			}
 
@@ -360,7 +360,7 @@ public static class RenderJob
 						// user cancellation, not a render failure.
 					}
 
-					return new RenderResult(false, "Cancelled by user.", sw.Elapsed);
+					return new RenderResult(false, "Cancelled by user", sw.Elapsed);
 				}
 
 				await ffmpeg.WaitForExitAsync(CancellationToken.None);

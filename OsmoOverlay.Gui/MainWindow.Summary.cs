@@ -273,7 +273,7 @@ public partial class MainWindow
 		switch (e.Kind)
 		{
 			case FileSummaryCacheEventKind.Hit:
-				AppendLog($"Cache hit (format v{e.CurrentFormatVersion}): using the cached analysis, file unchanged since last run.");
+				AppendLog($"Cache hit (format v{e.CurrentFormatVersion}): using the cached analysis, file unchanged since last run");
 				return;
 			case FileSummaryCacheEventKind.Stale:
 				AppendLog($"Cache outdated: found format v{e.PreviousFormatVersion}, current is v{e.CurrentFormatVersion} " +
@@ -283,15 +283,15 @@ public partial class MainWindow
 				AppendLog("No cache for this file yet (or the file changed since) - analyzing...");
 				break;
 			case FileSummaryCacheEventKind.Saved:
-				AppendLog($"New cache saved (format v{e.CurrentFormatVersion}).");
+				AppendLog($"New cache saved (format v{e.CurrentFormatVersion})");
 				return;
 			case FileSummaryCacheEventKind.SaveFailed:
-				AppendLog("Could not save the cache - see the log; the next run will analyze this file again.", LogLevel.Warn);
+				AppendLog("Could not save the cache - see the log; the next run will analyze this file again", LogLevel.Warn);
 				return;
 		}
 
 		AppendLog("Probing source file(s) (ffprobe)...");
-		AppendLog("Extracting telemetry (djmd stream)... falls back to exiftool if the raw layout doesn't match.");
+		AppendLog("Extracting telemetry (djmd stream)... falls back to exiftool if the raw layout doesn't match");
 	}
 
 	private void PopulateOutputInfo(FileSummary summary, string encoder)

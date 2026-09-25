@@ -79,7 +79,9 @@ public sealed record OverlaySettings(
 	double OutputBitrateMultiplier = 1.0,
 	bool FastStart = false,
 	// Measured render speed (frames/s) per RenderSpeedHistory.Key - feeds the GUI's pre-render estimate.
-	Dictionary<string, double>? RenderFpsHistory = null);
+	Dictionary<string, double>? RenderFpsHistory = null,
+	// An app release the user declined at startup - not offered there again (Settings' About tab still does).
+	string? SkippedAppUpdate = null);
 
 /// <summary>
 ///     Render speed remembered per "shape" of render (resolution, frame rate, encoder, preset), from the

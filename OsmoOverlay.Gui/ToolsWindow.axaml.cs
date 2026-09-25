@@ -39,7 +39,7 @@ public partial class ToolsWindow : Window
 	private void OnClearCacheClick(object? sender, RoutedEventArgs e)
 	{
 		var deleted = FileSummaryReader.ClearCache();
-		AppLogger.Notify($"Cleared {deleted} cached file(s).");
+		AppLogger.Notify($"Cleared {deleted} cached file(s)");
 	}
 
 	private void OnCloseClick(object? sender, RoutedEventArgs e)

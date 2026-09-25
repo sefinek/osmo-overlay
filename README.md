@@ -63,7 +63,11 @@ Pick the archive for your system:
 Each package contains both the app (`OsmoOverlay`) and the command-line renderer (`OsmoOverlay.Cli`). Checksums are in `OsmoOverlay-<version>-SHA256SUMS.txt`.
 
 ### Windows
-Extract the zip and run `OsmoOverlay.exe`. The builds aren't code-signed yet, so SmartScreen may warn on first launch - choose *More info* → *Run anyway*.
+The easiest way is the installer: `OsmoOverlay-<version>-win-x64-setup.exe` (or `win-arm64`). It installs for your account without administrator rights (you can choose all users instead), adds a Start menu shortcut and an uninstaller. It's based on the `self-contained` variant, so nothing else is needed. An installed copy checks for new versions on startup and can update itself (also from *Settings* → *About*): it downloads the new installer, verifies it, replaces the old version and starts again.
+
+Alternatively, extract the zip and run `OsmoOverlay.exe`.
+
+The builds aren't code-signed yet, so SmartScreen may warn on first launch - choose *More info* → *Run anyway*.
 
 ### Linux
 ```sh

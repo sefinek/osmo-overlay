@@ -37,7 +37,7 @@ public sealed partial class OverlayRenderer
 			// same "one bad user-editable field" policy as the map widget's placeholder fallback.
 			if (!OverlayTimeFormatting.TryFormat(shown, element.DateFormat, element.Locale, out dateText) &&
 			    _reportedTimeFormats.Add((element.Locale, element.DateFormat)))
-				AppLogger.Warn($"Time widget: invalid Locale/DateFormat ('{element.Locale}' / '{element.DateFormat}') - using default.");
+				AppLogger.Warn($"Time widget: invalid Locale/DateFormat ('{element.Locale}' / '{element.DateFormat}') - using default");
 
 			if (!toLocal) dateText += "  UTC";
 		}

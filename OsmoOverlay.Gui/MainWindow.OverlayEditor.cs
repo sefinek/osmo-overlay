@@ -981,7 +981,7 @@ public partial class MainWindow
 	{
 		if (_overlayPresets.Count <= 1)
 		{
-			AppendLog("Cannot delete the only remaining preset.");
+			AppendLog("Cannot delete the only remaining preset");
 			return;
 		}
 
@@ -1059,7 +1059,7 @@ public partial class MainWindow
 		OverlayPreset? imported = OverlayPresetStore.ImportFromFile(files[0].Path.LocalPath);
 		if (imported is null)
 		{
-			AppendLog($"Failed to import preset from {files[0].Path.LocalPath} - see the log for details.");
+			AppendLog($"Failed to import preset from {files[0].Path.LocalPath} - see the log for details");
 			return;
 		}
 
@@ -1072,7 +1072,7 @@ public partial class MainWindow
 		RefreshWidgetList();
 		_previewPlayer.SetLayout(ActiveElements);
 		SaveOverlayPresets();
-		AppendLog($"Imported preset \"{preset.Name}\".");
+		AppendLog($"Imported preset \"{preset.Name}\"");
 	}
 
 	private void OnRenamePresetClick(object? sender, RoutedEventArgs e)

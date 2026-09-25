@@ -92,7 +92,7 @@ public sealed partial class OverlayRenderer
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			AppLogger.Warn(ex, "Route intro: failed to prepare the route overview map - the card will show without a map.");
+			AppLogger.Warn(ex, "Route intro: failed to prepare the route overview map - the card will show without a map");
 			return (null, urlTemplate);
 		}
 	}

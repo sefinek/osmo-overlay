@@ -9,6 +9,7 @@ using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Core.Updates;
 
 namespace OsmoOverlay.Gui;
 
@@ -63,6 +64,7 @@ public partial class SettingsWindow : Window
 
 		var coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
 		CoreVersionText.Text = $"Core v{coreVersion}";
+		DependencyStatusRows.ShowChecking(DependencyStatusGrid, RequiredTools.All);
 
 		DateTime? configLastUpdatedUtc = OverlaySettingsStore.GetLastUpdatedUtc();
 		ConfigLastUpdatedText.Text = configLastUpdatedUtc is { } utc
@@ -192,10 +194,10 @@ public partial class SettingsWindow : Window
 		RouteIntroImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric,
 		RouteIntroColorBySpeedCheck.IsChecked == true);
 
-	// Set once the About tab has triggered its own automatic check, so switching back to it later
-	// (or switching away and back) doesn't re-spawn winget/brew/apt-cache every time - CheckForUpdatesButton
-	// stays available for an explicit re-check.
-	private bool _dependencyCheckStarted;
+	// Set once the About tab showed a check - switching back to it later doesn't show it again.
+	private bool _updatesShown;
+
+	private AppRelease? _latestRelease;
 
 	/// <summary>
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
@@ -215,56 +217,78 @@ public partial class SettingsWindow : Window
 		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
 		AboutPanel.IsVisible = CategoryList.SelectedIndex == 3;
 
-		if (CategoryList.SelectedIndex == 3 && !_dependencyCheckStarted)
+		if (CategoryList.SelectedIndex == 3 && !_updatesShown)
 		{
-			_dependencyCheckStarted = true;
-			_ = RunDependencyCheckAsync();
+			_updatesShown = true;
+			_ = ShowUpdatesAsync(UpdateChecks.Latest);
 		}
 	}
 
 	private void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e)
 	{
-		_ = RunDependencyCheckAsync();
+		_ = ShowUpdatesAsync(UpdateChecks.RefreshAsync());
 	}
 
 	/// <summary>
-	///     No separate status line - the table below already shows each tool's installed/latest side by
-	///     side, so a one-line verdict above it would just repeat what's already visible. The button's own
-	///     Content ("Checking..." while running) is the only progress indicator here; per-tool detail still
-	///     reaches the main window's LOG panel via AppLogger.Notify (see DependencyVersionChecker.CheckAsync).
+	///     Shows an update check (UpdateChecks) - usually the one from startup, already done. The dependencies get no status
+	///     line, the table shows each tool's installed/latest side by side; the app's status sits next to the button, which
+	///     stays disabled while a check runs. Per-tool detail reaches the main window's LOG panel (AppLogger.Notify).
 	/// </summary>
-	private async Task RunDependencyCheckAsync()
+	private async Task ShowUpdatesAsync(Task<UpdateCheckResult> check)
 	{
 		CheckForUpdatesButton.IsEnabled = false;
-		CheckForUpdatesButton.Content = "Checking...";
+		AppUpdateButton.IsVisible = false;
+		AppUpdateText.Text = "Checking for a new version...";
 
 		try
 		{
-			// Off the UI thread: each tool spawns a process (ffmpeg -version, winget/brew/apt-cache show),
-			// which can take a couple of seconds combined.
-			IReadOnlyList<ToolVersionInfo> statuses =
-				await Task.Run(() => DependencyVersionChecker.CheckAllAsync(RequiredTools.All, CancellationToken.None));
-
-			List<ToolVersionInfo> present = [.. statuses.Where(s => s.InstalledVersion is not null)];
-			DependencyStatusRows.Populate(this, DependencyStatusGrid, present, IsRendering);
+			UpdateCheckResult result = await check;
+			DependencyStatusRows.Populate(this, DependencyStatusGrid, [.. result.Dependencies.Where(s => s.InstalledVersion is not null)],
+				IsRendering);
+			ShowAppUpdate(result);
 		}
 		finally
 		{
-			CheckForUpdatesButton.Content = "Check for updates";
 			CheckForUpdatesButton.IsEnabled = true;
 		}
 	}
 
-	private void OnGitHubLinkClick(object? sender, PointerPressedEventArgs e)
+	private void ShowAppUpdate(UpdateCheckResult result)
 	{
-		try
+		_latestRelease = result.App;
+		if (result.AppCheckFailed)
 		{
-			Process.Start(new ProcessStartInfo("https://github.com/sefinek/osmo-overlay") { UseShellExecute = true })?.Dispose();
+			AppUpdateText.Text = "Could not check for a new version.";
+			return;
 		}
-		catch (Exception ex)
+
+		if (!result.AppUpdateAvailable)
 		{
-			AppLogger.Warn(ex, "Could not open the GitHub page in a browser");
+			AppUpdateText.Text = "You're using the latest version.";
+			return;
 		}
+
+		AppRelease release = result.App!;
+		AppUpdateText.Text = $"Version {release.Version} is available" +
+		                     (release.PublishedAt is { } published ? $" (released {published.ToLocalTime():yyyy-MM-dd})." : ".");
+		AppUpdateButton.Content = AppUpdates.CanUpdateInPlace(release) ? $"Update to {release.Version}" : "Download from GitHub";
+		AppUpdateButton.IsVisible = true;
+	}
+
+	private async void OnAppUpdateClick(object? sender, RoutedEventArgs e)
+	{
+		if (_latestRelease is null) return;
+
+		AppUpdateButton.IsEnabled = false;
+		var updating = await AppUpdateFlow.UpdateAsync(this, _latestRelease, IsRendering, status => AppUpdateText.Text = status,
+			share => AppUpdateText.Text = $"Downloading OsmoOverlay {_latestRelease.Version}... {share * 100:0}%");
+		if (!updating) AppUpdateButton.IsEnabled = true;
+	}
+
+	/// <summary>Every TextBlock.link on the About tab - the address is in its Tag.</summary>
+	private void OnLinkClick(object? sender, PointerPressedEventArgs e)
+	{
+		if ((sender as Control)?.Tag is string url) AppUpdateFlow.OpenInBrowser(url);
 	}
 
 	/// <summary>

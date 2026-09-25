@@ -254,6 +254,14 @@
 		<Style Selector="TextBlock.infoLabel">
 			<Setter Property="Opacity" Value="0.55" />
 		</Style>
+		<Style Selector="TextBlock.link">
+			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+			<Setter Property="Cursor" Value="Hand" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+		</Style>
+		<Style Selector="TextBlock.link:pointerover">
+			<Setter Property="TextDecorations" Value="Underline" />
+		</Style>
 		<Style Selector="TextBlock.hint">
 			<Setter Property="Opacity" Value="0.45" />
 			<Setter Property="FontSize" Value="13" />

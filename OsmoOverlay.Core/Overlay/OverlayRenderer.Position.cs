@@ -92,7 +92,7 @@ public sealed partial class OverlayRenderer
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			AppLogger.Warn(ex, "Map widget: failed to prepare the route map - the widget will show a placeholder.");
+			AppLogger.Warn(ex, "Map widget: failed to prepare the route map - the widget will show a placeholder");
 			return (null, key);
 		}
 	}

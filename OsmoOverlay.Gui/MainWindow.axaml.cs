@@ -10,6 +10,8 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
+using OsmoOverlay.Core.Updates;
+using OsmoOverlay.Gui.Native;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
 
 namespace OsmoOverlay.Gui;
@@ -173,9 +175,41 @@ public partial class MainWindow : Window
 		_ = Task.Run(FfmpegPipeline.DeleteStaleTempFiles);
 
 		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
-		if (missing.Count == 0) return;
+		if (missing.Count > 0) await new DependencyPromptWindow(missing).ShowDialog(this);
 
-		await new DependencyPromptWindow(missing).ShowDialog(this);
+		await OfferAppUpdateAsync(await UpdateChecks.Latest);
+	}
+
+	/// <summary>
+	///     After the startup update check (UpdateChecks, which logs every result - dependency updates are left to Settings'
+	///     About tab): asks about a new version of the app, unless this one was declined before.
+	/// </summary>
+	private async Task OfferAppUpdateAsync(UpdateCheckResult check)
+	{
+		if (!check.AppUpdateAvailable) return;
+
+		AppRelease release = check.App!;
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		if (settings.SkippedAppUpdate == release.Version.ToString()) return;
+
+		var canInstall = AppUpdates.CanUpdateInPlace(release);
+		var accepted = await ConfirmDialog.AskAsync(this, "Update available",
+			$"OsmoOverlay {release.Version} is available - you have {AppUpdates.CurrentVersion}.\n\n" +
+			(canInstall
+				? "Update now? OsmoOverlay will download it, close, install it and start again."
+				: "Open the download page?") +
+			"\n\nIf you cancel, you won't be asked about this version again - it stays available in Settings > About.",
+			canInstall ? "Update" : "Open GitHub", DialogKind.Info);
+		if (!accepted)
+		{
+			OverlaySettingsStore.Save(settings with { SkippedAppUpdate = release.Version.ToString() });
+			return;
+		}
+
+		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
+		var updating = await AppUpdateFlow.UpdateAsync(this, release, () => _phase == UiPhase.Rendering, status => AppendLog(status),
+			share => TaskbarProgress.SetValue(this, (ulong)(share * 1000), 1000), false);
+		if (!updating) TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 	}
 
 	private async void OnAddInputFilesClick(object? sender, RoutedEventArgs e)

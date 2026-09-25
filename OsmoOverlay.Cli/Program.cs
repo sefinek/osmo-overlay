@@ -25,7 +25,7 @@ while (i < args.Length && !options.Contains(args[i]))
 
 if (inputPaths.Count == 0)
 {
-	Console.Error.WriteLine("Error: at least one input file is required.");
+	Console.Error.WriteLine("Error: at least one input file is required");
 	return 1;
 }
 
@@ -35,7 +35,7 @@ for (; i < args.Length; i++)
 
 	if (i + 1 >= args.Length)
 	{
-		Console.Error.WriteLine($"Error: missing value for {args[i]}.");
+		Console.Error.WriteLine($"Error: missing value for {args[i]}");
 		return 1;
 	}
 
@@ -60,7 +60,7 @@ for (; i < args.Length; i++)
 			cutOuts.Add(new TimeRange(cutStart, cutEnd));
 			break;
 		default:
-			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'.");
+			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'");
 			return 1;
 	}
 }

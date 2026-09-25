@@ -10,6 +10,21 @@ namespace OsmoOverlay.Gui;
 /// <summary>Shared "Name | installed | latest | [Update]" row layout used by SettingsWindow's About tab.</summary>
 internal static class DependencyStatusRows
 {
+	/// <summary>The same rows before the first check is back, so the layout doesn't jump when the versions arrive.</summary>
+	public static void ShowChecking(Grid grid, IReadOnlyList<ExternalTool> tools)
+	{
+		grid.RowDefinitions.Clear();
+		grid.Children.Clear();
+
+		for (var i = 0; i < tools.Count; i++)
+		{
+			grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+			AddCell(grid, new TextBlock { Text = tools[i].DisplayName }, i, 0);
+			AddCell(grid, new TextBlock { Text = "installed ...", Opacity = 0.6 }, i, 1);
+			AddCell(grid, new TextBlock { Text = "latest ...", Opacity = 0.6 }, i, 2);
+		}
+	}
+
 	/// <param name="isRendering">An FFmpeg update that restarts the app waits until this is false.</param>
 	public static void Populate(Window owner, Grid grid, IReadOnlyList<ToolVersionInfo> statuses, Func<bool> isRendering)
 	{

@@ -14,6 +14,8 @@ const string usage = """
                        --output <dir>        Output directory (default: artifacts)
                        --skip-tests          Don't run OsmoOverlay.Tests first
                        --no-archive          Keep the published folders instead of zip/tar.gz archives
+                       --no-installer        Don't build the Windows installers
+                       --iscc <path>         Inno Setup 7 compiler (default: found in Program Files or on PATH)
                      """;
 
 string[] defaultRids = ["win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64"];
@@ -24,6 +26,8 @@ string? versionOverride = null;
 string? outputArg = null;
 var skipTests = false;
 var archive = true;
+var installer = true;
+string? isccArg = null;
 
 for (var i = 0; i < args.Length; i++)
 {
@@ -59,6 +63,12 @@ for (var i = 0; i < args.Length; i++)
 		case "--no-archive":
 			archive = false;
 			break;
+		case "--no-installer":
+			installer = false;
+			break;
+		case "--iscc":
+			isccArg = Value();
+			break;
 		case "-h" or "--help":
 			Console.WriteLine(usage);
 			return 0;
@@ -79,23 +89,28 @@ var displayVersion = ShortVersion(version);
 var outputDir = Path.GetFullPath(outputArg ?? Path.Combine(root, "artifacts"));
 Directory.CreateDirectory(outputDir);
 
+var iscc = installer && rids.Any(r => InstallerArchitecture(r) is not null) && flavors.Contains(Flavor.SelfContained) ? FindIscc() : null;
+if (installer && iscc is null && rids.Any(r => InstallerArchitecture(r) is not null) && flavors.Contains(Flavor.SelfContained))
+	Console.WriteLine("Inno Setup 7 (ISCC.exe) not found - skipping the Windows installers. Pass --iscc <path> or --no-installer.");
+
 Console.WriteLine($"OsmoOverlay {displayVersion}: {string.Join(", ", rids)} ({string.Join(", ", flavors.Select(Suffix))}) -> {outputDir}");
 var stopwatch = Stopwatch.StartNew();
 
 try
 {
-	if (!skipTests) Dotnet("test", "--project", Path.Combine(root, "OsmoOverlay.Tests"), "-c", "Release");
+	if (!skipTests) Run("dotnet", "test", "--project", Path.Combine(root, "OsmoOverlay.Tests"), "-c", "Release");
 
 	List<string> produced = [];
 	foreach (var rid in rids)
 	foreach (Flavor flavor in flavors)
-		produced.Add(Package(rid, flavor));
+		produced.AddRange(Package(rid, flavor));
 
-	if (archive) WriteChecksums(produced);
+	List<string> files = [.. produced.Where(File.Exists)];
+	if (files.Count > 0) WriteChecksums(files);
 
 	Console.WriteLine($"\nDone in {stopwatch.Elapsed:mm\\:ss}:");
 	foreach (var path in produced)
-		Console.WriteLine($"  {Path.GetFileName(path)}{(archive ? $" ({new FileInfo(path).Length / 1024.0 / 1024.0:0.0} MB)" : "")}");
+		Console.WriteLine($"  {Path.GetFileName(path)}{(File.Exists(path) ? $" ({new FileInfo(path).Length / 1024.0 / 1024.0:0.0} MB)" : "")}");
 	return 0;
 }
 catch (Exception ex) when (ex is BuildFailedException or IOException or UnauthorizedAccessException)
@@ -104,16 +119,20 @@ catch (Exception ex) when (ex is BuildFailedException or IOException or Unauthor
 	return 1;
 }
 
-string Package(string rid, Flavor flavor)
+List<string> Package(string rid, Flavor flavor)
 {
 	var name = $"OsmoOverlay-{displayVersion}-{rid}-{Suffix(flavor)}";
 	var packageDir = Path.Combine(outputDir, name);
 	var isWindows = rid.StartsWith("win-", StringComparison.Ordinal);
 	var archivePath = Path.Combine(outputDir, name + (isWindows ? ".zip" : ".tar.gz"));
+	var installerName = $"OsmoOverlay-{displayVersion}-{rid}-setup";
+	var installerPath = Path.Combine(outputDir, installerName + ".exe");
+	var buildInstaller = iscc is not null && flavor == Flavor.SelfContained && InstallerArchitecture(rid) is not null;
 
 	Console.WriteLine($"\n=== {name}");
 	DeleteIfExists(packageDir);
 	DeleteIfExists(archivePath);
+	if (buildInstaller) DeleteIfExists(installerPath);
 
 	var isMac = rid.StartsWith("osx-", StringComparison.Ordinal);
 	var publishDir = isMac ? Path.Combine(packageDir, "OsmoOverlay.app", "Contents", "MacOS") : packageDir;
@@ -124,12 +143,53 @@ string Package(string rid, Flavor flavor)
 	foreach (var document in new[] { "README.md", "LICENSE" })
 		File.Copy(Path.Combine(root, document), Path.Combine(packageDir, document));
 
-	if (!archive) return packageDir;
+	List<string> produced = [];
+	if (buildInstaller)
+	{
+		Console.WriteLine($"=== {installerName}");
+		Run(iscc!, "-q", Path.Combine(root, "OsmoOverlay.Build", "Installer", "OsmoOverlay.iss"),
+			$"-DAppVersion={displayVersion}",
+			$"-DFileVersion={(Version.TryParse(version, out _) ? version : "0.0.0.0")}",
+			$"-DArchitecture={InstallerArchitecture(rid)}",
+			$"-DSourceDir={packageDir}",
+			$"-DRepoRoot={root}",
+			$"-DOutputDir={outputDir}",
+			$"-DOutputName={installerName}");
+		produced.Add(installerPath);
+	}
+
+	if (!archive) return [packageDir, .. produced];
 
 	if (isWindows) ZipFile.CreateFromDirectory(packageDir, archivePath, CompressionLevel.SmallestSize, true);
 	else WriteTarGz(packageDir, archivePath);
 	Directory.Delete(packageDir, true);
-	return archivePath;
+	return [archivePath, .. produced];
+}
+
+static string? InstallerArchitecture(string rid)
+{
+	return rid switch
+	{
+		"win-x64" => "x64compatible",
+		"win-arm64" => "arm64",
+		_ => null
+	};
+}
+
+string? FindIscc()
+{
+	if (isccArg is not null) return File.Exists(isccArg) ? isccArg : throw new BuildFailedException($"ISCC not found at {isccArg}.");
+	if (!OperatingSystem.IsWindows()) return null;
+
+	IEnumerable<string> candidates =
+	[
+		Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Inno Setup 7", "ISCC.exe"),
+		Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Inno Setup 7", "ISCC.exe"),
+		Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Inno Setup 7", "ISCC.exe"),
+		.. (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+			.Select(dir => Path.Combine(dir, "ISCC.exe"))
+	];
+	return candidates.FirstOrDefault(File.Exists);
 }
 
 void Publish(string project, string rid, Flavor flavor, string destination)
@@ -144,7 +204,7 @@ void Publish(string project, string rid, Flavor flavor, string destination)
 		"-p:DebugType=none"
 	];
 	if (versionOverride is not null) arguments.Add($"-p:Version={versionOverride}");
-	Dotnet([.. arguments]);
+	Run("dotnet", [.. arguments]);
 }
 
 void WriteAppBundle(string contentsDir)
@@ -216,14 +276,15 @@ void WriteChecksums(IEnumerable<string> archives)
 	}));
 }
 
-void Dotnet(params string[] arguments)
+void Run(string command, params string[] arguments)
 {
-	var psi = new ProcessStartInfo("dotnet") { UseShellExecute = false, WorkingDirectory = root };
+	var psi = new ProcessStartInfo(command) { UseShellExecute = false, WorkingDirectory = root };
 	foreach (var argument in arguments) psi.ArgumentList.Add(argument);
 
-	using Process process = Process.Start(psi) ?? throw new BuildFailedException("Could not start dotnet.");
+	using Process process = Process.Start(psi) ?? throw new BuildFailedException($"Could not start {command}.");
 	process.WaitForExit();
-	if (process.ExitCode != 0) throw new BuildFailedException($"dotnet {arguments[0]} exited with code {process.ExitCode}.");
+	if (process.ExitCode != 0)
+		throw new BuildFailedException($"{Path.GetFileNameWithoutExtension(command)} {arguments[0]} exited with code {process.ExitCode}.");
 }
 
 static void DeleteIfExists(string path)

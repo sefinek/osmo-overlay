@@ -140,7 +140,7 @@ public partial class CompareVideosWindow : Window
 		if (topLevel?.Clipboard is null || _paths.Count == 0) return;
 
 		await topLevel.Clipboard.SetTextAsync(BuildComparisonMarkdown());
-		AppLogger.Notify($"Copied comparison of {_paths.Count} file(s) to clipboard as Markdown.");
+		AppLogger.Notify($"Copied comparison of {_paths.Count} file(s) to clipboard as Markdown");
 	}
 
 	private async void OnSaveToFileClick(object? sender, RoutedEventArgs e)
@@ -163,7 +163,7 @@ public partial class CompareVideosWindow : Window
 		if (file is null) return;
 
 		await File.WriteAllTextAsync(file.Path.LocalPath, BuildComparisonMarkdown());
-		AppLogger.Notify($"Saved video comparison to {Path.GetFileName(file.Path.LocalPath)}.");
+		AppLogger.Notify($"Saved video comparison to {Path.GetFileName(file.Path.LocalPath)}");
 	}
 
 	private void Render()

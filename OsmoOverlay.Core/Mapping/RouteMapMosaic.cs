@@ -210,7 +210,7 @@ public sealed class RouteMapMosaic : IDisposable
 		if (!fetchedAny)
 		{
 			bitmap.Dispose();
-			AppLogger.Warn("Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map.");
+			AppLogger.Warn("Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map");
 			return null;
 		}
 

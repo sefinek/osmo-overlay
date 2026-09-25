@@ -77,7 +77,7 @@ internal static class Mp4CameraMetadata
 
 			if (segments.Any(s => s.Timescale != segments[0].Timescale || !s.Stsd.Payload!.AsSpan().SequenceEqual(segments[0].Stsd.Payload)))
 			{
-				AppLogger.Warn($"Camera '{format}' track differs between segments (timescale/sample description) - not copied.");
+				AppLogger.Warn($"Camera '{format}' track differs between segments (timescale/sample description) - not copied");
 				continue;
 			}
 

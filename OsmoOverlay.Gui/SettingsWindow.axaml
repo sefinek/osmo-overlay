@@ -235,22 +235,46 @@
 					<StackPanel Margin="24,20" Spacing="20">
 						<StackPanel Spacing="6">
 							<TextBlock Text="Application" Classes="infoLabel" />
-							<TextBlock Name="AppVersionText" Text="OsmoOverlay" />
-							<TextBlock Name="CoreVersionText" Text="Core" />
-							<TextBlock Name="GitHubLinkText" Text="github.com/sefinek/osmo-overlay" Foreground="{StaticResource AccentHoverBrush}"
-							           Cursor="Hand" PointerPressed="OnGitHubLinkClick" />
+							<StackPanel Orientation="Horizontal" Spacing="12">
+								<TextBlock Name="AppVersionText" Text="OsmoOverlay" />
+								<TextBlock Name="CoreVersionText" Text="Core" Opacity="0.6" />
+							</StackPanel>
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Updates" Classes="infoLabel" />
+							<StackPanel Orientation="Horizontal" Spacing="12">
+								<Button Name="CheckForUpdatesButton" Content="Check for updates" Click="OnCheckForUpdatesClick" />
+								<TextBlock Name="AppUpdateText" Text="Checking for a new version..." VerticalAlignment="Center" />
+								<Button Name="AppUpdateButton" IsVisible="False" Click="OnAppUpdateClick" />
+							</StackPanel>
 						</StackPanel>
 
 						<StackPanel Spacing="6">
 							<TextBlock Text="Dependencies" Classes="infoLabel" />
 							<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
-							<Button Name="CheckForUpdatesButton" Content="Check for updates" HorizontalAlignment="Left"
-							        Click="OnCheckForUpdatesClick" />
 						</StackPanel>
 
 						<StackPanel Spacing="6">
 							<TextBlock Text="Configuration" Classes="infoLabel" />
 							<TextBlock Name="ConfigLastUpdatedText" Text="Config last updated: -" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="License" Classes="infoLabel" />
+							<TextBlock Text="Free for non-commercial use under the PolyForm Noncommercial License 1.0.0. The videos you make with it are yours - you can monetize them."
+							           TextWrapping="Wrap" />
+							<TextBlock Text="Read the license" Classes="link" Tag="https://github.com/sefinek/osmo-overlay/blob/main/LICENSE"
+							           PointerPressed="OnLinkClick" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Author" Classes="infoLabel" />
+							<TextBlock Text="Sefinek" />
+							<TextBlock Text="sefinek.net" Classes="link" Tag="https://sefinek.net" PointerPressed="OnLinkClick" />
+							<TextBlock Text="contact@sefinek.net" Classes="link" Tag="mailto:contact@sefinek.net" PointerPressed="OnLinkClick" />
+							<TextBlock Text="github.com/sefinek/osmo-overlay" Classes="link" Tag="https://github.com/sefinek/osmo-overlay"
+							           PointerPressed="OnLinkClick" />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>
