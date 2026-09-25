@@ -74,6 +74,7 @@ The builds aren't code-signed yet, so SmartScreen may warn on first launch - cho
 tar -xzf OsmoOverlay-<version>-linux-x64-self-contained.tar.gz
 ./OsmoOverlay-<version>-linux-x64-self-contained/OsmoOverlay
 ```
+To add OsmoOverlay (with its icon) to your application menu, run `./install-desktop-entry.sh` from the extracted folder - `--remove` takes it out again. Run it again if you move the folder.
 
 ### macOS
 Extract the archive and move `OsmoOverlay.app` to *Applications*. The app isn't signed or notarized yet, so macOS blocks the first launch - right-click it and choose *Open*, or remove the quarantine flag:

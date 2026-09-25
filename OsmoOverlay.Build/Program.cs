@@ -143,6 +143,7 @@ List<string> Package(string rid, Flavor flavor)
 	Publish(guiProject, rid, flavor, publishDir);
 	Publish(cliProject, rid, flavor, publishDir);
 	if (isMac) WriteAppBundle(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
+	if (rid.StartsWith("linux-", StringComparison.Ordinal)) WriteDesktopEntryInstaller(packageDir);
 	foreach (var document in new[] { "README.md", "LICENSE" })
 		File.Copy(Path.Combine(root, document), Path.Combine(packageDir, document));
 
@@ -210,6 +211,43 @@ void Publish(string project, string rid, Flavor flavor, string destination)
 	Run("dotnet", [.. arguments]);
 }
 
+// A .desktop file needs absolute paths, and where the archive gets extracted isn't known - so the package carries the
+// icon and a script that writes the menu entry for wherever the folder is.
+void WriteDesktopEntryInstaller(string packageDir)
+{
+	File.Copy(Path.Combine(root, "OsmoOverlay.Gui", "Assets", "OsmoOverlay.png"), Path.Combine(packageDir, "OsmoOverlay.png"));
+
+	const string script = """
+	                      #!/bin/sh
+	                      # Adds OsmoOverlay to the application menu for this folder; --remove takes it out again.
+	                      set -e
+	                      entry="${XDG_DATA_HOME:-$HOME/.local/share}/applications/osmooverlay.desktop"
+
+	                      if [ "$1" = "--remove" ]; then
+	                        rm -f "$entry"
+	                        echo "Removed $entry"
+	                        exit 0
+	                      fi
+
+	                      dir=$(cd "$(dirname "$0")" && pwd)
+	                      mkdir -p "$(dirname "$entry")"
+	                      cat > "$entry" <<EOF
+	                      [Desktop Entry]
+	                      Type=Application
+	                      Name=OsmoOverlay
+	                      Comment=Telemetry HUD for DJI Osmo Action footage
+	                      Exec="$dir/OsmoOverlay"
+	                      Path=$dir
+	                      Icon=$dir/OsmoOverlay.png
+	                      Terminal=false
+	                      Categories=AudioVideo;Video;
+	                      EOF
+	                      echo "Added OsmoOverlay to the application menu: $entry"
+
+	                      """;
+	File.WriteAllText(Path.Combine(packageDir, "install-desktop-entry.sh"), script.ReplaceLineEndings("\n"));
+}
+
 void WriteAppBundle(string contentsDir)
 {
 	var resourcesDir = Path.Combine(contentsDir, "Resources");
@@ -223,7 +261,7 @@ void WriteAppBundle(string contentsDir)
 	             <dict>
 	               <key>CFBundleName</key><string>OsmoOverlay</string>
 	               <key>CFBundleDisplayName</key><string>OsmoOverlay</string>
-	               <key>CFBundleIdentifier</key><string>com.sefinek.osmooverlay</string>
+	               <key>CFBundleIdentifier</key><string>net.sefinek.osmooverlay</string>
 	               <key>CFBundleExecutable</key><string>OsmoOverlay</string>
 	               <key>CFBundleIconFile</key><string>OsmoOverlay.icns</string>
 	               <key>CFBundlePackageType</key><string>APPL</string>
@@ -262,7 +300,7 @@ static void AddDirectory(TarWriter tar, string directory, string entryName)
 		using FileStream data = File.OpenRead(path);
 		tar.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, $"{entryName}/{fileName}")
 		{
-			Mode = fileName is "OsmoOverlay" or "OsmoOverlay.Cli" or "createdump" ? executable : regular,
+			Mode = fileName is "OsmoOverlay" or "OsmoOverlay.Cli" or "createdump" or "install-desktop-entry.sh" ? executable : regular,
 			ModificationTime = File.GetLastWriteTimeUtc(path),
 			DataStream = data
 		});
