@@ -1,7 +1,26 @@
 # Osmo Overlay ✨
-Not finished yet.
+Add a modern telemetry HUD (speed, map, route, tilt and more) to your DJI Osmo footage, straight from the data your camera already records - with no loss of image quality.
+
+If you find this repository useful, I would greatly appreciate it if you could give it a **star** ⭐. Thank you!
+Using OsmoOverlay in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
+Pull requests are welcome too - bug fixes, new widgets, support for other cameras, anything that makes the app better.
 
 ![](.github/OsmoOverlay_ru8MsYzI.jpg)
+
+## Features
+- **No quality loss** - the export matches the camera's original 1:1 (codec, 10-bit, bitrate, timecode).
+- **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance. No DJI Mimo needed.
+- **15 widgets** - including a speedometer, map, compass with route, tilt, G-meter, elevation, distance, date and time.
+- **Drag-and-drop editor** - position, size, fonts, colors, appear animations. Presets you can export and share.
+- **Live preview** - with sound, playback speed control, looping and a timeline with thumbnails.
+- **Cutting** - remove parts of the recording in the app. Distance, stats and the route account for the cuts.
+- **Privacy** - the camera's serial number and GPS track aren't included in the export unless you want them.
+- **Green screen export** - just the HUD, for compositing in another editor.
+- **Tools** - color tag fix, metadata removal, camera microphone audio conversion, video comparison.
+- **Windows, Linux and macOS** - on x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable; Linux and macOS are experimental.
+
+## Supported cameras
+Currently only the DJI Osmo Action 6 is supported. Unfortunately I don't own any other DJI cameras, so I can't test or add support for them. Recordings from other models may work, but this hasn't been verified.
 
 ## Important information
 Do not add the overlay in the DJI Mimo app. Doing so will slightly reduce the quality of your footage.
@@ -18,25 +37,24 @@ Do not add the overlay in the DJI Mimo app. Doing so will slightly reduce the qu
 
 This application fully preserves the source codec and other original video properties, so it has absolutely no impact on the final quality after export.
 
-Having the same resolution does not mean that the footage retains the same quality.
-
 ## Good to know
-Telemetry data (GPS data, as well as your camera's serial number) is stored directly in the MP4 file. Be careful who you share it with.
+- Telemetry data (GPS data, as well as your camera's serial number) is stored directly in the MP4 file. Be careful who you share it with.
+- The same resolution doesn't mean the same quality - the codec, color depth and bitrate matter too.
 
 ## Download
 Every release comes in two variants for each platform:
 
-| Variant               | .NET runtime                                                                       | Size   |
-|:----------------------|:-----------------------------------------------------------------------------------|:-------|
-| `self-contained`      | Included - nothing else to install                                                 | Larger |
+| Variant               | .NET runtime                                                                          | Size    |
+|:----------------------|:--------------------------------------------------------------------------------------|:--------|
+| `self-contained`      | Included - nothing else to install                                                    | Larger  |
 | `framework-dependent` | [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) required | Smaller |
 
 Pick the archive for your system:
 
-| System                | Package                                        |
-|:----------------------|:-----------------------------------------------|
-| Windows (Intel/AMD)   | `OsmoOverlay-<version>-win-x64-<variant>.zip`     |
-| Windows (ARM)         | `OsmoOverlay-<version>-win-arm64-<variant>.zip`   |
+| System                | Package                                              |
+|:----------------------|:-----------------------------------------------------|
+| Windows (Intel/AMD)   | `OsmoOverlay-<version>-win-x64-<variant>.zip`        |
+| Windows (ARM)         | `OsmoOverlay-<version>-win-arm64-<variant>.zip`      |
 | Linux (Intel/AMD)     | `OsmoOverlay-<version>-linux-x64-<variant>.tar.gz`   |
 | Linux (ARM)           | `OsmoOverlay-<version>-linux-arm64-<variant>.tar.gz` |
 | macOS (Intel)         | `OsmoOverlay-<version>-osx-x64-<variant>.tar.gz`     |
@@ -61,15 +79,15 @@ xattr -dr com.apple.quarantine /Applications/OsmoOverlay.app
 The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
 
 ## Requirements
-**FFmpeg 9** is required - both the `ffmpeg`/`ffprobe` commands and its shared libraries (used for the live preview). If it's missing, the app offers to install it on first launch:
+**FFmpeg 9** is required - both the `ffmpeg`/`ffprobe` commands and its shared libraries (used by the live preview). If it's missing, the app offers to install it on first launch:
 
-| System  | Installed with                                                                    |
-|:--------|:----------------------------------------------------------------------------------|
+| System  | Installed with                                                                        |
+|:--------|:--------------------------------------------------------------------------------------|
 | Windows | `winget install Gyan.FFmpeg.Shared` (the static `Gyan.FFmpeg` build has no libraries) |
-| macOS   | `brew install ffmpeg`                                                             |
-| Linux   | Your package manager (`ffmpeg` on apt/dnf/pacman)                                  |
+| macOS   | `brew install ffmpeg`                                                                 |
+| Linux   | Your package manager (`ffmpeg` on apt/dnf/pacman)                                     |
 
-Many Linux distributions still ship an older FFmpeg - the preview needs version 9 exactly.
+Many Linux distributions still ship an older FFmpeg - the preview needs version 9.x.
 
 [ExifTool](https://exiftool.org) is optional. It's only used as a fallback for cameras whose telemetry format the app can't read on its own.
 
@@ -82,4 +100,13 @@ dotnet test --project OsmoOverlay.Tests                  # run the unit tests
 dotnet run --project OsmoOverlay.Build                   # build every release package into artifacts/
 dotnet run --project OsmoOverlay.Build -- --help         # options: platforms, variant, version, output directory
 ```
-Release packages for every platform can be built from any of them.
+Packages for all platforms can be built on any system (Windows, Linux or macOS).
+
+## License
+OsmoOverlay is free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+- You can use, modify and share it (including modified versions) for any non-commercial purpose.
+- The videos you make with it are yours: you can monetize them and publish them as sponsored content, and you can use the app itself for paid editing work for clients.
+- You can't sell the app or a modified version of it, or include it in a paid product or service.
+
+The second point is an additional permission from the licensor on top of the license: using OsmoOverlay to create videos and other output, and using that output for any purpose, including commercial ones, is permitted. See [LICENSE](LICENSE) for the full terms.

@@ -115,13 +115,14 @@ string Package(string rid, Flavor flavor)
 	DeleteIfExists(packageDir);
 	DeleteIfExists(archivePath);
 
-	// On macOS the GUI ships as an app bundle; the CLI sits next to it inside Contents/MacOS, sharing its libraries.
 	var isMac = rid.StartsWith("osx-", StringComparison.Ordinal);
 	var publishDir = isMac ? Path.Combine(packageDir, "OsmoOverlay.app", "Contents", "MacOS") : packageDir;
 
 	Publish(guiProject, rid, flavor, publishDir);
 	Publish(cliProject, rid, flavor, publishDir);
 	if (isMac) WriteAppBundle(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
+	foreach (var document in new[] { "README.md", "LICENSE" })
+		File.Copy(Path.Combine(root, document), Path.Combine(packageDir, document));
 
 	if (!archive) return packageDir;
 
@@ -137,8 +138,6 @@ void Publish(string project, string rid, Flavor flavor, string destination)
 	[
 		"publish", project, "-c", "Release", "-r", rid, "-o", destination,
 		"--self-contained", flavor == Flavor.SelfContained ? "true" : "false",
-		// bin/obj of their own, per RID: the projects' own obj/project.assets.json is restored without RIDs
-		// whenever an open IDE feels like it, which breaks a publish mid-run (NETSDK1047).
 		"-p:UseArtifactsOutput=true",
 		$"-p:ArtifactsPath={Path.Combine(root, "artifacts", ".build")}",
 		"-p:AppendRuntimeIdentifierToOutputPath=true",
@@ -174,8 +173,6 @@ void WriteAppBundle(string contentsDir)
 	File.WriteAllText(Path.Combine(contentsDir, "Info.plist"), plist);
 }
 
-// tar.gz rather than zip for Linux/macOS: a zip written on Windows carries no Unix permissions, so the
-// executables would come out without +x.
 static void WriteTarGz(string sourceDir, string archivePath)
 {
 	using FileStream file = File.Create(archivePath);
@@ -244,7 +241,6 @@ static string FindRepoRoot()
 	throw new BuildFailedException("OsmoOverlay.slnx not found - run from inside the repository.");
 }
 
-// "0.1.0.0" -> "0.1.0": the fourth part is never used for releases.
 static string ShortVersion(string version)
 {
 	var parts = version.Split('.');

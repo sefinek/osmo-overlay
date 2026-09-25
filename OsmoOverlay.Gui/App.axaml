@@ -8,7 +8,6 @@
 				<ResourceInclude Source="avares://OsmoOverlay/Icons.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 
-			<!-- Palette - the only place a UI color is defined; XAML uses the *Brush keys, C# goes through Palette. -->
 			<Color x:Key="WindowBackgroundColor">#111113</Color>
 			<Color x:Key="SurfaceColor">#19191C</Color>
 			<Color x:Key="SurfaceInsetColor">#151518</Color>
@@ -80,7 +79,6 @@
 			<SolidColorBrush x:Key="DangerHoverBrush" Color="{StaticResource DangerHoverColor}" />
 			<SolidColorBrush x:Key="DangerPressedBrush" Color="{StaticResource DangerPressedColor}" />
 
-			<!-- Fluent derives its own accent shades (checkboxes, sliders, toggles) from these. -->
 			<Color x:Key="SystemAccentColor">#3E9EFF</Color>
 			<Color x:Key="SystemAccentColorDark1">#2E7ECC</Color>
 			<Color x:Key="SystemAccentColorDark2">#1F5E99</Color>
@@ -197,9 +195,6 @@
 			<Setter Property="MaxWidth" Value="380" />
 		</Style>
 
-		<!-- Scrollbars beside the content, not over it: Fluent's auto-hiding bars overlay the content and, expanded
-		     on hover, covered the right edge of the cards. Without auto-hide the theme keeps the content presenter
-		     in its own cell and the bar in the Auto column next to it (collapsed when there's nothing to scroll). -->
 		<Style Selector="ScrollViewer">
 			<Setter Property="AllowAutoHide" Value="False" />
 		</Style>
@@ -210,7 +205,6 @@
 			<Setter Property="Margin" Value="0,4,0,0" />
 		</Style>
 
-		<!-- A slim bar: just the thumb on a transparent track, no arrow buttons. -->
 		<Style Selector="ScrollBar">
 			<Setter Property="MinWidth" Value="0" />
 			<Setter Property="MinHeight" Value="0" />
@@ -250,7 +244,6 @@
 			<Setter Property="BorderThickness" Value="0" />
 		</Style>
 
-		<!-- Shared building blocks for every window; a window only overrides layout (margins, padding) locally. -->
 		<Style Selector="Border.card">
 			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
 			<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
