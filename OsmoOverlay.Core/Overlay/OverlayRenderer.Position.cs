@@ -408,9 +408,8 @@ public sealed partial class OverlayRenderer
 			// widget's TrailUseArrow is its own independent setting, so they can be styled differently.
 			DrawTrailMarker(canvas, 0, 0, frame.HeadingDegrees, element.TrailUseArrow);
 
-			// Required OSM attribution is no longer crammed inside this small circle (it read poorly
-			// over busy map tiles) - RenderInto() draws it bottom-center instead, see DrawWatermark/
-			// DrawMapAttributionOnly.
+			// The required OSM attribution isn't drawn inside this small circle (unreadable over busy map
+			// tiles) - DrawFrame draws it bottom-center instead, see DrawWatermark/DrawMapAttributionOnly.
 		}
 
 		canvas.DrawCircle(0, 0, radius, _ringStroke3White160);
@@ -450,7 +449,7 @@ public sealed partial class OverlayRenderer
 		return ResolveColor(hex, TrailColor);
 	}
 
-	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, the older static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>
+	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, a static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>
 	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, bool useArrow)
 	{
 		if (useArrow)

@@ -214,7 +214,7 @@ public partial class MainWindow
 
 	private void GoToEnd()
 	{
-		// VideoFrameSource clamps past-the-end seeks to the last decodable frame.
+		// LibavVideoSource clamps past-the-end seeks to the last decodable frame.
 		SeekToFrame(long.MaxValue);
 	}
 
@@ -234,9 +234,9 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Seeks a quarter frame before the frame's own start time: ffmpeg's -ss (millisecond precision) lands
-	///     on the first frame at or after the position, so aiming exactly at a frame's timestamp could round
-	///     past it and skip a frame on every step.
+	///     Seeks a quarter frame before the frame's own start time: PreviewFrames.IndexAt takes the first frame
+	///     at or after a position, so aiming exactly at a frame's timestamp could round past it and skip a frame
+	///     on every step.
 	/// </summary>
 	private void SeekToFrame(long frame)
 	{

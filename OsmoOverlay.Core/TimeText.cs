@@ -3,8 +3,8 @@ using System.Globalization;
 namespace OsmoOverlay.Core;
 
 /// <summary>
-///     Times on a recording's timeline as people type and read them - shared by the CLI's --from/--to, the
-///     GUI's render range fields and every log line about a range, so all of them accept and print the same thing.
+///     Times on a recording's timeline as people type and read them - shared by the CLI's --from/--to/--cut,
+///     the GUI's cut editor and every log line about a range, so all of them accept and print the same thing.
 /// </summary>
 public static class TimeText
 {

@@ -15,12 +15,11 @@ public sealed record FileSummary(
 	IReadOnlyList<TelemetryFrame>? TelemetryFrames,
 	IReadOnlyList<DerivedFrame>? DerivedFrames,
 	TelemetrySummary? Telemetry,
+	long TotalFrameCount,
 	// See SourceInfo.ContainerCreationTimeUtc - the fallback DateTimeText/UtcTimeText use when this
 	// recording has no GPS timestamp anywhere (OverlayRenderer.DrawTimeText).
 	DateTime? ContainerRecordingStartUtc = null,
-	bool FromCache = false,
-	// Null only on a cache entry written before this existed - callers fall back to duration * fps.
-	long? TotalFrameCount = null);
+	bool FromCache = false);
 
 public enum FileSummaryCacheEventKind
 {
@@ -85,8 +84,8 @@ public static class FileSummaryReader
 		{
 			var cameraModelOnly = ExifToolRunner.GetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, cameraModelOnly, first.Source.Video,
-				first.Source.Audio, durationSeconds, fileSize, false, null, null, null,
-				first.Source.ContainerCreationTimeUtc, TotalFrameCount: totalFrameCount);
+				first.Source.Audio, durationSeconds, fileSize, false, null, null, null, totalFrameCount,
+				first.Source.ContainerCreationTimeUtc);
 		}
 		else
 		{
@@ -102,7 +101,7 @@ public static class FileSummaryReader
 			var cameraModel = extraction.CameraModel ?? ExifToolRunner.GetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, cameraModel, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, true, extraction.Frames, derivedFrames, telemetry,
-				first.Source.ContainerCreationTimeUtc, TotalFrameCount: totalFrameCount);
+				totalFrameCount, first.Source.ContainerCreationTimeUtc);
 		}
 
 		var saved = FileSummaryCache.Save(inputPaths, summary);

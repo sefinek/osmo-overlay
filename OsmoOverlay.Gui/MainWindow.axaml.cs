@@ -28,10 +28,8 @@ public enum PreviewGridMode
 
 /// <summary>
 ///     Window shell: input file list, the Get Summary/Render action flow, and phase-driven panel
-///     visibility. The rest of this window's logic is split across sibling partial-class files by
-///     concern - MainWindow.Summary.cs (Get Summary + Input/Telemetry/Output info cards),
-///     MainWindow.Render.cs (running the render + completion dialog), MainWindow.Preview.cs (live
-///     preview transport), MainWindow.OverlayEditor.cs (overlay preset/widget editing + canvas drag).
+///     visibility. The rest of this window's logic is split across the sibling MainWindow.*.cs
+///     partial-class files by concern.
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -45,7 +43,7 @@ public partial class MainWindow : Window
 	private string? _draggingElementId;
 	// Id of whichever element's settings panel is currently populated/shown in the left column's inline
 	// widget-settings view - every field-changed handler in that panel targets this instance rather than
-	// a fixed OverlayElementType, since a type can now have several instances on the canvas at once (see
+	// a fixed OverlayElementType, since a type can have several instances on the canvas at once (see
 	// OnWidgetGearHoverButtonClick).
 	private string? _editingElementId;
 
@@ -144,8 +142,8 @@ public partial class MainWindow : Window
 
 		// See AppLogger.Notified for the general contract. Concretely: ffmpeg/ffprobe/exiftool
 		// invocations (from this window, ToolsWindow, or CompareVideosWindow), one-off status lines,
-		// and now every Warn/Error too - a failed map tile fetch, a corrupt preset file, a failed
-		// render - previously visible only in app.log. AppendLogLine (not AppendLog) skips re-logging
+		// and every Warn/Error - a failed map tile fetch, a corrupt preset file, a failed render.
+		// AppendLogLine (not AppendLog) skips re-logging
 		// to AppLogger, since the call that raised Notified already did its own logging.
 		AppLogger.Notified += (message, level) => Dispatcher.UIThread.Post(() =>
 			LogBox.AppendLogLine(LogScroll, message, level switch

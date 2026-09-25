@@ -192,6 +192,11 @@ public partial class SettingsWindow : Window
 		RouteIntroImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric,
 		RouteIntroColorBySpeedCheck.IsChecked == true);
 
+	// Set once the About tab has triggered its own automatic check, so switching back to it later
+	// (or switching away and back) doesn't re-spawn winget/brew/apt-cache every time - CheckForUpdatesButton
+	// stays available for an explicit re-check.
+	private bool _dependencyCheckStarted;
+
 	/// <summary>
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
 	///     - switching category just swaps which one is visible instead of reparenting content.
@@ -200,11 +205,6 @@ public partial class SettingsWindow : Window
 	///     since RenderingPanel is already the one visible by default in XAML (every other panel starts
 	///     with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
 	/// </summary>
-	// Set once the About tab has triggered its own automatic check, so switching back to it later
-	// (or switching away and back) doesn't re-spawn winget/brew/apt-cache every time - CheckForUpdatesButton
-	// stays available for an explicit re-check.
-	private bool _dependencyCheckStarted;
-
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
 		if (RenderingPanel is null || MapPanel is null || RouteIntroPanel is null || AboutPanel is null)

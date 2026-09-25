@@ -62,7 +62,7 @@ internal static class LogPanelExtensions
 			logScroll.ScrollToEnd();
 		}
 
-		/// <summary>Clears the panel back to empty - same effect the old plain-TextBox's `LogBox.Text = ""` had.</summary>
+		/// <summary>Clears the panel back to empty.</summary>
 		public void ClearLog()
 		{
 			logBox.Inlines?.Clear();

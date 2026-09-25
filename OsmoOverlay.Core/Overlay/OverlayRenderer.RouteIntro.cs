@@ -28,7 +28,7 @@ public sealed partial class OverlayRenderer
 
 	/// <summary>
 	///     Where the crossfade into the normal HUD begins, on the video's own timeline - shared by
-	///     Render (which draws the crossfade itself) and DrawWatermark/DrawMapAttributionSlide (whose
+	///     DrawFrame (which draws the crossfade itself) and DrawWatermark/DrawMapAttributionSlide (whose
 	///     own fade-out otherwise runs on fixed timing unrelated to RouteIntro.DurationSeconds - see
 	///     WatermarkFadeOutEndSeconds), so both fades land on the same moment regardless of how long the
 	///     card is configured to show for.
@@ -225,8 +225,7 @@ public sealed partial class OverlayRenderer
 
 	/// <summary>
 	///     Badge in the map's own bottom-right corner instead of a section header above it - reads as
-	///     the map's caption, and reclaims the vertical space a separate title row used to take above
-	///     the card. Drawn the same way whether or not the mosaic itself loaded.
+	///     the map's caption without taking a title row of its own. Drawn the same way whether or not the mosaic itself loaded.
 	/// </summary>
 	private void DrawRouteIntroMapLabel(SKCanvas canvas, SKRect mapRect)
 	{

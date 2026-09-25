@@ -341,7 +341,7 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Swaps in a brand-new elements list rather than mutating the one already handed to
-	///     PreviewPlayer - that list may be mid-enumeration on the playback thread's Render() call
+	///     PreviewPlayer - that list may be mid-enumeration in the compose thread's RenderOnto call
 	///     right now, and mutating it in place races with that enumeration.
 	/// </summary>
 	private void ReplaceActiveElements(List<OverlayElement> elements)
@@ -506,11 +506,8 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Populates one widget instance's settings panel and swaps the left column over to show it (in
-	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings,
-	///     whether reached from a canvas click or (in the future) anywhere else that identifies a specific
-	///     element. Not a separate window: an earlier popup-window version made it impossible to see the
-	///     SOURCE/preview area at the same time as the settings, which is exactly what editing a widget
-	///     needs.
+	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings. Not a
+	///     separate window: editing a widget needs the preview visible next to its settings.
 	/// </summary>
 	private void OpenElementSettings(OverlayElement element)
 	{
@@ -1044,7 +1041,7 @@ public partial class MainWindow
 		AppendLog($"Exported preset \"{preset.Name}\" to {file.Path.LocalPath}");
 	}
 
-	/// <summary>Same shape as OnDuplicatePresetClick - a new id avoids colliding with a preset already on this machine, WithMissingDefaultsFilled backfills any widget type added since the file was exported.</summary>
+	/// <summary>Same shape as OnDuplicatePresetClick - a new id avoids colliding with a preset already on this machine.</summary>
 	private async void OnImportPresetClick(object? sender, RoutedEventArgs e)
 	{
 		if (_summary is null) return;
@@ -1067,7 +1064,7 @@ public partial class MainWindow
 		}
 
 		var id = Guid.NewGuid().ToString("N");
-		OverlayPreset preset = (imported with { Id = id }).WithMissingDefaultsFilled(_summary.Video.Width, _summary.Video.Height);
+		OverlayPreset preset = imported with { Id = id };
 		_overlayPresets.Add(preset);
 		_activePresetId = id;
 
@@ -1189,12 +1186,6 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Rule-of-thirds + safe-margin guide lines over the preview, editor-only - purely a positioning
-	///     aid, never baked into the actual render (OverlayRenderer never draws these). The margin box
-	///     uses the exact same OverlayElementBounds.Margin OverlayPreset.CreateDefault positions widgets
-	///     within, so it visibly matches where widgets land by default.
-	/// </summary>
-	/// <summary>
 	///     Entries in the grid button's Flyout (GridModeOffButton/GridModeThirdsButton/
 	///     GridModeMarginButton/GridModeBothButton, matched by Name) - picks which of UpdatePreviewGuides' two
 	///     guide layers are drawn. Independent of _snapToGuides (OnToggleSnapClick).
@@ -1238,6 +1229,12 @@ public partial class MainWindow
 		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewSnapToGrid = _snapToGuides });
 	}
 
+	/// <summary>
+	///     Rule-of-thirds + safe-margin guide lines over the preview, editor-only - purely a positioning
+	///     aid, never baked into the actual render (OverlayRenderer never draws these). The margin box
+	///     uses the exact same OverlayElementBounds.Margin OverlayPreset.CreateDefault positions widgets
+	///     within, so it visibly matches where widgets land by default.
+	/// </summary>
 	private void UpdatePreviewGuides()
 	{
 		var showThirds = _gridMode is PreviewGridMode.Thirds or PreviewGridMode.Both;
@@ -1451,7 +1448,7 @@ public partial class MainWindow
 		if (FindElementAt(pos) is not { } el) return;
 
 		// Dragging needs a stable frame to align against, and it eliminates a real race:
-		// without pausing, the playback thread keeps calling Render() on the same elements
+		// without pausing, the compose thread keeps calling RenderOnto on the same elements
 		// list this drag is about to replace concurrently.
 		if (_previewPlayer.IsPlaying)
 		{

@@ -20,13 +20,12 @@ public sealed partial class OverlayRenderer
 	// would jitter with every sample instead of tracking actual cornering/braking swings.
 	// Plots AccelY (lateral, screen-horizontal) and AccelX (longitudinal, screen-vertical) - the same
 	// two axes PitchGauge's own comment already verified (AccelX = forward/backward tilt, AccelY =
-	// left/right lean), now cross-checked a second time against a dedicated tilt-test recording
+	// left/right lean), cross-checked against a dedicated tilt-test recording
 	// (right/left/floor/ceiling tilts at known timestamps): right tilt showed AccelY swing hugely
 	// negative with AccelX flat, left tilt the mirror positive swing, floor/ceiling tilts showed the
-	// opposite pattern on AccelX with AccelY flat. AccelZ was NOT used here (an earlier version plotted
-	// it) - it moves under both pitch and roll alike (the "remaining" component of the fixed ~1G
-	// vector), so pairing it with AccelX made a pure left/right tilt visibly move the dot on what was
-	// meant to be the up/down axis. This still only reads REORIENTATION (tilting the camera itself),
+	// opposite pattern on AccelX with AccelY flat. Not AccelZ: it moves under both pitch and roll alike
+	// (the "remaining" component of the fixed ~1G vector), so paired with AccelX a pure left/right tilt
+	// visibly moves the dot on what is meant to be the up/down axis. This still only reads REORIENTATION (tilting the camera itself),
 	// not necessarily translational G-force - a single accelerometer without a gyroscope cannot tell
 	// "the sensor rotated" apart from "the sensor felt a real force", so a deliberate/incidental tilt
 	// still shows up here same as a real cornering/braking G would.

@@ -4,8 +4,7 @@ namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
 ///     Layout constants shared between OverlayRenderer (drawing) and the GUI editor (hit-testing for
-///     drag-to-reposition), so the two can't drift apart. Sizes are fixed per element type in V1 -
-///     only position is editable. All sizes are expressed at ReferenceWidth x ReferenceHeight (4K);
+///     drag-to-reposition), so the two can't drift apart. All sizes are expressed at ReferenceWidth x ReferenceHeight (4K);
 ///     GetScale gives the factor both sides must apply so the layout looks the same (proportionally)
 ///     at any actual video resolution instead of overlapping on smaller frames.
 ///     The font sizes/typeface below are the single source OverlayRenderer builds its fonts from and
@@ -80,8 +79,8 @@ public static class OverlayElementBounds
 	}
 
 	/// <summary>
-	///     The exact bold system-font fallback chain OverlayRenderer draws every HUD widget with - moved
-	///     here (rather than duplicated) so GetBounds measures with the identical typeface.
+	///     The exact bold system-font fallback chain OverlayRenderer draws every HUD widget with - here
+	///     (rather than duplicated) so GetBounds measures with the identical typeface.
 	/// </summary>
 	public static SKTypeface CreateHudTypeface()
 	{

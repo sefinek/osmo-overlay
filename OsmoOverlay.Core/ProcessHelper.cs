@@ -13,10 +13,9 @@ internal static class ProcessHelper
 	}
 
 	/// <summary>
-	///     Like CreateHidden, but for a command that's spawned at high frequency for routine, uninteresting
-	///     work (e.g. one ffmpeg process per frame while scrubbing a preview) - still reaches the file log
-	///     (AppLogger.Info, for debugging a broken preview), but skips AppLogger.Notify so it doesn't flood
-	///     the GUI's log panel the way a scrub session would if every frame grab surfaced there.
+	///     Like CreateHidden, but for routine background commands nobody is watching (probing, version
+	///     checks) - still reaches the file log (AppLogger.Info), but skips AppLogger.Notify so it doesn't
+	///     flood the GUI's log panel.
 	/// </summary>
 	public static ProcessStartInfo CreateHiddenQuiet(string command, params string[] args)
 	{

@@ -4,9 +4,7 @@ namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
 ///     How a widget transitions in/out of the frame at its AppearAtSeconds/DisappearAtSeconds edges (see
-///     OverlayElement). None is an instant hard cut - no fade, no offset - matching every widget's
-///     existing always-on behavior exactly, so a preset with no timing set renders identically to before
-///     this existed. The slide directions name where the widget slides *in from* (SlideUp enters moving
+///     OverlayElement). None is an instant hard cut - no fade, no offset. The slide directions name where the widget slides *in from* (SlideUp enters moving
 ///     upward from below its resting position, etc.), mirrored in reverse on the way out.
 /// </summary>
 public enum OverlayAnimationType
@@ -47,19 +45,18 @@ public enum OverlayElementType
 ///     on the matching subtype below instead of being a "carried but ignored" field on every other type -
 ///     see the intermediate abstract types for the shared groups (style, labeled-stat, time-text, trail).
 ///     Type is a computed discriminator (each leaf overrides it to a fixed value) rather than a stored
-///     field - JsonPolymorphic/JsonDerivedType (see the attributes below) already writes/reads this exact
-///     value under the same "Type" JSON key old flat preset files used, so old files keep deserializing
-///     unchanged and this property stays available for the many call sites that switch/pattern-match on
-///     it. It's [JsonIgnore]'d so it doesn't collide with that same-named discriminator during
+///     field - JsonPolymorphic/JsonDerivedType (see the attributes below) writes/reads this value under the
+///     "Type" JSON key, and this property stays available for the many call sites that switch/pattern-match
+///     on it. It's [JsonIgnore]'d so it doesn't collide with that same-named discriminator during
 ///     serialization.
 ///     Id distinguishes multiple instances of the same Type (the GUI lets you drag a widget onto the
 ///     canvas more than once) - Type alone is not unique within a preset's Elements. Empty string is
-///     only a transient/deserialization state: OverlayPreset.CreateDefault always assigns Type.ToString()
-///     to the one instance it creates per type, new instances the GUI adds get a random Guid, and
-///     OverlayPreset.WithElementIdsBackfilled fixes up presets saved before this field existed.
+///     only a transient construction state: OverlayPreset.CreateDefault always assigns Type.ToString()
+///     to the one instance it creates per type, new instances the GUI adds get a random Guid, and a
+///     loaded preset with an element without one is rejected (OverlayPresetStore.Validate).
 ///     Scale multiplies a widget's size on top of the resolution-based scale every widget already draws
-///     at (OverlayElementBounds.GetScale) - applied once in OverlayRenderer.DrawElement, pivoted on X/Y so
-///     resizing never moves the widget. 1 (default) renders at the same size as before this field existed.
+///     at (OverlayElementBounds.GetScale) - applied once in OverlayRenderer.BeginElement, pivoted on X/Y so
+///     resizing never moves the widget. 1 (default) is the widget's base size.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "Type")]
 [JsonDerivedType(typeof(DateTimeTextElement), (int)OverlayElementType.DateTimeText)]
@@ -119,16 +116,12 @@ public abstract record LabeledStatElement : StyledOverlayElement
 	public string? Label { get; init; }
 }
 
-/// <summary>
-///     Reference: the GPS altitude itself, or the change since the render's first frame. New widgets get SeaLevel
-///     (OverlayPreset.CreateDefault - what "ELEVATION" reads as); the property's own default stays Start, which is
-///     what a preset saved before this existed has no field for and always showed.
-/// </summary>
+/// <summary>Reference: the GPS altitude itself (what "ELEVATION" reads as), or the change since the render's first frame.</summary>
 public sealed record ElevationElement : LabeledStatElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Elevation;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
-	public ElevationReference Reference { get; init; } = ElevationReference.Start;
+	public ElevationReference Reference { get; init; } = ElevationReference.SeaLevel;
 }
 
 public enum ElevationReference
@@ -158,8 +151,7 @@ public sealed record CameraInfoElement : LabeledStatElement
 /// <summary>
 ///     DateFormat/Locale for DateTimeText and UtcTimeText (raw GPS timestamp, no local-time conversion,
 ///     but same format/locale fields) - null means "use the built-in default" (Locale null means
-///     OS/thread culture at render time), so old preset files without these fields still deserialize
-///     correctly.
+///     OS/thread culture at render time).
 /// </summary>
 public abstract record TimeTextElementBase : StyledOverlayElement
 {

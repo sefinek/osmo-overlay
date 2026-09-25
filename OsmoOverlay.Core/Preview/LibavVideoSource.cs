@@ -5,8 +5,8 @@ namespace OsmoOverlay.Core.Preview;
 /// <summary>
 ///     The preview's decoder, in-process through the FFmpeg shared libraries (FFmpeg.AutoGen, loaded by LibavLoader).
 ///     Each segment's file is opened once and kept open, so a seek is a demuxer seek plus decoding from the keyframe -
-///     no process spawn and no re-reading of the file's index, which made the former ffmpeg process per seek take
-///     1.3-1.7 s on a 4K Osmo file.
+///     no process spawn and no re-reading of the file's index (an ffmpeg process per seek takes 1.3-1.7 s on a 4K
+///     Osmo file).
 ///     Decodes on the GPU where there is a decoder for it (LibavStreamDecoder.Open), else multi-threaded in software.
 ///     The decoder remembers where it is: the next frame (stepping, playback) just decodes on, a frame shortly
 ///     ahead decodes forward without seeking, and stepping backwards one frame at a time is served from the frames

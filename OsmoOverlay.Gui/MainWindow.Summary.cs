@@ -12,10 +12,6 @@ namespace OsmoOverlay.Gui;
 /// <summary>"Get Summary" (probing/telemetry extraction) and populating the Input/Telemetry/Output info cards from the resulting FileSummary.</summary>
 public partial class MainWindow
 {
-	// Simple check/cross tick marks (24x24 viewbox) drawn as vector geometry rather than a Unicode
-	// glyph - a ✓/✗ character can silently fall back to a different font with its own baseline,
-	// throwing off vertical alignment next to the surrounding text in a way that varies by system.
-
 	private async Task RunGetSummaryAsync()
 	{
 		if (_inputPaths.Count == 0 || _inputPaths.Any(p => !File.Exists(p)))
@@ -329,7 +325,7 @@ public partial class MainWindow
 				"Render speed depends on this machine, the GPU and the footage - it's measured during the first full render and used for the estimate from then on.");
 		}
 
-		// A changed setting (frame limit, input file) invalidates whatever was measured from a
+		// A changed setting (cuts, input files) invalidates whatever was measured from a
 		// previous export, so fall back to the plan until the next render actually produces a file.
 		OutPlanText.IsVisible = true;
 		SetPlannedFramesVisible(true);
@@ -389,7 +385,7 @@ public partial class MainWindow
 			range == (inputSummary.Video.ColorRange ?? "?"));
 
 		OutBitrate.Text = $"{output.Video.BitRate / 1_000_000.0:0.#} Mbps";
-		// VBR naturally drifts from the source's own bitrate - "matches" means close, not byte-exact.
+		// The encoder's rate lands near the source's, not exactly on it - "matches" means close.
 		var bitrateRatio = (double)output.Video.BitRate / inputSummary.Video.BitRate;
 		SetMatchCheck(OutBitrateCheck, bitrateRatio is >= 0.7 and <= 1.5);
 

@@ -24,10 +24,9 @@ public sealed partial class OverlayRenderer : IDisposable
 	private static readonly SKColor TrailColor = new(70, 220, 110);
 	private static readonly SKColor SunColor = new(255, 175, 45);
 	private static readonly SKColor Shadow = new(0, 0, 0, 225);
-	// Was alpha 55 (~21%) - on bright footage (sky, water, sand) the gauge panels read as barely-there,
-	// making their actual footprint (which matches the GUI's selection/hit box exactly, see
-	// OverlayElementBounds) look like mostly-empty padding. Bumped for legibility, not size - the radius
-	// each gauge draws at is unchanged.
+	// ~39% - much lower and the gauge panels read as barely-there on bright footage (sky, water, sand),
+	// making their footprint (which matches the GUI's selection/hit box exactly, see OverlayElementBounds)
+	// look like mostly-empty padding.
 	private static readonly SKColor PanelFill = new(0, 0, 0, 100);
 
 	// Canvas dimensions and the per-resolution scale every widget draws at (see OverlayElementBounds.GetScale).
@@ -66,7 +65,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	// Fixed-style paints (color/width never change frame to frame) reused across widgets, cached once
 	// here the same way fonts already are above - RenderInto() runs once per output frame, so allocating
-	// these fresh per widget per frame (as this file used to) is pure per-frame GC churn for a value
+	// these fresh per widget per frame would be pure per-frame GC churn for a value
 	// that's always identical.
 	private readonly SKPaint _panelFillPaint;
 	private readonly SKPaint _ringStroke3White160;
@@ -441,7 +440,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		}
 	}
 
-	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see Render's mapAttribution.</summary>
+	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see DrawFrame's mapAttribution.</summary>
 	private string? DrawWidgets(SKCanvas canvas, DerivedFrame frame)
 	{
 		string? mapAttribution = null;
@@ -534,7 +533,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// <summary>
 	///     `outlineColor`/`outlineWidthScale` default to the built-in near-black outline at its normal
 	///     width - only the text widgets' per-element OutlineColor/OutlineWidth override them (see
-	///     OverlayRenderer.TextWidgets.cs); every other caller draws exactly as before these existed.
+	///     OverlayRenderer.TextWidgets.cs); every other caller gets the defaults.
 	/// </summary>
 	private void DrawOutlined(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color,
 		SKTextAlign align = SKTextAlign.Left, float opacity = 1f, SKColor? outlineColor = null, float outlineWidthScale = 1f)

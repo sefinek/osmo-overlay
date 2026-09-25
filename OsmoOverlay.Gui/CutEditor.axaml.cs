@@ -25,7 +25,7 @@ public enum CutAction
 public partial class CutEditor : UserControl
 {
 	private readonly List<(TextBox From, TextBox To)> _rows = [];
-	// Applying cuts rebuilds the preview's overlay renderer - not on every keystroke of "1:30.250".
+	// Applying cuts remaps the preview's telemetry - not on every keystroke of "1:30.250".
 	private readonly DispatcherTimer _applyDelay = new() { Interval = TimeSpan.FromMilliseconds(400) };
 	private double _fps;
 	private long _totalFrames;

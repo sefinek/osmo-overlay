@@ -19,8 +19,8 @@ public sealed partial class OverlayRenderer
 		// Falls back to the container's own recording-start tag + time into the recording when this frame has no
 		// real GPS timestamp (see SourceInfo.ContainerCreationTimeUtc) - approximate (camera clock, not
 		// a GPS-synced one), but still far more useful than "--" for a file that never had a fix at
-		// all. The GUI signals this with a warning icon next to the checkbox (see
-		// MainWindow.RefreshElementCheckboxes) rather than marking it inside the burned-in video text.
+		// all. The GUI signals this with a warning icon next to the widget (see
+		// MainWindow.UsesTimeFallback) rather than marking it inside the burned-in video text.
 		DateTime? utc = frame.Raw.GpsTimestamp ??
 		                _containerRecordingStartUtc?.AddSeconds(frame.Raw.RecordingTimeSeconds);
 
@@ -103,8 +103,7 @@ public sealed partial class OverlayRenderer
 
 	/// <summary>
 	///     ISO/shutter speed/color temperature straight from the djmd stream's camera-settings block
-	///     (see DjiMetaTelemetryParser) - exposure metadata that was already being extracted for every
-	///     file but never shown anywhere. Each field is independently nullable (a fallback exiftool read
+	///     (see DjiMetaTelemetryParser). Each field is independently nullable (a fallback exiftool read
 	///     may not populate all three), so each renders "--" rather than pulling the whole widget down.
 	/// </summary>
 	private void DrawCameraInfo(SKCanvas canvas, DerivedFrame frame, CameraInfoElement element)

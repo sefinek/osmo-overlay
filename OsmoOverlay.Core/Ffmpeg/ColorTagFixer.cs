@@ -64,8 +64,7 @@ public static class ColorTagFixer
 	}
 
 	/// <summary>
-	///     Rewrites the container's color tags to Rec.709 via a lossless stream copy (no re-encode) - the
-	///     same fix validated by hand while dialing in Vegas render settings for this app's DJI footage.
+	///     Rewrites the container's color tags to Rec.709 via a lossless stream copy (no re-encode).
 	///     Always Rec.709: every SDR DJI Osmo source this app targets, and every render this app's own
 	///     pipeline produces from one, is Rec.709, so there's no ambiguity to ask the caller to resolve.
 	/// </summary>

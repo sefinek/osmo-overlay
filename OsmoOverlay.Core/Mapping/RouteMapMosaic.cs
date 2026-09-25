@@ -26,7 +26,7 @@ public sealed class RouteMapMosaic : IDisposable
 	// A handful of tiles in flight at once meaningfully cuts down the round-trip-latency-bound wait
 	// for a route needing hundreds of tiles, without turning into the kind of bulk/heavy parallel
 	// hammering OpenStreetMap's tile usage policy (see MapTileFetcher) asks providers' servers not to
-	// be subjected to - a couple of browsers' old per-host connection limits land in this same range.
+	// be subjected to.
 	private const int MaxConcurrentFetches = 4;
 
 	private readonly double _originWorldX;

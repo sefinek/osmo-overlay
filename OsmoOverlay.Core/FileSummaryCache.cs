@@ -10,7 +10,7 @@ internal static class FileSummaryCache
 {
 	// Bump whenever telemetry extraction or derivation logic changes, so stale cache
 	// entries computed with the old logic are treated as a cache miss automatically.
-	public const int FormatVersion = 18;
+	public const int FormatVersion = 19;
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "cache");
@@ -128,11 +128,10 @@ internal static class FileSummaryCache
 	}
 
 	/// <summary>
-	///     Rebuilds Summary.DerivedFrames from DerivedExtras + Summary.TelemetryFrames (see Save). Falls
-	///     back to whatever Summary.DerivedFrames already deserialized to - i.e. the pre-dedup on-disk
-	///     shape, still readable since DerivedExtras is simply absent from that older JSON - when there's
-	///     nothing to reinflate, and treats a count mismatch as a corrupt entry (caught by TryLoad's
-	///     caller, same as any other unreadable cache file) rather than reinflating out of bounds.
+	///     Rebuilds Summary.DerivedFrames from DerivedExtras + Summary.TelemetryFrames (see Save) - no
+	///     DerivedExtras means the recording had no derived telemetry. Treats a count mismatch as a corrupt
+	///     entry (caught by TryLoad, same as any other unreadable cache file) rather than reinflating out
+	///     of bounds.
 	/// </summary>
 	private static FileSummary Reinflate(CacheEntry entry)
 	{
@@ -152,7 +151,7 @@ internal static class FileSummaryCache
 
 	private sealed record FileStamp(long FileSizeBytes, long LastWriteTimeUtcTicks);
 
-	private sealed record CacheEntry(int FormatVersion, List<FileStamp> Files, FileSummary Summary, List<CachedDerivedFrame>? DerivedExtras = null);
+	private sealed record CacheEntry(int FormatVersion, List<FileStamp> Files, FileSummary Summary, List<CachedDerivedFrame>? DerivedExtras);
 
 	/// <summary>DerivedFrame minus Raw (see Save) - everything TelemetryProcessor computes from one TelemetryFrame, paired back up with it by index in Reinflate.</summary>
 	private sealed record CachedDerivedFrame(

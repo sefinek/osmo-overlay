@@ -30,9 +30,7 @@ public partial class MainWindow
 
 	private bool HasCuts => _outputTimeline is not null;
 
-	private long SourceFrames => _summary is null
-		? 0
-		: _summary.TotalFrameCount ?? (long)Math.Ceiling(_summary.DurationSeconds * _summary.Video.Fps);
+	private long SourceFrames => _summary?.TotalFrameCount ?? 0;
 
 	private FrameRange? Selection => _markIn is null && _markOut is null
 		? null
@@ -231,7 +229,7 @@ public partial class MainWindow
 		foreach (PreviewTimeline timeline in Timelines) timeline.SelectedCut = null;
 		OutputTimeline? previous = _outputTimeline;
 		_outputTimeline = BuildOutputTimeline();
-		// Rebuilds the preview's renderer - skipped when nothing was cut before or after.
+		// Remaps the preview's telemetry - skipped when nothing was cut before or after.
 		if (previous is not null || _outputTimeline is not null) _previewPlayer.SetOutputTimeline(_outputTimeline);
 
 		RefreshCutViews(showInEditor);

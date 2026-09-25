@@ -93,9 +93,10 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	/// <summary>
 	///     The first hardware decoder this platform has that also supports the codec. With hw_device_ctx set,
 	///     libavcodec's default get_format picks the matching hardware format itself. CUDA goes first where there
-	///     is an NVIDIA GPU: measured on a 4K HEVC 10-bit Osmo file (RTX 4070), decoding plus the download to
-	///     the CPU ran at 188 fps through CUDA against 109 through D3D11VA, with bit-identical frames; without an
-	///     NVIDIA GPU creating the CUDA device just fails and the next one is tried.
+	///     is an NVIDIA GPU: measured on a 4K HEVC 10-bit Osmo file (RTX 4070), it gives bit-identical frames to
+	///     D3D11VA, opens in 70 vs 145 ms and uses 1.65 vs 2.43 CPU cores, for ~6-10% less throughput (decode plus
+	///     download via the ffmpeg CLI: ~222 vs ~253 fps). Without an NVIDIA GPU creating the CUDA device just
+	///     fails and the next one is tried.
 	/// </summary>
 	private static string? AttachHardwareDevice(AVCodecContext* codec, AVCodec* decoder)
 	{

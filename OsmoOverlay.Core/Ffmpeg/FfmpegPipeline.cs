@@ -15,7 +15,7 @@ public static class FfmpegPipeline
 	// hardware decode (even with the copy back to system memory the CPU overlay filter needs) runs at
 	// ~150 fps, taking a full render from ~27 to ~39 fps. "auto" rather than a specific API, so a machine
 	// without a usable decoder just falls back to software instead of failing the render - same choice
-	// the live preview makes (VideoFrameSource).
+	// the live preview makes (LibavStreamDecoder).
 	private static readonly string[] HwDecodeArgs = ["-hwaccel", "auto"];
 
 	private static bool _nvencConfirmed;

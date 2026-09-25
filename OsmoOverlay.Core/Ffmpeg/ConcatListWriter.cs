@@ -8,13 +8,12 @@ namespace OsmoOverlay.Core.Ffmpeg;
 ///         -f concat -safe 0 -i
 ///         &lt;file&gt;
 ///     </c>
-///     ), shared by the full render pipeline (FfmpegPipeline) and the live preview
-///     (VideoFrameSource) so both stitch multi-segment recordings the same way.
+///     ), for the render pipeline (FfmpegPipeline) to stitch multi-segment recordings.
 ///     No "inpoint" for video - confirmed against a real multi-segment recording that the concat
 ///     demuxer's own seek (inpoint, or a top-level -ss before -i) decodes a stuck, repeated frame (or
 ///     breaks reference frames entirely) instead of actually seeking, regardless of hwaccel. Video
 ///     entries always start at their own beginning; a seek into the middle of a segment goes through a
-///     plain single-file -ss instead (VideoFrameSource.OpenPlaybackStream, FfmpegPipeline.StartRender).
+///     plain single-file -ss instead (FfmpegPipeline.AddSourceInputs).
 ///     Audio has no reference frames, so WriteAudioOnly can use inpoint (see there).
 /// </summary>
 internal static class ConcatListWriter
@@ -55,9 +54,9 @@ internal static class ConcatListWriter
 	}
 
 	/// <summary>
-	///     Lists are deleted once their ffmpeg exits (FfmpegPipeline, VideoPlaybackStream), but a crash or a
-	///     killed app skips that. Removes whatever earlier runs left behind - only lists older than
-	///     `olderThan`, so one a running render or preview still uses is never touched.
+	///     Lists are deleted once their ffmpeg exits (FfmpegPipeline), but a crash or a killed app skips
+	///     that. Removes whatever earlier runs left behind - only lists older than `olderThan`, so one a
+	///     running render still uses is never touched.
 	/// </summary>
 	public static int DeleteStale(TimeSpan olderThan)
 	{
