@@ -83,7 +83,7 @@
 						<StackPanel Spacing="6" Margin="0,12,0,0">
 							<TextBlock Text="Output quality" Classes="sectionHeader" />
 							<TextBlock Classes="hint"
-							           Text="By default the render matches the source file's own encoding 1:1 - same bitrate, keyframe interval, HEVC level/tier and no B-frames - so it doesn't lose quality compared to the original. The options below only change that if you pick something other than the default." />
+							           Text="By default the render matches the source file's own encoding 1:1 - same bitrate, keyframe interval, HEVC level/tier and no B-frames - so burning in the overlay costs as little quality as a render can. The options below only change that if you pick something other than the default." />
 						</StackPanel>
 
 						<StackPanel Spacing="6">

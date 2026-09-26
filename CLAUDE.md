@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-OsmoOverlay burns a telemetry HUD (speed, heading, tilt, sun, stats) onto footage from DJI Osmo Action cameras without any loss of source quality/codec (see README.md - re-encoding in DJI Mimo degrades quality; this application does not).
+OsmoOverlay burns a telemetry HUD (speed, heading, tilt, sun, stats) onto footage from DJI Osmo Action cameras, re-encoding the picture once with the source's own codec and settings (see README.md - DJI Mimo drops it to 8-bit H.264 at a lower bitrate). Burning in an overlay can't avoid that one encode, so user-facing text never claims "no quality loss" for a render - only the stream-copy Tools may.
 
 Five projects in one `.slnx` (net10.0):
 - `OsmoOverlay.Core` - all the logic: telemetry extraction, telemetry processing, overlay renderer (SkiaSharp), ffmpeg pipeline, video preview. No dependency on GUI/CLI.

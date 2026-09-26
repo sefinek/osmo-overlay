@@ -1,5 +1,5 @@
 # Osmo Overlay ✨
-Add a modern telemetry HUD (speed, map, route, tilt and more) to your DJI Osmo footage, straight from the data your camera already records - with no loss of image quality.
+Add a modern telemetry HUD (speed, map, route, tilt and more) to your DJI Osmo footage, straight from the data your camera already records - encoded just like the camera original, so the quality stays as close to it as a render can get.
 
 If you find this repository useful, I would greatly appreciate it if you could give it a **star** ⭐. Thank you!
 Using OsmoOverlay in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
@@ -8,8 +8,8 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 ![](.github/OsmoOverlay_ru8MsYzI.jpg)
 
 ## Features
-- **No quality loss** - export settings are taken from the source, so the video matches the camera original 1:1 (codec, 10-bit color, bitrate, timecode).
-- **Rendered on your computer, not your phone** - unlike the overlay in DJI Mimo: no drop in image and audio quality, no long wait with the phone unlocked and the app open, no phone as hot as an oven.
+- **Encoded like the original** - export settings are taken from the source, so the video matches the camera original 1:1 (codec, 10-bit color, bitrate, keyframes, timecode). Burning in an overlay always means encoding the picture once more, but at the camera's own settings the difference is practically invisible.
+- **Rendered on your computer, not your phone** - unlike the overlay in DJI Mimo: no drop to 8-bit H.264 at a lower bitrate, audio untouched, no long wait with the phone unlocked and the app open, no phone as hot as an oven.
 - **Joins split recordings** - the camera splits long recordings into files of about 25 minutes, and OsmoOverlay joins them into one video without breaking the route.
 - **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance.
 - **15 widgets** - including a speedometer, map, compass with route, tilt, G-meter, altitude, distance, and date and time. Metric or imperial units.
@@ -33,19 +33,21 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 Only the DJI Osmo Action 6 is currently supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for the Action 6.
 
 ## Important information
-Do not add the overlay in the DJI Mimo app. Doing so will slightly reduce the quality of your footage.
+Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit H.264 at a lower bitrate, which reduces its quality.
 
-| Comparison      | Original footage from the camera    | Footage exported from DJI Mimo    |
-|:----------------|:------------------------------------|:----------------------------------|
-| Image quality   | Full quality recorded by the camera | Slightly lower due to re-encoding |
-| Resolution      | 3840 × 2160 (4K UHD)                | 3840 × 2160 (4K UHD)              |
-| Video codec     | H.265 / HEVC, Main 10               | H.264 / AVC, Baseline             |
-| Color depth     | 10-bit                              | 8-bit                             |
-| Video bitrate   | 89.79 Mb/s                          | 79.68 Mb/s                        |
-| Audio           | AAC-LC, stereo, 48 kHz, 317 kb/s    | AAC-LC, stereo, 48 kHz, 128 kb/s  |
-| Camera metadata | Preserved                           | Removed                           |
+| Comparison      | Original footage from the camera    | Rendered with OsmoOverlay                        | Footage exported from DJI Mimo            |
+|:----------------|:------------------------------------|:-------------------------------------------------|:------------------------------------------|
+| Image quality   | Full quality recorded by the camera | Encoded once more with the camera's own settings | Lower - re-encoded to a weaker format     |
+| Resolution      | 3840 × 2160 (4K UHD)                | 3840 × 2160 (4K UHD)                             | 3840 × 2160 (4K UHD)                      |
+| Video codec     | H.265 / HEVC, Main 10               | H.265 / HEVC, Main 10                            | H.264 / AVC, Baseline                     |
+| Color depth     | 10-bit                              | 10-bit                                           | 8-bit                                     |
+| Video bitrate   | 89.79 Mb/s                          | 89.79 Mb/s (same as the source)                  | 79.68 Mb/s                                |
+| Audio           | AAC-LC, stereo, 48 kHz, 317 kb/s    | Copied unchanged*                                | AAC-LC, stereo, 48 kHz, 128 kb/s          |
+| Camera metadata | Preserved                           | Removed by default, can be kept                  | Removed                                   |
 
-This application fully preserves the source codec and other original video properties, so it has absolutely no impact on the final quality after export.
+\* With parts cut out, the audio is re-encoded at the source's own bitrate, since a copy can't span the joins.
+
+Adding anything to the picture means it has to be encoded again - no program can avoid that. What OsmoOverlay avoids is everything on top of it: the render keeps the source's codec, 10-bit color, bitrate, keyframe interval and HEVC level, so it looks practically the same as the original, while DJI Mimo drops to 8-bit H.264.
 
 ## Good to know
 - The camera has no GPS module of its own, only an accelerometer. To get the route, map, speed and distance, record with the DJI GPS Bluetooth Remote Controller paired with the camera, or use your phone's GPS through DJI Mimo (though that one can behave oddly). Before you start recording, wait until the remote gets a satellite fix. Without GPS data, the widgets that need it are disabled.
