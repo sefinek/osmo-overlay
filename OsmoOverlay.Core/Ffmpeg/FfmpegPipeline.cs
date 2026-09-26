@@ -129,9 +129,16 @@ public static class FfmpegPipeline
 			args.AddRange(["-map", source.AudioMap]);
 			// Pieces joined by the concat filter are decoded audio - it can't be stream-copied across the
 			// joins, so it's re-encoded at the source's own AAC bitrate. A single piece stays a lossless copy.
-			args.AddRange(source.EncodeAudio && source.StartSource.Audio is { } audio
-				? ["-c:a", "aac", "-b:a", audio.BitRate.ToString(CultureInfo.InvariantCulture)]
-				: ["-c:a", "copy"]);
+			if (!source.EncodeAudio)
+			{
+				args.AddRange(["-c:a", "copy"]);
+			}
+			else
+			{
+				args.AddRange(["-c:a", "aac"]);
+				// 0 = the source's rate couldn't be read - ffmpeg's default then, rather than asking for 0 b/s.
+				if (source.StartSource.Audio is { BitRate: > 0 } audio) args.AddRange(["-b:a", audio.BitRate.ToString(CultureInfo.InvariantCulture)]);
+			}
 		}
 
 		// Output-side limits: -frames:v because the lavfi color background of a green-screen render is
@@ -402,7 +409,7 @@ public static class FfmpegPipeline
 	private static (int num, int den) ParseFrameRate(string rFrameRate)
 	{
 		var parts = rFrameRate.Split('/');
-		return (int.Parse(parts[0]), parts.Length > 1 ? int.Parse(parts[1]) : 1);
+		return (int.Parse(parts[0], CultureInfo.InvariantCulture), parts.Length > 1 ? int.Parse(parts[1], CultureInfo.InvariantCulture) : 1);
 	}
 
 	/// <summary>

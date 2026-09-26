@@ -91,18 +91,37 @@ public static class ColorTagFixer
 				$"Color tag fix only supports HEVC and H.264 streams (this file is '{before.Video.CodecName}').")
 		};
 
-		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
-			"-y", "-i", inputPath,
-			"-c", "copy",
-			"-bsf:v", $"{metadataBsf}=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1",
-			"-color_primaries", "bt709",
-			"-color_trc", "bt709",
-			"-colorspace", "bt709",
-			resolvedOutput);
+		// Moved into place only once ffmpeg finished - a failed run never leaves a broken file under the output's name.
+		var partialPath = resolvedOutput + ".partial";
+		try
+		{
+			ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
+				"-y", "-i", inputPath,
+				"-c", "copy",
+				"-bsf:v", $"{metadataBsf}=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1",
+				"-color_primaries", "bt709",
+				"-color_trc", "bt709",
+				"-colorspace", "bt709",
+				"-f", "mp4",
+				partialPath);
 
-		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
-		if (exitCode != 0)
-			throw new InvalidOperationException($"ffmpeg exited with an error ({exitCode}): {stderr}{stdout}");
+			var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+			if (exitCode != 0)
+				throw new InvalidOperationException($"ffmpeg exited with an error ({exitCode}): {stderr}{stdout}");
+
+			File.Move(partialPath, resolvedOutput, true);
+		}
+		finally
+		{
+			try
+			{
+				File.Delete(partialPath);
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+			{
+				// Best-effort: a leftover .partial file is harmless.
+			}
+		}
 
 		SourceInfo after = SourceProbe.Probe(resolvedOutput);
 		return new ColorTagFixResult(beforeStatus, ColorTagStatus.From(after.Video), resolvedOutput);

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Updates;
 using SkiaSharp;
 
 namespace OsmoOverlay.Core.Mapping;
@@ -35,7 +36,7 @@ public static class MapTileFetcher
 	private static HttpClient CreateHttpClient()
 	{
 		var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-		client.DefaultRequestHeaders.UserAgent.ParseAdd("OsmoOverlay/1.0 (+https://github.com/sefinek/osmo-overlay)");
+		client.DefaultRequestHeaders.UserAgent.ParseAdd($"OsmoOverlay/{AppUpdates.CurrentVersion} (+{AppUpdates.RepositoryUrl})");
 		return client;
 	}
 

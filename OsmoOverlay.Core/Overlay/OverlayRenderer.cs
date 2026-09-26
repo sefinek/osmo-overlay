@@ -20,11 +20,17 @@ namespace OsmoOverlay.Core.Overlay;
 /// </summary>
 public sealed partial class OverlayRenderer : IDisposable
 {
-	private static readonly SKColor White = SKColors.White;
-	private static readonly SKColor Accent = new(70, 190, 255);
-	private static readonly SKColor TrailColor = new(70, 220, 110);
+	// What a widget's TextColor/AccentColor/OutlineColor/TrailColor fall back to - the GUI's color boxes show the same.
+	public const string DefaultTextColorHex = "#FFFFFF";
+	public const string DefaultAccentColorHex = "#46BEFF";
+	public const string DefaultOutlineColorHex = "#E1000000";
+	public const string DefaultTrailColorHex = "#46DC6E";
+
+	private static readonly SKColor White = SKColor.Parse(DefaultTextColorHex);
+	private static readonly SKColor Accent = SKColor.Parse(DefaultAccentColorHex);
+	private static readonly SKColor TrailColor = SKColor.Parse(DefaultTrailColorHex);
 	private static readonly SKColor SunColor = new(255, 175, 45);
-	private static readonly SKColor Shadow = new(0, 0, 0, 225);
+	private static readonly SKColor Shadow = SKColor.Parse(DefaultOutlineColorHex);
 	// ~39% - much lower and the gauge panels read as barely-there on bright footage (sky, water, sand),
 	// making their footprint (which matches the GUI's selection/hit box exactly, see OverlayElementBounds)
 	// look like mostly-empty padding.

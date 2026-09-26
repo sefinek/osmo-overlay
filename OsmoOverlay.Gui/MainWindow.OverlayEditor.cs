@@ -40,10 +40,6 @@ public partial class MainWindow
 		new("Moving time", TripStatKind.MovingTime)
 	];
 
-	// Trail swatch fallback when the box is empty/unparsable - matches OverlayRenderer's own built-in trail
-	// color, so what the swatch shows before you've typed anything is exactly what the render already uses.
-	private const string DefaultTrailColorHex = "#46DC6E";
-
 	// Shown in the Label box in place of a null Label - matches the fallback caption OverlayRenderer.
 	// TextWidgets.cs itself draws (case-insensitively; the renderer uppercases whatever it gets).
 	private const string DefaultElevationLabel = "Elevation";
@@ -844,8 +840,8 @@ public partial class MainWindow
 	private static void PopulateTrailControls(TextBox colorBox, Border swatch, CheckBox bySpeedCheck, NumericUpDown widthBox,
 		RadioButton arrowRadio, RadioButton dotRadio, TrailOverlayElement element)
 	{
-		colorBox.Text = element.TrailColor ?? DefaultTrailColorHex;
-		ColorSwatch.Update(swatch, element.TrailColor, DefaultTrailColorHex);
+		colorBox.Text = element.TrailColor ?? OverlayRenderer.DefaultTrailColorHex;
+		ColorSwatch.Update(swatch, element.TrailColor, OverlayRenderer.DefaultTrailColorHex);
 		bySpeedCheck.IsChecked = element.TrailColorBySpeed;
 		widthBox.Value = (decimal)element.TrailWidth;
 		arrowRadio.IsChecked = element.TrailUseArrow;
@@ -886,7 +882,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, CompassTrailColorBox.Text);
-		ColorSwatch.Update(CompassTrailColorSwatch, CompassTrailColorBox.Text, DefaultTrailColorHex);
+		ColorSwatch.Update(CompassTrailColorSwatch, CompassTrailColorBox.Text, OverlayRenderer.DefaultTrailColorHex);
 	}
 
 	private void OnCompassTrailBySpeedChanged(object? sender, RoutedEventArgs e)
@@ -1149,7 +1145,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 		SetElementTrailColor(id, MapTrailColorBox.Text);
-		ColorSwatch.Update(MapTrailColorSwatch, MapTrailColorBox.Text, DefaultTrailColorHex);
+		ColorSwatch.Update(MapTrailColorSwatch, MapTrailColorBox.Text, OverlayRenderer.DefaultTrailColorHex);
 	}
 
 	private void OnMapTrailBySpeedChanged(object? sender, RoutedEventArgs e)

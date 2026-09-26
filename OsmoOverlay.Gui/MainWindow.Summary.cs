@@ -55,7 +55,7 @@ public partial class MainWindow
 				: "Audio: none");
 
 			AppendLog($"Camera model: {summary.CameraModel ?? "unknown"}");
-			if (summary.Telemetry is { } t)
+			if (summary.Telemetry is not null)
 				AppendLog($"Telemetry stream detected (djmd) - {summary.TelemetryFrames?.Count ?? 0} raw samples, " +
 				          $"{summary.DerivedFrames?.Count ?? 0} derived frames");
 			else
@@ -336,12 +336,12 @@ public partial class MainWindow
 	///     Replaces the pre-render plan with what ffprobe actually measured from the exported file, so
 	///     "matches the source" is a verified fact rather than an assumption baked into the UI text.
 	/// </summary>
-	private void PopulateMeasuredOutputInfo(string outputPath, FileSummary inputSummary)
+	private async Task PopulateMeasuredOutputInfoAsync(string outputPath, FileSummary inputSummary)
 	{
 		SourceInfo output;
 		try
 		{
-			output = SourceProbe.Probe(outputPath);
+			output = await Task.Run(() => SourceProbe.Probe(outputPath));
 		}
 		catch (Exception ex)
 		{

@@ -52,17 +52,20 @@ public static class TelemetryExtraction
 			foreach (TelemetryFrame frame in result.Frames)
 				offsetFrames.Add(frame with { SampleTimeSeconds = frame.SampleTimeSeconds + segment.StartOffsetSeconds });
 
-			if (lastKnownFix is { } fix)
-				BridgeLeadingGpsGap(offsetFrames, fix);
-
 			DateTime? gpsStart = GpsStartUtc(result.Frames);
-			if (previous is { } before && GapSeconds(before.GpsStart, before.Offset, gpsStart, segment.StartOffsetSeconds) is { } gap &&
-			    gap > GapToleranceSeconds)
+			var gap = previous is { } before ? GapSeconds(before.GpsStart, before.Offset, gpsStart, segment.StartOffsetSeconds) : null;
+			var afterGap = gap > GapToleranceSeconds;
+			if (afterGap)
 			{
 				offsetFrames[0] = offsetFrames[0] with { StartsAfterGap = true };
 				AppLogger.Info($"{Path.GetFileName(segment.InputPath)} starts {gap:F1} s after the previous file ended (a stop, not a split) - " +
 				               "speed, distance and the route don't run across it");
 			}
+
+			// After a stop the camera may be somewhere else - the previous file's last fix held into this one's
+			// leading no-fix frames would add the jump to where its own fix lands to the distance and the route.
+			if (!(afterGap && BackfillBeforeFirstFix(offsetFrames)) && lastKnownFix is { } fix)
+				BridgeLeadingGpsGap(offsetFrames, fix);
 
 			previous = (gpsStart, segment.StartOffsetSeconds);
 
@@ -107,15 +110,17 @@ public static class TelemetryExtraction
 	///     first-fix hop to the cumulative distance, and hand the map/route-intro a bounding box spanning
 	///     half the globe. Holding the first real fix backwards instead is the same "hold, don't snap to
 	///     (0,0)" policy GpsForwardFill applies going forward. HasGpsFix stays false on those frames, so
-	///     FindGpsLossRanges still reports them. No-op for a recording with no fix at all.
+	///     FindGpsLossRanges still reports them. No-op for a recording with no fix at all - false then.
 	/// </summary>
-	private static void BackfillBeforeFirstFix(List<TelemetryFrame> frames)
+	private static bool BackfillBeforeFirstFix(List<TelemetryFrame> frames)
 	{
 		var firstFixIndex = frames.FindIndex(f => !IsNullIsland(f));
-		if (firstFixIndex <= 0) return;
+		if (firstFixIndex < 0) return false;
 
-		BridgeLeadingGpsGap(frames,
-			(frames[firstFixIndex].Latitude, frames[firstFixIndex].Longitude, frames[firstFixIndex].AltitudeMeters));
+		if (firstFixIndex > 0)
+			BridgeLeadingGpsGap(frames,
+				(frames[firstFixIndex].Latitude, frames[firstFixIndex].Longitude, frames[firstFixIndex].AltitudeMeters));
+		return true;
 	}
 
 	private static bool IsNullIsland(TelemetryFrame frame)

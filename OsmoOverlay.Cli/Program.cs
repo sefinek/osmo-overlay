@@ -89,9 +89,18 @@ var progress = new Progress<RenderStatus>(status =>
 	}
 });
 
+// Ctrl+C goes through RenderJob's cancellation, which stops ffmpeg and removes the unfinished output - ending the
+// process outright would leave both behind.
+using var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) =>
+{
+	e.Cancel = true;
+	cts.Cancel();
+};
+
 RenderResult result = await RenderJob.RunAsync(
 	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts), progress,
-	CancellationToken.None);
+	cts.Token);
 Console.WriteLine();
 
 if (!result.Success)
@@ -106,8 +115,8 @@ Console.WriteLine(doneMessage);
 AppLogger.Info(doneMessage);
 return 0;
 
-// Run by the Windows installer (OsmoOverlay.iss) - the same install path the GUI's dependency prompt takes, so it only
-// installs what's missing and keeps FFmpeg on the major the preview supports.
+// The same install path the GUI's dependency prompt takes, so it only installs what's missing and keeps FFmpeg on the
+// major the preview supports.
 static async Task<int> InstallDependenciesAsync(string[] names)
 {
 	List<ExternalTool> tools = names.Length == 0

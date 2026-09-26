@@ -336,7 +336,7 @@ public sealed class LayerTimeline : Control
 
 		for (var i = 1; i < _tracks.Count; i++) context.DrawLine(RowDivider, new Point(0, i * RowHeight), new Point(width, i * RowHeight));
 
-		int? insertLine = _drag == Zone.Header ? _insertIndex : _drop.Insert;
+		var insertLine = _drag == Zone.Header ? _insertIndex : _drop.Insert;
 		if (insertLine is { } line) context.DrawLine(InsertPen, new Point(0, line * RowHeight), new Point(width, line * RowHeight));
 		if (_dragLabel is { } label) DrawDragLabel(context, label.At, label.Text);
 	}
@@ -423,7 +423,7 @@ public sealed class LayerTimeline : Control
 		var shade = new StreamGeometry();
 		using (StreamGeometryContext geometry = shade.Open())
 		{
-			geometry.BeginFigure(from, true);
+			geometry.BeginFigure(from);
 			geometry.LineTo(to);
 			geometry.LineTo(corner);
 			geometry.EndFigure(true);
@@ -530,7 +530,7 @@ public sealed class LayerTimeline : Control
 	{
 		base.OnPointerPressed(e);
 		PointerPoint point = e.GetCurrentPoint(this);
-		var (track, clip, zone) = HitAt(point.Position);
+		(var track, LayerClip? clip, Zone zone) = HitAt(point.Position);
 		if (zone == Zone.None) return;
 
 		if (point.Properties.IsRightButtonPressed && zone is Zone.Header or Zone.Switch)
@@ -585,7 +585,7 @@ public sealed class LayerTimeline : Control
 
 		if (_drag == Zone.None)
 		{
-			var (hoveredTrack, hoveredClip, hovered) = HitAt(point);
+			(var hoveredTrack, LayerClip? hoveredClip, Zone hovered) = HitAt(point);
 			Cursor = hovered switch
 			{
 				Zone.Body or Zone.Empty when IsOnPlayhead(point.X) => ResizeCursor,
@@ -748,8 +748,8 @@ public sealed class LayerTimeline : Control
 				// Either edge can catch a snap target - the one closer to its target wins; neither: whole frames.
 				var dragged = at - _grabOffset;
 				var newStart = Math.Round(dragged * Fps) / Fps;
-				var startTarget = NearestTarget(dragged, clip.Id);
-				var endTarget = NearestTarget(dragged + length, clip.Id);
+				(double Seconds, double Distance)? startTarget = NearestTarget(dragged, clip.Id);
+				(double Seconds, double Distance)? endTarget = NearestTarget(dragged + length, clip.Id);
 				if (startTarget is { } s && (endTarget is not { } e || s.Distance <= e.Distance)) newStart = s.Seconds;
 				else if (endTarget is { } e2) newStart = e2.Seconds - length;
 				newStart = Math.Clamp(newStart, 0, Math.Max(0, OutputDurationSeconds - length));

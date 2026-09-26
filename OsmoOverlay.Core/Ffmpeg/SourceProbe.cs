@@ -29,15 +29,15 @@ public sealed record VideoInfo(
 	// the container duration (running past the last video frame to where the audio ends) overshoots.
 	long? FrameCount = null)
 {
-	public double Fps
+	public double Fps => ParseFps(FrameRate);
+
+	/// <summary>An ffprobe rate ("60000/1001" or "30") as frames a second.</summary>
+	internal static double ParseFps(string frameRate)
 	{
-		get
-		{
-			var parts = FrameRate.Split('/');
-			return parts.Length > 1
-				? double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture)
-				: double.Parse(parts[0], CultureInfo.InvariantCulture);
-		}
+		var parts = frameRate.Split('/');
+		return parts.Length > 1
+			? double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture)
+			: double.Parse(parts[0], CultureInfo.InvariantCulture);
 	}
 }
 
@@ -164,10 +164,7 @@ public static partial class SourceProbe
 	{
 		try
 		{
-			var parts = frameRate.Split('/');
-			var fps = parts.Length > 1
-				? double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture)
-				: double.Parse(parts[0], CultureInfo.InvariantCulture);
+			var fps = VideoInfo.ParseFps(frameRate);
 			if (!(fps > 0)) return null;
 
 			ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("ffprobe",

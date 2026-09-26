@@ -349,7 +349,6 @@ public sealed class PreviewPlayer : IDisposable
 		if (recording.Compositor.Renderer.NeedsMapPrepare(layout)) StartMapWidgetPreparation(recording);
 	}
 
-	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
 	/// <summary>
 	///     What a widget draws at `position`, around its anchor in reference pixels (see OverlayRenderer.MeasureElement) -
 	///     null with no recording open or when it draws nothing.
@@ -359,6 +358,7 @@ public sealed class PreviewPlayer : IDisposable
 		return _recording?.Compositor.MeasureElement(element, position);
 	}
 
+	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
 	public void SetShowWatermark(bool show)
 	{
 		if (_recording is { } recording) PublishStill(recording, recording.Compositor.Change(r => r.ShowWatermark = show));

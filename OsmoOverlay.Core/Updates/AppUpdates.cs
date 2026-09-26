@@ -138,7 +138,8 @@ public static class AppUpdates
 	/// <summary>Downloads the release's installer to the temp folder and checks it against its SHA-256; returns its path.</summary>
 	public static async Task<string> DownloadInstallerAsync(ReleaseAsset installer, IProgress<double>? progress, CancellationToken ct)
 	{
-		var path = Path.Combine(Path.GetTempPath(), installer.Name);
+		// The name comes from the API response - never let it point outside the temp folder.
+		var path = Path.Combine(Path.GetTempPath(), Path.GetFileName(installer.Name));
 		var partialPath = path + ".partial";
 
 		using (HttpResponseMessage response = await Http.GetAsync(installer.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct))

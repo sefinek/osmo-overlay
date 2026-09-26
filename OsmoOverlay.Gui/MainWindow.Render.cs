@@ -75,7 +75,7 @@ public partial class MainWindow
 			// "Matches the source" doesn't mean anything for a green-screen render - there's no source
 			// video in it to match (synthetic background, no audio) - so the Output card keeps showing
 			// whatever it already had (the plan, or an earlier normal render's measured results).
-			if (!greenScreen && _summary is not null) PopulateMeasuredOutputInfo(outputPath, _summary);
+			if (!greenScreen && _summary is not null) await PopulateMeasuredOutputInfoAsync(outputPath, _summary);
 
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 

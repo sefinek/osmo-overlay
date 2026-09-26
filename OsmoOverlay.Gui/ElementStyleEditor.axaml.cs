@@ -20,12 +20,6 @@ public sealed record ElementStyle(
 /// </summary>
 public partial class ElementStyleEditor : UserControl
 {
-	// Swatch fallbacks for an empty/unparsable box - match OverlayRenderer's built-in White/Accent/Shadow
-	// defaults (OverlayRenderer.TextWidgets.cs' *Of helpers), so the swatch shows what the render will use.
-	private const string DefaultTextColorHex = "#FFFFFF";
-	private const string DefaultAccentColorHex = "#46BEFF";
-	private const string DefaultOutlineColorHex = "#000000";
-
 	// Built once and shared by every editor instance - enumerating installed fonts isn't free.
 	private static readonly List<FontOption> FontOptions = BuildFontOptions();
 
@@ -65,10 +59,10 @@ public partial class ElementStyleEditor : UserControl
 		_populating = true;
 		FontCombo.SelectedItem = FontOptions.FirstOrDefault(o => o.Family == element.FontFamily) ?? FontOptions[0];
 		ScaleBox.Value = (decimal)element.Scale;
-		TextColorBox.Text = element.TextColor ?? DefaultTextColorHex;
-		OutlineColorBox.Text = element.OutlineColor ?? DefaultOutlineColorHex;
+		TextColorBox.Text = element.TextColor ?? OverlayRenderer.DefaultTextColorHex;
+		OutlineColorBox.Text = element.OutlineColor ?? OverlayRenderer.DefaultOutlineColorHex;
 		OutlineWidthBox.Value = (decimal)element.OutlineWidth;
-		if (_hasAccentColor) AccentColorBox.Text = (element as LabeledStatElement)?.AccentColor ?? DefaultAccentColorHex;
+		if (_hasAccentColor) AccentColorBox.Text = (element as LabeledStatElement)?.AccentColor ?? OverlayRenderer.DefaultAccentColorHex;
 		UpdateSwatches();
 		_populating = false;
 	}
@@ -89,9 +83,9 @@ public partial class ElementStyleEditor : UserControl
 
 	private void UpdateSwatches()
 	{
-		ColorSwatch.Update(TextColorSwatch, TextColorBox.Text, DefaultTextColorHex);
-		ColorSwatch.Update(OutlineColorSwatch, OutlineColorBox.Text, DefaultOutlineColorHex);
-		if (_hasAccentColor) ColorSwatch.Update(AccentColorSwatch, AccentColorBox.Text, DefaultAccentColorHex);
+		ColorSwatch.Update(TextColorSwatch, TextColorBox.Text, OverlayRenderer.DefaultTextColorHex);
+		ColorSwatch.Update(OutlineColorSwatch, OutlineColorBox.Text, OverlayRenderer.DefaultOutlineColorHex);
+		if (_hasAccentColor) ColorSwatch.Update(AccentColorSwatch, AccentColorBox.Text, OverlayRenderer.DefaultAccentColorHex);
 	}
 
 	private static string? NormalizeHex(string? text)

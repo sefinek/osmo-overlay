@@ -83,7 +83,8 @@ public static class RenderJob
 	public static Task<RenderResult> RunAsync(RenderOptions options, IProgress<RenderStatus>? progress,
 		CancellationToken ct)
 	{
-		return Task.Run(() => RunAsyncCore(options, progress, ct), ct);
+		// Not Task.Run's own token: a cancellation before it starts would throw instead of returning a RenderResult.
+		return Task.Run(() => RunAsyncCore(options, progress, ct));
 	}
 
 	private static async Task<RenderResult> RunAsyncCore(RenderOptions options, IProgress<RenderStatus>? progress,

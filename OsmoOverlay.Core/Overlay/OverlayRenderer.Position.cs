@@ -140,7 +140,7 @@ public sealed partial class OverlayRenderer
 	private string ResolveUrlTemplate()
 	{
 		var template = MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
-		return template.Replace("{api_key}", MapApiKey ?? "");
+		return template.Replace("{api_key}", Uri.EscapeDataString(MapApiKey?.Trim() ?? ""));
 	}
 
 	/// <summary>Keeps a hand-edited or out-of-range preset value from pushing the crop/fetch math outside sane bounds.</summary>

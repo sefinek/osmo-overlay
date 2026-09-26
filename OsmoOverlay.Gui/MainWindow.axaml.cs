@@ -391,7 +391,7 @@ public partial class MainWindow : Window
 		try
 		{
 			var (path, args) = AppCommand.Current();
-			Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = false });
+			Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = false })?.Dispose();
 		}
 		catch (Exception ex)
 		{

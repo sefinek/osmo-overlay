@@ -117,18 +117,32 @@ public static class OverlayPresetStore
 		AtomicFile.WriteAllText(filePath, JsonSerializer.Serialize(preset));
 	}
 
-	/// <summary>Deserializes a preset from a file (e.g. one received from someone else) - null on any read/parse failure, logged the same way a corrupt local preset file is in LoadPresetFiles.</summary>
+	/// <summary>
+	///     Deserializes a preset from a file (e.g. one received from someone else) - null on any read/parse failure, logged
+	///     the same way a corrupt local preset file is in LoadPresetFiles. An Image widget linking anything but a local file
+	///     loses its link: reading a UNC path (\\host\share) would hand the user's Windows credentials to that host.
+	/// </summary>
 	public static OverlayPreset? ImportFromFile(string filePath)
 	{
 		try
 		{
-			return Validate(JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath)));
+			OverlayPreset preset = Validate(JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath)));
+			return preset with
+			{
+				Elements = [.. preset.Elements.Select(e => e is ImageElement { ImagePath: { } path } image && !IsLocalFilePath(path) ? image with { ImagePath = null } : e)]
+			};
 		}
 		catch (Exception ex)
 		{
 			AppLogger.Warn(ex, $"Failed to import overlay preset from: {filePath}");
 			return null;
 		}
+	}
+
+	/// <summary>A fully qualified path on a local drive - not UNC (\\host, //host) or a device path (\\?\, \\.\).</summary>
+	internal static bool IsLocalFilePath(string path)
+	{
+		return Path.IsPathFullyQualified(path) && !(path.Length >= 2 && path[0] is '\\' or '/' && path[1] is '\\' or '/');
 	}
 
 	private static void WritePreset(OverlayPreset preset)
