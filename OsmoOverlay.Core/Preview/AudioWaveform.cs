@@ -104,6 +104,8 @@ public sealed class AudioWaveform : IDisposable
 			long sampleFrame = 0;
 			var lastUpdate = Environment.TickCount64;
 			var started = lastUpdate;
+			// Kept locally and published once per read - not a volatile read per sample.
+			var loudest = _loudest;
 
 			_source.Seek(0);
 			while (!ct.IsCancellationRequested)
@@ -120,10 +122,11 @@ public sealed class AudioWaveform : IDisposable
 					{
 						var level = Math.Abs(samples[i + c]);
 						if (level > _peaks[c][bucket]) _peaks[c][bucket] = level;
-						if (level > _loudest) _loudest = level;
+						if (level > loudest) loudest = level;
 					}
 				}
 
+				_loudest = loudest;
 				_available = (int)(sampleFrame / samplesPerBucket);
 				if (Environment.TickCount64 - lastUpdate < 250) continue;
 
