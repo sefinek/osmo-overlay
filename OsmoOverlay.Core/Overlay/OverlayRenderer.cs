@@ -46,6 +46,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	private double _totalDistanceMeters;
 	private double _totalDurationSeconds;
 	private TripStats _tripStats = TripStats.Compute([]);
+	// Far wider than any widget draws around its anchor - only bounds what MeasureElement records.
+	private static readonly SKRect MeasureArea = new(-100_000, -100_000, 100_000, 100_000);
 	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
 	private double _trailSpeedScaleKmh;
 
@@ -455,75 +457,96 @@ public sealed partial class OverlayRenderer : IDisposable
 			if (state.Progress <= 0f) continue;
 
 			var saveCount = BeginElement(canvas, element, state);
-			switch (element)
-			{
-				case DateTimeTextElement dateTime:
-					DrawTimeText(canvas, frame, dateTime, true);
-					break;
-				case UtcTimeTextElement utcTime:
-					DrawTimeText(canvas, frame, utcTime, false);
-					break;
-				case ElevationElement elevation:
-					DrawElevation(canvas, frame, elevation);
-					break;
-				case GradientElement gradient:
-					DrawGradient(canvas, frame, gradient);
-					break;
-				case DistanceElement distance:
-					DrawDistance(canvas, frame, distance);
-					break;
-				case CompassElement compass:
-					DrawCompass(canvas, frame, compass);
-					break;
-				case SunWidgetElement sun:
-					DrawSunWidget(canvas, frame, sun);
-					break;
-				case RollGaugeElement roll:
-					DrawRollGauge(canvas, roll, frame.RollDegrees);
-					break;
-				case PitchGaugeElement pitch:
-					DrawPitchGauge(canvas, pitch, frame.PitchDegrees);
-					break;
-				case MapWidgetElement map:
-					DrawMapWidget(canvas, frame, map);
-					if (MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
-					break;
-				case SpeedGaugeElement speed:
-					DrawSpeedGauge(canvas, speed, frame.SpeedKmh);
-					break;
-				case CameraInfoElement cameraInfo:
-					DrawCameraInfo(canvas, frame, cameraInfo);
-					break;
-				case ElapsedTimeTextElement elapsed:
-					DrawElapsedTime(canvas, frame, elapsed);
-					break;
-				case CameraModelTextElement cameraModel:
-					DrawCameraModel(canvas, cameraModel);
-					break;
-				case GMeterElement gMeter:
-					DrawGMeter(canvas, frame, gMeter);
-					break;
-				case TripProgressBarElement tripProgress:
-					DrawTripProgressBar(canvas, frame, tripProgress);
-					break;
-				case ProfileChartElement profile:
-					DrawProfileChart(canvas, frame, profile);
-					break;
-				case TripStatElement tripStat:
-					DrawTripStat(canvas, frame, tripStat);
-					break;
-				case TextElement text:
-					DrawText(canvas, text);
-					break;
-				case ImageElement image:
-					DrawImage(canvas, image);
-					break;
-			}
-
+			DrawElement(canvas, element, frame);
+			if (element is MapWidgetElement && MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
 			canvas.RestoreToCount(saveCount);
 		}
 
 		return mapAttribution;
+	}
+
+	/// <summary>One widget around its anchor at (0, 0), in reference pixels - the canvas already set up by BeginElement.</summary>
+	private void DrawElement(SKCanvas canvas, OverlayElement element, DerivedFrame frame)
+	{
+		switch (element)
+		{
+			case DateTimeTextElement dateTime:
+				DrawTimeText(canvas, frame, dateTime, true);
+				break;
+			case UtcTimeTextElement utcTime:
+				DrawTimeText(canvas, frame, utcTime, false);
+				break;
+			case ElevationElement elevation:
+				DrawElevation(canvas, frame, elevation);
+				break;
+			case GradientElement gradient:
+				DrawGradient(canvas, frame, gradient);
+				break;
+			case DistanceElement distance:
+				DrawDistance(canvas, frame, distance);
+				break;
+			case CompassElement compass:
+				DrawCompass(canvas, frame, compass);
+				break;
+			case SunWidgetElement sun:
+				DrawSunWidget(canvas, frame, sun);
+				break;
+			case RollGaugeElement roll:
+				DrawRollGauge(canvas, roll, frame.RollDegrees);
+				break;
+			case PitchGaugeElement pitch:
+				DrawPitchGauge(canvas, pitch, frame.PitchDegrees);
+				break;
+			case MapWidgetElement map:
+				DrawMapWidget(canvas, frame, map);
+				break;
+			case SpeedGaugeElement speed:
+				DrawSpeedGauge(canvas, speed, frame.SpeedKmh);
+				break;
+			case CameraInfoElement cameraInfo:
+				DrawCameraInfo(canvas, frame, cameraInfo);
+				break;
+			case ElapsedTimeTextElement elapsed:
+				DrawElapsedTime(canvas, frame, elapsed);
+				break;
+			case CameraModelTextElement cameraModel:
+				DrawCameraModel(canvas, cameraModel);
+				break;
+			case GMeterElement gMeter:
+				DrawGMeter(canvas, frame, gMeter);
+				break;
+			case TripProgressBarElement tripProgress:
+				DrawTripProgressBar(canvas, frame, tripProgress);
+				break;
+			case ProfileChartElement profile:
+				DrawProfileChart(canvas, frame, profile);
+				break;
+			case TripStatElement tripStat:
+				DrawTripStat(canvas, frame, tripStat);
+				break;
+			case TextElement text:
+				DrawText(canvas, text);
+				break;
+			case ImageElement image:
+				DrawImage(canvas, image);
+				break;
+		}
+	}
+
+	/// <summary>
+	///     What `element` draws at `frame`, around its anchor in reference pixels (before its X/Y and scale) - measured from
+	///     the drawing itself, shadow and outline included: recorded with an R-tree, Skia trims the picture's CullRect to what
+	///     was drawn. So hit-testing and the selection box frame the widget as it really is, text that grows included. Null
+	///     when it draws nothing (an Image without a file).
+	/// </summary>
+	public SKRect? MeasureElement(OverlayElement element, DerivedFrame frame)
+	{
+		using var recorder = new SKPictureRecorder();
+		SKCanvas canvas = recorder.BeginRecording(MeasureArea, true);
+		DrawElement(canvas, element, frame);
+		using SKPicture picture = recorder.EndRecording();
+		SKRect bounds = picture.CullRect;
+		return bounds.IsEmpty ? null : bounds;
 	}
 
 	/// <summary>

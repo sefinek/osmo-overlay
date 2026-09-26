@@ -113,6 +113,7 @@ public partial class MainWindow
 		UpdateCutScrim(position);
 		UpdatePreviewTimeText();
 		UpdateFrameStatus();
+		RefreshWidgetFrames();
 	}
 
 	private void OnPreviewPlaybackStopped()

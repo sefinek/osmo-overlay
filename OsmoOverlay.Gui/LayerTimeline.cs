@@ -218,6 +218,8 @@ public sealed class LayerTimeline : Control
 		get => _selectedId;
 		set
 		{
+			if (_selectedId == value) return;
+
 			_selectedId = value;
 			InvalidateVisual();
 		}

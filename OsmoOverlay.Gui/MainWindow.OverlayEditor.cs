@@ -322,6 +322,22 @@ public partial class MainWindow
 		return row;
 	}
 
+	private void SelectElement(string? id)
+	{
+		if (_selectedElementId == id) return;
+
+		_selectedElementId = id;
+		RebuildAddedWidgetsList();
+		RefreshSelectionHighlight();
+	}
+
+	/// <summary>A widget's drawing changes with the frame (a distance growing a digit) - the boxes framing it follow.</summary>
+	private void RefreshWidgetFrames()
+	{
+		if (_selectedElementId is not null) RefreshSelectionHighlight();
+		if (_hoveredElementId is { } id && ActiveElements.FirstOrDefault(e => e.Id == id) is { } hovered) ShowHoverIconsFor(hovered);
+	}
+
 	private void ToggleSelection(string id)
 	{
 		_selectedElementId = _selectedElementId == id ? null : id;
@@ -337,6 +353,8 @@ public partial class MainWindow
 	private void RefreshSelectionHighlight()
 	{
 		LayerTracks.SelectedId = _selectedElementId;
+		// The selection's solid box replaces the hover's dashed one on the same widget.
+		HoverOutline.Classes.Set("shown", _hoveredElementId is not null && _hoveredElementId != _selectedElementId);
 		// Nothing to frame for a widget that isn't drawn - no data for it, or its layer muted/unsoloed.
 		if (_selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
 		    !IsTypeSupported(el.Type) || OverlayLayers.Silenced(ActiveLayers).Contains(OverlayLayers.Key(el)))
@@ -368,14 +386,16 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     OverlayElementBounds.GetBounds with this element's own DateFormat/Locale/Label/FontFamily/text/image and
-	///     (for CameraModelText) the loaded file's actual camera model, instead of the generic placeholder
-	///     text/font GetBounds falls back to - keeps every hit-test/selection call site in this file
-	///     measuring against what that specific instance will really render, without repeating the same
-	///     extra arguments at each one.
+	///     The box a widget takes at (x, y) and `scale`, in video pixels, for every hit-test, outline and snap in the editor:
+	///     measured from what the preview's renderer draws for it at the frame shown (PreviewPlayer.MeasureElement - text
+	///     above a bar, a value growing a digit), so it frames the widget as it is. Without a preview, or for a widget that
+	///     draws nothing yet (an Image without a file), OverlayElementBounds' estimate for the type.
 	/// </summary>
 	private SKRect GetElementBounds(OverlayElement element, float x, float y, float scale)
 	{
+		if (_previewPlayer.MeasureElement(element, _previewPosition) is { } drawn)
+			return new SKRect(x + drawn.Left * scale, y + drawn.Top * scale, x + drawn.Right * scale, y + drawn.Bottom * scale);
+
 		return OverlayElementBounds.GetBounds(element.Type, x, y, scale,
 			(element as TimeTextElementBase)?.DateFormat, (element as TimeTextElementBase)?.Locale,
 			(element as LabeledStatElement)?.Label ?? (element as ElapsedTimeTextElement)?.Label, _summary?.CameraModel, (element as StyledOverlayElement)?.FontFamily,
@@ -560,10 +580,12 @@ public partial class MainWindow
 	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings. Not a
 	///     separate window: editing a widget needs the preview visible next to its settings.
 	/// </summary>
+	/// <summary>The widget whose settings are open is the selected one too - framed on the preview.</summary>
 	private void OpenElementSettings(OverlayElement element)
 	{
 		if (!IsTypeSupported(element.Type)) return;
 
+		SelectElement(element.Id);
 		_editingElementId = element.Id;
 		PopulateElementSettings(element);
 
@@ -1675,19 +1697,20 @@ public partial class MainWindow
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
 		if (TryStartPreviewPan(e)) return;
-		if (_summary is null || IsActivePresetDefault) return;
-		if (!e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
+		if (_summary is null || !e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
-		if (FindElementAt(pos) is not { } el) return;
 
-		// A locked layer's widget can be picked (for its settings), not moved.
-		if (IsLayerLocked(el))
+		// A click on the video itself lets go of the selection.
+		if (FindElementAt(pos) is not { } el)
 		{
-			if (_selectedElementId == el.Id) return;
+			SelectElement(null);
+			return;
+		}
 
-			_selectedElementId = el.Id;
-			RebuildAddedWidgetsList();
-			RefreshSelectionHighlight();
+		// The built-in preset's widgets, and a locked layer's, can be picked (to see and open their settings), not moved.
+		if (IsActivePresetDefault || IsLayerLocked(el))
+		{
+			SelectElement(el.Id);
 			return;
 		}
 
@@ -1830,9 +1853,13 @@ public partial class MainWindow
 		SaveOverlayPresets();
 	}
 
+	/// <summary>
+	///     The widget under the pointer gets its outline and name - also on the read-only built-in preset, to see what's
+	///     where - and, where it can be edited, the settings/remove buttons.
+	/// </summary>
 	private void UpdateHoverState(PointerEventArgs e)
 	{
-		if (_summary is null || IsActivePresetDefault)
+		if (_summary is null)
 		{
 			OverlayDragCanvas.Cursor = null;
 			HideHoverIcons();
@@ -1848,7 +1875,7 @@ public partial class MainWindow
 
 		Point? pos = MapCanvasPointToFullRes(canvasPos);
 		OverlayElement? hovered = pos is { } p ? FindElementAt(p) : null;
-		OverlayDragCanvas.Cursor = hovered is not null ? HandCursor : null;
+		OverlayDragCanvas.Cursor = hovered is not null && !IsActivePresetDefault ? HandCursor : null;
 
 		if (hovered is null)
 		{
@@ -1870,40 +1897,76 @@ public partial class MainWindow
 		return new Rect(Canvas.GetLeft(control), Canvas.GetTop(control), control.Bounds.Width, control.Bounds.Height);
 	}
 
-	/// <summary>Positions the gear/remove pair at a widget's top-right corner, gear to the left of remove.</summary>
+	/// <summary>
+	///     Frames the hovered widget: a dashed outline round its box (left to the selection's solid one when it's the
+	///     selected widget), its name above the top-left corner (below the box when there's no room above), and the
+	///     gear/remove pair on the top-right corner, gear to the left of remove.
+	/// </summary>
 	private void ShowHoverIconsFor(OverlayElement element)
 	{
 		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
 		SKRect bounds = GetElementBounds(element, element.X, element.Y, scale * element.Scale);
-		if (MapFullResPointToCanvas(bounds.Right, bounds.Top) is not { } corner)
+		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
+		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
 		{
 			HideHoverIcons();
 			return;
 		}
 
-		_hoveredElementId = element.Id;
+		if (_hoveredElementId != element.Id)
+		{
+			_hoveredElementId = element.Id;
+			HoverLabelText.Text = VisibleWidgetNames().FirstOrDefault(w => w.Element.Id == element.Id).Name ?? GetWidgetLabel(element.Type);
+		}
+
+		var width = Math.Max(0, bottomRight.X - topLeft.X);
+		Canvas.SetLeft(HoverOutline, topLeft.X);
+		Canvas.SetTop(HoverOutline, topLeft.Y);
+		HoverOutline.Width = width;
+		HoverOutline.Height = Math.Max(0, bottomRight.Y - topLeft.Y);
+		HoverOutline.Classes.Set("shown", element.Id != _selectedElementId);
+
+		const double labelGap = 4;
+		var editable = !IsActivePresetDefault;
+		// Clear of the buttons on the right corner.
+		HoverLabel.MaxWidth = Math.Max(60, width - (editable ? RemoveWidgetButton.Width + WidgetGearHoverButton.Width : 0));
+		var labelTop = topLeft.Y - HoverLabel.Height - labelGap;
+		Canvas.SetLeft(HoverLabel, topLeft.X);
+		Canvas.SetTop(HoverLabel, labelTop >= 0 ? labelTop : bottomRight.Y + labelGap);
+		HoverLabel.Classes.Set("shown", true);
+
+		RemoveWidgetButton.IsVisible = editable;
+		WidgetGearHoverButton.IsVisible = editable;
+		if (!editable) return;
 
 		const double gap = 4;
-		Canvas.SetLeft(RemoveWidgetButton, corner.X - RemoveWidgetButton.Width / 2);
-		Canvas.SetTop(RemoveWidgetButton, corner.Y - RemoveWidgetButton.Height / 2);
-		Canvas.SetLeft(WidgetGearHoverButton, corner.X - RemoveWidgetButton.Width / 2 - gap - WidgetGearHoverButton.Width);
-		Canvas.SetTop(WidgetGearHoverButton, corner.Y - WidgetGearHoverButton.Height / 2);
-
-		RemoveWidgetButton.IsVisible = true;
-		WidgetGearHoverButton.IsVisible = true;
+		Canvas.SetLeft(RemoveWidgetButton, bottomRight.X - RemoveWidgetButton.Width / 2);
+		Canvas.SetTop(RemoveWidgetButton, topLeft.Y - RemoveWidgetButton.Height / 2);
+		Canvas.SetLeft(WidgetGearHoverButton, bottomRight.X - RemoveWidgetButton.Width / 2 - gap - WidgetGearHoverButton.Width);
+		Canvas.SetTop(WidgetGearHoverButton, topLeft.Y - WidgetGearHoverButton.Height / 2);
 	}
 
 	private void HideHoverIcons()
 	{
 		_hoveredElementId = null;
+		HoverOutline.Classes.Set("shown", false);
+		HoverLabel.Classes.Set("shown", false);
 		RemoveWidgetButton.IsVisible = false;
 		WidgetGearHoverButton.IsVisible = false;
+	}
+
+	/// <summary>The gear/remove buttons are the canvas's own children, so moving onto them doesn't count as leaving.</summary>
+	private void OnOverlayCanvasPointerExited(object? sender, PointerEventArgs e)
+	{
+		if (_draggingElementId is null && _resizingElementId is null) HideHoverIcons();
 	}
 
 	private void OnWidgetGearHoverButtonClick(object? sender, RoutedEventArgs e)
 	{
 		if (_hoveredElementId is not { } id || ActiveElements.FirstOrDefault(el => el.Id == id) is not { } element) return;
 		OpenElementSettings(element);
+		// Selected now - its solid box takes over from the dashed one.
+		ShowHoverIconsFor(element);
 	}
 
 	private void OnRemoveWidgetButtonClick(object? sender, RoutedEventArgs e)

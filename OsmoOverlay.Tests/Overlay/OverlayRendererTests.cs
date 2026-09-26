@@ -48,6 +48,25 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
+	public void MeasureElement_FramesWhatTheWidgetDraws()
+	{
+		List<DerivedFrame> frames = Route(100, 0);
+		using OverlayRenderer renderer = Create(frames);
+
+		SKRect? bar = renderer.MeasureElement(new TripProgressBarElement { X = 0, Y = 0 }, frames[50]);
+		SKRect? gauge = renderer.MeasureElement(new SpeedGaugeElement { X = 0, Y = 0 }, frames[50]);
+		SKRect? noImage = renderer.MeasureElement(new ImageElement { X = 0, Y = 0 }, frames[50]);
+
+		Assert.IsNotNull(bar);
+		// The percentage and distance left sit above the bar itself - outside its ProgressBarHeight track.
+		Assert.IsTrue(bar.Value.Top < -OverlayElementBounds.ProgressBarHeight / 2, $"top {bar.Value.Top}");
+		Assert.IsTrue(bar.Value.Width < 100_000, "trimmed to the drawing, not the recording area");
+		Assert.IsNotNull(gauge);
+		Assert.AreEqual(0, gauge.Value.MidX, OverlayElementBounds.SpeedRadius * 0.2, "a round gauge is drawn around its anchor");
+		Assert.IsNull(noImage, "an image with no file draws nothing");
+	}
+
+	[TestMethod]
 	public void SetFrames_DrawsLikeARendererBuiltForThoseFrames()
 	{
 		List<DerivedFrame> before = Route(300, 0);

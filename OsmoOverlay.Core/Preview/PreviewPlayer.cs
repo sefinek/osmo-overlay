@@ -350,6 +350,15 @@ public sealed class PreviewPlayer : IDisposable
 	}
 
 	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
+	/// <summary>
+	///     What a widget draws at `position`, around its anchor in reference pixels (see OverlayRenderer.MeasureElement) -
+	///     null with no recording open or when it draws nothing.
+	/// </summary>
+	public SKRect? MeasureElement(OverlayElement element, TimeSpan position)
+	{
+		return _recording?.Compositor.MeasureElement(element, position);
+	}
+
 	public void SetShowWatermark(bool show)
 	{
 		if (_recording is { } recording) PublishStill(recording, recording.Compositor.Change(r => r.ShowWatermark = show));
