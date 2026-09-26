@@ -116,6 +116,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private RenderTargetBitmap? _tracksLayer;
 	// Kept until the next layer is drawn, not disposed right after DrawImage took it.
 	private WriteableBitmap? _waveformBitmap;
+	// The waveform's pixels, reused while the size stays - a fresh one per scroll or zoom step is ~1 MB on the large object heap.
+	private int[] _waveformPixels = [];
 	private (double Start, double PixelsPerSecond, Size Size, double Scaling, int Version) _tracksLayerKey;
 	private int _contentVersion;
 
@@ -183,7 +185,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	public double ViewStart { get; private set; }
 	public double ViewLength => PixelsPerSecond > 0 ? TimeWidth / PixelsPerSecond : Duration;
 
-	private double Duration => Math.Max(0, Maximum - Minimum);
+	// The recording's own seconds, from 0 - Minimum stays 0.
+	private double Duration => Math.Max(0, Maximum);
 	private double FitPixelsPerSecond => Duration > 0 ? TimeWidth / Duration : 0;
 	public double PixelsPerSecond => FitPixelsPerSecond * _zoom;
 	private double MaxZoom => FitPixelsPerSecond > 0 ? Math.Max(1, _fps * MaxPixelsPerFrame / FitPixelsPerSecond) : 1;
@@ -369,13 +372,15 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		var major = TickSteps.FirstOrDefault(step => step * PixelsPerSecond >= MinMajorTickPixels, TickSteps[^1]);
 		var minor = major / (major is 2 or 0.2 or 120 ? 4 : 5);
-		var first = Math.Floor(ViewStart / minor) * minor;
+		var ticksPerMajor = (int)Math.Round(major / minor);
 		var last = Math.Min(Duration, ViewStart + ViewLength);
 
-		for (var t = first; t <= last + minor / 2; t += minor)
+		// Counted in whole ticks, not summed in seconds - adding 0.02 hundreds of times drifts off the major ticks.
+		for (var tick = (long)Math.Floor(ViewStart / minor); tick * minor <= last + minor / 2; tick++)
 		{
+			var t = tick * minor;
 			var x = Math.Round(X(t)) + 0.5;
-			var isMajor = Math.Abs(t / major - Math.Round(t / major)) < 1e-6;
+			var isMajor = tick % ticksPerMajor == 0;
 			context.DrawLine(isMajor ? TickPen : MinorTickPen, new Point(x, isMajor ? 9 : 17), new Point(x, RulerHeight - 3));
 			if (!isMajor) continue;
 
@@ -483,7 +488,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		var lanes = Math.Min(2, waveform.Channels);
 		var laneHeight = (double)pixelHeight / lanes;
-		var pixels = new int[pixelWidth * pixelHeight];
+		if (_waveformPixels.Length != pixelWidth * pixelHeight) _waveformPixels = new int[pixelWidth * pixelHeight];
+		else Array.Clear(_waveformPixels);
+		var pixels = _waveformPixels;
 		Color color = WaveformBrush.Color;
 		var opacity = color.A / 255.0 * WaveformBrush.Opacity;
 		for (var px = 0; px < pixelWidth; px++)
@@ -594,7 +601,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private double X(double seconds)
 	{
-		return Inset + (seconds - Minimum - ViewStart) * PixelsPerSecond;
+		return Inset + (seconds - ViewStart) * PixelsPerSecond;
 	}
 
 	private double TimeAt(double x)
@@ -611,7 +618,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private double ValueAt(double x)
 	{
-		return Math.Clamp(Minimum + TimeAt(x), Minimum, Maximum);
+		return Math.Clamp(TimeAt(x), 0, Duration);
 	}
 
 	/// <summary>Clamps zoom and scroll to the recording, then redraws and asks for the thumbnails now in view.</summary>
@@ -859,6 +866,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		_tracksLayer = null;
 		_waveformBitmap?.Dispose();
 		_waveformBitmap = null;
+		_waveformPixels = [];
 	}
 
 	/// <summary>The stripes' timer runs only while there is a cut to draw on a timeline in the window.</summary>

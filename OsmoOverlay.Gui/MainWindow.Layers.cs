@@ -179,13 +179,7 @@ public partial class MainWindow
 	{
 		if (ActiveElements.FirstOrDefault(e => e.Id == id) is not { } element || !IsTypeSupported(element.Type)) return;
 
-		if (_selectedElementId != id)
-		{
-			_selectedElementId = id;
-			RebuildAddedWidgetsList();
-			RefreshSelectionHighlight();
-		}
-
+		SelectElement(id);
 		// Not again for the same widget - its panel is already open, and filling it anew would reset a field being typed in.
 		if (_editingElementId != id) OpenElementSettings(element);
 	}
