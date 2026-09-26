@@ -340,9 +340,7 @@ public partial class MainWindow
 
 	private void ToggleSelection(string id)
 	{
-		_selectedElementId = _selectedElementId == id ? null : id;
-		RefreshSelectionHighlight();
-		RebuildAddedWidgetsList();
+		SelectElement(_selectedElementId == id ? null : id);
 	}
 
 	/// <summary>
@@ -578,9 +576,9 @@ public partial class MainWindow
 	/// <summary>
 	///     Populates one widget instance's settings panel and swaps the left column over to show it (in
 	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings. Not a
-	///     separate window: editing a widget needs the preview visible next to its settings.
+	///     separate window: editing a widget needs the preview visible next to its settings. The widget whose settings are
+	///     open is the selected one too - framed on the preview.
 	/// </summary>
-	/// <summary>The widget whose settings are open is the selected one too - framed on the preview.</summary>
 	private void OpenElementSettings(OverlayElement element)
 	{
 		if (!IsTypeSupported(element.Type)) return;
@@ -1965,8 +1963,6 @@ public partial class MainWindow
 	{
 		if (_hoveredElementId is not { } id || ActiveElements.FirstOrDefault(el => el.Id == id) is not { } element) return;
 		OpenElementSettings(element);
-		// Selected now - its solid box takes over from the dashed one.
-		ShowHoverIconsFor(element);
 	}
 
 	private void OnRemoveWidgetButtonClick(object? sender, RoutedEventArgs e)
