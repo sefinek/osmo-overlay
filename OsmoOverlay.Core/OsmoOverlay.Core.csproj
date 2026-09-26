@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyName>OsmoOverlay.Core</AssemblyName>
+    <RootNamespace>OsmoOverlay.Core</RootNamespace>
+
+    <AssemblyTitle>OsmoOverlay Core</AssemblyTitle>
+    <Description>Telemetry extraction, HUD rendering and ffmpeg pipeline for DJI Osmo Action series footage.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFmpeg.AutoGen" Version="9.0.1.1" />
+    <PackageReference Include="NLog" Version="6.2.1" />
+    <PackageReference Include="ppy.SDL3-CS" Version="2026.722.0" />
+    <PackageReference Include="SkiaSharp" Version="4.152.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.152.1" />
+  </ItemGroup>
+
+</Project>

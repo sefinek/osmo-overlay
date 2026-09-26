@@ -1,0 +1,309 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="560"
+        x:Class="OsmoOverlay.Gui.SettingsWindow"
+        Width="820" Height="560" MinWidth="680" MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="Settings">
+
+	<Window.Resources>
+		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{StaticResource ControlColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{StaticResource ControlPressedColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundDisabled" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushDisabled" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBackground" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderChevronBackground" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPressed" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrush" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPressed" Color="Transparent" />
+	</Window.Resources>
+
+	<Window.Styles>
+		<Style Selector="TextBlock.sectionHeader">
+			<Setter Property="FontSize" Value="17" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.9" />
+		</Style>
+		<Style Selector="CheckBox, RadioButton">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="Padding" Value="8,0,0,0" />
+		</Style>
+		<Style Selector="ListBox#CategoryList">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="0" />
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem">
+			<Setter Property="Padding" Value="14,10" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+		</Style>
+	</Window.Styles>
+
+	<Grid>
+		<Grid ColumnDefinitions="180,*">
+			<Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" Padding="10">
+				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
+					<ListBoxItem Content="Rendering" />
+					<ListBoxItem Content="Map" />
+					<ListBoxItem Content="Route intro" />
+					<ListBoxItem Content="Interface" />
+					<ListBoxItem Content="About" />
+				</ListBox>
+			</Border>
+
+			<Grid Grid.Column="1">
+				<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Watermark" Classes="infoLabel" />
+							<CheckBox Name="ShowWatermarkCheck" Content="Show attribution watermark" />
+							<TextBlock Classes="hint"
+							           Text="Shows 'Made with OsmoOverlay' plus the project link at the bottom of the video for the first few seconds, fading out. On by default." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="GPS motion" Classes="infoLabel" />
+							<CheckBox Name="SmoothGpsMotionCheck" Content="Smooth GPS-derived motion" />
+							<TextBlock Classes="hint"
+							           Text="The camera's GPS only reports a new fix a few times a second, so the Compass trail and Map widget normally hold position for several frames then jump. This interpolates between real fixes for a smoother pan/trail. On by default; takes effect the next time a file/preview is opened." />
+						</StackPanel>
+
+						<StackPanel Spacing="6" Margin="0,12,0,0">
+							<TextBlock Text="Output quality" Classes="sectionHeader" />
+							<TextBlock Classes="hint"
+							           Text="By default the render matches the source file's own encoding 1:1 - same bitrate, keyframe interval, HEVC level/tier and no B-frames - so burning in the overlay costs as little quality as a render can. The options below only change that if you pick something other than the default." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Encoder preset (NVIDIA GPU)" Classes="infoLabel" />
+							<ComboBox Name="NvencPresetCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="How much effort the GPU encoder spends per frame at the same bitrate. P7 gives the best picture and is the default; lower presets render faster at a slightly lower quality. Only applies to NVENC (hevc_nvenc) - the CPU encoder always uses its own fixed preset." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Output bitrate" Classes="infoLabel" />
+							<ComboBox Name="BitrateCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="Same as source is the default. A higher bitrate makes a bigger file but keeps the thin HUD text crisper after a platform like YouTube re-compresses the upload." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Decoding" Classes="infoLabel" />
+							<CheckBox Name="HardwareDecodingCheck" Content="Decode the source on the GPU" />
+							<TextBlock Classes="hint"
+							           Text="On by default: decoding the 4K source on the GPU is several times faster than on the CPU and produces identical frames, so it never affects quality. Turn it off only if renders fail after a graphics driver update or on an unusual GPU - ffmpeg then decodes on the CPU." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Web playback" Classes="infoLabel" />
+							<CheckBox Name="FastStartCheck" Content="Fast start (index at the beginning of the file)" />
+							<TextBlock Classes="hint"
+							           Text="Lets a browser or messenger start playing the video before it has downloaded all of it. Doesn't change the picture - it only reorders the file, which takes an extra pass over it at the end of the render (a few seconds per GB). Off by default." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Camera metadata" Classes="infoLabel" />
+							<CheckBox Name="PreserveCameraMetadataCheck" Content="Keep the camera's metadata in the rendered file"
+							          IsCheckedChanged="OnMetadataOptionChanged" />
+							<TextBlock Classes="hint"
+							           Text="Copies data the camera recorded alongside the video into the output, so DJI Mimo, exiftool or this app can still read it from the render. Off by default - pick below exactly what to keep." />
+							<Expander Name="MetadataPartsExpander" HorizontalAlignment="Stretch" CornerRadius="8">
+								<StackPanel Spacing="12">
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataTelemetryCheck" Content="Telemetry - GPS route, speed, accelerometer, exposure"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="What DJI Mimo and this app read the ride from. Includes your exact position for every frame - anyone with the file can see where it was recorded." />
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataSerialCheck" Content="Camera serial number and device ID"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="Identifies your physical camera; nothing that reads the telemetry needs it. Off by default - the field is then removed from the file entirely, not just blanked." />
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataDebugCheck" Content="Camera debug track"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="DJI's internal sensor diagnostics (~1.7 Mbps). No location in it, but no common tool reads it either." />
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<CheckBox Name="MetadataThumbnailsCheck" Content="Thumbnails and recording info"
+										          IsCheckedChanged="OnMetadataOptionChanged" />
+										<TextBlock Classes="hint" Margin="28,0,0,0"
+										           Text="Cover image, camera model, shooting settings and the file's original name on the camera." />
+									</StackPanel>
+								</StackPanel>
+							</Expander>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="MapPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Map tile source" Classes="infoLabel" />
+							<TextBlock Classes="hint"
+							           Text="Shared by every map-based widget (the Map widget, the route-overview start card) - one provider/key for the whole preset instead of setting it up per widget." />
+							<ComboBox Name="MapProviderCombo" HorizontalAlignment="Stretch" SelectionChanged="OnMapProviderChanged" />
+							<TextBlock Name="MapCustomUrlLabel" Text="Custom tile URL template" Classes="infoLabel" IsVisible="False" />
+							<TextBox Name="MapTileUrlBox" IsVisible="False"
+							         PlaceholderText="https://tile.example.com/{z}/{x}/{y}.png"
+							         LostFocus="OnMapTileUrlChanged" TextWrapping="Wrap" />
+							<TextBlock Name="MapApiKeyLabel" Text="API key" Classes="infoLabel" IsVisible="False" />
+							<TextBox Name="MapApiKeyBox" IsVisible="False" PlaceholderText="Paste your API key"
+							         PasswordChar="•" LostFocus="OnMapApiKeyChanged" />
+							<TextBlock Name="MapApiKeyHint" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False"
+							           Text="Doesn't look like a CARTO key - expected format: xxx_xxxx_n_&lt;24 hex chars&gt;." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<CheckBox Name="MapShowAttributionCheck" Content="Show attribution on the video"
+							          Click="OnMapShowAttributionChanged" />
+							<TextBlock Classes="hint"
+							           Text="Turning this off means you must credit the map source yourself elsewhere (e.g. in the video description)." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Name="MapAttributionLabel" Text="Attribution" Classes="infoLabel" />
+							<TextBox Name="MapAttributionBox" PlaceholderText="© OpenStreetMap contributors" />
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="RouteIntroPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Route overview start card" Classes="infoLabel" />
+							<CheckBox Name="ShowRouteIntroCheck" Content="Show fullscreen route overview at the start"
+							          Click="OnShowRouteIntroChanged" />
+							<TextBlock Classes="hint"
+							           Text="A fullscreen card shown for the first few seconds of the render: the whole route on a map plus the trip stats checked below. Needs a GPS fix and network access to fetch the overview map." />
+						</StackPanel>
+
+						<StackPanel Name="RouteIntroOptionsPanel" Spacing="20">
+							<StackPanel Spacing="6">
+								<TextBlock Name="RouteIntroDurationLabel" Text="Duration (seconds)" Classes="infoLabel" />
+								<NumericUpDown Name="RouteIntroDurationBox" Minimum="1" Maximum="30" Increment="1"
+								               FormatString="0" HorizontalAlignment="Stretch" />
+							</StackPanel>
+
+							<StackPanel Spacing="6">
+								<TextBlock Text="Route" Classes="infoLabel" />
+								<CheckBox Name="RouteIntroColorBySpeedCheck" Content="Color the route by speed" />
+								<TextBlock Classes="hint"
+								           Text="Green when slow, through yellow and orange to red at the recording's top speed." />
+							</StackPanel>
+
+							<StackPanel Spacing="6">
+								<TextBlock Name="RouteIntroStatsLabel" Text="Stats to show" Classes="infoLabel" />
+								<StackPanel Spacing="2">
+									<CheckBox Name="RouteIntroDistanceCheck" Content="Total distance" />
+									<CheckBox Name="RouteIntroMaxSpeedCheck" Content="Max speed" />
+									<CheckBox Name="RouteIntroAvgSpeedCheck" Content="Average speed" />
+									<CheckBox Name="RouteIntroDateCheck" Content="Date" />
+									<CheckBox Name="RouteIntroDurationCheck" Content="Recording duration" />
+									<CheckBox Name="RouteIntroElevationGainCheck" Content="Elevation gain" />
+									<CheckBox Name="RouteIntroCameraModelCheck" Content="Camera model" />
+								</StackPanel>
+							</StackPanel>
+
+							<StackPanel Spacing="6">
+								<TextBlock Text="Units" Classes="infoLabel" />
+								<StackPanel Orientation="Horizontal" Spacing="16">
+									<RadioButton Name="RouteIntroMetricRadio" Content="Metric" GroupName="RouteIntroUnits" />
+									<RadioButton Name="RouteIntroImperialRadio" Content="Imperial" GroupName="RouteIntroUnits" />
+								</StackPanel>
+							</StackPanel>
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="InterfacePanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Interface scale" Classes="infoLabel" />
+							<ComboBox Name="InterfaceScaleCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="Scales the whole app on top of your system's display scaling. Needs a restart - with no file loaded the app restarts on its own when you close Settings." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Time format" Classes="infoLabel" />
+							<ComboBox Name="TimeFormatCombo" HorizontalAlignment="Stretch" SelectionChanged="OnTimeFormatChanged" />
+							<TextBlock Name="TimeFormatHint" Classes="hint" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Main window" Classes="infoLabel" />
+							<CheckBox Name="RestoreWindowPlacementCheck" Content="Open where it was closed" />
+							<TextBlock Classes="hint"
+							           Text="Brings back the window's size, position and screen, maximized or not. Off, it always starts maximized." />
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="AboutPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Application" Classes="infoLabel" />
+							<StackPanel Orientation="Horizontal" Spacing="12">
+								<TextBlock Name="AppVersionText" Text="OsmoOverlay" />
+								<TextBlock Name="CoreVersionText" Text="Core" Opacity="0.6" />
+							</StackPanel>
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Updates" Classes="infoLabel" />
+							<StackPanel Orientation="Horizontal" Spacing="12">
+								<Button Name="CheckForUpdatesButton" Content="Check for updates" Click="OnCheckForUpdatesClick" />
+								<TextBlock Name="AppUpdateText" Text="Checking for a new version..." VerticalAlignment="Center" />
+								<Button Name="AppUpdateButton" IsVisible="False" Click="OnAppUpdateClick" />
+							</StackPanel>
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Dependencies" Classes="infoLabel" />
+							<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Configuration" Classes="infoLabel" />
+							<TextBlock Name="ConfigLastUpdatedText" Text="Config last updated: -" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="License" Classes="infoLabel" />
+							<TextBlock Text="Free for non-commercial use under the PolyForm Noncommercial License 1.0.0. The videos you make with it are yours - you can monetize them."
+							           TextWrapping="Wrap" />
+							<TextBlock Text="Read the license" Classes="link" Tag="https://github.com/sefinek/osmo-overlay/blob/main/LICENSE"
+							           PointerPressed="OnLinkClick" />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Author" Classes="infoLabel" />
+							<TextBlock Text="Sefinek" />
+							<TextBlock Text="sefinek.net" Classes="link" Tag="https://sefinek.net" PointerPressed="OnLinkClick" />
+							<TextBlock Text="contact@sefinek.net" Classes="link" Tag="mailto:contact@sefinek.net" PointerPressed="OnLinkClick" />
+							<TextBlock Text="github.com/sefinek/osmo-overlay" Classes="link" Tag="https://github.com/sefinek/osmo-overlay"
+							           PointerPressed="OnLinkClick" />
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+			</Grid>
+		</Grid>
+	</Grid>
+</Window>

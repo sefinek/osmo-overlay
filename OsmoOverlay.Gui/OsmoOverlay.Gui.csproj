@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+
+    <AssemblyName>OsmoOverlay</AssemblyName>
+    <RootNamespace>OsmoOverlay.Gui</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\OsmoOverlay.ico</ApplicationIcon>
+
+    <AssemblyTitle>OsmoOverlay</AssemblyTitle>
+    <Description>HUD overlay renderer for DJI Osmo Action series footage.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="NLog.config" CopyToOutputDirectory="PreserveNewest" />
+    <AvaloniaResource Include="Assets\OsmoOverlay.ico" />
+  </ItemGroup>
+
+</Project>

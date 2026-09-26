@@ -1,0 +1,1297 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:core="clr-namespace:OsmoOverlay.Core.Overlay;assembly=OsmoOverlay.Core"
+        xmlns:local="using:OsmoOverlay.Gui"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="OsmoOverlay.Gui.MainWindow"
+        Width="1280" Height="800" MinWidth="1000" MinHeight="640"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="OsmoOverlay - DJI Osmo Action Telemetry HUD Renderer">
+
+	<Window.Styles>
+		<Style Selector="StackPanel.cardTitle">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="8" />
+			<Setter Property="Margin" Value="0,0,0,3" />
+		</Style>
+		<Style Selector="TextBlock.cardTitleText">
+			<Setter Property="FontSize" Value="15" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.85" />
+			<Setter Property="LetterSpacing" Value="1" />
+		</Style>
+		<Style Selector="TextBlock.infoLabel">
+			<Setter Property="Margin" Value="0,5" />
+		</Style>
+		<Style Selector="TextBlock.infoValue">
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Margin" Value="0,5" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="StackPanel.previewStatus">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="6" />
+			<Setter Property="Background" Value="Transparent" />
+		</Style>
+		<Style Selector="StackPanel.previewStatus > local|IconView">
+			<Setter Property="Width" Value="12" />
+			<Setter Property="Height" Value="12" />
+			<Setter Property="Opacity" Value="0.55" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="StackPanel.previewStatus > TextBlock">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontFeatures" Value="+tnum" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Border.pill">
+			<Setter Property="CornerRadius" Value="10" />
+			<Setter Property="Padding" Value="10,2" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.toolbar">
+			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+			<Setter Property="Padding" Value="0,7" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.toolbar:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+		</Style>
+		<Style Selector="Button.toolbar.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+			<Setter Property="BorderThickness" Value="1" />
+		</Style>
+		<Style Selector="ListBox#InputFilesList ListBoxItem">
+			<Setter Property="Padding" Value="8,4" />
+			<Setter Property="MinHeight" Value="0" />
+		</Style>
+		<Style Selector="local|IconView.checkIcon">
+			<Setter Property="Width" Value="13" />
+			<Setter Property="Height" Value="13" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.transport">
+			<Setter Property="Focusable" Value="False" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.transport.active">
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+		</Style>
+		<Style Selector="Button.transport.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
+		<Style Selector="Button.iconButton">
+			<Setter Property="Padding" Value="9,0" />
+			<Setter Property="VerticalAlignment" Value="Stretch" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="TextBlock.sectionLabel">
+			<Setter Property="Margin" Value="0,8,0,2" />
+		</Style>
+		<Style Selector="TextBlock.flyoutSectionLabel">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="Opacity" Value="0.8" />
+			<Setter Property="Margin" Value="0,8,0,2" />
+		</Style>
+		<Style Selector="Button.gearButton">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+			<Setter Property="Opacity" Value="0.55" />
+			<Setter Property="Padding" Value="6,0" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.gearButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+		</Style>
+		<Style Selector="Button.previewToolButton">
+			<Setter Property="Focusable" Value="False" />
+			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+			<Setter Property="Opacity" Value="0.7" />
+			<Setter Property="Padding" Value="7" />
+			<Setter Property="Width" Value="28" />
+			<Setter Property="Height" Value="28" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.previewToolButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+		</Style>
+		<Style Selector="Button.previewToolButton.active">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+		</Style>
+		<Style Selector="Button.previewToolButton.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
+		<Style Selector="StackPanel.settingsFlyout">
+			<Setter Property="Spacing" Value="8" />
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+		</Style>
+		<Style Selector="Border.flyoutDivider">
+			<Setter Property="Height" Value="1" />
+			<Setter Property="Background" Value="{StaticResource StrokeBrush}" />
+			<Setter Property="Margin" Value="0,10,0,2" />
+		</Style>
+		<Style Selector="Border.settingsGroup">
+			<Setter Property="Background" Value="{StaticResource SurfaceInsetBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="8" />
+			<Setter Property="Padding" Value="12,10" />
+		</Style>
+		<Style Selector="TextBlock.settingsGroupTitle">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="Opacity" Value="0.85" />
+			<Setter Property="LetterSpacing" Value="0.6" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+		</Style>
+		<Style Selector="Border.calloutInfo">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource AccentCalloutBorderBrush}" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="10,8" />
+		</Style>
+		<Style Selector="TextBlock.calloutInfoText">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Opacity" Value="0.8" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="18" />
+		</Style>
+		<Style Selector="Border.fallbackWarning">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="Margin" Value="4,0,0,0" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.fallbackWarning > local|IconView">
+			<Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+			<Setter Property="Width" Value="13" />
+			<Setter Property="Height" Value="13" />
+		</Style>
+		<Style Selector="Border.overlayListItem">
+			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="10,8" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.overlayListItem:pointerover">
+			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+		</Style>
+		<Style Selector="Border.overlayListItem.active">
+			<Setter Property="Background" Value="{StaticResource SuccessSubtleBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+		</Style>
+		<Style Selector="Border.overlayListItem:disabled">
+			<Setter Property="Opacity" Value="0.35" />
+			<Setter Property="Cursor" Value="Arrow" />
+		</Style>
+		<Style Selector="TextBlock.overlayListItemText">
+			<Setter Property="FontSize" Value="13" />
+		</Style>
+		<Style Selector="Border.addedWidgetRow">
+			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
+			<Setter Property="CornerRadius" Value="6" />
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Border.addedWidgetRow:pointerover">
+			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+		</Style>
+		<Style Selector="Border.addedWidgetRow.selected">
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
+		<Style Selector="Button.addedWidgetRemove">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+			<Setter Property="Padding" Value="6,0" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="CornerRadius" Value="4" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.addedWidgetRemove:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource DangerBrush}" />
+			<Setter Property="Foreground" Value="White" />
+		</Style>
+		<Style Selector="Button.widgetHoverButton">
+			<Setter Property="Width" Value="20" />
+			<Setter Property="Height" Value="20" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="CornerRadius" Value="10" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+		<Style Selector="Button.widgetGearButton">
+			<Setter Property="Background" Value="{StaticResource OnVideoBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource OnVideoBorderBrush}" />
+		</Style>
+		<Style Selector="Button.widgetGearButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource ControlBorderHoverBrush}" />
+		</Style>
+		<Style Selector="Button.removeWidgetButton">
+			<Setter Property="Background" Value="{StaticResource OnVideoBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+		</Style>
+		<Style Selector="Button.removeWidgetButton:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource DangerBrush}" />
+		</Style>
+		<Style Selector="Border.selectionHighlight">
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+			<Setter Property="BorderThickness" Value="2" />
+			<Setter Property="CornerRadius" Value="4" />
+		</Style>
+		<Style Selector="Ellipse.resizeHandle">
+			<Setter Property="Width" Value="14" />
+			<Setter Property="Height" Value="14" />
+			<Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+			<Setter Property="Stroke" Value="White" />
+			<Setter Property="StrokeThickness" Value="2" />
+			<Setter Property="Cursor" Value="BottomRightCorner" />
+		</Style>
+		<Style Selector="Line.previewGuide">
+			<Setter Property="Stroke" Value="{StaticResource StrokeStrongBrush}" />
+			<Setter Property="StrokeThickness" Value="1" />
+			<Setter Property="StrokeDashArray" Value="4,4" />
+		</Style>
+		<Style Selector="Rectangle.previewGuide">
+			<Setter Property="Stroke" Value="{StaticResource StrokeStrongBrush}" />
+			<Setter Property="StrokeThickness" Value="1" />
+			<Setter Property="StrokeDashArray" Value="4,4" />
+			<Setter Property="Fill" Value="Transparent" />
+		</Style>
+	</Window.Styles>
+
+	<Grid Name="RootGrid" Margin="14" RowDefinitions="*,230" RowSpacing="10">
+
+		<Grid Grid.Row="0" ColumnDefinitions="550,*,260" ColumnSpacing="10">
+
+			<Grid Grid.Column="0">
+				<ScrollViewer Name="SourceColumnScroll" HorizontalScrollBarVisibility="Disabled">
+					<StackPanel Spacing="10">
+						<Border Classes="card">
+							<StackPanel Spacing="8">
+								<StackPanel Classes="cardTitle">
+									<TextBlock Classes="cardTitleText" Text="SOURCE" />
+								</StackPanel>
+
+								<StackPanel Name="InputPanel" Spacing="4">
+									<TextBlock Text="Input file(s)" Classes="infoLabel" Margin="0" />
+									<TextBlock Text="Add several segments of the same auto-split recording to stitch them into one render"
+									           Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+									           TextWrapping="Wrap" />
+									<ListBox Name="InputFilesList" Height="56" SelectionMode="Single" />
+									<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+										<Button Grid.Column="0" Content="Add..." Click="OnAddInputFilesClick"
+										        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+										<Button Grid.Column="1" Classes="iconButton" Click="OnMoveInputUpClick" ToolTip.Tip="Move up">
+											<local:IconView Data="{StaticResource IconArrowUp}" Width="14" Height="14" />
+										</Button>
+										<Button Grid.Column="2" Classes="iconButton" Click="OnMoveInputDownClick" ToolTip.Tip="Move down">
+											<local:IconView Data="{StaticResource IconArrowDown}" Width="14" Height="14" />
+										</Button>
+										<Button Grid.Column="3" Content="Remove" Click="OnRemoveInputClick" />
+									</Grid>
+								</StackPanel>
+
+								<StackPanel Spacing="4">
+									<TextBlock Text="Output file" Classes="infoLabel" Margin="0" />
+									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+										<TextBox Grid.Column="0" Name="OutputPathBox" />
+										<Button Grid.Column="1" Content="Browse..." Click="OnPickOutputClick" />
+									</Grid>
+								</StackPanel>
+
+								<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+									<Button Grid.Column="0" Content="Settings" Click="OnSettingsClick"
+									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+									<Button Grid.Column="1" Content="Tools" Click="OnToolsClick"
+									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+								</Grid>
+							</StackPanel>
+						</Border>
+
+						<Border Classes="card">
+							<StackPanel Spacing="8">
+								<StackPanel Classes="cardTitle">
+									<TextBlock Classes="cardTitleText" Text="ACTION" />
+								</StackPanel>
+
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+									<Button Grid.Column="0" Name="ActionButton" Content="Get Summary" Click="OnActionClick"
+									        Classes="accent" IsEnabled="False" HorizontalAlignment="Stretch"
+									        HorizontalContentAlignment="Center" />
+									<Button Grid.Column="1" Name="GreenScreenButton" Content="Green Screen"
+									        Click="OnGreenScreenRenderClick" IsEnabled="False" IsVisible="False"
+									        HorizontalContentAlignment="Center"
+									        ToolTip.Tip="Render just the HUD overlay on a solid green-screen background (no source video, no audio) for compositing in another editor." />
+									<Button Grid.Column="0" Grid.ColumnSpan="2" Name="CancelButton" Content="Cancel"
+									        Click="OnCancelClick" IsVisible="False" HorizontalAlignment="Stretch"
+									        HorizontalContentAlignment="Center" />
+								</Grid>
+								<ProgressBar Name="Progress" Minimum="0" Maximum="100" Height="16" IsVisible="False" />
+							</StackPanel>
+						</Border>
+
+						<StackPanel Name="SummaryPanel" Spacing="10" IsVisible="False">
+
+							<Border Classes="card" Name="FileInfoCard" IsVisible="False">
+								<StackPanel Spacing="2">
+									<StackPanel Classes="cardTitle">
+										<TextBlock Classes="cardTitleText" Text="INPUT" />
+									</StackPanel>
+
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto" RowSpacing="2"
+									      ColumnSpacing="8">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Camera" />
+										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Telemetry" />
+										<Border Grid.Row="0" Grid.Column="4" Classes="pill" Name="TelemetryPill"
+										        HorizontalAlignment="Left">
+											<TextBlock Name="InfoTelemetry" FontWeight="SemiBold" FontSize="12" />
+										</Border>
+
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Duration" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="InfoDuration" />
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="File size" />
+										<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="InfoFileSize" />
+									</Grid>
+
+									<TextBlock Text="VIDEO" Classes="sectionLabel" />
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+									      ColumnSpacing="8">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
+										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoResolution" Margin="0" />
+											<local:IconView Classes="checkIcon" Name="InfoResolutionCheck" />
+										</StackPanel>
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Frame rate" />
+										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoFrameRate" Margin="0" />
+											<local:IconView Classes="checkIcon" Name="InfoFrameRateCheck" />
+										</StackPanel>
+
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Codec" />
+										<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoCodec" Margin="0" />
+											<local:IconView Classes="checkIcon" Name="InfoCodecCheck" />
+										</StackPanel>
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
+										<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoBitrate" Margin="0" />
+											<local:IconView Classes="checkIcon" Name="InfoBitrateCheck" />
+										</StackPanel>
+
+										<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Pixel format" />
+										<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoPixFmt" Margin="0" />
+											<local:IconView Classes="checkIcon" Name="InfoPixFmtCheck" />
+										</StackPanel>
+										<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Color" />
+										<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoColor" Margin="0" TextWrapping="Wrap" />
+											<local:IconView Classes="checkIcon" Name="InfoColorCheck" />
+										</StackPanel>
+									</Grid>
+
+									<TextBlock Text="AUDIO" Classes="sectionLabel" />
+									<Grid Name="AudioGrid" ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto"
+									      RowSpacing="2" ColumnSpacing="8">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Codec" />
+										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoAudioCodec" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Sample rate" />
+										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="InfoAudioSampleRate" />
+
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Channels" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="InfoAudioChannels" />
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
+										<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+										            VerticalAlignment="Center">
+											<TextBlock Classes="infoValue" Name="InfoAudioBitrate" Margin="0" />
+											<local:IconView Classes="checkIcon" Name="InfoAudioBitrateCheck" />
+										</StackPanel>
+									</Grid>
+									<TextBlock Name="InfoAudioNone" Classes="infoValue" Text="None" IsVisible="False" />
+								</StackPanel>
+							</Border>
+
+							<Border Classes="card" Name="TelemetryCard" IsVisible="False">
+								<StackPanel Spacing="4">
+									<StackPanel Classes="cardTitle">
+										<TextBlock Classes="cardTitleText" Text="TELEMETRY" />
+									</StackPanel>
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+									      ColumnSpacing="8">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Samples" />
+										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="TeleSamples" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Duration" />
+										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="TeleDuration" />
+
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Distance" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="TeleDistance" />
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Max speed" />
+										<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="TeleMaxSpeed" />
+
+										<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Altitude" />
+										<TextBlock Grid.Row="2" Grid.Column="1" Classes="infoValue" Name="TeleAltitude" />
+										<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Max G-force" />
+										<TextBlock Grid.Row="2" Grid.Column="4" Classes="infoValue" Name="TeleMaxG" />
+									</Grid>
+									<TextBlock Classes="infoLabel" Margin="0,10,0,0">
+										<Run Text="Recorded: " /><Run Name="TeleRecordedAt" />
+									</TextBlock>
+								</StackPanel>
+							</Border>
+
+							<Border Classes="card" Name="OutputInfoCard" IsVisible="False">
+								<StackPanel Spacing="4">
+									<StackPanel Classes="cardTitle">
+										<TextBlock Classes="cardTitleText" Text="OUTPUT" />
+									</StackPanel>
+									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Encoder" />
+										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Audio" />
+										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutAudio" />
+										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Frames" Name="OutFrameCountLabel" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutFrameCount" />
+										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Est. render time" Name="OutEstimatedTimeLabel" />
+										<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="OutEstimatedTime" />
+									</Grid>
+
+									<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,6,0,0" FontSize="11" Opacity="0.6"
+									           TextWrapping="Wrap" />
+
+									<StackPanel Name="OutMeasuredPanel" Spacing="4" IsVisible="False">
+										<TextBlock Text="MEASURED (EXPORTED FILE)" Classes="sectionLabel" />
+										<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+										      ColumnSpacing="8">
+											<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
+											<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+											            VerticalAlignment="Center">
+												<TextBlock Classes="infoValue" Name="OutResolution" Margin="0" />
+												<local:IconView Classes="checkIcon" Name="OutResolutionCheck" />
+											</StackPanel>
+											<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Frame rate" />
+											<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+											            VerticalAlignment="Center">
+												<TextBlock Classes="infoValue" Name="OutFrameRate" Margin="0" />
+												<local:IconView Classes="checkIcon" Name="OutFrameRateCheck" />
+											</StackPanel>
+
+											<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Codec" />
+											<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+											            VerticalAlignment="Center">
+												<TextBlock Classes="infoValue" Name="OutCodec" Margin="0" />
+												<local:IconView Classes="checkIcon" Name="OutCodecCheck" />
+											</StackPanel>
+											<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Bitrate" />
+											<StackPanel Background="Transparent" Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+											            VerticalAlignment="Center">
+												<TextBlock Classes="infoValue" Name="OutBitrate" Margin="0" />
+												<local:IconView Classes="checkIcon" Name="OutBitrateCheck" />
+											</StackPanel>
+
+											<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Pixel format" />
+											<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
+											            VerticalAlignment="Center">
+												<TextBlock Classes="infoValue" Name="OutPixFmt" Margin="0" />
+												<local:IconView Classes="checkIcon" Name="OutPixFmtCheck" />
+											</StackPanel>
+											<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Color" />
+											<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
+											            VerticalAlignment="Center">
+												<TextBlock Classes="infoValue" Name="OutColor" Margin="0" TextWrapping="Wrap" />
+												<local:IconView Classes="checkIcon" Name="OutColorCheck" />
+											</StackPanel>
+										</Grid>
+
+										<Grid ColumnDefinitions="Auto,*,24,Auto,*" ColumnSpacing="8">
+											<TextBlock Grid.Column="0" Classes="infoLabel" Text="Duration" />
+											<TextBlock Grid.Column="1" Classes="infoValue" Name="OutMeasuredDuration" />
+											<TextBlock Grid.Column="3" Classes="infoLabel" Text="File size" />
+											<TextBlock Grid.Column="4" Classes="infoValue" Name="OutMeasuredFileSize" />
+										</Grid>
+									</StackPanel>
+								</StackPanel>
+							</Border>
+
+						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="WidgetSettingsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+					<StackPanel Spacing="10">
+						<Grid ColumnDefinitions="Auto,*,Auto">
+							<Button Grid.Column="0" Name="WidgetSettingsBackButton" Classes="toolbar"
+							        Padding="10,7" FontSize="12" HorizontalAlignment="Left"
+							        Click="OnWidgetSettingsBackClick">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
+									<TextBlock Text="Back" VerticalAlignment="Center" />
+								</StackPanel>
+							</Button>
+							<TextBlock Grid.Column="1" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+								<Run Text="WIDGET SETTINGS -" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" />
+								<Run Name="WidgetSettingsTitleRun" Text="Widget settings" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+							</TextBlock>
+							<Button Grid.Column="2" Name="WidgetSettingsResetButton" Classes="toolbar"
+							        Content="Reset to default" Padding="10,7" FontSize="12" HorizontalAlignment="Right"
+							        Click="OnResetElementClick" />
+						</Grid>
+						<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
+						<ContentControl Name="WidgetSettingsPanelHost" HorizontalContentAlignment="Stretch" />
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="CutsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+					<StackPanel Spacing="10">
+						<Grid ColumnDefinitions="Auto,*,Auto">
+							<Button Grid.Column="0" Classes="toolbar" Padding="10,7" FontSize="12" HorizontalAlignment="Left"
+							        Click="OnCutsBackClick">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
+									<TextBlock Text="Back" VerticalAlignment="Center" />
+								</StackPanel>
+							</Button>
+							<TextBlock Grid.Column="1" Text="CUTS" FontSize="14" FontWeight="SemiBold"
+							           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+							<Button Grid.Column="2" Classes="toolbar" Content="Clear all" Padding="10,7" FontSize="12"
+							        HorizontalAlignment="Right" Click="OnClearCutsClick" ToolTip.Tip="Remove every cut - render the whole recording" />
+						</Grid>
+						<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
+						<local:CutEditor Name="CutsEditor" />
+					</StackPanel>
+				</ScrollViewer>
+			</Grid>
+
+			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
+				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+					<Grid Grid.Row="0">
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
+							<ComboBox Name="PreviewQualityCombo" VerticalAlignment="Center" MinWidth="150"
+							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewQualityChanged"
+							          ToolTip.Tip="Preview quality - how sharp the live preview is. Lower decodes faster; the exported video always renders at the source's full resolution." />
+							<ComboBox Name="PreviewZoomCombo" VerticalAlignment="Center" MinWidth="80"
+							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewZoomChanged"
+							          ToolTip.Tip="Preview zoom - 100% is one source pixel per screen pixel. Ctrl+wheel zooms at the pointer, the middle mouse button pans. Pixel-peeping wants the Full resolution preview quality." />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+							<Button Name="ToggleGridButton" Classes="previewToolButton active"
+							        ToolTip.Tip="Grid guides">
+								<local:IconView Data="{StaticResource IconGrid}" Width="14" Height="14" />
+								<Button.Flyout>
+									<Flyout Placement="Bottom">
+										<StackPanel Spacing="4" Width="150">
+											<Button Name="GridModeOffButton" Classes="toolbar" Content="Off"
+											        Click="OnGridModeClick" />
+											<Button Name="GridModeThirdsButton" Classes="toolbar" Content="Rule of thirds"
+											        Click="OnGridModeClick" />
+											<Button Name="GridModeMarginButton" Classes="toolbar" Content="Safe margin"
+											        Click="OnGridModeClick" />
+											<Button Name="GridModeBothButton" Classes="toolbar active" Content="Thirds + margin"
+											        Click="OnGridModeClick" />
+										</StackPanel>
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+							<Button Name="ToggleSnapButton" Classes="previewToolButton active" Click="OnToggleSnapClick"
+							        ToolTip.Tip="Snap widgets to grid">
+								<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
+							</Button>
+							<Button Name="ToggleOverlayButton" Classes="previewToolButton active" Click="OnToggleOverlayClick"
+							        ToolTip.Tip="Show the overlay (H) - off shows the plain footage">
+								<local:IconView Data="{StaticResource IconEye}" Width="14" Height="14" />
+							</Button>
+							<Button Name="SnapshotButton" Classes="previewToolButton" Click="OnSnapshotClick"
+							        ToolTip.Tip="Save the frame on screen as a PNG, at full resolution">
+								<local:IconView Data="{StaticResource IconCamera}" Width="14" Height="14" />
+							</Button>
+							<Button Name="TimeFormatButton" Classes="previewToolButton"
+							        ToolTip.Tip="Time format - minutes and seconds, milliseconds or timecode. Clicking the time readout switches it too.">
+								<local:IconView Data="{StaticResource IconStopwatch}" Width="14" Height="14" />
+								<Button.Flyout>
+									<Flyout Placement="Bottom">
+										<StackPanel Name="TimeFormatMenu" Spacing="4" Width="170" />
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+							<Button Name="ToggleTimelineButton" Classes="previewToolButton" Click="OnToggleTimelineClick"
+							        ToolTip.Tip="Timeline with thumbnails and audio waveform, in place of the log">
+								<local:IconView Data="{StaticResource IconTimeline}" Width="14" Height="14" />
+							</Button>
+							<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
+							        ToolTip.Tip="Cut parts out of the render">
+								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
+							</Button>
+						</StackPanel>
+						<StackPanel Name="AudioPanel" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" IsEnabled="False"
+						            ToolTip.ShowOnDisabled="True">
+							<Button Name="MuteButton" Classes="previewToolButton" Click="OnMuteClick" ToolTip.Tip="Unmute (M)">
+								<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" Width="14" Height="14" />
+							</Button>
+							<Slider Name="VolumeSlider" Minimum="0" Maximum="1" Width="90" VerticalAlignment="Center"
+							        ValueChanged="OnVolumeChanged" ToolTip.Tip="Preview volume" />
+						</StackPanel>
+					</Grid>
+					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
+						<Grid>
+							<Canvas>
+								<local:VideoView Name="PreviewVideo" />
+							</Canvas>
+							<Border Name="CutScrim" Background="{StaticResource ScrimBrush}" IsVisible="False" IsHitTestVisible="False">
+								<Border Background="{StaticResource OnVideoBrush}" BorderBrush="{StaticResource OnVideoBorderBrush}" BorderThickness="1"
+								        CornerRadius="6" Padding="14,8" HorizontalAlignment="Center" VerticalAlignment="Center">
+									<StackPanel Orientation="Horizontal" Spacing="8">
+										<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" VerticalAlignment="Center" />
+										<TextBlock Text="Cut out - not in the render" FontWeight="SemiBold" VerticalAlignment="Center" />
+									</StackPanel>
+								</Border>
+							</Border>
+							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"
+							            Spacing="8">
+								<TextBlock Text="No video loaded" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" />
+								<TextBlock Text="Pick a DJI Osmo Action file and get its summary to preview the overlay"
+								           Opacity="0.3" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
+								           MaxWidth="320" TextAlignment="Center" />
+							</StackPanel>
+							<Canvas Name="OverlayDragCanvas" Background="Transparent"
+							        DragDrop.AllowDrop="True"
+							        PointerPressed="OnOverlayCanvasPointerPressed"
+							        PointerMoved="OnOverlayCanvasPointerMoved"
+							        PointerReleased="OnOverlayCanvasPointerReleased"
+							        PointerCaptureLost="OnOverlayCanvasPointerCaptureLost"
+							        DragDrop.DragOver="OnOverlayCanvasDragOver"
+							        DragDrop.Drop="OnOverlayCanvasDrop">
+								<Line Name="PreviewGridVLine1" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Line Name="PreviewGridVLine2" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Line Name="PreviewGridHLine1" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Line Name="PreviewGridHLine2" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+								<Rectangle Name="PreviewSafeMarginBox" Classes="previewGuide" IsHitTestVisible="False" IsVisible="False" />
+
+								<Border Name="SelectionHighlightBox" Classes="selectionHighlight" IsHitTestVisible="False" IsVisible="False" />
+								<Ellipse Name="ResizeHandle" Classes="resizeHandle" IsVisible="False"
+								         PointerPressed="OnResizeHandlePointerPressed"
+								         ToolTip.Tip="Drag to resize" />
+
+								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton"
+								        IsVisible="False" Click="OnWidgetGearHoverButtonClick"
+								        ToolTip.Tip="Widget settings">
+									<local:IconView Data="{StaticResource IconGear}" Width="11" Height="11" />
+								</Button>
+								<Button Name="RemoveWidgetButton" Classes="widgetHoverButton removeWidgetButton"
+								        IsVisible="False" Click="OnRemoveWidgetButtonClick"
+								        ToolTip.Tip="Remove from overlay">
+									<local:IconView Data="{StaticResource IconClose}" Width="9" Height="9" />
+								</Button>
+							</Canvas>
+						</Grid>
+					</Border>
+
+					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="6">
+						<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
+							<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="Go to start (Home)">
+								<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />
+							</Button>
+							<Button Classes="transport" Click="OnPreviousFrameClick" ToolTip.Tip="Previous frame (Left)">
+								<local:IconView Data="{StaticResource IconFramePrevious}" Width="14" Height="14" />
+							</Button>
+							<Button Name="PlayPauseButton" Classes="transport" Click="OnPlayPauseClick" ToolTip.Tip="Play (Space)">
+								<local:IconView Name="PlayPauseIcon" Data="{StaticResource IconPlay}" Width="14" Height="14" />
+							</Button>
+							<Button Classes="transport" Click="OnNextFrameClick" ToolTip.Tip="Next frame (Right)">
+								<local:IconView Data="{StaticResource IconFrameNext}" Width="14" Height="14" />
+							</Button>
+							<Button Classes="transport" Click="OnGoToEndClick" ToolTip.Tip="Go to end (End)">
+								<local:IconView Data="{StaticResource IconSkipEnd}" Width="14" Height="14" />
+							</Button>
+							<Button Name="LoopButton" Classes="transport" Click="OnLoopClick"
+							        ToolTip.Tip="Loop playback (Q) - the In/Out selection, or the whole recording without one">
+								<local:IconView Data="{StaticResource IconLoop}" Width="14" Height="14" />
+							</Button>
+							<ComboBox Name="SpeedCombo" Width="74" FontSize="12" Padding="8,4" VerticalAlignment="Center" Margin="4,0,0,0"
+							          SelectionChanged="OnSpeedChanged"
+							          ToolTip.Tip="Playback speed - J slower, K pause, L play / faster. The sound keeps its pitch." />
+						</StackPanel>
+						<local:PreviewTimeline Grid.Column="1" Name="PreviewTimeline" Minimum="0" Maximum="1" IsEnabled="False"
+						                       VerticalAlignment="Center" ValueChanged="OnPreviewTimelineValueChanged" />
+						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
+						           VerticalAlignment="Center" Text="00:00 / 00:00" Background="Transparent" Cursor="Hand"
+						           PointerPressed="OnPreviewTimeTextPressed" ToolTip.Tip="Click to switch the time format" />
+						<StackPanel Grid.Row="1" Grid.ColumnSpan="3" Name="PreviewStatusBar" Margin="0,8,0,0" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center"
+						            VerticalAlignment="Center" IsVisible="False">
+							<StackPanel Classes="previewStatus" ToolTip.Tip="Recording - the source video's resolution and frame rate">
+								<local:IconView Data="{StaticResource IconFile}" />
+								<TextBlock Name="StatusSourceText" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus"
+							            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar)">
+								<local:IconView Data="{StaticResource IconMonitor}" />
+								<TextBlock Name="StatusPreviewText" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus" ToolTip.Tip="Current frame - the number of the frame at the cursor">
+								<local:IconView Data="{StaticResource IconFrameCurrent}" />
+								<TextBlock Name="StatusFrameText" MinWidth="50" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus"
+							            ToolTip.Tip="Display - the preview's size on screen, and while playing the frames a second that reach it (amber when fewer than the playback speed calls for)">
+								<local:IconView Data="{StaticResource IconDisplay}" />
+								<TextBlock Name="StatusDisplayText" MinWidth="118" />
+							</StackPanel>
+						</StackPanel>
+					</Grid>
+				</Grid>
+			</Border>
+
+			<Border Grid.Column="2" Classes="card" Name="OverlayCard">
+				<Grid RowDefinitions="Auto,Auto,*">
+					<StackPanel Grid.Row="0" Classes="cardTitle">
+						<TextBlock Classes="cardTitleText" Text="OVERLAY" />
+					</StackPanel>
+
+					<StackPanel Grid.Row="1" Name="OverlayPlaceholder" Spacing="8" Margin="0,20,0,0">
+						<TextBlock Text="No file loaded" Opacity="0.4" FontSize="13" HorizontalAlignment="Center" />
+						<TextBlock Text="Pick a file and get its summary to edit widgets" Opacity="0.3" FontSize="12"
+						           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="200"
+						           TextAlignment="Center" />
+					</StackPanel>
+
+					<ScrollViewer Grid.Row="2" Name="OverlayContent" HorizontalScrollBarVisibility="Disabled"
+					              Margin="0,10,0,0" IsVisible="False">
+						<StackPanel Spacing="10">
+							<StackPanel Spacing="4">
+								<TextBlock Text="Preset" Classes="infoLabel" Margin="0" />
+								<Grid ColumnDefinitions="*,Auto">
+									<ComboBox Grid.Column="0" Name="PresetComboBox" HorizontalAlignment="Stretch"
+									          IsVisible="True" SelectionChanged="OnPresetSelectionChanged" />
+									<TextBox Grid.Column="0" Name="PresetRenameBox" IsVisible="False"
+									         KeyDown="OnPresetRenameBoxKeyDown" LostFocus="OnPresetRenameBoxLostFocus" />
+								</Grid>
+								<UniformGrid Columns="2" Margin="0,2,0,0">
+									<Button Classes="toolbar" Margin="0,0,4,4" Content="New" Click="OnNewPresetClick" />
+									<Button Classes="toolbar" Margin="4,0,0,4" Content="Duplicate" Click="OnDuplicatePresetClick" />
+									<Button Name="RenamePresetButton" Classes="toolbar" Margin="0,0,4,4" Content="Rename"
+									        Click="OnRenamePresetClick" />
+									<Button Name="DeletePresetButton" Classes="toolbar" Margin="4,0,0,4" Content="Delete"
+									        Click="OnDeletePresetClick" />
+								</UniformGrid>
+								<Button Name="ResetPresetButton" Classes="toolbar" Content="Reset to default"
+								        Click="OnResetPresetClick" />
+								<UniformGrid Columns="2" Margin="0,2,0,0">
+									<Button Classes="toolbar" Margin="0,0,4,0" Content="Export..." Click="OnExportPresetClick" />
+									<Button Classes="toolbar" Margin="4,0,0,0" Content="Import..." Click="OnImportPresetClick" />
+								</UniformGrid>
+								<TextBlock Name="DefaultPresetLockedHint"
+								           Text="This is the built-in read-only preset - use Duplicate to customize it."
+								           Classes="infoLabel" Margin="0" FontSize="12"
+								           TextWrapping="Wrap" IsVisible="False" />
+							</StackPanel>
+
+							<StackPanel Spacing="10">
+								<TextBlock Text="WIDGETS" Classes="sectionLabel" Margin="0" />
+								<TextBlock Text="Drag a widget from the palette below onto the preview to add it - drag it there to reposition, hover it and use the gear for its settings or the cross to remove it."
+								           Classes="infoLabel" Margin="0,-6,0,0" FontSize="12" TextWrapping="Wrap" />
+
+								<TextBlock Text="ON OVERLAY" Classes="sectionLabel" Margin="0,6,0,0" />
+								<StackPanel Name="AddedWidgetsList" Spacing="4" />
+								<TextBlock Name="AddedWidgetsEmptyHint" Classes="infoLabel" Margin="0" FontSize="11" Opacity="0.4"
+								           TextWrapping="Wrap"
+								           Text="Nothing on the overlay yet - drag a widget from the palette below onto the preview." />
+
+								<TextBlock Text="PALETTE - DRAG ONTO PREVIEW" Classes="sectionLabel" Margin="0,6,0,0" />
+								<StackPanel Spacing="6">
+									<Grid ColumnDefinitions="*,Auto,Auto">
+										<Border Grid.Column="0" Name="DateTimeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.DateTimeText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<Grid ColumnDefinitions="*,Auto">
+												<TextBlock Classes="overlayListItemText" Text="Date &amp; time" />
+												<Border Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning" IsVisible="False">
+													<local:IconView Data="{StaticResource IconWarning}" />
+												</Border>
+											</Grid>
+										</Border>
+										<Border Name="DateTimeSettingsPanel" Grid.Column="2" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DateTimeFormatCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnDateTimeFormatChanged" />
+												<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="DateTimeLocaleCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnDateTimeLocaleChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="DateTimeStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="DateTimeTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto,Auto">
+										<Border Grid.Column="0" Name="UtcTimeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.UtcTimeText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<Grid ColumnDefinitions="*,Auto">
+												<TextBlock Classes="overlayListItemText" Text="UTC time" />
+												<Border Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning" IsVisible="False">
+													<local:IconView Data="{StaticResource IconWarning}" />
+												</Border>
+											</Grid>
+										</Border>
+										<Border Name="UtcTimeSettingsPanel" Grid.Column="2" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Format" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="UtcTimeFormatCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnUtcTimeFormatChanged" />
+												<TextBlock Text="Language" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="UtcTimeLocaleCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnUtcTimeLocaleChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="UtcTimeStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="UtcTimeTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="CameraInfoListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.CameraInfo}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Camera info" />
+										</Border>
+										<Border Name="CameraInfoSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="CameraInfoLabelBox" PlaceholderText="Camera"
+												         LostFocus="OnCameraInfoLabelChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="CameraInfoStyle" HasAccentColor="True" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="CameraInfoTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="CompassListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Compass}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Compass" />
+										</Border>
+										<Border Name="CompassSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+													<Border Grid.Column="0" Name="CompassTrailColorSwatch" Width="20" Height="20"
+													        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
+													<TextBox Grid.Column="1" Name="CompassTrailColorBox" PlaceholderText="#46DC6E"
+													         LostFocus="OnCompassTrailColorChanged" />
+												</Grid>
+												<CheckBox Name="CompassTrailBySpeedCheck" Content="Color by speed"
+												          Click="OnCompassTrailBySpeedChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+												           Text="Trail color when slow, through yellow and orange to red at the recording's top speed." />
+												<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="CompassTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
+												               FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnCompassTrailWidthChanged" />
+												<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="CompassTrailArrowRadio" Content="Arrow"
+													             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
+													<RadioButton Name="CompassTrailDotRadio" Content="Dot"
+													             GroupName="CompassTrailMarker" Click="OnCompassTrailMarkerChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="CompassTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="MapListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.MapWidget}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Map" />
+										</Border>
+										<Border Name="MapSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<Border Classes="calloutInfo">
+													<TextBlock Classes="calloutInfoText"
+													           Text="Tile provider, API key and attribution are set once for every map widget in Settings, not per widget." />
+												</Border>
+
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="ZOOM &amp; FRAMING" Classes="settingsGroupTitle" />
+														<TextBlock Text="Zoom (2-19)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapZoomBox" Increment="1"
+														               FormatString="0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapZoomChanged" />
+														<CheckBox Name="MapDynamicZoomCheck" Content="Auto zoom to fit route"
+														          Click="OnMapDynamicZoomChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45"
+														           TextWrapping="Wrap"
+														           Text="Zooms out as the driven trail grows so it stays fully in view; when off, the map stays at a fixed zoom and the trail may get cut off near the edge." />
+														<TextBlock Name="MapZoomOutMaxLabel" Text="Max zoom-out (x)" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapZoomOutMaxBox" Increment="1"
+														               FormatString="0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapZoomOutMaxChanged" />
+														<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,-4,0,0" FontSize="12"
+														           Opacity="0.45" TextWrapping="Wrap"
+														           Text="How far out the map is allowed to zoom to keep the trail visible (higher = shows more area, further from the built-in zoom level above)." />
+														<TextBlock Classes="infoLabel" Margin="0" FontSize="12" Opacity="0.4"
+														           TextWrapping="Wrap"
+														           Text="Fetches tiles over the network the first time a route is opened/rendered, then caches them on disk." />
+													</StackPanel>
+												</Border>
+
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="TRAIL STYLE" Classes="settingsGroupTitle" />
+														<TextBlock Text="Trail color" Classes="infoLabel" Margin="0" />
+														<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+															<Border Grid.Column="0" Name="MapTrailColorSwatch" Width="20" Height="20"
+															        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
+															<TextBox Grid.Column="1" Name="MapTrailColorBox" PlaceholderText="#46DC6E"
+															         LostFocus="OnMapTrailColorChanged" />
+														</Grid>
+														<CheckBox Name="MapTrailBySpeedCheck" Content="Color by speed"
+														          Click="OnMapTrailBySpeedChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														           Text="Trail color when slow, through yellow and orange to red at the recording's top speed." />
+														<TextBlock Text="Line thickness" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapTrailWidthBox" Minimum="1" Maximum="12" Increment="0.5"
+														               FormatString="0.0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapTrailWidthChanged" />
+														<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
+														<StackPanel Orientation="Horizontal" Spacing="12">
+															<RadioButton Name="MapTrailArrowRadio" Content="Arrow"
+															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
+															<RadioButton Name="MapTrailDotRadio" Content="Dot"
+															             GroupName="MapTrailMarker" Click="OnMapTrailMarkerChanged" />
+														</StackPanel>
+													</StackPanel>
+												</Border>
+
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="MapTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="SpeedListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.SpeedGauge}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Speed gauge" />
+										</Border>
+										<Border Name="SpeedSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="SpeedMetricRadio" Content="Metric"
+													             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
+													<RadioButton Name="SpeedImperialRadio" Content="Imperial"
+													             GroupName="SpeedUnits" Click="OnSpeedUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="SpeedStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="SpeedTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="PitchListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.PitchGauge}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Pitch gauge" />
+										</Border>
+										<Border Name="PitchSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
+												<local:ElementStyleEditor Name="PitchStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="PitchTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="SunListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.SunWidget}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Sun / G-force" />
+										</Border>
+										<Border Name="SunSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
+												<local:ElementStyleEditor Name="SunStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="SunTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="GMeterListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.GMeter}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="G-meter" />
+										</Border>
+										<Border Name="GMeterSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Full-scale range (G)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="GMeterFullScaleBox" Minimum="0.1" Maximum="5"
+												               Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnGMeterFullScaleChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="How many G's put the dot at the ring's edge - lower for a gentle ride, higher for motorsport." />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="GMeterStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="GMeterTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="ElapsedTimeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.ElapsedTimeText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Elapsed time" />
+										</Border>
+										<Border Name="ElapsedTimeSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
+												<local:ElementStyleEditor Name="ElapsedTimeStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="ElapsedTimeTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="CameraModelListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.CameraModelText}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Camera model" />
+										</Border>
+										<Border Name="CameraModelSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
+												<local:ElementStyleEditor Name="CameraModelStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="CameraModelTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="TripProgressBarListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.TripProgressBar}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Trip progress bar" />
+										</Border>
+										<Border Name="TripProgressBarSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="TripProgressMetricRadio" Content="Metric"
+													             GroupName="TripProgressUnits" Click="OnTripProgressUnitsChanged" />
+													<RadioButton Name="TripProgressImperialRadio" Content="Imperial"
+													             GroupName="TripProgressUnits" Click="OnTripProgressUnitsChanged" />
+												</StackPanel>
+												<TextBlock Text="Arrival margin (m)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="TripProgressToleranceBox" Minimum="0" Maximum="100"
+												               Increment="0.5" FormatString="0.0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnTripProgressToleranceChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+												           TextWrapping="Wrap"
+												           Text="How close to the total distance counts as 'arrived' - below this, GPS jitter would otherwise never quite resolve the remaining distance to exactly zero." />
+												<TextBlock Text="Arrived label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="TripProgressLabelBox" PlaceholderText="FINISH"
+												         LostFocus="OnTripProgressLabelChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="TripProgressBarTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="ElevationListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Elevation}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Elevation" />
+										</Border>
+										<Border Name="ElevationSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="ElevationLabelBox" PlaceholderText="Elevation"
+												         LostFocus="OnElevationLabelChanged" />
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ElevationMetricRadio" Content="Metric"
+													             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
+													<RadioButton Name="ElevationImperialRadio" Content="Imperial"
+													             GroupName="ElevationUnits" Click="OnElevationUnitsChanged" />
+												</StackPanel>
+												<TextBlock Text="Shows" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ElevationFromStartRadio" Content="Change from start"
+													             GroupName="ElevationReference" Click="OnElevationReferenceChanged"
+													             ToolTip.Tip="How much higher or lower than where the video starts" />
+													<RadioButton Name="ElevationSeaLevelRadio" Content="Above sea level"
+													             GroupName="ElevationReference" Click="OnElevationReferenceChanged"
+													             ToolTip.Tip="The altitude the camera's GPS reports" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="ElevationStyle" HasAccentColor="True" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="ElevationTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="GradientListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Gradient}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Gradient" />
+										</Border>
+										<Border Name="GradientSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="GradientLabelBox" PlaceholderText="Gradient"
+												         LostFocus="OnGradientLabelChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="GradientStyle" HasAccentColor="True" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="GradientTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="DistanceListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Distance}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Total distance" />
+										</Border>
+										<Border Name="DistanceSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="DistanceLabelBox" PlaceholderText="Total distance"
+												         LostFocus="OnDistanceLabelChanged" />
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="DistanceMetricRadio" Content="Metric"
+													             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
+													<RadioButton Name="DistanceImperialRadio" Content="Imperial"
+													             GroupName="DistanceUnits" Click="OnDistanceUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="DistanceStyle" HasAccentColor="True" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="DistanceTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+								</StackPanel>
+							</StackPanel>
+						</StackPanel>
+					</ScrollViewer>
+				</Grid>
+			</Border>
+		</Grid>
+
+		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
+			<StackPanel Spacing="2">
+				<Border CornerRadius="4" ClipToBounds="True">
+					<local:PreviewTimeline Name="ExpandedTimeline" Expanded="True" Minimum="0" Maximum="1" IsEnabled="False"
+					                       ValueChanged="OnExpandedTimelineValueChanged" />
+				</Border>
+				<ScrollBar Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False" IsVisible="False"
+				           Scroll="OnTimelineScroll" />
+			</StackPanel>
+		</Border>
+
+		<Border Grid.Row="1" Classes="card" Name="LogCard">
+			<Border Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6" Padding="10">
+				<ScrollViewer Name="LogScroll">
+					<SelectableTextBlock Name="LogBox" TextWrapping="Wrap"
+					                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
+				</ScrollViewer>
+			</Border>
+		</Border>
+	</Grid>
+</Window>

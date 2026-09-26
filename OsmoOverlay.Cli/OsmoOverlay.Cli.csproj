@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+
+    <AssemblyName>OsmoOverlay.Cli</AssemblyName>
+    <RootNamespace>OsmoOverlay.Cli</RootNamespace>
+    <ApplicationIcon>Assets\OsmoOverlay.Cli.ico</ApplicationIcon>
+
+    <AssemblyTitle>OsmoOverlay CLI</AssemblyTitle>
+    <Description>Command-line renderer for OsmoOverlay.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="NLog.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

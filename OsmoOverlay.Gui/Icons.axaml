@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<!--
+		Every UI icon, as a filled shape on a 16x16 grid. Shown with IconView, which scales the grid to its
+		own size and fills it with the surrounding text color - so an icon follows a button's hover/disabled
+		colors without extra styles. Keep new icons filled (not stroked) and inside 0..16.
+	-->
+
+	<!-- Playback -->
+	<StreamGeometry x:Key="IconPlay">M4.5,2.2 L13.8,8 L4.5,13.8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconPause">M3.5,2.5 H6.5 V13.5 H3.5 Z M9.5,2.5 H12.5 V13.5 H9.5 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconSkipStart">M2.5,2.5 H4.5 V13.5 H2.5 Z M13.5,2.5 V13.5 L5.2,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconSkipEnd">M11.5,2.5 H13.5 V13.5 H11.5 Z M2.5,2.5 V13.5 L10.8,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconFramePrevious">M10.2,2.5 V13.5 L3,8 Z M11.8,3.5 H13.3 V12.5 H11.8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconFrameNext">M5.8,2.5 V13.5 L13,8 Z M2.7,3.5 H4.2 V12.5 H2.7 Z</StreamGeometry>
+
+	<!-- Actions -->
+	<StreamGeometry x:Key="IconClose">M3.4,2 L8,6.6 L12.6,2 L14,3.4 L9.4,8 L14,12.6 L12.6,14 L8,9.4 L3.4,14 L2,12.6 L6.6,8 L2,3.4 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconArrowUp">M8,2 L13,7 L11.6,8.4 L9,5.8 V14 H7 V5.8 L4.4,8.4 L3,7 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconArrowDown">M8,14 L3,9 L4.4,7.6 L7,10.2 V2 H9 V10.2 L11.6,7.6 L13,9 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconArrowLeft">M2,8 L7,3 L8.4,4.4 L5.8,7 H14 V9 H5.8 L8.4,11.6 L7,13 Z</StreamGeometry>
+
+	<!-- Status -->
+	<StreamGeometry x:Key="IconGear">F1 M6.08,2.74 L6.34,0.79 L9.66,0.79 L9.92,2.74 L10.37,2.92 L11.92,1.72 L14.28,4.08 L13.08,5.63 L13.26,6.08 L15.21,6.34 L15.21,9.66 L13.26,9.92 L13.08,10.37 L14.28,11.92 L11.92,14.28 L10.37,13.08 L9.92,13.26 L9.66,15.21 L6.34,15.21 L6.08,13.26 L5.63,13.08 L4.08,14.28 L1.72,11.92 L2.92,10.37 L2.74,9.92 L0.79,9.66 L0.79,6.34 L2.74,6.08 L2.92,5.63 L1.72,4.08 L4.08,1.72 L5.63,2.92 Z M5.60,8 A2.4,2.4 0 1 0 10.40,8 A2.4,2.4 0 1 0 5.60,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconWarning">F1 M8,1 L15.4,14.4 H0.6 Z M7.15,5.4 H8.85 L8.55,10.2 H7.45 Z M7.15,11.3 H8.85 V13 H7.15 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconExclamation">M6.9,2 H9.1 L8.7,10.4 H7.3 Z M6.9,11.8 H9.1 V14 H6.9 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconInfo">M6.9,2 H9.1 V4.2 H6.9 Z M6.9,6 H9.1 V14 H6.9 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconCheck">M6.2,12.8 L1.6,8.2 L3.2,6.6 L6.2,9.6 L12.8,3 L14.4,4.6 Z</StreamGeometry>
+
+	<!-- Render range and cuts. F1 = nonzero fill: the handle rings' inner circles run the other way, so they're holes. -->
+	<StreamGeometry x:Key="IconCut">F1 M1.4,12 A2.6,2.6 0 1 0 6.6,12 A2.6,2.6 0 1 0 1.4,12 Z M2.6,12 A1.4,1.4 0 1 1 5.4,12 A1.4,1.4 0 1 1 2.6,12 Z M9.4,12 A2.6,2.6 0 1 0 14.6,12 A2.6,2.6 0 1 0 9.4,12 Z M10.6,12 A1.4,1.4 0 1 1 13.4,12 A1.4,1.4 0 1 1 10.6,12 Z M5.4,10 L11.8,1.2 L13,2 L6.7,10.8 Z M10.6,10 L4.2,1.2 L3,2 L9.3,10.8 Z</StreamGeometry>
+
+	<!-- Preview guides -->
+	<StreamGeometry x:Key="IconGrid">M1,4.9 H15 V6.1 H1 Z M1,9.9 H15 V11.1 H1 Z M4.9,1 H6.1 V15 H4.9 Z M9.9,1 H11.1 V15 H9.9 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconStopwatch">F1 M2,9 A6,6 0 1 1 14,9 A6,6 0 1 1 2,9 Z M3.4,9 A4.6,4.6 0 1 0 12.6,9 A4.6,4.6 0 1 0 3.4,9 Z M6.2,0.6 H9.8 V2 H6.2 Z M7.3,5.2 H8.7 V9.6 H7.3 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconVolume">F1 M1.5,5.5 H4.5 L8.5,2 V14 L4.5,10.5 H1.5 Z M10.9,5.6 A3.4,3.4 0 0 1 10.9,10.4 L10.06,9.56 A2.2,2.2 0 0 0 10.06,6.44 Z M12.6,3.9 A5.8,5.8 0 0 1 12.6,12.1 L11.75,11.25 A4.6,4.6 0 0 0 11.75,4.75 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconVolumeMuted">F1 M1.5,5.5 H4.5 L8.5,2 V14 L4.5,10.5 H1.5 Z M10,6.4 L11,5.4 L12.6,7 L14.2,5.4 L15.2,6.4 L13.6,8 L15.2,9.6 L14.2,10.6 L12.6,9 L11,10.6 L10,9.6 L11.6,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconEye">F1 M0.6,8 C3,3.6 13,3.6 15.4,8 C13,12.4 3,12.4 0.6,8 Z M5.3,8 A2.7,2.7 0 1 0 10.7,8 A2.7,2.7 0 1 0 5.3,8 Z M6.8,8 A1.2,1.2 0 1 0 9.2,8 A1.2,1.2 0 1 0 6.8,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconCamera">F1 M0.8,4.4 H4.4 L5.9,2.4 H10.1 L11.6,4.4 H15.2 V13.6 H0.8 Z M4.9,9 A3.1,3.1 0 1 0 11.1,9 A3.1,3.1 0 1 0 4.9,9 Z M6.4,9 A1.6,1.6 0 1 0 9.6,9 A1.6,1.6 0 1 0 6.4,9 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconTimeline">F1 M0.8,3 H15.2 V13 H0.8 Z M2,4.1 H3.4 V5.3 H2 Z M5.3,4.1 H6.7 V5.3 H5.3 Z M8.6,4.1 H10 V5.3 H8.6 Z M11.9,4.1 H13.3 V5.3 H11.9 Z M2,10.7 H3.4 V11.9 H2 Z M5.3,10.7 H6.7 V11.9 H5.3 Z M8.6,10.7 H10 V11.9 H8.6 Z M11.9,10.7 H13.3 V11.9 H11.9 Z M2,6.5 H14 V9.5 H2 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconLoop">M3,5 H11 V3 L14,6 L11,9 V7 H5 V9 H3 Z M13,11 H5 V13 L2,10 L5,7 V9 H11 V7 H13 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconSnap">M7.4,1 H8.6 V5 H7.4 Z M7.4,11 H8.6 V15 H7.4 Z M1,7.4 H5 V8.6 H1 Z M11,7.4 H15 V8.6 H11 Z M6.5,8 A1.5,1.5 0 1 0 9.5,8 A1.5,1.5 0 1 0 6.5,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconFile">M3,1 H9.8 L13,4.2 V15 H3 Z M4.2,2.2 V13.8 H11.8 V5.2 H8.8 V2.2 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconMonitor">M1,2 H15 V11.6 H1 Z M2.2,3.2 V10.4 H13.8 V3.2 Z M7.4,11.6 H8.6 V13.2 H7.4 Z M4.6,13.2 H11.4 V14.4 H4.6 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconFrameCurrent">M1,1 H5 V2.2 H2.2 V5 H1 Z M11,1 H15 V5 H13.8 V2.2 H11 Z M1,11 H2.2 V13.8 H5 V15 H1 Z M13.8,11 H15 V15 H11 V13.8 H13.8 Z M5,5 H11 V11 H5 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconDisplay">M1,1 H5 V2.2 H2.2 V5 H1 Z M11,1 H15 V5 H13.8 V2.2 H11 Z M1,11 H2.2 V13.8 H5 V15 H1 Z M13.8,11 H15 V15 H11 V13.8 H13.8 Z M4.4,4.4 H11.6 V11.6 H4.4 Z M5.6,5.6 V10.4 H10.4 V5.6 Z</StreamGeometry>
+</ResourceDictionary>

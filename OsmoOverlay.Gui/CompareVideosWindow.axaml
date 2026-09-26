@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+        x:Class="OsmoOverlay.Gui.CompareVideosWindow"
+        Width="900" Height="620" CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        WindowState="Maximized"
+        Background="{StaticResource WindowBackgroundBrush}"
+        FontSize="15"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="Compare videos">
+
+	<Window.Styles>
+		<Style Selector="TextBlock.infoLabel">
+			<Setter Property="Margin" Value="0,5" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="Margin" Value="0,4,0,0" />
+		</Style>
+		<Style Selector="TextBlock.rowLabel">
+			<Setter Property="Opacity" Value="0.6" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="TextBlock.cellValue">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+	</Window.Styles>
+
+	<DockPanel Margin="20">
+		<StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,12" HorizontalAlignment="Center">
+			<TextBlock Text="Compare videos" Classes="infoLabel" Margin="0" TextAlignment="Center" HorizontalAlignment="Center" />
+			<TextBlock Classes="hint" Margin="0,0,0,4" TextAlignment="Center" HorizontalAlignment="Center"
+			           Text="Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side. Values that differ between files are highlighted." />
+			<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+				<Button Name="AddFilesButton" Content="Add video(s)..." Click="OnAddFilesClick" />
+				<Button Name="ClearAllButton" Content="Clear all" Click="OnClearAllClick" />
+				<Button Name="CopyAsTextButton" Content="Copy as Markdown" Click="OnCopyAsTextClick" />
+				<Button Name="SaveToFileButton" Content="Save to file..." Click="OnSaveToFileClick" />
+				<CheckBox Name="ShowOnlyDifferencesCheck" Content="Show only differences" Click="OnShowOnlyDifferencesClick"
+				          VerticalAlignment="Center" Margin="8,0,0,0" />
+			</StackPanel>
+		</StackPanel>
+
+		<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+			<Panel>
+				<TextBlock Name="EmptyStateText" Classes="hint" FontSize="14"
+				           Text="No files added yet - click &quot;Add video(s)...&quot; to get started."
+				           HorizontalAlignment="Center" VerticalAlignment="Center" />
+				<TextBlock Name="NoDifferencesText" Classes="hint" FontSize="14"
+				           Text="No differences between the added files."
+				           HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False" />
+				<Grid Name="CompareGrid" />
+			</Panel>
+		</ScrollViewer>
+	</DockPanel>
+</Window>

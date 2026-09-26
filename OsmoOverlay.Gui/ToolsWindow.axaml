@@ -1,0 +1,99 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="520"
+        x:Class="OsmoOverlay.Gui.ToolsWindow"
+        Width="780" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="Tools">
+
+	<Window.Styles>
+		<Style Selector="Border.toolCard">
+			<Setter Property="Padding" Value="16,14" />
+		</Style>
+		<Style Selector="TextBlock.toolTitle">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.9" />
+			<Setter Property="Margin" Value="0,0,0,6" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="LineHeight" Value="18" />
+		</Style>
+		<Style Selector="StackPanel.toolActions">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="8" />
+			<Setter Property="Margin" Value="0,14,0,0" />
+		</Style>
+	</Window.Styles>
+
+	<StackPanel Margin="20" Spacing="12">
+		<TextBlock Classes="sectionLabel" Text="VIDEO &amp; AUDIO" />
+
+		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+			<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Fix color tags" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="SelectColorTagFileButton" Content="Select file..." Click="OnSelectColorTagFileClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. Rewrites the tag with a lossless stream copy - no re-encode." />
+				</DockPanel>
+			</Border>
+
+			<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Remove metadata" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="SelectStripFileButton" Content="Select file..." Click="OnSelectStripFileClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy)." />
+				</DockPanel>
+			</Border>
+
+			<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Camera microphone audio (.AAC)" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="ConvertAudioWavButton" Content="To WAV..." Click="OnConvertAudioWavClick" />
+						<Button Name="ConvertAudioM4aButton" Content="To M4A..." Click="OnConvertAudioM4aClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="With an external mic connected, the camera saves its built-in microphones as a separate .AAC file that Vegas Pro and Audacity can't open. Converts it without any quality loss (verified sample by sample), next to the original. WAV works everywhere; M4A keeps the original AAC data, 10x smaller." />
+				</DockPanel>
+			</Border>
+
+			<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Compare videos" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Content="Compare..." Click="OnCompareVideosClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side." />
+				</DockPanel>
+			</Border>
+		</Grid>
+
+		<TextBlock Classes="sectionLabel" Text="APP DATA" Margin="0,8,0,0" />
+
+		<Border Classes="card toolCard">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+				           Text="Presets, settings, map tiles, logs and the cached file analysis." />
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+					<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
+					<Button Content="Clear cache" Click="OnClearCacheClick"
+					        ToolTip.Tip="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<Button HorizontalAlignment="Right" Content="Close" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
+	</StackPanel>
+</Window>
