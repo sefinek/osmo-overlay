@@ -6,6 +6,16 @@ namespace OsmoOverlay.Core.Overlay;
 public sealed partial class OverlayRenderer
 {
 	public const double AnimationDurationSecondsDefault = 0.6;
+	// The longest a way in or out can be set to (the settings' boxes, the layers' handles) - a slow fade over a title or a
+	// logo, not just a quick transition. Within a clip the way in and out still never overlap (ElementAnimation).
+	public const double AnimationDurationSecondsMin = 0.1;
+	public const double AnimationDurationSecondsMax = 30;
+
+	/// <summary>
+	///     The rendered video's length in output seconds - a widget with no DisappearAtSeconds leaves at it, so its way out
+	///     ends with the video (ElementAnimation). Infinite until a caller sets it: nothing then plays a way out at the end.
+	/// </summary>
+	public double OutputDurationSeconds { get; set; } = double.PositiveInfinity;
 
 	// How far (at the 4K reference resolution - see OverlayElementBounds) a sliding widget travels from
 	// its resting position at progress 0. Scaled by _scale like every other layout constant, so it reads
@@ -16,50 +26,28 @@ public sealed partial class OverlayRenderer
 	///     Sets the canvas up for one widget and returns the save count to restore it to: the origin on the widget's
 	///     anchor (element.X/Y, so every widget draws around (0, 0)), scaled by the resolution's scale times the
 	///     widget's own element.Scale (pivoted on the anchor, so resizing never shifts it), slid and faded by
-	///     `progress` (ElementProgress). The fade's SaveLayer only exists while a widget is fading in or out - a
+	///     `state` (ElementAnimation.At). The fade's SaveLayer only exists while a widget is fading in or out - a
 	///     widget with no timing set, or between its two ramps, draws straight onto the frame.
 	/// </summary>
-	private int BeginElement(SKCanvas canvas, OverlayElement element, float progress)
+	private int BeginElement(SKCanvas canvas, OverlayElement element, ElementState state)
 	{
 		var saveCount = canvas.Save();
-		var (offsetX, offsetY) = SlideOffset(element.AnimationType, progress);
+		var (offsetX, offsetY) = SlideOffset(state);
 		canvas.Translate(element.X + offsetX, element.Y + offsetY);
 		var scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
-		if (progress < 1f) canvas.SaveLayer(AlphaPaint(progress));
+		if (state.Progress < 1f) canvas.SaveLayer(AlphaPaint(state.Progress));
 		return saveCount;
 	}
 
 	/// <summary>
-	///     0..1 visibility/opacity at `sampleTimeSeconds`. AnimationType.None is a hard cut (1 for the
-	///     whole [AppearAtSeconds, DisappearAtSeconds) window, 0 outside it) - Fade/Slide types ramp over
-	///     AnimationDurationSeconds at each edge instead, reusing the same FadeAlpha the watermark's own
-	///     fade already relies on. fadeOutStart is clamped to never sit earlier than fadeInEnd, so an
-	///     appear/disappear window shorter than two animation durations still shows *something* instead
-	///     of the two ramps crossing and inverting.
+	///     Canvas-space (X, Y) translation - see OverlayAnimationType: coming in, a slide starts off to the side it enters from;
+	///     going out, it ends up off to the side it moves toward.
 	/// </summary>
-	private static float ElementProgress(OverlayElement element, double sampleTimeSeconds)
+	private (float X, float Y) SlideOffset(ElementState state)
 	{
-		if (element.AppearAtSeconds is null && element.DisappearAtSeconds is null && element.AnimationType == OverlayAnimationType.None)
-			return 1f;
-
-		var appearAt = element.AppearAtSeconds ?? 0;
-		var disappearAt = element.DisappearAtSeconds ?? double.PositiveInfinity;
-
-		if (element.AnimationType == OverlayAnimationType.None)
-			return sampleTimeSeconds >= appearAt && sampleTimeSeconds < disappearAt ? 1f : 0f;
-
-		var duration = Math.Max(element.AnimationDurationSeconds, 0.05);
-		var fadeInEnd = appearAt + duration;
-		var fadeOutStart = Math.Max(disappearAt - duration, fadeInEnd);
-		return FadeAlpha(sampleTimeSeconds, appearAt, fadeInEnd, fadeOutStart, disappearAt);
-	}
-
-	/// <summary>Canvas-space (X, Y) translation at the given progress - see OverlayAnimationType for what each direction enters from.</summary>
-	private (float X, float Y) SlideOffset(OverlayAnimationType type, float progress)
-	{
-		var d = (1f - progress) * SlideDistance * _scale;
-		return type switch
+		var d = (1f - state.Progress) * SlideDistance * _scale * (state.Leaving ? -1 : 1);
+		return state.Animation switch
 		{
 			OverlayAnimationType.SlideUp => (0f, d),
 			OverlayAnimationType.SlideDown => (0f, -d),

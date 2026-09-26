@@ -4,11 +4,13 @@ using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
 
-/// <summary>Text/stat widgets: DateTimeText/UtcTimeText, ElapsedTimeText, CameraModelText, Elevation/Gradient/Distance and CameraInfo.</summary>
+/// <summary>Text/stat widgets: DateTimeText/UtcTimeText, ElapsedTimeText, CameraModelText, Text, Elevation/Gradient/Distance, TripStat and CameraInfo.</summary>
 public sealed partial class OverlayRenderer
 {
 	private const double MetersToFeet = 3.28084;
 	private const double MilesInMeters = 1609.344;
+
+	public const string TextDefault = "Your text";
 
 	// (Locale, DateFormat) pairs already reported as invalid - a bad one would otherwise log once per frame.
 	private readonly HashSet<(string?, string?)> _reportedTimeFormats = [];
@@ -52,6 +54,12 @@ public sealed partial class OverlayRenderer
 		var text = OverlayTimeFormatting.FormatElapsed(frame.Raw.SampleTimeSeconds);
 		DrawOutlined(canvas, text, 0, 0, TextFont(element, OverlayElementBounds.DateFontSize), TextColorOf(element),
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
+
+		// Above the time, so a caption added later doesn't move the time itself.
+		if (!string.IsNullOrWhiteSpace(element.Label))
+			DrawOutlined(canvas, element.Label.ToUpperInvariant(), 0, -OverlayElementBounds.CaptionAboveOffset,
+				TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element),
+				outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 	}
 
 	/// <summary>Static per-recording text (FileSummary.CameraModel) - same value on every frame, so unlike the other widgets nothing here depends on `frame`.</summary>
@@ -61,13 +69,59 @@ public sealed partial class OverlayRenderer
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 	}
 
+	/// <summary>Lines split on line breaks, each a DateFontSize line below the last - baseline of the first at (0, 0).</summary>
+	private void DrawText(SKCanvas canvas, TextElement element)
+	{
+		SKFont font = TextFont(element, OverlayElementBounds.DateFontSize);
+		SKColor color = TextColorOf(element);
+		SKColor outline = OutlineColorOf(element);
+		var lines = OverlayElementBounds.TextLines(element.Text);
+		for (var i = 0; i < lines.Length; i++)
+			DrawOutlined(canvas, lines[i], 0, i * font.Spacing, font, color, outlineColor: outline, outlineWidthScale: element.OutlineWidth);
+	}
+
 	private void DrawElevation(SKCanvas canvas, DerivedFrame frame, ElevationElement element)
 	{
 		var meters = element.Reference == ElevationReference.SeaLevel ? frame.Raw.AltitudeMeters : frame.Raw.AltitudeMeters - _startAltitude;
-		var (value, unit) = element.Units == UnitSystem.Imperial
+		var (value, unit) = FormatAltitude(meters, element.Units);
+		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);
+	}
+
+	/// <summary>The value so far at `frame` (TripStats) - where it is in the recording found by its time.</summary>
+	private void DrawTripStat(SKCanvas canvas, DerivedFrame frame, TripStatElement element)
+	{
+		var i = _allFrames.Count > 0 ? TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds) : -1;
+		var (value, unit) = i < 0
+			? ("--", "")
+			: element.Stat switch
+			{
+				TripStatKind.MaxSpeed => FormatSpeed(_tripStats.MaxSpeedKmh(i), element.Units),
+				TripStatKind.AverageSpeed => FormatSpeed(_tripStats.AverageSpeedKmh(i), element.Units),
+				TripStatKind.ElevationGain => FormatAltitude(_tripStats.ElevationGainMeters(i), element.Units),
+				TripStatKind.ElevationLoss => FormatAltitude(_tripStats.ElevationLossMeters(i), element.Units),
+				_ => (OverlayTimeFormatting.FormatElapsed(_tripStats.MovingSeconds(i)), "")
+			};
+		DrawStat(canvas, element, element.Label ?? DefaultTripStatLabel(element.Stat), value, unit);
+	}
+
+	public static string DefaultTripStatLabel(TripStatKind stat)
+	{
+		return stat switch
+		{
+			TripStatKind.MaxSpeed => "MAX SPEED",
+			TripStatKind.AverageSpeed => "AVG SPEED",
+			TripStatKind.ElevationGain => "ELEVATION GAIN",
+			TripStatKind.ElevationLoss => "ELEVATION LOSS",
+			_ => "MOVING TIME"
+		};
+	}
+
+	/// <summary>Whole metres/feet - an altitude or a climb, where FormatDistance's decimals would only show GPS noise.</summary>
+	private static (string Value, string Unit) FormatAltitude(double meters, UnitSystem units)
+	{
+		return units == UnitSystem.Imperial
 			? (F(meters * MetersToFeet, "0"), "FT")
 			: (F(meters, "0"), "M");
-		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);
 	}
 
 	private void DrawGradient(SKCanvas canvas, DerivedFrame frame, GradientElement element)

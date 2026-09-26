@@ -1,7 +1,10 @@
 namespace OsmoOverlay.Core.Overlay;
 
+/// <summary>Layers: top to bottom, null in a preset no layer was ever changed in - see OverlayLayers.Normalize.</summary>
 public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> Elements)
 {
+	public List<OverlayLayer>? Layers { get; init; }
+
 	/// <summary>
 	///     The built-in default layout for a video resolution. All spacing is expressed
 	///     at OverlayElementBounds' 4K reference and scaled down for smaller frames, so elements don't
@@ -14,7 +17,9 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 
 		var speedCx = width - m - OverlayElementBounds.SpeedRadius * scale;
 		var speedCy = height - m - OverlayElementBounds.SpeedRadius * scale;
-		var pitchCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.PitchRadius + 40) * scale;
+		var rollCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.TiltRadius + 40) * scale;
+		// Beside the roll gauge, toward the middle.
+		var pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40) * scale;
 
 		var statsX = m;
 		var dateY = m + 40 * scale;
@@ -29,6 +34,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		var cameraInfoY = utcY + 240 * scale;
 		var elapsedY = cameraInfoY + 240 * scale;
 		var cameraModelY = elapsedY + 110 * scale;
+		var tripStatY = cameraModelY + 150 * scale;
 
 		var compassCx = m + OverlayElementBounds.CompassRadius * scale;
 		var mapCx = compassCx + (OverlayElementBounds.CompassRadius + 40 + OverlayElementBounds.MapRadius) * scale;
@@ -40,6 +46,10 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		// at their default positions.
 		var progressBarCx = width / 2f;
 		var progressBarCy = height - m - OverlayElementBounds.ProgressBarHeight / 2 * scale;
+		// Centered above the progress bar, which is as wide.
+		var chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2 * scale;
+		var chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop +
+		                              OverlayElementBounds.ChartHeight) * scale;
 
 		List<OverlayElement> elements =
 		[
@@ -61,7 +71,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			// Off by default - GMeter takes the top-right spot, so this sits one slot down in case it's enabled.
 			new SunWidgetElement { X = sunCx, Y = sunCy, Visible = false },
 			new SpeedGaugeElement { X = speedCx, Y = speedCy },
-			new PitchGaugeElement { X = speedCx, Y = pitchCy },
+			new RollGaugeElement { X = speedCx, Y = rollCy },
 			// Tile source (satellite by default) is a global setting - see OverlaySettings - not a per-element
 			// field, so turning this on doesn't need any per-widget provider setup to already look right.
 			new MapWidgetElement { X = compassCx, Y = height - m - OverlayElementBounds.MapRadius * scale },
@@ -73,7 +83,13 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			{
 				X = progressBarCx, Y = progressBarCy,
 				AppearAtSeconds = 16.0, AnimationType = OverlayAnimationType.Fade
-			}
+			},
+			// The rest are off by default - added after the layout above, so they mustn't move or cover any of it.
+			new PitchGaugeElement { X = pitchCx, Y = rollCy, Visible = false },
+			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },
+			new TripStatElement { X = statsX, Y = tripStatY, Visible = false },
+			new TextElement { X = width / 2f, Y = m + 40 * scale, Visible = false },
+			new ImageElement { X = width / 2f, Y = m, Visible = false }
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid, so a

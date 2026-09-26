@@ -12,28 +12,22 @@ public sealed record TelemetrySummary(
 
 public static class TelemetryProcessor
 {
-	// Reference window for speed/heading/gradient, and the smoothing time constants for the
-	// on-screen pitch/G-force readouts. All expressed in seconds (not sample count) so behavior
+	// Reference window for speed/heading/gradient, and the smoothing time constant for the on-screen
+	// G-force readout (roll/pitch: CameraTilt). All expressed in seconds (not sample count) so behavior
 	// stays consistent regardless of the camera's telemetry sampling rate.
 	internal const double SpeedWindowSeconds = 1.0;
-	private const double PitchTimeConstantSeconds = 0.3;
 	private const double GForceTimeConstantSeconds = 0.3;
 
 	public static List<DerivedFrame> Process(IReadOnlyList<TelemetryFrame> frames, bool smoothGps = false)
 	{
 		if (smoothGps) frames = GpsInterpolation.Apply(frames);
 
-		var result = new List<DerivedFrame>(frames.Count);
 		var cumulativeDistances = SteppedDistances(frames);
 		var refIndex = 0;
 
-		var originLat = frames[0].Latitude;
-		var originLon = frames[0].Longitude;
-		var metersPerDegLat = 111_320.0;
-		var metersPerDegLon = 111_320.0 * Math.Cos(AngleMath.DegToRad(originLat));
-
-		var smoothedPitch = 0.0;
-		var smoothedGForce = 0.0;
+		var speeds = new double[frames.Count];
+		var headings = new double[frames.Count];
+		var gradients = new double[frames.Count];
 
 		for (var i = 0; i < frames.Count; i++)
 		{
@@ -56,36 +50,37 @@ public static class TelemetryProcessor
 				: dt > 0
 					? horizontalMeters / dt * 3.6
 					: 0;
-			var heading = horizontalMeters > 0.1
+			speeds[i] = speedKmh;
+			headings[i] = horizontalMeters > 0.1
 				? TelemetryMath.BearingDegrees(reference.Latitude, reference.Longitude, current.Latitude,
 					current.Longitude)
-				: result.Count > 0
-					? result[^1].HeadingDegrees
+				: i > 0
+					? headings[i - 1]
 					: 0;
-			var gradient = horizontalMeters > 0.5 ? verticalMeters / horizontalMeters * 100.0 : 0;
+			gradients[i] = horizontalMeters > 0.5 ? verticalMeters / horizontalMeters * 100.0 : 0;
+		}
 
-			// AccelX tracks forward/backward tilt (true pitch), not left/right lean - confirmed by
-			// extracting frames from a controlled tilt-test recording: large AccelX swings show the
-			// camera pitching to floor/ceiling with a level horizon, while large AccelY swings show
-			// a canted horizon (roll) with the camera still facing forward. This gauge is meant to
-			// read as left/right lean, so it uses AccelY. Negated: confirmed live in the GUI that the
-			// un-negated sign put the dot on the wrong side (tilt left showed the dot going right).
-			var rawPitch = -AngleMath.RadToDeg(Math.Atan2(current.AccelY,
-				Math.Sqrt(current.AccelX * current.AccelX + current.AccelZ * current.AccelZ)));
+		var (roll, pitch) = CameraTilt.Compute(frames, speeds, headings);
+
+		var originLat = frames[0].Latitude;
+		var originLon = frames[0].Longitude;
+		var metersPerDegLat = 111_320.0;
+		var metersPerDegLon = 111_320.0 * Math.Cos(AngleMath.DegToRad(originLat));
+
+		var result = new List<DerivedFrame>(frames.Count);
+		var smoothedGForce = 0.0;
+
+		for (var i = 0; i < frames.Count; i++)
+		{
+			TelemetryFrame current = frames[i];
 
 			// Raw per-sample accelerometer readings are inherently noisy (vibration, bumps), so the
 			// live HUD gauges show an exponential moving average instead of the instantaneous value.
-			var frameDt = i > 0 ? current.SampleTimeSeconds - frames[i - 1].SampleTimeSeconds : 0;
 			if (i == 0 || current.StartsAfterGap)
-			{
-				smoothedPitch = rawPitch;
 				smoothedGForce = current.GForce;
-			}
 			else
-			{
-				smoothedPitch += Ema(frameDt, PitchTimeConstantSeconds) * (rawPitch - smoothedPitch);
-				smoothedGForce += Ema(frameDt, GForceTimeConstantSeconds) * (current.GForce - smoothedGForce);
-			}
+				smoothedGForce += Ema(current.SampleTimeSeconds - frames[i - 1].SampleTimeSeconds, GForceTimeConstantSeconds) *
+				                  (current.GForce - smoothedGForce);
 
 			SunPosition sun = current.GpsTimestamp is { } ts
 				? SunCalculator.Calculate(DateTime.SpecifyKind(ts, DateTimeKind.Utc), current.Latitude,
@@ -95,8 +90,8 @@ public static class TelemetryProcessor
 			var localEast = (current.Longitude - originLon) * metersPerDegLon;
 			var localNorth = (current.Latitude - originLat) * metersPerDegLat;
 
-			result.Add(new DerivedFrame(current, speedKmh, heading, gradient, cumulativeDistances[i], smoothedPitch, sun,
-				localEast, localNorth, smoothedGForce, current.StartsAfterGap));
+			result.Add(new DerivedFrame(current, speeds[i], headings[i], gradients[i], cumulativeDistances[i], roll[i], pitch[i],
+				sun, localEast, localNorth, smoothedGForce, current.StartsAfterGap));
 		}
 
 		return result;

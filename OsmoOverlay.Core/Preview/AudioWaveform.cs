@@ -4,8 +4,9 @@ namespace OsmoOverlay.Core.Preview;
 
 /// <summary>
 ///     The audio track's peak levels for the timeline, per channel, BucketsPerSecond buckets a second - decoded once in
-///     the background by an audio decoder of its own (a 25 min recording takes ~15 s; the timeline fills in as it goes).
-///     Updated is raised from the background thread every few hundred milliseconds of progress.
+///     the background by an audio decoder of its own (a 25 min recording takes ~15 s; the timeline fills in as it goes),
+///     then kept in WaveformCache, so the same recording opened again has them straight away. Updated is raised from the
+///     background thread every few hundred milliseconds of progress.
 /// </summary>
 public sealed class AudioWaveform : IDisposable
 {
@@ -20,21 +21,32 @@ public sealed class AudioWaveform : IDisposable
 	private const float QuietestReference = 0.001f;
 	private const double DisplayFloorDb = -72;
 
-	private readonly LibavAudioSource _source;
+	private readonly LibavAudioSource? _source;
+	private readonly IReadOnlyList<PlaybackSegment> _segments;
 	private readonly float[][] _peaks;
 	private readonly CancellationTokenSource _cts = new();
-	private readonly Thread _worker;
+	private readonly Thread? _worker;
 	private volatile int _available;
 	private volatile float _loudest;
 
-	private AudioWaveform(LibavAudioSource source, double durationSeconds)
+	private AudioWaveform(LibavAudioSource source, IReadOnlyList<PlaybackSegment> segments, double durationSeconds)
 	{
 		_source = source;
+		_segments = segments;
 		var buckets = (int)Math.Ceiling(durationSeconds * BucketsPerSecond) + 1;
 		_peaks = [.. Enumerable.Range(0, source.Channels).Select(_ => new float[buckets])];
 		// A thread of its own below normal priority: ~15 s of decoding mustn't take CPU from playback and the UI.
 		_worker = new Thread(Run) { IsBackground = true, Priority = ThreadPriority.BelowNormal, Name = "Timeline waveform" };
 		_worker.Start();
+	}
+
+	/// <summary>From WaveformCache - complete, nothing to decode.</summary>
+	private AudioWaveform(IReadOnlyList<PlaybackSegment> segments, float[][] peaks, float loudest)
+	{
+		_segments = segments;
+		_peaks = peaks;
+		_loudest = loudest;
+		_available = peaks[0].Length;
 	}
 
 	public int Channels => _peaks.Length;
@@ -44,11 +56,17 @@ public sealed class AudioWaveform : IDisposable
 
 	public event Action? Updated;
 
-	/// <summary>Null when the recording has no audio track. Blocking - opens the first file.</summary>
+	/// <summary>Null when the recording has no audio track. Blocking - reads the cache, or opens the first file.</summary>
 	public static AudioWaveform? Start(IReadOnlyList<PlaybackSegment> segments)
 	{
+		if (WaveformCache.TryLoad(segments) is { } cached)
+		{
+			AppLogger.Info($"Timeline waveform: {cached.Peaks[0].Length / (double)BucketsPerSecond:F0} s of audio from the cache");
+			return new AudioWaveform(segments, cached.Peaks, cached.Loudest);
+		}
+
 		LibavAudioSource? source = LibavAudioSource.TryOpen(segments);
-		return source is null ? null : new AudioWaveform(source, segments.Sum(s => s.DurationSeconds));
+		return source is null ? null : new AudioWaveform(source, segments, segments.Sum(s => s.DurationSeconds));
 	}
 
 	/// <summary>How tall to draw a peak, 0-1: decibels from DisplayRangeDb below the loudest peak (never below DisplayFloorDb) up to it.</summary>
@@ -76,6 +94,8 @@ public sealed class AudioWaveform : IDisposable
 
 	private void Run()
 	{
+		if (_source is null) return;
+
 		CancellationToken ct = _cts.Token;
 		try
 		{
@@ -113,8 +133,12 @@ public sealed class AudioWaveform : IDisposable
 
 			_available = _peaks[0].Length;
 			if (!ct.IsCancellationRequested)
+			{
 				AppLogger.Info($"Timeline waveform: {_peaks[0].Length / (double)BucketsPerSecond:F0} s of audio in " +
 				               $"{(Environment.TickCount64 - started) / 1000.0:F1} s");
+				WaveformCache.Save(_segments, _peaks, _loudest);
+			}
+
 			Updated?.Invoke();
 		}
 		catch (InvalidOperationException ex)
@@ -126,8 +150,8 @@ public sealed class AudioWaveform : IDisposable
 	public void Dispose()
 	{
 		_cts.Cancel();
-		_worker.Join(TimeSpan.FromSeconds(2));
-		_source.Dispose();
+		_worker?.Join(TimeSpan.FromSeconds(2));
+		_source?.Dispose();
 		_cts.Dispose();
 	}
 }

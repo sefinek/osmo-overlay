@@ -244,7 +244,7 @@ public sealed partial class OverlayRenderer
 		(string Label, string Value)? elevationGain = null;
 		if (RouteIntro.ShowElevationGain)
 		{
-			var (value, unit) = FormatDistance(_totalElevationGainMeters, RouteIntro.Units);
+			var (value, unit) = FormatAltitude(_tripStats.Count > 0 ? _tripStats.ElevationGainMeters(_tripStats.Count - 1) : 0, RouteIntro.Units);
 			elevationGain = ("ELEVATION GAIN", $"{value} {unit}");
 		}
 
@@ -258,7 +258,7 @@ public sealed partial class OverlayRenderer
 		(string Label, string Value)? avgSpeed = null;
 		if (RouteIntro.ShowAvgSpeed)
 		{
-			var (value, unit) = FormatSpeed(_avgSpeedKmh, RouteIntro.Units);
+			var (value, unit) = FormatSpeed(_tripStats.Count > 0 ? _tripStats.AverageSpeedKmh(_tripStats.Count - 1) : 0, RouteIntro.Units);
 			avgSpeed = ("AVG SPEED", $"{value} {unit}");
 		}
 

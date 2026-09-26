@@ -26,6 +26,30 @@ public sealed class OutputTimelineTests
 	}
 
 	[TestMethod]
+	public void NearestOutputTime_PutsCutOutMomentsWhereTheOutputGoesOn()
+	{
+		OutputTimeline timeline = Timeline(new TimeRange(20, 30));
+
+		Assert.AreEqual(0, timeline.NearestOutputSeconds(5), 1e-9, "before the range");
+		Assert.AreEqual(5, timeline.NearestOutputSeconds(15), 1e-9);
+		Assert.AreEqual(10, timeline.NearestOutputSeconds(25), 1e-9, "inside the cut: the next piece's start");
+		Assert.AreEqual(40, timeline.NearestOutputSeconds(80), 1e-9, "past the range: the output's end");
+	}
+
+	[TestMethod]
+	public void RecordingTime_IsWhatTheOutputShows()
+	{
+		OutputTimeline timeline = Timeline(new TimeRange(20, 30));
+
+		Assert.AreEqual(10, timeline.ToRecordingSeconds(0), 1e-9);
+		Assert.AreEqual(15, timeline.ToRecordingSeconds(5), 1e-9);
+		Assert.AreEqual(30, timeline.ToRecordingSeconds(10), 1e-9, "the second piece starts after the cut");
+		Assert.AreEqual(60, timeline.ToRecordingSeconds(40), 1e-9, "the output's end is the last piece's end");
+		foreach (var output in new[] { 1.3, 9.9, 12.7, 39.9 })
+			Assert.AreEqual(output, timeline.NearestOutputSeconds(timeline.ToRecordingSeconds(output)), 1e-9, "round trip");
+	}
+
+	[TestMethod]
 	public void OutputTime_StartsAtZero_AndSkipsCutParts()
 	{
 		OutputTimeline timeline = Timeline(new TimeRange(20, 30));

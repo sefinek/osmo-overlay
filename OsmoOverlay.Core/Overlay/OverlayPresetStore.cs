@@ -199,6 +199,7 @@ public static class OverlayPresetStore
 				: e with { Scale = float.IsFinite(e.Scale) ? Math.Clamp(e.Scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : 1f })
 		];
 
-		return preset with { Name = preset.Name ?? preset.Id, Elements = elements };
+		List<OverlayLayer>? layers = preset.Layers?.Where(l => l is not null && !string.IsNullOrEmpty(l.Id)).ToList();
+		return preset with { Name = preset.Name ?? preset.Id, Elements = elements, Layers = layers };
 	}
 }

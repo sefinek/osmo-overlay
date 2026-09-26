@@ -28,6 +28,9 @@ public sealed class OutputTimeline
 
 	public RenderPlan Plan { get; }
 
+	/// <summary>The output's length - every kept frame back to back.</summary>
+	public double DurationSeconds => Plan.TotalFrames / _fps;
+
 	/// <summary>Where a moment of the recording lands in the output, or null if it was cut out.</summary>
 	public double? ToOutputSeconds(double recordingSeconds)
 	{
@@ -41,6 +44,37 @@ public sealed class OutputTimeline
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	///     Like ToOutputSeconds, but a moment cut out (or before the first piece) lands where the output goes on - the start
+	///     of the next kept piece - and one past the last piece at the output's end. For dragging something on the
+	///     recording's timeline that is timed on the output's (a widget's appear/disappear).
+	/// </summary>
+	public double NearestOutputSeconds(double recordingSeconds)
+	{
+		if (ToOutputSeconds(recordingSeconds) is { } output) return output;
+
+		var frame = recordingSeconds * _fps;
+		for (var i = 0; i < Plan.Pieces.Count; i++)
+			if (frame < Plan.Pieces[i].SourceStartFrame)
+				return _outputStartFrames[i] / _fps;
+
+		return Plan.TotalFrames / _fps;
+	}
+
+	/// <summary>The moment of the recording shown at a time of the output - the output's end maps to the last piece's end.</summary>
+	public double ToRecordingSeconds(double outputSeconds)
+	{
+		var frame = Math.Max(0, outputSeconds * _fps);
+		for (var i = 0; i < Plan.Pieces.Count; i++)
+		{
+			RenderPiece piece = Plan.Pieces[i];
+			if (frame < _outputStartFrames[i] + piece.FrameCount || i == Plan.Pieces.Count - 1)
+				return (piece.SourceStartFrame + Math.Min(frame - _outputStartFrames[i], piece.FrameCount)) / _fps;
+		}
+
+		return 0;
 	}
 
 	/// <summary>

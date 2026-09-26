@@ -246,17 +246,22 @@ public partial class MainWindow
 	{
 		foreach (PreviewTimeline timeline in Timelines)
 		{
-			timeline.ScrubStarted += () =>
-			{
-				_timelineScrubbing = true;
-				_previewPlayer.BeginScrubDrag();
-			};
-			timeline.ScrubEnded += () =>
-			{
-				_timelineScrubbing = false;
-				_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewTimeline.Value));
-			};
+			timeline.ScrubStarted += BeginTimelineScrub;
+			timeline.ScrubEnded += EndTimelineScrub;
 		}
+	}
+
+	/// <summary>A drag moving the playhead - from either timeline or the layers: playback pauses until it ends, then goes on from there.</summary>
+	private void BeginTimelineScrub()
+	{
+		_timelineScrubbing = true;
+		_previewPlayer.BeginScrubDrag();
+	}
+
+	private void EndTimelineScrub()
+	{
+		_timelineScrubbing = false;
+		_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewTimeline.Value));
 	}
 
 	private void OnExpandedTimelineValueChanged(object? sender, RangeBaseValueChangedEventArgs e)

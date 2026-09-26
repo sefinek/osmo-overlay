@@ -6,6 +6,8 @@ public sealed record DerivedFrame(
 	double HeadingDegrees,
 	double GradientPercent,
 	double CumulativeDistanceMeters,
+	// Left/right lean (positive = right) and nose up/down (positive = up), vehicle acceleration taken out - CameraTilt.
+	double RollDegrees,
 	double PitchDegrees,
 	SunPosition Sun,
 	double LocalEastMeters,

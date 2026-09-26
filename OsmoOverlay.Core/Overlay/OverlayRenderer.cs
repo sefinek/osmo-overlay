@@ -11,9 +11,10 @@ namespace OsmoOverlay.Core.Overlay;
 ///     dispatch that switches on each visible OverlayElement's type. The actual per-widget drawing
 ///     code lives in sibling partial-class files grouped by widget family: OverlayRenderer.Position.cs
 ///     (Compass + MapWidget + the shared route trail), OverlayRenderer.Gauges.cs (SpeedGauge +
-///     PitchGauge + SunWidget + GMeter + TripProgressBar), OverlayRenderer.TextWidgets.cs
-///     (DateTimeText/UtcTimeText + ElapsedTimeText + CameraModelText + Elevation/Gradient/Distance +
-///     CameraInfo), OverlayRenderer.Watermark.cs (the "Made with OsmoOverlay" watermark + map
+///     RollGauge + PitchGauge + SunWidget + GMeter + TripProgressBar), OverlayRenderer.TextWidgets.cs
+///     (DateTimeText/UtcTimeText + ElapsedTimeText + CameraModelText + Text + Elevation/Gradient/Distance +
+///     TripStat + CameraInfo), OverlayRenderer.Charts.cs (ProfileChart), OverlayRenderer.Image.cs (Image),
+///     OverlayRenderer.Watermark.cs (the "Made with OsmoOverlay" watermark + map
 ///     attribution slide), and OverlayRenderer.RouteIntro.cs (the optional fullscreen route-overview
 ///     card shown at the start of the render).
 /// </summary>
@@ -44,8 +45,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private double _observedMaxSpeedKmh;
 	private double _totalDistanceMeters;
 	private double _totalDurationSeconds;
-	private double _totalElevationGainMeters;
-	private double _avgSpeedKmh;
+	private TripStats _tripStats = TripStats.Compute([]);
 	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
 	private double _trailSpeedScaleKmh;
 
@@ -78,6 +78,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _blackStroke2;
 	private readonly SKPaint _sunFillPaint;
 	private readonly SKPaint _whiteStroke6Round;
+	private readonly SKPaint _accentStroke4Round;
 	private readonly SKPaint _speedBandGreen;
 	private readonly SKPaint _speedBandYellow;
 	private readonly SKPaint _speedBandOrange;
@@ -169,6 +170,10 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			Color = White, IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 6, StrokeCap = SKStrokeCap.Round
 		};
+		_accentStroke4Round = new SKPaint
+		{
+			Color = Accent, IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 4, StrokeCap = SKStrokeCap.Round
+		};
 		_speedBandGreen = CreateGaugeBandPaint(new SKColor(70, 200, 90));
 		_speedBandYellow = CreateGaugeBandPaint(new SKColor(230, 200, 60));
 		_speedBandOrange = CreateGaugeBandPaint(new SKColor(235, 140, 50));
@@ -230,6 +235,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		_blackStroke2.Dispose();
 		_sunFillPaint.Dispose();
 		_whiteStroke6Round.Dispose();
+		_accentStroke4Round.Dispose();
+		_chartFillPaint.Dispose();
+		_chartLinePaint.Dispose();
+		ClearProfiles();
+		DisposeImages();
 		_speedBandGreen.Dispose();
 		_speedBandYellow.Dispose();
 		_speedBandOrange.Dispose();
@@ -288,18 +298,9 @@ public sealed partial class OverlayRenderer : IDisposable
 		_observedMaxSpeedKmh = observedMaxSpeedKmh;
 		_totalDistanceMeters = allFrames.Count > 0 ? allFrames[^1].CumulativeDistanceMeters : 0;
 		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
-		// Sum of positive altitude deltas only (a simple running climb total, not the true barometric
-		// "elevation gain" a dedicated sensor would give) - GPS altitude jitter means this reads a bit
-		// high on flat ground, but it's the only altitude source this app has.
-		_totalElevationGainMeters = 0;
-		for (var i = 1; i < allFrames.Count; i++)
-		{
-			var delta = allFrames[i].Raw.AltitudeMeters - allFrames[i - 1].Raw.AltitudeMeters;
-			if (delta > 0) _totalElevationGainMeters += delta;
-		}
-
-		_avgSpeedKmh = _totalDurationSeconds > 0 ? _totalDistanceMeters / _totalDurationSeconds * 3.6 : 0;
+		_tripStats = TripStats.Compute(allFrames);
 		_trailSpeedScaleKmh = ComputeTrailSpeedScale(allFrames);
+		ClearProfiles();
 	}
 
 	public int FrameBufferSize(int? outputWidth = null, int? outputHeight = null)
@@ -450,10 +451,10 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			if (!element.Visible) continue;
 
-			var progress = ElementProgress(element, sampleTime);
-			if (progress <= 0f) continue;
+			ElementState state = ElementAnimation.At(element, sampleTime, OutputDurationSeconds);
+			if (state.Progress <= 0f) continue;
 
-			var saveCount = BeginElement(canvas, element, progress);
+			var saveCount = BeginElement(canvas, element, state);
 			switch (element)
 			{
 				case DateTimeTextElement dateTime:
@@ -476,6 +477,9 @@ public sealed partial class OverlayRenderer : IDisposable
 					break;
 				case SunWidgetElement sun:
 					DrawSunWidget(canvas, frame, sun);
+					break;
+				case RollGaugeElement roll:
+					DrawRollGauge(canvas, roll, frame.RollDegrees);
 					break;
 				case PitchGaugeElement pitch:
 					DrawPitchGauge(canvas, pitch, frame.PitchDegrees);
@@ -501,6 +505,18 @@ public sealed partial class OverlayRenderer : IDisposable
 					break;
 				case TripProgressBarElement tripProgress:
 					DrawTripProgressBar(canvas, frame, tripProgress);
+					break;
+				case ProfileChartElement profile:
+					DrawProfileChart(canvas, frame, profile);
+					break;
+				case TripStatElement tripStat:
+					DrawTripStat(canvas, frame, tripStat);
+					break;
+				case TextElement text:
+					DrawText(canvas, text);
+					break;
+				case ImageElement image:
+					DrawImage(canvas, image);
 					break;
 			}
 

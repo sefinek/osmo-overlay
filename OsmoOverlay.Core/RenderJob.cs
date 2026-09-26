@@ -174,7 +174,8 @@ public static class RenderJob
 				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
 				settings.MapShowAttribution, settings.MapApiKey, RouteIntroSettings.ForRecording(settings, hasGpsFix))
 			{
-				RouteAcrossCuts = settings.RouteAcrossCuts
+				RouteAcrossCuts = settings.RouteAcrossCuts,
+				OutputDurationSeconds = plan.TotalFrames / fps
 			};
 
 			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
@@ -486,7 +487,9 @@ public static class RenderJob
 	private static IReadOnlyList<OverlayElement> LoadActiveLayout(int width, int height)
 	{
 		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(width, height);
-		return presets.First(p => p.Id == activeId).Elements;
+		OverlayPreset preset = presets.First(p => p.Id == activeId);
+		// Muted (or not soloed) layers stay out of the render as they're out of the preview.
+		return OverlayLayers.Drawn(preset.Elements, preset.Layers);
 	}
 }
 

@@ -246,6 +246,7 @@ public partial class MainWindow
 		UpdateCutScrim(_previewPosition);
 		IReadOnlyList<TimeRange> cuts = _summary is null ? [] : CutList.ToTimeRanges(CutList.Normalize(_cuts, SourceFrames), _summary.Video.Fps);
 		foreach (PreviewTimeline timeline in Timelines) timeline.Cuts = cuts;
+		RefreshLayers();
 	}
 
 	private void ShowSelection()

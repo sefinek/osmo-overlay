@@ -10,7 +10,7 @@ internal static class FileSummaryCache
 {
 	// Bump whenever telemetry extraction or derivation logic changes, so stale cache
 	// entries computed with the old logic are treated as a cache miss automatically.
-	public const int FormatVersion = 19;
+	public const int FormatVersion = 20;
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "cache");
@@ -61,7 +61,9 @@ internal static class FileSummaryCache
 	{
 		if (!Directory.Exists(CacheDir)) return 0;
 
-		IEnumerable<string> files = Directory.GetFiles(CacheDir, "*.json").Concat(Directory.GetFiles(CacheDir, "*.tmp"));
+		// The timeline's waveforms (WaveformCache) live alongside and go with the rest.
+		IEnumerable<string> files = Directory.GetFiles(CacheDir, "*.json").Concat(Directory.GetFiles(CacheDir, "*.tmp"))
+			.Concat(Preview.WaveformCache.Files(CacheDir));
 		var deleted = 0;
 		foreach (var file in files)
 			try
@@ -159,6 +161,7 @@ internal static class FileSummaryCache
 		double HeadingDegrees,
 		double GradientPercent,
 		double CumulativeDistanceMeters,
+		double RollDegrees,
 		double PitchDegrees,
 		SunPosition Sun,
 		double LocalEastMeters,
@@ -168,14 +171,14 @@ internal static class FileSummaryCache
 		public static CachedDerivedFrame From(DerivedFrame frame)
 		{
 			return new CachedDerivedFrame(frame.SpeedKmh, frame.HeadingDegrees, frame.GradientPercent,
-				frame.CumulativeDistanceMeters, frame.PitchDegrees, frame.Sun, frame.LocalEastMeters,
+				frame.CumulativeDistanceMeters, frame.RollDegrees, frame.PitchDegrees, frame.Sun, frame.LocalEastMeters,
 				frame.LocalNorthMeters, frame.SmoothedGForce);
 		}
 
 		public DerivedFrame ToDerivedFrame(TelemetryFrame raw)
 		{
 			return new DerivedFrame(raw, SpeedKmh, HeadingDegrees, GradientPercent, CumulativeDistanceMeters,
-				PitchDegrees, Sun, LocalEastMeters, LocalNorthMeters, SmoothedGForce, raw.StartsAfterGap);
+				RollDegrees, PitchDegrees, Sun, LocalEastMeters, LocalNorthMeters, SmoothedGForce, raw.StartsAfterGap);
 		}
 	}
 }

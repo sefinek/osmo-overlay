@@ -38,7 +38,8 @@ public partial class MainWindow
 		// The summary's own paths, not the live list - its TelemetryFrames were stitched from exactly these.
 		IReadOnlyList<string> inputPaths = _summary?.InputPaths ?? [.. _inputPaths];
 		var progress = new Progress<RenderStatus>(OnProgress);
-		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? ActiveElements : null;
+		// As the preview shows it - muted and unsoloed layers left out.
+		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? OverlayLayers.Drawn(ActiveElements, ActiveLayers) : null;
 		List<TimeRange>? cutOuts = CutOutsForRender();
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,

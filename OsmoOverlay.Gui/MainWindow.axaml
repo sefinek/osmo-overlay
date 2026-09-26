@@ -56,6 +56,11 @@
 			<Setter Property="HorizontalAlignment" Value="Left" />
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
+		<Style Selector="TextBlock.timelineTrackName">
+			<Setter Property="Margin" Value="10,6,0,0" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+		</Style>
 		<Style Selector="Button.toolbar">
 			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
 			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
@@ -1062,6 +1067,24 @@
 										</Border>
 									</Grid>
 									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="RollListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.RollGauge}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Roll gauge" />
+										</Border>
+										<Border Name="RollSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+												           Text="The camera's left/right lean. With GPS, the vehicle's own cornering is taken out - a bike leaning into a turn shows its lean, a car in a turn stays level." />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
+												<local:ElementStyleEditor Name="RollStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="RollTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="PitchListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.PitchGauge}"
 										        PointerPressed="OnWidgetItemPointerPressed">
@@ -1069,6 +1092,8 @@
 										</Border>
 										<Border Name="PitchSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+												           Text="The camera's nose up/down. With GPS, speeding up and braking are taken out, so they don't read as tilt." />
 												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
 												<local:ElementStyleEditor Name="PitchStyle" />
 												<Border Classes="flyoutDivider" />
@@ -1125,7 +1150,13 @@
 										</Border>
 										<Border Name="ElapsedTimeSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout">
-												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0" />
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="ElapsedTimeLabelBox" PlaceholderText="None - just the time"
+												         LostFocus="OnElapsedTimeLabelChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+												           Text="A caption above the time, e.g. Elapsed time." />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
 												<local:ElementStyleEditor Name="ElapsedTimeStyle" />
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
@@ -1177,6 +1208,81 @@
 												<Border Classes="flyoutDivider" />
 												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
 												<local:ElementTimingEditor Name="TripProgressBarTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="ProfileChartListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.ProfileChart}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Elevation / speed chart" />
+										</Border>
+										<Border Name="ProfileChartSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+												           Text="The whole recording's profile - the part already covered is highlighted and the marker follows the video." />
+												<TextBlock Text="Shows" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ProfileElevationRadio" Content="Elevation"
+													             GroupName="ProfileSeries" Click="OnProfileSeriesChanged" />
+													<RadioButton Name="ProfileSpeedRadio" Content="Speed"
+													             GroupName="ProfileSeries" Click="OnProfileSeriesChanged" />
+												</StackPanel>
+												<TextBlock Text="Along" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ProfileDistanceRadio" Content="Distance"
+													             GroupName="ProfileAxis" Click="OnProfileAxisChanged"
+													             ToolTip.Tip="Stops take no room - the usual elevation profile" />
+													<RadioButton Name="ProfileTimeRadio" Content="Time"
+													             GroupName="ProfileAxis" Click="OnProfileAxisChanged"
+													             ToolTip.Tip="Evenly with the video, stops included" />
+												</StackPanel>
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="ProfileLabelBox" LostFocus="OnProfileLabelChanged" />
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="ProfileMetricRadio" Content="Metric"
+													             GroupName="ProfileUnits" Click="OnProfileUnitsChanged" />
+													<RadioButton Name="ProfileImperialRadio" Content="Imperial"
+													             GroupName="ProfileUnits" Click="OnProfileUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="ProfileChartStyle" HasAccentColor="True" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="ProfileChartTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="TripStatListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.TripStat}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Trip statistic" />
+										</Border>
+										<Border Name="TripStatSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Statistic" Classes="infoLabel" Margin="0" />
+												<ComboBox Name="TripStatCombo" HorizontalAlignment="Stretch"
+												          SelectionChanged="OnTripStatKindChanged" />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+												           Text="Counted up to the moment on screen. Moving time and the average leave out stops (under 3 km/h); climbs under 3 m are GPS altitude noise and don't count." />
+												<TextBlock Text="Label" Classes="infoLabel" Margin="0" />
+												<TextBox Name="TripStatLabelBox" LostFocus="OnTripStatLabelChanged" />
+												<TextBlock Text="Units" Classes="infoLabel" Margin="0" />
+												<StackPanel Orientation="Horizontal" Spacing="12">
+													<RadioButton Name="TripStatMetricRadio" Content="Metric"
+													             GroupName="TripStatUnits" Click="OnTripStatUnitsChanged" />
+													<RadioButton Name="TripStatImperialRadio" Content="Imperial"
+													             GroupName="TripStatUnits" Click="OnTripStatUnitsChanged" />
+												</StackPanel>
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="TripStatStyle" HasAccentColor="True" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="TripStatTiming" />
 											</StackPanel>
 										</Border>
 									</Grid>
@@ -1266,6 +1372,57 @@
 											</StackPanel>
 										</Border>
 									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="TextListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Text}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Text" />
+										</Border>
+										<Border Name="TextSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="Text" Classes="infoLabel" Margin="0" />
+												<TextBox Name="TextContentBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64"
+												         TextChanged="OnTextContentTyped" LostFocus="OnTextContentChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Style" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementStyleEditor Name="TextStyle" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="TextTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="ImageListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Image}"
+										        PointerPressed="OnWidgetItemPointerPressed">
+											<TextBlock Classes="overlayListItemText" Text="Image / logo" />
+										</Border>
+										<Border Name="ImageSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout">
+												<TextBlock Text="File" Classes="infoLabel" Margin="0" />
+												<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+													<TextBox Grid.Column="0" Name="ImagePathBox" IsReadOnly="True" PlaceholderText="No image chosen" />
+													<Button Grid.Column="1" Classes="toolbar" Content="Choose..." Padding="14,0"
+												        VerticalAlignment="Stretch" VerticalContentAlignment="Center" Click="OnImageBrowseClick" />
+												</Grid>
+												<TextBlock Name="ImageUnreadableHint" Classes="infoLabel" Margin="0" FontSize="12"
+												           Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" IsVisible="False"
+												           Text="Can't read this file - it needs to be a PNG, JPEG or WebP up to 8192 px a side, still at this path." />
+												<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+												           Text="Drawn at its own pixel size on a 4K frame (smaller with lower resolutions) - resize it with the handle. The file is linked, not copied, so keep it where it is." />
+												<TextBlock Text="Opacity (%)" Classes="infoLabel" Margin="0" />
+												<NumericUpDown Name="ImageOpacityBox" Minimum="0" Maximum="100" Increment="5"
+												               FormatString="0" HorizontalAlignment="Stretch"
+												               ValueChanged="OnImageOpacityChanged" />
+												<Border Classes="flyoutDivider" />
+												<TextBlock Text="Timing" Classes="flyoutSectionLabel" Margin="0,2,0,0" />
+												<local:ElementTimingEditor Name="ImageTiming" />
+											</StackPanel>
+										</Border>
+									</Grid>
 								</StackPanel>
 							</StackPanel>
 						</StackPanel>
@@ -1275,14 +1432,35 @@
 		</Grid>
 
 		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
-			<StackPanel Spacing="2">
-				<Border CornerRadius="4" ClipToBounds="True">
+			<!-- Column 0 is LayerTimeline.HeaderWidth wide (set in WireLayers): the tracks' names, the layers' own headers under them. -->
+			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="2">
+				<StackPanel Grid.Row="0" Grid.Column="0" Background="{StaticResource ControlBrush}">
+					<Border Height="{x:Static local:PreviewTimeline.RulerHeight}" />
+					<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
+					<Border Height="{x:Static local:PreviewTimeline.VideoTrackHeight}">
+						<TextBlock Classes="timelineTrackName" Text="Video" />
+					</Border>
+					<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
+					<Border Height="{x:Static local:PreviewTimeline.AudioTrackHeight}">
+						<TextBlock Classes="timelineTrackName" Text="Audio" />
+					</Border>
+				</StackPanel>
+				<Border Grid.Row="0" Grid.Column="1" Name="ExpandedTimelineFrame" CornerRadius="4" ClipToBounds="True">
 					<local:PreviewTimeline Name="ExpandedTimeline" Expanded="True" Minimum="0" Maximum="1" IsEnabled="False"
 					                       ValueChanged="OnExpandedTimelineValueChanged" />
 				</Border>
-				<ScrollBar Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False" IsVisible="False"
-				           Scroll="OnTimelineScroll" />
-			</StackPanel>
+				<Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*,Auto" Margin="10,4,6,2">
+					<TextBlock Grid.Column="0" Text="LAYERS" Classes="sectionLabel" Margin="0" VerticalAlignment="Center" />
+					<Button Grid.Column="1" Name="NewLayerButton" Classes="toolbar" Content="+ New layer" Padding="8,2"
+					        ToolTip.Tip="An empty layer on top - drag widgets' clips onto it" Click="OnNewLayerClick" />
+				</Grid>
+				<ScrollViewer Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Name="LayerScroll"
+				              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+					<local:LayerTimeline Name="LayerTracks" />
+				</ScrollViewer>
+				<ScrollBar Grid.Row="3" Grid.Column="1" Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False"
+				           IsVisible="False" Scroll="OnTimelineScroll" />
+			</Grid>
 		</Border>
 
 		<Border Grid.Row="1" Classes="card" Name="LogCard">

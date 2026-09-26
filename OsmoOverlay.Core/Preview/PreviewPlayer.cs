@@ -124,7 +124,7 @@ public sealed class PreviewPlayer : IDisposable
 				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark, summary.CameraModel,
 				summary.ContainerRecordingStartUtc, settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution,
 				settings.MapApiKey, routeIntro) { RouteAcrossCuts = settings.RouteAcrossCuts },
-			recordingFrames, availability, _outputTimeline, _showOverlay, pool);
+			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool);
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
 			routeIntro.Enabled);
 		_recording = recording;

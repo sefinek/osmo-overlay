@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using OsmoOverlay.Core.Overlay;
 using SkiaSharp;
 
@@ -30,6 +31,15 @@ public partial class MainWindow
 
 	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
 
+	private static readonly List<TripStatOption> TripStatOptions =
+	[
+		new("Max speed", TripStatKind.MaxSpeed),
+		new("Average speed (moving)", TripStatKind.AverageSpeed),
+		new("Elevation gain", TripStatKind.ElevationGain),
+		new("Elevation loss", TripStatKind.ElevationLoss),
+		new("Moving time", TripStatKind.MovingTime)
+	];
+
 	// Trail swatch fallback when the box is empty/unparsable - matches OverlayRenderer's own built-in trail
 	// color, so what the swatch shows before you've typed anything is exactly what the render already uses.
 	private const string DefaultTrailColorHex = "#46DC6E";
@@ -48,6 +58,9 @@ public partial class MainWindow
 	///     Custom drag-and-drop format used to carry an OverlayElementType through a widget-list-to-canvas
 	///     drag. DataFormat&lt;T&gt; requires a reference type, so the enum travels as its name string.
 	/// </summary>
+	// A save writes every preset's file - typing goes through this rather than saving on every key.
+	private readonly DispatcherTimer _presetSaveDelay = new() { Interval = TimeSpan.FromMilliseconds(500) };
+
 	private static readonly DataFormat<string> WidgetDragFormat =
 		DataFormat.CreateInProcessFormat<string>("OsmoOverlay.OverlayElementType");
 
@@ -70,7 +83,7 @@ public partial class MainWindow
 		_overlayPresetsLoaded = true;
 		RefreshPresetComboBox();
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		// Re-evaluate SetPhase's visibility now that _overlayPresetsLoaded flipped - the Overlay
 		// panel (New/Duplicate/etc.) only actually appears from this point on, see the field's doc.
 		SetPhase(_phase);
@@ -78,7 +91,15 @@ public partial class MainWindow
 
 	private void SaveOverlayPresets()
 	{
+		_presetSaveDelay.Stop();
 		OverlayPresetStore.Save(_overlayPresets, _activePresetId);
+	}
+
+	/// <summary>For edits arriving key by key: saved once they pause, at the latest when the window closes (OnClosed).</summary>
+	private void SaveOverlayPresetsSoon()
+	{
+		_presetSaveDelay.Stop();
+		_presetSaveDelay.Start();
 	}
 
 	private void RefreshPresetComboBox()
@@ -97,6 +118,9 @@ public partial class MainWindow
 	/// </summary>
 	private void RefreshWidgetList()
 	{
+		// A preset whose layers were never set up (loaded, switched to, reset, imported) gets them here, in its draw order.
+		if (ActivePreset is { Layers: null }) NormalizeActivePreset(ActiveElements, null);
+
 		List<OverlayElement> elements = ActiveElements;
 		var editable = !IsActivePresetDefault;
 
@@ -122,6 +146,7 @@ public partial class MainWindow
 		RebuildAddedWidgetsList();
 		RefreshSelectionHighlight();
 		UpdatePreviewGuides();
+		RefreshLayers();
 
 		RenamePresetButton.IsEnabled = editable;
 		DeletePresetButton.IsEnabled = editable;
@@ -186,6 +211,7 @@ public partial class MainWindow
 			OverlayElementType.CameraInfo => CameraInfoListItem,
 			OverlayElementType.Compass => CompassListItem,
 			OverlayElementType.SunWidget => SunListItem,
+			OverlayElementType.RollGauge => RollListItem,
 			OverlayElementType.PitchGauge => PitchListItem,
 			OverlayElementType.GMeter => GMeterListItem,
 			OverlayElementType.ElapsedTimeText => ElapsedTimeListItem,
@@ -193,6 +219,10 @@ public partial class MainWindow
 			OverlayElementType.SpeedGauge => SpeedListItem,
 			OverlayElementType.MapWidget => MapListItem,
 			OverlayElementType.TripProgressBar => TripProgressBarListItem,
+			OverlayElementType.ProfileChart => ProfileChartListItem,
+			OverlayElementType.TripStat => TripStatListItem,
+			OverlayElementType.Text => TextListItem,
+			OverlayElementType.Image => ImageListItem,
 			_ => null
 		};
 	}
@@ -215,21 +245,31 @@ public partial class MainWindow
 	private void RebuildAddedWidgetsList()
 	{
 		AddedWidgetsList.Children.Clear();
-		List<OverlayElement> visible = [.. ActiveElements.Where(e => e.Visible)];
+		List<(OverlayElement Element, string Name)> visible = VisibleWidgetNames();
 		var editable = !IsActivePresetDefault;
+
+		foreach (var (element, name) in visible) AddedWidgetsList.Children.Add(BuildAddedWidgetRow(element, name, editable));
+
+		AddedWidgetsEmptyHint.IsVisible = visible.Count == 0;
+	}
+
+	/// <summary>The widgets on the overlay in layout (draw) order, named as the "on overlay" list and the layers show them.</summary>
+	private List<(OverlayElement Element, string Name)> VisibleWidgetNames()
+	{
+		List<OverlayElement> visible = [.. ActiveElements.Where(e => e.Visible)];
 
 		Dictionary<OverlayElementType, int> totalByType = [];
 		foreach (OverlayElement el in visible) totalByType[el.Type] = totalByType.GetValueOrDefault(el.Type) + 1;
 
 		Dictionary<OverlayElementType, int> seenByType = [];
+		List<(OverlayElement, string)> named = [];
 		foreach (OverlayElement el in visible)
 		{
 			var index = seenByType[el.Type] = seenByType.GetValueOrDefault(el.Type) + 1;
-			var name = GetWidgetLabel(el.Type) + (totalByType[el.Type] > 1 ? $" ({index})" : "");
-			AddedWidgetsList.Children.Add(BuildAddedWidgetRow(el, name, editable));
+			named.Add((el, GetWidgetLabel(el.Type) + (totalByType[el.Type] > 1 ? $" ({index})" : "")));
 		}
 
-		AddedWidgetsEmptyHint.IsVisible = visible.Count == 0;
+		return named;
 	}
 
 	/// <summary>
@@ -296,8 +336,10 @@ public partial class MainWindow
 	/// </summary>
 	private void RefreshSelectionHighlight()
 	{
+		LayerTracks.SelectedId = _selectedElementId;
+		// Nothing to frame for a widget that isn't drawn - no data for it, or its layer muted/unsoloed.
 		if (_selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
-		    !IsTypeSupported(el.Type))
+		    !IsTypeSupported(el.Type) || OverlayLayers.Silenced(ActiveLayers).Contains(OverlayLayers.Key(el)))
 		{
 			SelectionHighlightBox.IsVisible = false;
 			ResizeHandle.IsVisible = false;
@@ -322,21 +364,22 @@ public partial class MainWindow
 
 		Canvas.SetLeft(ResizeHandle, bottomRight.X - ResizeHandle.Width / 2);
 		Canvas.SetTop(ResizeHandle, bottomRight.Y - ResizeHandle.Height / 2);
-		ResizeHandle.IsVisible = !IsActivePresetDefault;
+		ResizeHandle.IsVisible = !IsActivePresetDefault && !IsLayerLocked(el);
 	}
 
 	/// <summary>
-	///     OverlayElementBounds.GetBounds with this element's own DateFormat/Locale/Label/FontFamily and
+	///     OverlayElementBounds.GetBounds with this element's own DateFormat/Locale/Label/FontFamily/text/image and
 	///     (for CameraModelText) the loaded file's actual camera model, instead of the generic placeholder
 	///     text/font GetBounds falls back to - keeps every hit-test/selection call site in this file
 	///     measuring against what that specific instance will really render, without repeating the same
-	///     five extra arguments at each one.
+	///     extra arguments at each one.
 	/// </summary>
 	private SKRect GetElementBounds(OverlayElement element, float x, float y, float scale)
 	{
 		return OverlayElementBounds.GetBounds(element.Type, x, y, scale,
 			(element as TimeTextElementBase)?.DateFormat, (element as TimeTextElementBase)?.Locale,
-			(element as LabeledStatElement)?.Label, _summary?.CameraModel, (element as StyledOverlayElement)?.FontFamily);
+			(element as LabeledStatElement)?.Label ?? (element as ElapsedTimeTextElement)?.Label, _summary?.CameraModel, (element as StyledOverlayElement)?.FontFamily,
+			(element as TextElement)?.Text, (element as ImageElement)?.ImagePath);
 	}
 
 	/// <summary>
@@ -344,10 +387,11 @@ public partial class MainWindow
 	///     PreviewPlayer - that list may be mid-enumeration in the compose thread's RenderOnto call
 	///     right now, and mutating it in place races with that enumeration.
 	/// </summary>
-	private void ReplaceActiveElements(List<OverlayElement> elements)
+	/// <param name="layers">The preset's layers changed too - null keeps its own. Either way the two are brought in step (NormalizeActivePreset).</param>
+	private void ReplaceActiveElements(List<OverlayElement> elements, IReadOnlyList<OverlayLayer>? layers = null)
 	{
-		var index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
-		if (index >= 0) _overlayPresets[index] = _overlayPresets[index] with { Elements = elements };
+		NormalizeActivePreset(elements, layers);
+		RefreshLayers();
 	}
 
 	private void UpdateElement(string id, Func<OverlayElement, OverlayElement> update)
@@ -360,11 +404,11 @@ public partial class MainWindow
 
 		elements[index] = update(elements[index]);
 		ReplaceActiveElements(elements);
-		_previewPlayer.SetLayout(elements);
+		ShowLayout();
 		SaveOverlayPresets();
 	}
 
-	/// <summary>Units has no single shared abstract ancestor across the 4 types that use it (unlike Label/DateFormat below), so this stays an explicit switch.</summary>
+	/// <summary>Units has no single shared abstract ancestor across the types that use it (unlike Label/DateFormat below), so this stays an explicit switch.</summary>
 	private void SetElementUnits(string id, UnitSystem units)
 	{
 		UpdateElement(id, el => el switch
@@ -373,6 +417,8 @@ public partial class MainWindow
 			DistanceElement e => e with { Units = units },
 			SpeedGaugeElement e => e with { Units = units },
 			TripProgressBarElement e => e with { Units = units },
+			ProfileChartElement e => e with { Units = units },
+			TripStatElement e => e with { Units = units },
 			_ => el
 		});
 	}
@@ -431,11 +477,14 @@ public partial class MainWindow
 
 		List<OverlayElement> elements = [.. ActiveElements, instance];
 		ReplaceActiveElements(elements);
-		_previewPlayer.SetLayout(elements);
+		ShowLayout();
 		SaveOverlayPresets();
 
 		_selectedElementId = instance.Id;
 		RefreshWidgetList();
+
+		// An image widget draws nothing until a file is picked - straight to where it's picked.
+		if (instance is ImageElement) OpenElementSettings(instance);
 	}
 
 	/// <summary>
@@ -454,7 +503,7 @@ public partial class MainWindow
 		if (_editingElementId == id) _editingElementId = null;
 
 		ReplaceActiveElements(elements);
-		_previewPlayer.SetLayout(elements);
+		ShowLayout();
 		SaveOverlayPresets();
 		RefreshWidgetList();
 	}
@@ -475,7 +524,7 @@ public partial class MainWindow
 		var factory = OverlayPreset.CreateDefault("factory", "Factory", _summary.Video.Width, _summary.Video.Height);
 		if (factory.Elements.FirstOrDefault(e => e.Type == existing.Type) is not { } defaults) return;
 
-		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible });
+		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible, LayerId = el.LayerId });
 
 		if (ActiveElements.FirstOrDefault(e => e.Id == id) is { } updated) PopulateElementSettings(updated);
 		RefreshWidgetList();
@@ -500,7 +549,9 @@ public partial class MainWindow
 			AppearAtSeconds = timing.AppearAtSeconds,
 			DisappearAtSeconds = timing.DisappearAtSeconds,
 			AnimationType = timing.AnimationType,
-			AnimationDurationSeconds = timing.AnimationDurationSeconds
+			AnimationDurationSeconds = timing.AnimationDurationSeconds,
+			OutAnimationType = timing.OutAnimationType,
+			OutAnimationDurationSeconds = timing.OutAnimationDurationSeconds
 		});
 	}
 
@@ -634,6 +685,14 @@ public partial class MainWindow
 				break;
 			}
 
+			case OverlayElementType.RollGauge:
+			{
+				var x = (RollGaugeElement)el;
+				RollStyle.Populate(x);
+				RollTiming.Populate(x);
+				break;
+			}
+
 			case OverlayElementType.PitchGauge:
 			{
 				var x = (PitchGaugeElement)el;
@@ -677,6 +736,7 @@ public partial class MainWindow
 			case OverlayElementType.ElapsedTimeText:
 			{
 				var x = (ElapsedTimeTextElement)el;
+				ElapsedTimeLabelBox.Text = x.Label;
 				ElapsedTimeStyle.Populate(x);
 				ElapsedTimeTiming.Populate(x);
 				break;
@@ -699,9 +759,60 @@ public partial class MainWindow
 				TripProgressBarTiming.Populate(x);
 				break;
 			}
+
+			case OverlayElementType.ProfileChart:
+			{
+				var x = (ProfileChartElement)el;
+				ProfileElevationRadio.IsChecked = x.Series == ProfileSeries.Elevation;
+				ProfileSpeedRadio.IsChecked = x.Series == ProfileSeries.Speed;
+				ProfileDistanceRadio.IsChecked = x.Axis == ProfileAxis.Distance;
+				ProfileTimeRadio.IsChecked = x.Axis == ProfileAxis.Time;
+				ProfileLabelBox.Text = x.Label;
+				ProfileLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultProfileLabel(x.Series));
+				SetUnitsRadio(ProfileMetricRadio, ProfileImperialRadio, x.Units);
+				ProfileChartStyle.Populate(x);
+				ProfileChartTiming.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.TripStat:
+			{
+				var x = (TripStatElement)el;
+				TripStatCombo.SelectedItem = TripStatOptions.First(o => o.Stat == x.Stat);
+				TripStatLabelBox.Text = x.Label;
+				TripStatLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultTripStatLabel(x.Stat));
+				SetUnitsRadio(TripStatMetricRadio, TripStatImperialRadio, x.Units);
+				TripStatStyle.Populate(x);
+				TripStatTiming.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.Text:
+			{
+				var x = (TextElement)el;
+				TextContentBox.Text = x.Text;
+				TextStyle.Populate(x);
+				TextTiming.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.Image:
+			{
+				var x = (ImageElement)el;
+				ShowImagePath(x.ImagePath);
+				ImageOpacityBox.Value = (decimal)Math.Round(x.Opacity * 100);
+				ImageTiming.Populate(x);
+				break;
+			}
 		}
 
 		_suppressOverlayEvents = false;
+	}
+
+	/// <summary>"ELEVATION GAIN" -> "Elevation gain", the way the other Label boxes show their built-in caption.</summary>
+	private static string SentenceCase(string caption)
+	{
+		return caption.Length == 0 ? caption : caption[..1] + caption[1..].ToLowerInvariant();
 	}
 
 	private static void SetUnitsRadio(RadioButton metric, RadioButton imperial, UnitSystem units)
@@ -786,6 +897,121 @@ public partial class MainWindow
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id || GMeterFullScaleBox.Value is not { } fullScale) return;
 		UpdateElement(id, el => el is GMeterElement g ? g with { GMeterFullScaleG = (double)fullScale } : el);
+	}
+
+	private void OnElapsedTimeLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		var label = string.IsNullOrWhiteSpace(ElapsedTimeLabelBox.Text) ? null : ElapsedTimeLabelBox.Text.Trim();
+		UpdateElement(id, el => el is ElapsedTimeTextElement t ? t with { Label = label } : el);
+		RefreshSelectionHighlight();
+	}
+
+	private void OnProfileSeriesChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		ProfileSeries series = ProfileSpeedRadio.IsChecked == true ? ProfileSeries.Speed : ProfileSeries.Elevation;
+		ProfileLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultProfileLabel(series));
+		UpdateElement(id, el => el is ProfileChartElement p ? p with { Series = series } : el);
+	}
+
+	private void OnProfileAxisChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		ProfileAxis axis = ProfileTimeRadio.IsChecked == true ? ProfileAxis.Time : ProfileAxis.Distance;
+		UpdateElement(id, el => el is ProfileChartElement p ? p with { Axis = axis } : el);
+	}
+
+	private void OnProfileLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SetElementLabel(id, ProfileLabelBox.Text);
+		RefreshSelectionHighlight();
+	}
+
+	private void OnProfileUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SetElementUnits(id, ProfileImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnTripStatKindChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || TripStatCombo.SelectedItem is not TripStatOption option) return;
+		TripStatLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultTripStatLabel(option.Stat));
+		UpdateElement(id, el => el is TripStatElement t ? t with { Stat = option.Stat } : el);
+	}
+
+	private void OnTripStatLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SetElementLabel(id, TripStatLabelBox.Text);
+		RefreshSelectionHighlight();
+	}
+
+	private void OnTripStatUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SetElementUnits(id, TripStatImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	/// <summary>
+	///     Every keystroke goes to the preview, the preset is saved once typing pauses - the box isn't rewritten meanwhile
+	///     (OnTextContentChanged tidies it once left).
+	/// </summary>
+	private void OnTextContentTyped(object? sender, TextChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || IsActivePresetDefault || _editingElementId is not { } id) return;
+
+		var text = string.IsNullOrWhiteSpace(TextContentBox.Text) ? OverlayRenderer.TextDefault : TextContentBox.Text;
+		List<OverlayElement> elements = [.. ActiveElements];
+		var index = elements.FindIndex(el => el.Id == id);
+		if (index < 0 || elements[index] is not TextElement element || element.Text == text) return;
+
+		elements[index] = element with { Text = text };
+		ReplaceActiveElements(elements);
+		ShowLayout();
+		SaveOverlayPresetsSoon();
+		RefreshSelectionHighlight();
+	}
+
+	/// <summary>An emptied box goes back to the default text rather than leave an invisible widget behind.</summary>
+	private void OnTextContentChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		var text = string.IsNullOrWhiteSpace(TextContentBox.Text) ? OverlayRenderer.TextDefault : TextContentBox.Text.TrimEnd();
+		if (TextContentBox.Text != text) TextContentBox.Text = text;
+		UpdateElement(id, el => el is TextElement t ? t with { Text = text } : el);
+		RefreshSelectionHighlight();
+	}
+
+	private async void OnImageBrowseClick(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id || GetTopLevel(this) is not { } topLevel) return;
+
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = "Choose an image",
+			AllowMultiple = false,
+			FileTypeFilter = [new FilePickerFileType("Image") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.webp"] }]
+		});
+		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+
+		UpdateElement(id, el => el is ImageElement image ? image with { ImagePath = path } : el);
+		ShowImagePath(path);
+		RefreshSelectionHighlight();
+	}
+
+	private void ShowImagePath(string? path)
+	{
+		ImagePathBox.Text = path;
+		ImageUnreadableHint.IsVisible = !string.IsNullOrWhiteSpace(path) && OverlayElementBounds.ImageSize(path) is null;
+	}
+
+	private void OnImageOpacityChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || ImageOpacityBox.Value is not { } percent) return;
+		UpdateElement(id, el => el is ImageElement image ? image with { Opacity = (float)percent / 100f } : el);
 	}
 
 	private void OnDateTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
@@ -943,7 +1169,7 @@ public partial class MainWindow
 
 		_activePresetId = _overlayPresets[PresetComboBox.SelectedIndex].Id;
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		SaveOverlayPresets();
 	}
 
@@ -959,7 +1185,7 @@ public partial class MainWindow
 
 		RefreshPresetComboBox();
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		SaveOverlayPresets();
 	}
 
@@ -967,13 +1193,13 @@ public partial class MainWindow
 	{
 		OverlayPreset source = _overlayPresets.First(p => p.Id == _activePresetId);
 		var id = Guid.NewGuid().ToString("N");
-		var copy = new OverlayPreset(id, $"{source.Name} copy", [.. source.Elements]);
+		var copy = new OverlayPreset(id, $"{source.Name} copy", [.. source.Elements]) { Layers = source.Layers?.ToList() };
 		_overlayPresets.Add(copy);
 		_activePresetId = id;
 
 		RefreshPresetComboBox();
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		SaveOverlayPresets();
 	}
 
@@ -995,7 +1221,7 @@ public partial class MainWindow
 
 		RefreshPresetComboBox();
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		SaveOverlayPresets();
 	}
 
@@ -1016,7 +1242,7 @@ public partial class MainWindow
 			_summary.Video.Width, _summary.Video.Height);
 
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		SaveOverlayPresets();
 	}
 
@@ -1070,7 +1296,7 @@ public partial class MainWindow
 
 		RefreshPresetComboBox();
 		RefreshWidgetList();
-		_previewPlayer.SetLayout(ActiveElements);
+		ShowLayout();
 		SaveOverlayPresets();
 		AppendLog($"Imported preset \"{preset.Name}\"");
 	}
@@ -1362,10 +1588,12 @@ public partial class MainWindow
 
 		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
 		List<OverlayElement> elements = ActiveElements;
+		// A muted (or unsoloed) layer's widgets aren't drawn, so they can't be picked either.
+		HashSet<string> silenced = OverlayLayers.Silenced(ActiveLayers);
 		for (var i = elements.Count - 1; i >= 0; i--)
 		{
 			OverlayElement el = elements[i];
-			if (!el.Visible || !IsTypeSupported(el.Type)) continue;
+			if (!el.Visible || !IsTypeSupported(el.Type) || silenced.Contains(OverlayLayers.Key(el))) continue;
 
 			SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
 			if (pos.X >= bounds.Left && pos.X <= bounds.Right && pos.Y >= bounds.Top && pos.Y <= bounds.Bottom) return el;
@@ -1391,6 +1619,7 @@ public partial class MainWindow
 			OverlayElementType.CameraInfo => CameraInfoSettingsPanel,
 			OverlayElementType.Compass => CompassSettingsPanel,
 			OverlayElementType.SunWidget => SunSettingsPanel,
+			OverlayElementType.RollGauge => RollSettingsPanel,
 			OverlayElementType.PitchGauge => PitchSettingsPanel,
 			OverlayElementType.GMeter => GMeterSettingsPanel,
 			OverlayElementType.ElapsedTimeText => ElapsedTimeSettingsPanel,
@@ -1398,6 +1627,10 @@ public partial class MainWindow
 			OverlayElementType.SpeedGauge => SpeedSettingsPanel,
 			OverlayElementType.MapWidget => MapSettingsPanel,
 			OverlayElementType.TripProgressBar => TripProgressBarSettingsPanel,
+			OverlayElementType.ProfileChart => ProfileChartSettingsPanel,
+			OverlayElementType.TripStat => TripStatSettingsPanel,
+			OverlayElementType.Text => TextSettingsPanel,
+			OverlayElementType.Image => ImageSettingsPanel,
 			_ => null
 		};
 	}
@@ -1446,6 +1679,17 @@ public partial class MainWindow
 		if (!e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 		if (FindElementAt(pos) is not { } el) return;
+
+		// A locked layer's widget can be picked (for its settings), not moved.
+		if (IsLayerLocked(el))
+		{
+			if (_selectedElementId == el.Id) return;
+
+			_selectedElementId = el.Id;
+			RebuildAddedWidgetsList();
+			RefreshSelectionHighlight();
+			return;
+		}
 
 		// Dragging needs a stable frame to align against, and it eliminates a real race:
 		// without pausing, the compose thread keeps calling RenderOnto on the same elements
@@ -1500,7 +1744,7 @@ public partial class MainWindow
 
 		elements[index] = elements[index] with { X = newX, Y = newY };
 		ReplaceActiveElements(elements);
-		_previewPlayer.SetLayout(elements);
+		ShowLayout();
 		if (_selectedElementId == id) RefreshSelectionHighlight();
 	}
 
@@ -1546,7 +1790,7 @@ public partial class MainWindow
 
 		elements[index] = el with { Scale = newScale };
 		ReplaceActiveElements(elements);
-		_previewPlayer.SetLayout(elements);
+		ShowLayout();
 		if (_selectedElementId == id) RefreshSelectionHighlight();
 	}
 
@@ -1678,6 +1922,14 @@ public partial class MainWindow
 	}
 
 	private sealed record LocaleOption(string Display, string? CultureName)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	private sealed record TripStatOption(string Display, TripStatKind Stat)
 	{
 		public override string ToString()
 		{

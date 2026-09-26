@@ -3,7 +3,7 @@ using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
 
-/// <summary>The round gauge widgets: SpeedGauge, PitchGauge, SunWidget (sun position + G-force readout) and GMeter.</summary>
+/// <summary>The round gauge widgets: SpeedGauge, RollGauge, PitchGauge, SunWidget (sun position + G-force readout) and GMeter, plus TripProgressBar.</summary>
 public sealed partial class OverlayRenderer
 {
 	private const double KmhToMph = 0.621371;
@@ -19,7 +19,7 @@ public sealed partial class OverlayRenderer
 	// those two gauges this one never went through TelemetryProcessor, so without this the dot/reading
 	// would jitter with every sample instead of tracking actual cornering/braking swings.
 	// Plots AccelY (lateral, screen-horizontal) and AccelX (longitudinal, screen-vertical) - the same
-	// two axes PitchGauge's own comment already verified (AccelX = forward/backward tilt, AccelY =
+	// two axes CameraTilt's comment already verified (AccelX = forward/backward tilt, AccelY =
 	// left/right lean), cross-checked against a dedicated tilt-test recording
 	// (right/left/floor/ceiling tilts at known timestamps): right tilt showed AccelY swing hugely
 	// negative with AccelX flat, left tilt the mirror positive swing, floor/ceiling tilts showed the
@@ -109,28 +109,46 @@ public sealed partial class OverlayRenderer
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 	}
 
+	private void DrawRollGauge(SKCanvas canvas, RollGaugeElement element, double rollDegrees)
+	{
+		const float radius = OverlayElementBounds.TiltRadius;
+
+		DrawTiltPanel(canvas);
+
+		// Roll is +-90 at most, so doubling it maps the full physical range onto the full ring - level sits at
+		// the top, and either direction sweeps round to meet at the bottom for a full 90 degree lean.
+		var angleRad = AngleMath.DegToRad(270 + Math.Clamp(rollDegrees, -90, 90) * 2);
+		canvas.DrawCircle((float)(Math.Cos(angleRad) * radius), (float)(Math.Sin(angleRad) * radius), 12, _dotFillAccent);
+
+		DrawOutlined(canvas, $"{F(rollDegrees, "0")}°", 0, 16, TextFont(element, OverlayElementBounds.LabelFontSize),
+			TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
+	}
+
+	/// <summary>
+	///     Seen from the side, facing right: level at 3 o'clock (the tick), nose up moves the dot up the right half of the
+	///     ring, nose down moves it down - +-90 covers the half. The line from the dot inwards reads as the camera's axis.
+	/// </summary>
 	private void DrawPitchGauge(SKCanvas canvas, PitchGaugeElement element, double pitchDegrees)
 	{
-		const float cx = 0;
-		const float cy = 0;
+		const float radius = OverlayElementBounds.TiltRadius;
 
-		DrawPanelShadow(canvas, cx, cy, OverlayElementBounds.PitchRadius);
-		canvas.DrawCircle(cx, cy, OverlayElementBounds.PitchRadius, _panelFillPaint);
-		canvas.DrawCircle(cx, cy, OverlayElementBounds.PitchRadius, _ringStroke5White150);
+		DrawTiltPanel(canvas);
+		canvas.DrawLine(radius - 18, 0, radius, 0, _ringStroke3White160);
 
-		// AccelY-derived roll saturates at +-90 (see TelemetryProcessor), so doubling it here maps the
-		// full physical range onto the full 360 degree ring - a level camera sits at top, and either
-		// tilt direction sweeps all the way around to meet at the bottom for a full 90 degree roll.
-		var clamped = Math.Clamp(pitchDegrees, -90, 90);
-		var angleDeg = 270 + clamped * 2;
-		var angleRad = AngleMath.DegToRad(angleDeg);
-		var dotX = cx + (float)(Math.Cos(angleRad) * OverlayElementBounds.PitchRadius);
-		var dotY = cy + (float)(Math.Sin(angleRad) * OverlayElementBounds.PitchRadius);
+		var angleRad = AngleMath.DegToRad(-Math.Clamp(pitchDegrees, -90, 90));
+		var (cos, sin) = ((float)Math.Cos(angleRad), (float)Math.Sin(angleRad));
+		canvas.DrawLine(cos * radius * 0.5f, sin * radius * 0.5f, cos * radius, sin * radius, _accentStroke4Round);
+		canvas.DrawCircle(cos * radius, sin * radius, 12, _dotFillAccent);
 
-		canvas.DrawCircle(dotX, dotY, 12, _dotFillAccent);
-
-		DrawOutlined(canvas, $"{F(pitchDegrees, "0")}°", cx, cy + 16, TextFont(element, OverlayElementBounds.LabelFontSize),
+		DrawOutlined(canvas, $"{F(pitchDegrees, "0")}°", 0, 16, TextFont(element, OverlayElementBounds.LabelFontSize),
 			TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
+	}
+
+	private void DrawTiltPanel(SKCanvas canvas)
+	{
+		DrawPanelShadow(canvas, 0, 0, OverlayElementBounds.TiltRadius);
+		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, _panelFillPaint);
+		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, _ringStroke5White150);
 	}
 
 	private void DrawGMeter(SKCanvas canvas, DerivedFrame frame, GMeterElement element)

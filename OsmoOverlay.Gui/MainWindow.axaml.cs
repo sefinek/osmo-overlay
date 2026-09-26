@@ -107,20 +107,24 @@ public partial class MainWindow : Window
 		DateTimeLocaleCombo.ItemsSource = LocaleOptions;
 		UtcTimeFormatCombo.ItemsSource = DateFormatOptions;
 		UtcTimeLocaleCombo.ItemsSource = LocaleOptions;
+		TripStatCombo.ItemsSource = TripStatOptions;
 
 		ElementTimingEditor[] timingEditors =
 		[
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
-			SpeedTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
-			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming
+			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
+			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
+			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming
 		];
 		foreach (ElementTimingEditor timing in timingEditors) timing.TimingChanged += OnElementTimingChanged;
+		_presetSaveDelay.Tick += (_, _) => SaveOverlayPresets();
 
-		// Compass/MapWidget/TripProgressBar have no text of their own to style, so no Style editor.
+		// Compass/MapWidget/TripProgressBar/Image have no text of their own to style, so no Style editor.
 		ElementStyleEditor[] styleEditors =
 		[
-			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, PitchStyle, SunStyle,
-			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle
+			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, RollStyle, PitchStyle, SunStyle,
+			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
+			ProfileChartStyle, TripStatStyle, TextStyle
 		];
 		foreach (ElementStyleEditor style in styleEditors) style.StyleChanged += OnElementStyleChanged;
 
@@ -138,6 +142,7 @@ public partial class MainWindow : Window
 		WirePreviewQuality();
 		WireSpeed();
 		WireTimelineTracks();
+		WireLayers();
 		WirePreviewZoom();
 		WirePreviewShortcuts();
 
@@ -487,6 +492,7 @@ public partial class MainWindow : Window
 
 	protected override void OnClosed(EventArgs e)
 	{
+		if (_presetSaveDelay.IsEnabled) SaveOverlayPresets();
 		SavePlacement();
 		_previewPlayer.Dispose();
 		base.OnClosed(e);

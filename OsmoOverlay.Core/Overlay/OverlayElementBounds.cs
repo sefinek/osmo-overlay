@@ -20,11 +20,13 @@ public static class OverlayElementBounds
 	public const float CompassRadius = 260f;
 	public const float SunRadius = 90f;
 	public const float SpeedRadius = 260f;
-	public const float PitchRadius = 95f;
+	public const float TiltRadius = 95f;
 	public const float MapRadius = 260f;
 	public const float GMeterRadius = 110f;
 	public const float LabelBelowRadiusOffset = 56f;
 	public const float LabelBelowRadiusPadding = LabelBelowRadiusOffset + 14f;
+	// ElapsedTimeText's optional caption: its baseline this far above the time's.
+	public const float CaptionAboveOffset = 56f;
 
 	public const float DateFontSize = 46f;
 	public const float LabelFontSize = 30f;
@@ -41,6 +43,16 @@ public static class OverlayElementBounds
 
 	public const float ProgressBarWidth = 760f;
 	public const float ProgressBarHeight = 60f;
+
+	// ProfileChart: label and current value on a line at y=0, the chart panel below it.
+	public const float ChartWidth = 760f;
+	public const float ChartTop = 24f;
+	public const float ChartHeight = 220f;
+
+	// Image: larger sides are refused rather than decoded (a 16K x 16K PNG is a 1 GB bitmap). An image not picked
+	// yet gets a box of ImagePlaceholder size, so there's something to grab and open the settings from.
+	public const int MaxImageDimension = 8192;
+	private static readonly SKSize ImagePlaceholder = new(480, 270);
 
 	// DrawStat (Elevation/Gradient/Distance) and DrawCameraInfo's own fixed layout - the y-offsets each
 	// line's baseline sits at, in the same reference-pixel space GetBounds measures in. Kept here (not
@@ -62,6 +74,8 @@ public static class OverlayElementBounds
 	private const string SampleIsoText = "ISO 12800";
 	private const string SampleShutterText = "1/8000 S";
 	private const string SampleColorTempText = "9900 K";
+	private const string SampleTripStatValue = "9999";
+	private const string SampleChartValue = "9999 KM/H";
 
 	// Lives for the process lifetime rather than being disposed - this is a static utility class with
 	// no owner to call Dispose, the same "cheap, kept forever" pattern already used for the GUI's own
@@ -72,6 +86,11 @@ public static class OverlayElementBounds
 	private static readonly SKTypeface HudTypeface = CreateHudTypeface();
 	private static readonly Dictionary<string, SKTypeface> TypefacesByFamily = [];
 	private static readonly Dictionary<(string Family, float Size), SKFont> FontsBySize = [];
+	// Read by the GUI's hit-testing and by OverlayRenderer on the preview's compose thread - hence the lock. One entry per
+	// file ever picked, so it's simply emptied past MaxCachedImageSizes.
+	private const int MaxCachedImageSizes = 64;
+	private static readonly Dictionary<string, (DateTime Modified, SKSizeI? Size)> ImageSizes = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly Lock ImageSizesLock = new();
 
 	public static float GetScale(int width, int height)
 	{
@@ -128,11 +147,11 @@ public static class OverlayElementBounds
 	///     `cameraModel`/`fontFamily` let a caller that already has the real OverlayElement (and, for
 	///     CameraModelText, the file's actual camera model) measure the box against what will really be
 	///     drawn instead of a generic placeholder - all optional since a caller mid-drag (SnapToGuides) may
-	///     only have the type.
+	///     only have the type. `text` is a Text widget's own text, `imagePath` an Image widget's file.
 	/// </summary>
 	public static SKRect GetBounds(OverlayElementType type, float x, float y, float scale,
 		string? dateFormat = null, string? locale = null, string? label = null, string? cameraModel = null,
-		string? fontFamily = null)
+		string? fontFamily = null, string? text = null, string? imagePath = null)
 	{
 		SKRect local = type switch
 		{
@@ -141,12 +160,23 @@ public static class OverlayElementBounds
 			// span, so a short sample still yields a box tall enough for real text with descenders/accents.
 			OverlayElementType.DateTimeText => MeasureLine(SampleDateTimeText(dateFormat, locale), DateFontSize, fontFamily),
 			OverlayElementType.UtcTimeText => MeasureLine(SampleDateTimeText(dateFormat, locale) + "  UTC", DateFontSize, fontFamily),
-			OverlayElementType.ElapsedTimeText => MeasureLine(OverlayTimeFormatting.FormatElapsed(SampleElapsedSeconds), DateFontSize, fontFamily),
+			OverlayElementType.ElapsedTimeText => string.IsNullOrWhiteSpace(label)
+				? MeasureLine(OverlayTimeFormatting.FormatElapsed(SampleElapsedSeconds), DateFontSize, fontFamily)
+				: SKRect.Union(MeasureLine(OverlayTimeFormatting.FormatElapsed(SampleElapsedSeconds), DateFontSize, fontFamily),
+					OffsetY(MeasureLine(label.ToUpperInvariant(), LabelFontSize, fontFamily), -CaptionAboveOffset)),
 			OverlayElementType.CameraModelText => MeasureLine(cameraModel ?? SampleCameraModel, DateFontSize, fontFamily),
 			OverlayElementType.Elevation => MeasureStat(label ?? "ELEVATION", SampleElevationValue, "M", fontFamily),
 			OverlayElementType.Gradient => MeasureStat(label ?? "GRADIENT", SampleGradientValue, "%", fontFamily),
 			OverlayElementType.Distance => MeasureStat(label ?? "TOTAL DISTANCE", SampleDistanceValue, "KM", fontFamily),
 			OverlayElementType.CameraInfo => MeasureCameraInfo(label ?? "CAMERA", fontFamily),
+			// The widest built-in caption, since the one shown depends on the stat picked.
+			OverlayElementType.TripStat => MeasureStat(label ?? OverlayRenderer.DefaultTripStatLabel(TripStatKind.ElevationLoss),
+				SampleTripStatValue, "KM/H", fontFamily),
+			OverlayElementType.Text => MeasureText(text ?? OverlayRenderer.TextDefault, fontFamily),
+			OverlayElementType.ProfileChart => MeasureChart(label ?? "ELEVATION", fontFamily),
+			OverlayElementType.Image => ImageSize(imagePath) is { } size
+				? new SKRect(0, 0, size.Width, size.Height)
+				: new SKRect(0, 0, ImagePlaceholder.Width, ImagePlaceholder.Height),
 			// TripProgressBar's anchor is the bar's vertical/horizontal center (DrawTripProgressBar
 			// translates to (x, y) and draws the track symmetrically around it), unlike the text panels
 			// above whose anchor is a corner - so the hit box is centered on (x, y) too.
@@ -154,7 +184,7 @@ public static class OverlayElementBounds
 				new SKRect(-ProgressBarWidth / 2, -ProgressBarHeight / 2, ProgressBarWidth / 2, ProgressBarHeight / 2),
 			OverlayElementType.Compass => CircleLocal(CompassRadius),
 			OverlayElementType.SunWidget => CircleWithBottomLabelLocal(SunRadius),
-			OverlayElementType.PitchGauge => CircleLocal(PitchRadius),
+			OverlayElementType.RollGauge or OverlayElementType.PitchGauge => CircleLocal(TiltRadius),
 			OverlayElementType.SpeedGauge => CircleLocal(SpeedRadius),
 			OverlayElementType.MapWidget => CircleLocal(MapRadius),
 			OverlayElementType.GMeter => CircleWithBottomLabelLocal(GMeterRadius),
@@ -208,6 +238,11 @@ public static class OverlayElementBounds
 		return (metrics.Ascent, metrics.Descent, font.MeasureText(text));
 	}
 
+	private static SKRect OffsetY(SKRect rect, float dy)
+	{
+		return new SKRect(rect.Left, rect.Top + dy, rect.Right, rect.Bottom + dy);
+	}
+
 	/// <summary>
 	///     A single line of DrawOutlined text with its baseline at local (0, 0): horizontal extent from
 	///     measuring the actual text, vertical extent from the font's ascent/descent (see GetBounds' doc).
@@ -233,6 +268,75 @@ public static class OverlayElementBounds
 		var bottom = Math.Max(labelDescent, Math.Max(StatValueBaselineY + valueDescent, StatValueBaselineY + unitDescent)) + pad;
 		var right = Math.Max(labelWidth, valueWidth + StatUnitGapX + unitWidth) + pad;
 		return new SKRect(-pad, top, right, bottom);
+	}
+
+	/// <summary>Mirrors DrawText: one line per TextLines entry, font.Spacing apart.</summary>
+	private static SKRect MeasureText(string text, string? family)
+	{
+		SKFont font = GetFont(family, DateFontSize);
+		var lines = TextLines(text);
+		var width = lines.Max(line => font.MeasureText(line));
+		font.GetFontMetrics(out SKFontMetrics metrics);
+		var pad = DateFontSize * 0.09f;
+		return new SKRect(-pad, metrics.Ascent - pad, width + pad, (lines.Length - 1) * font.Spacing + metrics.Descent + pad);
+	}
+
+	/// <summary>Mirrors DrawProfileChart: label and value on the y=0 line, the panel from ChartTop down.</summary>
+	private static SKRect MeasureChart(string label, string? family)
+	{
+		var (labelAscent, _, labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
+		var (valueAscent, _, _) = LineExtent(SampleChartValue, SmallFontSize, family);
+		var pad = SmallFontSize * 0.09f;
+		return new SKRect(-pad, Math.Min(labelAscent, valueAscent) - pad, Math.Max(ChartWidth, labelWidth) + pad, ChartTop + ChartHeight + pad);
+	}
+
+	/// <summary>A Text widget's lines - line breaks of any kind, never none (an empty text is one empty line).</summary>
+	public static string[] TextLines(string? text)
+	{
+		return (text ?? "").ReplaceLineEndings("\n").Split('\n');
+	}
+
+	/// <summary>
+	///     An image file's pixel size read from its header (no decoding), or null when it isn't a readable image or is
+	///     larger than MaxImageDimension a side. Cached per path until the file's modification time changes.
+	/// </summary>
+	public static SKSizeI? ImageSize(string? path)
+	{
+		if (string.IsNullOrWhiteSpace(path)) return null;
+
+		DateTime modified;
+		try
+		{
+			modified = File.GetLastWriteTimeUtc(path);
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+
+		lock (ImageSizesLock)
+		{
+			if (ImageSizes.TryGetValue(path, out var cached) && cached.Modified == modified) return cached.Size;
+		}
+
+		SKSizeI? size = null;
+		try
+		{
+			using SKCodec? codec = SKCodec.Create(path);
+			if (codec is { Info: { Width: > 0 and <= MaxImageDimension, Height: > 0 and <= MaxImageDimension } info })
+				size = new SKSizeI(info.Width, info.Height);
+		}
+		catch (Exception)
+		{
+			// Not an image Skia can read - no size, like a missing file.
+		}
+
+		lock (ImageSizesLock)
+		{
+			if (ImageSizes.Count >= MaxCachedImageSizes && !ImageSizes.ContainsKey(path)) ImageSizes.Clear();
+			ImageSizes[path] = (modified, size);
+		}
+		return size;
 	}
 
 	/// <summary>Mirrors DrawCameraInfo's layout: an uppercased label at y=0, then three lines at CameraInfoLineBaselineYs.</summary>

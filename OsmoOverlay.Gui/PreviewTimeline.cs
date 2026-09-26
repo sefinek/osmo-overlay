@@ -30,10 +30,11 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 {
-	private const double RulerHeight = 26;
-	private const double VideoTrackHeight = 64;
-	private const double AudioTrackHeight = VideoTrackHeight;
-	private const double TrackGap = 2;
+	// Public for the track headers beside the expanded timeline (MainWindow.axaml).
+	public const double RulerHeight = 26;
+	public const double VideoTrackHeight = 64;
+	public const double AudioTrackHeight = VideoTrackHeight;
+	public const double TrackGap = 2;
 	private const double StripeSpacing = 7;
 	private const double StripePixelsPerSecond = 8;
 	// The stripes move 8 px a second - ~30 steps a second is smooth, redrawing on every display refresh (144-280 Hz,
@@ -51,6 +52,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double CompactTrackHeight = 6;
 	private const double CompactCutHeight = 16;
 	private const double CompactSelectionHeight = 24;
+	// Room after the recording's end on the expanded timeline, so the end - and whatever ends there, a cut or a widget's
+	// layer - sits in view and can be grabbed rather than on the control's last pixel.
+	private const double ExpandedEndPadding = 32;
 	// Generated content redraws the tracks layer at most this often: after a zoom step every tile wants a new
 	// thumbnail, one every ~15 ms, and a full layer redraw per thumbnail kept the UI thread busy for half a second.
 	private static readonly TimeSpan ContentRefreshInterval = TimeSpan.FromMilliseconds(100);
@@ -174,12 +178,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	// The compact track keeps the thumb whole at 0 and at Maximum.
 	private double Inset => _expanded ? 0 : CompactThumbRadius;
 
+	private double TimeWidth => Math.Max(0, Bounds.Width - 2 * Inset - (_expanded ? ExpandedEndPadding : 0));
+
 	public double ViewStart { get; private set; }
-	public double ViewLength => PixelsPerSecond > 0 ? Math.Max(0, Bounds.Width - 2 * Inset) / PixelsPerSecond : Duration;
+	public double ViewLength => PixelsPerSecond > 0 ? TimeWidth / PixelsPerSecond : Duration;
 
 	private double Duration => Math.Max(0, Maximum - Minimum);
-	private double FitPixelsPerSecond => Duration > 0 ? Math.Max(0, Bounds.Width - 2 * Inset) / Duration : 0;
-	private double PixelsPerSecond => FitPixelsPerSecond * _zoom;
+	private double FitPixelsPerSecond => Duration > 0 ? TimeWidth / Duration : 0;
+	public double PixelsPerSecond => FitPixelsPerSecond * _zoom;
 	private double MaxZoom => FitPixelsPerSecond > 0 ? Math.Max(1, _fps * MaxPixelsPerFrame / FitPixelsPerSecond) : 1;
 
 	public IReadOnlyList<TimeRange> Cuts
@@ -653,23 +659,43 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
 	{
 		base.OnPointerWheelChanged(e);
-		if (!_expanded || Duration <= 0) return;
+		if (Wheel(e.GetPosition(this).X, e.Delta, e.KeyModifiers)) e.Handled = true;
+	}
 
-		var x = e.GetPosition(this).X;
-		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift) || Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y))
+	/// <summary>
+	///     Wheel zoom around `x` (this control's coordinates), Shift+wheel or a sideways wheel scrolls - also for the layer
+	///     tracks under it (LayerTimeline), which share this view. False when there's nothing to zoom.
+	/// </summary>
+	public bool Wheel(double x, Vector delta, KeyModifiers modifiers)
+	{
+		if (!_expanded || Duration <= 0) return false;
+
+		if (modifiers.HasFlag(KeyModifiers.Shift) || Math.Abs(delta.X) > Math.Abs(delta.Y))
 		{
-			var delta = Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y) ? e.Delta.X : e.Delta.Y;
-			SetView(_zoom, ViewStart - delta * ViewLength * 0.1);
+			var step = Math.Abs(delta.X) > Math.Abs(delta.Y) ? delta.X : delta.Y;
+			SetView(_zoom, ViewStart - step * ViewLength * 0.1);
 		}
 		else
 		{
 			// Zooms around the time under the pointer, which stays where it is.
 			var anchor = TimeAt(x);
-			var zoom = Math.Clamp(_zoom * Math.Pow(WheelZoomStep, e.Delta.Y), 1, MaxZoom);
+			var zoom = Math.Clamp(_zoom * Math.Pow(WheelZoomStep, delta.Y), 1, MaxZoom);
 			SetView(zoom, anchor - x / (FitPixelsPerSecond * zoom));
 		}
 
-		e.Handled = true;
+		return true;
+	}
+
+	/// <summary>A recording time's x in this control - the layer tracks draw on the same mapping.</summary>
+	public double XOf(double seconds)
+	{
+		return X(seconds);
+	}
+
+	/// <summary>The recording time at x in this control, clamped to the recording.</summary>
+	public double SecondsAt(double x)
+	{
+		return ValueAt(x);
 	}
 
 	protected override void OnPointerPressed(PointerPressedEventArgs e)

@@ -19,6 +19,7 @@ internal sealed class OverlayCompositor : IDisposable
 	private readonly FrameBufferPool _pool;
 	private readonly IReadOnlyList<DerivedFrame> _recordingFrames;
 	private readonly OverlayAvailability _availability;
+	private readonly double _recordingDurationSeconds;
 	private IReadOnlyList<DerivedFrame> _frames;
 	private OutputTimeline? _timeline;
 	private bool _showOverlay;
@@ -27,16 +28,19 @@ internal sealed class OverlayCompositor : IDisposable
 	private bool _disposed;
 
 	/// <param name="recordingFrames">Telemetry on the recording's own timeline - mapped per the output timeline from here on.</param>
+	/// <param name="recordingDurationSeconds">The whole recording's length - the output's while nothing is cut.</param>
 	public OverlayCompositor(Func<IReadOnlyList<DerivedFrame>, OverlayRenderer> createRenderer, IReadOnlyList<DerivedFrame> recordingFrames,
-		OverlayAvailability availability, OutputTimeline? timeline, bool showOverlay, FrameBufferPool pool)
+		double recordingDurationSeconds, OverlayAvailability availability, OutputTimeline? timeline, bool showOverlay, FrameBufferPool pool)
 	{
 		_recordingFrames = recordingFrames;
+		_recordingDurationSeconds = recordingDurationSeconds;
 		_availability = availability;
 		_timeline = timeline;
 		_showOverlay = showOverlay;
 		_pool = pool;
 		_frames = MapToOutput(timeline);
 		Renderer = createRenderer(_frames);
+		Renderer.OutputDurationSeconds = OutputDuration(timeline);
 	}
 
 	/// <summary>
@@ -92,6 +96,7 @@ internal sealed class OverlayCompositor : IDisposable
 			_timeline = timeline;
 			_frames = MapToOutput(timeline);
 			Renderer.SetFrames(_frames, _frames[0].Raw.AltitudeMeters, TelemetryProcessor.Summarize(_frames).MaxSpeedKmh);
+			Renderer.OutputDurationSeconds = OutputDuration(timeline);
 			return RecomposeLocked();
 		}
 	}
@@ -160,6 +165,11 @@ internal sealed class OverlayCompositor : IDisposable
 	private double? OutputSeconds(TimeSpan position)
 	{
 		return _timeline is { } timeline ? timeline.ToOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
+	}
+
+	private double OutputDuration(OutputTimeline? timeline)
+	{
+		return timeline?.DurationSeconds ?? _recordingDurationSeconds;
 	}
 
 	private IReadOnlyList<DerivedFrame> MapToOutput(OutputTimeline? timeline)

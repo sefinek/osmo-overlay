@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
-///     How a widget transitions in/out of the frame at its AppearAtSeconds/DisappearAtSeconds edges (see
-///     OverlayElement). None is an instant hard cut - no fade, no offset. The slide directions name where the widget slides *in from* (SlideUp enters moving
-///     upward from below its resting position, etc.), mirrored in reverse on the way out.
+///     How a widget transitions into or out of the frame at its AppearAtSeconds/DisappearAtSeconds edges (see
+///     ElementAnimation). None is an instant hard cut - no fade, no offset. The slide directions name the way the widget
+///     moves: coming in, SlideUp rises into place from below; going out, SlideUp rises out of it.
 /// </summary>
 public enum OverlayAnimationType
 {
@@ -25,7 +25,7 @@ public enum OverlayElementType
 	Distance,
 	Compass,
 	SunWidget,
-	PitchGauge,
+	RollGauge,
 	SpeedGauge,
 	MapWidget,
 	UtcTimeText,
@@ -33,15 +33,20 @@ public enum OverlayElementType
 	ElapsedTimeText,
 	CameraModelText,
 	GMeter,
-	TripProgressBar
+	TripProgressBar,
+	PitchGauge,
+	ProfileChart,
+	TripStat,
+	Text,
+	Image
 }
 
 /// <summary>
 ///     One positionable widget in the HUD. X/Y is the anchor point - top-left for text elements,
 ///     circle center for round gauges/widgets. Base type carries only what every widget type needs
 ///     regardless of what it draws: position, visibility, id, per-widget resize (Scale) and the
-///     appear/disappear timing/animation (AppearAtSeconds/DisappearAtSeconds/AnimationType/
-///     AnimationDurationSeconds - see OverlayRenderer.ElementProgress). Everything type-specific lives
+///     appear/disappear timing/animation (AppearAtSeconds/DisappearAtSeconds, AnimationType/AnimationDurationSeconds on
+///     the way in, OutAnimationType/OutAnimationDurationSeconds on the way out - see ElementAnimation). Everything type-specific lives
 ///     on the matching subtype below instead of being a "carried but ignored" field on every other type -
 ///     see the intermediate abstract types for the shared groups (style, labeled-stat, time-text, trail).
 ///     Type is a computed discriminator (each leaf overrides it to a fixed value) rather than a stored
@@ -65,7 +70,7 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(DistanceElement), (int)OverlayElementType.Distance)]
 [JsonDerivedType(typeof(CompassElement), (int)OverlayElementType.Compass)]
 [JsonDerivedType(typeof(SunWidgetElement), (int)OverlayElementType.SunWidget)]
-[JsonDerivedType(typeof(PitchGaugeElement), (int)OverlayElementType.PitchGauge)]
+[JsonDerivedType(typeof(RollGaugeElement), (int)OverlayElementType.RollGauge)]
 [JsonDerivedType(typeof(SpeedGaugeElement), (int)OverlayElementType.SpeedGauge)]
 [JsonDerivedType(typeof(MapWidgetElement), (int)OverlayElementType.MapWidget)]
 [JsonDerivedType(typeof(UtcTimeTextElement), (int)OverlayElementType.UtcTimeText)]
@@ -74,6 +79,11 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(CameraModelTextElement), (int)OverlayElementType.CameraModelText)]
 [JsonDerivedType(typeof(GMeterElement), (int)OverlayElementType.GMeter)]
 [JsonDerivedType(typeof(TripProgressBarElement), (int)OverlayElementType.TripProgressBar)]
+[JsonDerivedType(typeof(PitchGaugeElement), (int)OverlayElementType.PitchGauge)]
+[JsonDerivedType(typeof(ProfileChartElement), (int)OverlayElementType.ProfileChart)]
+[JsonDerivedType(typeof(TripStatElement), (int)OverlayElementType.TripStat)]
+[JsonDerivedType(typeof(TextElement), (int)OverlayElementType.Text)]
+[JsonDerivedType(typeof(ImageElement), (int)OverlayElementType.Image)]
 public abstract record OverlayElement
 {
 	[JsonIgnore] public abstract OverlayElementType Type { get; }
@@ -87,12 +97,22 @@ public abstract record OverlayElement
 	public double? DisappearAtSeconds { get; init; }
 	public OverlayAnimationType AnimationType { get; init; } = OverlayAnimationType.None;
 	public double AnimationDurationSeconds { get; init; } = OverlayRenderer.AnimationDurationSecondsDefault;
+	// Null: no way out (a hard cut), and the default length once one is picked (ElementAnimation).
+	public OverlayAnimationType? OutAnimationType { get; init; }
+	public double? OutAnimationDurationSeconds { get; init; }
+
+	/// <summary>
+	///     The layer this widget is on in the GUI's layer view - widgets sharing one are drawn one after another. Null: a layer
+	///     of its own (the default), keyed by its Id, so a widget another one was put next to keeps that layer by its own Id.
+	///     The renderer doesn't read it - the layout's order is the draw order, which the GUI keeps grouped by layer.
+	/// </summary>
+	public string? LayerId { get; init; }
 }
 
 /// <summary>
 ///     FontFamily/TextColor/OutlineColor/OutlineWidth style the text-based widgets and every round
 ///     gauge's own text readout - shared by every OverlayElementType except Compass/MapWidget/
-///     TripProgressBar (see OverlayRenderer.TextWidgets.cs/OverlayRenderer.Gauges.cs). Null/1 means "use
+///     TripProgressBar/Image (see OverlayRenderer.TextWidgets.cs/OverlayRenderer.Gauges.cs). Null/1 means "use
 ///     the built-in default" (white text, the built-in near-black outline at its normal width, the
 ///     built-in HUD font) - an invalid hex or a font family not installed on this machine falls back
 ///     rather than throwing, same fail-soft policy as TrailColor/DateFormat.
@@ -106,9 +126,10 @@ public abstract record StyledOverlayElement : OverlayElement
 }
 
 /// <summary>
-///     The four label+value stat widgets (Elevation/Gradient/Distance/CameraInfo): Label overrides the
+///     The labeled widgets (Elevation/Gradient/Distance/CameraInfo/TripStat/ProfileChart): Label overrides the
 ///     built-in caption, AccentColor styles the value text specifically (distinct from TextColor, which
-///     styles the label/unit text) - see OverlayRenderer.TextWidgets.cs DrawStat/DrawCameraInfo.
+///     styles the label/unit text; ProfileChart's line and fill too) - see OverlayRenderer.TextWidgets.cs
+///     DrawStat/DrawCameraInfo and OverlayRenderer.Charts.cs.
 /// </summary>
 public abstract record LabeledStatElement : StyledOverlayElement
 {
@@ -169,9 +190,11 @@ public sealed record UtcTimeTextElement : TimeTextElementBase
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.UtcTimeText;
 }
 
+/// <summary>Label: an optional caption above the time - null/empty draws the time alone (unlike LabeledStatElement, no built-in caption).</summary>
 public sealed record ElapsedTimeTextElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ElapsedTimeText;
+	public string? Label { get; init; }
 }
 
 public sealed record CameraModelTextElement : StyledOverlayElement
@@ -185,6 +208,13 @@ public sealed record SpeedGaugeElement : StyledOverlayElement
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 }
 
+/// <summary>Left/right lean - DerivedFrame.RollDegrees.</summary>
+public sealed record RollGaugeElement : StyledOverlayElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.RollGauge;
+}
+
+/// <summary>Nose up/down - DerivedFrame.PitchDegrees.</summary>
 public sealed record PitchGaugeElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.PitchGauge;
@@ -253,4 +283,61 @@ public sealed record TripProgressBarElement : OverlayElement
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 	public double TripArrivedToleranceMeters { get; init; } = OverlayRenderer.TripArrivedToleranceMetersDefault;
 	public string TripArrivedLabel { get; init; } = OverlayRenderer.TripArrivedLabelDefault;
+}
+
+public enum ProfileSeries
+{
+	Elevation,
+	Speed
+}
+
+public enum ProfileAxis
+{
+	Distance,
+	Time
+}
+
+/// <summary>The whole recording's elevation or speed as a chart, what's been covered so far highlighted - see OverlayRenderer.Charts.cs.</summary>
+public sealed record ProfileChartElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ProfileChart;
+	public ProfileSeries Series { get; init; } = ProfileSeries.Elevation;
+	public ProfileAxis Axis { get; init; } = ProfileAxis.Distance;
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+}
+
+public enum TripStatKind
+{
+	MaxSpeed,
+	AverageSpeed,
+	ElevationGain,
+	ElevationLoss,
+	MovingTime
+}
+
+/// <summary>A running statistic - its value up to the frame shown, not the whole recording's (TripStats).</summary>
+public sealed record TripStatElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.TripStat;
+	public TripStatKind Stat { get; init; } = TripStatKind.MaxSpeed;
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+}
+
+/// <summary>Free text, one or more lines.</summary>
+public sealed record TextElement : StyledOverlayElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Text;
+	public string Text { get; init; } = OverlayRenderer.TextDefault;
+}
+
+/// <summary>
+///     A PNG/JPEG/WebP file (a logo, a watermark of your own) drawn at its own pixel size at the 4K reference, top-left
+///     at X/Y. ImagePath is absolute - a preset moved to another machine draws nothing until it's picked again.
+///     Opacity 0..1.
+/// </summary>
+public sealed record ImageElement : OverlayElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Image;
+	public string? ImagePath { get; init; }
+	public float Opacity { get; init; } = 1f;
 }

@@ -12,7 +12,7 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Rendered on your computer, not your phone** - unlike the overlay in DJI Mimo: no drop to 8-bit H.264 at a lower bitrate, audio untouched, no long wait with the phone unlocked and the app open, no phone as hot as an oven.
 - **Joins split recordings** - the camera splits long recordings into files of about 25 minutes, and OsmoOverlay joins them into one video without breaking the route.
 - **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance.
-- **15 widgets** - including a speedometer, map, compass with route, tilt, G-meter, altitude, distance, and date and time. Metric or imperial units.
+- **20 widgets** - including a speedometer, map, compass with route, roll and pitch, G-meter, elevation and speed charts, trip statistics, altitude, distance, date and time, and your own text or logo. Metric or imperial units.
 - **Route card** - an optional summary at the start of the video: the whole route on a map, distance, speeds, elevation gain and ride time.
 - **Satellite or standard map** - several built-in map sources or your own tile server.
 - **Drag-and-drop editor** - position, size, fonts, colors, appear and disappear animations. Presets can be exported and shared.
