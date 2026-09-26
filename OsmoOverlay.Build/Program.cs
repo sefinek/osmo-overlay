@@ -191,7 +191,7 @@ string? FindIscc()
 		Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Inno Setup 7", "ISCC.exe"),
 		Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Inno Setup 7", "ISCC.exe"),
 		.. (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-			.Select(dir => Path.Combine(dir, "ISCC.exe"))
+		.Select(dir => Path.Combine(dir, "ISCC.exe"))
 	];
 	return candidates.FirstOrDefault(File.Exists);
 }

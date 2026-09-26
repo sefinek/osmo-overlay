@@ -1,3 +1,4 @@
+using System.Text.Json;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Updates;
@@ -33,7 +34,7 @@ internal static class UpdateChecks
 		// Off the UI thread: every tool spawns processes (ffmpeg -version, winget/brew/apt-cache), a couple of seconds together.
 		Task<(AppRelease?, bool)> app = Task.Run(CheckAppAsync);
 		Task<IReadOnlyList<ToolVersionInfo>> dependencies = Task.Run(CheckDependenciesAsync);
-		var (release, failed) = await app;
+		(AppRelease? release, var failed) = await app;
 		return new UpdateCheckResult(release, failed, await dependencies);
 	}
 
@@ -43,7 +44,7 @@ internal static class UpdateChecks
 		{
 			return (await AppUpdates.GetLatestAsync(CancellationToken.None), false);
 		}
-		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or System.Text.Json.JsonException)
+		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or JsonException)
 		{
 			AppLogger.Warn(ex, "Could not check for a new version of OsmoOverlay");
 			return (null, true);

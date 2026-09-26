@@ -454,7 +454,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>Drops the least recently drawn quarter - the tiles of the layer being drawn were all used just now, so none of them.</summary>
 	private void EvictThumbnailBitmaps()
 	{
-		foreach (var (slot, cached) in _thumbnailBitmaps.OrderBy(p => p.Value.LastUse).Take(MaxThumbnailBitmaps / 4).ToList())
+		foreach ((var slot, CachedThumbnail cached) in _thumbnailBitmaps.OrderBy(p => p.Value.LastUse).Take(MaxThumbnailBitmaps / 4).ToList())
 		{
 			cached.Bitmap.Dispose();
 			_thumbnailBitmaps.Remove(slot);

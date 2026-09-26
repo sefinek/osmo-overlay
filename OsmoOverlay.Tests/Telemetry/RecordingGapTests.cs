@@ -68,7 +68,7 @@ public sealed class RecordingGapTests
 			if (!frames[i].StartsAfterGap)
 				frames[i] = frames[i] with { Latitude = frames[i - 1].Latitude };
 
-		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, smoothGps: true);
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, true);
 
 		Assert.AreEqual(frames[99].Latitude, derived[99].Raw.Latitude);
 	}

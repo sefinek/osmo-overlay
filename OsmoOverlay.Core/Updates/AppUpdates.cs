@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
@@ -66,7 +67,7 @@ public static class AppUpdates
 		timeout.CancelAfter(TimeSpan.FromSeconds(20));
 
 		using HttpResponseMessage response = await Http.GetAsync(LatestReleaseApi, timeout.Token);
-		if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+		if (response.StatusCode == HttpStatusCode.NotFound) return null;
 		response.EnsureSuccessStatusCode();
 
 		JsonNode json = JsonNode.Parse(await response.Content.ReadAsStringAsync(timeout.Token))

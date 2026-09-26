@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;

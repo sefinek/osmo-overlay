@@ -6,15 +6,15 @@ namespace OsmoOverlay.Tests.Dependencies;
 public sealed class DependencyVersionsTests
 {
 	private const string ShowVersionsOutput = """
-		Found FFmpeg (Shared) [Gyan.FFmpeg.Shared]
-		Version
-		-------
-		10.0
-		9.0.2
-		9.0.1
-		9.0
-		8.1.2
-		""";
+	                                          Found FFmpeg (Shared) [Gyan.FFmpeg.Shared]
+	                                          Version
+	                                          -------
+	                                          10.0
+	                                          9.0.2
+	                                          9.0.1
+	                                          9.0
+	                                          8.1.2
+	                                          """;
 
 	[TestMethod]
 	public void ParseVersionList_TakesOnlyVersionLines()

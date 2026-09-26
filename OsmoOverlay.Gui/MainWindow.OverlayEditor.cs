@@ -827,7 +827,7 @@ public partial class MainWindow
 	private void OnElevationReferenceChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		var reference = ElevationSeaLevelRadio.IsChecked == true ? ElevationReference.SeaLevel : ElevationReference.Start;
+		ElevationReference reference = ElevationSeaLevelRadio.IsChecked == true ? ElevationReference.SeaLevel : ElevationReference.Start;
 		UpdateElement(id, el => el is ElevationElement x ? x with { Reference = reference } : el);
 	}
 

@@ -26,7 +26,10 @@ public static class LibavLoader
 	{
 		get
 		{
-			lock (Gate) return _loaded;
+			lock (Gate)
+			{
+				return _loaded;
+			}
 		}
 	}
 

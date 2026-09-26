@@ -7,7 +7,11 @@ namespace OsmoOverlay.Core.Dependencies;
 
 /// <param name="LatestVersion">The newest version this app can use (within ExternalTool.SupportedMajorVersion) - what Update installs.</param>
 /// <param name="UnsupportedVersion">A newer major than the app supports, when one is out - never offered as an update.</param>
-public sealed record ToolVersionInfo(ExternalTool Tool, string? InstalledVersion, string? LatestVersion, bool UpdateAvailable,
+public sealed record ToolVersionInfo(
+	ExternalTool Tool,
+	string? InstalledVersion,
+	string? LatestVersion,
+	bool UpdateAvailable,
 	string? UnsupportedVersion);
 
 public static partial class DependencyVersionChecker
@@ -40,7 +44,7 @@ public static partial class DependencyVersionChecker
 		await Task.WhenAll(installedTask, availableTask);
 
 		var installed = installedTask.Result;
-		var (available, canUpgrade) = availableTask.Result;
+		(IReadOnlyList<string> available, var canUpgrade) = availableTask.Result;
 		var latest = PickLatest(available, tool.SupportedMajorVersion);
 		var newest = PickLatest(available, null);
 		var unsupported = tool.SupportedMajorVersion is { } major && MajorOf(newest) > major ? newest : null;
