@@ -103,7 +103,7 @@ public sealed class CameraTiltTests
 	[TestMethod]
 	public void WithoutAGpsFix_NothingIsTakenOut()
 	{
-		var drive = Drive(4, -0.3, 0, -1, t => 50 - 3 * 3.6 * t, _ => 0);
+		(List<TelemetryFrame> Frames, double[] Speeds, double[] Headings) drive = Drive(4, -0.3, 0, -1, t => 50 - 3 * 3.6 * t, _ => 0);
 		drive.Frames = [.. drive.Frames.Select(f => f with { HasGpsFix = false })];
 
 		Assert.AreEqual(Math.Asin(-0.3 / Math.Sqrt(1.09)) * 180 / Math.PI, Middle(drive).Pitch, 1e-6);
@@ -114,7 +114,7 @@ public sealed class CameraTiltTests
 	{
 		// Standing still in the first file, 40 km/h from the first frame of the next.
 		const int gapAt = 120;
-		var drive = Drive(4, 0, 0, -1, t => t < gapAt / Hz ? 0 : 40, _ => 0, gapAt);
+		(List<TelemetryFrame> Frames, double[] Speeds, double[] Headings) drive = Drive(4, 0, 0, -1, t => t < gapAt / Hz ? 0 : 40, _ => 0, gapAt);
 
 		var (_, pitch) = CameraTilt.Compute(drive.Frames, drive.Speeds, drive.Headings);
 

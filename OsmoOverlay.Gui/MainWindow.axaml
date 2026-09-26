@@ -1461,7 +1461,7 @@
 												<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
 													<TextBox Grid.Column="0" Name="ImagePathBox" IsReadOnly="True" PlaceholderText="No image chosen" />
 													<Button Grid.Column="1" Classes="toolbar" Content="Choose..." Padding="14,0"
-												        VerticalAlignment="Stretch" VerticalContentAlignment="Center" Click="OnImageBrowseClick" />
+													        VerticalAlignment="Stretch" VerticalContentAlignment="Center" Click="OnImageBrowseClick" />
 												</Grid>
 												<TextBlock Name="ImageUnreadableHint" Classes="infoLabel" Margin="0" FontSize="12"
 												           Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" IsVisible="False"

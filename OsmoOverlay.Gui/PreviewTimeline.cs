@@ -263,7 +263,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
 	{
-		base.OnPropertyChanged(change);
+		OnPropertyChanged(change);
 		if (change.Property == BoundsProperty || change.Property == MaximumProperty)
 		{
 			SetView(_zoom, ViewStart);
@@ -658,7 +658,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
 	{
-		base.OnPointerWheelChanged(e);
+		OnPointerWheelChanged(e);
 		if (Wheel(e.GetPosition(this).X, e.Delta, e.KeyModifiers)) e.Handled = true;
 	}
 
@@ -700,7 +700,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPointerPressed(PointerPressedEventArgs e)
 	{
-		base.OnPointerPressed(e);
+		OnPointerPressed(e);
 		PointerPoint point = e.GetCurrentPoint(this);
 		if (!point.Properties.IsLeftButtonPressed || Duration <= 0) return;
 
@@ -736,7 +736,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPointerMoved(PointerEventArgs e)
 	{
-		base.OnPointerMoved(e);
+		OnPointerMoved(e);
 		var x = e.GetPosition(this).X;
 		var time = Snap(ValueAt(x));
 		switch (_drag)
@@ -771,14 +771,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPointerExited(PointerEventArgs e)
 	{
-		base.OnPointerExited(e);
+		OnPointerExited(e);
 		_hoverX = null;
 		InvalidateVisual();
 	}
 
 	protected override void OnPointerReleased(PointerReleasedEventArgs e)
 	{
-		base.OnPointerReleased(e);
+		OnPointerReleased(e);
 		if (_drag == DragMode.None) return;
 
 		// Ended before releasing the capture - OnPointerCaptureLost must not end the drag a second time.
@@ -788,7 +788,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
 	{
-		base.OnPointerCaptureLost(e);
+		OnPointerCaptureLost(e);
 		EndDrag(false);
 	}
 
@@ -845,14 +845,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
 	{
-		base.OnAttachedToVisualTree(e);
+		OnAttachedToVisualTree(e);
 		_attached = true;
 		UpdateStripeAnimation();
 	}
 
 	protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
 	{
-		base.OnDetachedFromVisualTree(e);
+		OnDetachedFromVisualTree(e);
 		_attached = false;
 		UpdateStripeAnimation();
 		_tracksLayer?.Dispose();

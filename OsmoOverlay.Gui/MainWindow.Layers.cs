@@ -135,7 +135,7 @@ public partial class MainWindow
 		if (index < 0) return;
 
 		OverlayPreset preset = _overlayPresets[index];
-		var (normalizedLayers, ordered) = OverlayLayers.Normalize(elements, layers ?? preset.Layers);
+		(List<OverlayLayer> normalizedLayers, List<OverlayElement> ordered) = OverlayLayers.Normalize(elements, layers ?? preset.Layers);
 		_overlayPresets[index] = preset with { Elements = ordered, Layers = normalizedLayers };
 	}
 
@@ -311,7 +311,10 @@ public partial class MainWindow
 	{
 		if (IsActivePresetDefault) return;
 
-		bool OnLayer(OverlayElement e) => e.Visible && OverlayLayers.Key(e) == layer.Id;
+		bool OnLayer(OverlayElement e)
+		{
+			return e.Visible && OverlayLayers.Key(e) == layer.Id;
+		}
 
 		var count = ActiveElements.Count(OnLayer);
 		if (count > 0 && !await ConfirmDialog.AskAsync(this, "Delete layer",

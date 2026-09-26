@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core;
@@ -63,7 +64,7 @@ internal static class FileSummaryCache
 
 		// The timeline's waveforms (WaveformCache) live alongside and go with the rest.
 		IEnumerable<string> files = Directory.GetFiles(CacheDir, "*.json").Concat(Directory.GetFiles(CacheDir, "*.tmp"))
-			.Concat(Preview.WaveformCache.Files(CacheDir));
+			.Concat(WaveformCache.Files(CacheDir));
 		var deleted = 0;
 		foreach (var file in files)
 			try

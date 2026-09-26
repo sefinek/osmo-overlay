@@ -30,7 +30,7 @@ public sealed class WaveformCacheTests
 		float[][] peaks = [[0, 0.25f, 1], [0.5f, 0.001f, 0]];
 
 		WaveformCache.Save(_segments, peaks, 1, _directory);
-		var loaded = WaveformCache.TryLoad(_segments, _directory);
+		(float[][] Peaks, float Loudest)? loaded = WaveformCache.TryLoad(_segments, _directory);
 
 		Assert.IsNotNull(loaded);
 		Assert.AreEqual(1f, loaded.Value.Loudest);

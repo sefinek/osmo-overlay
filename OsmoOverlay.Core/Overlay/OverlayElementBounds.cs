@@ -316,13 +316,13 @@ public static class OverlayElementBounds
 
 		lock (ImageSizesLock)
 		{
-			if (ImageSizes.TryGetValue(path, out var cached) && cached.Modified == modified) return cached.Size;
+			if (ImageSizes.TryGetValue(path, out (DateTime Modified, SKSizeI? Size) cached) && cached.Modified == modified) return cached.Size;
 		}
 
 		SKSizeI? size = null;
 		try
 		{
-			using SKCodec? codec = SKCodec.Create(path);
+			using var codec = SKCodec.Create(path);
 			if (codec is { Info: { Width: > 0 and <= MaxImageDimension, Height: > 0 and <= MaxImageDimension } info })
 				size = new SKSizeI(info.Width, info.Height);
 		}
@@ -336,6 +336,7 @@ public static class OverlayElementBounds
 			if (ImageSizes.Count >= MaxCachedImageSizes && !ImageSizes.ContainsKey(path)) ImageSizes.Clear();
 			ImageSizes[path] = (modified, size);
 		}
+
 		return size;
 	}
 
