@@ -1,8 +1,9 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace OsmoOverlay.Core;
 
-/// <summary>Shared startup banner text so the CLI console and the GUI's LOG panel show the same thing.</summary>
+/// <summary>Startup banner - the GUI's LOG panel shows it, the CLI writes it to its log. The environment line is what a bug report needs first.</summary>
 public static class AppBanner
 {
 	public static IReadOnlyList<string> BuildLines(string appLabel)
@@ -15,6 +16,7 @@ public static class AppBanner
 			"==================================================",
 			$"     OsmoOverlay | {appLabel} v{appVersion} | Core v{coreVersion}",
 			" Telemetry HUD burner for DJI Osmo Action footage",
+			$" {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}, .NET {Environment.Version}",
 			"=================================================="
 		];
 	}

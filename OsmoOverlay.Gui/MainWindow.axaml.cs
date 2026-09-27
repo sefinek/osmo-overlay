@@ -488,7 +488,7 @@ public partial class MainWindow : Window
 		LogBox.AppendLog(LogScroll, message, level);
 	}
 
-	/// <summary>Same banner text the CLI prints to console (see AppBanner), shown in the GUI's own log so both surfaces show the same startup info.</summary>
+	/// <summary>The startup banner (AppBanner) in the LOG panel - and through it in app.log.</summary>
 	private void AppendBanner()
 	{
 		foreach (string line in AppBanner.BuildLines("GUI"))

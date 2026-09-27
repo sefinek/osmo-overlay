@@ -6,6 +6,13 @@ using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Reframe;
 
+AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+{
+	if (e.ExceptionObject is Exception ex) AppLogger.Error(ex, $"Fatal error: {ex.Message}");
+};
+foreach (string line in AppBanner.BuildLines("CLI"))
+	AppLogger.Info(line);
+
 CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
 
 string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view"];
