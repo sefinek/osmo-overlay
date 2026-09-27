@@ -30,7 +30,7 @@ public sealed class TelemetryProcessorTests
 	[TestMethod]
 	public void Speed_FromPosition_WhenNoGpsSpeed()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 0, 10, 5));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 0, 10, 5), null);
 
 		Assert.AreEqual(36, derived[^1].SpeedKmh, 0.5);
 	}
@@ -38,7 +38,7 @@ public sealed class TelemetryProcessorTests
 	[TestMethod]
 	public void Speed_PrefersGpsMeasuredSpeed_OverPosition()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(0, 0, 10, 3, 12.5));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(0, 0, 10, 3, 12.5), null);
 
 		Assert.AreEqual(45, derived[^1].SpeedKmh, 1e-9);
 	}
@@ -49,7 +49,7 @@ public sealed class TelemetryProcessorTests
 	[DataRow(59.94)]
 	public void Speed_DoesNotDependOnSamplingRate(double hz)
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(8, 45, hz, 4));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(8, 45, hz, 4), null);
 
 		Assert.AreEqual(8 * 3.6, derived[^1].SpeedKmh, 0.3, $"at {hz} Hz");
 	}
@@ -61,7 +61,7 @@ public sealed class TelemetryProcessorTests
 	[DataRow(270.0)]
 	public void Heading_FollowsDirectionOfTravel(double heading)
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, heading, 10, 3));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, heading, 10, 3), null);
 
 		var error = Math.Abs(((derived[^1].HeadingDegrees - heading) % 360 + 540) % 360 - 180);
 		Assert.IsTrue(error < 0.5, $"heading {derived[^1].HeadingDegrees} vs expected {heading}");
@@ -70,7 +70,7 @@ public sealed class TelemetryProcessorTests
 	[TestMethod]
 	public void CumulativeDistance_AdvancesInWholeSecondSteps()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 30, 59.94, 20));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 30, 59.94, 20), null);
 
 		// Steps of >= 1 s (GPS jitter at 60 Hz would otherwise inflate it) - so it lags by up to a second of
 		// travel, except the last frame, which gets the final partial step so the total is complete.
@@ -85,7 +85,7 @@ public sealed class TelemetryProcessorTests
 	[DataRow(59.94, 0.5)]
 	public void Summary_TotalDistance_IncludesTheLastPartialStep(double hz, double seconds)
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 30, hz, seconds));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 30, hz, seconds), null);
 		var travelled = 10 * derived[^1].Raw.SampleTimeSeconds;
 
 		Assert.AreEqual(travelled, TelemetryProcessor.Summarize(derived).TotalDistanceMeters, travelled * 0.001 + 0.01);
@@ -102,7 +102,7 @@ public sealed class TelemetryProcessorTests
 			.. Enumerable.Range(1, 50).Select(i => last with { FrameNumber = last.FrameNumber + i, SampleTimeSeconds = last.SampleTimeSeconds + i / 10.0 })
 		];
 
-		Assert.AreEqual(54, TelemetryProcessor.Summarize(TelemetryProcessor.Process(frames)).TotalDistanceMeters, 0.1);
+		Assert.AreEqual(54, TelemetryProcessor.Summarize(TelemetryProcessor.Process(frames, null)).TotalDistanceMeters, 0.1);
 	}
 
 	[TestMethod]
@@ -116,7 +116,7 @@ public sealed class TelemetryProcessorTests
 			.. Enumerable.Range(1, 30).Select(i => last with { FrameNumber = last.FrameNumber + i, SampleTimeSeconds = last.SampleTimeSeconds + i / 10.0 })
 		];
 
-		List<DerivedFrame> derived = TelemetryProcessor.Process(frames);
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, null);
 
 		Assert.AreEqual(90, derived[^1].HeadingDegrees, 0.5);
 		Assert.AreEqual(0, derived[^1].SpeedKmh, 1e-9);
@@ -141,47 +141,11 @@ public sealed class TelemetryProcessorTests
 	[TestMethod]
 	public void FindIndex_ReturnsFirstFrameAtOrAfterTime_ClampedToLast()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(1, 0, 10, 1));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(1, 0, 10, 1), null);
 
 		Assert.AreEqual(0, TelemetryProcessor.FindIndex(derived, -5));
 		Assert.AreEqual(3, TelemetryProcessor.FindIndex(derived, 0.3));
 		Assert.AreEqual(4, TelemetryProcessor.FindIndex(derived, 0.31));
 		Assert.AreEqual(derived.Count - 1, TelemetryProcessor.FindIndex(derived, 99));
-	}
-}
-
-[TestClass]
-public sealed class GpsForwardFillTests
-{
-	[TestMethod]
-	public void MissingFix_HoldsLastKnownPosition()
-	{
-		var fill = new GpsForwardFill();
-
-		fill.Apply(50, 20, 300);
-		var (lat, lon, alt, hasFix) = fill.Apply(null, null, null);
-
-		Assert.AreEqual((50.0, 20.0, 300.0, false), (lat, lon, alt, hasFix));
-	}
-
-	[TestMethod]
-	public void AltitudeWithoutPosition_UpdatesAltitudeOnly()
-	{
-		var fill = new GpsForwardFill();
-
-		fill.Apply(50, 20, 300);
-		var (lat, _, alt, hasFix) = fill.Apply(null, null, 310);
-
-		Assert.AreEqual(50.0, lat);
-		Assert.AreEqual(310.0, alt);
-		Assert.IsFalse(hasFix);
-	}
-
-	[TestMethod]
-	public void NoFixYet_IsZeroButFlaggedAsNoFix()
-	{
-		var (lat, lon, _, hasFix) = new GpsForwardFill().Apply(null, null, null);
-
-		Assert.AreEqual((0.0, 0.0, false), (lat, lon, hasFix));
 	}
 }

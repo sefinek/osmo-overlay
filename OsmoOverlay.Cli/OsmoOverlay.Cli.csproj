@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+    <ProjectReference Include="..\OsmoOverlay.Cameras.Dji\OsmoOverlay.Cameras.Dji.csproj" />
+    <ProjectReference Include="..\OsmoOverlay.Cameras.Insta360\OsmoOverlay.Cameras.Insta360.csproj" />
   </ItemGroup>
 
   <ItemGroup>

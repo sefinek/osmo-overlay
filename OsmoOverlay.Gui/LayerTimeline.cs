@@ -360,7 +360,7 @@ public sealed class LayerTimeline : Control
 		DrawSwitch(context, index, LayerSwitch.Lock, "L", track.Locked, LockOnBrush);
 	}
 
-	private Rect SwitchRect(int track, LayerSwitch which)
+	private static Rect SwitchRect(int track, LayerSwitch which)
 	{
 		var right = HeaderWidth - 6 - (2 - (int)which) * (SwitchWidth + SwitchGap);
 		return new Rect(right - SwitchWidth, track * RowHeight + (RowHeight - SwitchHeight) / 2, SwitchWidth, SwitchHeight);
@@ -376,7 +376,7 @@ public sealed class LayerTimeline : Control
 		context.DrawText(text, new Point(rect.X + (rect.Width - text.Width) / 2, rect.Y + (rect.Height - text.Height) / 2));
 	}
 
-	private LayerSwitch? SwitchAt(Point point, int track)
+	private static LayerSwitch? SwitchAt(Point point, int track)
 	{
 		foreach (LayerSwitch which in Enum.GetValues<LayerSwitch>())
 			if (SwitchRect(track, which).Inflate(1).Contains(point))

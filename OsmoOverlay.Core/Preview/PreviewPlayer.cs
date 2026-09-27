@@ -1,4 +1,6 @@
 using System.Runtime.InteropServices;
+using OsmoOverlay.Core.Reframe;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
@@ -49,6 +51,8 @@ public sealed class PreviewPlayer : IDisposable
 	private OutputTimeline? _outputTimeline;
 	private bool _showOverlay = true;
 	private float _audioGain;
+	// A 360 recording's view (SetReframe) - the default one until set.
+	private ReframeView _reframe = new();
 
 	public bool IsPlaying => _session is not null;
 	public bool HasAudio => _recording?.AudioOutput is not null;
@@ -96,14 +100,16 @@ public sealed class PreviewPlayer : IDisposable
 
 		// Recomputed rather than taken from summary.DerivedFrames, so a changed SmoothGpsMotion applies on every open.
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, settings.SmoothGpsMotion);
-		var availability = new OverlayAvailability(TelemetryProcessor.HasAnyGpsFix(rawFrames),
-			TelemetryProcessor.HasAnyGpsTimestamp(rawFrames), summary.ContainerRecordingStartUtc is not null);
+		ICameraFormat? camera = summary.CameraFormat;
+		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion);
+		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
+		Reframer? reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
 		var pool = new FrameBufferPool(PooledFrames);
 
 		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread.
-		LibavVideoSource video = await Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool));
+		LibavVideoSource video = await Task.Run(() =>
+			new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer));
 		(LibavAudioSource? audioSource, AudioOutput? audioOutput) = await Task.Run(() => OpenAudio(segments));
 		if (generation != _openGeneration)
 		{
@@ -126,7 +132,7 @@ public sealed class PreviewPlayer : IDisposable
 				settings.MapApiKey, routeIntro) { RouteAcrossCuts = settings.RouteAcrossCuts },
 			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool);
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
-			routeIntro.Enabled);
+			routeIntro.Enabled, reframer);
 		_recording = recording;
 
 		ComposedPreviewFrame? first;
@@ -358,6 +364,19 @@ public sealed class PreviewPlayer : IDisposable
 		return _recording?.Compositor.MeasureElement(element, position);
 	}
 
+	/// <summary>
+	///     Where a 360 recording's flat picture looks - kept for the next open too. Paused, the frame at `position` is
+	///     shown again from the one already decoded; playing, the next played frame shows it.
+	/// </summary>
+	public void SetReframe(ReframeView view, TimeSpan position)
+	{
+		_reframe = view;
+		if (_recording is not { Reframer: not null } recording) return;
+
+		recording.Video.SetView(view);
+		if (!IsPlaying) RequestSeek(position);
+	}
+
 	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
 	public void SetShowWatermark(bool show)
 	{
@@ -388,7 +407,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		return await Task.Run(() =>
 		{
-			using var source = new LibavVideoSource(recording.Segments, recording.Fps, recording.Width, recording.Height);
+			using var source = new LibavVideoSource(recording.Segments, recording.Fps, recording.Width, recording.Height,
+				recording.Reframer is { } reframer ? reframer with { View = _reframe } : null);
 			VideoFrame frame = source.GetFrame(position, SeekAccuracy.Exact, CancellationToken.None)
 			                   ?? throw new InvalidOperationException("The frame couldn't be decoded.");
 
@@ -570,7 +590,8 @@ public sealed class PreviewPlayer : IDisposable
 		int width,
 		int height,
 		double fps,
-		bool showsRouteIntro) : IDisposable
+		bool showsRouteIntro,
+		Reframer? reframer) : IDisposable
 	{
 		public LibavVideoSource Video { get; } = video;
 
@@ -588,6 +609,8 @@ public sealed class PreviewPlayer : IDisposable
 		public int Height { get; } = height;
 		public double Fps { get; } = fps;
 		public bool ShowsRouteIntro { get; } = showsRouteIntro;
+		// A 360 recording's lenses and leveling - the view is the player's own (_reframe).
+		public Reframer? Reframer { get; } = reframer;
 
 		public void Dispose()
 		{

@@ -171,12 +171,12 @@ public partial class MainWindow
 
 	private bool IsTypeSupported(OverlayElementType type)
 	{
-		return OverlayDataRequirements.IsSupported(type, _hasGpsFix, _hasGpsTimestamp, _hasContainerTime);
+		return OverlayDataRequirements.IsSupported(type, _availability);
 	}
 
 	private bool UsesTimeFallback(OverlayElementType type)
 	{
-		return type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText && !_hasGpsTimestamp && _hasContainerTime;
+		return type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText && _availability is { GpsTimestamp: false, ContainerTime: true };
 	}
 
 	private static string UnsupportedReason(OverlayElementType type)
@@ -186,6 +186,9 @@ public partial class MainWindow
 			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText =>
 				"This file has no GPS timestamp and no usable recording-start time, so this widget can't show a time",
 			OverlayElementType.SunWidget => "This file has no GPS fix or no GPS timestamp, so the sun's position can't be computed",
+			OverlayElementType.RollGauge or OverlayElementType.PitchGauge or OverlayElementType.GMeter =>
+				"This camera's accelerometer axes aren't known here (a 360 camera's export can face any way), so its tilt can't be shown",
+			OverlayElementType.CameraInfo => "This file's telemetry has no ISO or color temperature",
 			_ => "This file has no GPS fix, so this widget has nothing to show"
 		};
 	}
@@ -1690,7 +1693,7 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
-		if (TryStartPreviewPan(e)) return;
+		if (TryStartPreviewPan(e) || TryStartReframeDrag(e)) return;
 		if (_summary is null || !e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
@@ -1734,7 +1737,7 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerMoved(object? sender, PointerEventArgs e)
 	{
-		if (ContinuePreviewPan(e)) return;
+		if (ContinuePreviewPan(e) || ContinueReframeDrag(e)) return;
 		if (_resizingElementId is { } resizingId)
 		{
 			UpdateResize(resizingId, e);
@@ -1819,6 +1822,7 @@ public partial class MainWindow
 	private void OnOverlayCanvasPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
 	{
 		_panning = false;
+		_reframeDragStart = null;
 		if (_resizingElementId is null && _draggingElementId is null) return;
 
 		_resizingElementId = null;
@@ -1829,7 +1833,7 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
 	{
-		if (EndPreviewPan(e)) return;
+		if (EndPreviewPan(e) || EndReframeDrag(e)) return;
 		if (_resizingElementId is not null)
 		{
 			_resizingElementId = null;

@@ -156,8 +156,8 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>
-	///     ISO/shutter speed/color temperature straight from the djmd stream's camera-settings block
-	///     (see DjiMetaTelemetryParser). Each field is independently nullable (a fallback exiftool read
+	///     ISO/shutter speed/color temperature as the camera recorded them (DJI: the djmd stream's
+	///     camera-settings block). Each field is independently nullable (a camera or a fallback read
 	///     may not populate all three), so each renders "--" rather than pulling the whole widget down.
 	/// </summary>
 	private void DrawCameraInfo(SKCanvas canvas, DerivedFrame frame, CameraInfoElement element)

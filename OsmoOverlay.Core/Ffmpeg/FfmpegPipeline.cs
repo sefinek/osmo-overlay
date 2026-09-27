@@ -18,32 +18,71 @@ public static class FfmpegPipeline
 	// the live preview makes (LibavStreamDecoder).
 	private static readonly string[] HwDecodeArgs = ["-hwaccel", "auto"];
 
-	private static bool _nvencConfirmed;
+	private static readonly HashSet<(string Encoder, bool TenBit)> NvencConfirmed = [];
 
 	/// <summary>
-	///     Probes with the same 10-bit Main10 output the render uses - some GPUs (e.g. Maxwell GM204) have HEVC
-	///     NVENC but no 10-bit support, and an 8-bit probe would pass there only for the real render to fail.
-	///     Only a success is remembered: a failure can be transient (consumer cards cap concurrent NVENC
-	///     sessions, so another app encoding at the same time makes the probe fail), worth re-probing next time.
+	///     The encoder for the source's own codec - H.264 stays H.264 (an Insta360 Studio export), everything else is
+	///     encoded as HEVC like the Osmo's own files: NVENC when this GPU can, else x264/x265. Probed with the render's
+	///     profile and bit depth - some GPUs (e.g. Maxwell GM204) have HEVC NVENC but no 10-bit support, and an 8-bit
+	///     probe would pass there only for the real render to fail. Only a success is remembered: a failure can be
+	///     transient (consumer cards cap concurrent NVENC sessions, so another app encoding at the same time makes the
+	///     probe fail), worth re-probing next time.
 	/// </summary>
-	public static string SelectVideoEncoder()
+	public static string SelectVideoEncoder(VideoInfo source)
 	{
-		if (_nvencConfirmed) return "hevc_nvenc";
+		var h264 = IsH264(source);
+		var tenBit = IsTenBit(source);
+		var nvenc = h264 ? "h264_nvenc" : "hevc_nvenc";
+		lock (NvencConfirmed)
+		{
+			if (NvencConfirmed.Contains((nvenc, tenBit))) return nvenc;
+		}
 
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
 			"-hide_banner", "-loglevel", "error",
 			"-f", "lavfi", "-i", "color=c=black:s=256x256:d=0.1",
-			"-c:v", "hevc_nvenc",
-			"-profile:v", "main10",
-			"-pix_fmt", "yuv420p10le",
+			"-c:v", nvenc,
+			"-profile:v", Profile(h264, tenBit),
+			"-pix_fmt", PixelFormat(tenBit),
 			"-f", "null", "-");
 
-		_nvencConfirmed = ProcessHelper.RunCaptured(psi).ExitCode == 0;
-		return _nvencConfirmed ? "hevc_nvenc" : "libx265";
+		if (ProcessHelper.RunCaptured(psi).ExitCode != 0) return h264 ? "libx264" : "libx265";
+
+		lock (NvencConfirmed)
+		{
+			NvencConfirmed.Add((nvenc, tenBit));
+		}
+
+		return nvenc;
+	}
+
+	public static bool IsGpuEncoder(string encoder)
+	{
+		return encoder.EndsWith("_nvenc", StringComparison.Ordinal);
+	}
+
+	private static bool IsH264(VideoInfo video)
+	{
+		return video.CodecName == "h264";
+	}
+
+	private static bool IsTenBit(VideoInfo video)
+	{
+		return video.PixFmt.Contains("10", StringComparison.Ordinal);
+	}
+
+	private static string Profile(bool h264, bool tenBit)
+	{
+		return h264 ? tenBit ? "high10" : "high" : tenBit ? "main10" : "main";
+	}
+
+	private static string PixelFormat(bool tenBit)
+	{
+		return tenBit ? "yuv420p10le" : "yuv420p";
 	}
 
 	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, bool overwrite,
-		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false)
+		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false)
 	{
 		SourceInfo info = segments[0].Source;
 		var (num, den) = ParseFrameRate(info.Video.FrameRate);
@@ -72,8 +111,8 @@ public static class FfmpegPipeline
 			try
 			{
 				source = plan.Pieces.Count == 1
-					? AddSourceInputs(args, segments, plan.Pieces[0], encode, num, den, tempFiles)
-					: AddCutInputs(args, segments, plan, encode, num, den, tempFiles);
+					? AddSourceInputs(args, segments, plan.Pieces[0], encode, num, den, tempFiles, !composedPicture)
+					: AddCutInputs(args, segments, plan, encode, num, den, tempFiles, !composedPicture);
 			}
 			catch
 			{
@@ -94,6 +133,8 @@ public static class FfmpegPipeline
 		var transfer = info.Video.ColorTransfer ?? "bt709";
 		var colorspace = info.Video.ColorSpace ?? "bt709";
 		var range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
+		var h264 = encoder is "h264_nvenc" or "libx264";
+		var tenBit = IsTenBit(info.Video);
 
 		// The overlay's RGB -> YUV conversion must use the same matrix the output is tagged with, or the HUD's
 		// colors come out shifted. Explicit on the scaler because older ffmpeg's swscale defaults to BT.601;
@@ -110,14 +151,20 @@ public static class FfmpegPipeline
 			_ => "bt709"
 		};
 
+		var tags = $"setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}";
 		args.AddRange([
 			"-filter_complex",
-			$"{source.MainVideo}setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}[main];" +
-			$"[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range},format=yuva420p10le[ovl];" +
-			// shortest=1: the overlay pipe is sized from the container duration, which runs a few ms past the
-			// last video frame (audio ends later) - without it overlay's default eof_action=repeat padded the
-			// output with copies of the source's last frame (1 extra frame on a 20 s clip, 3 on a 25 min one).
-			"[main][ovl]overlay=format=yuv420p10:shortest=1[v]"
+			composedPicture
+				// The pipe already carries the finished picture (a 360 recording's view with the overlay on it) - it's
+				// only turned into YUV with the output's own matrix; the inputs before it are there for the sound.
+				? $"{source.MainVideo}[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}," +
+				  $"format={(tenBit ? "yuv420p10le" : "yuv420p")},{tags}[v]"
+				: $"{source.MainVideo}{tags}[main];" +
+				  $"[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range},format={(tenBit ? "yuva420p10le" : "yuva420p")}[ovl];" +
+				  // shortest=1: the overlay pipe is sized from the container duration, which runs a few ms past the
+				  // last video frame (audio ends later) - without it overlay's default eof_action=repeat padded the
+				  // output with copies of the source's last frame (1 extra frame on a 20 s clip, 3 on a 25 min one).
+				  $"[main][ovl]overlay=format={(tenBit ? "yuv420p10" : "yuv420")}:shortest=1[v]"
 		]);
 
 		args.AddRange(["-map", "[v]"]);
@@ -158,21 +205,37 @@ public static class FfmpegPipeline
 		// rate matched the original.
 		var bitRate = ((long)Math.Round(info.Video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
 		var gop = info.Video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
-		if (encoder == "hevc_nvenc")
+		if (IsGpuEncoder(encoder))
 		{
 			args.AddRange([
-				"-c:v", "hevc_nvenc",
+				"-c:v", encoder,
 				"-preset", encode.NvencPreset,
 				"-rc", "cbr",
 				"-b:v", bitRate,
 				"-bufsize", bitRate,
 				"-bf", "0",
 				"-g", gop.ToString(CultureInfo.InvariantCulture),
-				"-profile:v", "main10",
-				"-pix_fmt", "yuv420p10le"
+				"-profile:v", Profile(h264, tenBit),
+				"-pix_fmt", PixelFormat(tenBit)
 			]);
+			// ffprobe's level is NVENC's own number for both codecs (HEVC 5.2 = 156, H.264 5.1 = 51).
 			if (info.Video.Level > 0) args.AddRange(["-level", info.Video.Level.ToString(CultureInfo.InvariantCulture)]);
-			if (info.Video.HighTier is { } highTier) args.AddRange(["-tier", highTier ? "high" : "main"]);
+			if (!h264 && info.Video.HighTier is { } highTier) args.AddRange(["-tier", highTier ? "high" : "main"]);
+		}
+		else if (h264)
+		{
+			List<string> x264Params = ["bframes=0", $"keyint={gop}", $"min-keyint={gop}", "scenecut=0"];
+			args.AddRange([
+				"-c:v", "libx264",
+				"-preset", "slow",
+				"-b:v", bitRate,
+				"-maxrate", bitRate,
+				"-bufsize", bitRate,
+				"-x264-params", string.Join(':', x264Params),
+				"-profile:v", Profile(true, tenBit),
+				"-pix_fmt", PixelFormat(tenBit)
+			]);
+			if (info.Video.Level > 0) args.AddRange(["-level", (info.Video.Level / 10.0).ToString("0.#", CultureInfo.InvariantCulture)]);
 		}
 		else
 		{
@@ -188,14 +251,14 @@ public static class FfmpegPipeline
 				"-maxrate", bitRate,
 				"-bufsize", bitRate,
 				"-x265-params", string.Join(':', x265Params),
-				"-pix_fmt", "yuv420p10le"
+				"-pix_fmt", PixelFormat(tenBit)
 			]);
 		}
 
 		// Container-level metadata the camera wrote: recording date (file managers, photo libraries and
 		// NLEs sort by it - without it the render looks like it was shot at render time) and the start
-		// timecode (lets an NLE line the render up against the original). Not the djmd/dbgi streams:
-		// djmd carries the GPS track and the camera's serial number, which don't belong in a video that's
+		// timecode (lets an NLE line the render up against the original). Not the camera's data streams
+		// (DJI's djmd/dbgi): they carry the GPS track and the camera's serial number, which don't belong in a video that's
 		// meant to be shared.
 		// For a range render both are moved to the range's own first frame (see SourceInputs.LocalStartFrame).
 		if (!greenScreen && source.StartSource.ContainerCreationTimeUtc is { } createdUtc)
@@ -214,12 +277,12 @@ public static class FfmpegPipeline
 			"-color_primaries", primaries,
 			"-color_trc", transfer,
 			"-colorspace", colorspace,
-			"-color_range", range,
-			// Matches the source's MP4 HEVC tag (DJI writes hvc1: SPS/PPS/VPS out-of-band) instead of
-			// ffmpeg's hev1 default, so pickier players/editors (DaVinci Resolve, older QuickTime/FCP)
-			// that expect hvc1 don't choke on an otherwise-identical bitstream.
-			"-tag:v", "hvc1"
+			"-color_range", range
 		]);
+		// Matches the source's MP4 HEVC tag (DJI writes hvc1: SPS/PPS/VPS out-of-band) instead of
+		// ffmpeg's hev1 default, so pickier players/editors (DaVinci Resolve, older QuickTime/FCP)
+		// that expect hvc1 don't choke on an otherwise-identical bitstream.
+		if (!h264) args.AddRange(["-tag:v", "hvc1"]);
 
 		args.Add(outputPath);
 
@@ -256,11 +319,11 @@ public static class FfmpegPipeline
 	///     nor repeats a frame, and the audio is in sync (0 ms against a single-file cut of the same span).
 	/// </summary>
 	private static SourceInputs AddSourceInputs(List<string> args, IReadOnlyList<VideoSegment> segments,
-		RenderPiece piece, RenderEncodeSettings encode, int num, int den, List<string> tempFiles)
+		RenderPiece piece, RenderEncodeSettings encode, int num, int den, List<string> tempFiles, bool withVideo)
 	{
 		void AddHwDecode()
 		{
-			if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+			if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
 		}
 
 		string? AudioMapFor(int input, SourceInfo s)
@@ -268,6 +331,7 @@ public static class FfmpegPipeline
 			return s.Audio is null ? null : $"{input}:a";
 		}
 
+		var video = withVideo ? "[0:v]" : "";
 		if (piece.SourceStartFrame == 0)
 		{
 			AddHwDecode();
@@ -282,7 +346,7 @@ public static class FfmpegPipeline
 				args.AddRange(["-f", "concat", "-safe", "0", "-i", listPath]);
 			}
 
-			return new SourceInputs(1, "[0:v]", AudioMapFor(0, segments[0].Source), segments[0].Source);
+			return new SourceInputs(1, video, AudioMapFor(0, segments[0].Source), segments[0].Source);
 		}
 
 		var (first, localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
@@ -294,33 +358,39 @@ public static class FfmpegPipeline
 		AddHwDecode();
 		args.AddRange(["-ss", seek, "-i", segments[first].InputPath]);
 		if (last == first)
-			return new SourceInputs(1, "[0:v]", AudioMapFor(0, startSource), startSource, localStartFrame);
+			return new SourceInputs(1, video, AudioMapFor(0, startSource), startSource, localStartFrame);
 
 		List<string> tailPaths = [.. segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath)];
-		var tailList = ConcatListWriter.Write(tailPaths);
-		tempFiles.Add(tailList);
-		AddHwDecode();
-		args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
-		const string mainVideo = "[0:v][1:v]concat=n=2:v=1:a=0,";
+		var inputs = 1;
+		if (withVideo)
+		{
+			var tailList = ConcatListWriter.Write(tailPaths);
+			tempFiles.Add(tailList);
+			AddHwDecode();
+			args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
+			video = "[0:v][1:v]concat=n=2:v=1:a=0,";
+			inputs++;
+		}
 
-		if (startSource.Audio is null) return new SourceInputs(2, mainVideo, null, startSource, localStartFrame);
+		if (startSource.Audio is null) return new SourceInputs(inputs, video, null, startSource, localStartFrame);
 		if (startSource.Audio.StreamId is not { } audioStreamId)
 			throw new InvalidOperationException("Can't locate the audio track's id in the source, needed to render a range spanning several files.");
 
 		var audioList = ConcatListWriter.WriteAudioOnly([segments[first].InputPath, .. tailPaths], audioStreamId, localStartSeconds);
 		tempFiles.Add(audioList);
 		args.AddRange(["-itsoffset", SourceProbe.ProbeConcatStartTime(audioList), "-f", "concat", "-safe", "0", "-i", audioList]);
-		return new SourceInputs(3, mainVideo, "2:a", startSource, localStartFrame);
+		return new SourceInputs(inputs + 1, video, $"{inputs}:a", startSource, localStartFrame);
 	}
 
 	/// <summary>
 	///     Inputs for a plan with parts cut out of the middle. Each kept piece is opened on its own the way
 	///     AddSourceInputs opens a single one (a plain -ss into the segment it starts in, plus a concat of the
 	///     later segments it runs into), trimmed to exactly its frame count, and the pieces are joined by the
-	///     concat filter - video and audio together, so they stay in sync across every join.
+	///     concat filter - video and audio together, so they stay in sync across every join. Without video only the
+	///     sound is joined, and the graph ends there.
 	/// </summary>
 	private static SourceInputs AddCutInputs(List<string> args, IReadOnlyList<VideoSegment> segments, RenderPlan plan,
-		RenderEncodeSettings encode, int num, int den, List<string> tempFiles)
+		RenderEncodeSettings encode, int num, int den, List<string> tempFiles, bool withVideo)
 	{
 		var hasAudio = segments[0].Source.Audio is not null;
 		var graph = new StringBuilder();
@@ -340,7 +410,7 @@ public static class FfmpegPipeline
 				startLocalFrame = localStartFrame;
 			}
 
-			if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+			if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
 			args.AddRange(["-ss", (localStartFrame * den / (double)num).ToString("R", CultureInfo.InvariantCulture), "-i", segments[first].InputPath]);
 			var head = input++;
 			var video = $"[{head}:v]";
@@ -350,20 +420,30 @@ public static class FfmpegPipeline
 			{
 				var tailList = ConcatListWriter.Write(segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath));
 				tempFiles.Add(tailList);
-				if (encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+				if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
 				args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
 				var tail = input++;
 				video = $"[{head}:v][{tail}:v]concat=n=2:v=1:a=0,";
 				audio = $"[{head}:a][{tail}:a]concat=n=2:v=0:a=1,";
 			}
 
-			var pieceSeconds = (piece.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture);
-			graph.Append($"{video}trim=end_frame={piece.FrameCount},setpts=PTS-STARTPTS[p{p}v];");
-			joined.Append($"[p{p}v]");
+			if (withVideo)
+			{
+				graph.Append($"{video}trim=end_frame={piece.FrameCount},setpts=PTS-STARTPTS[p{p}v];");
+				joined.Append($"[p{p}v]");
+			}
+
 			if (!hasAudio) continue;
 
+			var pieceSeconds = (piece.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture);
 			graph.Append($"{audio}atrim=end={pieceSeconds},asetpts=PTS-STARTPTS[p{p}a];");
 			joined.Append($"[p{p}a]");
+		}
+
+		if (!withVideo)
+		{
+			if (hasAudio) graph.Append($"{joined}concat=n={plan.Pieces.Count}:v=0:a=1[cuta];");
+			return new SourceInputs(input, graph.ToString(), hasAudio ? "[cuta]" : null, startSource!, startLocalFrame, true);
 		}
 
 		// Timestamps rebuilt from the frame number after the join: concat's own come out a hair off the exact

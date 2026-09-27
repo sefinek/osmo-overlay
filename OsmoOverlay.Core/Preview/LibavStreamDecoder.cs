@@ -44,8 +44,8 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	/// <summary>The hardware decoder in use ("d3d11va"...), or null for software.</summary>
 	public string? Hardware { get; }
 
-	/// <summary>Null when the file has no stream of that type.</summary>
-	public static LibavStreamDecoder? Open(string path, AVMediaType type, bool useHardware)
+	/// <summary>Null when the file has no stream of that type - or no `ordinal`-th one (1 = the second, a 360 file's other lens).</summary>
+	public static LibavStreamDecoder? Open(string path, AVMediaType type, bool useHardware, int ordinal = 0)
 	{
 		AVFormatContext* format = null;
 		AVCodecContext* codec = null;
@@ -54,7 +54,10 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 			Check(ffmpeg.avformat_open_input(&format, path, null, null), $"open {path}");
 
 			AVCodec* decoder = null;
-			var stream = ffmpeg.av_find_best_stream(format, type, -1, -1, &decoder, 0);
+			var wanted = ordinal == 0 ? -1 : NthStream(format, type, ordinal);
+			var stream = wanted == ffmpeg.AVERROR_STREAM_NOT_FOUND
+				? wanted
+				: ffmpeg.av_find_best_stream(format, type, wanted, -1, &decoder, 0);
 			if (stream == ffmpeg.AVERROR_STREAM_NOT_FOUND)
 			{
 				ffmpeg.avformat_close_input(&format);
@@ -119,6 +122,19 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 		}
 
 		return null;
+	}
+
+	/// <summary>The index of the file's `ordinal`-th stream of a type (from 0), attached pictures (thumbnails) not counted.</summary>
+	private static int NthStream(AVFormatContext* format, AVMediaType type, int ordinal)
+	{
+		for (var i = 0; i < format->nb_streams; i++)
+		{
+			AVStream* stream = format->streams[i];
+			if (stream->codecpar->codec_type != type || (stream->disposition & ffmpeg.AV_DISPOSITION_ATTACHED_PIC) != 0) continue;
+			if (ordinal-- == 0) return i;
+		}
+
+		return ffmpeg.AVERROR_STREAM_NOT_FOUND;
 	}
 
 	private static bool SupportsDevice(AVCodec* decoder, AVHWDeviceType type)

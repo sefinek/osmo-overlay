@@ -7,11 +7,13 @@
     <RootNamespace>OsmoOverlay.Core</RootNamespace>
 
     <AssemblyTitle>OsmoOverlay Core</AssemblyTitle>
-    <Description>Telemetry extraction, HUD rendering and ffmpeg pipeline for DJI Osmo Action series footage.</Description>
+    <Description>Telemetry processing, HUD rendering, 360 reframing and the ffmpeg pipeline - the camera formats plug in (OsmoOverlay.Cameras.*).</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+    <InternalsVisibleTo Include="OsmoOverlay.Cameras.Dji" />
+    <InternalsVisibleTo Include="OsmoOverlay.Cameras.Insta360" />
   </ItemGroup>
 
   <ItemGroup>

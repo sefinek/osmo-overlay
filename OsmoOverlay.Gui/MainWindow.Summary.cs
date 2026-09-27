@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
@@ -20,13 +21,12 @@ public partial class MainWindow
 		List<string> inputPaths = [.. _inputPaths];
 
 		ClosePreview();
+		ResetReframe();
 		SetPhase(UiPhase.LoadingSummary);
-		_hasGpsFix = false;
+		_availability = new OverlayAvailability(false, false, false, false, false);
 		// Cuts, thumbnails and the waveform belong to the recording they were made for.
 		ClearCuts();
 		ReleaseTimelineTracks();
-		_hasGpsTimestamp = false;
-		_hasContainerTime = false;
 		LogBox.ClearLog();
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
@@ -40,8 +40,16 @@ public partial class MainWindow
 
 		try
 		{
-			FileSummary summary = await Task.Run(() => FileSummaryReader.Read(inputPaths,
+			var (read, problem) = await Task.Run(() => FileSummaryReader.Read(inputPaths,
 				cacheEvent => ui?.Post(_ => LogCacheEvent(cacheEvent), null)));
+			if (read is not { } summary)
+			{
+				AppendLog(problem!, LogLevel.Error);
+				SetPhase(UiPhase.Idle);
+				ActionButton.IsEnabled = true;
+				await ConfirmDialog.ShowAsync(this, "These files can't be joined", problem!, kind: DialogKind.Warning);
+				return;
+			}
 
 			AppendLog(
 				$"ffprobe: {summary.Video.CodecName} {summary.Video.Profile}, {summary.Video.Width}x{summary.Video.Height}, " +
@@ -49,6 +57,9 @@ public partial class MainWindow
 			AppendLog(
 				$"Color: {summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / " +
 				$"{summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})");
+			if (summary.Fisheye is { } lenses)
+				AppendLog($"360 recording: two {lenses.LensSize}x{lenses.LensSize} fisheye lenses, framed into a flat " +
+				          $"{summary.Video.Width}x{summary.Video.Height} picture - pick the view with the globe above the preview");
 			AppendLog($"Duration: {TimeSpan.FromSeconds(summary.DurationSeconds):hh\\:mm\\:ss}, size: {FormatHelper.FormatBytes(summary.FileSizeBytes)}");
 			AppendLog(summary.Audio is { } audio
 				? $"Audio: {audio.CodecName}, {audio.SampleRate} Hz, {audio.Channels}ch"
@@ -56,25 +67,23 @@ public partial class MainWindow
 
 			AppendLog($"Camera model: {summary.CameraModel ?? "unknown"}");
 			if (summary.Telemetry is not null)
-				AppendLog($"Telemetry stream detected (djmd) - {summary.TelemetryFrames?.Count ?? 0} raw samples, " +
-				          $"{summary.DerivedFrames?.Count ?? 0} derived frames");
+				AppendLog($"Telemetry detected ({summary.CameraFormat?.DisplayName ?? "unknown camera"}) - " +
+				          $"{summary.TelemetryFrames?.Count ?? 0} raw samples, {summary.DerivedFrames?.Count ?? 0} derived frames");
 			else
-				AppendLog("No telemetry stream found - this file cannot be rendered", LogLevel.Error);
-
-			_hasContainerTime = summary.ContainerRecordingStartUtc is not null;
+				AppendLog("No telemetry found - this file cannot be rendered. Add the camera's original recording " +
+				          $"({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}), not a file exported from another app", LogLevel.Error);
 
 			if (summary.TelemetryFrames is { Count: > 0 } rawFrames)
 			{
-				_hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
-				_hasGpsTimestamp = TelemetryProcessor.HasAnyGpsTimestamp(rawFrames);
+				_availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, summary.CameraFormat);
 
 				var withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
 				AppendLog(withGpsSpeed > 0
-					? $"GPS-measured speed: {withGpsSpeed}/{rawFrames.Count} frames (protobuf djmd velocity); " +
+					? $"GPS-measured speed: {withGpsSpeed}/{rawFrames.Count} frames (the GPS receiver's own velocity); " +
 					  $"{rawFrames.Count - withGpsSpeed} fall back to derived speed"
 					: "GPS-measured speed: not available for this file - using derived speed for all frames");
 
-				if (!_hasGpsFix)
+				if (!_availability.GpsFix)
 				{
 					// No fix anywhere isn't an "anomaly" to flag on the preview timeline - it's just this
 					// recording's normal state (e.g. filmed indoors) - see OpenPreviewAsync.
@@ -93,19 +102,20 @@ public partial class MainWindow
 						AppendLog("GPS signal: no loss detected");
 				}
 
-				if (!_hasGpsTimestamp)
-					AppendLog(_hasContainerTime
+				if (!_availability.GpsTimestamp)
+					AppendLog(_availability.ContainerTime
 						? "GPS timestamp: not present in this recording - Date & time / UTC time fall back to the " +
 						  "file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)"
 						: "GPS timestamp: not present in this recording, and no usable recording-start time either - " +
 						  "Date & time / UTC time are unavailable and greyed out", LogLevel.Warn);
 
-				var withCameraSettings = rawFrames.Count(f => f.Iso is not null);
-				AppendLog(withCameraSettings == rawFrames.Count
-					? "Telemetry source: native djmd decoder (ISO/shutter/color temp all present, exiftool not needed)"
-					: withCameraSettings > 0
-						? $"Telemetry source: native djmd decoder, partial camera settings ({withCameraSettings}/{rawFrames.Count})"
-						: "Telemetry source: exiftool fallback (native djmd decode failed or ISO/shutter/CT unavailable)");
+				if (summary.CameraFormat is { } camera)
+				{
+					AppendLog(camera.DescribeTelemetry(rawFrames));
+					if (!_availability.CameraAxes)
+						AppendLog("Roll, pitch and G-meter widgets aren't available for this camera - its accelerometer's axes aren't " +
+						          "known against the picture", LogLevel.Warn);
+				}
 			}
 
 			if (summary.Telemetry is { } tele)
@@ -120,8 +130,8 @@ public partial class MainWindow
 			}
 
 			AppendLog("Checking NVENC availability...");
-			var encoder = await Task.Run(FfmpegPipeline.SelectVideoEncoder);
-			AppendLog($"Using encoder: {encoder}" + (encoder == "libx265" ? " (NVENC unavailable - CPU)" : " (GPU)"));
+			var encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(summary.Video));
+			AppendLog($"Using encoder: {encoder}" + (FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (NVENC unavailable - CPU)"));
 
 			_summary = summary;
 			_detectedEncoder = encoder;
@@ -136,6 +146,8 @@ public partial class MainWindow
 
 			if (summary.HasTelemetry)
 				await OpenPreviewAsync(summary);
+
+			await ShowSupportNoticeAsync(summary, inputPaths);
 		}
 		catch (Exception ex)
 		{
@@ -147,6 +159,19 @@ public partial class MainWindow
 		{
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 		}
+	}
+
+	/// <summary>The camera's SupportNotice, once per set of files - not again when the same recording is read again.</summary>
+	private async Task ShowSupportNoticeAsync(FileSummary summary, List<string> inputPaths)
+	{
+		if (summary.CameraFormat?.SupportNotice is not { } notice) return;
+
+		var key = string.Join('|', inputPaths);
+		if (key == _supportNoticeShownFor) return;
+		_supportNoticeShownFor = key;
+
+		AppendLog(notice, LogLevel.Warn);
+		await ConfirmDialog.ShowAsync(this, $"Limited {summary.CameraFormat.DisplayName} support", notice, kind: DialogKind.Warning);
 	}
 
 	private void PopulateInputInfo(FileSummary summary)
@@ -211,7 +236,7 @@ public partial class MainWindow
 		}
 
 		// "Detected" alone would read as "full telemetry" even for a recording that never had a GPS
-		// fix (accelerometer/camera-settings data only, decoded from the same djmd stream) - a
+		// fix (accelerometer/camera-settings data only) - a
 		// distinct amber "No GPS fix" state instead of lumping it in with the green case, so it isn't
 		// mistaken for a recording with real position data.
 		var hasGpsFix = summary.TelemetryFrames is { Count: > 0 } telemetryFrames && TelemetryProcessor.HasAnyGpsFix(telemetryFrames);
@@ -262,7 +287,7 @@ public partial class MainWindow
 		// A flat "0.00 km" / "0 - 0 m" here reads the same whether the recording genuinely never
 		// moved/climbed or - as for a file with no GPS fix at all - the position data needed to
 		// compute them simply doesn't exist. Same tooltip signal as InfoTelemetry's "No GPS fix" pill.
-		var noGpsFixTip = _hasGpsFix ? null : "No GPS fix in this recording - this reads 0, not a real measurement.";
+		var noGpsFixTip = _availability.GpsFix ? null : "No GPS fix in this recording - this reads 0, not a real measurement.";
 		ToolTip.SetTip(TeleDistance, noGpsFixTip);
 		ToolTip.SetTip(TeleMaxSpeed, noGpsFixTip);
 		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
@@ -291,7 +316,7 @@ public partial class MainWindow
 		}
 
 		AppendLog("Probing source file(s) (ffprobe)...");
-		AppendLog("Extracting telemetry (djmd stream)... falls back to exiftool if the raw layout doesn't match");
+		AppendLog("Extracting telemetry...");
 	}
 
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
@@ -299,7 +324,7 @@ public partial class MainWindow
 		var fps = summary.Video.Fps;
 		var totalFrames = PlannedFrameCount();
 
-		OutEncoder.Text = encoder + (encoder == "libx265" ? " (CPU)" : " (GPU)");
+		OutEncoder.Text = encoder + (FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (CPU)");
 		// Same condition FfmpegPipeline uses: pieces joined by the concat filter can't have their audio stream-copied.
 		OutAudio.Text = summary.Audio is null ? "None"
 			: _outputTimeline?.Plan.Pieces.Count > 1 ? "AAC at the source bitrate (re-encoded to join the cuts)"
@@ -427,10 +452,10 @@ public partial class MainWindow
 		List<string> deviations = [];
 		if (Math.Abs(settings.OutputBitrateMultiplier - 1.0) > 0.001)
 			deviations.Add($"bitrate {settings.OutputBitrateMultiplier:0.##}x the source");
-		if (encoder == "hevc_nvenc" && settings.NvencPreset != "p7")
+		if (FfmpegPipeline.IsGpuEncoder(encoder) && settings.NvencPreset != "p7")
 			deviations.Add($"faster encoder preset ({settings.NvencPreset.ToUpperInvariant()})");
-		if (encoder == "libx265")
-			deviations.Add("CPU encoder (x265) instead of the GPU");
+		if (!FfmpegPipeline.IsGpuEncoder(encoder))
+			deviations.Add($"CPU encoder ({encoder}) instead of the GPU");
 
 		var extras = new List<string>();
 		if (settings.PreserveCameraMetadata && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack || settings.MetadataKeepThumbnails))

@@ -1,11 +1,21 @@
+using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Cameras.Insta360;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Reframe;
 
-string[] options = ["-o", "--frames", "--from", "--to", "--cut"];
-const string usage = "Usage: OsmoOverlay.Cli <input1.mp4> [input2.mp4 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...]\n" +
+CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
+
+string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view"];
+string[] flags = ["--no-level"];
+const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level]\n" +
+                     "  inputs are the camera's own recordings: DJI Osmo Action .MP4, Insta360 .insv/.lrv\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
                      "  --cut removes that part from the video and the telemetry; repeat it for several cuts\n" +
+                     "  --view <yaw>,<pitch>,<roll>[,<fov>] frames a 360 recording's flat picture, in degrees (default 0,0,0,100),\n" +
+                     "         leveled by the camera's accelerometer unless --no-level\n" +
                      "       OsmoOverlay.Cli --install-dependencies [ffmpeg] [exiftool]\n" +
                      "  installs the listed tools (default: ffmpeg) through the system's package manager, if they're missing";
 
@@ -24,9 +34,11 @@ int? frameLimit = null;
 double? rangeStart = null;
 double? rangeEnd = null;
 List<TimeRange> cutOuts = [];
+ReframeView? view = null;
+var level = true;
 
 var i = 0;
-while (i < args.Length && !options.Contains(args[i]))
+while (i < args.Length && !options.Contains(args[i]) && !flags.Contains(args[i]))
 	inputPaths.Add(args[i++]);
 
 if (inputPaths.Count == 0)
@@ -37,6 +49,12 @@ if (inputPaths.Count == 0)
 
 for (; i < args.Length; i++)
 {
+	if (args[i] == "--no-level")
+	{
+		level = false;
+		continue;
+	}
+
 	if (!options.Contains(args[i])) continue;
 
 	if (i + 1 >= args.Length)
@@ -64,6 +82,9 @@ for (; i < args.Length; i++)
 		case "--cut" when value.Split('-') is [var cutFrom, var cutTo] &&
 		                  TimeText.TryParse(cutFrom, out var cutStart) && TimeText.TryParse(cutTo, out var cutEnd) && cutEnd > cutStart:
 			cutOuts.Add(new TimeRange(cutStart, cutEnd));
+			break;
+		case "--view" when ReframeView.TryParse(value, out ReframeView parsedView):
+			view = parsedView;
 			break;
 		default:
 			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'");
@@ -99,7 +120,7 @@ Console.CancelKeyPress += (_, e) =>
 };
 
 RenderResult result = await RenderJob.RunAsync(
-	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts), progress,
+	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level }), progress,
 	cts.Token);
 Console.WriteLine();
 

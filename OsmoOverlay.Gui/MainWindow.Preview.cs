@@ -40,9 +40,8 @@ public partial class MainWindow
 			UpdateAudioPanel();
 			_ = LoadTimelineTracksAsync(summary);
 
-			// _hasGpsFix false means the recording never had a fix at all - not an anomaly worth
-			// flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
-			IReadOnlyList<TimeRange> gpsLoss = _hasGpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
+			// No fix at all isn't an anomaly worth flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
+			IReadOnlyList<TimeRange> gpsLoss = _availability.GpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
 				? [.. TelemetryProcessor.FindGpsLossRanges(rawFrames).Select(r => new TimeRange(r.Start, r.End))]
 				: [];
 			foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = gpsLoss;

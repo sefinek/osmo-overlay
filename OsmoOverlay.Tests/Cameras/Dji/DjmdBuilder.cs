@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace OsmoOverlay.Tests.Telemetry;
+namespace OsmoOverlay.Tests.Cameras.Dji;
 
 /// <summary>Minimal protobuf writer for building synthetic djmd samples - no real recording (GPS, serial number) in the repo.</summary>
 internal sealed class Proto

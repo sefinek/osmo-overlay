@@ -1,6 +1,8 @@
+using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Tests.Telemetry;
+namespace OsmoOverlay.Tests.Cameras.Dji;
 
 [TestClass]
 public sealed class DjiMetaTelemetryParserTests

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Gui.Native;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
@@ -43,7 +44,7 @@ public partial class MainWindow
 		List<TimeRange>? cutOuts = CutOutsForRender();
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
-			GreenScreen: greenScreen, CutOuts: cutOuts);
+			GreenScreen: greenScreen, CutOuts: cutOuts, Reframe: _reframe);
 
 		AppendLog(greenScreen ? "Mode: green screen (HUD only, solid background, no audio)" : "Mode: normal");
 		AppendLog($"Output: {outputPath}");
@@ -52,7 +53,7 @@ public partial class MainWindow
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, cutOuts ?? [])}");
+			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null)}");
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -107,12 +108,19 @@ public partial class MainWindow
 		GreenScreenButton.IsEnabled = true;
 	}
 
-	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts)
+	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts,
+		ReframeView? view)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
 		parts.AddRange(inputPaths.Select(QuoteArg));
 		parts.Add("-o");
 		parts.Add(QuoteArg(outputPath));
+		if (view is not null)
+		{
+			parts.AddRange(["--view", view.ToArgument()]);
+			if (!view.Level) parts.Add("--no-level");
+		}
+
 		foreach (TimeRange cut in cutOuts)
 			parts.AddRange(["--cut", $"{cut.StartSeconds.ToString("0.###", CultureInfo.InvariantCulture)}-{cut.EndSeconds.ToString("0.###", CultureInfo.InvariantCulture)}"]);
 

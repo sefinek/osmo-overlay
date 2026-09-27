@@ -14,8 +14,9 @@ public sealed record TelemetryFrame(
 	float? Iso = null,
 	double? ShutterSeconds = null,
 	int? ColorTemperatureKelvin = null,
-	// False only when this sample had no real GPS fix (raw "no fix"/dropped signal) and
-	// Latitude/Longitude/AltitudeMeters were carried forward by GpsForwardFill instead - not raised
+	// False only when this sample had no real GPS fix (raw "no fix"/dropped signal) and the camera format
+	// carried Latitude/Longitude/AltitudeMeters forward from the last fix instead, or left them at (0,0)
+	// before the recording's first one (DJI: GpsForwardFill) - not raised
 	// for the normal, much more frequent case of the GPS receiver simply not having reported a *new*
 	// fix yet at this exact video frame (see GpsInterpolation for that one).
 	bool HasGpsFix = true,

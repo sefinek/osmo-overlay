@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using FFmpeg.AutoGen;
+using OsmoOverlay.Core.Reframe;
 
 namespace OsmoOverlay.Core.Preview;
 
@@ -35,13 +37,17 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	private readonly int _width;
 	private readonly int _height;
 	private readonly long _totalFrames;
+	// A 360 recording's flat picture - replaced by SetView, read under _lock.
+	private Reframer? _reframer;
 	private DecoderSession? _positioned;
 	// The global frame the positioned session outputs next when decoding on.
 	private long _nextFrame = -1;
 	private long _lastReturned = -1;
 	private bool _disposed;
 
-	public LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height) : this(segments, fps, width, height, null)
+	/// <param name="reframer">A 360 recording's lenses and view - its frames are then that flat view of them (FisheyeProjector).</param>
+	public LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, Reframer? reframer = null)
+		: this(segments, fps, width, height, null, reframer)
 	{
 	}
 
@@ -49,10 +55,12 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	///     Where frame buffers come from and go back to (Recycle) - the preview shares one with everything its frames
 	///     pass through; null for a pool of this source's own.
 	/// </param>
-	internal LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, FrameBufferPool? buffers)
+	internal LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, FrameBufferPool? buffers,
+		Reframer? reframer)
 	{
 		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException($"The preview can't decode video: {failure}");
 
+		_reframer = reframer;
 		Fps = fps;
 		_width = width;
 		_height = height;
@@ -111,6 +119,22 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		return new PlaybackStream(this, Math.Clamp(PreviewFrames.IndexAt(from.TotalSeconds, Fps), 0, _totalFrames - 1), ct);
 	}
 
+	/// <summary>
+	///     A 360 recording's view, from the next frame on - frames kept for stepping back show the old one, so they go.
+	///     The frame on screen is shown again by just converting it again (DecodeAt), nothing decoded.
+	/// </summary>
+	public void SetView(ReframeView view)
+	{
+		lock (_lock)
+		{
+			if (_disposed || _reframer is null || view == _reframer.View) return;
+
+			_reframer = _reframer with { View = view };
+			foreach (var buffer in _backStepCache.Values) _buffers.Return(buffer);
+			_backStepCache.Clear();
+		}
+	}
+
 	/// <summary>Hands a frame's buffer back for reuse - the caller must not touch the frame afterwards.</summary>
 	public void Recycle(VideoFrame frame)
 	{
@@ -139,6 +163,9 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		var (segmentIndex, localTarget) = Locate(target);
 		Segment segment = _segments[segmentIndex];
 		DecoderSession session = SessionFor(segmentIndex);
+
+		// The frame the decoder is on, asked for again (a 360 view changed): converted again, not decoded.
+		if (ReferenceEquals(session, _positioned) && target == _nextFrame - 1 && session.HasFrame) return (Returned(Convert(session), target), target);
 
 		var aheadLimit = accuracy == SeekAccuracy.Keyframe ? KeyframeDecodeAheadFrames : DecodeAheadSeconds * Fps;
 		var decodeOn = ReferenceEquals(session, _positioned) && target >= _nextFrame && target - _nextFrame <= aheadLimit;
@@ -248,7 +275,8 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	private VideoFrame Convert(DecoderSession session)
 	{
 		var buffer = _buffers.Rent(_width * _height * 4);
-		session.ConvertInto(buffer, _width, _height);
+		var seconds = (_segments[session.SegmentIndex].StartFrame + session.FrameIndex()) / Fps;
+		session.ConvertInto(buffer, _width, _height, _reframer, seconds);
 		return new VideoFrame(buffer, _width, _height);
 	}
 
@@ -279,7 +307,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			return session;
 		}
 
-		session = DecoderSession.Open(_segments[segmentIndex].Path, segmentIndex, Fps);
+		session = DecoderSession.Open(_segments[segmentIndex].Path, segmentIndex, Fps, _reframer?.Lenses);
 		_sessions.Add(session);
 		if (_sessions.Count > MaxOpenSessions)
 		{
@@ -381,21 +409,35 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		}
 	}
 
-	/// <summary>One open file's video: the shared decoder plus the conversion to BGRA at the preview size.</summary>
+	/// <summary>
+	///     One open file's video: the shared decoder plus the conversion to BGRA at the preview size. A 360 recording's
+	///     second lens (a stream of its own in an .insv) gets a decoder of its own, moved in step with the first; its
+	///     lenses are converted to BGRA at full size and the FisheyeProjector makes the flat view from them.
+	/// </summary>
 	private sealed class DecoderSession : IDisposable
 	{
 		private readonly LibavStreamDecoder _decoder;
+		private readonly LibavStreamDecoder? _secondLens;
+		private readonly DualFisheye? _lenses;
+		private readonly FisheyeProjector? _projector;
 		private readonly double _fps;
 		private readonly AVFrame* _transfer;
+		private readonly AVFrame* _secondTransfer;
 		private readonly AVFrame* _scaled;
 		private SwsContext* _sws;
+		// The lenses as BGRA (two pictures, or one twice as wide side by side) - native, 29 MB at 1920 px a lens.
+		private byte* _lensPixels;
 
-		private DecoderSession(LibavStreamDecoder decoder, int segmentIndex, double fps)
+		private DecoderSession(LibavStreamDecoder decoder, LibavStreamDecoder? secondLens, DualFisheye? lenses, int segmentIndex, double fps)
 		{
 			_decoder = decoder;
+			_secondLens = secondLens;
+			_lenses = lenses;
+			_projector = lenses is null ? null : new FisheyeProjector();
 			_fps = fps;
 			SegmentIndex = segmentIndex;
 			_transfer = ffmpeg.av_frame_alloc();
+			_secondTransfer = ffmpeg.av_frame_alloc();
 			_scaled = ffmpeg.av_frame_alloc();
 		}
 
@@ -403,22 +445,44 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		public string? Hardware => _decoder.Hardware;
 		public bool HasFrame => _decoder.HasFrame;
 
-		public static DecoderSession Open(string path, int segmentIndex, double fps)
+		public static DecoderSession Open(string path, int segmentIndex, double fps, DualFisheye? lenses)
 		{
 			LibavStreamDecoder decoder = LibavStreamDecoder.Open(path, AVMediaType.AVMEDIA_TYPE_VIDEO, true)
 			                             ?? throw new InvalidOperationException($"{path} has no video stream.");
-			return new DecoderSession(decoder, segmentIndex, fps);
+			LibavStreamDecoder? secondLens = null;
+			try
+			{
+				if (lenses?.Layout == FisheyeLayout.TwoStreams)
+					secondLens = LibavStreamDecoder.Open(path, AVMediaType.AVMEDIA_TYPE_VIDEO, true, 1)
+					             ?? throw new InvalidOperationException($"{path} has no second lens stream.");
+				return new DecoderSession(decoder, secondLens, lenses, segmentIndex, fps);
+			}
+			catch
+			{
+				secondLens?.Dispose();
+				decoder.Dispose();
+				throw;
+			}
 		}
 
 		/// <summary>To the keyframe at or before the frame; the frames up to it still have to be decoded.</summary>
 		public void Seek(long localFrame)
 		{
 			_decoder.Seek(localFrame / _fps);
+			_secondLens?.Seek(localFrame / _fps);
 		}
 
+		/// <summary>The next frame - of both lenses, the second one decoded on until it's at the first one's frame.</summary>
 		public bool Receive()
 		{
-			return _decoder.Receive();
+			if (!_decoder.Receive()) return false;
+			if (_secondLens is null) return true;
+
+			var index = FrameIndex();
+			while (!_secondLens.HasFrame || Math.Round(_secondLens.FrameSeconds() * _fps) < index)
+				if (!_secondLens.Receive())
+					break;
+			return true;
 		}
 
 		/// <summary>The current frame's index within this file.</summary>
@@ -427,18 +491,53 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			return (long)Math.Round(_decoder.FrameSeconds() * _fps);
 		}
 
-		/// <summary>The current frame as BGRA at the given size, converted with the frame's own color matrix and range.</summary>
-		public void ConvertInto(byte[] destination, int width, int height)
+		/// <summary>
+		///     The current frame as BGRA at the given size, converted with the frame's own color matrix and range - for a 360
+		///     recording the reframer's view of it, leveled for `recordingSeconds`.
+		/// </summary>
+		public void ConvertInto(byte[] destination, int width, int height, Reframer? reframer, double recordingSeconds)
 		{
-			AVFrame* source = _decoder.Frame;
-			if (source->hw_frames_ctx is not null)
+			AVFrame* source = InMemory(_decoder.Frame, _transfer);
+			fixed (byte* target = destination)
 			{
-				ffmpeg.av_frame_unref(_transfer);
-				LibavStreamDecoder.Check(ffmpeg.av_hwframe_transfer_data(_transfer, source, 0), "copy the frame from the GPU");
-				LibavStreamDecoder.Check(ffmpeg.av_frame_copy_props(_transfer, source), "copy the frame's properties");
-				source = _transfer;
-			}
+				if (_lenses is null || reframer is null)
+				{
+					Scale(source, target, destination.Length, width * 4, width, height);
+					return;
+				}
 
+				var size = _lenses.LensSize;
+				if (_lensPixels is null) _lensPixels = (byte*)NativeMemory.Alloc((nuint)(2L * size * size * 4));
+
+				LensImage front, back;
+				if (_secondLens is not null)
+				{
+					// The second stream is the front lens (v360's right half).
+					var lensBytes = (long)size * size * 4;
+					Scale(InMemory(_secondLens.Frame, _secondTransfer), _lensPixels, lensBytes, size * 4, size, size);
+					Scale(source, _lensPixels + lensBytes, lensBytes, size * 4, size, size);
+					front = new LensImage(_lensPixels, size * 4);
+					back = new LensImage(_lensPixels + lensBytes, size * 4);
+				}
+				else
+				{
+					// Side by side, the front lens is on the left.
+					Scale(source, _lensPixels, 2L * size * size * 4, size * 8, size * 2, size);
+					front = new LensImage(_lensPixels, size * 8);
+					back = new LensImage(_lensPixels + size * 4, size * 8);
+				}
+
+				_projector!.Project(front, back, _lenses, reframer.RotationAt(recordingSeconds), reframer.View.FovDegrees, target, width * 4,
+					width, height);
+			}
+		}
+
+		/// <summary>
+		///     swscale straight into `target`: the frame borrows it (pinned or native, for the call) through a buffer whose
+		///     free callback does nothing, instead of converting into a frame of its own and copying that over.
+		/// </summary>
+		private void Scale(AVFrame* source, byte* target, long bytes, int rowBytes, int width, int height)
+		{
 			if (_sws is null)
 			{
 				_sws = ffmpeg.sws_alloc_context();
@@ -446,29 +545,34 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				_sws->threads = 0;
 			}
 
-			// swscale writes straight into `destination`: the frame borrows it (pinned for the call) through a buffer
-			// whose free callback does nothing, instead of converting into a frame of its own and copying that over.
-			var rowBytes = width * 4;
-			fixed (byte* target = destination)
+			try
 			{
-				try
-				{
-					_scaled->width = width;
-					_scaled->height = height;
-					_scaled->format = (int)AVPixelFormat.AV_PIX_FMT_BGRA;
-					_scaled->color_range = AVColorRange.AVCOL_RANGE_JPEG;
-					_scaled->buf[0] = ffmpeg.av_buffer_create(target, (ulong)destination.Length, BorrowedBuffer, null, 0);
-					if (_scaled->buf[0] is null) throw new InvalidOperationException("FFmpeg could not wrap the preview frame.");
-					_scaled->data[0] = target;
-					_scaled->linesize[0] = rowBytes;
-					LibavStreamDecoder.Check(ffmpeg.sws_scale_frame(_sws, _scaled, source), "convert the frame");
-					if (_scaled->data[0] != target) throw new InvalidOperationException("swscale converted into a frame of its own.");
-				}
-				finally
-				{
-					ffmpeg.av_frame_unref(_scaled);
-				}
+				_scaled->width = width;
+				_scaled->height = height;
+				_scaled->format = (int)AVPixelFormat.AV_PIX_FMT_BGRA;
+				_scaled->color_range = AVColorRange.AVCOL_RANGE_JPEG;
+				_scaled->buf[0] = ffmpeg.av_buffer_create(target, (ulong)bytes, BorrowedBuffer, null, 0);
+				if (_scaled->buf[0] is null) throw new InvalidOperationException("FFmpeg could not wrap the preview frame.");
+				_scaled->data[0] = target;
+				_scaled->linesize[0] = rowBytes;
+				LibavStreamDecoder.Check(ffmpeg.sws_scale_frame(_sws, _scaled, source), "convert the frame");
+				if (_scaled->data[0] != target) throw new InvalidOperationException("swscale converted into a frame of its own.");
 			}
+			finally
+			{
+				ffmpeg.av_frame_unref(_scaled);
+			}
+		}
+
+		/// <summary>A decoded frame in system memory - downloaded into `transfer` when it was decoded on the GPU.</summary>
+		private static AVFrame* InMemory(AVFrame* frame, AVFrame* transfer)
+		{
+			if (frame->hw_frames_ctx is null) return frame;
+
+			ffmpeg.av_frame_unref(transfer);
+			LibavStreamDecoder.Check(ffmpeg.av_hwframe_transfer_data(transfer, frame, 0), "copy the frame from the GPU");
+			LibavStreamDecoder.Check(ffmpeg.av_frame_copy_props(transfer, frame), "copy the frame's properties");
+			return transfer;
 		}
 
 		// Kept in a static field so the delegate FFmpeg calls back into is never collected.
@@ -477,11 +581,16 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		public void Dispose()
 		{
 			AVFrame* transfer = _transfer;
+			AVFrame* secondTransfer = _secondTransfer;
 			AVFrame* scaled = _scaled;
 			SwsContext* sws = _sws;
 			ffmpeg.av_frame_free(&transfer);
+			ffmpeg.av_frame_free(&secondTransfer);
 			ffmpeg.av_frame_free(&scaled);
 			ffmpeg.sws_free_context(&sws);
+			NativeMemory.Free(_lensPixels);
+			_lensPixels = null;
+			_secondLens?.Dispose();
 			_decoder.Dispose();
 		}
 	}

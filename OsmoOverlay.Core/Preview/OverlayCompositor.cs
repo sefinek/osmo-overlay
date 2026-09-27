@@ -220,12 +220,3 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 }
-
-/// <summary>What telemetry a recording has - which widgets it can feed (OverlayDataRequirements).</summary>
-internal readonly record struct OverlayAvailability(bool GpsFix, bool GpsTimestamp, bool ContainerTime)
-{
-	public IReadOnlyList<OverlayElement> Apply(IReadOnlyList<OverlayElement> layout)
-	{
-		return OverlayDataRequirements.ApplyAvailability(layout, GpsFix, GpsTimestamp, ContainerTime);
-	}
-}

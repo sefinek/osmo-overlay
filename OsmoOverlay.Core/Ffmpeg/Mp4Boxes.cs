@@ -5,7 +5,7 @@ namespace OsmoOverlay.Core.Ffmpeg;
 
 /// <summary>
 ///     Minimal ISO-BMFF (MP4) box tree for the post-render edits ffmpeg can't do itself (see
-///     Mp4CameraMetadata/Mp4FastStart). Only the container boxes those edits need to walk into are parsed
+///     Mp4FastStart and the camera formats' CopyMetadata). Only the container boxes those edits need to walk into are parsed
 ///     into children; every other box - including ones this code knows nothing about - is kept as its raw
 ///     payload and written back byte for byte.
 /// </summary>

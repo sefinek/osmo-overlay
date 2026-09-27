@@ -11,7 +11,7 @@
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
-        Title="OsmoOverlay - DJI Osmo Action Telemetry HUD Renderer">
+        Title="OsmoOverlay - Action Camera Telemetry HUD Renderer">
 
 	<Window.Styles>
 		<Style Selector="StackPanel.cardTitle">
@@ -699,6 +699,14 @@
 							        ToolTip.Tip="Snap widgets to grid">
 								<local:IconView Data="{StaticResource IconSnap}" Width="14" Height="14" />
 							</Button>
+							<Button Name="ToggleReframeButton" Classes="previewToolButton" Click="OnToggleReframeClick" IsVisible="False"
+							        ToolTip.Tip="Frame the 360 view - drag the video to turn it, Shift+drag to tilt it, the wheel to widen or narrow it, double-click to reset. The render uses this view.">
+								<local:IconView Data="{StaticResource IconSphere}" Width="14" Height="14" />
+							</Button>
+							<Button Name="ToggleLevelButton" Classes="previewToolButton active" Click="OnToggleLevelClick" IsVisible="False"
+							        ToolTip.Tip="Keep the 360 view level - the camera's accelerometer holds the horizon straight however it was tilted. Off, the view turns with the camera.">
+								<local:IconView Data="{StaticResource IconHorizon}" Width="14" Height="14" />
+							</Button>
 							<Button Name="ToggleOverlayButton" Classes="previewToolButton active" Click="OnToggleOverlayClick"
 							        ToolTip.Tip="Show the overlay (H) - off shows the plain footage">
 								<local:IconView Data="{StaticResource IconEye}" Width="14" Height="14" />
@@ -751,7 +759,7 @@
 							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"
 							            Spacing="8">
 								<TextBlock Text="No video loaded" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" />
-								<TextBlock Text="Pick a DJI Osmo Action file and get its summary to preview the overlay"
+								<TextBlock Text="Pick a DJI Osmo Action or Insta360 recording and get its summary to preview the overlay"
 								           Opacity="0.3" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
 								           MaxWidth="320" TextAlignment="Center" />
 							</StackPanel>
@@ -833,6 +841,11 @@
 							            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar)">
 								<local:IconView Data="{StaticResource IconMonitor}" />
 								<TextBlock Name="StatusPreviewText" />
+							</StackPanel>
+							<StackPanel Classes="previewStatus" Name="StatusReframePanel" IsVisible="False"
+							            ToolTip.Tip="360 view - where the flat picture looks: turned, tilted up, rolled, and how wide (the globe above the preview changes it)">
+								<local:IconView Data="{StaticResource IconSphere}" />
+								<TextBlock Name="StatusReframeText" />
 							</StackPanel>
 							<StackPanel Classes="previewStatus" ToolTip.Tip="Current frame - the number of the frame at the cursor">
 								<local:IconView Data="{StaticResource IconFrameCurrent}" />

@@ -1,7 +1,7 @@
 namespace OsmoOverlay.Core.Telemetry;
 
 /// <summary>
-///     The djmd stream carries one telemetry record per video frame, but the GPS receiver only
+///     A camera's telemetry carries about one record per video frame (DJI's djmd), but the GPS receiver only
 ///     reports a new fix a few times a second - most records just repeat the last known position
 ///     verbatim, so anything reading it directly (Compass trail, Map pan/center) visibly "holds" then
 ///     jumps at the GPS rate instead of the video's frame rate. This smooths that staircase into a
@@ -13,10 +13,10 @@ public static class GpsInterpolation
 	// A gap this long between two real fixes is more likely a genuine signal loss (tunnel, garage)
 	// than normal GPS cadence - interpolating a straight line across it would draw a route the
 	// vehicle probably didn't take. Past this threshold the held frames are left untouched, same as
-	// GpsForwardFill's own frozen-position behavior for a dropped fix.
+	// the frozen position a camera format holds for a dropped fix (TelemetryFrame.HasGpsFix).
 	private const double MaxInterpolationGapSeconds = 3.0;
 
-	// A "held" sample repeats the previous one's Lat/Lon bit-for-bit today (see GpsForwardFill), but
+	// A "held" sample repeats the previous one's Lat/Lon bit-for-bit today (DJI's GpsForwardFill), but
 	// exact `==` would make this feature silently do nothing for a camera/firmware that re-serializes
 	// an unchanged position with sub-millimeter rounding noise each frame. ~1cm at the equator - well
 	// below any real movement, but enough to absorb that noise.
@@ -61,9 +61,8 @@ public static class GpsInterpolation
 		TelemetryFrame start = frames[from];
 		TelemetryFrame end = frames[to];
 
-		// (0,0) is this codebase's sentinel for "no fix has ever been seen yet" (GpsForwardFill's
-		// initial default, before the very first real fix in a recording - see also
-		// DjiMetaTelemetryParser's own (0,0) rejection). Without this guard, the leading run before
+		// (0,0) is this codebase's sentinel for "no fix has ever been seen yet" (TelemetryFrame.HasGpsFix,
+		// before the very first real fix in a recording). Without this guard, the leading run before
 		// the first fix would linearly interpolate straight through Null Island - a huge, nonsensical
 		// jump - instead of being left untouched like every other never-had-a-fix-yet case.
 		if (IsNullIsland(start) || IsNullIsland(end)) return;

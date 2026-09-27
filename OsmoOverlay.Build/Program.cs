@@ -235,7 +235,7 @@ void WriteDesktopEntryInstaller(string packageDir)
 	                      [Desktop Entry]
 	                      Type=Application
 	                      Name=OsmoOverlay
-	                      Comment=Telemetry HUD for DJI Osmo Action footage
+	                      Comment=Telemetry HUD for DJI Osmo Action and Insta360 footage
 	                      Exec="$dir/OsmoOverlay"
 	                      Path=$dir
 	                      Icon=$dir/OsmoOverlay.png

@@ -14,7 +14,7 @@ public sealed class TripStatsTests
 		{
 			if (i > 0) distance += speedsKmh[i] / 3.6;
 			var raw = new TelemetryFrame(i, i, 50, 20, altitudes[i], null, 0, 0, -1);
-			frames.Add(new DerivedFrame(raw, speedsKmh[i], 0, 0, distance, 0, 0, default, 0, 0, 1, i == cutAt));
+			frames.Add(new DerivedFrame(raw, speedsKmh[i], 0, 0, distance, 0, 0, default, 0, 0, 1, 0, 0, i == cutAt));
 		}
 
 		return frames;

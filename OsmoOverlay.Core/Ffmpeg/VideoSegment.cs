@@ -53,37 +53,46 @@ public static class VideoSegments
 		throw new ArgumentException("No segments.", nameof(segments));
 	}
 
-	public static bool AllHaveDjmdTrack(this IReadOnlyList<VideoSegment> segments)
+	public static bool AllHaveTelemetry(this IReadOnlyList<VideoSegment> segments)
 	{
-		return segments.All(s => s.Source.HasDjmdTrack);
+		return segments.All(s => s.Source.Camera is not null);
 	}
 
 	/// <summary>
 	///     ffmpeg's concat demuxer does not re-encode, so segments must already share the same
 	///     decode parameters - a mismatch here would otherwise surface as a corrupt or garbled render
-	///     instead of a clear error. Telemetry presence must also be all-or-nothing: a mix can't be
-	///     stitched into one continuous telemetry-driven overlay.
+	///     instead of a clear error. They must also come from the same camera (or all from one no registered camera
+	///     knows): a mix can't be stitched into one continuous telemetry-driven overlay. Files a user picked that don't go
+	///     together are an expected outcome, so it's a message for them, not an exception - null when they can be joined.
 	/// </summary>
-	public static void Validate(IReadOnlyList<VideoSegment> segments)
+	public static string? FindMismatch(IReadOnlyList<VideoSegment> segments)
 	{
 		VideoSegment first = segments[0];
-		var hasDjmd = first.Source.HasDjmdTrack;
+		var firstName = Path.GetFileName(first.InputPath);
 
 		foreach (VideoSegment segment in segments.Skip(1))
 		{
-			if (segment.Source.HasDjmdTrack != hasDjmd)
-				throw new InvalidOperationException(
-					$"{segment.InputPath} {(segment.Source.HasDjmdTrack ? "has" : "has no")} a 'djmd' telemetry " +
-					$"stream, but {first.InputPath} {(hasDjmd ? "does" : "doesn't")} - all segments must either " +
-					"all have telemetry or all lack it.");
+			var name = Path.GetFileName(segment.InputPath);
+			if (segment.Source.Camera?.Format.Id != first.Source.Camera?.Format.Id)
+				return $"{name} is from {Describe(segment.Source)}, but {firstName} is from {Describe(first.Source)} - " +
+				       "all files must come from the same camera.";
+
+			if (segment.Source.Fisheye != first.Source.Fisheye)
+				return $"{name} and {firstName} weren't recorded with the same lens setup (360 or flat).";
 
 			VideoInfo a = first.Source.Video;
 			VideoInfo b = segment.Source.Video;
 			if (a.Width != b.Width || a.Height != b.Height || a.FrameRate != b.FrameRate || a.PixFmt != b.PixFmt)
-				throw new InvalidOperationException(
-					$"{segment.InputPath} ({b.Width}x{b.Height}, {b.FrameRate} fps, {b.PixFmt}) doesn't match " +
-					$"{first.InputPath} ({a.Width}x{a.Height}, {a.FrameRate} fps, {a.PixFmt}) - segments must share " +
-					"the same resolution, frame rate and pixel format to be stitched together.");
+				return $"{name} ({b.Width}x{b.Height}, {b.FrameRate} fps, {b.PixFmt}) doesn't match " +
+				       $"{firstName} ({a.Width}x{a.Height}, {a.FrameRate} fps, {a.PixFmt}) - files must share " +
+				       "the same resolution, frame rate and pixel format to be joined.";
 		}
+
+		return null;
+	}
+
+	private static string Describe(SourceInfo source)
+	{
+		return source.Camera?.Format.DisplayName ?? "a camera with no telemetry the app reads";
 	}
 }

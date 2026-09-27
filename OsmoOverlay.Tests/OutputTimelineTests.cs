@@ -17,7 +17,7 @@ public sealed class OutputTimelineTests
 			.. Enumerable.Range(0, 1000).Select(i => new TelemetryFrame(i, i / Fps, 50 + 10 * (i / Fps) / MetersPerDegreeLat, 20, 200,
 				new DateTime(2026, 9, 23, 12, 0, 0).AddSeconds(i / Fps), 0, 0, 1, 10))
 		];
-		return TelemetryProcessor.Process(raw);
+		return TelemetryProcessor.Process(raw, null);
 	}
 
 	private static OutputTimeline Timeline(params TimeRange[] cuts)

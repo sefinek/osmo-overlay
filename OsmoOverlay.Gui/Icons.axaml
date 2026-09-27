@@ -22,7 +22,7 @@
 
 	<!-- Status -->
 	<StreamGeometry x:Key="IconGear">F1 M6.08,2.74 L6.34,0.79 L9.66,0.79 L9.92,2.74 L10.37,2.92 L11.92,1.72 L14.28,4.08 L13.08,5.63 L13.26,6.08 L15.21,6.34 L15.21,9.66 L13.26,9.92 L13.08,10.37 L14.28,11.92 L11.92,14.28 L10.37,13.08 L9.92,13.26 L9.66,15.21 L6.34,15.21 L6.08,13.26 L5.63,13.08 L4.08,14.28 L1.72,11.92 L2.92,10.37 L2.74,9.92 L0.79,9.66 L0.79,6.34 L2.74,6.08 L2.92,5.63 L1.72,4.08 L4.08,1.72 L5.63,2.92 Z M5.60,8 A2.4,2.4 0 1 0 10.40,8 A2.4,2.4 0 1 0 5.60,8 Z</StreamGeometry>
-	<StreamGeometry x:Key="IconWarning">F1 M8,1 L15.4,14.4 H0.6 Z M7.15,5.4 H8.85 L8.55,10.2 H7.45 Z M7.15,11.3 H8.85 V13 H7.15 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconWarning">F0 M8,1 L15.4,14.4 H0.6 Z M7.15,5.4 H8.85 L8.55,10.2 H7.45 Z M7.15,11.3 H8.85 V13 H7.15 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconExclamation">M6.9,2 H9.1 L8.7,10.4 H7.3 Z M6.9,11.8 H9.1 V14 H6.9 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconInfo">M6.9,2 H9.1 V4.2 H6.9 Z M6.9,6 H9.1 V14 H6.9 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconCheck">M6.2,12.8 L1.6,8.2 L3.2,6.6 L6.2,9.6 L12.8,3 L14.4,4.6 Z</StreamGeometry>
@@ -44,4 +44,8 @@
 	<StreamGeometry x:Key="IconMonitor">M1,2 H15 V11.6 H1 Z M2.2,3.2 V10.4 H13.8 V3.2 Z M7.4,11.6 H8.6 V13.2 H7.4 Z M4.6,13.2 H11.4 V14.4 H4.6 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconFrameCurrent">M1,1 H5 V2.2 H2.2 V5 H1 Z M11,1 H15 V5 H13.8 V2.2 H11 Z M1,11 H2.2 V13.8 H5 V15 H1 Z M13.8,11 H15 V15 H11 V13.8 H13.8 Z M5,5 H11 V11 H5 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconDisplay">M1,1 H5 V2.2 H2.2 V5 H1 Z M11,1 H15 V5 H13.8 V2.2 H11 Z M1,11 H2.2 V13.8 H5 V15 H1 Z M13.8,11 H15 V15 H11 V13.8 H13.8 Z M4.4,4.4 H11.6 V11.6 H4.4 Z M5.6,5.6 V10.4 H10.4 V5.6 Z</StreamGeometry>
+
+	<!-- 360 view (Insta360): the globe frames the view, the sun over the horizon turns leveling on/off -->
+	<StreamGeometry x:Key="IconSphere">F0 M1,8 A7,7 0 1 0 15,8 A7,7 0 1 0 1,8 Z M2.2,8 A5.8,5.8 0 1 0 13.8,8 A5.8,5.8 0 1 0 2.2,8 Z M2.2,8 A5.8,2.6 0 1 0 13.8,8 A5.8,2.6 0 1 0 2.2,8 Z M3.4,8 A4.6,1.4 0 1 0 12.6,8 A4.6,1.4 0 1 0 3.4,8 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconHorizon">M1,9.4 H15 V11 H1 Z M4.2,8.2 A3.8,3.8 0 0 1 11.8,8.2 Z M3,12.6 H13 V13.8 H3 Z</StreamGeometry>
 </ResourceDictionary>

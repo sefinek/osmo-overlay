@@ -31,16 +31,16 @@ public sealed class RecordingGapTests
 	[TestMethod]
 	public void Distance_DoesNotCountWhatWasRiddenBetweenTheFiles()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Joined(true));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Joined(true), null);
 
 		Assert.AreEqual(198, derived[^1].CumulativeDistanceMeters, 0.01);
-		Assert.AreEqual(1099, TelemetryProcessor.Process(Joined(false))[^1].CumulativeDistanceMeters, 0.01);
+		Assert.AreEqual(1099, TelemetryProcessor.Process(Joined(false), null)[^1].CumulativeDistanceMeters, 0.01);
 	}
 
 	[TestMethod]
 	public void Speed_DoesNotSpanTheGap()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Joined(true));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Joined(true), null);
 
 		Assert.IsTrue(derived.Max(f => f.SpeedKmh) < 37, $"max {derived.Max(f => f.SpeedKmh):F1} km/h");
 		Assert.AreEqual(36, derived[150].SpeedKmh, 0.5);
@@ -49,7 +49,7 @@ public sealed class RecordingGapTests
 	[TestMethod]
 	public void FirstFrameAfterTheGap_IsMarkedForTheRoute_AndKeptThroughACut()
 	{
-		List<DerivedFrame> derived = TelemetryProcessor.Process(Joined(true));
+		List<DerivedFrame> derived = TelemetryProcessor.Process(Joined(true), null);
 		Assert.IsTrue(derived[100].StartsAfterCut);
 		Assert.AreEqual(1, derived.Count(f => f.StartsAfterCut));
 
@@ -68,7 +68,7 @@ public sealed class RecordingGapTests
 			if (!frames[i].StartsAfterGap)
 				frames[i] = frames[i] with { Latitude = frames[i - 1].Latitude };
 
-		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, true);
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, null, true);
 
 		Assert.AreEqual(frames[99].Latitude, derived[99].Raw.Latitude);
 	}

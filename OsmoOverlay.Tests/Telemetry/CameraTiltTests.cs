@@ -1,7 +1,10 @@
+using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Tests.Telemetry;
 
+/// <summary>CameraTilt through DJI's axes (DjiOsmoFormat.Gravity) - the readings are a DJI accelerometer's, (x, y, z) in g.</summary>
 [TestClass]
 public sealed class CameraTiltTests
 {
@@ -24,9 +27,16 @@ public sealed class CameraTiltTests
 			[.. frames.Select(f => AngleMath.NormalizeDegrees(headingDegrees(f.SampleTimeSeconds)))]);
 	}
 
+	private static (double[] Roll, double[] Pitch) Tilt((List<TelemetryFrame> Frames, double[] Speeds, double[] Headings) drive)
+	{
+		var dji = new DjiOsmoFormat();
+		Direction[] gravity = [.. drive.Frames.Select(f => dji.Gravity(f)!.Value)];
+		return CameraTilt.Compute(drive.Frames, gravity, drive.Speeds, drive.Headings);
+	}
+
 	private static (double Roll, double Pitch) Middle((List<TelemetryFrame> Frames, double[] Speeds, double[] Headings) drive)
 	{
-		var (roll, pitch) = CameraTilt.Compute(drive.Frames, drive.Speeds, drive.Headings);
+		var (roll, pitch) = Tilt(drive);
 		return (roll[roll.Length / 2], pitch[pitch.Length / 2]);
 	}
 
@@ -116,7 +126,7 @@ public sealed class CameraTiltTests
 		const int gapAt = 120;
 		(List<TelemetryFrame> Frames, double[] Speeds, double[] Headings) drive = Drive(4, 0, 0, -1, t => t < gapAt / Hz ? 0 : 40, _ => 0, gapAt);
 
-		var (_, pitch) = CameraTilt.Compute(drive.Frames, drive.Speeds, drive.Headings);
+		var (_, pitch) = Tilt(drive);
 
 		Assert.AreEqual(0, pitch[gapAt], 1e-9);
 		Assert.AreEqual(0, pitch[gapAt - 1], 1e-9);

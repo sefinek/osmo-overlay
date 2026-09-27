@@ -1,4 +1,9 @@
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core;
@@ -19,7 +24,16 @@ public sealed record FileSummary(
 	// See SourceInfo.ContainerCreationTimeUtc - the fallback DateTimeText/UtcTimeText use when this
 	// recording has no GPS timestamp anywhere (OverlayRenderer.DrawTimeText).
 	DateTime? ContainerRecordingStartUtc = null,
-	bool FromCache = false);
+	bool FromCache = false,
+	// The camera that recorded it (ICameraFormat.Id) - what reads its telemetry's axes (tilt, leveling).
+	string? CameraFormatId = null,
+	// A 360 recording's lenses (SourceInfo.Fisheye) - Video is then the flat picture reframed from them.
+	DualFisheye? Fisheye = null)
+{
+	/// <summary>The registered camera format this recording came from - null when none of them knows it.</summary>
+	[JsonIgnore]
+	public ICameraFormat? CameraFormat => CameraFormats.Find(CameraFormatId);
+}
 
 public enum FileSummaryCacheEventKind
 {
@@ -50,21 +64,23 @@ public static class FileSummaryReader
 
 	public static FileSummary Read(string inputPath)
 	{
-		return Read([inputPath]);
+		return Read([inputPath]).Summary!;
 	}
 
 	/// <summary>
+	///     The files' summary, or - Summary null - why they can't be read as one recording (VideoSegments.FindMismatch).
 	///     onCacheEvent fires synchronously on the calling thread: once right after the cache lookup (before
 	///     any probing/extraction starts, so a caller can say what's about to happen rather than after the
 	///     fact), and once more after a recompute with whether it made it into the cache.
 	/// </summary>
-	public static FileSummary Read(IReadOnlyList<string> inputPaths, Action<FileSummaryCacheEvent>? onCacheEvent = null)
+	public static (FileSummary? Summary, string? Problem) Read(IReadOnlyList<string> inputPaths,
+		Action<FileSummaryCacheEvent>? onCacheEvent = null)
 	{
 		(FileSummary? cached, var staleFormatVersion) = FileSummaryCache.TryLoad(inputPaths);
 		if (cached is not null)
 		{
 			onCacheEvent?.Invoke(new FileSummaryCacheEvent(FileSummaryCacheEventKind.Hit, CurrentCacheFormatVersion));
-			return cached with { FromCache = true };
+			return (cached with { FromCache = true }, null);
 		}
 
 		onCacheEvent?.Invoke(staleFormatVersion is { } previous
@@ -72,7 +88,7 @@ public static class FileSummaryReader
 			: new FileSummaryCacheEvent(FileSummaryCacheEventKind.Miss, CurrentCacheFormatVersion));
 
 		IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(inputPaths);
-		VideoSegments.Validate(segments);
+		if (VideoSegments.FindMismatch(segments) is { } mismatch) return (null, mismatch);
 		VideoSegment first = segments[0];
 		var fileSize = inputPaths.Sum(path => new FileInfo(path).Length);
 		var durationSeconds = segments.TotalDurationSeconds();
@@ -80,33 +96,48 @@ public static class FileSummaryReader
 		var totalFrameCount = segments.TotalFrameCount();
 
 		FileSummary summary;
-		if (!segments.AllHaveDjmdTrack())
+		if (!segments.AllHaveTelemetry())
 		{
-			var cameraModelOnly = ExifToolRunner.GetCameraModel(inputPaths[0]);
+			var cameraModelOnly = TryGetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, cameraModelOnly, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, false, null, null, null, totalFrameCount,
-				first.Source.ContainerCreationTimeUtc);
+				first.Source.ContainerCreationTimeUtc, CameraFormatId: first.Source.Camera?.Format.Id, Fisheye: first.Source.Fisheye);
 		}
 		else
 		{
+			ICameraFormat camera = first.Source.Camera!.Format;
 			TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
 			List<DerivedFrame>? derivedFrames = null;
 			TelemetrySummary? telemetry = null;
 			if (extraction.Frames.Count > 0)
 			{
-				derivedFrames = TelemetryProcessor.Process(extraction.Frames);
+				derivedFrames = TelemetryProcessor.Process(extraction.Frames, camera);
 				telemetry = TelemetryProcessor.Summarize(derivedFrames);
 			}
 
-			var cameraModel = extraction.CameraModel ?? ExifToolRunner.GetCameraModel(inputPaths[0]);
+			var cameraModel = extraction.CameraModel ?? TryGetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, cameraModel, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, true, extraction.Frames, derivedFrames, telemetry,
-				totalFrameCount, first.Source.ContainerCreationTimeUtc);
+				totalFrameCount, first.Source.ContainerCreationTimeUtc, CameraFormatId: camera.Id, Fisheye: first.Source.Fisheye);
 		}
 
 		var saved = FileSummaryCache.Save(inputPaths, summary);
 		onCacheEvent?.Invoke(new FileSummaryCacheEvent(
 			saved ? FileSummaryCacheEventKind.Saved : FileSummaryCacheEventKind.SaveFailed, CurrentCacheFormatVersion));
-		return summary;
+		return (summary, null);
+	}
+
+	/// <summary>exiftool is optional - without it the camera model is just unknown, not a failed summary.</summary>
+	private static string? TryGetCameraModel(string path)
+	{
+		try
+		{
+			return ExifToolRunner.GetCameraModel(path);
+		}
+		catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
+		{
+			AppLogger.Info($"Camera model not read (exiftool unavailable: {ex.Message})");
+			return null;
+		}
 	}
 }

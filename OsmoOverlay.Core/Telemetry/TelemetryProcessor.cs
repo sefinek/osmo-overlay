@@ -1,3 +1,6 @@
+using OsmoOverlay.Core.Cameras;
+using OsmoOverlay.Core.Reframe;
+
 namespace OsmoOverlay.Core.Telemetry;
 
 public sealed record TelemetrySummary(
@@ -18,7 +21,11 @@ public static class TelemetryProcessor
 	internal const double SpeedWindowSeconds = 1.0;
 	private const double GForceTimeConstantSeconds = 0.3;
 
-	public static List<DerivedFrame> Process(IReadOnlyList<TelemetryFrame> frames, bool smoothGps = false)
+	/// <param name="camera">
+	///     Reads the accelerometer's axes (ICameraFormat.Gravity) for roll, pitch and the G-meter - all 0 without it or
+	///     when it doesn't know them.
+	/// </param>
+	public static List<DerivedFrame> Process(IReadOnlyList<TelemetryFrame> frames, ICameraFormat? camera, bool smoothGps = false)
 	{
 		if (smoothGps) frames = GpsInterpolation.Apply(frames);
 
@@ -43,7 +50,7 @@ public static class TelemetryProcessor
 				reference.Latitude, reference.Longitude, current.Latitude, current.Longitude);
 			var verticalMeters = current.AltitudeMeters - reference.AltitudeMeters;
 
-			// Prefer the GPS receiver's own measured velocity (from the raw djmd stream) over
+			// Prefer the GPS receiver's own measured velocity (when the camera records it) over
 			// differentiating position samples - it's not affected by GPS position quantization/lag.
 			var speedKmh = current.GpsSpeedMs is { } gpsSpeedMs
 				? gpsSpeedMs * 3.6
@@ -60,7 +67,10 @@ public static class TelemetryProcessor
 			gradients[i] = horizontalMeters > 0.5 ? verticalMeters / horizontalMeters * 100.0 : 0;
 		}
 
-		var (roll, pitch) = CameraTilt.Compute(frames, speeds, headings);
+		Direction[]? gravity = GravityOf(frames, camera);
+		var (roll, pitch) = gravity is null
+			? (new double[frames.Count], new double[frames.Count])
+			: CameraTilt.Compute(frames, gravity, speeds, headings);
 
 		var originLat = frames[0].Latitude;
 		var originLon = frames[0].Longitude;
@@ -89,12 +99,21 @@ public static class TelemetryProcessor
 
 			var localEast = (current.Longitude - originLon) * metersPerDegLon;
 			var localNorth = (current.Latitude - originLat) * metersPerDegLat;
+			// The G-meter's dot: sideways to the right, forward up.
+			var (lateral, longitudinal) = gravity is null ? (0, 0) : (gravity[i].X, -gravity[i].Z);
 
 			result.Add(new DerivedFrame(current, speeds[i], headings[i], gradients[i], cumulativeDistances[i], roll[i], pitch[i],
-				sun, localEast, localNorth, smoothedGForce, current.StartsAfterGap));
+				sun, localEast, localNorth, smoothedGForce, lateral, longitudinal, current.StartsAfterGap));
 		}
 
 		return result;
+	}
+
+	/// <summary>Every frame's gravity in the camera's own space - null when the camera doesn't know its axes.</summary>
+	internal static Direction[]? GravityOf(IReadOnlyList<TelemetryFrame> frames, ICameraFormat? camera)
+	{
+		if (camera is null || frames.Count == 0 || camera.Gravity(frames[0]) is null) return null;
+		return [.. frames.Select(f => camera.Gravity(f) ?? default)];
 	}
 
 	/// <summary>
@@ -174,7 +193,7 @@ public static class TelemetryProcessor
 
 	/// <summary>
 	///     Contiguous [Start, End] SampleTimeSeconds ranges where the raw stream had no real GPS fix
-	///     (TelemetryFrame.HasGpsFix false - see GpsForwardFill) - e.g. for a GUI to mark on a scrub
+	///     (TelemetryFrame.HasGpsFix false) - e.g. for a GUI to mark on a scrub
 	///     timeline. Runs on the raw frames, not DerivedFrames, so it reflects what the camera actually
 	///     recorded regardless of the (optional, cosmetic) GpsInterpolation smoothing setting. Callers
 	///     that want to flag only genuine anomalies (a fix that dropped out mid-recording, not a file

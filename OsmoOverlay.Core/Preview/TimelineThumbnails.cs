@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;
@@ -35,10 +36,10 @@ public sealed class TimelineThumbnails : IDisposable
 
 	public event Action? Updated;
 
-	/// <summary>Blocking - opens the first file. Width and height should keep the recording's aspect ratio.</summary>
-	public static TimelineThumbnails Open(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height)
+	/// <summary>Blocking - opens the first file. Width and height should keep the recording's aspect ratio; a 360 recording's show its reframer's view.</summary>
+	public static TimelineThumbnails Open(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, Reframer? reframer = null)
 	{
-		var source = new LibavVideoSource(segments, fps, width, height);
+		var source = new LibavVideoSource(segments, fps, width, height, reframer);
 		return new TimelineThumbnails(source, width, height, (int)Math.Ceiling(source.Duration.TotalSeconds));
 	}
 

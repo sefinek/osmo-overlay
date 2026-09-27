@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using OsmoOverlay.Core.Cameras;
+using OsmoOverlay.Core.Reframe;
 
 namespace OsmoOverlay.Core.Ffmpeg;
 
@@ -47,15 +49,22 @@ public sealed record AudioInfo(string CodecName, int SampleRate, int Channels, l
 public sealed record SourceInfo(
 	VideoInfo Video,
 	AudioInfo? Audio,
-	bool HasDjmdTrack,
 	double DurationSeconds,
-	int? DjmdStreamIndex,
 	// The container's own "when did recording start" (its creation_time tag, written by the camera
 	// itself) - independent of GPS, so it's the only usable fallback for Date&Time/UTC time on a
 	// recording with no GPS timestamp at all (e.g. filmed indoors, no fix ever acquired). Null when
 	// the container has no such tag or it fails to parse - callers must treat that as "no fallback
 	// available", not "recording started at DateTime default".
-	DateTime? ContainerCreationTimeUtc);
+	DateTime? ContainerCreationTimeUtc,
+	// The camera that recorded the file (CameraFormats.Detect) - null for one no registered camera knows, i.e. no telemetry.
+	CameraRecording? Camera = null)
+{
+	/// <summary>
+	///     A 360 recording's lenses - Video then describes the flat picture reframed from them (Reframing.OutputSize), the
+	///     picture everything else in the app works with; only the render's and the preview's decoding see the lenses.
+	/// </summary>
+	public DualFisheye? Fisheye => Camera?.Lenses;
+}
 
 public static partial class SourceProbe
 {
@@ -72,26 +81,23 @@ public static partial class SourceProbe
 		JsonArray streams = root["streams"]!.AsArray();
 
 		JsonNode? videoStream = null;
+		JsonNode? secondVideoStream = null;
 		JsonNode? audioStream = null;
-		var hasDjmd = false;
-		int? djmdStreamIndex = null;
 
 		foreach (JsonNode? s in streams)
 		{
 			var codecType = s!["codec_type"]?.GetValue<string>();
-			var codecTag = s["codec_tag_string"]?.GetValue<string>();
 
 			switch (codecType)
 			{
 				case "video" when videoStream is null:
 					videoStream = s;
 					break;
+				case "video" when secondVideoStream is null && !IsAttachedPicture(s):
+					secondVideoStream = s;
+					break;
 				case "audio" when audioStream is null:
 					audioStream = s;
-					break;
-				case "data" when codecTag == "djmd":
-					hasDjmd = true;
-					djmdStreamIndex = s["index"]?.GetValue<int>();
 					break;
 			}
 		}
@@ -130,13 +136,33 @@ public static partial class SourceProbe
 
 		var duration = double.Parse(root["format"]!["duration"]!.GetValue<string>(), CultureInfo.InvariantCulture);
 
-		DateTime? containerCreationTimeUtc = null;
-		if (root["format"]?["tags"]?["creation_time"]?.GetValue<string>() is { } creationTimeStr &&
-		    DateTime.TryParse(creationTimeStr, CultureInfo.InvariantCulture,
-			    DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out DateTime parsed))
-			containerCreationTimeUtc = parsed;
+		DateTime? containerCreationTimeUtc = ParseCreationTime(root["format"]?["tags"]?["creation_time"]?.GetValue<string>());
+		CameraRecording? camera = CameraFormats.Detect(inputPath, streams);
+		if (camera?.Lenses is { } lenses) video = Reframed(video, lenses, secondVideoStream);
+		return new SourceInfo(video, audio, duration, containerCreationTimeUtc, camera);
+	}
 
-		return new SourceInfo(video, audio, hasDjmd, duration, djmdStreamIndex, containerCreationTimeUtc);
+	/// <summary>The flat picture reframed from the lenses - its size, and the lenses' bitrate per pixel kept at that size.</summary>
+	private static VideoInfo Reframed(VideoInfo lenses, DualFisheye fisheye, JsonNode? secondStream)
+	{
+		var (width, height) = Reframing.OutputSize(fisheye);
+		var lensBitRate = lenses.BitRate +
+		                  (long.TryParse(secondStream?["bit_rate"]?.GetValue<string>(), CultureInfo.InvariantCulture, out var second) ? second : 0);
+		var lensPixels = fisheye.Layout == FisheyeLayout.TwoStreams ? 2.0 * lenses.Width * lenses.Height : (double)lenses.Width * lenses.Height;
+		return lenses with { Width = width, Height = height, BitRate = (long)Math.Round(lensBitRate * (width * (double)height / lensPixels)) };
+	}
+
+	private static bool IsAttachedPicture(JsonNode stream)
+	{
+		return stream["disposition"]?["attached_pic"]?.GetValue<int>() == 1;
+	}
+
+	private static DateTime? ParseCreationTime(string? text)
+	{
+		return DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+			out DateTime parsed)
+			? parsed
+			: null;
 	}
 
 	/// <summary>

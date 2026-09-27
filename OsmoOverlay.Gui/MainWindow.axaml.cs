@@ -51,11 +51,9 @@ public partial class MainWindow : Window
 	// OnWidgetGearHoverButtonClick).
 	private string? _editingElementId;
 
-	// Default true (nothing greyed out) until a file's actually been read - RefreshWidgetList only
-	// starts using these once _summary is set, so the default only matters for that brief gap.
-	private bool _hasContainerTime = true;
-	private bool _hasGpsFix = true;
-	private bool _hasGpsTimestamp = true;
+	// Everything available (nothing greyed out) until a file's actually been read - RefreshWidgetList only
+	// starts using it once _summary is set, so the default only matters for that brief gap.
+	private OverlayAvailability _availability = new(true, true, true);
 	private string? _hoveredElementId;
 	private TimeSpan _previewPosition;
 	// The frame at _previewPosition (FrameAt) - the time readout and the status strip both show it.
@@ -83,6 +81,8 @@ public partial class MainWindow : Window
 	private bool _showWatermark;
 	private bool _smoothGpsMotion;
 	private FileSummary? _summary;
+	// The input set SupportNotice was last shown for (ShowSupportNoticeAsync).
+	private string? _supportNoticeShownFor;
 	private bool _suppressOverlayEvents;
 	private bool _suppressTimelineEvent;
 	private bool _timelineScrubbing;
@@ -145,6 +145,7 @@ public partial class MainWindow : Window
 		WireLayers();
 		WirePreviewZoom();
 		WirePreviewShortcuts();
+		WireReframe();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStarted += OnPreviewPlaybackStarted;
@@ -231,9 +232,13 @@ public partial class MainWindow : Window
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Select DJI Osmo Action recording(s) - pick several segments to stitch them together",
+			Title = "Select recording(s) - pick several segments of one recording to stitch them together",
 			AllowMultiple = true,
-			FileTypeFilter = [new FilePickerFileType("MP4 video") { Patterns = ["*.mp4", "*.MP4"] }]
+			FileTypeFilter =
+			[
+				new FilePickerFileType("Camera recordings") { Patterns = ["*.mp4", "*.MP4", "*.insv", "*.INSV", "*.lrv", "*.LRV"] },
+				new FilePickerFileType("All files") { Patterns = ["*"] }
+			]
 		});
 
 		if (files.Count == 0) return;
@@ -475,6 +480,7 @@ public partial class MainWindow : Window
 		InputPanel.IsEnabled = !busy;
 		if (busy)
 			ActionButton.IsEnabled = false;
+		UpdateReframeControls();
 	}
 
 	private void AppendLog(string message, LogLevel level = LogLevel.Info)

@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using OsmoOverlay.Core;
+using OsmoOverlay.Core.Cameras;
+using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Core.Telemetry;
+namespace OsmoOverlay.Cameras.Dji;
 
 /// <summary>
 ///     Decodes the protobuf-encoded "DJI meta" stream (codec_tag djmd) embedded by DJI Osmo Action
@@ -36,7 +39,7 @@ namespace OsmoOverlay.Core.Telemetry;
 ///     index / fps to floating-point rounding, not a hardware timestamp - so we compute it the same
 ///     way, using the video's real frame rate from ffprobe.
 /// </summary>
-public static class DjiMetaTelemetryParser
+internal static class DjiMetaTelemetryParser
 {
 	public static ReadOnlyMemory<byte> ExtractRawStream(string inputPath, int streamIndex)
 	{

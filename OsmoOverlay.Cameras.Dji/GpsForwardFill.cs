@@ -1,4 +1,6 @@
-namespace OsmoOverlay.Core.Telemetry;
+
+
+namespace OsmoOverlay.Cameras.Dji;
 
 /// <summary>
 ///     A dropped GPS fix (tunnel, indoors) must not be treated as (0,0): carry the last known fix

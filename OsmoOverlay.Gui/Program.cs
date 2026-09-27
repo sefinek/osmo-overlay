@@ -1,4 +1,7 @@
 using Avalonia;
+using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Cameras.Insta360;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Updates;
 
 namespace OsmoOverlay.Gui;
@@ -10,6 +13,7 @@ internal class Program
 	{
 		// Held while the app runs - the installer's AppMutex, so an update waits for the app to close.
 		using var appMutex = new Mutex(false, AppUpdates.MutexName);
+		CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
 		UiScale.Initialize();
 		BuildAvaloniaApp()
 			.StartWithClassicDesktopLifetime(args);

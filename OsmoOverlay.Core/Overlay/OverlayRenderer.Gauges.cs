@@ -18,14 +18,8 @@ public sealed partial class OverlayRenderer
 	// smoothing) - raw per-sample accelerometer readings are noisy (vibration, bumps), and unlike
 	// those two gauges this one never went through TelemetryProcessor, so without this the dot/reading
 	// would jitter with every sample instead of tracking actual cornering/braking swings.
-	// Plots AccelY (lateral, screen-horizontal) and AccelX (longitudinal, screen-vertical) - the same
-	// two axes CameraTilt's comment already verified (AccelX = forward/backward tilt, AccelY =
-	// left/right lean), cross-checked against a dedicated tilt-test recording
-	// (right/left/floor/ceiling tilts at known timestamps): right tilt showed AccelY swing hugely
-	// negative with AccelX flat, left tilt the mirror positive swing, floor/ceiling tilts showed the
-	// opposite pattern on AccelX with AccelY flat. Not AccelZ: it moves under both pitch and roll alike
-	// (the "remaining" component of the fixed ~1G vector), so paired with AccelX a pure left/right tilt
-	// visibly moves the dot on what is meant to be the up/down axis. This still only reads REORIENTATION (tilting the camera itself),
+	// Which accelerometer axes are sideways and forward is the camera format's (ICameraFormat.Gravity,
+	// DerivedFrame.LateralAccelG/LongitudinalAccelG). This still only reads REORIENTATION (tilting the camera itself),
 	// not necessarily translational G-force - a single accelerometer without a gyroscope cannot tell
 	// "the sensor rotated" apart from "the sensor felt a real force", so a deliberate/incidental tilt
 	// still shows up here same as a real cornering/braking G would.
@@ -166,7 +160,7 @@ public sealed partial class OverlayRenderer
 		canvas.DrawLine(cx, cy - radius, cx, cy + radius, _thinStroke2White70);
 
 		var fullScaleG = Math.Clamp(element.GMeterFullScaleG, GMeterFullScaleGMin, GMeterFullScaleGMax);
-		var (lateral, longitudinal) = SmoothGMeterDelta(frame.Raw);
+		var (lateral, longitudinal) = SmoothGMeterDelta(frame);
 		var dotX = cx + (float)Math.Clamp(lateral / fullScaleG, -1, 1) * radius;
 		var dotY = cy - (float)Math.Clamp(longitudinal / fullScaleG, -1, 1) * radius;
 
@@ -189,18 +183,14 @@ public sealed partial class OverlayRenderer
 	///     backwards/large time gap resets all four straight to the raw reading, same as if they shared
 	///     one clock.
 	/// </summary>
-	private (double Lateral, double Longitudinal) SmoothGMeterDelta(TelemetryFrame raw)
+	private (double Lateral, double Longitudinal) SmoothGMeterDelta(DerivedFrame frame)
 	{
-		var seconds = raw.SampleTimeSeconds;
-		var baselineLateral = _gMeterBaselineLateralEma.Update(seconds, raw.AccelY, GMeterBaselineSeconds);
-		var baselineLongitudinal = _gMeterBaselineLongitudinalEma.Update(seconds, raw.AccelX, GMeterBaselineSeconds);
-		var smoothedLateral = _gMeterSmoothedLateralEma.Update(seconds, raw.AccelY, GMeterSmoothingSeconds);
-		var smoothedLongitudinal = _gMeterSmoothedLongitudinalEma.Update(seconds, raw.AccelX, GMeterSmoothingSeconds);
-
-		// Negated: right tilt showed AccelY swing negative in the verification recording (see the
-		// comment above DrawGMeter), but "tilt right" should move the dot right (positive), same
-		// left-is-negative/right-is-positive convention as screen X.
-		return (-(smoothedLateral - baselineLateral), smoothedLongitudinal - baselineLongitudinal);
+		var seconds = frame.Raw.SampleTimeSeconds;
+		var baselineLateral = _gMeterBaselineLateralEma.Update(seconds, frame.LateralAccelG, GMeterBaselineSeconds);
+		var baselineLongitudinal = _gMeterBaselineLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterBaselineSeconds);
+		var smoothedLateral = _gMeterSmoothedLateralEma.Update(seconds, frame.LateralAccelG, GMeterSmoothingSeconds);
+		var smoothedLongitudinal = _gMeterSmoothedLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterSmoothingSeconds);
+		return (smoothedLateral - baselineLateral, smoothedLongitudinal - baselineLongitudinal);
 	}
 
 	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)

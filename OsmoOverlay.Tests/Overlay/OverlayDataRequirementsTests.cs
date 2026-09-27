@@ -1,4 +1,6 @@
+using OsmoOverlay.Cameras.Insta360;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Tests.Overlay;
 
@@ -27,7 +29,22 @@ public sealed class OverlayDataRequirementsTests
 	[DataRow(OverlayElementType.SunWidget, true, true, false, true)]
 	public void IsSupported(OverlayElementType type, bool gpsFix, bool gpsTimestamp, bool containerTime, bool expected)
 	{
-		Assert.AreEqual(expected, OverlayDataRequirements.IsSupported(type, gpsFix, gpsTimestamp, containerTime));
+		Assert.AreEqual(expected, OverlayDataRequirements.IsSupported(type, new OverlayAvailability(gpsFix, gpsTimestamp, containerTime)));
+	}
+
+	[TestMethod]
+	[DataRow(OverlayElementType.RollGauge, true)]
+	[DataRow(OverlayElementType.PitchGauge, true)]
+	[DataRow(OverlayElementType.GMeter, true)]
+	[DataRow(OverlayElementType.CameraInfo, false)]
+	[DataRow(OverlayElementType.ElapsedTimeText, true)]
+	[DataRow(OverlayElementType.CameraModelText, true)]
+	[DataRow(OverlayElementType.DateTimeText, true)]
+	public void Insta360_TiltFromItsAxes_NoCameraSettings(OverlayElementType type, bool expected)
+	{
+		List<TelemetryFrame> frames = [new(0, 0, 0, 0, 0, null, 0, 0, 1, ShutterSeconds: 0.001, HasGpsFix: false)];
+
+		Assert.AreEqual(expected, OverlayDataRequirements.IsSupported(type, OverlayAvailability.Of(frames, true, new Insta360Format())));
 	}
 
 	[TestMethod]
@@ -40,7 +57,7 @@ public sealed class OverlayDataRequirementsTests
 			new MapWidgetElement { X = 0, Y = 0, Visible = false }
 		];
 
-		IReadOnlyList<OverlayElement> applied = OverlayDataRequirements.ApplyAvailability(preset, false, false, true);
+		IReadOnlyList<OverlayElement> applied = new OverlayAvailability(false, false, true).Apply(preset);
 
 		CollectionAssert.AreEqual(new[] { false, true, false }, applied.Select(e => e.Visible).ToArray());
 		Assert.IsTrue(preset[0].Visible, "the saved preset itself must stay as the user arranged it");

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
@@ -104,7 +105,8 @@ public partial class MainWindow
 		try
 		{
 			(thumbnails, waveform) = await Task.Run(() =>
-				(TimelineThumbnails.Open(segments, summary.Video.Fps, thumbnailWidth, ThumbnailHeight), AudioWaveform.Start(segments)));
+				(TimelineThumbnails.Open(segments, summary.Video.Fps, thumbnailWidth, ThumbnailHeight, ReframerFor(summary, _reframe)),
+					AudioWaveform.Start(segments)));
 		}
 		catch (InvalidOperationException ex)
 		{
@@ -122,6 +124,40 @@ public partial class MainWindow
 		_timelineThumbnails = thumbnails;
 		_timelineWaveform = waveform;
 		ExpandedTimeline.SetSources(thumbnails, waveform, summary.Video.Fps, aspect);
+	}
+
+	/// <summary>A 360 recording's filmstrip shows its view - generated again for a new one, the waveform kept.</summary>
+	private async Task ReloadTimelineThumbnailsAsync()
+	{
+		if (_timelineTracksFor is not { Fisheye: not null } summary) return;
+
+		var aspect = (double)summary.Video.Width / summary.Video.Height;
+		var thumbnailWidth = (int)Math.Round(ThumbnailHeight * aspect) & ~1;
+		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
+		ReframeView view = _reframe;
+		Reframer? reframer = ReframerFor(summary, view);
+		TimelineThumbnails thumbnails;
+		try
+		{
+			thumbnails = await Task.Run(() => TimelineThumbnails.Open(segments, summary.Video.Fps, thumbnailWidth, ThumbnailHeight, reframer));
+		}
+		catch (InvalidOperationException ex)
+		{
+			AppLogger.Warn(ex, "Timeline thumbnails unavailable");
+			return;
+		}
+
+		// Another recording, or a newer view, took over meanwhile.
+		if (!ReferenceEquals(_timelineTracksFor, summary) || view != _reframe)
+		{
+			thumbnails.Dispose();
+			return;
+		}
+
+		TimelineThumbnails? previous = _timelineThumbnails;
+		_timelineThumbnails = thumbnails;
+		ExpandedTimeline.SetSources(thumbnails, _timelineWaveform, summary.Video.Fps, aspect);
+		previous?.Dispose();
 	}
 
 	private void ReleaseTimelineTracks()

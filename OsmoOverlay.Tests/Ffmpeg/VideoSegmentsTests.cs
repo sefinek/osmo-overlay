@@ -1,4 +1,6 @@
 using System.Globalization;
+using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
 
 namespace OsmoOverlay.Tests.Ffmpeg;
@@ -10,7 +12,7 @@ public sealed class VideoSegmentsTests
 	{
 		var video = new VideoInfo("hevc", "Main 10", 3840, 2160, "60000/1001", "yuv420p10le", "bt709", "bt709", "bt709", "tv",
 			90_000_000, FrameCount: frames);
-		return new VideoSegment("x.mp4", new SourceInfo(video, null, true, frames * 1001 / 60000.0, 2, null), 0);
+		return new VideoSegment("x.mp4", new SourceInfo(video, null, frames * 1001 / 60000.0, null, new CameraRecording(new DjiOsmoFormat(), 2)), 0);
 	}
 
 	[TestMethod]

@@ -20,7 +20,7 @@ public sealed class OverlayRendererTests
 			var north = i * 1.5;
 			if (i > 0) distance += 3;
 			var raw = new TelemetryFrame(i, i / 30.0, 50 + north / 111320.0, 20 + east / 71560.0, 200 + i * 0.1, null, 0, 0, 1);
-			frames.Add(new DerivedFrame(raw, 20 + i % 30, i % 360, 2, distance, 0, 0, new SunPosition(120, 30), east, north, 1));
+			frames.Add(new DerivedFrame(raw, 20 + i % 30, i % 360, 2, distance, 0, 0, new SunPosition(120, 30), east, north, 1, 0, 0));
 		}
 
 		return frames;

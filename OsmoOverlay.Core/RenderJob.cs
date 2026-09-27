@@ -2,9 +2,12 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Channels;
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Core.Preview;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core;
@@ -26,7 +29,9 @@ public sealed record RenderOptions(
 	// FrameLimit still caps the frame count on top of both.
 	double? RangeStartSeconds = null,
 	double? RangeEndSeconds = null,
-	IReadOnlyList<TimeRange>? CutOuts = null)
+	IReadOnlyList<TimeRange>? CutOuts = null,
+	// Where the flat picture of a 360 recording looks - the default (leveled, straight ahead) when null; ignored for a flat video.
+	ReframeView? Reframe = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
 	{
@@ -105,7 +110,8 @@ public static class RenderJob
 		{
 			Report(RenderPhase.Probing, "Probing source file(s) (ffprobe)...");
 			IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(options.InputPaths);
-			VideoSegments.Validate(segments);
+			if (VideoSegments.FindMismatch(segments) is { } mismatch)
+				return new RenderResult(false, mismatch, sw.Elapsed);
 			VideoSegment first = segments[0];
 
 			Report(RenderPhase.Probing,
@@ -113,9 +119,10 @@ public static class RenderJob
 				$"{first.Source.Video.FrameRate} fps, {first.Source.Video.PixFmt}, ~{first.Source.Video.BitRate / 1_000_000} Mbps" +
 				(segments.Count > 1 ? $" ({segments.Count} segments)" : ""));
 
-			if (!segments.AllHaveDjmdTrack())
+			if (!segments.AllHaveTelemetry())
 				return new RenderResult(false,
-					$"{first.InputPath} has no 'djmd' telemetry stream - this is likely a proxy/preview file, not an original DJI Osmo Action recording",
+					$"{first.InputPath} has no telemetry - it isn't an original recording from a supported camera (DJI Osmo Action's " +
+					"'djmd' stream, Insta360's trailer), e.g. a file exported from another app",
 					sw.Elapsed);
 
 			if (!options.Overwrite && File.Exists(options.OutputPath))
@@ -123,6 +130,7 @@ public static class RenderJob
 
 			IReadOnlyList<TelemetryFrame> rawFrames;
 			var cameraModel = options.CameraModel;
+			ICameraFormat camera = first.Source.Camera!.Format;
 			if (options.TelemetryFrames is { Count: > 0 })
 			{
 				rawFrames = options.TelemetryFrames;
@@ -130,7 +138,7 @@ public static class RenderJob
 			}
 			else
 			{
-				Report(RenderPhase.ExtractingTelemetry, "Extracting telemetry (djmd stream)...");
+				Report(RenderPhase.ExtractingTelemetry, "Extracting telemetry...");
 				TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
 				rawFrames = extraction.Frames;
 				cameraModel ??= extraction.CameraModel;
@@ -145,16 +153,16 @@ public static class RenderJob
 			RenderPlan plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
 				fps, segments.TotalFrameCount());
 			// The overlay describes the video as rendered: telemetry moved onto the output's own timeline.
-			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, smoothGps));
+			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps));
 			var startAltitude = derived[0].Raw.AltitudeMeters;
 			var maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
 			if (options.Encoder is null)
 				Report(RenderPhase.SelectingEncoder, "Checking NVENC availability...");
-			var encoder = options.Encoder ?? FfmpegPipeline.SelectVideoEncoder();
+			var encoder = options.Encoder ?? FfmpegPipeline.SelectVideoEncoder(first.Source.Video);
 			Report(RenderPhase.SelectingEncoder,
 				$"Using encoder: {encoder}" +
-				(encoder == "libx265" ? " (NVENC unavailable - rendering on CPU)" : " (GPU)"));
+				(FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (NVENC unavailable - rendering on CPU)"));
 
 			var totalFrames = (int)plan.TotalFrames;
 			Report(RenderPhase.Rendering, $"Rendering {totalFrames} frames to {options.OutputPath}" +
@@ -162,13 +170,12 @@ public static class RenderJob
 
 			IReadOnlyList<OverlayElement> layout =
 				options.Layout ?? LoadActiveLayout(first.Source.Video.Width, first.Source.Video.Height);
-			var hasGpsFix = TelemetryProcessor.HasAnyGpsFix(rawFrames);
 			// Forces off any widget this file's telemetry can't support (e.g. Map/Compass checked from
 			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
 			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
-			layout = OverlayDataRequirements.ApplyAvailability(layout,
-				hasGpsFix, TelemetryProcessor.HasAnyGpsTimestamp(rawFrames),
-				first.Source.ContainerCreationTimeUtc is not null);
+			var availability = OverlayAvailability.Of(rawFrames, first.Source.ContainerCreationTimeUtc is not null, camera);
+			var hasGpsFix = availability.GpsFix;
+			layout = availability.Apply(layout);
 			var showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
@@ -210,7 +217,7 @@ public static class RenderJob
 			}
 
 			// Green screen has no source recording in it to carry camera metadata over from.
-			// The camera's djmd/dbgi tracks are copied whole (Mp4CameraMetadata) - on a partial render they'd
+			// The camera's data tracks are copied whole (ICameraFormat.CopyMetadata) - on a partial render they'd
 			// describe a longer recording than the video they sit next to, so only the non-track parts stay.
 			var keepTracks = !plan.IsPartial;
 			if (!keepTracks && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack) && settings.PreserveCameraMetadata &&
@@ -218,14 +225,23 @@ public static class RenderJob
 				Report(RenderPhase.Rendering, "Partial render - the camera's telemetry/debug tracks aren't copied (they cover the whole recording)");
 			var metadataSelection = new CameraMetadataSelection(settings.MetadataKeepTelemetry && keepTracks,
 				settings.MetadataKeepDebugTrack && keepTracks, settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
-			var preserveMetadata = settings.PreserveCameraMetadata && metadataSelection.Any && !options.GreenScreen;
+			var preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !options.GreenScreen;
 			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata);
 			// Only a file this render wrote may be deleted if it fails - never one that was already there and
 			// wasn't meant to be overwritten.
 			var outputIsOurs = options.Overwrite || !File.Exists(options.OutputPath);
 			var succeeded = false;
+			// A 360 recording's picture is made here (FisheyeProjector, the preview's own) and goes to ffmpeg finished, the
+			// overlay drawn on it - ffmpeg only takes the sound from the files.
+			Reframer? reframer = options.GreenScreen
+				? null
+				: Reframer.For(first.Source.Fisheye, rawFrames, camera, options.Reframe ?? new ReframeView());
+			using LibavVideoSource? pictures = reframer is null
+				? null
+				: new LibavVideoSource([.. segments.Select(s => new PlaybackSegment(s.InputPath, s.Source.DurationSeconds))], fps,
+					first.Source.Video.Width, first.Source.Video.Height, reframer);
 			using Process ffmpeg = FfmpegPipeline.StartRender(segments, options.OutputPath, encoder, options.Overwrite, encode,
-				plan, options.GreenScreen);
+				plan, options.GreenScreen, pictures is not null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// `using Process ffmpeg` above only releases managed handles on Dispose - it does NOT
@@ -272,12 +288,19 @@ public static class RenderJob
 				{
 					try
 					{
-						for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
+						if (pictures is not null)
 						{
-							DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
-							if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
-							renderer.RenderInto(frame, pixels);
-							await channel.Writer.WriteAsync(pixels, producerCt);
+							await ProduceComposedAsync(pictures, plan, derived, renderer, fps, channel.Writer, producerCt);
+						}
+						else
+						{
+							for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
+							{
+								DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
+								if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
+								renderer.RenderInto(frame, pixels);
+								await channel.Writer.WriteAsync(pixels, producerCt);
+							}
 						}
 
 						channel.Writer.TryComplete();
@@ -299,7 +322,8 @@ public static class RenderJob
 					await foreach (var pixels in channel.Reader.ReadAllAsync(ct))
 					{
 						stdin.Write(pixels, 0, pixels.Length);
-						freeBuffers.Enqueue(pixels);
+						if (pictures is not null) pictures.Recycle(new VideoFrame(pixels, first.Source.Video.Width, first.Source.Video.Height));
+						else freeBuffers.Enqueue(pixels);
 						written++;
 						rate.Add(written);
 
@@ -381,7 +405,7 @@ public static class RenderJob
 					RenderSpeedHistory.Record(RenderSpeedHistory.Key(first.Source.Video.Width, first.Source.Video.Height, fps,
 						encoder, encode.NvencPreset), averageFps);
 
-				PostProcess(options.OutputPath, options.InputPaths, preserveMetadata ? metadataSelection : null,
+				PostProcess(options.OutputPath, options.InputPaths, camera, preserveMetadata ? metadataSelection : null,
 					settings.FastStart && !options.GreenScreen,
 					message => Report(RenderPhase.Rendering, message, written, totalFrames));
 
@@ -408,11 +432,33 @@ public static class RenderJob
 	}
 
 	/// <summary>
-	///     Edits of the finished file ffmpeg can't do itself - see Mp4CameraMetadata/Mp4FastStart. Each step
+	///     A 360 recording's frames for the render: each kept piece decoded on from its first frame, turned into the
+	///     flat view and the overlay drawn onto it at the output's time - what the preview shows, at full size.
+	/// </summary>
+	private static async Task ProduceComposedAsync(LibavVideoSource pictures, RenderPlan plan, IReadOnlyList<DerivedFrame> derived,
+		OverlayRenderer renderer, double fps, ChannelWriter<byte[]> writer, CancellationToken ct)
+	{
+		var outputFrame = 0;
+		foreach (RenderPiece piece in plan.Pieces)
+		{
+			LibavVideoSource.PlaybackStream stream = pictures.OpenPlaybackStream(TimeSpan.FromSeconds(piece.SourceStartFrame / fps), ct);
+			for (long k = 0; k < piece.FrameCount && !ct.IsCancellationRequested; k++, outputFrame++)
+			{
+				VideoFrame frame = stream.TryReadNextFrame()
+				                   ?? throw new InvalidOperationException(stream.Error ?? "The recording ended before the render's last frame.");
+				renderer.RenderOnto(TelemetryProcessor.FindNearest(derived, outputFrame / fps), frame.Bgra, frame.Width, frame.Height);
+				await writer.WriteAsync(frame.Bgra, ct);
+			}
+		}
+	}
+
+	/// <summary>
+	///     Edits of the finished file ffmpeg can't do itself - the camera's metadata (ICameraFormat.CopyMetadata) and
+	///     Mp4FastStart after it. Each step
 	///     is best-effort: the video itself is already complete and correct at this point, so a failure is
 	///     logged and the render still counts as successful (both steps leave the file intact on failure).
 	/// </summary>
-	private static void PostProcess(string outputPath, IReadOnlyList<string> inputPaths, CameraMetadataSelection? metadata,
+	private static void PostProcess(string outputPath, IReadOnlyList<string> inputPaths, ICameraFormat camera, CameraMetadataSelection? metadata,
 		bool fastStart, Action<string> report)
 	{
 		var preserveMetadata = metadata is not null;
@@ -425,7 +471,7 @@ public static class RenderJob
 			report($"Copying camera metadata into the output: {string.Join(", ", parts)}...");
 			try
 			{
-				Mp4CameraMetadata.CopyInto(outputPath, inputPaths, metadata);
+				camera.CopyMetadata(outputPath, inputPaths, metadata);
 			}
 			catch (Exception ex)
 			{

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 
@@ -64,8 +65,8 @@ public sealed record OverlaySettings(
 	// project has no dependency on the Gui project to reference that enum directly.
 	string PreviewGridMode = "Both",
 	// Export options (see RenderEncodeSettings) - every default reproduces the source 1:1; each one only
-	// ever trades away something the user explicitly opted out of. Off by default: the camera's djmd
-	// track holds the GPS route and the camera serial number, which a video meant for sharing shouldn't
+	// ever trades away something the user explicitly opted out of. Off by default: the camera's telemetry
+	// (DJI's djmd track) holds the GPS route and the camera serial number, which a video meant for sharing shouldn't
 	// carry unless asked to.
 	bool PreserveCameraMetadata = false,
 	// What PreserveCameraMetadata keeps, see CameraMetadataSelection. Serial number off by default even
@@ -104,7 +105,7 @@ public static class RenderSpeedHistory
 {
 	public static string Key(int width, int height, double fps, string encoder, string nvencPreset)
 	{
-		return FormattableString.Invariant($"{width}x{height}@{fps:0.##}|{encoder}{(encoder == "hevc_nvenc" ? "|" + nvencPreset : "")}");
+		return FormattableString.Invariant($"{width}x{height}@{fps:0.##}|{encoder}{(FfmpegPipeline.IsGpuEncoder(encoder) ? "|" + nvencPreset : "")}");
 	}
 
 	public static double? TryGet(string key)

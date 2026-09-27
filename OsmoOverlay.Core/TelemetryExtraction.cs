@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Telemetry;
@@ -10,27 +11,16 @@ public static class TelemetryExtraction
 	// 0.1 s off at most); a file starting this much later than the previous one ended was recorded after a stop.
 	private const double GapToleranceSeconds = 2.0;
 
+	/// <summary>A file's telemetry, read by the camera that recorded it (SourceInfo.Camera).</summary>
 	public static TelemetryExtractionResult Extract(string inputPath, SourceInfo source)
 	{
-		if (source.DjmdStreamIndex is { } djmdStreamIndex)
-			try
-			{
-				ReadOnlyMemory<byte> raw = DjiMetaTelemetryParser.ExtractRawStream(inputPath, djmdStreamIndex);
-				return DjiMetaTelemetryParser.Parse(raw, source.Video.Fps);
-			}
-			catch (Exception ex)
-			{
-				// Native djmd decode is verified against DJI Osmo Action 6 firmware; fall back
-				// to exiftool below for other models/firmware where the raw layout might differ.
-				AppLogger.Warn(ex, $"Native djmd decode failed for {inputPath}, falling back to exiftool");
-			}
-
-		return ExifToolRunner.Extract(inputPath);
+		CameraRecording camera = source.Camera ?? throw new InvalidOperationException($"{Path.GetFileName(inputPath)} has no telemetry the app reads.");
+		return camera.Format.ExtractTelemetry(inputPath, source);
 	}
 
 	/// <summary>
-	///     Stitches telemetry from several consecutive files (DJI Osmo Action auto-splits long
-	///     recordings) into one continuous stream: each segment's SampleTimeSeconds is shifted onto
+	///     Stitches telemetry from several consecutive files (a camera auto-splits long recordings,
+	///     e.g. DJI Osmo Action) into one continuous stream: each segment's SampleTimeSeconds is shifted onto
 	///     the combined timeline, so everything downstream (TelemetryProcessor's distance/speed/trail
 	///     origin, OverlayRenderer's compass trail) sees one uninterrupted ride instead of resetting
 	///     at every file boundary.
@@ -105,11 +95,11 @@ public static class TelemetryExtraction
 
 	/// <summary>
 	///     A recording that starts before the GPS receiver has its first fix (the camera was just powered
-	///     on, or started indoors) otherwise keeps GpsForwardFill's (0,0) sentinel for that whole leading
+	///     on, or started indoors) otherwise keeps the (0,0) no-fix-yet sentinel (TelemetryFrame.HasGpsFix) for that whole leading
 	///     run - and TelemetryProcessor would then take Null Island as the route origin, add the (0,0) to
 	///     first-fix hop to the cumulative distance, and hand the map/route-intro a bounding box spanning
 	///     half the globe. Holding the first real fix backwards instead is the same "hold, don't snap to
-	///     (0,0)" policy GpsForwardFill applies going forward. HasGpsFix stays false on those frames, so
+	///     (0,0)" policy the camera format applies going forward. HasGpsFix stays false on those frames, so
 	///     FindGpsLossRanges still reports them. No-op for a recording with no fix at all - false then.
 	/// </summary>
 	private static bool BackfillBeforeFirstFix(List<TelemetryFrame> frames)
@@ -129,10 +119,10 @@ public static class TelemetryExtraction
 	}
 
 	/// <summary>
-	///     A fresh GpsForwardFill inside each segment's own extraction starts at (0,0) until that
+	///     Each segment's own extraction starts at (0,0) until that
 	///     file's first real fix arrives - across a segment boundary that reads as a spurious jump to
 	///     null island. Carry the previous segment's last known position into those leading frames
-	///     instead, matching the same (0,0)-means-no-fix-yet sentinel GpsForwardFill already uses.
+	///     instead, matching the same (0,0)-means-no-fix-yet sentinel the camera formats use.
 	/// </summary>
 	private static void BridgeLeadingGpsGap(List<TelemetryFrame> frames,
 		(double Lat, double Lon, double AltitudeMeters) lastKnownFix)

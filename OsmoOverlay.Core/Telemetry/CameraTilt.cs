@@ -1,3 +1,5 @@
+using OsmoOverlay.Core.Reframe;
+
 namespace OsmoOverlay.Core.Telemetry;
 
 /// <summary>
@@ -6,20 +8,19 @@ namespace OsmoOverlay.Core.Telemetry;
 ///     An accelerometer can't tell tilt from acceleration (it reads their sum), so on its own braking reads as
 ///     nose-down and a turn as lean - and a bike leaning into a steady turn reads level, since the cornering
 ///     force cancels the lean. Where the GPS says the camera is moving, the forward acceleration (dv/dt) and
-///     the cornering one (v * heading rate) are known, so both are removed: with k = acceleration / g and m the
-///     reading as a fraction of the total, roll = atan(k) - asin(m_y) and pitch = asin(m_x) - atan(k)
-///     (a car in a turn reads m_y = k / sqrt(1 + k^2) and gets roll 0, a bike leaning into it reads m_y = 0 and
-///     gets its lean). Without GPS, or slower than CompensationFullKmh, k fades to 0 - the plain tilt.
-///     Axes and signs: AccelY is roll and AccelX pitch (the controlled tilt-test recording, see
-///     TelemetryProcessor), roll negated (verified in the GUI). Measured on 6 real Osmo Action 6 rides
-///     (1 s windows above 4 km/h): AccelX rises with GPS dv/dt (slope 0.45-0.78 g/g in every ride), which by
-///     the same equivalence fixes pitch's sign (nose-up reads like speeding up); AccelY rises with v * heading
-///     rate (0.11-0.29 g/g - riders leaning into turns, a car would be ~1). Compensated pitch varied less than
-///     the raw one in all 6 rides.
+///     the cornering one (v * heading rate) are known, so both are removed: with k = acceleration / g and d the
+///     camera's gravity (ICameraFormat.Gravity: x right, y down, z forward) as a fraction of its length,
+///     roll = asin(d_x) + atan(k) and pitch = -asin(d_z) - atan(k) (a car in a turn reads d_x = -k / sqrt(1 + k^2)
+///     and gets roll 0, a bike leaning into it reads d_x = 0 and gets its lean). Without GPS, or slower than
+///     CompensationFullKmh, k fades to 0 - the plain tilt. The signs were verified on DJI Osmo Action 6 rides (see
+///     DjiOsmoFormat.Gravity): 6 real rides (1 s windows above 4 km/h) had the forward reading rise with GPS dv/dt
+///     (slope 0.45-0.78 g/g in every ride), which by the same equivalence fixes pitch's sign (nose-up reads like
+///     speeding up), and the sideways one with v * heading rate (0.11-0.29 g/g - riders leaning into turns, a car
+///     would be ~1). Compensated pitch varied less than the raw one in all 6 rides.
 /// </summary>
-public static class CameraTilt
+internal static class CameraTilt
 {
-	internal const double TimeConstantSeconds = 0.3;
+	private const double TimeConstantSeconds = 0.3;
 
 	private const double G = 9.80665;
 	// GPS speed and heading are differenced over this window, centered on the frame.
@@ -31,9 +32,12 @@ public static class CameraTilt
 	// A GPS glitch can put a spike into a derivative - no vehicle this films corners or brakes past ~1 g.
 	private const double MaxAccelerationG = 1.0;
 
-	/// <summary>Smoothed roll/pitch in degrees for every frame. speedKmh/headingDegrees are TelemetryProcessor's, one per frame.</summary>
-	public static (double[] Roll, double[] Pitch) Compute(IReadOnlyList<TelemetryFrame> frames, IReadOnlyList<double> speedKmh,
-		IReadOnlyList<double> headingDegrees)
+	/// <summary>
+	///     Smoothed roll/pitch in degrees for every frame. gravity is the camera format's per frame, speedKmh/headingDegrees
+	///     TelemetryProcessor's.
+	/// </summary>
+	public static (double[] Roll, double[] Pitch) Compute(IReadOnlyList<TelemetryFrame> frames, IReadOnlyList<Direction> gravity,
+		IReadOnlyList<double> speedKmh, IReadOnlyList<double> headingDegrees)
 	{
 		var roll = new double[frames.Count];
 		var pitch = new double[frames.Count];
@@ -59,7 +63,7 @@ public static class CameraTilt
 			before = Math.Max(before, segmentStart);
 
 			var (forwardG, lateralG) = VehicleAcceleration(frames, speedKmh, headingDegrees, i, before, after);
-			var (rawRoll, rawPitch) = Angles(frame, forwardG, lateralG);
+			var (rawRoll, rawPitch) = Angles(gravity[i], forwardG, lateralG);
 
 			if (i == segmentStart)
 			{
@@ -81,13 +85,13 @@ public static class CameraTilt
 	}
 
 	/// <summary>One sample's unsmoothed roll/pitch with the given vehicle acceleration (in g) taken out.</summary>
-	internal static (double Roll, double Pitch) Angles(TelemetryFrame frame, double forwardG, double lateralG)
+	internal static (double Roll, double Pitch) Angles(Direction gravity, double forwardG, double lateralG)
 	{
-		var magnitude = frame.GForce;
+		var magnitude = gravity.Length;
 		if (magnitude <= 1e-6) return (0, 0);
 
-		var roll = Math.Atan(lateralG) - Math.Asin(Math.Clamp(frame.AccelY / magnitude, -1, 1));
-		var pitch = Math.Asin(Math.Clamp(frame.AccelX / magnitude, -1, 1)) - Math.Atan(forwardG);
+		var roll = Math.Asin(Math.Clamp(gravity.X / magnitude, -1, 1)) + Math.Atan(lateralG);
+		var pitch = -Math.Asin(Math.Clamp(gravity.Z / magnitude, -1, 1)) - Math.Atan(forwardG);
 		return (AngleMath.RadToDeg(roll), AngleMath.RadToDeg(pitch));
 	}
 
