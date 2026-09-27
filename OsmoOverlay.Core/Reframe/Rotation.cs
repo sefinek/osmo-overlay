@@ -22,9 +22,15 @@ public readonly record struct Direction(double X, double Y, double Z)
 ///     in the camera's lenses it is taken from.
 /// </summary>
 public readonly record struct Rotation(
-	double M00, double M01, double M02,
-	double M10, double M11, double M12,
-	double M20, double M21, double M22)
+	double M00,
+	double M01,
+	double M02,
+	double M10,
+	double M11,
+	double M12,
+	double M20,
+	double M21,
+	double M22)
 {
 	public static readonly Rotation Identity = new(1, 0, 0, 0, 1, 0, 0, 0, 1);
 

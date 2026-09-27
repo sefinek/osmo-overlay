@@ -1,5 +1,3 @@
-
-
 namespace OsmoOverlay.Cameras.Dji;
 
 /// <summary>

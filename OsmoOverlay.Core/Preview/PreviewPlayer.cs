@@ -1,9 +1,9 @@
 using System.Runtime.InteropServices;
-using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
@@ -102,7 +102,7 @@ public sealed class PreviewPlayer : IDisposable
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		ICameraFormat? camera = summary.CameraFormat;
 		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion);
-		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
+		OverlayAvailability availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
 		Reframer? reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
 		var pool = new FrameBufferPool(PooledFrames);

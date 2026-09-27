@@ -15,7 +15,7 @@ public sealed class Insta360TrailerParserTests
 	{
 		var trailer = new MemoryStream();
 		List<(ushort Id, int Size, int Offset)> table = [];
-		foreach ((var id, var data) in records)
+		foreach (var (id, data) in records)
 		{
 			table.Add((id, data.Length, (int)trailer.Length));
 			trailer.Write(data);

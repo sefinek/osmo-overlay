@@ -173,7 +173,7 @@ public static class RenderJob
 			// Forces off any widget this file's telemetry can't support (e.g. Map/Compass checked from
 			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
 			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
-			var availability = OverlayAvailability.Of(rawFrames, first.Source.ContainerCreationTimeUtc is not null, camera);
+			OverlayAvailability availability = OverlayAvailability.Of(rawFrames, first.Source.ContainerCreationTimeUtc is not null, camera);
 			var hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
 			var showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
@@ -289,11 +289,8 @@ public static class RenderJob
 					try
 					{
 						if (pictures is not null)
-						{
 							await ProduceComposedAsync(pictures, plan, derived, renderer, fps, channel.Writer, producerCt);
-						}
 						else
-						{
 							for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
 							{
 								DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
@@ -301,7 +298,6 @@ public static class RenderJob
 								renderer.RenderInto(frame, pixels);
 								await channel.Writer.WriteAsync(pixels, producerCt);
 							}
-						}
 
 						channel.Writer.TryComplete();
 					}

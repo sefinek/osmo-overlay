@@ -76,7 +76,7 @@ internal static class Insta360TrailerParser
 		string? model = null;
 		List<Insta360ImuSample> imu = [];
 		List<Insta360Exposure> exposures = [];
-		foreach ((var id, var dataStart, var length) in Records(stream, footer, trailerStart, fileLength - FooterSize))
+		foreach (var (id, dataStart, length) in Records(stream, footer, trailerStart, fileLength - FooterSize))
 			switch (id)
 			{
 				case InfoRecord:
