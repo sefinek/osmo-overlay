@@ -106,7 +106,9 @@ public static class OverlayPresetStore
 			WritePreset(fresh);
 		}
 		else
+		{
 			presets[index] = fresh;
+		}
 	}
 
 	/// <summary>Serializes one preset to an arbitrary file the user picked, so it can be shared/sent to someone else.</summary>

@@ -87,7 +87,9 @@ public partial class ToolsWindow : Window
 			}
 
 			if (status.NeedsFix)
+			{
 				await AskAndFixAsync(path, fileName, status);
+			}
 			else
 			{
 				await ConfirmDialog.ShowAsync(this, "Nothing to do",

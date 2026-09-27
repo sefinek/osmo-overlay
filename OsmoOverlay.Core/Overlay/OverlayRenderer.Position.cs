@@ -161,7 +161,9 @@ public sealed partial class OverlayRenderer
 
 		int index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
 		if (index == _trailCacheIndex + 1)
+		{
 			AppendTrailPoint(_allFrames[index]);
+		}
 		else if (index != _trailCacheIndex)
 		{
 			_trail.Clear();
@@ -184,7 +186,9 @@ public sealed partial class OverlayRenderer
 		}
 
 		if (_trail.Count == 0)
+		{
 			(_trailMinEast, _trailMaxEast, _trailMinNorth, _trailMaxNorth) = (east, east, north, north);
+		}
 		else
 		{
 			_trailMinEast = Math.Min(_trailMinEast, east);
@@ -429,7 +433,10 @@ public sealed partial class OverlayRenderer
 			// Another mosaic places the same points at other pixels.
 			DisposeRoutes(_mapRoutes);
 		}
-		else if (_trailPixels.Count > _trail.Count) _trailPixels.RemoveRange(_trail.Count, _trailPixels.Count - _trail.Count);
+		else if (_trailPixels.Count > _trail.Count)
+		{
+			_trailPixels.RemoveRange(_trail.Count, _trailPixels.Count - _trail.Count);
+		}
 
 		for (int i = _trailPixels.Count; i < _trail.Count; i++)
 			_trailPixels.Add(_mapMosaic!.GetPixel(_trail[i].Lat, _trail[i].Lon));

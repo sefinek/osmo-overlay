@@ -100,8 +100,10 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 	public void Clear()
 	{
 		lock (_lock)
+		{
 			if (!_disposed)
 				SDL3.SDL_ClearAudioStream(_stream);
+		}
 	}
 
 	public void Stop()

@@ -7,11 +7,9 @@
 
     <AssemblyTitle>OsmoOverlay Tests</AssemblyTitle>
     <Description>Unit tests for OsmoOverlay.Core and the camera formats.</Description>
-  </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
-  </ItemGroup>
+    <MicrosoftTestingExtensionsCodeCoverageVersion>18.11.2</MicrosoftTestingExtensionsCodeCoverageVersion>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />

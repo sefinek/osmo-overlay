@@ -34,8 +34,10 @@ public static class FfmpegPipeline
 		bool tenBit = IsTenBit(source);
 		string nvenc = h264 ? "h264_nvenc" : "hevc_nvenc";
 		lock (NvencConfirmed)
+		{
 			if (NvencConfirmed.Contains((nvenc, tenBit)))
 				return nvenc;
+		}
 
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
 			"-hide_banner", "-loglevel", "error",
@@ -173,7 +175,9 @@ public static class FfmpegPipeline
 			// Pieces joined by the concat filter are decoded audio - it can't be stream-copied across the
 			// joins, so it's re-encoded at the source's own AAC bitrate. A single piece stays a lossless copy.
 			if (!source.EncodeAudio)
+			{
 				args.AddRange(["-c:a", "copy"]);
+			}
 			else
 			{
 				args.AddRange(["-c:a", "aac"]);
@@ -330,7 +334,9 @@ public static class FfmpegPipeline
 		{
 			AddHwDecode();
 			if (segments.Count == 1)
+			{
 				args.AddRange(["-i", segments[0].InputPath]);
+			}
 			else
 			{
 				string listPath = ConcatListWriter.Write(segments.Select(s => s.InputPath));

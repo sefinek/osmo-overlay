@@ -146,8 +146,10 @@ internal sealed class OverlayCompositor : IDisposable
 	public void DrawOverlayOnto(byte[] bgra, int width, int height, TimeSpan position)
 	{
 		lock (_lock)
+		{
 			if (!_disposed)
 				DrawOverlayLocked(bgra, width, height, position);
+		}
 	}
 
 	/// <summary>

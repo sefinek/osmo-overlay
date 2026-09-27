@@ -101,7 +101,9 @@ internal sealed class PlaybackClock
 					}
 				}
 				else
+				{
 					now = _stopwatchBase + (wall - _stopwatchStart) * _rate;
+				}
 
 				_lastNow = Math.Max(_lastNow, Math.Max(0, now));
 				return _lastNow;
@@ -145,7 +147,9 @@ internal sealed class PlaybackClock
 				_audio!.Start();
 			}
 			else
+			{
 				StartStopwatch(playTime, _wallSeconds());
+			}
 		}
 	}
 

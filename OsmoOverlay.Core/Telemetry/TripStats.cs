@@ -44,7 +44,9 @@ public sealed class TripStats
 			maxSpeed = Math.Max(maxSpeed, frame.SpeedKmh);
 
 			if (i > 0 && frame.StartsAfterCut)
+			{
 				anchor = frame.Raw.AltitudeMeters;
+			}
 			else if (i > 0)
 			{
 				if (frame.SpeedKmh >= MovingThresholdKmh)

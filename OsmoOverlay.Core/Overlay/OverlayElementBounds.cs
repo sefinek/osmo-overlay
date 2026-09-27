@@ -315,8 +315,10 @@ public static class OverlayElementBounds
 		}
 
 		lock (ImageSizesLock)
+		{
 			if (ImageSizes.TryGetValue(path, out (DateTime Modified, SKSizeI? Size) cached) && cached.Modified == modified)
 				return cached.Size;
+		}
 
 		SKSizeI? size = null;
 		try

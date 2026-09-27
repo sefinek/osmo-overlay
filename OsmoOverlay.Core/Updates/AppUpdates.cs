@@ -161,7 +161,9 @@ public static class AppUpdates
 		}
 
 		if (installer.Sha256 is null)
+		{
 			AppLogger.Warn($"{installer.Name} has no published SHA-256 - installing it unverified");
+		}
 		else
 		{
 			await using FileStream downloaded = File.OpenRead(partialPath);

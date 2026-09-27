@@ -108,7 +108,9 @@ public partial class MainWindow
 						          "(shown as amber marks under the preview timeline)", LogLevel.Warn);
 					}
 					else
+					{
 						AppendLog("GPS signal: no loss detected");
+					}
 				}
 
 				if (!_availability.GpsTimestamp)

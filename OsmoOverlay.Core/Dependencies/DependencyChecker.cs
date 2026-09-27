@@ -109,9 +109,13 @@ public static class DependencyChecker
 				.Concat(current);
 		}
 		else if (OperatingSystem.IsMacOS())
+		{
 			merged = current.Concat(new[] { "/opt/homebrew/bin", "/usr/local/bin" }.Where(Directory.Exists));
+		}
 		else
+		{
 			return;
+		}
 
 		var distinct = merged.Distinct(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal).ToList();
 		if (distinct.Count > 0) Environment.SetEnvironmentVariable("PATH", string.Join(Path.PathSeparator, distinct));

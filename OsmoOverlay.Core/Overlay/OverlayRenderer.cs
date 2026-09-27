@@ -429,7 +429,9 @@ public sealed partial class OverlayRenderer : IDisposable
 			}
 		}
 		else
+		{
 			mapAttribution = DrawWidgets(canvas, frame);
+		}
 
 		// On the route-intro card, centering under the whole frame (the normal-frame default) lands the
 		// watermark under the map alone (which only occupies the card's left portion) rather than the
@@ -444,7 +446,10 @@ public sealed partial class OverlayRenderer : IDisposable
 			if (mapAttribution is not null)
 				DrawMapAttributionSlide(canvas, sampleTime, mapAttribution, watermarkAnchorX, watermarkAlign);
 		}
-		else if (mapAttribution is not null) DrawMapAttributionOnly(canvas, mapAttribution, watermarkAnchorX, watermarkAlign);
+		else if (mapAttribution is not null)
+		{
+			DrawMapAttributionOnly(canvas, mapAttribution, watermarkAnchorX, watermarkAlign);
+		}
 	}
 
 	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see DrawFrame's mapAttribution.</summary>
@@ -658,7 +663,9 @@ public sealed partial class OverlayRenderer : IDisposable
 		public double Update(double seconds, double target, double timeConstantSeconds, double resetGapSeconds = 2.0)
 		{
 			if (_lastSeconds is not { } last || seconds <= last || seconds - last > resetGapSeconds)
+			{
 				Value = target;
+			}
 			else
 			{
 				double alpha = 1.0 - Math.Exp(-(seconds - last) / timeConstantSeconds);

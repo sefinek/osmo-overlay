@@ -245,7 +245,9 @@ public partial class CompareVideosWindow : Window
 				loadedValues.Add(values[col]);
 			}
 			else
+			{
 				values[col] = _errors.ContainsKey(path) ? "Error" : "Loading...";
+			}
 		}
 
 		return (values, loadedValues.Distinct().Count() > 1);

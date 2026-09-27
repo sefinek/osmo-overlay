@@ -87,7 +87,9 @@ public static class TelemetryProcessor
 			// Raw per-sample accelerometer readings are inherently noisy (vibration, bumps), so the
 			// live HUD gauges show an exponential moving average instead of the instantaneous value.
 			if (i == 0 || current.StartsAfterGap)
+			{
 				smoothedGForce = current.GForce;
+			}
 			else
 			{
 				smoothedGForce += Ema(current.SampleTimeSeconds - frames[i - 1].SampleTimeSeconds, GForceTimeConstantSeconds) *
@@ -209,7 +211,9 @@ public static class TelemetryProcessor
 		for (int i = 0; i < frames.Count; i++)
 		{
 			if (!frames[i].HasGpsFix)
+			{
 				rangeStart ??= frames[i].SampleTimeSeconds;
+			}
 			else if (rangeStart is { } start)
 			{
 				ranges.Add((start, frames[i - 1].SampleTimeSeconds));

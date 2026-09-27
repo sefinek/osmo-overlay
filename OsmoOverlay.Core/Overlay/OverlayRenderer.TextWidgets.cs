@@ -28,7 +28,9 @@ public sealed partial class OverlayRenderer
 
 		string dateText;
 		if (utc is not { } resolvedUtc)
+		{
 			dateText = "--";
+		}
 		else
 		{
 			DateTime shown = toLocal ? resolvedUtc.ToLocalFromUtc() : resolvedUtc;

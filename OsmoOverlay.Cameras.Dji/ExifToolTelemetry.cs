@@ -112,7 +112,7 @@ internal static class ExifToolTelemetry
 		if (!fields.TryGetValue(key, out JsonNode? node) || node is null) return null;
 
 		JsonValue value = node.AsValue();
-		if (value.TryGetValue<double>(out double d)) return d;
+		if (value.TryGetValue(out double d)) return d;
 		return double.Parse(value.GetValue<string>(), CultureInfo.InvariantCulture);
 	}
 

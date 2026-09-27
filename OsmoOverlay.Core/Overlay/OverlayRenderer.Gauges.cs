@@ -281,7 +281,9 @@ public sealed partial class OverlayRenderer
 		DrawOutlined(canvas, $"{F(displayPercent, "0")}%", -halfWidth, -26, _smallFont, White);
 
 		if (arrived)
+		{
 			DrawOutlined(canvas, element.TripArrivedLabel, halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+		}
 		else
 		{
 			(string remainingValue, string remainingUnit) = FormatDistance(remainingMeters, element.Units);

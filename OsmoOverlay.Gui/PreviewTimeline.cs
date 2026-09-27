@@ -268,7 +268,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnPropertyChanged(change);
 		if (change.Property == BoundsProperty || change.Property == MaximumProperty)
+		{
 			SetView(_zoom, ViewStart);
+		}
 		else if (change.Property == ValueProperty && !_scrubbing && _expanded)
 		{
 			// Playing past the view's edge pages along, keeping a little of what was just played in sight.

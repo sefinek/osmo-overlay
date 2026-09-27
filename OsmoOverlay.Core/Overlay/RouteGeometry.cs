@@ -96,7 +96,9 @@ internal sealed class RouteGeometry : IDisposable
 	private void AddTravelled(SKPoint point, double speedKmh)
 	{
 		if (_buckets is null)
+		{
 			_solid.LineTo(point);
+		}
 		else
 		{
 			int bucket = SpeedColorScale.Bucket((_previousSpeedKmh + speedKmh) / 2 / _speedScaleKmh);

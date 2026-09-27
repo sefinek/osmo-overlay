@@ -53,7 +53,10 @@ internal sealed class Mp4Box
 				size = (long)BinaryPrimitives.ReadUInt64BigEndian(data[(pos + 8)..]);
 				header = 16;
 			}
-			else if (size == 0) size = data.Length - pos;
+			else if (size == 0)
+			{
+				size = data.Length - pos;
+			}
 
 			if (size < header || pos + size > data.Length)
 				throw new InvalidDataException($"Malformed MP4 box '{type}' at offset {pos}.");
@@ -94,7 +97,9 @@ internal sealed class Mp4Box
 		stream.Write(header);
 
 		if (Payload is not null)
+		{
 			stream.Write(Payload);
+		}
 		else
 		{
 			foreach (Mp4Box child in Children!)
@@ -134,7 +139,10 @@ internal static class Mp4File
 				size = (long)BinaryPrimitives.ReadUInt64BigEndian(header[8..]);
 				headerSize = 16;
 			}
-			else if (size == 0) size = length - pos;
+			else if (size == 0)
+			{
+				size = length - pos;
+			}
 
 			if (size < headerSize || pos + size > length)
 				throw new InvalidDataException($"Malformed top-level MP4 box '{type}' at offset {pos}.");
