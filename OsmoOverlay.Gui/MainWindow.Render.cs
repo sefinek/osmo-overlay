@@ -1,8 +1,8 @@
 using System.Globalization;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
-using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Gui.Native;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
 

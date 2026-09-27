@@ -40,7 +40,7 @@ public partial class MainWindow
 
 		try
 		{
-			var (read, problem) = await Task.Run(() => FileSummaryReader.Read(inputPaths,
+			(FileSummary? read, var problem) = await Task.Run(() => FileSummaryReader.Read(inputPaths,
 				cacheEvent => ui?.Post(_ => LogCacheEvent(cacheEvent), null)));
 			if (read is not { } summary)
 			{

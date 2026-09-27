@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
-using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
+using OsmoOverlay.Core.Reframe;
 
 namespace OsmoOverlay.Gui;
 
