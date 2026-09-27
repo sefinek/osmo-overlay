@@ -291,13 +291,7 @@ public static class RenderJob
 						if (pictures is not null)
 							await ProduceComposedAsync(pictures, plan, derived, renderer, fps, channel.Writer, producerCt);
 						else
-							for (var i = 0; i < totalFrames && !producerCt.IsCancellationRequested; i++)
-							{
-								DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
-								if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
-								renderer.RenderInto(frame, pixels);
-								await channel.Writer.WriteAsync(pixels, producerCt);
-							}
+							await ProduceOverlayAsync(totalFrames, derived, renderer, fps, freeBuffers, frameBufferSize, channel.Writer, producerCt);
 
 						channel.Writer.TryComplete();
 					}
@@ -424,6 +418,19 @@ public static class RenderJob
 			// the GUI's on-screen panel.
 			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}: {ex.Message}");
 			return new RenderResult(false, ex.Message, sw.Elapsed);
+		}
+	}
+
+	/// <summary>The overlay alone on a transparent frame, for ffmpeg to lay over the source's own picture.</summary>
+	private static async Task ProduceOverlayAsync(int totalFrames, IReadOnlyList<DerivedFrame> derived, OverlayRenderer renderer, double fps,
+		ConcurrentQueue<byte[]> freeBuffers, int frameBufferSize, ChannelWriter<byte[]> writer, CancellationToken ct)
+	{
+		for (var i = 0; i < totalFrames && !ct.IsCancellationRequested; i++)
+		{
+			DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
+			if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
+			renderer.RenderInto(frame, pixels);
+			await writer.WriteAsync(pixels, ct);
 		}
 	}
 

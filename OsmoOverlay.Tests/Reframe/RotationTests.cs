@@ -19,7 +19,7 @@ public sealed class RotationTests
 	public void FromView_FollowsV360()
 	{
 		// x right, y down: yaw turns the view right, pitch up.
-		AreClose(new Direction(1, 0, 0), Rotation.FromView(new ReframeView(90)).Apply(Forward), "yaw 90 looks right");
+		AreClose(new Direction(1, 0, 0), Rotation.FromView(new ReframeView(Yaw: 90)).Apply(Forward), "yaw 90 looks right");
 		AreClose(new Direction(0, -1, 0), Rotation.FromView(new ReframeView(Pitch: 90)).Apply(Forward), "pitch 90 looks up");
 		AreClose(Forward, Rotation.FromView(new ReframeView(Roll: 40)).Apply(Forward), "roll keeps the direction");
 	}
@@ -28,7 +28,7 @@ public sealed class RotationTests
 	public void FromView_AppliesRollFirstThenPitchThenYaw()
 	{
 		var view = new ReframeView(30, 20, 10);
-		Rotation composed = Rotation.FromView(new ReframeView(30)) * Rotation.FromView(new ReframeView(Pitch: 20)) *
+		Rotation composed = Rotation.FromView(new ReframeView(Yaw: 30)) * Rotation.FromView(new ReframeView(Pitch: 20)) *
 		                    Rotation.FromView(new ReframeView(Roll: 10));
 		var probe = new Direction(0.3, -0.2, 0.9);
 

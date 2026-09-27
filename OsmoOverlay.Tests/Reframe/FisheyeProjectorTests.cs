@@ -39,13 +39,13 @@ public sealed unsafe class FisheyeProjectorTests
 	public void StraightAhead_IsTheFrontLens_TurnedAround_TheBack()
 	{
 		Assert.AreEqual(((byte)0, (byte)0, (byte)255, (byte)255), Pixel(Project(new ReframeView()), 16, 9));
-		Assert.AreEqual(((byte)255, (byte)0, (byte)0, (byte)255), Pixel(Project(new ReframeView(180)), 16, 9));
+		Assert.AreEqual(((byte)255, (byte)0, (byte)0, (byte)255), Pixel(Project(new ReframeView(Yaw: 180)), 16, 9));
 	}
 
 	[TestMethod]
 	public void SideOn_TheSeamRunsDownTheMiddle()
 	{
-		var side = Project(new ReframeView(90, FovDegrees: 60));
+		byte[] side = Project(new ReframeView(Yaw: 90, FovDegrees: 60));
 
 		Assert.AreEqual((byte)255, Pixel(side, 2, 9).R, "left of the seam: still the front lens");
 		Assert.AreEqual((byte)255, Pixel(side, 29, 9).B, "right of it: the back one");
