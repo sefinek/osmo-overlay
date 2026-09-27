@@ -12,7 +12,7 @@ insert_final_newline = true
 
 # Microsoft .NET properties
 csharp_new_line_before_members_in_object_initializers = false
-csharp_preferred_modifier_order = public, private, protected, internal, file, new, static, abstract, virtual, sealed, readonly, override, extern, unsafe, volatile, async, required:none
+csharp_preferred_modifier_order = public, private, protected, internal, file, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, required, volatile, async:suggestion
 csharp_style_prefer_utf8_string_literals = true:suggestion
 csharp_style_var_elsewhere = false:suggestion
 csharp_style_var_for_built_in_types = false:suggestion
@@ -171,7 +171,6 @@ end_of_line = crlf
 
 # C# file rules
 [*.cs]
-resharper_braces_for_ifelse = required_for_complex
 resharper_braces_for_for = required_for_multiline
 resharper_braces_for_foreach = required_for_multiline
 resharper_braces_for_while = required_for_multiline

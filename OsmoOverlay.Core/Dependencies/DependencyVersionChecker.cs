@@ -27,17 +27,14 @@ public static partial class DependencyVersionChecker
 	}
 
 	/// <summary>
-	///     Notifies (not just file-logs) each step - unlike the routine, high-frequency process spawns
-	///     this drives internally (CreateHiddenQuiet), a user pressing "Check for updates" is watching and
-	///     waiting, so silence here would look like the app hung, especially on Linux/macOS where a
-	///     package-manager query can take a couple of seconds. onProgress is a second, optional route for
-	///     the same lines - AppLogger.Notify reaches the main window's LOG panel, but a caller showing its
-	///     own live status label (Settings' About tab) wants these lines directly, without picking up
-	///     unrelated Notify traffic from elsewhere in the app.
+	///     Notifies (not just file-logs) the result - a user pressing "Check for updates" is watching the main
+	///     window's LOG panel. The start of each tool's check only goes to the file: the caller announces the
+	///     whole check once (UpdateChecks), a line per tool on top of it was noise. onProgress is a second,
+	///     optional route for the result lines, for a caller with its own live status label.
 	/// </summary>
 	public static async Task<ToolVersionInfo> CheckAsync(ExternalTool tool, CancellationToken ct, Action<string>? onProgress = null)
 	{
-		Report($"Checking {tool.DisplayName} version...", onProgress);
+		AppLogger.Info($"Checking {tool.DisplayName} version...");
 
 		Task<string?> installedTask = GetInstalledVersionAsync(tool, ct);
 		Task<(IReadOnlyList<string> Versions, bool CanUpgrade)> availableTask = GetAvailableVersionsAsync(tool, ct);

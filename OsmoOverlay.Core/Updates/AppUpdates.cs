@@ -49,7 +49,7 @@ public static class AppUpdates
 	/// <summary>Null when the repository has no release yet. Throws on network/API failures. Logs the check and its outcome.</summary>
 	public static async Task<AppRelease?> GetLatestAsync(CancellationToken ct)
 	{
-		AppLogger.Notify($"Checking for a new version of OsmoOverlay (current: {CurrentVersion})...");
+		AppLogger.Info($"Checking for a new version of OsmoOverlay (current: {CurrentVersion})...");
 		AppRelease? release = await FetchLatestAsync(ct);
 
 		AppLogger.Notify(release switch

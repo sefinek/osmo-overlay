@@ -31,6 +31,7 @@ internal static class UpdateChecks
 
 	private static async Task<UpdateCheckResult> RunAsync()
 	{
+		AppLogger.Notify("Checking for updates...");
 		// Off the UI thread: every tool spawns processes (ffmpeg -version, winget/brew/apt-cache), a couple of seconds together.
 		var app = Task.Run(CheckAppAsync);
 		var dependencies = Task.Run(CheckDependenciesAsync);

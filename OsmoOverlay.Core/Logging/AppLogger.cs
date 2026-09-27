@@ -13,7 +13,8 @@ public enum AppLogLevel
 /// <summary>
 ///     Single shared logger for the whole app (GUI + CLI). Targets/levels come from NLog.config next
 ///     to each executable (NLog auto-loads it from the app's base directory), not from code here, so
-///     logging can be retuned without a rebuild.
+///     logging can be retuned without a rebuild. The GUI writes app.log and the CLI cli.log - two
+///     processes running at once must not share one file.
 /// </summary>
 public static class AppLogger
 {
