@@ -11,15 +11,15 @@ public sealed unsafe class FisheyeProjectorTests
 	/// <summary>Front lens all red, back lens all blue - which lens a pixel came from is its color.</summary>
 	private static byte[] Project(ReframeView view, int width = 32, int height = 18)
 	{
-		var front = new byte[LensSize * LensSize * 4];
-		var back = new byte[LensSize * LensSize * 4];
-		for (var i = 0; i < front.Length; i += 4)
+		byte[] front = new byte[LensSize * LensSize * 4];
+		byte[] back = new byte[LensSize * LensSize * 4];
+		for (int i = 0; i < front.Length; i += 4)
 		{
 			front[i + 2] = 255;
 			back[i] = 255;
 		}
 
-		var output = new byte[width * height * 4];
+		byte[] output = new byte[width * height * 4];
 		fixed (byte* f = front, b = back, o = output)
 		{
 			new FisheyeProjector().Project(new LensImage(f, LensSize * 4), new LensImage(b, LensSize * 4), Lenses, Rotation.FromView(view),
@@ -31,7 +31,7 @@ public sealed unsafe class FisheyeProjectorTests
 
 	private static (byte B, byte G, byte R, byte A) Pixel(byte[] bgra, int x, int y, int width = 32)
 	{
-		var i = (y * width + x) * 4;
+		int i = (y * width + x) * 4;
 		return (bgra[i], bgra[i + 1], bgra[i + 2], bgra[i + 3]);
 	}
 

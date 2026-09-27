@@ -79,9 +79,9 @@ public sealed class RouteGeometryTests
 	public void LongRoute_SpanningManyChunks_IsDrawnWhole()
 	{
 		using var route = new RouteGeometry(RouteJoin.Gap, true, 50);
-		for (var i = 0; i < 1000; i++) route.Add(new SKPoint(5 + i * 0.09f, 50), i % 60, false);
+		for (int i = 0; i < 1000; i++) route.Add(new SKPoint(5 + i * 0.09f, 50), i % 60, false);
 		using SKBitmap bitmap = Draw(route, SKMatrix.Identity);
 
-		for (var x = 6; x < 94; x += 4) Assert.IsTrue(Drawn(bitmap, x, 50), $"x = {x}");
+		for (int x = 6; x < 94; x += 4) Assert.IsTrue(Drawn(bitmap, x, 50), $"x = {x}");
 	}
 }

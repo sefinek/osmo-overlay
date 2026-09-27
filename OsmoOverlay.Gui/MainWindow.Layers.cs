@@ -61,7 +61,7 @@ public partial class MainWindow
 
 	private OverlayLayer? LayerOf(OverlayElement element)
 	{
-		var key = OverlayLayers.Key(element);
+		string key = OverlayLayers.Key(element);
 		return ActiveLayers.FirstOrDefault(l => l.Id == key);
 	}
 
@@ -78,7 +78,7 @@ public partial class MainWindow
 			return;
 		}
 
-		var fps = _summary.Video.Fps;
+		double fps = _summary.Video.Fps;
 		LayerTracks.Fps = fps > 0 ? fps : 30;
 		LayerTracks.OutputDurationSeconds = PlannedFrameCount() / LayerTracks.Fps;
 		if (_outputTimeline is { } output)
@@ -97,7 +97,7 @@ public partial class MainWindow
 		NewLayerButton.IsEnabled = !IsActivePresetDefault;
 
 		List<(OverlayElement Element, string Name)> widgets = VisibleWidgetNames();
-		var anySolo = ActiveLayers.Any(l => l.Solo);
+		bool anySolo = ActiveLayers.Any(l => l.Solo);
 		LayerTracks.Tracks =
 		[
 			.. ActiveLayers.Select((layer, i) => new LayerTrack(layer.Id, layer.Name ?? $"Layer {i + 1}",
@@ -131,7 +131,7 @@ public partial class MainWindow
 	/// <summary>Writes `elements` and `layers` (null: the preset's own) back to the active preset, in step - see OverlayLayers.Normalize.</summary>
 	private void NormalizeActivePreset(IReadOnlyList<OverlayElement> elements, IReadOnlyList<OverlayLayer>? layers)
 	{
-		var index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
+		int index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
 		if (index < 0) return;
 
 		OverlayPreset preset = _overlayPresets[index];
@@ -155,7 +155,7 @@ public partial class MainWindow
 		if (IsActivePresetDefault) return;
 
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Id == timing.Id);
+		int index = elements.FindIndex(el => el.Id == timing.Id);
 		if (index < 0) return;
 
 		OverlayElement edited = elements[index] = elements[index] with
@@ -187,7 +187,7 @@ public partial class MainWindow
 	/// <summary>`topToBottom` is every layer's Id, the one in front first.</summary>
 	private void OnLayersReordered(IReadOnlyList<string> topToBottom)
 	{
-		Dictionary<string, OverlayLayer> byId = ActiveLayers.ToDictionary(l => l.Id);
+		var byId = ActiveLayers.ToDictionary(l => l.Id);
 		ApplyLayerChange([.. ActiveElements], [.. topToBottom.Where(byId.ContainsKey).Select(id => byId[id])]);
 	}
 
@@ -195,7 +195,7 @@ public partial class MainWindow
 	private void OnClipMovedToLayer(string id, string layerId)
 	{
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(e => e.Id == id);
+		int index = elements.FindIndex(e => e.Id == id);
 		if (index < 0) return;
 
 		OverlayElement moved = elements[index] with { LayerId = layerId };
@@ -208,7 +208,7 @@ public partial class MainWindow
 	private void OnClipMovedToNewLayer(string id, int gap)
 	{
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(e => e.Id == id);
+		int index = elements.FindIndex(e => e.Id == id);
 		if (index < 0) return;
 
 		OverlayLayer layer = NewLayer();
@@ -264,14 +264,14 @@ public partial class MainWindow
 	{
 		var box = new TextBox { Text = layer.Name ?? "", Width = 200, PlaceholderText = "Layer name" };
 		var flyout = new Flyout { Content = box };
-		var committed = false;
+		bool committed = false;
 
 		void Commit()
 		{
 			if (committed) return;
 
 			committed = true;
-			var name = string.IsNullOrWhiteSpace(box.Text) ? null : box.Text.Trim();
+			string? name = string.IsNullOrWhiteSpace(box.Text) ? null : box.Text.Trim();
 			if (name != layer.Name) UpdateLayer(layer.Id, l => l with { Name = name });
 		}
 
@@ -310,7 +310,7 @@ public partial class MainWindow
 			return e.Visible && OverlayLayers.Key(e) == layer.Id;
 		}
 
-		var count = ActiveElements.Count(OnLayer);
+		int count = ActiveElements.Count(OnLayer);
 		if (count > 0 && !await ConfirmDialog.AskAsync(this, "Delete layer",
 			    $"Delete this layer and the {count} widget{(count == 1 ? "" : "s")} on it?", "Delete", DialogKind.Danger))
 			return;

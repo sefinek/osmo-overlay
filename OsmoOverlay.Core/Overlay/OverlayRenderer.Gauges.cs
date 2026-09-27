@@ -61,7 +61,7 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private static double ComputeGaugeMaxSpeed(double observedSpeed)
 	{
-		var rounded = Math.Ceiling(Math.Max(observedSpeed, 1) / 10.0) * 10.0;
+		double rounded = Math.Ceiling(Math.Max(observedSpeed, 1) / 10.0) * 10.0;
 		return Math.Max(rounded, 20.0);
 	}
 
@@ -72,7 +72,7 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private double GaugeMaxSpeed(UnitSystem units)
 	{
-		var observed = units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh;
+		double observed = units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh;
 		return ComputeGaugeMaxSpeed(observed);
 	}
 
@@ -86,18 +86,18 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(cx, cy, OverlayElementBounds.SunRadius, _panelFillPaint);
 		canvas.DrawCircle(cx, cy, OverlayElementBounds.SunRadius, _ringStroke3White140);
 
-		var relativeAzimuthRad = AngleMath.DegToRad(frame.Sun.AzimuthDegrees - frame.HeadingDegrees);
-		var elevationClamped = Math.Clamp(frame.Sun.ElevationDegrees, -20, 90);
-		var radiusFactor = 1.0 - (elevationClamped + 20) / 110.0;
+		double relativeAzimuthRad = AngleMath.DegToRad(frame.Sun.AzimuthDegrees - frame.HeadingDegrees);
+		double elevationClamped = Math.Clamp(frame.Sun.ElevationDegrees, -20, 90);
+		double radiusFactor = 1.0 - (elevationClamped + 20) / 110.0;
 
-		var dotX = cx + (float)(Math.Sin(relativeAzimuthRad) * OverlayElementBounds.SunRadius * 0.8 * radiusFactor);
-		var dotY = cy - (float)(Math.Cos(relativeAzimuthRad) * OverlayElementBounds.SunRadius * 0.8 * radiusFactor);
+		float dotX = cx + (float)(Math.Sin(relativeAzimuthRad) * OverlayElementBounds.SunRadius * 0.8 * radiusFactor);
+		float dotY = cy - (float)(Math.Cos(relativeAzimuthRad) * OverlayElementBounds.SunRadius * 0.8 * radiusFactor);
 
 		float sunDotRadius = frame.Sun.ElevationDegrees > 0 ? 16 : 10;
 		canvas.DrawCircle(dotX, dotY, sunDotRadius, _sunFillPaint);
 		canvas.DrawCircle(dotX, dotY, sunDotRadius, _blackStroke2);
 
-		var gText = $"{F(frame.SmoothedGForce, "0.0")}G";
+		string gText = $"{F(frame.SmoothedGForce, "0.0")}G";
 		DrawOutlined(canvas, gText, cx, cy + OverlayElementBounds.SunRadius + OverlayElementBounds.LabelBelowRadiusOffset,
 			TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element), SKTextAlign.Center,
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
@@ -111,7 +111,7 @@ public sealed partial class OverlayRenderer
 
 		// Roll is +-90 at most, so doubling it maps the full physical range onto the full ring - level sits at
 		// the top, and either direction sweeps round to meet at the bottom for a full 90 degree lean.
-		var angleRad = AngleMath.DegToRad(270 + Math.Clamp(rollDegrees, -90, 90) * 2);
+		double angleRad = AngleMath.DegToRad(270 + Math.Clamp(rollDegrees, -90, 90) * 2);
 		canvas.DrawCircle((float)(Math.Cos(angleRad) * radius), (float)(Math.Sin(angleRad) * radius), 12, _dotFillAccent);
 
 		DrawOutlined(canvas, $"{F(rollDegrees, "0")}°", 0, 16, TextFont(element, OverlayElementBounds.LabelFontSize),
@@ -129,8 +129,8 @@ public sealed partial class OverlayRenderer
 		DrawTiltPanel(canvas);
 		canvas.DrawLine(radius - 18, 0, radius, 0, _ringStroke3White160);
 
-		var angleRad = AngleMath.DegToRad(-Math.Clamp(pitchDegrees, -90, 90));
-		var (cos, sin) = ((float)Math.Cos(angleRad), (float)Math.Sin(angleRad));
+		double angleRad = AngleMath.DegToRad(-Math.Clamp(pitchDegrees, -90, 90));
+		(float cos, float sin) = ((float)Math.Cos(angleRad), (float)Math.Sin(angleRad));
 		canvas.DrawLine(cos * radius * 0.5f, sin * radius * 0.5f, cos * radius, sin * radius, _accentStroke4Round);
 		canvas.DrawCircle(cos * radius, sin * radius, 12, _dotFillAccent);
 
@@ -159,15 +159,15 @@ public sealed partial class OverlayRenderer
 		canvas.DrawLine(cx - radius, cy, cx + radius, cy, _thinStroke2White70);
 		canvas.DrawLine(cx, cy - radius, cx, cy + radius, _thinStroke2White70);
 
-		var fullScaleG = Math.Clamp(element.GMeterFullScaleG, GMeterFullScaleGMin, GMeterFullScaleGMax);
-		var (lateral, longitudinal) = SmoothGMeterDelta(frame);
-		var dotX = cx + (float)Math.Clamp(lateral / fullScaleG, -1, 1) * radius;
-		var dotY = cy - (float)Math.Clamp(longitudinal / fullScaleG, -1, 1) * radius;
+		double fullScaleG = Math.Clamp(element.GMeterFullScaleG, GMeterFullScaleGMin, GMeterFullScaleGMax);
+		(double lateral, double longitudinal) = SmoothGMeterDelta(frame);
+		float dotX = cx + (float)Math.Clamp(lateral / fullScaleG, -1, 1) * radius;
+		float dotY = cy - (float)Math.Clamp(longitudinal / fullScaleG, -1, 1) * radius;
 
 		canvas.DrawCircle(dotX, dotY, 12, _dotOutlineBlackFill);
 		canvas.DrawCircle(dotX, dotY, 9, _dotFillAccent);
 
-		var magnitude = Math.Sqrt(lateral * lateral + longitudinal * longitudinal);
+		double magnitude = Math.Sqrt(lateral * lateral + longitudinal * longitudinal);
 		DrawOutlined(canvas, $"{F(magnitude, "0.00")}G", cx, cy + radius + OverlayElementBounds.LabelBelowRadiusOffset,
 			TextFont(element, OverlayElementBounds.LabelFontSize), TextColorOf(element), SKTextAlign.Center,
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
@@ -185,11 +185,11 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private (double Lateral, double Longitudinal) SmoothGMeterDelta(DerivedFrame frame)
 	{
-		var seconds = frame.Raw.SampleTimeSeconds;
-		var baselineLateral = _gMeterBaselineLateralEma.Update(seconds, frame.LateralAccelG, GMeterBaselineSeconds);
-		var baselineLongitudinal = _gMeterBaselineLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterBaselineSeconds);
-		var smoothedLateral = _gMeterSmoothedLateralEma.Update(seconds, frame.LateralAccelG, GMeterSmoothingSeconds);
-		var smoothedLongitudinal = _gMeterSmoothedLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterSmoothingSeconds);
+		double seconds = frame.Raw.SampleTimeSeconds;
+		double baselineLateral = _gMeterBaselineLateralEma.Update(seconds, frame.LateralAccelG, GMeterBaselineSeconds);
+		double baselineLongitudinal = _gMeterBaselineLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterBaselineSeconds);
+		double smoothedLateral = _gMeterSmoothedLateralEma.Update(seconds, frame.LateralAccelG, GMeterSmoothingSeconds);
+		double smoothedLongitudinal = _gMeterSmoothedLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterSmoothingSeconds);
 		return (smoothedLateral - baselineLateral, smoothedLongitudinal - baselineLongitudinal);
 	}
 
@@ -198,11 +198,11 @@ public sealed partial class OverlayRenderer
 		float cx = 0;
 		float cy = 0;
 
-		var imperial = element.Units == UnitSystem.Imperial;
-		var displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
-		var maxDisplaySpeed = GaugeMaxSpeed(element.Units);
+		bool imperial = element.Units == UnitSystem.Imperial;
+		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
+		double maxDisplaySpeed = GaugeMaxSpeed(element.Units);
 
-		var radius = OverlayElementBounds.SpeedRadius;
+		float radius = OverlayElementBounds.SpeedRadius;
 		var rect = new SKRect(cx - radius, cy - radius, cx + radius, cy + radius);
 		const float startAngle = 135f;
 		const float sweep = 270f;
@@ -217,11 +217,11 @@ public sealed partial class OverlayRenderer
 		canvas.DrawArc(rect, startAngle + sweep * 0.70f, sweep * 0.18f, false, _speedBandOrange);
 		canvas.DrawArc(rect, startAngle + sweep * 0.88f, sweep * 0.12f, false, _speedBandRed);
 
-		var clamped = Math.Clamp(displaySpeed, 0, maxDisplaySpeed);
-		var needleAngleDeg = startAngle + sweep * (clamped / maxDisplaySpeed);
-		var needleRad = AngleMath.DegToRad(needleAngleDeg);
-		var needleX = cx + (float)(Math.Cos(needleRad) * (radius - 34));
-		var needleY = cy + (float)(Math.Sin(needleRad) * (radius - 34));
+		double clamped = Math.Clamp(displaySpeed, 0, maxDisplaySpeed);
+		double needleAngleDeg = startAngle + sweep * (clamped / maxDisplaySpeed);
+		double needleRad = AngleMath.DegToRad(needleAngleDeg);
+		float needleX = cx + (float)(Math.Cos(needleRad) * (radius - 34));
+		float needleY = cy + (float)(Math.Sin(needleRad) * (radius - 34));
 
 		canvas.DrawLine(cx, cy, needleX, needleY, _whiteStroke6Round);
 
@@ -233,8 +233,8 @@ public sealed partial class OverlayRenderer
 		SKColor textColor = TextColorOf(element);
 		SKColor outlineColor = OutlineColorOf(element);
 
-		var speedText = F(displaySpeed, "0");
-		var textWidth = speedFont.MeasureText(speedText);
+		string speedText = F(displaySpeed, "0");
+		float textWidth = speedFont.MeasureText(speedText);
 		DrawOutlined(canvas, speedText, cx - textWidth / 2, cy + radius - 90, speedFont, textColor,
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", cx, cy + radius - 30, speedUnitFont, textColor, SKTextAlign.Center,
@@ -252,7 +252,7 @@ public sealed partial class OverlayRenderer
 		const float halfWidth = OverlayElementBounds.ProgressBarWidth / 2f;
 		const float trackHeight = 14f;
 
-		var progress = _totalDistanceMeters > 0
+		double progress = _totalDistanceMeters > 0
 			? Math.Clamp(frame.CumulativeDistanceMeters / _totalDistanceMeters, 0.0, 1.0)
 			: 0.0;
 
@@ -260,7 +260,7 @@ public sealed partial class OverlayRenderer
 		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, _panelFillPaint);
 		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, _thinStroke2White70);
 
-		var dotX = -halfWidth + (float)(OverlayElementBounds.ProgressBarWidth * progress);
+		float dotX = -halfWidth + (float)(OverlayElementBounds.ProgressBarWidth * progress);
 		if (progress > 0)
 		{
 			var fillRect = new SKRect(-halfWidth, -trackHeight / 2, dotX, trackHeight / 2);
@@ -270,23 +270,21 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(dotX, 0, 16, _dotOutlineBlackFill);
 		canvas.DrawCircle(dotX, 0, 12, _dotFillAccent);
 
-		var remainingMeters = Math.Max(_totalDistanceMeters - frame.CumulativeDistanceMeters, 0);
+		double remainingMeters = Math.Max(_totalDistanceMeters - frame.CumulativeDistanceMeters, 0);
 
 		// A stationary GPS receiver's position jitter means remainingMeters almost never settles on
 		// exactly 0 (see element.TripArrivedToleranceMeters) - within that margin, treat the trip as
 		// arrived and show a clean "100%"/TripArrivedLabel instead of the two numbers rounding
 		// independently into a contradiction like "100%, 0.4 M LEFT".
-		var arrived = remainingMeters <= element.TripArrivedToleranceMeters;
-		var displayPercent = arrived ? 100.0 : Math.Min(progress * 100, 99);
+		bool arrived = remainingMeters <= element.TripArrivedToleranceMeters;
+		double displayPercent = arrived ? 100.0 : Math.Min(progress * 100, 99);
 		DrawOutlined(canvas, $"{F(displayPercent, "0")}%", -halfWidth, -26, _smallFont, White);
 
 		if (arrived)
-		{
 			DrawOutlined(canvas, element.TripArrivedLabel, halfWidth, -26, _smallFont, White, SKTextAlign.Right);
-		}
 		else
 		{
-			var (remainingValue, remainingUnit) = FormatDistance(remainingMeters, element.Units);
+			(string remainingValue, string remainingUnit) = FormatDistance(remainingMeters, element.Units);
 			DrawOutlined(canvas, $"{remainingValue} {remainingUnit} LEFT", halfWidth, -26, _smallFont, White, SKTextAlign.Right);
 		}
 	}

@@ -36,7 +36,7 @@ public sealed record VideoInfo(
 	/// <summary>An ffprobe rate ("60000/1001" or "30") as frames a second.</summary>
 	internal static double ParseFps(string frameRate)
 	{
-		var parts = frameRate.Split('/');
+		string[] parts = frameRate.Split('/');
 		return parts.Length > 1
 			? double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture)
 			: double.Parse(parts[0], CultureInfo.InvariantCulture);
@@ -73,7 +73,7 @@ public static partial class SourceProbe
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
 			"-v", "error", "-print_format", "json", "-show_streams", "-show_format", inputPath);
 
-		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
 		if (exitCode != 0)
 			throw new InvalidOperationException($"ffprobe exited with an error ({exitCode}): {stderr}");
 
@@ -86,7 +86,7 @@ public static partial class SourceProbe
 
 		foreach (JsonNode? s in streams)
 		{
-			var codecType = s!["codec_type"]?.GetValue<string>();
+			string? codecType = s!["codec_type"]?.GetValue<string>();
 
 			switch (codecType)
 			{
@@ -121,7 +121,7 @@ public static partial class SourceProbe
 			ProbeKeyframeInterval(inputPath, videoStream["r_frame_rate"]!.GetValue<string>()),
 			ResolveTimecode(videoStream, streams, root),
 			videoStream["codec_name"]?.GetValue<string>() == "hevc" ? ProbeHevcHighTier(inputPath) : null,
-			long.TryParse(videoStream["nb_frames"]?.GetValue<string>(), CultureInfo.InvariantCulture, out var frameCount) && frameCount > 0
+			long.TryParse(videoStream["nb_frames"]?.GetValue<string>(), CultureInfo.InvariantCulture, out long frameCount) && frameCount > 0
 				? frameCount
 				: null);
 
@@ -134,7 +134,7 @@ public static partial class SourceProbe
 				ResolveAudioBitRate(audioStream, videoStream, root),
 				audioStream["id"]?.GetValue<string>());
 
-		var duration = double.Parse(root["format"]!["duration"]!.GetValue<string>(), CultureInfo.InvariantCulture);
+		double duration = double.Parse(root["format"]!["duration"]!.GetValue<string>(), CultureInfo.InvariantCulture);
 
 		DateTime? containerCreationTimeUtc = ParseCreationTime(root["format"]?["tags"]?["creation_time"]?.GetValue<string>());
 		CameraRecording? camera = CameraFormats.Detect(inputPath, streams);
@@ -145,10 +145,10 @@ public static partial class SourceProbe
 	/// <summary>The flat picture reframed from the lenses - its size, and the lenses' bitrate per pixel kept at that size.</summary>
 	private static VideoInfo Reframed(VideoInfo lenses, DualFisheye fisheye, JsonNode? secondStream)
 	{
-		var (width, height) = Reframing.OutputSize(fisheye);
-		var lensBitRate = lenses.BitRate +
-		                  (long.TryParse(secondStream?["bit_rate"]?.GetValue<string>(), CultureInfo.InvariantCulture, out var second) ? second : 0);
-		var lensPixels = fisheye.Layout == FisheyeLayout.TwoStreams ? 2.0 * lenses.Width * lenses.Height : (double)lenses.Width * lenses.Height;
+		(int width, int height) = Reframing.OutputSize(fisheye);
+		long lensBitRate = lenses.BitRate +
+		                   (long.TryParse(secondStream?["bit_rate"]?.GetValue<string>(), CultureInfo.InvariantCulture, out long second) ? second : 0);
+		double lensPixels = fisheye.Layout == FisheyeLayout.TwoStreams ? 2.0 * lenses.Width * lenses.Height : (double)lenses.Width * lenses.Height;
 		return lenses with { Width = width, Height = height, BitRate = (long)Math.Round(lensBitRate * (width * (double)height / lensPixels)) };
 	}
 
@@ -174,8 +174,8 @@ public static partial class SourceProbe
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
 			"-v", "error", "-f", "concat", "-safe", "0", "-show_entries", "format=start_time", "-of", "csv=p=0", listPath);
 
-		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
-		var startTime = stdout.Trim();
+		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
+		string startTime = stdout.Trim();
 		if (exitCode != 0 || !double.TryParse(startTime, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
 			throw new InvalidOperationException($"Couldn't read the start time of the audio for this range: {stderr}");
 		return startTime;
@@ -190,19 +190,19 @@ public static partial class SourceProbe
 	{
 		try
 		{
-			var fps = VideoInfo.ParseFps(frameRate);
+			double fps = VideoInfo.ParseFps(frameRate);
 			if (!(fps > 0)) return null;
 
 			ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("ffprobe",
 				"-v", "error", "-select_streams", "v:0", "-skip_frame", "nokey", "-read_intervals", "%+6",
 				"-show_entries", "frame=pts_time", "-of", "csv=p=0", inputPath);
-			var (exitCode, stdout, _) = ProcessHelper.RunCaptured(psi);
+			(int exitCode, string stdout, _) = ProcessHelper.RunCaptured(psi);
 			if (exitCode != 0) return null;
 
 			List<double> times =
 			[
 				.. stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-					.Select(line => double.TryParse(line, CultureInfo.InvariantCulture, out var t) ? t : double.NaN)
+					.Select(line => double.TryParse(line, CultureInfo.InvariantCulture, out double t) ? t : double.NaN)
 					.Where(double.IsFinite)
 			];
 			if (times.Count < 2) return null;
@@ -229,7 +229,7 @@ public static partial class SourceProbe
 			ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("ffmpeg",
 				"-hide_banner", "-loglevel", "trace", "-i", inputPath, "-map", "0:v:0", "-frames:v", "1", "-c", "copy",
 				"-bsf:v", "trace_headers", "-f", "null", "-");
-			var (_, _, stderr) = ProcessHelper.RunCaptured(psi);
+			(_, _, string stderr) = ProcessHelper.RunCaptured(psi);
 			Match match = TierFlagRegex().Match(stderr);
 			return match.Success ? match.Groups[1].Value == "1" : null;
 		}
@@ -251,31 +251,31 @@ public static partial class SourceProbe
 
 	private static long ResolveVideoBitRate(JsonNode videoStream, JsonNode? audioStream, JsonNode root)
 	{
-		var videoBitRate = videoStream["bit_rate"]?.GetValue<string>();
+		string? videoBitRate = videoStream["bit_rate"]?.GetValue<string>();
 		if (videoBitRate is not null) return long.Parse(videoBitRate);
 
-		var formatBitRateStr = root["format"]?["bit_rate"]?.GetValue<string>()
-		                       ?? throw new InvalidOperationException(
-			                       "ffprobe reported no bit_rate for the video stream or the container format.");
-		var formatBitRate = long.Parse(formatBitRateStr);
+		string formatBitRateStr = root["format"]?["bit_rate"]?.GetValue<string>()
+		                          ?? throw new InvalidOperationException(
+			                          "ffprobe reported no bit_rate for the video stream or the container format.");
+		long formatBitRate = long.Parse(formatBitRateStr);
 
 		// format.bit_rate covers every stream in the container; when the video stream doesn't
 		// report its own rate, subtract the audio track's so we don't inflate the video target.
-		var audioBitRate = audioStream?["bit_rate"]?.GetValue<string>();
+		string? audioBitRate = audioStream?["bit_rate"]?.GetValue<string>();
 		return audioBitRate is not null ? Math.Max(0, formatBitRate - long.Parse(audioBitRate)) : formatBitRate;
 	}
 
 	private static long ResolveAudioBitRate(JsonNode audioStream, JsonNode videoStream, JsonNode root)
 	{
-		var audioBitRate = audioStream["bit_rate"]?.GetValue<string>();
+		string? audioBitRate = audioStream["bit_rate"]?.GetValue<string>();
 		if (audioBitRate is not null) return long.Parse(audioBitRate);
 
 		// Mirrors ResolveVideoBitRate: when the audio stream doesn't report its own rate, derive it
 		// from the container total minus the video track's rate instead of showing 0.
-		var formatBitRateStr = root["format"]?["bit_rate"]?.GetValue<string>();
+		string? formatBitRateStr = root["format"]?["bit_rate"]?.GetValue<string>();
 		if (formatBitRateStr is null) return 0;
 
-		var videoBitRate = videoStream["bit_rate"]?.GetValue<string>();
+		string? videoBitRate = videoStream["bit_rate"]?.GetValue<string>();
 		if (videoBitRate is null) return 0;
 
 		return Math.Max(0, long.Parse(formatBitRateStr) - long.Parse(videoBitRate));

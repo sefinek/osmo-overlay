@@ -75,8 +75,8 @@ public partial class MainWindow
 
 	private void SyncTimelineScrollBar()
 	{
-		var duration = ExpandedTimeline.Maximum - ExpandedTimeline.Minimum;
-		var visible = ExpandedTimeline.ViewLength;
+		double duration = ExpandedTimeline.Maximum - ExpandedTimeline.Minimum;
+		double visible = ExpandedTimeline.ViewLength;
 		TimelineScrollBar.IsVisible = duration > 0 && visible < duration - 1e-3;
 		TimelineScrollBar.Maximum = Math.Max(0, duration - visible);
 		TimelineScrollBar.ViewportSize = visible;
@@ -88,7 +88,7 @@ public partial class MainWindow
 	/// <summary>With the preview: starts the generators for a newly loaded recording, or hands the timeline the ones it already has.</summary>
 	private async Task LoadTimelineTracksAsync(FileSummary summary)
 	{
-		var aspect = (double)summary.Video.Width / summary.Video.Height;
+		double aspect = (double)summary.Video.Width / summary.Video.Height;
 		if (ReferenceEquals(_timelineTracksFor, summary))
 		{
 			ExpandedTimeline.SetSources(_timelineThumbnails, _timelineWaveform, summary.Video.Fps, aspect);
@@ -99,7 +99,7 @@ public partial class MainWindow
 		_timelineTracksFor = summary;
 
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
-		var thumbnailWidth = (int)Math.Round(ThumbnailHeight * aspect) & ~1;
+		int thumbnailWidth = (int)Math.Round(ThumbnailHeight * aspect) & ~1;
 		TimelineThumbnails? thumbnails = null;
 		AudioWaveform? waveform = null;
 		try
@@ -131,8 +131,8 @@ public partial class MainWindow
 	{
 		if (_timelineTracksFor is not { Fisheye: not null } summary) return;
 
-		var aspect = (double)summary.Video.Width / summary.Video.Height;
-		var thumbnailWidth = (int)Math.Round(ThumbnailHeight * aspect) & ~1;
+		double aspect = (double)summary.Video.Width / summary.Video.Height;
+		int thumbnailWidth = (int)Math.Round(ThumbnailHeight * aspect) & ~1;
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
 		ReframeView view = _reframe;
 		Reframer? reframer = ReframerFor(summary, view);

@@ -72,7 +72,7 @@ public static class AppUpdates
 
 		JsonNode json = JsonNode.Parse(await response.Content.ReadAsStringAsync(timeout.Token))
 		                ?? throw new InvalidDataException("Empty release response.");
-		(AppRelease release, var sumsUrl) = ParseRelease(json, InstallerSuffix());
+		(AppRelease release, string? sumsUrl) = ParseRelease(json, InstallerSuffix());
 
 		// Assets uploaded before GitHub started publishing digests have none - the release's SHA256SUMS file does.
 		if (release.Installer is { Sha256: null } installer && sumsUrl is not null)
@@ -85,7 +85,7 @@ public static class AppUpdates
 	/// <returns>The release, and the SHA256SUMS file's URL when the installer has no digest of its own.</returns>
 	internal static (AppRelease Release, string? SumsUrl) ParseRelease(JsonNode release, string? installerSuffix)
 	{
-		var tag = release["tag_name"]?.GetValue<string>() ?? throw new InvalidDataException("Release has no tag.");
+		string tag = release["tag_name"]?.GetValue<string>() ?? throw new InvalidDataException("Release has no tag.");
 		if (!Version.TryParse(tag.TrimStart('v', 'V').Split('-', '+')[0], out Version? version))
 			throw new InvalidDataException($"Release tag '{tag}' isn't a version number.");
 
@@ -94,8 +94,8 @@ public static class AppUpdates
 		string? sumsUrl = null;
 		if (installerSuffix is not null && AssetEndingWith(assets, installerSuffix) is { } asset)
 		{
-			var name = asset["name"]!.GetValue<string>();
-			var sha256 = asset["digest"]?.GetValue<string>() is { } digest && digest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase)
+			string name = asset["name"]!.GetValue<string>();
+			string? sha256 = asset["digest"]?.GetValue<string>() is { } digest && digest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase)
 				? digest["sha256:".Length..].ToLowerInvariant()
 				: null;
 			if (sha256 is null) sumsUrl = AssetEndingWith(assets, "SHA256SUMS.txt")?["browser_download_url"]?.GetValue<string>();
@@ -139,17 +139,17 @@ public static class AppUpdates
 	public static async Task<string> DownloadInstallerAsync(ReleaseAsset installer, IProgress<double>? progress, CancellationToken ct)
 	{
 		// The name comes from the API response - never let it point outside the temp folder.
-		var path = Path.Combine(Path.GetTempPath(), Path.GetFileName(installer.Name));
-		var partialPath = path + ".partial";
+		string path = Path.Combine(Path.GetTempPath(), Path.GetFileName(installer.Name));
+		string partialPath = path + ".partial";
 
 		using (HttpResponseMessage response = await Http.GetAsync(installer.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct))
 		{
 			response.EnsureSuccessStatusCode();
-			var total = response.Content.Headers.ContentLength ?? installer.Size;
+			long total = response.Content.Headers.ContentLength ?? installer.Size;
 			await using Stream source = await response.Content.ReadAsStreamAsync(ct);
 			await using FileStream target = File.Create(partialPath);
 
-			var buffer = new byte[81920];
+			byte[] buffer = new byte[81920];
 			long received = 0;
 			int read;
 			while ((read = await source.ReadAsync(buffer, ct)) > 0)
@@ -161,13 +161,11 @@ public static class AppUpdates
 		}
 
 		if (installer.Sha256 is null)
-		{
 			AppLogger.Warn($"{installer.Name} has no published SHA-256 - installing it unverified");
-		}
 		else
 		{
 			await using FileStream downloaded = File.OpenRead(partialPath);
-			var actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(downloaded, ct));
+			string actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(downloaded, ct));
 			if (actual != installer.Sha256)
 			{
 				downloaded.Close();
@@ -186,13 +184,13 @@ public static class AppUpdates
 	/// </summary>
 	public static void StartInstaller(string installerPath)
 	{
-		var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "logs");
+		string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "logs");
 		Directory.CreateDirectory(logDir);
-		var logFile = Path.Combine(logDir, $"update-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+		string logFile = Path.Combine(logDir, $"update-{DateTime.Now:yyyyMMdd-HHmmss}.log");
 
 		// Deliberately not ProcessHelper: setup has its own visible progress window and may ask for elevation.
 		var psi = new ProcessStartInfo(installerPath) { UseShellExecute = true };
-		foreach (var argument in (string[])["/UPDATE", "/SILENT", "/NORESTART", $"/LOG={logFile}"])
+		foreach (string argument in (string[])["/UPDATE", "/SILENT", "/NORESTART", $"/LOG={logFile}"])
 			psi.ArgumentList.Add(argument);
 		Process.Start(psi)?.Dispose();
 		AppLogger.Info($"Started the update: {installerPath} (log: {logFile})");

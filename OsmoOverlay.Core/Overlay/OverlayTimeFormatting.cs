@@ -34,7 +34,7 @@ internal static class OverlayTimeFormatting
 	/// <summary>Same shape DrawElapsedTime renders: "H:MM:SS" once the recording passes an hour, "MM:SS" before that.</summary>
 	public static string FormatElapsed(double seconds)
 	{
-		TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(seconds, 0));
+		var elapsed = TimeSpan.FromSeconds(Math.Max(seconds, 0));
 		return elapsed.TotalHours >= 1
 			? $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
 			: $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";

@@ -39,14 +39,14 @@ internal static class CameraTilt
 	public static (double[] Roll, double[] Pitch) Compute(IReadOnlyList<TelemetryFrame> frames, IReadOnlyList<Direction> gravity,
 		IReadOnlyList<double> speedKmh, IReadOnlyList<double> headingDegrees)
 	{
-		var roll = new double[frames.Count];
-		var pitch = new double[frames.Count];
-		var segmentStart = 0;
-		var segmentEnd = SegmentEnd(frames, 0);
+		double[] roll = new double[frames.Count];
+		double[] pitch = new double[frames.Count];
+		int segmentStart = 0;
+		int segmentEnd = SegmentEnd(frames, 0);
 		int before = 0, after = 0;
 		double smoothedRoll = 0, smoothedPitch = 0;
 
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
 			TelemetryFrame frame = frames[i];
 			if (i > 0 && frame.StartsAfterGap)
@@ -56,14 +56,14 @@ internal static class CameraTilt
 				before = after = i;
 			}
 
-			var t = frame.SampleTimeSeconds;
+			double t = frame.SampleTimeSeconds;
 			while (before < i && t - frames[before].SampleTimeSeconds > DerivativeWindowSeconds / 2) before++;
 			if (after < i) after = i;
 			while (after + 1 < segmentEnd && frames[after + 1].SampleTimeSeconds - t <= DerivativeWindowSeconds / 2) after++;
 			before = Math.Max(before, segmentStart);
 
-			var (forwardG, lateralG) = VehicleAcceleration(frames, speedKmh, headingDegrees, i, before, after);
-			var (rawRoll, rawPitch) = Angles(gravity[i], forwardG, lateralG);
+			(double forwardG, double lateralG) = VehicleAcceleration(frames, speedKmh, headingDegrees, i, before, after);
+			(double rawRoll, double rawPitch) = Angles(gravity[i], forwardG, lateralG);
 
 			if (i == segmentStart)
 			{
@@ -72,7 +72,7 @@ internal static class CameraTilt
 			}
 			else
 			{
-				var alpha = 1.0 - Math.Exp(-Math.Max(t - frames[i - 1].SampleTimeSeconds, 0) / TimeConstantSeconds);
+				double alpha = 1.0 - Math.Exp(-Math.Max(t - frames[i - 1].SampleTimeSeconds, 0) / TimeConstantSeconds);
 				smoothedRoll += alpha * (rawRoll - smoothedRoll);
 				smoothedPitch += alpha * (rawPitch - smoothedPitch);
 			}
@@ -87,24 +87,24 @@ internal static class CameraTilt
 	/// <summary>One sample's unsmoothed roll/pitch with the given vehicle acceleration (in g) taken out.</summary>
 	internal static (double Roll, double Pitch) Angles(Direction gravity, double forwardG, double lateralG)
 	{
-		var magnitude = gravity.Length;
+		double magnitude = gravity.Length;
 		if (magnitude <= 1e-6) return (0, 0);
 
-		var roll = Math.Asin(Math.Clamp(gravity.X / magnitude, -1, 1)) + Math.Atan(lateralG);
-		var pitch = -Math.Asin(Math.Clamp(gravity.Z / magnitude, -1, 1)) - Math.Atan(forwardG);
+		double roll = Math.Asin(Math.Clamp(gravity.X / magnitude, -1, 1)) + Math.Atan(lateralG);
+		double pitch = -Math.Asin(Math.Clamp(gravity.Z / magnitude, -1, 1)) - Math.Atan(forwardG);
 		return (AngleMath.RadToDeg(roll), AngleMath.RadToDeg(pitch));
 	}
 
 	private static (double ForwardG, double LateralG) VehicleAcceleration(IReadOnlyList<TelemetryFrame> frames,
 		IReadOnlyList<double> speedKmh, IReadOnlyList<double> headingDegrees, int i, int before, int after)
 	{
-		var weight = Math.Clamp((speedKmh[i] - CompensationStartKmh) / (CompensationFullKmh - CompensationStartKmh), 0, 1);
-		var dt = frames[after].SampleTimeSeconds - frames[before].SampleTimeSeconds;
+		double weight = Math.Clamp((speedKmh[i] - CompensationStartKmh) / (CompensationFullKmh - CompensationStartKmh), 0, 1);
+		double dt = frames[after].SampleTimeSeconds - frames[before].SampleTimeSeconds;
 		if (weight <= 0 || !frames[i].HasGpsFix || dt < DerivativeWindowSeconds / 2) return (0, 0);
 
-		var forward = (speedKmh[after] - speedKmh[before]) / 3.6 / dt / G;
-		var turn = AngleMath.DegToRad(AngleMath.NormalizeDegrees(headingDegrees[after] - headingDegrees[before] + 180) - 180);
-		var lateral = speedKmh[i] / 3.6 * turn / dt / G;
+		double forward = (speedKmh[after] - speedKmh[before]) / 3.6 / dt / G;
+		double turn = AngleMath.DegToRad(AngleMath.NormalizeDegrees(headingDegrees[after] - headingDegrees[before] + 180) - 180);
+		double lateral = speedKmh[i] / 3.6 * turn / dt / G;
 		return (weight * Math.Clamp(forward, -MaxAccelerationG, MaxAccelerationG),
 			weight * Math.Clamp(lateral, -MaxAccelerationG, MaxAccelerationG));
 	}
@@ -112,7 +112,7 @@ internal static class CameraTilt
 	/// <summary>One past the last frame of the file `start` is in - derivatives never reach across a gap between files.</summary>
 	private static int SegmentEnd(IReadOnlyList<TelemetryFrame> frames, int start)
 	{
-		var end = start + 1;
+		int end = start + 1;
 		while (end < frames.Count && !frames[end].StartsAfterGap) end++;
 		return end;
 	}

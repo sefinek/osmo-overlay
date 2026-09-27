@@ -7,8 +7,8 @@ public static class AppBanner
 {
 	public static IReadOnlyList<string> BuildLines(string appLabel)
 	{
-		var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
-		var coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
+		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
+		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
 
 		return
 		[

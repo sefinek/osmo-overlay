@@ -12,44 +12,44 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	/// </summary>
 	public static OverlayPreset CreateDefault(string id, string name, int width, int height)
 	{
-		var scale = OverlayElementBounds.GetScale(width, height);
-		var m = OverlayElementBounds.Margin * scale;
+		float scale = OverlayElementBounds.GetScale(width, height);
+		float m = OverlayElementBounds.Margin * scale;
 
-		var speedCx = width - m - OverlayElementBounds.SpeedRadius * scale;
-		var speedCy = height - m - OverlayElementBounds.SpeedRadius * scale;
-		var rollCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.TiltRadius + 40) * scale;
+		float speedCx = width - m - OverlayElementBounds.SpeedRadius * scale;
+		float speedCy = height - m - OverlayElementBounds.SpeedRadius * scale;
+		float rollCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.TiltRadius + 40) * scale;
 		// Beside the roll gauge, toward the middle.
-		var pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40) * scale;
+		float pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40) * scale;
 
-		var statsX = m;
-		var dateY = m + 40 * scale;
-		var elevationY = dateY + 110 * scale;
-		var gradientY = elevationY + 240 * scale;
-		var distanceY = gradientY + 240 * scale;
+		float statsX = m;
+		float dateY = m + 40 * scale;
+		float elevationY = dateY + 110 * scale;
+		float gradientY = elevationY + 240 * scale;
+		float distanceY = gradientY + 240 * scale;
 		// Appended after the always-visible stats column instead of spliced between DateTimeText and
 		// Elevation - it's off by default, so it must not shift anything else's default position just
 		// to make room for it.
-		var utcY = distanceY + 240 * scale;
+		float utcY = distanceY + 240 * scale;
 		// Same reasoning as UtcTimeText above - off by default, appended after it instead of shifting it.
-		var cameraInfoY = utcY + 240 * scale;
-		var elapsedY = cameraInfoY + 240 * scale;
-		var cameraModelY = elapsedY + 110 * scale;
-		var tripStatY = cameraModelY + 150 * scale;
+		float cameraInfoY = utcY + 240 * scale;
+		float elapsedY = cameraInfoY + 240 * scale;
+		float cameraModelY = elapsedY + 110 * scale;
+		float tripStatY = cameraModelY + 150 * scale;
 
-		var compassCx = m + OverlayElementBounds.CompassRadius * scale;
-		var mapCx = compassCx + (OverlayElementBounds.CompassRadius + 40 + OverlayElementBounds.MapRadius) * scale;
-		var gMeterCx = width - m - OverlayElementBounds.GMeterRadius * scale;
-		var gMeterCy = m + OverlayElementBounds.GMeterRadius * scale;
-		var sunCx = width - m - OverlayElementBounds.SunRadius * scale;
-		var sunCy = m + OverlayElementBounds.GMeterRadius * 2 * scale + OverlayElementBounds.SunRadius * scale + 40 * scale;
+		float compassCx = m + OverlayElementBounds.CompassRadius * scale;
+		float mapCx = compassCx + (OverlayElementBounds.CompassRadius + 40 + OverlayElementBounds.MapRadius) * scale;
+		float gMeterCx = width - m - OverlayElementBounds.GMeterRadius * scale;
+		float gMeterCy = m + OverlayElementBounds.GMeterRadius * scale;
+		float sunCx = width - m - OverlayElementBounds.SunRadius * scale;
+		float sunCy = m + OverlayElementBounds.GMeterRadius * 2 * scale + OverlayElementBounds.SunRadius * scale + 40 * scale;
 		// Centered along the bottom edge, clear of Compass (bottom-left) and SpeedGauge (bottom-right)
 		// at their default positions.
-		var progressBarCx = width / 2f;
-		var progressBarCy = height - m - OverlayElementBounds.ProgressBarHeight / 2 * scale;
+		float progressBarCx = width / 2f;
+		float progressBarCy = height - m - OverlayElementBounds.ProgressBarHeight / 2 * scale;
 		// Centered above the progress bar, which is as wide.
-		var chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2 * scale;
-		var chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop +
-		                              OverlayElementBounds.ChartHeight) * scale;
+		float chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2 * scale;
+		float chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop +
+		                                OverlayElementBounds.ChartHeight) * scale;
 
 		List<OverlayElement> elements =
 		[

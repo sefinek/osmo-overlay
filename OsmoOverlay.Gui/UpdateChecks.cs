@@ -32,9 +32,9 @@ internal static class UpdateChecks
 	private static async Task<UpdateCheckResult> RunAsync()
 	{
 		// Off the UI thread: every tool spawns processes (ffmpeg -version, winget/brew/apt-cache), a couple of seconds together.
-		Task<(AppRelease?, bool)> app = Task.Run(CheckAppAsync);
-		Task<IReadOnlyList<ToolVersionInfo>> dependencies = Task.Run(CheckDependenciesAsync);
-		(AppRelease? release, var failed) = await app;
+		var app = Task.Run(CheckAppAsync);
+		var dependencies = Task.Run(CheckDependenciesAsync);
+		(AppRelease? release, bool failed) = await app;
 		return new UpdateCheckResult(release, failed, await dependencies);
 	}
 

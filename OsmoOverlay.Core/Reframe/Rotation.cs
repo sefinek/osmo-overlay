@@ -12,7 +12,7 @@ public readonly record struct Direction(double X, double Y, double Z)
 
 	public Direction Normalized()
 	{
-		var length = Length;
+		double length = Length;
 		return length > 0 ? new Direction(X / length, Y / length, Z / length) : new Direction(0, 1, 0);
 	}
 }
@@ -44,13 +44,13 @@ public readonly record struct Rotation(double M00, double M01, double M02, doubl
 		Direction d = down.Normalized();
 		// Axis = (0, 1, 0) x d, sine = its length, cosine = (0, 1, 0) . d.
 		double ax = d.Z, ay = 0, az = -d.X;
-		var sin = Math.Sqrt(ax * ax + az * az);
-		var cos = d.Y;
+		double sin = Math.Sqrt(ax * ax + az * az);
+		double cos = d.Y;
 		if (sin < 1e-9) return cos > 0 ? Identity : AboutX(Math.PI);
 
 		ax /= sin;
 		az /= sin;
-		var v = 1 - cos;
+		double v = 1 - cos;
 		return new Rotation(
 			cos + ax * ax * v, ax * ay * v - az * sin, ax * az * v + ay * sin,
 			ay * ax * v + az * sin, cos + ay * ay * v, ay * az * v - ax * sin,

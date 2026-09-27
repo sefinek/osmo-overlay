@@ -146,9 +146,8 @@ internal sealed class OverlayCompositor : IDisposable
 	public void DrawOverlayOnto(byte[] bgra, int width, int height, TimeSpan position)
 	{
 		lock (_lock)
-		{
-			if (!_disposed) DrawOverlayLocked(bgra, width, height, position);
-		}
+			if (!_disposed)
+				DrawOverlayLocked(bgra, width, height, position);
 	}
 
 	/// <summary>
@@ -161,7 +160,7 @@ internal sealed class OverlayCompositor : IDisposable
 		{
 			if (_disposed) return null;
 
-			var seconds = _timeline is { } timeline ? timeline.NearestOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
+			double seconds = _timeline is { } timeline ? timeline.NearestOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
 			DerivedFrame frame = TelemetryProcessor.FindNearest(_frames, seconds);
 			if (!ReferenceEquals(frame, _measuredFrame))
 			{
@@ -178,7 +177,7 @@ internal sealed class OverlayCompositor : IDisposable
 	{
 		if (_still is not { } still) return null;
 
-		var composed = _pool.Rent(still.Bgra.Length);
+		byte[] composed = _pool.Rent(still.Bgra.Length);
 		Buffer.BlockCopy(still.Bgra, 0, composed, 0, still.Bgra.Length);
 		DrawOverlayLocked(composed, still.Width, still.Height, _stillPosition);
 		return new ComposedPreviewFrame(_stillPosition, composed, still.Width, still.Height) { Owner = _pool };

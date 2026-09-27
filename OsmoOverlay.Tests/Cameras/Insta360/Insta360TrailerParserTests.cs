@@ -15,7 +15,7 @@ public sealed class Insta360TrailerParserTests
 	{
 		var trailer = new MemoryStream();
 		List<(ushort Id, int Size, int Offset)> table = [];
-		foreach (var (id, data) in records)
+		foreach ((ushort id, byte[] data) in records)
 		{
 			table.Add((id, data.Length, (int)trailer.Length));
 			trailer.Write(data);
@@ -25,8 +25,8 @@ public sealed class Insta360TrailerParserTests
 		byte[] last;
 		if (directory)
 		{
-			var entries = new byte[(table.Count + 1) * 10];
-			for (var i = 0; i < table.Count; i++)
+			byte[] entries = new byte[(table.Count + 1) * 10];
+			for (int i = 0; i < table.Count; i++)
 			{
 				BinaryPrimitives.WriteUInt16LittleEndian(entries.AsSpan((i + 1) * 10), (ushort)(table[i].Id >> 8));
 				BinaryPrimitives.WriteUInt32LittleEndian(entries.AsSpan((i + 1) * 10 + 2), (uint)table[i].Size);
@@ -44,7 +44,7 @@ public sealed class Insta360TrailerParserTests
 			last = Footer(records[^1].Id, records[^1].Data.Length);
 		}
 
-		var end = new byte[78];
+		byte[] end = new byte[78];
 		last.CopyTo(end, 0);
 		BinaryPrimitives.WriteUInt32LittleEndian(end.AsSpan(38), (uint)(trailer.Length + end.Length));
 		BinaryPrimitives.WriteUInt32LittleEndian(end.AsSpan(42), 3);
@@ -60,7 +60,7 @@ public sealed class Insta360TrailerParserTests
 
 	private static byte[] Footer(ushort id, int length)
 	{
-		var footer = new byte[6];
+		byte[] footer = new byte[6];
 		BinaryPrimitives.WriteUInt16LittleEndian(footer, id);
 		BinaryPrimitives.WriteUInt32LittleEndian(footer.AsSpan(2), (uint)length);
 		return footer;
@@ -76,8 +76,8 @@ public sealed class Insta360TrailerParserTests
 	/// <summary>1 kHz samples from `startMicros` for `count` ms, accel X = the sample's index (so averages are checkable).</summary>
 	private static byte[] PackedImu(long startMicros, int count)
 	{
-		var data = new byte[count * 20];
-		for (var i = 0; i < count; i++)
+		byte[] data = new byte[count * 20];
+		for (int i = 0; i < count; i++)
 		{
 			Span<byte> e = data.AsSpan(i * 20, 20);
 			BinaryPrimitives.WriteInt64LittleEndian(e, startMicros + i * 1000L);
@@ -85,7 +85,7 @@ public sealed class Insta360TrailerParserTests
 			BinaryPrimitives.WriteUInt16LittleEndian(e[10..], 0x8000);
 			BinaryPrimitives.WriteUInt16LittleEndian(e[12..], 0x8000 + 1000);
 			// Gyro at rest - 0x8000, never three zero bytes where doubles would have them.
-			for (var g = 14; g < 20; g += 2) BinaryPrimitives.WriteUInt16LittleEndian(e[g..], 0x8000);
+			for (int g = 14; g < 20; g += 2) BinaryPrimitives.WriteUInt16LittleEndian(e[g..], 0x8000);
 		}
 
 		return data;
@@ -93,8 +93,8 @@ public sealed class Insta360TrailerParserTests
 
 	private static byte[] DoubleImu(long startMicros, int count)
 	{
-		var data = new byte[count * 56];
-		for (var i = 0; i < count; i++)
+		byte[] data = new byte[count * 56];
+		for (int i = 0; i < count; i++)
 		{
 			Span<byte> e = data.AsSpan(i * 56, 56);
 			BinaryPrimitives.WriteInt64LittleEndian(e, startMicros + i * 1000L);
@@ -107,8 +107,8 @@ public sealed class Insta360TrailerParserTests
 
 	private static byte[] Exposures(long startMicros, int count)
 	{
-		var data = new byte[count * 16];
-		for (var i = 0; i < count; i++)
+		byte[] data = new byte[count * 16];
+		for (int i = 0; i < count; i++)
 		{
 			BinaryPrimitives.WriteInt64LittleEndian(data.AsSpan(i * 16), startMicros + i * FrameMicros);
 			BinaryPrimitives.WriteDoubleLittleEndian(data.AsSpan(i * 16 + 8), 1.0 / 2000);

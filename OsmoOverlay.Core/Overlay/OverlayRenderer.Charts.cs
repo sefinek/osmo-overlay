@@ -37,7 +37,7 @@ public sealed partial class OverlayRenderer
 
 		DrawOutlined(canvas, (element.Label ?? DefaultProfileLabel(element.Series)).ToUpperInvariant(), 0, 0,
 			TextFont(element, OverlayElementBounds.LabelFontSize), textColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
-		var (value, unit) = element.Series == ProfileSeries.Speed
+		(string value, string unit) = element.Series == ProfileSeries.Speed
 			? FormatSpeed(frame.SpeedKmh, element.Units)
 			: FormatAltitude(frame.Raw.AltitudeMeters, element.Units);
 		DrawOutlined(canvas, $"{value} {unit}", width, 0, TextFont(element, OverlayElementBounds.SmallFontSize), accent,
@@ -51,7 +51,7 @@ public sealed partial class OverlayRenderer
 
 		const float plotLeft = ProfileInset;
 		const float plotTop = top + ProfileInset;
-		var markerX = (float)ProfilePosition(frame, profile.Axis) * ProfilePlotWidth;
+		float markerX = (float)ProfilePosition(frame, profile.Axis) * ProfilePlotWidth;
 
 		canvas.Save();
 		canvas.Translate(plotLeft, plotTop);
@@ -71,7 +71,7 @@ public sealed partial class OverlayRenderer
 		canvas.DrawPath(profile.Line, _chartLinePaint);
 		canvas.Restore();
 
-		var markerY = profile.YAt(markerX);
+		float markerY = profile.YAt(markerX);
 		canvas.DrawLine(markerX, 0, markerX, ProfilePlotHeight, _thinStroke2White70);
 		canvas.DrawCircle(markerX, markerY, 11, _dotOutlineBlackFill);
 		_chartFillPaint.Color = accent;
@@ -87,7 +87,7 @@ public sealed partial class OverlayRenderer
 	/// <summary>0..1 along the chart's X axis - the share of the distance or time covered at `frame`.</summary>
 	private double ProfilePosition(DerivedFrame frame, ProfileAxis axis)
 	{
-		var fraction = axis == ProfileAxis.Distance
+		double fraction = axis == ProfileAxis.Distance
 			? frame.CumulativeDistanceMeters / _totalDistanceMeters
 			: (frame.Raw.SampleTimeSeconds - _allFrames[0].Raw.SampleTimeSeconds) / _totalDurationSeconds;
 		return double.IsFinite(fraction) ? Math.Clamp(fraction, 0, 1) : 0;
@@ -103,19 +103,21 @@ public sealed partial class OverlayRenderer
 		if (_profiles.TryGetValue((series, axis), out ProfileGeometry? cached)) return cached;
 		if (_allFrames.Count < 2 || _totalDurationSeconds <= 0) return null;
 
-		var sums = new double[ProfileBuckets];
-		var counts = new int[ProfileBuckets];
+		double[] sums = new double[ProfileBuckets];
+		int[] counts = new int[ProfileBuckets];
 		foreach (DerivedFrame f in _allFrames)
 		{
-			var bucket = Math.Min((int)(ProfilePosition(f, axis) * ProfileBuckets), ProfileBuckets - 1);
+			int bucket = Math.Min((int)(ProfilePosition(f, axis) * ProfileBuckets), ProfileBuckets - 1);
 			sums[bucket] += series == ProfileSeries.Speed ? f.SpeedKmh : f.Raw.AltitudeMeters;
 			counts[bucket]++;
 		}
 
 		List<(float X, double Value)> samples = [];
-		for (var i = 0; i < ProfileBuckets; i++)
+		for (int i = 0; i < ProfileBuckets; i++)
+		{
 			if (counts[i] > 0)
 				samples.Add(((i + 0.5f) / ProfileBuckets, sums[i] / counts[i]));
+		}
 
 		double min, max;
 		if (series == ProfileSeries.Speed)
@@ -127,8 +129,8 @@ public sealed partial class OverlayRenderer
 		{
 			min = samples.Min(s => s.Value);
 			max = samples.Max(s => s.Value);
-			var span = Math.Max(max - min, ProfileMinElevationSpanMeters);
-			var mid = (min + max) / 2;
+			double span = Math.Max(max - min, ProfileMinElevationSpanMeters);
+			double mid = (min + max) / 2;
 			min = mid - span / 2;
 			max = mid + span * 0.6;
 		}
@@ -184,10 +186,10 @@ public sealed partial class OverlayRenderer
 		/// <summary>The curve's Y at `x`, between the two points around it.</summary>
 		public float YAt(float x)
 		{
-			var i = 1;
+			int i = 1;
 			while (i < _points.Length - 1 && _points[i].X < x) i++;
 			SKPoint a = _points[i - 1], b = _points[i];
-			var t = b.X > a.X ? Math.Clamp((x - a.X) / (b.X - a.X), 0, 1) : 0;
+			float t = b.X > a.X ? Math.Clamp((x - a.X) / (b.X - a.X), 0, 1) : 0;
 			return a.Y + (b.Y - a.Y) * t;
 		}
 

@@ -76,7 +76,7 @@ public static class FileSummaryReader
 	public static (FileSummary? Summary, string? Problem) Read(IReadOnlyList<string> inputPaths,
 		Action<FileSummaryCacheEvent>? onCacheEvent = null)
 	{
-		(FileSummary? cached, var staleFormatVersion) = FileSummaryCache.TryLoad(inputPaths);
+		(FileSummary? cached, int? staleFormatVersion) = FileSummaryCache.TryLoad(inputPaths);
 		if (cached is not null)
 		{
 			onCacheEvent?.Invoke(new FileSummaryCacheEvent(FileSummaryCacheEventKind.Hit, CurrentCacheFormatVersion));
@@ -90,15 +90,15 @@ public static class FileSummaryReader
 		IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(inputPaths);
 		if (VideoSegments.FindMismatch(segments) is { } mismatch) return (null, mismatch);
 		VideoSegment first = segments[0];
-		var fileSize = inputPaths.Sum(path => new FileInfo(path).Length);
-		var durationSeconds = segments.TotalDurationSeconds();
-		List<double> segmentDurations = segments.Select(s => s.Source.DurationSeconds).ToList();
-		var totalFrameCount = segments.TotalFrameCount();
+		long fileSize = inputPaths.Sum(path => new FileInfo(path).Length);
+		double durationSeconds = segments.TotalDurationSeconds();
+		var segmentDurations = segments.Select(s => s.Source.DurationSeconds).ToList();
+		long totalFrameCount = segments.TotalFrameCount();
 
 		FileSummary summary;
 		if (!segments.AllHaveTelemetry())
 		{
-			var cameraModelOnly = TryGetCameraModel(inputPaths[0]);
+			string? cameraModelOnly = TryGetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, cameraModelOnly, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, false, null, null, null, totalFrameCount,
 				first.Source.ContainerCreationTimeUtc, CameraFormatId: first.Source.Camera?.Format.Id, Fisheye: first.Source.Fisheye);
@@ -115,13 +115,13 @@ public static class FileSummaryReader
 				telemetry = TelemetryProcessor.Summarize(derivedFrames);
 			}
 
-			var cameraModel = extraction.CameraModel ?? TryGetCameraModel(inputPaths[0]);
+			string? cameraModel = extraction.CameraModel ?? TryGetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, cameraModel, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, true, extraction.Frames, derivedFrames, telemetry,
 				totalFrameCount, first.Source.ContainerCreationTimeUtc, CameraFormatId: camera.Id, Fisheye: first.Source.Fisheye);
 		}
 
-		var saved = FileSummaryCache.Save(inputPaths, summary);
+		bool saved = FileSummaryCache.Save(inputPaths, summary);
 		onCacheEvent?.Invoke(new FileSummaryCacheEvent(
 			saved ? FileSummaryCacheEventKind.Saved : FileSummaryCacheEventKind.SaveFailed, CurrentCacheFormatVersion));
 		return (summary, null);

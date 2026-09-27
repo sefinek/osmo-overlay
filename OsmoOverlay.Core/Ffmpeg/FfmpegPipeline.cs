@@ -30,13 +30,12 @@ public static class FfmpegPipeline
 	/// </summary>
 	public static string SelectVideoEncoder(VideoInfo source)
 	{
-		var h264 = IsH264(source);
-		var tenBit = IsTenBit(source);
-		var nvenc = h264 ? "h264_nvenc" : "hevc_nvenc";
+		bool h264 = IsH264(source);
+		bool tenBit = IsTenBit(source);
+		string nvenc = h264 ? "h264_nvenc" : "hevc_nvenc";
 		lock (NvencConfirmed)
-		{
-			if (NvencConfirmed.Contains((nvenc, tenBit))) return nvenc;
-		}
+			if (NvencConfirmed.Contains((nvenc, tenBit)))
+				return nvenc;
 
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
 			"-hide_banner", "-loglevel", "error",
@@ -48,10 +47,7 @@ public static class FfmpegPipeline
 
 		if (ProcessHelper.RunCaptured(psi).ExitCode != 0) return h264 ? "libx264" : "libx265";
 
-		lock (NvencConfirmed)
-		{
-			NvencConfirmed.Add((nvenc, tenBit));
-		}
+		lock (NvencConfirmed) NvencConfirmed.Add((nvenc, tenBit));
 
 		return nvenc;
 	}
@@ -85,7 +81,7 @@ public static class FfmpegPipeline
 		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false)
 	{
 		SourceInfo info = segments[0].Source;
-		var (num, den) = ParseFrameRate(info.Video.FrameRate);
+		(int num, int den) = ParseFrameRate(info.Video.FrameRate);
 
 		var args = new List<string> { "-hide_banner", "-y" };
 		if (!overwrite) args[^1] = "-n";
@@ -129,12 +125,12 @@ public static class FfmpegPipeline
 			"-i", "pipe:0"
 		]);
 
-		var primaries = info.Video.ColorPrimaries ?? "bt709";
-		var transfer = info.Video.ColorTransfer ?? "bt709";
-		var colorspace = info.Video.ColorSpace ?? "bt709";
-		var range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
-		var h264 = encoder is "h264_nvenc" or "libx264";
-		var tenBit = IsTenBit(info.Video);
+		string primaries = info.Video.ColorPrimaries ?? "bt709";
+		string transfer = info.Video.ColorTransfer ?? "bt709";
+		string colorspace = info.Video.ColorSpace ?? "bt709";
+		string range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
+		bool h264 = encoder is "h264_nvenc" or "libx264";
+		bool tenBit = IsTenBit(info.Video);
 
 		// The overlay's RGB -> YUV conversion must use the same matrix the output is tagged with, or the HUD's
 		// colors come out shifted. Explicit on the scaler because older ffmpeg's swscale defaults to BT.601;
@@ -142,7 +138,7 @@ public static class FfmpegPipeline
 		// ffmpeg negotiates the overlay input's colorspace to match the main input's - an untagged source
 		// (e.g. an NLE export missing its color tags, see ColorTagFixer) would otherwise drag the HUD back
 		// to BT.601 while the output still gets tagged as BT.709.
-		var overlayMatrix = colorspace switch
+		string overlayMatrix = colorspace switch
 		{
 			"bt2020nc" or "bt2020c" => "bt2020",
 			"smpte170m" or "bt470bg" => "bt601",
@@ -151,7 +147,7 @@ public static class FfmpegPipeline
 			_ => "bt709"
 		};
 
-		var tags = $"setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}";
+		string tags = $"setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}";
 		args.AddRange([
 			"-filter_complex",
 			composedPicture
@@ -177,9 +173,7 @@ public static class FfmpegPipeline
 			// Pieces joined by the concat filter are decoded audio - it can't be stream-copied across the
 			// joins, so it's re-encoded at the source's own AAC bitrate. A single piece stays a lossless copy.
 			if (!source.EncodeAudio)
-			{
 				args.AddRange(["-c:a", "copy"]);
-			}
 			else
 			{
 				args.AddRange(["-c:a", "aac"]);
@@ -203,8 +197,8 @@ public static class FfmpegPipeline
 		// source's own rate (1 s buffer) instead of VBR: VBR spent ~3 Mbps on the static route-intro card
 		// and then ran over the source's rate for the rest, so neither the average nor the per-second
 		// rate matched the original.
-		var bitRate = ((long)Math.Round(info.Video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
-		var gop = info.Video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
+		string bitRate = ((long)Math.Round(info.Video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
+		int gop = info.Video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
 		if (IsGpuEncoder(encoder))
 		{
 			args.AddRange([
@@ -331,17 +325,15 @@ public static class FfmpegPipeline
 			return s.Audio is null ? null : $"{input}:a";
 		}
 
-		var video = withVideo ? "[0:v]" : "";
+		string video = withVideo ? "[0:v]" : "";
 		if (piece.SourceStartFrame == 0)
 		{
 			AddHwDecode();
 			if (segments.Count == 1)
-			{
 				args.AddRange(["-i", segments[0].InputPath]);
-			}
 			else
 			{
-				var listPath = ConcatListWriter.Write(segments.Select(s => s.InputPath));
+				string listPath = ConcatListWriter.Write(segments.Select(s => s.InputPath));
 				tempFiles.Add(listPath);
 				args.AddRange(["-f", "concat", "-safe", "0", "-i", listPath]);
 			}
@@ -349,11 +341,11 @@ public static class FfmpegPipeline
 			return new SourceInputs(1, video, AudioMapFor(0, segments[0].Source), segments[0].Source);
 		}
 
-		var (first, localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
-		var (last, _) = VideoSegments.Locate(segments, piece.SourceEndFrame - 1);
+		(int first, long localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
+		(int last, _) = VideoSegments.Locate(segments, piece.SourceEndFrame - 1);
 		SourceInfo startSource = segments[first].Source;
-		var localStartSeconds = localStartFrame * den / (double)num;
-		var seek = localStartSeconds.ToString("R", CultureInfo.InvariantCulture);
+		double localStartSeconds = localStartFrame * den / (double)num;
+		string seek = localStartSeconds.ToString("R", CultureInfo.InvariantCulture);
 
 		AddHwDecode();
 		args.AddRange(["-ss", seek, "-i", segments[first].InputPath]);
@@ -361,10 +353,10 @@ public static class FfmpegPipeline
 			return new SourceInputs(1, video, AudioMapFor(0, startSource), startSource, localStartFrame);
 
 		List<string> tailPaths = [.. segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath)];
-		var inputs = 1;
+		int inputs = 1;
 		if (withVideo)
 		{
-			var tailList = ConcatListWriter.Write(tailPaths);
+			string tailList = ConcatListWriter.Write(tailPaths);
 			tempFiles.Add(tailList);
 			AddHwDecode();
 			args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
@@ -376,7 +368,7 @@ public static class FfmpegPipeline
 		if (startSource.Audio.StreamId is not { } audioStreamId)
 			throw new InvalidOperationException("Can't locate the audio track's id in the source, needed to render a range spanning several files.");
 
-		var audioList = ConcatListWriter.WriteAudioOnly([segments[first].InputPath, .. tailPaths], audioStreamId, localStartSeconds);
+		string audioList = ConcatListWriter.WriteAudioOnly([segments[first].InputPath, .. tailPaths], audioStreamId, localStartSeconds);
 		tempFiles.Add(audioList);
 		args.AddRange(["-itsoffset", SourceProbe.ProbeConcatStartTime(audioList), "-f", "concat", "-safe", "0", "-i", audioList]);
 		return new SourceInputs(inputs + 1, video, $"{inputs}:a", startSource, localStartFrame);
@@ -392,18 +384,18 @@ public static class FfmpegPipeline
 	private static SourceInputs AddCutInputs(List<string> args, IReadOnlyList<VideoSegment> segments, RenderPlan plan,
 		RenderEncodeSettings encode, int num, int den, List<string> tempFiles, bool withVideo)
 	{
-		var hasAudio = segments[0].Source.Audio is not null;
+		bool hasAudio = segments[0].Source.Audio is not null;
 		var graph = new StringBuilder();
 		var joined = new StringBuilder();
-		var input = 0;
+		int input = 0;
 		SourceInfo? startSource = null;
 		long startLocalFrame = 0;
 
-		for (var p = 0; p < plan.Pieces.Count; p++)
+		for (int p = 0; p < plan.Pieces.Count; p++)
 		{
 			RenderPiece piece = plan.Pieces[p];
-			var (first, localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
-			var (last, _) = VideoSegments.Locate(segments, piece.SourceEndFrame - 1);
+			(int first, long localStartFrame) = VideoSegments.Locate(segments, piece.SourceStartFrame);
+			(int last, _) = VideoSegments.Locate(segments, piece.SourceEndFrame - 1);
 			if (p == 0)
 			{
 				startSource = segments[first].Source;
@@ -412,17 +404,17 @@ public static class FfmpegPipeline
 
 			if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
 			args.AddRange(["-ss", (localStartFrame * den / (double)num).ToString("R", CultureInfo.InvariantCulture), "-i", segments[first].InputPath]);
-			var head = input++;
-			var video = $"[{head}:v]";
-			var audio = $"[{head}:a]";
+			int head = input++;
+			string video = $"[{head}:v]";
+			string audio = $"[{head}:a]";
 
 			if (last > first)
 			{
-				var tailList = ConcatListWriter.Write(segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath));
+				string tailList = ConcatListWriter.Write(segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath));
 				tempFiles.Add(tailList);
 				if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
 				args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
-				var tail = input++;
+				int tail = input++;
 				video = $"[{head}:v][{tail}:v]concat=n=2:v=1:a=0,";
 				audio = $"[{head}:a][{tail}:a]concat=n=2:v=0:a=1,";
 			}
@@ -435,7 +427,7 @@ public static class FfmpegPipeline
 
 			if (!hasAudio) continue;
 
-			var pieceSeconds = (piece.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture);
+			string pieceSeconds = (piece.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture);
 			graph.Append($"{audio}atrim=end={pieceSeconds},asetpts=PTS-STARTPTS[p{p}a];");
 			joined.Append($"[p{p}a]");
 		}
@@ -456,7 +448,8 @@ public static class FfmpegPipeline
 
 	private static void DeleteTempFiles(List<string> paths)
 	{
-		foreach (var path in paths)
+		foreach (string path in paths)
+		{
 			try
 			{
 				File.Delete(path);
@@ -465,6 +458,7 @@ public static class FfmpegPipeline
 			{
 				// Best-effort: a stray temp file is harmless, not worth failing over.
 			}
+		}
 	}
 
 	/// <summary>Clears concat lists left in the temp folder by earlier runs that didn't exit cleanly - see ConcatListWriter.DeleteStale.</summary>
@@ -488,7 +482,7 @@ public static class FfmpegPipeline
 
 	private static (int num, int den) ParseFrameRate(string rFrameRate)
 	{
-		var parts = rFrameRate.Split('/');
+		string[] parts = rFrameRate.Split('/');
 		return (int.Parse(parts[0], CultureInfo.InvariantCulture), parts.Length > 1 ? int.Parse(parts[1], CultureInfo.InvariantCulture) : 1);
 	}
 

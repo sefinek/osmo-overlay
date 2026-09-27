@@ -268,13 +268,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnPropertyChanged(change);
 		if (change.Property == BoundsProperty || change.Property == MaximumProperty)
-		{
 			SetView(_zoom, ViewStart);
-		}
 		else if (change.Property == ValueProperty && !_scrubbing && _expanded)
 		{
 			// Playing past the view's edge pages along, keeping a little of what was just played in sight.
-			var x = X(Value);
+			double x = X(Value);
 			if (x > Bounds.Width - 12 || x < 0) SetView(_zoom, Value - ViewLength * 0.1);
 		}
 	}
@@ -287,8 +285,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private void RenderCompact(DrawingContext context)
 	{
-		var middle = Bounds.Height / 2;
-		var trackWidth = Math.Max(0, Bounds.Width - 2 * Inset);
+		double middle = Bounds.Height / 2;
+		double trackWidth = Math.Max(0, Bounds.Width - 2 * Inset);
 		var track = new Rect(Inset, middle - CompactTrackHeight / 2, trackWidth, CompactTrackHeight);
 		using DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
 
@@ -298,7 +296,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		foreach (TimeRange loss in _gpsLoss)
 		{
-			var (x1, x2) = Span(loss, 3);
+			(double x1, double x2) = Span(loss, 3);
 			context.DrawRectangle(GpsLossBrush, null, new Rect(x1, middle + CompactTrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
 		}
 
@@ -311,15 +309,15 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private void RenderExpanded(DrawingContext context)
 	{
-		var width = Bounds.Width;
+		double width = Bounds.Width;
 		using DrawingContext.PushedState clip = context.PushClip(new Rect(Bounds.Size));
 		using DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
 
-		var videoTop = RulerHeight + TrackGap;
-		var audioTop = videoTop + VideoTrackHeight + TrackGap;
-		var bottom = audioTop + AudioTrackHeight;
+		double videoTop = RulerHeight + TrackGap;
+		double audioTop = videoTop + VideoTrackHeight + TrackGap;
+		double bottom = audioTop + AudioTrackHeight;
 
-		var scaling = UiScale.DeviceScaling(TopLevel.GetTopLevel(this));
+		double scaling = UiScale.DeviceScaling(TopLevel.GetTopLevel(this));
 		(double, double, Size, double, int) key = (ViewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
 		if (_tracksLayer is null || _tracksLayerKey != key)
 		{
@@ -361,7 +359,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		foreach (TimeRange loss in _gpsLoss)
 		{
-			var (x1, x2) = Span(loss, 3);
+			(double x1, double x2) = Span(loss, 3);
 			context.FillRectangle(GpsLossBrush, new Rect(x1, RulerHeight - 3, x2 - x1, 3));
 		}
 
@@ -370,17 +368,17 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private void DrawRuler(DrawingContext context, double width)
 	{
-		var major = TickSteps.FirstOrDefault(step => step * PixelsPerSecond >= MinMajorTickPixels, TickSteps[^1]);
-		var minor = major / (major is 2 or 0.2 or 120 ? 4 : 5);
-		var ticksPerMajor = (int)Math.Round(major / minor);
-		var last = Math.Min(Duration, ViewStart + ViewLength);
+		double major = TickSteps.FirstOrDefault(step => step * PixelsPerSecond >= MinMajorTickPixels, TickSteps[^1]);
+		double minor = major / (major is 2 or 0.2 or 120 ? 4 : 5);
+		int ticksPerMajor = (int)Math.Round(major / minor);
+		double last = Math.Min(Duration, ViewStart + ViewLength);
 
 		// Counted in whole ticks, not summed in seconds - adding 0.02 hundreds of times drifts off the major ticks.
-		for (var tick = (long)Math.Floor(ViewStart / minor); tick * minor <= last + minor / 2; tick++)
+		for (long tick = (long)Math.Floor(ViewStart / minor); tick * minor <= last + minor / 2; tick++)
 		{
-			var t = tick * minor;
-			var x = Math.Round(X(t)) + 0.5;
-			var isMajor = tick % ticksPerMajor == 0;
+			double t = tick * minor;
+			double x = Math.Round(X(t)) + 0.5;
+			bool isMajor = tick % ticksPerMajor == 0;
 			context.DrawLine(isMajor ? TickPen : MinorTickPen, new Point(x, isMajor ? 9 : 17), new Point(x, RulerHeight - 3));
 			if (!isMajor) continue;
 
@@ -394,27 +392,27 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		if (step < 1) return TimeText.Format(seconds);
 
-		TimeSpan time = TimeSpan.FromSeconds(Math.Round(seconds));
+		var time = TimeSpan.FromSeconds(Math.Round(seconds));
 		return time.ToString(time.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss", CultureInfo.InvariantCulture);
 	}
 
 	/// <summary>Tiles on a grid fixed to the timeline (not the view), so they don't swim while scrolling; each shows the thumbnail of the second at its middle.</summary>
 	private void DrawFilmstrip(DrawingContext context, double top, double width)
 	{
-		var tileHeight = VideoTrackHeight - 4;
-		var tileWidth = Math.Round(tileHeight * _thumbnailAspect);
-		var viewLeft = ViewStart * PixelsPerSecond;
-		var firstTile = (int)Math.Floor(viewLeft / tileWidth);
-		var endX = Math.Min(width, X(Duration));
+		double tileHeight = VideoTrackHeight - 4;
+		double tileWidth = Math.Round(tileHeight * _thumbnailAspect);
+		double viewLeft = ViewStart * PixelsPerSecond;
+		int firstTile = (int)Math.Floor(viewLeft / tileWidth);
+		double endX = Math.Min(width, X(Duration));
 
 		using DrawingContext.PushedState clip = context.PushClip(new Rect(0, top, endX, VideoTrackHeight));
-		for (var tile = firstTile;; tile++)
+		for (int tile = firstTile;; tile++)
 		{
-			var x = tile * tileWidth - viewLeft;
+			double x = tile * tileWidth - viewLeft;
 			if (x >= endX) break;
 
 			var dest = new Rect(x + 1, top + 2, tileWidth - 2, tileHeight);
-			var slot = TileSlot(tile, tileWidth);
+			int slot = TileSlot(tile, tileWidth);
 			if ((Thumbnail(slot) ?? StandIn(slot, tileWidth)) is { } bitmap)
 				context.DrawImage(bitmap, new Rect(bitmap.Size), dest);
 			else
@@ -452,8 +450,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			PixelFormat.Bgra8888, AlphaFormat.Opaque);
 		using (ILockedFramebuffer buffer = bitmap.Lock())
 		{
-			var rowBytes = _thumbnails.Width * 4;
-			for (var y = 0; y < _thumbnails.Height; y++)
+			int rowBytes = _thumbnails.Width * 4;
+			for (int y = 0; y < _thumbnails.Height; y++)
 				Marshal.Copy(bgra, y * rowBytes, buffer.Address + y * buffer.RowBytes, rowBytes);
 		}
 
@@ -465,7 +463,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>Drops the least recently drawn quarter - the tiles of the layer being drawn were all used just now, so none of them.</summary>
 	private void EvictThumbnailBitmaps()
 	{
-		foreach ((var slot, CachedThumbnail cached) in _thumbnailBitmaps.OrderBy(p => p.Value.LastUse).Take(MaxThumbnailBitmaps / 4).ToList())
+		foreach ((int slot, CachedThumbnail cached) in _thumbnailBitmaps.OrderBy(p => p.Value.LastUse).Take(MaxThumbnailBitmaps / 4).ToList())
 		{
 			cached.Bitmap.Dispose();
 			_thumbnailBitmaps.Remove(slot);
@@ -481,33 +479,33 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		if (_waveform is not { } waveform) return;
 
-		var endX = Math.Min(width, X(Duration));
-		var pixelWidth = (int)Math.Ceiling(endX * scaling);
-		var pixelHeight = (int)Math.Round(AudioTrackHeight * scaling);
+		double endX = Math.Min(width, X(Duration));
+		int pixelWidth = (int)Math.Ceiling(endX * scaling);
+		int pixelHeight = (int)Math.Round(AudioTrackHeight * scaling);
 		if (pixelWidth <= 0 || pixelHeight <= 0) return;
 
-		var lanes = Math.Min(2, waveform.Channels);
-		var laneHeight = (double)pixelHeight / lanes;
+		int lanes = Math.Min(2, waveform.Channels);
+		double laneHeight = (double)pixelHeight / lanes;
 		if (_waveformPixels.Length != pixelWidth * pixelHeight) _waveformPixels = new int[pixelWidth * pixelHeight];
 		else Array.Clear(_waveformPixels);
-		var pixels = _waveformPixels;
+		int[] pixels = _waveformPixels;
 		Color color = WaveformBrush.Color;
-		var opacity = color.A / 255.0 * WaveformBrush.Opacity;
-		for (var px = 0; px < pixelWidth; px++)
+		double opacity = color.A / 255.0 * WaveformBrush.Opacity;
+		for (int px = 0; px < pixelWidth; px++)
 		{
-			var from = (int)(TimeAt(px / scaling) * AudioWaveform.BucketsPerSecond);
-			var to = Math.Max(from + 1, (int)(TimeAt((px + 1) / scaling) * AudioWaveform.BucketsPerSecond));
-			for (var lane = 0; lane < lanes; lane++)
+			int from = (int)(TimeAt(px / scaling) * AudioWaveform.BucketsPerSecond);
+			int to = Math.Max(from + 1, (int)(TimeAt((px + 1) / scaling) * AudioWaveform.BucketsPerSecond));
+			for (int lane = 0; lane < lanes; lane++)
 			{
-				var middle = laneHeight * (lane + 0.5);
-				var level = AudioWaveform.DisplayLevel(waveform.Peak(lane, from, to), waveform.LoudestPeak);
-				var half = Math.Max(0.5 * scaling, level * (laneHeight / 2 - scaling));
-				var firstRow = Math.Max(0, (int)Math.Floor(middle - half));
-				var lastRow = Math.Min(pixelHeight - 1, (int)Math.Ceiling(middle + half) - 1);
-				for (var y = firstRow; y <= lastRow; y++)
+				double middle = laneHeight * (lane + 0.5);
+				double level = AudioWaveform.DisplayLevel(waveform.Peak(lane, from, to), waveform.LoudestPeak);
+				double half = Math.Max(0.5 * scaling, level * (laneHeight / 2 - scaling));
+				int firstRow = Math.Max(0, (int)Math.Floor(middle - half));
+				int lastRow = Math.Min(pixelHeight - 1, (int)Math.Ceiling(middle + half) - 1);
+				for (int y = firstRow; y <= lastRow; y++)
 				{
 					// The end rows only partly covered, so the edge stays as smooth as the antialiased figures were.
-					var coverage = Math.Clamp(half - Math.Abs(y + 0.5 - middle) + 0.5, 0, 1);
+					double coverage = Math.Clamp(half - Math.Abs(y + 0.5 - middle) + 0.5, 0, 1);
 					pixels[y * pixelWidth + px] = Premultiplied(color, opacity * coverage);
 				}
 			}
@@ -518,14 +516,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			AlphaFormat.Premul);
 		using (ILockedFramebuffer buffer = _waveformBitmap.Lock())
 		{
-			for (var y = 0; y < pixelHeight; y++)
+			for (int y = 0; y < pixelHeight; y++)
 				Marshal.Copy(pixels, y * pixelWidth, buffer.Address + y * buffer.RowBytes, pixelWidth);
 		}
 
 		context.DrawImage(_waveformBitmap, new Rect(_waveformBitmap.Size), new Rect(0, top, pixelWidth / scaling, pixelHeight / scaling));
-		for (var lane = 0; lane < lanes; lane++)
+		for (int lane = 0; lane < lanes; lane++)
 		{
-			var middle = top + laneHeight * (lane + 0.5) / scaling;
+			double middle = top + laneHeight * (lane + 0.5) / scaling;
 			context.DrawLine(WaveformCenterPen, new Point(0, middle), new Point(endX, middle));
 		}
 	}
@@ -540,7 +538,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>The cut being resized is drawn where its edge is dragged to; the selected one gets a stronger border.</summary>
 	private void DrawCuts(DrawingContext context, double top, double bottom)
 	{
-		for (var i = 0; i < _cuts.Count; i++)
+		for (int i = 0; i < _cuts.Count; i++)
 		{
 			TimeRange cut = _drag is DragMode.CutStart or DragMode.CutEnd && i == _dragCut && _dragPreview is { } preview
 				? new TimeRange(Math.Min(preview.StartSeconds, preview.EndSeconds), Math.Max(preview.StartSeconds, preview.EndSeconds))
@@ -551,14 +549,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private void DrawCut(DrawingContext context, TimeRange cut, double top, double bottom, bool selected)
 	{
-		var (x1, x2) = Span(cut, 3);
+		(double x1, double x2) = Span(cut, 3);
 		var band = new Rect(x1, top, x2 - x1, bottom - top);
 		context.FillRectangle(CutFill, band);
 
 		using (context.PushClip(band))
 		{
 			// Diagonal stripes (the usual "removed" hatching), shifted by the animation offset.
-			for (var x = band.Left - band.Height - StripeSpacing + _stripeOffset; x < band.Right; x += StripeSpacing)
+			for (double x = band.Left - band.Height - StripeSpacing + _stripeOffset; x < band.Right; x += StripeSpacing)
 				context.DrawLine(CutStripe, new Point(x, band.Bottom), new Point(x + band.Height, band.Top));
 		}
 
@@ -567,11 +565,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private void DrawSelection(DrawingContext context, TimeRange selection, double top, double bottom)
 	{
-		var (x1, x2) = Span(selection, 2);
+		(double x1, double x2) = Span(selection, 2);
 		context.FillRectangle(SelectionFill, new Rect(x1, top, x2 - x1, bottom - top));
 
 		const double tick = 6;
-		foreach (var (x, direction) in new[] { (x1 + 1, 1.0), (x2 - 1, -1.0) })
+		foreach ((double x, double direction) in new[] { (x1 + 1, 1.0), (x2 - 1, -1.0) })
 		{
 			context.DrawLine(SelectionBracket, new Point(x, top), new Point(x, bottom));
 			context.DrawLine(SelectionBracket, new Point(x, top + 1), new Point(x + direction * tick, top + 1));
@@ -581,7 +579,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private void DrawPlayhead(DrawingContext context, double bottom)
 	{
-		var x = Math.Round(X(Value)) + 0.5;
+		double x = Math.Round(X(Value)) + 0.5;
 		if (x < -6 || x > Bounds.Width + 6) return;
 
 		context.DrawLine(PlayheadPen, new Point(x, 0), new Point(x, bottom));
@@ -612,7 +610,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>A range in pixels, at least minWidth wide so a one-frame cut still shows.</summary>
 	private (double X1, double X2) Span(TimeRange range, double minWidth)
 	{
-		var x1 = X(range.StartSeconds);
+		double x1 = X(range.StartSeconds);
 		return (x1, Math.Max(X(range.EndSeconds), x1 + minWidth));
 	}
 
@@ -635,10 +633,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		if (!_expanded || _thumbnails is null || PixelsPerSecond <= 0) return;
 
-		var tileWidth = Math.Round((VideoTrackHeight - 4) * _thumbnailAspect);
-		var viewLeft = ViewStart * PixelsPerSecond;
-		var firstTile = (int)Math.Floor(viewLeft / tileWidth);
-		var lastTile = (int)Math.Ceiling((viewLeft + Bounds.Width) / tileWidth);
+		double tileWidth = Math.Round((VideoTrackHeight - 4) * _thumbnailAspect);
+		double viewLeft = ViewStart * PixelsPerSecond;
+		int firstTile = (int)Math.Floor(viewLeft / tileWidth);
+		int lastTile = (int)Math.Ceiling((viewLeft + Bounds.Width) / tileWidth);
 		_thumbnails.Request(Enumerable.Range(firstTile, Math.Max(0, lastTile - firstTile + 1)).Select(t => TileSlot(t, tileWidth)));
 	}
 
@@ -679,14 +677,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		if (modifiers.HasFlag(KeyModifiers.Shift) || Math.Abs(delta.X) > Math.Abs(delta.Y))
 		{
-			var step = Math.Abs(delta.X) > Math.Abs(delta.Y) ? delta.X : delta.Y;
+			double step = Math.Abs(delta.X) > Math.Abs(delta.Y) ? delta.X : delta.Y;
 			SetView(_zoom, ViewStart - step * ViewLength * 0.1);
 		}
 		else
 		{
 			// Zooms around the time under the pointer, which stays where it is.
-			var anchor = TimeAt(x);
-			var zoom = Math.Clamp(_zoom * Math.Pow(WheelZoomStep, delta.Y), 1, MaxZoom);
+			double anchor = TimeAt(x);
+			double zoom = Math.Clamp(_zoom * Math.Pow(WheelZoomStep, delta.Y), 1, MaxZoom);
 			SetView(zoom, anchor - x / (FitPixelsPerSecond * zoom));
 		}
 
@@ -711,7 +709,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		PointerPoint point = e.GetCurrentPoint(this);
 		if (!point.Properties.IsLeftButtonPressed || Duration <= 0) return;
 
-		var x = point.Position.X;
+		double x = point.Position.X;
 		if (_expanded && e.ClickCount == 2 && point.Position.Y < RulerHeight)
 		{
 			SetView(1, 0);
@@ -744,8 +742,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	protected override void OnPointerMoved(PointerEventArgs e)
 	{
 		base.OnPointerMoved(e);
-		var x = e.GetPosition(this).X;
-		var time = Snap(ValueAt(x));
+		double x = e.GetPosition(this).X;
+		double time = Snap(ValueAt(x));
 		switch (_drag)
 		{
 			case DragMode.Scrub:
@@ -826,7 +824,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			if (Math.Abs(X(selection.EndSeconds) - x) <= EdgeGrabPixels) return (DragMode.SelectionEnd, -1);
 		}
 
-		for (var i = 0; i < _cuts.Count; i++)
+		for (int i = 0; i < _cuts.Count; i++)
 		{
 			if (Math.Abs(X(_cuts[i].StartSeconds) - x) <= EdgeGrabPixels) return (DragMode.CutStart, i);
 			if (Math.Abs(X(_cuts[i].EndSeconds) - x) <= EdgeGrabPixels) return (DragMode.CutEnd, i);
@@ -837,9 +835,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	private int? CutIndexAt(double seconds)
 	{
-		for (var i = 0; i < _cuts.Count; i++)
+		for (int i = 0; i < _cuts.Count; i++)
+		{
 			if (seconds >= _cuts[i].StartSeconds && seconds < _cuts[i].EndSeconds)
 				return i;
+		}
 
 		return null;
 	}
@@ -872,7 +872,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>The stripes' timer runs only while there is a cut to draw on a timeline in the window.</summary>
 	private void UpdateStripeAnimation()
 	{
-		var needed = _attached && _cuts.Count > 0;
+		bool needed = _attached && _cuts.Count > 0;
 		if (needed == _stripeTimer is not null) return;
 
 		if (needed)

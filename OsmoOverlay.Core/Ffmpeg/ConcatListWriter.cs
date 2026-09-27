@@ -22,7 +22,7 @@ internal static class ConcatListWriter
 
 	public static string Write(IEnumerable<string> paths)
 	{
-		var listPath = NewListPath();
+		string listPath = NewListPath();
 		File.WriteAllLines(listPath, paths.Select(p => $"file '{Escape(p)}'"));
 		return listPath;
 	}
@@ -41,9 +41,9 @@ internal static class ConcatListWriter
 	/// </summary>
 	public static string WriteAudioOnly(IReadOnlyList<string> paths, string audioStreamId, double firstInpointSeconds)
 	{
-		var listPath = NewListPath();
+		string listPath = NewListPath();
 		List<string> lines = ["ffconcat version 1.0", "stream", $"exact_stream_id {audioStreamId}"];
-		for (var i = 0; i < paths.Count; i++)
+		for (int i = 0; i < paths.Count; i++)
 		{
 			lines.Add($"file '{Escape(paths[i])}'");
 			if (i == 0) lines.Add($"inpoint {firstInpointSeconds.ToString("R", CultureInfo.InvariantCulture)}");
@@ -60,9 +60,10 @@ internal static class ConcatListWriter
 	/// </summary>
 	public static int DeleteStale(TimeSpan olderThan)
 	{
-		var deleted = 0;
+		int deleted = 0;
 		DateTime cutoff = DateTime.UtcNow - olderThan;
-		foreach (var path in Directory.EnumerateFiles(Path.GetTempPath(), FilePrefix + "*.txt"))
+		foreach (string path in Directory.EnumerateFiles(Path.GetTempPath(), FilePrefix + "*.txt"))
+		{
 			try
 			{
 				if (File.GetLastWriteTimeUtc(path) >= cutoff) continue;
@@ -73,6 +74,7 @@ internal static class ConcatListWriter
 			{
 				// Best-effort: another instance may be using it, or it's already gone.
 			}
+		}
 
 		return deleted;
 	}

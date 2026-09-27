@@ -71,7 +71,7 @@ public sealed class DjiMetaTelemetryParserTests
 			.Varint(9, 12345)
 			.Message(99, new Proto().String(1, "future firmware field"))
 			.Float(50, 1.5f);
-		var stream = new Proto().Varint(1, 1).Message(3, sample).Double(7, 2.5).ToArray();
+		byte[] stream = new Proto().Varint(1, 1).Message(3, sample).Double(7, 2.5).ToArray();
 
 		TelemetryExtractionResult result = DjiMetaTelemetryParser.Parse(stream, Fps);
 
@@ -82,7 +82,7 @@ public sealed class DjiMetaTelemetryParserTests
 	[TestMethod]
 	public void Parse_TruncatedLastSample_KeepsTheCompleteOnes()
 	{
-		var stream = DjmdSample.Stream(new DjmdSample(), new DjmdSample { Lat = 51 });
+		byte[] stream = DjmdSample.Stream(new DjmdSample(), new DjmdSample { Lat = 51 });
 
 		TelemetryExtractionResult result = DjiMetaTelemetryParser.Parse(stream.AsMemory(0, stream.Length - 5), Fps);
 

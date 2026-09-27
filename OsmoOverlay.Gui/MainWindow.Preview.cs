@@ -20,9 +20,9 @@ public partial class MainWindow
 
 		try
 		{
-			var scale = Math.Min(1.0, (double)_previewMaxWidth / summary.Video.Width);
-			var previewWidth = (int)(summary.Video.Width * scale) & ~1;
-			var previewHeight = (int)(summary.Video.Height * scale) & ~1;
+			double scale = Math.Min(1.0, (double)_previewMaxWidth / summary.Video.Width);
+			int previewWidth = (int)(summary.Video.Width * scale) & ~1;
+			int previewHeight = (int)(summary.Video.Height * scale) & ~1;
 
 			_previewFrameSize = new PixelSize(previewWidth, previewHeight);
 			ApplyPreviewLayout();
@@ -160,7 +160,7 @@ public partial class MainWindow
 	{
 		if (_summary is not { HasTelemetry: true } summary || _phase != UiPhase.SummaryReady) return;
 
-		var position = PreviewTimeline.Value;
+		double position = PreviewTimeline.Value;
 		await OpenPreviewAsync(summary);
 		if (PreviewTimeline.IsEnabled && position > 0) PreviewTimeline.Value = position;
 	}

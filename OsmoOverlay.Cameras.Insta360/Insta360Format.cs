@@ -52,7 +52,7 @@ public sealed class Insta360Format : ICameraFormat
 	/// </summary>
 	public TelemetryExtractionResult ExtractTelemetry(string path, SourceInfo source)
 	{
-		var name = Path.GetFileName(path);
+		string name = Path.GetFileName(path);
 		Insta360Trailer trailer = Insta360TrailerParser.Read(path) ?? throw new InvalidDataException($"{name} has no Insta360 telemetry.");
 		List<TelemetryFrame> frames = Insta360TrailerParser.ToFrames(trailer, source.DurationSeconds);
 		if (frames.Count == 0) throw new InvalidDataException($"{name}'s Insta360 telemetry has no per-frame timing.");

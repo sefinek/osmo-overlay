@@ -16,7 +16,7 @@ internal static class DependencyStatusRows
 		grid.RowDefinitions.Clear();
 		grid.Children.Clear();
 
-		for (var i = 0; i < tools.Count; i++)
+		for (int i = 0; i < tools.Count; i++)
 		{
 			grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 			AddCell(grid, new TextBlock { Text = tools[i].DisplayName }, i, 0);
@@ -31,7 +31,7 @@ internal static class DependencyStatusRows
 		grid.RowDefinitions.Clear();
 		grid.Children.Clear();
 
-		for (var i = 0; i < statuses.Count; i++)
+		for (int i = 0; i < statuses.Count; i++)
 		{
 			grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 			ToolVersionInfo status = statuses[i];
@@ -121,7 +121,7 @@ internal static class DependencyStatusRows
 	/// <summary>The preview has FFmpeg's DLLs loaded, and Windows won't let winget replace them - see DependencyInstaller.UpgradeNeedsRestart.</summary>
 	private static async Task UpdateAfterRestartAsync(Window owner, ToolVersionInfo status, Button button, Func<bool> isRendering)
 	{
-		var name = status.Tool.DisplayName;
+		string name = status.Tool.DisplayName;
 		if (isRendering())
 		{
 			await ConfirmDialog.ShowAsync(owner, $"Update {name}",
@@ -129,7 +129,7 @@ internal static class DependencyStatusRows
 			return;
 		}
 
-		var confirmed = await ConfirmDialog.AskAsync(owner, $"Update {name}",
+		bool confirmed = await ConfirmDialog.AskAsync(owner, $"Update {name}",
 			$"The preview keeps {name}'s libraries in use, so OsmoOverlay will close, update {name} to {status.LatestVersion} " +
 			"in a separate window and then start again.", "Close and update", DialogKind.Warning);
 		if (!confirmed) return;

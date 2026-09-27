@@ -29,19 +29,19 @@ public sealed class HorizonLeveling
 
 		// Prefix sums of down per frame, so every frame's window average is one subtraction.
 		var sums = new Direction[frames.Count + 1];
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
 			Direction d = camera.Gravity(frames[i]) ?? default;
 			Direction s = sums[i];
 			sums[i + 1] = new Direction(s.X + d.X, s.Y + d.Y, s.Z + d.Z);
 		}
 
-		var times = new double[frames.Count];
+		double[] times = new double[frames.Count];
 		var rotations = new Rotation[frames.Count];
 		int first = 0, last = 0;
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
-			var t = frames[i].SampleTimeSeconds;
+			double t = frames[i].SampleTimeSeconds;
 			while (frames[first].SampleTimeSeconds < t - WindowSeconds / 2) first++;
 			while (last + 1 < frames.Count && frames[last + 1].SampleTimeSeconds <= t + WindowSeconds / 2) last++;
 
@@ -56,7 +56,7 @@ public sealed class HorizonLeveling
 	/// <summary>The leveling for the frame nearest to a moment of the recording.</summary>
 	public Rotation At(double recordingSeconds)
 	{
-		var index = Array.BinarySearch(_times, recordingSeconds);
+		int index = Array.BinarySearch(_times, recordingSeconds);
 		if (index >= 0) return _rotations[index];
 
 		index = ~index;

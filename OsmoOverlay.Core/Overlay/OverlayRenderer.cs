@@ -268,8 +268,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		// A family that isn't installed on this machine resolves to _hudTypeface itself (see
 		// ResolveTypeface's fallback) - skip those entries so it isn't disposed twice.
 		foreach (SKTypeface typeface in _customTypefacesByFamily.Values)
+		{
 			if (!ReferenceEquals(typeface, _hudTypeface))
 				typeface.Dispose();
+		}
+
 		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
 		_routeIntroCard?.Dispose();
@@ -328,15 +331,15 @@ public sealed partial class OverlayRenderer : IDisposable
 	public void RenderInto(DerivedFrame frame, byte[] destination, int? outputWidth = null, int? outputHeight = null,
 		bool premultiplied = false)
 	{
-		var outW = outputWidth ?? _width;
-		var outH = outputHeight ?? _height;
+		int outW = outputWidth ?? _width;
+		int outH = outputHeight ?? _height;
 		var info = new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Premul);
 		if (destination.Length < info.BytesSize)
 			throw new ArgumentException($"Destination buffer is {destination.Length} bytes, {info.BytesSize} needed.", nameof(destination));
 
 		UpdateTrail(frame);
 
-		GCHandle pin = GCHandle.Alloc(destination, GCHandleType.Pinned);
+		var pin = GCHandle.Alloc(destination, GCHandleType.Pinned);
 		try
 		{
 			using var bitmap = new SKBitmap();
@@ -367,7 +370,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		UpdateTrail(frame);
 
-		GCHandle pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
+		var pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
 		try
 		{
 			using var bitmap = new SKBitmap();
@@ -385,13 +388,13 @@ public sealed partial class OverlayRenderer : IDisposable
 	{
 		canvas.Scale(outW / (float)_width, outH / (float)_height);
 
-		var sampleTime = frame.Raw.SampleTimeSeconds;
-		var introEnd = RouteIntro.DurationSeconds;
-		var isRouteIntroFrame = RouteIntro.Enabled && sampleTime < introEnd;
+		double sampleTime = frame.Raw.SampleTimeSeconds;
+		double introEnd = RouteIntro.DurationSeconds;
+		bool isRouteIntroFrame = RouteIntro.Enabled && sampleTime < introEnd;
 		// Non-null only inside the crossfade window right before introEnd: 0 at its start (intro still
 		// fully opaque) to 1 at introEnd (intro fully gone, widgets fully opaque takes over exactly as
 		// the plain isRouteIntroFrame branch below would from here on).
-		var transitionStart = RouteIntroTransitionStartSeconds;
+		double transitionStart = RouteIntroTransitionStartSeconds;
 		float? crossfadeT = isRouteIntroFrame && sampleTime >= transitionStart
 			? (float)((sampleTime - transitionStart) / (introEnd - transitionStart))
 			: null;
@@ -411,8 +414,8 @@ public sealed partial class OverlayRenderer : IDisposable
 			{
 				DrawRouteIntroCard(canvas, outW, outH, 1 - t);
 				// The widgets fade in as one flattened group, not each on its own.
-				var saveCount = canvas.SaveLayer(AlphaPaint(t));
-				var widgetsAttribution = DrawWidgets(canvas, frame);
+				int saveCount = canvas.SaveLayer(AlphaPaint(t));
+				string? widgetsAttribution = DrawWidgets(canvas, frame);
 				canvas.RestoreToCount(saveCount);
 				// The card's own attribution is about to disappear along with it - once the widgets
 				// underneath are visible at all, their attribution requirement (if any) is what matters
@@ -426,9 +429,7 @@ public sealed partial class OverlayRenderer : IDisposable
 			}
 		}
 		else
-		{
 			mapAttribution = DrawWidgets(canvas, frame);
-		}
 
 		// On the route-intro card, centering under the whole frame (the normal-frame default) lands the
 		// watermark under the map alone (which only occupies the card's left portion) rather than the
@@ -443,17 +444,14 @@ public sealed partial class OverlayRenderer : IDisposable
 			if (mapAttribution is not null)
 				DrawMapAttributionSlide(canvas, sampleTime, mapAttribution, watermarkAnchorX, watermarkAlign);
 		}
-		else if (mapAttribution is not null)
-		{
-			DrawMapAttributionOnly(canvas, mapAttribution, watermarkAnchorX, watermarkAlign);
-		}
+		else if (mapAttribution is not null) DrawMapAttributionOnly(canvas, mapAttribution, watermarkAnchorX, watermarkAlign);
 	}
 
 	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see DrawFrame's mapAttribution.</summary>
 	private string? DrawWidgets(SKCanvas canvas, DerivedFrame frame)
 	{
 		string? mapAttribution = null;
-		var sampleTime = frame.Raw.SampleTimeSeconds;
+		double sampleTime = frame.Raw.SampleTimeSeconds;
 
 		foreach (OverlayElement element in Layout)
 		{
@@ -462,7 +460,7 @@ public sealed partial class OverlayRenderer : IDisposable
 			ElementState state = ElementAnimation.At(element, sampleTime, OutputDurationSeconds);
 			if (state.Progress <= 0f) continue;
 
-			var saveCount = BeginElement(canvas, element, state);
+			int saveCount = BeginElement(canvas, element, state);
 			DrawElement(canvas, element, frame);
 			if (element is MapWidgetElement && MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
 			canvas.RestoreToCount(saveCount);
@@ -583,7 +581,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private void DrawOutlined(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color,
 		SKTextAlign align = SKTextAlign.Left, float opacity = 1f, SKColor? outlineColor = null, float outlineWidthScale = 1f)
 	{
-		var dropOffset = font.Size * 0.045f;
+		float dropOffset = font.Size * 0.045f;
 		_outlineShadowPaint.Color = new SKColor(0, 0, 0, (byte)(130 * opacity));
 		_outlineShadowPaint.MaskFilter = GetBlurMaskFilter(font.Size * 0.04f);
 		canvas.DrawText(text, x + dropOffset, y + dropOffset, align, font, _outlineShadowPaint);
@@ -660,12 +658,10 @@ public sealed partial class OverlayRenderer : IDisposable
 		public double Update(double seconds, double target, double timeConstantSeconds, double resetGapSeconds = 2.0)
 		{
 			if (_lastSeconds is not { } last || seconds <= last || seconds - last > resetGapSeconds)
-			{
 				Value = target;
-			}
 			else
 			{
-				var alpha = 1.0 - Math.Exp(-(seconds - last) / timeConstantSeconds);
+				double alpha = 1.0 - Math.Exp(-(seconds - last) / timeConstantSeconds);
 				Value += (target - Value) * alpha;
 			}
 

@@ -43,9 +43,11 @@ public static class DependencyInstaller
 		DependencyChecker.RefreshProcessPath();
 		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, $"{tool.DisplayName} installed");
 		if (!tool.Commands.All(DependencyChecker.IsCommandAvailable))
+		{
 			return new InstallResult(false,
 				$"The package manager reports {tool.DisplayName} as installed, but {string.Join("/", tool.Commands)} " +
 				"still can't be found on PATH. Restart the app, or add its folder to PATH manually");
+		}
 
 		// The package manager's build is too old (or a static one) for the preview's libraries.
 		return new InstallResult(false, $"{tool.DisplayName} is installed, but the preview can't use it: {LibavLoader.TryLoad()}. " +
@@ -88,7 +90,7 @@ public static class DependencyInstaller
 		if (!OperatingSystem.IsWindows()) return new InstallResult(false, "Upgrading after exit is only needed on Windows");
 		if (await Winget.FindInstalledPackageIdAsync(tool, ct) is not { } packageId) return NotFromWinget(tool);
 
-		var (found, version) = await ResolveWingetVersionAsync(tool, packageId, ct);
+		(bool found, string? version) = await ResolveWingetVersionAsync(tool, packageId, ct);
 		if (!found) return NoSupportedVersion(tool, packageId);
 
 		try
@@ -110,10 +112,10 @@ public static class DependencyInstaller
 
 	private static string BuildUpgradeAfterExitScript(ExternalTool tool, string packageId, string? version)
 	{
-		var (appPath, appArgs) = AppCommand.Current();
-		var wingetArgs = string.Join(' ', Winget.UpgradeArgs(packageId, version).Select(PowerShellLiteral));
-		var relaunch = $"Start-Process -FilePath {PowerShellLiteral(appPath)}" +
-		               (appArgs.Length == 0 ? "" : $" -ArgumentList {string.Join(',', appArgs.Select(PowerShellLiteral))}");
+		(string appPath, string[] appArgs) = AppCommand.Current();
+		string wingetArgs = string.Join(' ', Winget.UpgradeArgs(packageId, version).Select(PowerShellLiteral));
+		string relaunch = $"Start-Process -FilePath {PowerShellLiteral(appPath)}" +
+		                  (appArgs.Length == 0 ? "" : $" -ArgumentList {string.Join(',', appArgs.Select(PowerShellLiteral))}");
 
 		return string.Join('\n',
 			$"$Host.UI.RawUI.WindowTitle = {PowerShellLiteral($"Updating {tool.DisplayName}")}",
@@ -143,7 +145,7 @@ public static class DependencyInstaller
 	{
 		if (tool.SupportedMajorVersion is not { } major) return (true, null);
 
-		var version = DependencyVersionChecker.PickLatest(await Winget.GetAvailableVersionsAsync(packageId, ct), major);
+		string? version = DependencyVersionChecker.PickLatest(await Winget.GetAvailableVersionsAsync(packageId, ct), major);
 		return (version is not null, version);
 	}
 
@@ -172,7 +174,7 @@ public static class DependencyInstaller
 			if (!DependencyChecker.IsCommandAvailable("brew"))
 				return new InstallResult(false, "Homebrew is not installed. Install it from https://brew.sh, then retry");
 
-			var exitCode = await RunAsync(ProcessHelper.CreateHidden("brew", upgrade ? "upgrade" : "install", tool.BrewPackage),
+			int exitCode = await RunAsync(ProcessHelper.CreateHidden("brew", upgrade ? "upgrade" : "install", tool.BrewPackage),
 				onOutput, ct);
 			return exitCode == 0
 				? new InstallResult(true, $"brew {(upgrade ? "upgrade" : "install")} {tool.BrewPackage} finished")
@@ -186,10 +188,10 @@ public static class DependencyInstaller
 
 	private static async Task<InstallResult> InstallWithWingetAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
 	{
-		var (found, version) = await ResolveWingetVersionAsync(tool, tool.WingetId, ct);
+		(bool found, string? version) = await ResolveWingetVersionAsync(tool, tool.WingetId, ct);
 		if (!found) return NoSupportedVersion(tool, tool.WingetId);
 
-		var exitCode = await RunAsync(Winget.CreateStartInfo(false, Winget.InstallArgs(tool.WingetId, version)), onOutput, ct);
+		int exitCode = await RunAsync(Winget.CreateStartInfo(false, Winget.InstallArgs(tool.WingetId, version)), onOutput, ct);
 
 		// "Already installed" / "no upgrade available" still count here - InstallAsync then checks whether
 		// the tool is actually reachable, which is what matters.
@@ -202,11 +204,11 @@ public static class DependencyInstaller
 	{
 		if (await Winget.FindInstalledPackageIdAsync(tool, ct) is not { } packageId) return NotFromWinget(tool);
 
-		var (found, version) = await ResolveWingetVersionAsync(tool, packageId, ct);
+		(bool found, string? version) = await ResolveWingetVersionAsync(tool, packageId, ct);
 		if (!found) return NoSupportedVersion(tool, packageId);
 
 		onOutput($"Upgrading winget package {packageId}{(version is null ? "" : $" to {version}")}...");
-		var exitCode = await RunAsync(Winget.CreateStartInfo(false, Winget.UpgradeArgs(packageId, version)), onOutput, ct);
+		int exitCode = await RunAsync(Winget.CreateStartInfo(false, Winget.UpgradeArgs(packageId, version)), onOutput, ct);
 
 		return exitCode switch
 		{
@@ -225,19 +227,23 @@ public static class DependencyInstaller
 		CancellationToken ct)
 	{
 		if (FindLinuxPackageManager() is not { } manager)
+		{
 			return new InstallResult(false,
 				$"No supported package manager (apt, dnf, pacman) was found. Install {tool.DisplayName} manually");
+		}
 
 		List<string> steps = [];
 		if (manager.RefreshArgs is not null) steps.Add(string.Join(' ', [manager.Command, .. manager.RefreshArgs]));
 		steps.Add(string.Join(' ', [manager.Command, .. upgrade ? manager.UpgradeArgs : manager.InstallArgs, manager.Package(tool)]));
 
 		if (!DependencyChecker.IsCommandAvailable("pkexec"))
+		{
 			return new InstallResult(false,
 				$"Run this in a terminal: {string.Join(" && ", steps.Select(s => "sudo " + s))}");
+		}
 
-		var script = string.Join(" && ", steps.Select(s => manager.EnvPrefix + s));
-		var exitCode = await RunAsync(ProcessHelper.CreateHidden("pkexec", "sh", "-c", script), onOutput, ct);
+		string script = string.Join(" && ", steps.Select(s => manager.EnvPrefix + s));
+		int exitCode = await RunAsync(ProcessHelper.CreateHidden("pkexec", "sh", "-c", script), onOutput, ct);
 
 		// 126/127: pkexec's own "not authorized" / "dismissed", as opposed to the package manager failing.
 		return exitCode switch
@@ -291,7 +297,7 @@ public static class DependencyInstaller
 	/// <summary>Spinner frames ("-", "\", "|", "/") and download progress bars - winget redraws them with \r even when redirected.</summary>
 	private static bool IsProgressNoise(string line)
 	{
-		var trimmed = line.Trim();
+		string trimmed = line.Trim();
 		return trimmed.Length == 0 || trimmed is "-" or "\\" or "|" or "/" || trimmed.Contains('█') || trimmed.Contains('▒');
 	}
 

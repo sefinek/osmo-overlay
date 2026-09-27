@@ -26,16 +26,16 @@ internal static class FileSummaryCache
 	/// </summary>
 	public static (FileSummary? Summary, int? StaleFormatVersion) TryLoad(IReadOnlyList<string> inputPaths)
 	{
-		var cachePath = GetCachePath(inputPaths);
+		string cachePath = GetCachePath(inputPaths);
 		if (!File.Exists(cachePath)) return (null, null);
 
 		try
 		{
-			var entry = JsonSerializer.Deserialize<CacheEntry>(File.ReadAllText(cachePath));
+			CacheEntry? entry = JsonSerializer.Deserialize<CacheEntry>(File.ReadAllText(cachePath));
 			if (entry is null) return (null, null);
 			if (entry.Files.Count != inputPaths.Count) return (null, null);
 
-			for (var i = 0; i < inputPaths.Count; i++)
+			for (int i = 0; i < inputPaths.Count; i++)
 			{
 				var info = new FileInfo(inputPaths[i]);
 				if (entry.Files[i].FileSizeBytes != info.Length ||
@@ -65,8 +65,9 @@ internal static class FileSummaryCache
 		// The timeline's waveforms (WaveformCache) live alongside and go with the rest.
 		IEnumerable<string> files = Directory.GetFiles(CacheDir, "*.json").Concat(Directory.GetFiles(CacheDir, "*.tmp"))
 			.Concat(WaveformCache.Files(CacheDir));
-		var deleted = 0;
-		foreach (var file in files)
+		int deleted = 0;
+		foreach (string file in files)
+		{
 			try
 			{
 				File.Delete(file);
@@ -76,6 +77,7 @@ internal static class FileSummaryCache
 			{
 				// Best-effort: a file in use or otherwise undeletable is skipped, not fatal.
 			}
+		}
 
 		return deleted;
 	}
@@ -99,7 +101,7 @@ internal static class FileSummaryCache
 		try
 		{
 			Directory.CreateDirectory(CacheDir);
-			List<FileStamp> files = inputPaths.Select(path =>
+			var files = inputPaths.Select(path =>
 			{
 				var info = new FileInfo(path);
 				return new FileStamp(info.Length, info.LastWriteTimeUtc.Ticks);
@@ -110,7 +112,7 @@ internal static class FileSummaryCache
 			// verbatim would store every raw sample twice, roughly doubling the file for a telemetry-
 			// heavy recording. Strip it here and pair DerivedExtras back up with TelemetryFrames by
 			// index in Reinflate instead.
-			List<CachedDerivedFrame>? derivedExtras = summary.DerivedFrames?.Select(CachedDerivedFrame.From).ToList();
+			var derivedExtras = summary.DerivedFrames?.Select(CachedDerivedFrame.From).ToList();
 			var entry = new CacheEntry(FormatVersion, files, summary with { DerivedFrames = null }, derivedExtras);
 			AtomicFile.WriteAllText(GetCachePath(inputPaths), JsonSerializer.Serialize(entry));
 			return true;
@@ -125,8 +127,8 @@ internal static class FileSummaryCache
 
 	public static string GetCachePath(IReadOnlyList<string> inputPaths)
 	{
-		var joined = string.Join('|', inputPaths.Select(p => Path.GetFullPath(p).ToLowerInvariant()));
-		var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(joined)));
+		string joined = string.Join('|', inputPaths.Select(p => Path.GetFullPath(p).ToLowerInvariant()));
+		string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(joined)));
 		return Path.Combine(CacheDir, $"{hash}.json");
 	}
 
@@ -146,7 +148,7 @@ internal static class FileSummaryCache
 			throw new InvalidDataException("Cache entry's DerivedExtras count doesn't match TelemetryFrames.");
 
 		var derivedFrames = new List<DerivedFrame>(raw.Count);
-		for (var i = 0; i < raw.Count; i++)
+		for (int i = 0; i < raw.Count; i++)
 			derivedFrames.Add(entry.DerivedExtras[i].ToDerivedFrame(raw[i]));
 
 		return entry.Summary with { DerivedFrames = derivedFrames };

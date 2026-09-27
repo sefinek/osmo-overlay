@@ -16,7 +16,7 @@ public sealed class TimeTextTests
 	[DataRow("00:00", 0.0)]
 	public void TryParse_Accepts(string text, double expected)
 	{
-		Assert.IsTrue(TimeText.TryParse(text, out var seconds));
+		Assert.IsTrue(TimeText.TryParse(text, out double seconds));
 		Assert.AreEqual(expected, seconds, 1e-9);
 	}
 
@@ -49,9 +49,9 @@ public sealed class TimeTextTests
 	public void FormatThenParse_StaysWithinAMillisecond()
 	{
 		// The GUI writes a range into its fields with Format and reads it back with TryParse.
-		foreach (var seconds in new[] { 0.016683, 59.994, 196.9968, 4000.123456 })
+		foreach (double seconds in new[] { 0.016683, 59.994, 196.9968, 4000.123456 })
 		{
-			Assert.IsTrue(TimeText.TryParse(TimeText.Format(seconds), out var back));
+			Assert.IsTrue(TimeText.TryParse(TimeText.Format(seconds), out double back));
 			Assert.AreEqual(seconds, back, 0.0005);
 		}
 	}

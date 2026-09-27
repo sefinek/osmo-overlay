@@ -27,8 +27,8 @@ public static class GpsInterpolation
 		var result = new List<TelemetryFrame>(frames);
 		if (result.Count < 2) return result;
 
-		var anchorIndex = 0;
-		for (var i = 1; i < result.Count; i++)
+		int anchorIndex = 0;
+		for (int i = 1; i < result.Count; i++)
 		{
 			TelemetryFrame current = result[i];
 			TelemetryFrame previous = result[i - 1];
@@ -67,13 +67,13 @@ public static class GpsInterpolation
 		// jump - instead of being left untouched like every other never-had-a-fix-yet case.
 		if (IsNullIsland(start) || IsNullIsland(end)) return;
 
-		var span = end.SampleTimeSeconds - start.SampleTimeSeconds;
+		double span = end.SampleTimeSeconds - start.SampleTimeSeconds;
 		if (span <= 0 || span > MaxInterpolationGapSeconds) return;
 
-		for (var i = from + 1; i < to; i++)
+		for (int i = from + 1; i < to; i++)
 		{
 			TelemetryFrame frame = frames[i];
-			var t = (frame.SampleTimeSeconds - start.SampleTimeSeconds) / span;
+			double t = (frame.SampleTimeSeconds - start.SampleTimeSeconds) / span;
 			frames[i] = frame with
 			{
 				Latitude = Lerp(start.Latitude, end.Latitude, t),

@@ -12,8 +12,8 @@ public static class VideoSegments
 	public static IReadOnlyList<VideoSegment> ProbeAll(IReadOnlyList<string> inputPaths)
 	{
 		var segments = new List<VideoSegment>(inputPaths.Count);
-		var offset = 0.0;
-		foreach (var path in inputPaths)
+		double offset = 0.0;
+		foreach (string path in inputPaths)
 		{
 			SourceInfo source = SourceProbe.Probe(path);
 			segments.Add(new VideoSegment(path, source, offset));
@@ -43,9 +43,9 @@ public static class VideoSegments
 	/// <summary>Which segment frame `frame` of the combined timeline falls in, and its frame index within that segment.</summary>
 	public static (int Index, long LocalFrame) Locate(IReadOnlyList<VideoSegment> segments, long frame)
 	{
-		for (var i = 0; i < segments.Count; i++)
+		for (int i = 0; i < segments.Count; i++)
 		{
-			var count = segments[i].FrameCount();
+			long count = segments[i].FrameCount();
 			if (frame < count || i == segments.Count - 1) return (i, frame);
 			frame -= count;
 		}
@@ -68,14 +68,16 @@ public static class VideoSegments
 	public static string? FindMismatch(IReadOnlyList<VideoSegment> segments)
 	{
 		VideoSegment first = segments[0];
-		var firstName = Path.GetFileName(first.InputPath);
+		string firstName = Path.GetFileName(first.InputPath);
 
 		foreach (VideoSegment segment in segments.Skip(1))
 		{
-			var name = Path.GetFileName(segment.InputPath);
+			string name = Path.GetFileName(segment.InputPath);
 			if (segment.Source.Camera?.Format.Id != first.Source.Camera?.Format.Id)
+			{
 				return $"{name} is from {Describe(segment.Source)}, but {firstName} is from {Describe(first.Source)} - " +
 				       "all files must come from the same camera.";
+			}
 
 			if (segment.Source.Fisheye != first.Source.Fisheye)
 				return $"{name} and {firstName} weren't recorded with the same lens setup (360 or flat).";
@@ -83,9 +85,11 @@ public static class VideoSegments
 			VideoInfo a = first.Source.Video;
 			VideoInfo b = segment.Source.Video;
 			if (a.Width != b.Width || a.Height != b.Height || a.FrameRate != b.FrameRate || a.PixFmt != b.PixFmt)
+			{
 				return $"{name} ({b.Width}x{b.Height}, {b.FrameRate} fps, {b.PixFmt}) doesn't match " +
 				       $"{firstName} ({a.Width}x{a.Height}, {a.FrameRate} fps, {a.PixFmt}) - files must share " +
 				       "the same resolution, frame rate and pixel format to be joined.";
+			}
 		}
 
 		return null;

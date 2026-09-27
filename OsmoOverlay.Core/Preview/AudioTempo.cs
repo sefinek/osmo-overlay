@@ -33,7 +33,7 @@ public sealed unsafe class AudioTempo : IDisposable
 		{
 			AVFilterContext* source = null;
 			AVFilterContext* sink = null;
-			var layout = ChannelLayoutName(channels);
+			string layout = ChannelLayoutName(channels);
 			LibavStreamDecoder.Check(ffmpeg.avfilter_graph_create_filter(&source, ffmpeg.avfilter_get_by_name("abuffer"), "in",
 				$"time_base=1/{sampleRate}:sample_rate={sampleRate}:sample_fmt=flt:channel_layout={layout}", null, _graph), "set up the audio tempo");
 			LibavStreamDecoder.Check(ffmpeg.avfilter_graph_create_filter(&sink, ffmpeg.avfilter_get_by_name("abuffersink"), "out",
@@ -86,7 +86,7 @@ public sealed unsafe class AudioTempo : IDisposable
 	/// <summary>Feeds interleaved samples in and returns what the filter has ready (possibly nothing yet) - valid until the next call.</summary>
 	public ReadOnlySpan<float> Process(ReadOnlySpan<float> samples)
 	{
-		var sampleFrames = samples.Length / _channels;
+		int sampleFrames = samples.Length / _channels;
 		if (sampleFrames == 0) return [];
 
 		ffmpeg.av_frame_unref(_input);
@@ -100,10 +100,10 @@ public sealed unsafe class AudioTempo : IDisposable
 		_pts += sampleFrames;
 		LibavStreamDecoder.Check(ffmpeg.av_buffersrc_add_frame_flags(_source, _input, 0), "change the audio tempo");
 
-		var count = 0;
+		int count = 0;
 		while (ffmpeg.av_buffersink_get_frame(_sink, _output) >= 0)
 		{
-			var produced = _output->nb_samples * _channels;
+			int produced = _output->nb_samples * _channels;
 			if (_buffer.Length < count + produced) Array.Resize(ref _buffer, Math.Max(count + produced, _buffer.Length * 2));
 			new ReadOnlySpan<float>(_output->data[0], produced).CopyTo(_buffer.AsSpan(count));
 			count += produced;
@@ -118,7 +118,7 @@ public sealed unsafe class AudioTempo : IDisposable
 		AVChannelLayout layout;
 		ffmpeg.av_channel_layout_default(&layout, channels);
 		const int size = 64;
-		var name = stackalloc byte[size];
+		byte* name = stackalloc byte[size];
 		ffmpeg.av_channel_layout_describe(&layout, name, size);
 		ffmpeg.av_channel_layout_uninit(&layout);
 		return new string((sbyte*)name);

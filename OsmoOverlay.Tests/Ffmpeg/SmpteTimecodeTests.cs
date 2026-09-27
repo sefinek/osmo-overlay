@@ -60,7 +60,7 @@ public sealed class SmpteTimecodeTests
 		for (long a = 0; a < 20_000; a += 997)
 		for (long b = 0; b < 20_000; b += 1_499)
 		{
-			var twoSteps = SmpteTimecode.AddFrames(SmpteTimecode.AddFrames("09:58:31;17", a, Ntsc60)!, b, Ntsc60);
+			string? twoSteps = SmpteTimecode.AddFrames(SmpteTimecode.AddFrames("09:58:31;17", a, Ntsc60)!, b, Ntsc60);
 			Assert.AreEqual(SmpteTimecode.AddFrames("09:58:31;17", a + b, Ntsc60), twoSteps, $"a={a}, b={b}");
 		}
 	}

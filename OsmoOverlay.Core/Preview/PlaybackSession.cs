@@ -116,8 +116,8 @@ internal sealed class PlaybackSession
 	public void Start()
 	{
 		_audioOutput?.Stop();
-		Task decoder = Task.Run(DecodeAsync);
-		Task composer = Task.Run(ComposeAsync);
+		var decoder = Task.Run(DecodeAsync);
+		var composer = Task.Run(ComposeAsync);
 		Task feeder = _clock.FollowsAudio ? Task.Run(FeedAudioAsync) : Task.CompletedTask;
 		_workers = Task.WhenAll(decoder, composer, feeder);
 	}
@@ -161,10 +161,10 @@ internal sealed class PlaybackSession
 			_started = true;
 		}
 
-		var rate = Rate;
-		var now = _clock.Now;
-		var dueBy = now + _displayInterval / 2 * rate;
-		var maxLate = MaxLateIntervals * Math.Max(_displayInterval * rate, _step / _video.Fps);
+		double rate = Rate;
+		double now = _clock.Now;
+		double dueBy = now + _displayInterval / 2 * rate;
+		double maxLate = MaxLateIntervals * Math.Max(_displayInterval * rate, _step / _video.Fps);
 		PlaybackFrame? shown = null;
 		while (reader.TryPeek(out next))
 		{
@@ -193,7 +193,7 @@ internal sealed class PlaybackSession
 
 		if (shown is not { } due) return null;
 
-		var late = (now - due.PlayTime) / rate;
+		double late = (now - due.PlayTime) / rate;
 		_lateTotal += late;
 		_lateMax = Math.Max(_lateMax, late);
 		if (_shownFrames++ == 0) _firstShown = Stopwatch.GetTimestamp();
@@ -205,7 +205,7 @@ internal sealed class PlaybackSession
 	/// <summary>One line for the log about how the playback went - what to look at when it didn't look smooth.</summary>
 	public string Summary()
 	{
-		var seconds = _shownFrames > 0 ? Stopwatch.GetElapsedTime(_firstShown).TotalSeconds : 0;
+		double seconds = _shownFrames > 0 ? Stopwatch.GetElapsedTime(_firstShown).TotalSeconds : 0;
 		return $"Preview playback at {Rate:0.##}x: {_shownFrames} frames shown in {seconds:0.0} s ({_shownFrames / Math.Max(seconds, 1e-9):0.0} a second), " +
 		       $"skipped at the display {_skippedAtDisplay}, dropped late {Volatile.Read(ref _droppedLate)}, " +
 		       $"decoded past to catch up {Volatile.Read(ref _decodedPast)}, shown late by {_lateTotal / Math.Max(_shownFrames, 1) * 1000:0.0} ms " +
@@ -214,10 +214,10 @@ internal sealed class PlaybackSession
 
 	private void MeasureDisplayInterval()
 	{
-		var now = Stopwatch.GetTimestamp();
+		long now = Stopwatch.GetTimestamp();
 		if (_lastTake != 0)
 		{
-			var interval = Stopwatch.GetElapsedTime(_lastTake, now).TotalSeconds;
+			double interval = Stopwatch.GetElapsedTime(_lastTake, now).TotalSeconds;
 			// A window that stopped rendering for a while (minimized) says nothing about the refresh rate.
 			if (interval is > 0.002 and < 0.05) _displayInterval += (interval - _displayInterval) * 0.1;
 		}
@@ -270,12 +270,12 @@ internal sealed class PlaybackSession
 	{
 		if (audioPosition is not { } now) return 0;
 
-		var late = now - convertPlayTime;
-		var lateSeconds = late / rate;
+		double late = now - convertPlayTime;
+		double lateSeconds = late / rate;
 		if (lateSeconds <= ConvertLateSeconds) return 0;
 
-		var needed = Math.Ceiling((late + CatchUpLeadSeconds * rate) * fps);
-		var perRead = Math.Min(step * Math.Ceiling(lateSeconds / LateFrameSeconds), Math.Ceiling(fps * 2));
+		double needed = Math.Ceiling((late + CatchUpLeadSeconds * rate) * fps);
+		double perRead = Math.Min(step * Math.Ceiling(lateSeconds / LateFrameSeconds), Math.Ceiling(fps * 2));
 		return (int)Math.Min(needed, perRead);
 	}
 
@@ -284,8 +284,8 @@ internal sealed class PlaybackSession
 	{
 		ChannelWriter<DecodedFrame> writer = _decoded.Writer;
 		CancellationToken ct = _stop.Token;
-		var fps = _video.Fps;
-		TimeSpan halfFrame = TimeSpan.FromSeconds(0.5 / fps);
+		double fps = _video.Fps;
+		var halfFrame = TimeSpan.FromSeconds(0.5 / fps);
 		// Where each stretch starts on the play timeline - the stretches back to back, the way the sound is pushed.
 		double playOffset = 0;
 		try
@@ -293,17 +293,17 @@ internal sealed class PlaybackSession
 			foreach (PlaybackStretch stretch in _plan.Stretches())
 			{
 				LibavVideoSource.PlaybackStream stream = _video.OpenPlaybackStream(stretch.Start, ct);
-				var playStart = playOffset;
+				double playStart = playOffset;
 				playOffset += stretch.Seconds;
-				var startsStretch = true;
+				bool startsStretch = true;
 				while (!ct.IsCancellationRequested)
 				{
-					var step = _step;
+					int step = _step;
 					// The first frame of a stretch is where the sound resumes too - only later ones can fall behind it.
 					if (!startsStretch)
 					{
-						var convertPlayTime = playStart + (stream.NextPosition - stretch.Start).TotalSeconds + (step - 1) / fps;
-						var skip = CatchUpFrames(_clock.AudioPosition, convertPlayTime, fps, Rate, step);
+						double convertPlayTime = playStart + (stream.NextPosition - stretch.Start).TotalSeconds + (step - 1) / fps;
+						int skip = CatchUpFrames(_clock.AudioPosition, convertPlayTime, fps, Rate, step);
 						if (skip > 0)
 						{
 							if (!stream.Skip(skip)) break;
@@ -324,7 +324,7 @@ internal sealed class PlaybackSession
 						break;
 					}
 
-					var playTime = playStart + (stream.Position - stretch.Start).TotalSeconds;
+					double playTime = playStart + (stream.Position - stretch.Start).TotalSeconds;
 					await WriteOrRecycleAsync(writer, new DecodedFrame(frame, stream.Position, playTime, startsStretch), frame.Bgra, ct);
 					startsStretch = false;
 				}
@@ -405,7 +405,7 @@ internal sealed class PlaybackSession
 		LibavAudioSource source = _audioSource!;
 		AudioOutput output = _audioOutput!;
 		IEnumerable<PlaybackStretch> stretches = _plan.Stretches();
-		var rate = Rate;
+		double rate = Rate;
 		try
 		{
 			while (true)
@@ -439,10 +439,7 @@ internal sealed class PlaybackSession
 				finally
 				{
 					// Before it's disposed - SetRate must not cancel a source that's gone.
-					lock (_audioRestartLock)
-					{
-						_audioStretchCts = null;
-					}
+					lock (_audioRestartLock) _audioStretchCts = null;
 				}
 			}
 		}

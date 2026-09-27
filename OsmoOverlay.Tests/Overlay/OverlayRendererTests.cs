@@ -14,10 +14,10 @@ public sealed class OverlayRendererTests
 	{
 		List<DerivedFrame> frames = [];
 		double distance = 0;
-		for (var i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 		{
-			var east = eastOffset + 200 * Math.Sin(i * 0.02);
-			var north = i * 1.5;
+			double east = eastOffset + 200 * Math.Sin(i * 0.02);
+			double north = i * 1.5;
 			if (i > 0) distance += 3;
 			var raw = new TelemetryFrame(i, i / 30.0, 50 + north / 111320.0, 20 + east / 71560.0, 200 + i * 0.1, null, 0, 0, 1);
 			frames.Add(new DerivedFrame(raw, 20 + i % 30, i % 360, 2, distance, 0, 0, new SunPosition(120, 30), east, north, 1, 0, 0));
@@ -28,7 +28,7 @@ public sealed class OverlayRendererTests
 
 	private static byte[] Render(OverlayRenderer renderer, IReadOnlyList<DerivedFrame> frames)
 	{
-		var buffer = new byte[renderer.FrameBufferSize()];
+		byte[] buffer = new byte[renderer.FrameBufferSize()];
 		// Sequentially up to the frame compared, so the trail builds the way it does in playback.
 		foreach (DerivedFrame frame in frames.Take(150)) renderer.RenderInto(frame, buffer, premultiplied: true);
 		return buffer;
@@ -84,7 +84,7 @@ public sealed class OverlayRendererTests
 	public void EveryWidgetType_DrawsSomething()
 	{
 		List<DerivedFrame> frames = Route(300, 0);
-		var imagePath = Path.Combine(Path.GetTempPath(), $"osmooverlay-test-{Guid.NewGuid():N}.png");
+		string imagePath = Path.Combine(Path.GetTempPath(), $"osmooverlay-test-{Guid.NewGuid():N}.png");
 		using (var bitmap = new SKBitmap(40, 20))
 		{
 			bitmap.Erase(SKColors.Red);
@@ -120,8 +120,8 @@ public sealed class OverlayRendererTests
 		using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters,
 			[new ProfileChartElement { X = 20, Y = 40 }], frames, TelemetryProcessor.Summarize(frames).MaxSpeedKmh, false);
 
-		var early = new byte[renderer.FrameBufferSize()];
-		var late = new byte[renderer.FrameBufferSize()];
+		byte[] early = new byte[renderer.FrameBufferSize()];
+		byte[] late = new byte[renderer.FrameBufferSize()];
 		renderer.RenderInto(frames[10], early, premultiplied: true);
 		renderer.RenderInto(frames[250], late, premultiplied: true);
 

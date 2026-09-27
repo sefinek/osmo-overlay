@@ -15,18 +15,18 @@ public static partial class ExifToolRunner
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden(ExifToolExe, "-Model", "-Make", "-Category", "-j", inputPath);
 
-		var (exitCode, stdout, _) = ProcessHelper.RunCaptured(psi);
+		(int exitCode, string stdout, _) = ProcessHelper.RunCaptured(psi);
 		if (exitCode != 0) return null;
 
 		JsonArray? array = JsonNode.Parse(stdout)?.AsArray();
 		if (array is not { Count: > 0 }) return null;
 
 		JsonObject obj = array[0]!.AsObject();
-		var model = obj["Model"]?.GetValue<string>();
+		string? model = obj["Model"]?.GetValue<string>();
 		if (!string.IsNullOrWhiteSpace(model)) return model;
 
-		var make = obj["Make"]?.GetValue<string>();
-		var category = obj["Category"]?.GetValue<string>();
+		string? make = obj["Make"]?.GetValue<string>();
+		string? category = obj["Category"]?.GetValue<string>();
 		Match code = category is not null ? ModelNameInCategoryRegex().Match(category) : Match.Empty;
 
 		return (make, code.Success) switch

@@ -13,7 +13,7 @@ public sealed class WaveformCacheTests
 	{
 		_directory = Path.Combine(Path.GetTempPath(), $"osmooverlay-waveform-{Guid.NewGuid():N}");
 		Directory.CreateDirectory(_directory);
-		var video = Path.Combine(_directory, "clip.mp4");
+		string video = Path.Combine(_directory, "clip.mp4");
 		File.WriteAllBytes(video, [1, 2, 3]);
 		_segments = [new PlaybackSegment(video, 3)];
 	}
@@ -34,8 +34,8 @@ public sealed class WaveformCacheTests
 
 		Assert.IsNotNull(loaded);
 		Assert.AreEqual(1f, loaded.Value.Loudest);
-		for (var c = 0; c < peaks.Length; c++)
-		for (var i = 0; i < peaks[c].Length; i++)
+		for (int c = 0; c < peaks.Length; c++)
+		for (int i = 0; i < peaks[c].Length; i++)
 			Assert.AreEqual(peaks[c][i], loaded.Value.Peaks[c][i], 1e-4, $"channel {c}, bucket {i}");
 	}
 
@@ -52,8 +52,8 @@ public sealed class WaveformCacheTests
 	public void AHeaderClaimingMoreThanTheFileHolds_IsAMiss()
 	{
 		WaveformCache.Save(_segments, [[0.5f, 0.25f]], 0.5f, _directory);
-		var path = Directory.GetFiles(_directory, "*.waveform").Single();
-		var bytes = File.ReadAllBytes(path);
+		string path = Directory.GetFiles(_directory, "*.waveform").Single();
+		byte[] bytes = File.ReadAllBytes(path);
 		// Buckets sit right before Loudest and the peaks: 2 buckets of 1 channel, 4 + 4 + 2 * 2 bytes from the end.
 		BitConverter.GetBytes(int.MaxValue).CopyTo(bytes, bytes.Length - 12);
 		File.WriteAllBytes(path, bytes);

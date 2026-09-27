@@ -12,7 +12,7 @@ internal static class AtomicFile
 {
 	public static void WriteAllText(string path, string contents)
 	{
-		var tempPath = TempPathFor(path);
+		string tempPath = TempPathFor(path);
 		try
 		{
 			File.WriteAllText(tempPath, contents);
@@ -27,7 +27,7 @@ internal static class AtomicFile
 
 	public static async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken ct)
 	{
-		var tempPath = TempPathFor(path);
+		string tempPath = TempPathFor(path);
 		try
 		{
 			await File.WriteAllBytesAsync(tempPath, bytes, ct);

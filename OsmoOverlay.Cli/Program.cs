@@ -29,15 +29,15 @@ if (args[0] == "--install-dependencies")
 	return await InstallDependenciesAsync(args[1..]);
 
 var inputPaths = new List<string>();
-var outputPath = "";
+string outputPath = "";
 int? frameLimit = null;
 double? rangeStart = null;
 double? rangeEnd = null;
 List<TimeRange> cutOuts = [];
 ReframeView? view = null;
-var level = true;
+bool level = true;
 
-var i = 0;
+int i = 0;
 while (i < args.Length && !options.Contains(args[i]) && !flags.Contains(args[i]))
 	inputPaths.Add(args[i++]);
 
@@ -63,24 +63,24 @@ for (; i < args.Length; i++)
 		return 1;
 	}
 
-	var option = args[i];
-	var value = args[++i];
+	string option = args[i];
+	string value = args[++i];
 	switch (option)
 	{
 		case "-o":
 			outputPath = value;
 			break;
-		case "--frames" when int.TryParse(value, out var parsedFrameLimit) && parsedFrameLimit > 0:
+		case "--frames" when int.TryParse(value, out int parsedFrameLimit) && parsedFrameLimit > 0:
 			frameLimit = parsedFrameLimit;
 			break;
-		case "--from" when TimeText.TryParse(value, out var from):
+		case "--from" when TimeText.TryParse(value, out double from):
 			rangeStart = from;
 			break;
-		case "--to" when TimeText.TryParse(value, out var to):
+		case "--to" when TimeText.TryParse(value, out double to):
 			rangeEnd = to;
 			break;
 		case "--cut" when value.Split('-') is [var cutFrom, var cutTo] &&
-		                  TimeText.TryParse(cutFrom, out var cutStart) && TimeText.TryParse(cutTo, out var cutEnd) && cutEnd > cutStart:
+		                  TimeText.TryParse(cutFrom, out double cutStart) && TimeText.TryParse(cutTo, out double cutEnd) && cutEnd > cutStart:
 			cutOuts.Add(new TimeRange(cutStart, cutEnd));
 			break;
 		case "--view" when ReframeView.TryParse(value, out ReframeView parsedView):
@@ -100,7 +100,7 @@ var progress = new Progress<RenderStatus>(status =>
 	if (status is { Phase: RenderPhase.Rendering, TotalFrames: > 0 } &&
 	    (status.Message.StartsWith("Frame") || status.Message.StartsWith("Fetching map tiles:")))
 	{
-		var pct = 100.0 * status.CurrentFrame / status.TotalFrames;
+		double pct = 100.0 * status.CurrentFrame / status.TotalFrames;
 		Console.Write($"\r  {status.Message} ({pct:0.0}%) - {status.Elapsed:hh\\:mm\\:ss}   ");
 	}
 	else
@@ -131,7 +131,7 @@ if (!result.Success)
 	return 1;
 }
 
-var doneMessage = $"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:ss})";
+string doneMessage = $"Done: {outputPath} (render time: {result.Elapsed:hh\\:mm\\:ss})";
 Console.WriteLine(doneMessage);
 AppLogger.Info(doneMessage);
 return 0;
@@ -156,7 +156,7 @@ static async Task<int> InstallDependenciesAsync(string[] names)
 		return 0;
 	}
 
-	var failed = false;
+	bool failed = false;
 	foreach (ExternalTool tool in missing)
 	{
 		Console.WriteLine($"Installing {tool.DisplayName}...");

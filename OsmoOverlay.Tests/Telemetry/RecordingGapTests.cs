@@ -17,10 +17,10 @@ public sealed class RecordingGapTests
 	private static List<TelemetryFrame> Joined(bool markGap)
 	{
 		List<TelemetryFrame> frames = [];
-		for (var i = 0; i < 200; i++)
+		for (int i = 0; i < 200; i++)
 		{
-			var t = i / Hz;
-			var north = i < 100 ? 10 * t : 1000 + 10 * (t - 10);
+			double t = i / Hz;
+			double north = i < 100 ? 10 * t : 1000 + 10 * (t - 10);
 			frames.Add(new TelemetryFrame(i, t, 50 + north / MetersPerDegreeLat, 20, 200, null, 0, 0, 1,
 				StartsAfterGap: markGap && i == 100));
 		}
@@ -64,9 +64,11 @@ public sealed class RecordingGapTests
 	{
 		List<TelemetryFrame> frames = Joined(true);
 		// A GPS that reports twice a second: every other sample repeats the last fix, as the camera's does.
-		for (var i = 1; i < frames.Count; i += 2)
+		for (int i = 1; i < frames.Count; i += 2)
+		{
 			if (!frames[i].StartsAfterGap)
 				frames[i] = frames[i] with { Latitude = frames[i - 1].Latitude };
+		}
 
 		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, null, true);
 
@@ -81,7 +83,7 @@ public sealed class RecordingGapTests
 		[
 			.. Enumerable.Range(0, 30).Select(i =>
 			{
-				var t = i / Hz;
+				double t = i / Hz;
 				DateTime clock = start.AddSeconds(t);
 				return new TelemetryFrame(i, t, 50, 20, 200, clock.AddTicks(-(clock.Ticks % TimeSpan.TicksPerSecond)), 0, 0, 1);
 			})

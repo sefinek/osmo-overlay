@@ -110,7 +110,7 @@ public static class OverlayElementBounds
 				? ["Helvetica Neue", "Arial"]
 				: ["Noto Sans", "DejaVu Sans", "Liberation Sans", "Arial"];
 
-		foreach (var family in candidates)
+		foreach (string family in candidates)
 		{
 			SKTypeface? typeface = SKFontManager.Default.MatchFamily(family, style);
 			if (typeface is not null && typeface.FamilyName.Equals(family, StringComparison.OrdinalIgnoreCase))
@@ -207,7 +207,7 @@ public static class OverlayElementBounds
 
 	private static string SampleDateTimeText(string? format, string? locale)
 	{
-		OverlayTimeFormatting.TryFormat(SampleDateTime, format, locale, out var text);
+		OverlayTimeFormatting.TryFormat(SampleDateTime, format, locale, out string text);
 		return text;
 	}
 
@@ -251,22 +251,22 @@ public static class OverlayElementBounds
 	/// </summary>
 	private static SKRect MeasureLine(string text, float fontSize, string? family)
 	{
-		var (ascent, descent, width) = LineExtent(text, fontSize, family);
-		var pad = fontSize * 0.09f;
+		(float ascent, float descent, float width) = LineExtent(text, fontSize, family);
+		float pad = fontSize * 0.09f;
 		return new SKRect(-pad, ascent - pad, width + pad, descent + pad);
 	}
 
 	/// <summary>Mirrors DrawStat's layout: an uppercased label at y=0, then VALUE + " " + UNIT at y=StatValueBaselineY.</summary>
 	private static SKRect MeasureStat(string label, string value, string unit, string? family)
 	{
-		var (labelAscent, labelDescent, labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
-		var (valueAscent, valueDescent, valueWidth) = LineExtent(value, ValueFontSize, family);
-		var (_, unitDescent, unitWidth) = LineExtent(unit, UnitFontSize, family);
-		var pad = ValueFontSize * 0.09f;
+		(float labelAscent, float labelDescent, float labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
+		(float valueAscent, float valueDescent, float valueWidth) = LineExtent(value, ValueFontSize, family);
+		(_, float unitDescent, float unitWidth) = LineExtent(unit, UnitFontSize, family);
+		float pad = ValueFontSize * 0.09f;
 
-		var top = Math.Min(labelAscent, StatValueBaselineY + valueAscent) - pad;
-		var bottom = Math.Max(labelDescent, Math.Max(StatValueBaselineY + valueDescent, StatValueBaselineY + unitDescent)) + pad;
-		var right = Math.Max(labelWidth, valueWidth + StatUnitGapX + unitWidth) + pad;
+		float top = Math.Min(labelAscent, StatValueBaselineY + valueAscent) - pad;
+		float bottom = Math.Max(labelDescent, Math.Max(StatValueBaselineY + valueDescent, StatValueBaselineY + unitDescent)) + pad;
+		float right = Math.Max(labelWidth, valueWidth + StatUnitGapX + unitWidth) + pad;
 		return new SKRect(-pad, top, right, bottom);
 	}
 
@@ -274,19 +274,19 @@ public static class OverlayElementBounds
 	private static SKRect MeasureText(string text, string? family)
 	{
 		SKFont font = GetFont(family, DateFontSize);
-		var lines = TextLines(text);
-		var width = lines.Max(line => font.MeasureText(line));
+		string[] lines = TextLines(text);
+		float width = lines.Max(line => font.MeasureText(line));
 		font.GetFontMetrics(out SKFontMetrics metrics);
-		var pad = DateFontSize * 0.09f;
+		float pad = DateFontSize * 0.09f;
 		return new SKRect(-pad, metrics.Ascent - pad, width + pad, (lines.Length - 1) * font.Spacing + metrics.Descent + pad);
 	}
 
 	/// <summary>Mirrors DrawProfileChart: label and value on the y=0 line, the panel from ChartTop down.</summary>
 	private static SKRect MeasureChart(string label, string? family)
 	{
-		var (labelAscent, _, labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
-		var (valueAscent, _, _) = LineExtent(SampleChartValue, SmallFontSize, family);
-		var pad = SmallFontSize * 0.09f;
+		(float labelAscent, _, float labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
+		(float valueAscent, _, _) = LineExtent(SampleChartValue, SmallFontSize, family);
+		float pad = SmallFontSize * 0.09f;
 		return new SKRect(-pad, Math.Min(labelAscent, valueAscent) - pad, Math.Max(ChartWidth, labelWidth) + pad, ChartTop + ChartHeight + pad);
 	}
 
@@ -315,9 +315,8 @@ public static class OverlayElementBounds
 		}
 
 		lock (ImageSizesLock)
-		{
-			if (ImageSizes.TryGetValue(path, out (DateTime Modified, SKSizeI? Size) cached) && cached.Modified == modified) return cached.Size;
-		}
+			if (ImageSizes.TryGetValue(path, out (DateTime Modified, SKSizeI? Size) cached) && cached.Modified == modified)
+				return cached.Size;
 
 		SKSizeI? size = null;
 		try
@@ -343,17 +342,17 @@ public static class OverlayElementBounds
 	/// <summary>Mirrors DrawCameraInfo's layout: an uppercased label at y=0, then three lines at CameraInfoLineBaselineYs.</summary>
 	private static SKRect MeasureCameraInfo(string label, string? family)
 	{
-		var (labelAscent, labelDescent, labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
-		var pad = SmallFontSize * 0.09f;
+		(float labelAscent, float labelDescent, float labelWidth) = LineExtent(label.ToUpperInvariant(), LabelFontSize, family);
+		float pad = SmallFontSize * 0.09f;
 
-		var top = labelAscent - pad;
-		var bottom = labelDescent;
-		var right = labelWidth;
+		float top = labelAscent - pad;
+		float bottom = labelDescent;
+		float right = labelWidth;
 
 		string[] lines = [SampleIsoText, SampleShutterText, SampleColorTempText];
-		for (var i = 0; i < lines.Length; i++)
+		for (int i = 0; i < lines.Length; i++)
 		{
-			var (_, descent, width) = LineExtent(lines[i], SmallFontSize, family);
+			(_, float descent, float width) = LineExtent(lines[i], SmallFontSize, family);
 			bottom = Math.Max(bottom, CameraInfoLineBaselineYs[i] + descent);
 			right = Math.Max(right, width);
 		}

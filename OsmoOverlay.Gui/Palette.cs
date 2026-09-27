@@ -26,7 +26,7 @@ internal static class Palette
 
 	private static IBrush Brush(string key)
 	{
-		return Application.Current is { } app && app.TryGetResource(key, app.ActualThemeVariant, out var value) && value is IBrush brush
+		return Application.Current is { } app && app.TryGetResource(key, app.ActualThemeVariant, out object? value) && value is IBrush brush
 			? brush
 			: throw new InvalidOperationException($"Brush resource '{key}' is missing from App.axaml.");
 	}

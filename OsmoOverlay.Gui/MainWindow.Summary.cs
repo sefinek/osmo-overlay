@@ -31,7 +31,7 @@ public partial class MainWindow
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);
-		foreach (var path in inputPaths)
+		foreach (string path in inputPaths)
 			AppendLog($"Input: {path}");
 
 		// Cache events arrive on the worker thread, mid-Read - posted through the same UI context the
@@ -40,7 +40,7 @@ public partial class MainWindow
 
 		try
 		{
-			(FileSummary? read, var problem) = await Task.Run(() => FileSummaryReader.Read(inputPaths,
+			(FileSummary? read, string? problem) = await Task.Run(() => FileSummaryReader.Read(inputPaths,
 				cacheEvent => ui?.Post(_ => LogCacheEvent(cacheEvent), null)));
 			if (read is not { } summary)
 			{
@@ -58,8 +58,11 @@ public partial class MainWindow
 				$"Color: {summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / " +
 				$"{summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})");
 			if (summary.Fisheye is { } lenses)
+			{
 				AppendLog($"360 recording: two {lenses.LensSize}x{lenses.LensSize} fisheye lenses, framed into a flat " +
 				          $"{summary.Video.Width}x{summary.Video.Height} picture - pick the view with the globe above the preview");
+			}
+
 			AppendLog($"Duration: {TimeSpan.FromSeconds(summary.DurationSeconds):hh\\:mm\\:ss}, size: {FormatHelper.FormatBytes(summary.FileSizeBytes)}");
 			AppendLog(summary.Audio is { } audio
 				? $"Audio: {audio.CodecName}, {audio.SampleRate} Hz, {audio.Channels}ch"
@@ -67,17 +70,21 @@ public partial class MainWindow
 
 			AppendLog($"Camera model: {summary.CameraModel ?? "unknown"}");
 			if (summary.Telemetry is not null)
+			{
 				AppendLog($"Telemetry detected ({summary.CameraFormat?.DisplayName ?? "unknown camera"}) - " +
 				          $"{summary.TelemetryFrames?.Count ?? 0} raw samples, {summary.DerivedFrames?.Count ?? 0} derived frames");
+			}
 			else
+			{
 				AppendLog("No telemetry found - this file cannot be rendered. Add the camera's original recording " +
 				          $"({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}), not a file exported from another app", LogLevel.Error);
+			}
 
 			if (summary.TelemetryFrames is { Count: > 0 } rawFrames)
 			{
 				_availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, summary.CameraFormat);
 
-				var withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
+				int withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
 				AppendLog(withGpsSpeed > 0
 					? $"GPS-measured speed: {withGpsSpeed}/{rawFrames.Count} frames (the GPS receiver's own velocity); " +
 					  $"{rawFrames.Count - withGpsSpeed} fall back to derived speed"
@@ -96,25 +103,31 @@ public partial class MainWindow
 				{
 					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
 					if (gpsLossRanges.Count > 0)
+					{
 						AppendLog($"GPS signal lost: {gpsLossRanges.Count} range(s), {gpsLossRanges.Sum(r => r.End - r.Start):0.0}s total " +
 						          "(shown as amber marks under the preview timeline)", LogLevel.Warn);
+					}
 					else
 						AppendLog("GPS signal: no loss detected");
 				}
 
 				if (!_availability.GpsTimestamp)
+				{
 					AppendLog(_availability.ContainerTime
 						? "GPS timestamp: not present in this recording - Date & time / UTC time fall back to the " +
 						  "file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)"
 						: "GPS timestamp: not present in this recording, and no usable recording-start time either - " +
 						  "Date & time / UTC time are unavailable and greyed out", LogLevel.Warn);
+				}
 
 				if (summary.CameraFormat is { } camera)
 				{
 					AppendLog(camera.DescribeTelemetry(rawFrames));
 					if (!_availability.CameraAxes)
+					{
 						AppendLog("Roll, pitch and G-meter widgets aren't available for this camera - its accelerometer's axes aren't " +
 						          "known against the picture", LogLevel.Warn);
+					}
 				}
 			}
 
@@ -130,7 +143,7 @@ public partial class MainWindow
 			}
 
 			AppendLog("Checking NVENC availability...");
-			var encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(summary.Video));
+			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(summary.Video));
 			AppendLog($"Using encoder: {encoder}" + (FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (NVENC unavailable - CPU)"));
 
 			_summary = summary;
@@ -166,7 +179,7 @@ public partial class MainWindow
 	{
 		if (summary.CameraFormat?.SupportNotice is not { } notice) return;
 
-		var key = string.Join('|', inputPaths);
+		string key = string.Join('|', inputPaths);
 		if (key == _supportNoticeShownFor) return;
 		_supportNoticeShownFor = key;
 
@@ -178,7 +191,7 @@ public partial class MainWindow
 	{
 		InfoCamera.Text = summary.CameraModel ?? "Unknown";
 
-		RecommendedSettings? recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
+		var recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
 
 		bool? Check(Func<RecommendedSettings, bool> predicate)
 		{
@@ -205,10 +218,10 @@ public partial class MainWindow
 		SetCheck(InfoPixFmtCheck, Check(_ => summary.Video.PixFmt.Contains("10le", StringComparison.OrdinalIgnoreCase)),
 			"10-bit (yuv420p10le)");
 
-		var primaries = summary.Video.ColorPrimaries ?? "?";
-		var transfer = summary.Video.ColorTransfer ?? "?";
-		var colorSpace = summary.Video.ColorSpace ?? "?";
-		var range = summary.Video.ColorRange ?? "?";
+		string primaries = summary.Video.ColorPrimaries ?? "?";
+		string transfer = summary.Video.ColorTransfer ?? "?";
+		string colorSpace = summary.Video.ColorSpace ?? "?";
+		string range = summary.Video.ColorRange ?? "?";
 		InfoColor.Text = primaries == transfer && transfer == colorSpace
 			? $"{primaries} ({range})"
 			: $"{primaries} / {transfer} / {colorSpace} ({range})";
@@ -239,7 +252,7 @@ public partial class MainWindow
 		// fix (accelerometer/camera-settings data only) - a
 		// distinct amber "No GPS fix" state instead of lumping it in with the green case, so it isn't
 		// mistaken for a recording with real position data.
-		var hasGpsFix = summary.TelemetryFrames is { Count: > 0 } telemetryFrames && TelemetryProcessor.HasAnyGpsFix(telemetryFrames);
+		bool hasGpsFix = summary.TelemetryFrames is { Count: > 0 } telemetryFrames && TelemetryProcessor.HasAnyGpsFix(telemetryFrames);
 		IBrush telemetryBrush = !summary.HasTelemetry ? Palette.Danger : hasGpsFix ? Palette.Success : Palette.Warning;
 		InfoTelemetry.Text = !summary.HasTelemetry ? "Not found" : hasGpsFix ? "Detected" : "No GPS fix";
 		InfoTelemetry.Foreground = telemetryBrush;
@@ -287,7 +300,7 @@ public partial class MainWindow
 		// A flat "0.00 km" / "0 - 0 m" here reads the same whether the recording genuinely never
 		// moved/climbed or - as for a file with no GPS fix at all - the position data needed to
 		// compute them simply doesn't exist. Same tooltip signal as InfoTelemetry's "No GPS fix" pill.
-		var noGpsFixTip = _availability.GpsFix ? null : "No GPS fix in this recording - this reads 0, not a real measurement.";
+		string? noGpsFixTip = _availability.GpsFix ? null : "No GPS fix in this recording - this reads 0, not a real measurement.";
 		ToolTip.SetTip(TeleDistance, noGpsFixTip);
 		ToolTip.SetTip(TeleMaxSpeed, noGpsFixTip);
 		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
@@ -321,8 +334,8 @@ public partial class MainWindow
 
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
 	{
-		var fps = summary.Video.Fps;
-		var totalFrames = PlannedFrameCount();
+		double fps = summary.Video.Fps;
+		long totalFrames = PlannedFrameCount();
 
 		OutEncoder.Text = encoder + (FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (CPU)");
 		// Same condition FfmpegPipeline uses: pieces joined by the concat filter can't have their audio stream-copied.
@@ -335,7 +348,7 @@ public partial class MainWindow
 		// meaningful way to predict it before the first one, so say so instead of guessing.
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		OutPlanText.Text = DescribeEncodePlan(settings, encoder);
-		var key = RenderSpeedHistory.Key(summary.Video.Width, summary.Video.Height, fps, encoder, settings.NvencPreset);
+		string key = RenderSpeedHistory.Key(summary.Video.Width, summary.Video.Height, fps, encoder, settings.NvencPreset);
 		if (RenderSpeedHistory.TryGet(key) is { } renderFps)
 		{
 			OutEstimatedTime.Text = $"~{TimeSpan.FromSeconds(totalFrames / renderFps):hh\\:mm\\:ss}";
@@ -396,10 +409,10 @@ public partial class MainWindow
 		SetMatchCheck(OutPixFmtCheck,
 			output.Video.PixFmt.Equals(inputSummary.Video.PixFmt, StringComparison.OrdinalIgnoreCase));
 
-		var primaries = output.Video.ColorPrimaries ?? "?";
-		var transfer = output.Video.ColorTransfer ?? "?";
-		var colorSpace = output.Video.ColorSpace ?? "?";
-		var range = output.Video.ColorRange ?? "?";
+		string primaries = output.Video.ColorPrimaries ?? "?";
+		string transfer = output.Video.ColorTransfer ?? "?";
+		string colorSpace = output.Video.ColorSpace ?? "?";
+		string range = output.Video.ColorRange ?? "?";
 		OutColor.Text = primaries == transfer && transfer == colorSpace
 			? $"{primaries} ({range})"
 			: $"{primaries} / {transfer} / {colorSpace} ({range})";
@@ -411,7 +424,7 @@ public partial class MainWindow
 
 		OutBitrate.Text = $"{output.Video.BitRate / 1_000_000.0:0.#} Mbps";
 		// The encoder's rate lands near the source's, not exactly on it - "matches" means close.
-		var bitrateRatio = (double)output.Video.BitRate / inputSummary.Video.BitRate;
+		double bitrateRatio = (double)output.Video.BitRate / inputSummary.Video.BitRate;
 		SetMatchCheck(OutBitrateCheck, bitrateRatio is >= 0.7 and <= 1.5);
 
 		OutMeasuredDuration.Text = TimeSpan.FromSeconds(output.DurationSeconds).ToString(@"hh\:mm\:ss");
@@ -461,7 +474,7 @@ public partial class MainWindow
 		if (settings.PreserveCameraMetadata && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack || settings.MetadataKeepThumbnails))
 			extras.Add(settings.MetadataKeepSerialNumber ? "camera metadata kept, incl. serial number" : "camera metadata kept");
 		if (settings.FastStart) extras.Add("fast start");
-		var suffix = extras.Count > 0 ? $" ({string.Join(", ", extras)})" : "";
+		string suffix = extras.Count > 0 ? $" ({string.Join(", ", extras)})" : "";
 
 		return deviations.Count == 0
 			? $"Encoding matches the source 1:1 - resolution, frame rate, codec/profile/level, bitrate, keyframes and color tags{suffix}."

@@ -15,9 +15,11 @@ internal sealed class FrameBufferPool(int maxRetained)
 	public byte[] Rent(int size)
 	{
 		// A buffer of another size is left over from a previous preview resolution - drop it.
-		while (_free.TryDequeue(out var buffer))
+		while (_free.TryDequeue(out byte[]? buffer))
+		{
 			if (buffer.Length == size)
 				return buffer;
+		}
 
 		return new byte[size];
 	}

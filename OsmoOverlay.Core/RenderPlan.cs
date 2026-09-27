@@ -30,15 +30,17 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 			return Math.Clamp((long)Math.Round(seconds * fps), 0, sourceFrames);
 		}
 
-		var start = startSeconds is { } s ? ToFrame(s) : 0;
-		var end = endSeconds is { } e ? ToFrame(e) : sourceFrames;
+		long start = startSeconds is { } s ? ToFrame(s) : 0;
+		long end = endSeconds is { } e ? ToFrame(e) : sourceFrames;
 		if (end <= start)
+		{
 			throw new InvalidOperationException(
 				$"The render range is empty ({TimeText.Format(start / fps)} - {TimeText.Format(end / fps)}) - the end must come after the start.");
+		}
 
 		List<RenderPiece> pieces = [];
-		var cursor = start;
-		foreach (var (cutStart, cutEnd) in (cutOuts ?? [])
+		long cursor = start;
+		foreach ((long cutStart, long cutEnd) in (cutOuts ?? [])
 		         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds)))
 		         .Where(c => c.End > c.Start)
 		         .OrderBy(c => c.Start))
@@ -54,7 +56,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 
 		if (frameLimit is > 0 and var limit) pieces = CapFrames(pieces, limit);
 
-		var whole = pieces is [{ SourceStartFrame: 0 } only] && only.FrameCount == sourceFrames;
+		bool whole = pieces is [{ SourceStartFrame: 0 } only] && only.FrameCount == sourceFrames;
 		return new RenderPlan(pieces, !whole);
 	}
 

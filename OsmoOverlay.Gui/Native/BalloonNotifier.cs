@@ -28,7 +28,7 @@ internal static class BalloonNotifier
 
 		try
 		{
-			var hwnd = window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+			IntPtr hwnd = window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
 			if (hwnd == IntPtr.Zero) return;
 
 			var data = new NotifyIconData

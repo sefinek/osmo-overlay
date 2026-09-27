@@ -27,9 +27,9 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		TimeSpan position = TimeSpan.FromSeconds(PreviewTimeline.Value);
-		var source = _summary.InputPaths[0];
-		var suggestedName = $"{Path.GetFileNameWithoutExtension(source)}_{TimeText.Format(position.TotalSeconds).Replace(':', '-')}.png";
+		var position = TimeSpan.FromSeconds(PreviewTimeline.Value);
+		string source = _summary.InputPaths[0];
+		string suggestedName = $"{Path.GetFileNameWithoutExtension(source)}_{TimeText.Format(position.TotalSeconds).Replace(':', '-')}.png";
 
 		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
@@ -44,7 +44,7 @@ public partial class MainWindow
 		try
 		{
 			SnapshotButton.IsEnabled = false;
-			var png = await _previewPlayer.RenderSnapshotPngAsync(position);
+			byte[] png = await _previewPlayer.RenderSnapshotPngAsync(position);
 			await using Stream stream = await file.OpenWriteAsync();
 			await stream.WriteAsync(png);
 			AppendLog($"Frame saved: {file.Path.LocalPath} ({_summary.Video.Width}x{_summary.Video.Height})");

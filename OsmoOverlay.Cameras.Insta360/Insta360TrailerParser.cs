@@ -60,10 +60,10 @@ internal static class Insta360TrailerParser
 
 	public static Insta360Trailer? Read(Stream stream)
 	{
-		var fileLength = stream.Length;
+		long fileLength = stream.Length;
 		if (fileLength < FooterSize) return null;
 
-		var footer = new byte[FooterSize];
+		byte[] footer = new byte[FooterSize];
 		stream.Position = fileLength - FooterSize;
 		stream.ReadExactly(footer);
 		if (!footer.AsSpan(FooterSize - Magic.Length).SequenceEqual(Magic)) return null;
@@ -71,12 +71,13 @@ internal static class Insta360TrailerParser
 		long trailerLength = BinaryPrimitives.ReadUInt32LittleEndian(footer.AsSpan(38));
 		if (trailerLength < FooterSize || trailerLength > fileLength)
 			throw new InvalidDataException($"Insta360 trailer length {trailerLength} doesn't fit the file ({fileLength} bytes).");
-		var trailerStart = fileLength - trailerLength;
+		long trailerStart = fileLength - trailerLength;
 
 		string? model = null;
 		List<Insta360ImuSample> imu = [];
 		List<Insta360Exposure> exposures = [];
-		foreach (var (id, dataStart, length) in Records(stream, footer, trailerStart, fileLength - FooterSize))
+		foreach ((ushort id, long dataStart, int length) in Records(stream, footer, trailerStart, fileLength - FooterSize))
+		{
 			switch (id)
 			{
 				case InfoRecord:
@@ -89,6 +90,7 @@ internal static class Insta360TrailerParser
 					ReadExposures(ReadData(stream, dataStart, length), exposures);
 					break;
 			}
+		}
 
 		imu.Sort((a, b) => a.TimeMicros.CompareTo(b.TimeMicros));
 		exposures.Sort((a, b) => a.TimeMicros.CompareTo(b.TimeMicros));
@@ -98,21 +100,21 @@ internal static class Insta360TrailerParser
 	/// <summary>Every record's id and where its data is - through the directory table when the trailer ends with one.</summary>
 	private static IEnumerable<(ushort Id, long DataStart, int Length)> Records(Stream stream, byte[] footer, long trailerStart, long lastRecordEnd)
 	{
-		var id = BinaryPrimitives.ReadUInt16LittleEndian(footer);
-		var length = BinaryPrimitives.ReadUInt32LittleEndian(footer.AsSpan(2));
+		ushort id = BinaryPrimitives.ReadUInt16LittleEndian(footer);
+		uint length = BinaryPrimitives.ReadUInt32LittleEndian(footer.AsSpan(2));
 		if (length > lastRecordEnd - trailerStart) throw new InvalidDataException("Insta360 trailer record runs past the trailer's start.");
 
 		if (id == DirectoryRecord && length > 0)
 		{
-			var table = ReadData(stream, lastRecordEnd - length, (int)length);
-			var header = new byte[RecordFooterSize];
-			for (var p = 0; p + 10 <= table.Length; p += 10)
+			byte[] table = ReadData(stream, lastRecordEnd - length, (int)length);
+			byte[] header = new byte[RecordFooterSize];
+			for (int p = 0; p + 10 <= table.Length; p += 10)
 			{
-				var size = BinaryPrimitives.ReadUInt32LittleEndian(table.AsSpan(p + 2));
-				var offset = BinaryPrimitives.ReadUInt32LittleEndian(table.AsSpan(p + 6));
+				uint size = BinaryPrimitives.ReadUInt32LittleEndian(table.AsSpan(p + 2));
+				uint offset = BinaryPrimitives.ReadUInt32LittleEndian(table.AsSpan(p + 6));
 				if (BinaryPrimitives.ReadUInt16LittleEndian(table.AsSpan(p)) == 0 || size == 0) continue;
 
-				var dataStart = trailerStart + offset;
+				long dataStart = trailerStart + offset;
 				if (dataStart + size + RecordFooterSize > lastRecordEnd) continue;
 
 				// The table's own ids don't always match the records' (0x3 for 0x300) - the footer after the data says.
@@ -125,11 +127,11 @@ internal static class Insta360TrailerParser
 		}
 
 		// Older cameras: records back to back, walked from the last one to the first.
-		var end = lastRecordEnd;
-		var previous = new byte[RecordFooterSize];
+		long end = lastRecordEnd;
+		byte[] previous = new byte[RecordFooterSize];
 		while (true)
 		{
-			var dataStart = end - length;
+			long dataStart = end - length;
 			if (dataStart < trailerStart) yield break;
 
 			yield return (id, dataStart, (int)length);
@@ -147,7 +149,7 @@ internal static class Insta360TrailerParser
 
 	private static byte[] ReadData(Stream stream, long start, int length)
 	{
-		var data = new byte[length];
+		byte[] data = new byte[length];
 		stream.Position = start;
 		stream.ReadExactly(data);
 		return data;
@@ -155,10 +157,10 @@ internal static class Insta360TrailerParser
 
 	private static string? ReadModel(byte[] info)
 	{
-		for (var p = 0; p + 2 <= info.Length;)
+		for (int p = 0; p + 2 <= info.Length;)
 		{
-			var tag = info[p];
-			var length = info[p + 1];
+			byte tag = info[p];
+			byte length = info[p + 1];
 			if (p + 2 + length > info.Length) break;
 			if (tag == ModelTag) return Encoding.UTF8.GetString(info, p + 2, length).Trim('\0', ' ');
 			p += 2 + length;
@@ -169,11 +171,11 @@ internal static class Insta360TrailerParser
 
 	private static void ReadImu(byte[] data, List<Insta360ImuSample> samples)
 	{
-		var entry = ImuEntrySize(data);
-		for (var p = 0; p + entry <= data.Length; p += entry)
+		int entry = ImuEntrySize(data);
+		for (int p = 0; p + entry <= data.Length; p += entry)
 		{
 			ReadOnlySpan<byte> e = data.AsSpan(p, entry);
-			var time = BinaryPrimitives.ReadInt64LittleEndian(e);
+			long time = BinaryPrimitives.ReadInt64LittleEndian(e);
 			samples.Add(entry == 56
 				? new Insta360ImuSample(time, BinaryPrimitives.ReadDoubleLittleEndian(e[8..]), BinaryPrimitives.ReadDoubleLittleEndian(e[16..]),
 					BinaryPrimitives.ReadDoubleLittleEndian(e[24..]))
@@ -196,9 +198,11 @@ internal static class Insta360TrailerParser
 
 	private static void ReadExposures(byte[] data, List<Insta360Exposure> exposures)
 	{
-		for (var p = 0; p + 16 <= data.Length; p += 16)
+		for (int p = 0; p + 16 <= data.Length; p += 16)
+		{
 			exposures.Add(new Insta360Exposure(BinaryPrimitives.ReadInt64LittleEndian(data.AsSpan(p)),
 				BinaryPrimitives.ReadDoubleLittleEndian(data.AsSpan(p + 8))));
+		}
 	}
 
 	/// <summary>
@@ -214,19 +218,19 @@ internal static class Insta360TrailerParser
 		List<TelemetryFrame> frames = [];
 		if (exposures.Count == 0) return frames;
 
-		var origin = exposures[0].TimeMicros;
-		var frameMicros = exposures.Count > 1 ? (exposures[^1].TimeMicros - origin) / (double)(exposures.Count - 1) : 1e6 / 60;
-		var halfFrameSeconds = frameMicros / 2e6;
-		var imu = 0;
-		for (var i = 0; i < exposures.Count; i++)
+		long origin = exposures[0].TimeMicros;
+		double frameMicros = exposures.Count > 1 ? (exposures[^1].TimeMicros - origin) / (double)(exposures.Count - 1) : 1e6 / 60;
+		double halfFrameSeconds = frameMicros / 2e6;
+		int imu = 0;
+		for (int i = 0; i < exposures.Count; i++)
 		{
-			var start = exposures[i].TimeMicros;
-			var end = i + 1 < exposures.Count ? exposures[i + 1].TimeMicros : start + (long)frameMicros;
+			long start = exposures[i].TimeMicros;
+			long end = i + 1 < exposures.Count ? exposures[i + 1].TimeMicros : start + (long)frameMicros;
 			while (imu < trailer.Imu.Count && trailer.Imu[imu].TimeMicros < start) imu++;
 
 			double x = 0, y = 0, z = 0;
-			var count = 0;
-			for (var k = imu; k < trailer.Imu.Count && trailer.Imu[k].TimeMicros < end; k++, count++)
+			int count = 0;
+			for (int k = imu; k < trailer.Imu.Count && trailer.Imu[k].TimeMicros < end; k++, count++)
 			{
 				x += trailer.Imu[k].AccelX;
 				y += trailer.Imu[k].AccelY;
@@ -240,7 +244,7 @@ internal static class Insta360TrailerParser
 				(x, y, z, count) = (nearest.AccelX, nearest.AccelY, nearest.AccelZ, 1);
 			}
 
-			var time = (start - origin) / 1e6;
+			double time = (start - origin) / 1e6;
 			if (durationSeconds is { } duration && time > duration + halfFrameSeconds) break;
 
 			frames.Add(new TelemetryFrame(frames.Count, time, 0, 0, 0, null,

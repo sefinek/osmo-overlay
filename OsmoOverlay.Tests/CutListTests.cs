@@ -84,7 +84,7 @@ public sealed class CutListTests
 		const long total = 11955;
 		FrameRange[] cuts = [R(0, 3596), R(5000, 5001), R(11000, total)];
 
-		RenderPlan plan = RenderPlan.Resolve(null, null, CutList.ToTimeRanges(cuts, fps), null, fps, total);
+		var plan = RenderPlan.Resolve(null, null, CutList.ToTimeRanges(cuts, fps), null, fps, total);
 
 		CollectionAssert.AreEqual(new[] { new RenderPiece(3596, 5000 - 3596), new RenderPiece(5001, 11000 - 5001) },
 			plan.Pieces.ToArray());

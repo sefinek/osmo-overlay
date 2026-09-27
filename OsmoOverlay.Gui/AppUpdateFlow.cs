@@ -39,7 +39,7 @@ internal static class AppUpdateFlow
 		try
 		{
 			onStatus($"Downloading OsmoOverlay {release.Version}...");
-			var installer = await AppUpdates.DownloadInstallerAsync(release.Installer!, new Progress<double>(onDownload), CancellationToken.None);
+			string installer = await AppUpdates.DownloadInstallerAsync(release.Installer!, new Progress<double>(onDownload), CancellationToken.None);
 			onStatus("Starting the installer...");
 			AppUpdates.StartInstaller(installer);
 		}

@@ -205,8 +205,8 @@ public partial class MainWindow : Window
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		if (settings.SkippedAppUpdate == release.Version.ToString()) return;
 
-		var canInstall = AppUpdates.CanUpdateInPlace(release);
-		var accepted = await ConfirmDialog.AskAsync(this, "Update available",
+		bool canInstall = AppUpdates.CanUpdateInPlace(release);
+		bool accepted = await ConfirmDialog.AskAsync(this, "Update available",
 			$"OsmoOverlay {release.Version} is available - you have {AppUpdates.CurrentVersion}.\n\n" +
 			(canInstall
 				? "Update now? OsmoOverlay will download it, close, install it and start again."
@@ -220,7 +220,7 @@ public partial class MainWindow : Window
 		}
 
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
-		var updating = await AppUpdateFlow.UpdateAsync(this, release, () => _phase == UiPhase.Rendering, status => AppendLog(status),
+		bool updating = await AppUpdateFlow.UpdateAsync(this, release, () => _phase == UiPhase.Rendering, status => AppendLog(status),
 			share => TaskbarProgress.SetValue(this, (ulong)(share * 1000), 1000), false);
 		if (!updating) TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 	}
@@ -243,7 +243,7 @@ public partial class MainWindow : Window
 
 		if (files.Count == 0) return;
 
-		var wasEmpty = _inputPaths.Count == 0;
+		bool wasEmpty = _inputPaths.Count == 0;
 		// The same file twice would get stitched (and rendered) twice.
 		_inputPaths.AddRange(files.Select(f => f.Path.LocalPath)
 			.Where(p => !_inputPaths.Contains(p, StringComparer.OrdinalIgnoreCase))
@@ -261,7 +261,7 @@ public partial class MainWindow : Window
 
 	private void OnMoveInputUpClick(object? sender, RoutedEventArgs e)
 	{
-		var index = InputFilesList.SelectedIndex;
+		int index = InputFilesList.SelectedIndex;
 		if (index <= 0) return;
 
 		(_inputPaths[index - 1], _inputPaths[index]) = (_inputPaths[index], _inputPaths[index - 1]);
@@ -272,7 +272,7 @@ public partial class MainWindow : Window
 
 	private void OnMoveInputDownClick(object? sender, RoutedEventArgs e)
 	{
-		var index = InputFilesList.SelectedIndex;
+		int index = InputFilesList.SelectedIndex;
 		if (index < 0 || index >= _inputPaths.Count - 1) return;
 
 		(_inputPaths[index + 1], _inputPaths[index]) = (_inputPaths[index], _inputPaths[index + 1]);
@@ -295,7 +295,7 @@ public partial class MainWindow : Window
 
 	private void OnRemoveInputClick(object? sender, RoutedEventArgs e)
 	{
-		var index = InputFilesList.SelectedIndex;
+		int index = InputFilesList.SelectedIndex;
 		if (index < 0) return;
 
 		_inputPaths.RemoveAt(index);
@@ -325,7 +325,7 @@ public partial class MainWindow : Window
 		OverlaySettings beforeExportChanges = OverlaySettingsStore.Load();
 		OverlaySettings withExportChanges = settings.ApplyExportSettings(beforeExportChanges);
 		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);
-		var interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
+		bool interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
 		SetTimeFormat(PreviewTimeFormats.Parse(withExportChanges.PreviewTimeFormat), false);
 
 		if (settings.ShowWatermark != _showWatermark)
@@ -339,7 +339,7 @@ public partial class MainWindow : Window
 		// with (see PreviewPlayer.OpenAsync), not just a draw-time flag - there's no cheap "swap it live"
 		// path, so a changed setting only takes effect on the next preview open. Reopen here instead of
 		// leaving the user staring at a preview that doesn't match the checkbox they just changed.
-		var needsPreviewReopen = false;
+		bool needsPreviewReopen = false;
 		if (settings.SmoothGpsMotion != _smoothGpsMotion)
 		{
 			_smoothGpsMotion = settings.SmoothGpsMotion;
@@ -395,7 +395,7 @@ public partial class MainWindow : Window
 	{
 		try
 		{
-			var (path, args) = AppCommand.Current();
+			(string path, string[] args) = AppCommand.Current();
 			Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = false })?.Dispose();
 		}
 		catch (Exception ex)
@@ -460,12 +460,12 @@ public partial class MainWindow : Window
 		if (phase != UiPhase.SummaryReady) SetTimelineExpanded(false, false);
 		else if (previous == UiPhase.LoadingSummary) SetTimelineExpanded(_timelineWanted, false);
 
-		var summaryVisible = phase is UiPhase.SummaryReady or UiPhase.Rendering;
+		bool summaryVisible = phase is UiPhase.SummaryReady or UiPhase.Rendering;
 		SummaryPanel.IsVisible = summaryVisible;
 		OutputInfoCard.IsVisible = summaryVisible;
 		FileInfoCard.IsVisible = phase == UiPhase.SummaryReady;
 		TelemetryCard.IsVisible = phase == UiPhase.SummaryReady && _summary?.Telemetry is not null;
-		var overlayReady = summaryVisible && _summary?.HasTelemetry == true && _overlayPresetsLoaded;
+		bool overlayReady = summaryVisible && _summary?.HasTelemetry == true && _overlayPresetsLoaded;
 		OverlayContent.IsVisible = overlayReady;
 		OverlayPlaceholder.IsVisible = !overlayReady;
 
@@ -475,7 +475,7 @@ public partial class MainWindow : Window
 		ActionButton.Content = phase == UiPhase.SummaryReady ? "Render" : "Get Summary";
 		GreenScreenButton.IsVisible = phase == UiPhase.SummaryReady;
 
-		var busy = phase is UiPhase.LoadingSummary or UiPhase.Rendering;
+		bool busy = phase is UiPhase.LoadingSummary or UiPhase.Rendering;
 		// Editing the input list mid-run would reset the phase under a running summary/render.
 		InputPanel.IsEnabled = !busy;
 		if (busy)
@@ -491,7 +491,7 @@ public partial class MainWindow : Window
 	/// <summary>Same banner text the CLI prints to console (see AppBanner), shown in the GUI's own log so both surfaces show the same startup info.</summary>
 	private void AppendBanner()
 	{
-		foreach (var line in AppBanner.BuildLines("GUI"))
+		foreach (string line in AppBanner.BuildLines("GUI"))
 			AppendLog(line);
 		AppendLog("");
 	}

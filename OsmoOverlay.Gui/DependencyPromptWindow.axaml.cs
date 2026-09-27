@@ -20,7 +20,7 @@ public partial class DependencyPromptWindow : Window
 	{
 		InitializeComponent();
 
-		var canAutoInstall = DependencyInstaller.CanAttemptAutoInstall();
+		bool canAutoInstall = DependencyInstaller.CanAttemptAutoInstall();
 		foreach (ExternalTool tool in missing.OrderBy(t => t.IsOptional))
 		{
 			var check = new CheckBox
@@ -33,7 +33,7 @@ public partial class DependencyPromptWindow : Window
 			ToolPanel.Children.Add(check);
 		}
 
-		var optionalNote = missing.Any(t => t.IsOptional)
+		string optionalNote = missing.Any(t => t.IsOptional)
 			? " ExifTool is optional - it's only used for cameras whose telemetry OsmoOverlay can't read on its own."
 			: "";
 		MessageText.Text = canAutoInstall
@@ -60,7 +60,7 @@ public partial class DependencyPromptWindow : Window
 
 		foreach ((_, CheckBox check) in _tools) check.IsEnabled = false;
 
-		var allSucceeded = true;
+		bool allSucceeded = true;
 		foreach ((ExternalTool tool, _) in _tools.Where(t => t.Check.IsChecked == true))
 		{
 			AppendLog($"Installing {tool.DisplayName}...");

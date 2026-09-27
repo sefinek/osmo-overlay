@@ -28,7 +28,7 @@ internal static class TaskbarProgress
 
 		try
 		{
-			var hwnd = GetHwnd(window);
+			IntPtr hwnd = GetHwnd(window);
 			if (hwnd == IntPtr.Zero) return;
 			Instance.SetProgressState(hwnd, ToFlag(state));
 		}
@@ -43,7 +43,7 @@ internal static class TaskbarProgress
 
 		try
 		{
-			var hwnd = GetHwnd(window);
+			IntPtr hwnd = GetHwnd(window);
 			if (hwnd == IntPtr.Zero) return;
 			Instance.SetProgressValue(hwnd, completed, total);
 		}

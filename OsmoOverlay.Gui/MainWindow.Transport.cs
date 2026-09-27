@@ -129,11 +129,11 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var fps = _summary.Video.Fps;
+		double fps = _summary.Video.Fps;
 		IEnumerable<FrameRange> gpsLoss = PreviewTimeline.GpsLoss.Select(r =>
 			new FrameRange((long)Math.Round(r.StartSeconds * fps), (long)Math.Round(r.EndSeconds * fps)));
 		SortedSet<long> markers = TimelineMarkers.Collect(SourceFrames, CutList.Normalize(_cuts, SourceFrames), Selection, gpsLoss);
-		var current = CurrentFrame();
+		long current = CurrentFrame();
 		if ((direction > 0 ? TimelineMarkers.Next(markers, current) : TimelineMarkers.Previous(markers, current)) is { } target)
 			SeekToFrame(target);
 	}
@@ -166,7 +166,7 @@ public partial class MainWindow
 	/// </summary>
 	private void StepSpeed(int direction)
 	{
-		var current = Array.IndexOf(PlaybackRates, _previewPlayer.PlaybackRate);
+		int current = Array.IndexOf(PlaybackRates, _previewPlayer.PlaybackRate);
 		if (direction > 0 && !_previewPlayer.IsPlaying)
 		{
 			SetSpeed(Array.IndexOf(PlaybackRates, 1.0));
@@ -195,7 +195,7 @@ public partial class MainWindow
 
 	private void TogglePlayback()
 	{
-		var wasPlaying = _previewPlayer.IsPlaying;
+		bool wasPlaying = _previewPlayer.IsPlaying;
 		_previewPlayer.TogglePlayPause(TimeSpan.FromSeconds(PreviewTimeline.Value));
 		if (!wasPlaying) ShowPlayingState(true);
 	}
@@ -254,7 +254,7 @@ public partial class MainWindow
 			ShowPlayingState(false);
 		}
 
-		var seconds = frame == long.MaxValue ? PreviewTimeline.Maximum : (frame - 0.25) / _summary.Video.Fps;
+		double seconds = frame == long.MaxValue ? PreviewTimeline.Maximum : (frame - 0.25) / _summary.Video.Fps;
 		PreviewTimeline.Value = Math.Clamp(seconds, 0, PreviewTimeline.Maximum);
 	}
 }

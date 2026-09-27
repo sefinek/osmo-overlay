@@ -30,7 +30,7 @@ internal static class UiScale
 	/// <summary>Before the AppBuilder starts - the X11 backend reads the variable while initializing.</summary>
 	public static void Initialize()
 	{
-		var scale = OverlaySettingsStore.Load().InterfaceScale;
+		double scale = OverlaySettingsStore.Load().InterfaceScale;
 		if (!double.IsFinite(scale) || scale < 0.5 || scale > 3.0 || Math.Abs(scale - 1.0) < 0.001) return;
 
 		_configured = scale;
@@ -91,7 +91,7 @@ internal static class UiScale
 	{
 		if (!double.IsFinite(value) || value <= 0) return value;
 
-		var scaled = value * Factor;
+		double scaled = value * Factor;
 		return limit is { } max ? Math.Min(scaled, max) : scaled;
 	}
 }

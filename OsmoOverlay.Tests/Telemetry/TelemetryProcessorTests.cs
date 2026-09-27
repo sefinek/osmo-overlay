@@ -13,14 +13,14 @@ public sealed class TelemetryProcessorTests
 	/// <summary>Straight-line motion at `speedMs`, sampled at `hz`, without GPS-measured speed unless given.</summary>
 	private static List<TelemetryFrame> Track(double speedMs, double headingDegrees, double hz, double seconds, double? gpsSpeedMs = null)
 	{
-		var metersPerDegreeLon = MetersPerDegreeLat * Math.Cos(StartLat * Math.PI / 180);
-		var rad = headingDegrees * Math.PI / 180;
+		double metersPerDegreeLon = MetersPerDegreeLat * Math.Cos(StartLat * Math.PI / 180);
+		double rad = headingDegrees * Math.PI / 180;
 		return
 		[
 			.. Enumerable.Range(0, (int)(seconds * hz) + 1).Select(i =>
 			{
-				var t = i / hz;
-				var d = speedMs * t;
+				double t = i / hz;
+				double d = speedMs * t;
 				return new TelemetryFrame(i, t, StartLat + d * Math.Cos(rad) / MetersPerDegreeLat,
 					StartLon + d * Math.Sin(rad) / metersPerDegreeLon, 200, null, 0, 0, 1, gpsSpeedMs);
 			})
@@ -63,7 +63,7 @@ public sealed class TelemetryProcessorTests
 	{
 		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, heading, 10, 3), null);
 
-		var error = Math.Abs(((derived[^1].HeadingDegrees - heading) % 360 + 540) % 360 - 180);
+		double error = Math.Abs(((derived[^1].HeadingDegrees - heading) % 360 + 540) % 360 - 180);
 		Assert.IsTrue(error < 0.5, $"heading {derived[^1].HeadingDegrees} vs expected {heading}");
 	}
 
@@ -86,7 +86,7 @@ public sealed class TelemetryProcessorTests
 	public void Summary_TotalDistance_IncludesTheLastPartialStep(double hz, double seconds)
 	{
 		List<DerivedFrame> derived = TelemetryProcessor.Process(Track(10, 30, hz, seconds), null);
-		var travelled = 10 * derived[^1].Raw.SampleTimeSeconds;
+		double travelled = 10 * derived[^1].Raw.SampleTimeSeconds;
 
 		Assert.AreEqual(travelled, TelemetryProcessor.Summarize(derived).TotalDistanceMeters, travelled * 0.001 + 0.01);
 	}

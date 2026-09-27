@@ -54,8 +54,8 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 			Check(ffmpeg.avformat_open_input(&format, path, null, null), $"open {path}");
 
 			AVCodec* decoder = null;
-			var wanted = ordinal == 0 ? -1 : NthStream(format, type, ordinal);
-			var stream = wanted == ffmpeg.AVERROR_STREAM_NOT_FOUND
+			int wanted = ordinal == 0 ? -1 : NthStream(format, type, ordinal);
+			int stream = wanted == ffmpeg.AVERROR_STREAM_NOT_FOUND
 				? wanted
 				: ffmpeg.av_find_best_stream(format, type, wanted, -1, &decoder, 0);
 			if (stream == ffmpeg.AVERROR_STREAM_NOT_FOUND)
@@ -67,15 +67,17 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 			Check(stream, $"find the {ffmpeg.av_get_media_type_string(type)} stream of {path}");
 			// Every other track (the camera's djmd/dbgi telemetry, timecode, the other media type) is never needed
 			// here - discarded streams aren't handed back by av_read_frame at all.
-			for (var i = 0; i < format->nb_streams; i++)
+			for (int i = 0; i < format->nb_streams; i++)
+			{
 				if (i != stream)
 					format->streams[i]->discard = AVDiscard.AVDISCARD_ALL;
+			}
 
 			codec = ffmpeg.avcodec_alloc_context3(decoder);
 			Check(ffmpeg.avcodec_parameters_to_context(codec, format->streams[stream]->codecpar), "set up the decoder");
 			codec->pkt_timebase = format->streams[stream]->time_base;
 
-			var hardware = useHardware ? AttachHardwareDevice(codec, decoder) : null;
+			string? hardware = useHardware ? AttachHardwareDevice(codec, decoder) : null;
 			if (hardware is null)
 			{
 				codec->thread_count = 0;
@@ -127,7 +129,7 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	/// <summary>The index of the file's `ordinal`-th stream of a type (from 0), attached pictures (thumbnails) not counted.</summary>
 	private static int NthStream(AVFormatContext* format, AVMediaType type, int ordinal)
 	{
-		for (var i = 0; i < format->nb_streams; i++)
+		for (int i = 0; i < format->nb_streams; i++)
 		{
 			AVStream* stream = format->streams[i];
 			if (stream->codecpar->codec_type != type || (stream->disposition & ffmpeg.AV_DISPOSITION_ATTACHED_PIC) != 0) continue;
@@ -139,7 +141,7 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 
 	private static bool SupportsDevice(AVCodec* decoder, AVHWDeviceType type)
 	{
-		for (var i = 0;; i++)
+		for (int i = 0;; i++)
 		{
 			AVCodecHWConfig* config = ffmpeg.avcodec_get_hw_config(decoder, i);
 			if (config is null) return false;
@@ -151,7 +153,7 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	/// <summary>To the keyframe at or before the time in this file; the frames from there to it still have to be decoded.</summary>
 	public void Seek(double seconds)
 	{
-		var timestamp = _startPts + (long)Math.Round(seconds / _timeBase);
+		long timestamp = _startPts + (long)Math.Round(seconds / _timeBase);
 		Check(ffmpeg.av_seek_frame(_format, _stream, timestamp, ffmpeg.AVSEEK_FLAG_BACKWARD), "seek");
 		ffmpeg.avcodec_flush_buffers(Codec);
 		_draining = false;
@@ -163,7 +165,7 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	{
 		while (true)
 		{
-			var result = ffmpeg.avcodec_receive_frame(Codec, _spare);
+			int result = ffmpeg.avcodec_receive_frame(Codec, _spare);
 			if (result == 0)
 			{
 				AVFrame* decoded = _spare;
@@ -202,7 +204,7 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	/// <summary>When the current frame starts, in seconds from the start of this file's stream.</summary>
 	public double FrameSeconds()
 	{
-		var pts = Frame->best_effort_timestamp != ffmpeg.AV_NOPTS_VALUE ? Frame->best_effort_timestamp : Frame->pts;
+		long pts = Frame->best_effort_timestamp != ffmpeg.AV_NOPTS_VALUE ? Frame->best_effort_timestamp : Frame->pts;
 		return (pts - _startPts) * _timeBase;
 	}
 
@@ -226,7 +228,7 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 		if (result >= 0) return;
 
 		const int size = 256;
-		var message = stackalloc byte[size];
+		byte* message = stackalloc byte[size];
 		ffmpeg.av_strerror(result, message, size);
 		throw new InvalidOperationException($"FFmpeg could not {action}: {new string((sbyte*)message)}");
 	}

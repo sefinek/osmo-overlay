@@ -35,9 +35,9 @@ public sealed record RenderOptions(
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
 	{
-		var inputPath = inputPaths[0];
-		var dir = Path.GetDirectoryName(inputPath) ?? ".";
-		var name = Path.GetFileNameWithoutExtension(inputPath);
+		string inputPath = inputPaths[0];
+		string dir = Path.GetDirectoryName(inputPath) ?? ".";
+		string name = Path.GetFileNameWithoutExtension(inputPath);
 		return Path.Combine(dir, $"{name}_overlay.mp4");
 	}
 
@@ -49,9 +49,9 @@ public sealed record RenderOptions(
 	/// </summary>
 	public static string GreenScreenOutputPath(string outputPath)
 	{
-		var dir = Path.GetDirectoryName(outputPath) ?? ".";
-		var name = Path.GetFileNameWithoutExtension(outputPath);
-		var ext = Path.GetExtension(outputPath);
+		string dir = Path.GetDirectoryName(outputPath) ?? ".";
+		string name = Path.GetFileNameWithoutExtension(outputPath);
+		string ext = Path.GetExtension(outputPath);
 		if (name.EndsWith("_overlay", StringComparison.OrdinalIgnoreCase))
 			name = name[..^"_overlay".Length];
 		return Path.Combine(dir, $"{name}_greenscreen{ext}");
@@ -102,9 +102,11 @@ public static class RenderJob
 			progress?.Report(new RenderStatus(phase, message, current, total, sw.Elapsed));
 		}
 
-		foreach (var path in options.InputPaths)
+		foreach (string path in options.InputPaths)
+		{
 			if (!File.Exists(path))
 				return new RenderResult(false, $"File not found: {path}", sw.Elapsed);
+		}
 
 		try
 		{
@@ -120,16 +122,18 @@ public static class RenderJob
 				(segments.Count > 1 ? $" ({segments.Count} segments)" : ""));
 
 			if (!segments.AllHaveTelemetry())
+			{
 				return new RenderResult(false,
 					$"{first.InputPath} has no telemetry - it isn't an original recording from a supported camera (DJI Osmo Action's " +
 					"'djmd' stream, Insta360's trailer), e.g. a file exported from another app",
 					sw.Elapsed);
+			}
 
 			if (!options.Overwrite && File.Exists(options.OutputPath))
 				return new RenderResult(false, $"Output file already exists: {options.OutputPath}", sw.Elapsed);
 
 			IReadOnlyList<TelemetryFrame> rawFrames;
-			var cameraModel = options.CameraModel;
+			string? cameraModel = options.CameraModel;
 			ICameraFormat camera = first.Source.Camera!.Format;
 			if (options.TelemetryFrames is { Count: > 0 })
 			{
@@ -148,23 +152,23 @@ public static class RenderJob
 			}
 
 			OverlaySettings settings = OverlaySettingsStore.Load();
-			var smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
-			var fps = first.Source.Video.Fps;
-			RenderPlan plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
+			bool smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
+			double fps = first.Source.Video.Fps;
+			var plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
 				fps, segments.TotalFrameCount());
 			// The overlay describes the video as rendered: telemetry moved onto the output's own timeline.
 			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps));
-			var startAltitude = derived[0].Raw.AltitudeMeters;
-			var maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
+			double startAltitude = derived[0].Raw.AltitudeMeters;
+			double maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
 			if (options.Encoder is null)
 				Report(RenderPhase.SelectingEncoder, "Checking NVENC availability...");
-			var encoder = options.Encoder ?? FfmpegPipeline.SelectVideoEncoder(first.Source.Video);
+			string encoder = options.Encoder ?? FfmpegPipeline.SelectVideoEncoder(first.Source.Video);
 			Report(RenderPhase.SelectingEncoder,
 				$"Using encoder: {encoder}" +
 				(FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (NVENC unavailable - rendering on CPU)"));
 
-			var totalFrames = (int)plan.TotalFrames;
+			int totalFrames = (int)plan.TotalFrames;
 			Report(RenderPhase.Rendering, $"Rendering {totalFrames} frames to {options.OutputPath}" +
 			                              (plan.IsPartial ? $" ({DescribePlan(plan, fps)} of the recording)..." : "..."), 0, totalFrames);
 
@@ -173,10 +177,10 @@ public static class RenderJob
 			// Forces off any widget this file's telemetry can't support (e.g. Map/Compass checked from
 			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
 			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
-			OverlayAvailability availability = OverlayAvailability.Of(rawFrames, first.Source.ContainerCreationTimeUtc is not null, camera);
-			var hasGpsFix = availability.GpsFix;
+			var availability = OverlayAvailability.Of(rawFrames, first.Source.ContainerCreationTimeUtc is not null, camera);
+			bool hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
-			var showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
+			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
 			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, settings.MapTileUrlTemplate, settings.MapAttribution,
@@ -219,18 +223,18 @@ public static class RenderJob
 			// Green screen has no source recording in it to carry camera metadata over from.
 			// The camera's data tracks are copied whole (ICameraFormat.CopyMetadata) - on a partial render they'd
 			// describe a longer recording than the video they sit next to, so only the non-track parts stay.
-			var keepTracks = !plan.IsPartial;
+			bool keepTracks = !plan.IsPartial;
 			if (!keepTracks && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack) && settings.PreserveCameraMetadata &&
 			    !options.GreenScreen)
 				Report(RenderPhase.Rendering, "Partial render - the camera's telemetry/debug tracks aren't copied (they cover the whole recording)");
 			var metadataSelection = new CameraMetadataSelection(settings.MetadataKeepTelemetry && keepTracks,
 				settings.MetadataKeepDebugTrack && keepTracks, settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
-			var preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !options.GreenScreen;
+			bool preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !options.GreenScreen;
 			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata);
 			// Only a file this render wrote may be deleted if it fails - never one that was already there and
 			// wasn't meant to be overwritten.
-			var outputIsOurs = options.Overwrite || !File.Exists(options.OutputPath);
-			var succeeded = false;
+			bool outputIsOurs = options.Overwrite || !File.Exists(options.OutputPath);
+			bool succeeded = false;
 			// A 360 recording's picture is made here (FisheyeProjector, the preview's own) and goes to ffmpeg finished, the
 			// overlay drawn on it - ffmpeg only takes the sound from the files.
 			Reframer? reframer = options.GreenScreen
@@ -282,9 +286,9 @@ public static class RenderJob
 				// Frame buffers go back here once written to ffmpeg - the bounded channel caps how many are
 				// ever in flight, so a render allocates only a handful of them instead of one per frame.
 				var freeBuffers = new ConcurrentQueue<byte[]>();
-				var frameBufferSize = renderer.FrameBufferSize();
+				int frameBufferSize = renderer.FrameBufferSize();
 
-				Task producer = Task.Run(async () =>
+				var producer = Task.Run(async () =>
 				{
 					try
 					{
@@ -305,11 +309,11 @@ public static class RenderJob
 					}
 				}, producerCt);
 
-				var written = 0;
+				int written = 0;
 				var rate = new RenderRateEstimator(fps);
 				try
 				{
-					await foreach (var pixels in channel.Reader.ReadAllAsync(ct))
+					await foreach (byte[] pixels in channel.Reader.ReadAllAsync(ct))
 					{
 						stdin.Write(pixels, 0, pixels.Length);
 						if (pictures is not null) pictures.Recycle(new VideoFrame(pixels, first.Source.Video.Width, first.Source.Video.Height));
@@ -318,8 +322,10 @@ public static class RenderJob
 						rate.Add(written);
 
 						if (written % 60 == 0)
+						{
 							Report(RenderPhase.Rendering, $"Frame {written}/{totalFrames}{rate.Describe(written, totalFrames)}",
 								written, totalFrames);
+						}
 					}
 
 					stdin.Flush();
@@ -352,7 +358,7 @@ public static class RenderJob
 					}
 				}
 
-				var cancelled = ct.IsCancellationRequested;
+				bool cancelled = ct.IsCancellationRequested;
 				if (cancelled)
 				{
 					// Closing stdin alone doesn't make ffmpeg exit promptly - the overlay filter's default
@@ -380,11 +386,11 @@ public static class RenderJob
 				}
 
 				await ffmpeg.WaitForExitAsync(CancellationToken.None);
-				var stderr = await stderrTask;
+				string stderr = await stderrTask;
 
 				if (ffmpeg.ExitCode != 0)
 				{
-					var message = $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}";
+					string message = $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}";
 					AppLogger.Error(message);
 					return new RenderResult(false, message, sw.Elapsed);
 				}
@@ -392,8 +398,10 @@ public static class RenderJob
 				// Short renders are dominated by the route intro and ffmpeg's spin-up, not representative of
 				// a full one - only a render long enough to reach steady state updates the estimate.
 				if (written >= MinFramesForSpeedHistory && rate.AverageFps(written) is { } averageFps)
+				{
 					RenderSpeedHistory.Record(RenderSpeedHistory.Key(first.Source.Video.Width, first.Source.Video.Height, fps,
 						encoder, encode.NvencPreset), averageFps);
+				}
 
 				PostProcess(options.OutputPath, options.InputPaths, camera, preserveMetadata ? metadataSelection : null,
 					settings.FastStart && !options.GreenScreen,
@@ -425,10 +433,10 @@ public static class RenderJob
 	private static async Task ProduceOverlayAsync(int totalFrames, IReadOnlyList<DerivedFrame> derived, OverlayRenderer renderer, double fps,
 		ConcurrentQueue<byte[]> freeBuffers, int frameBufferSize, ChannelWriter<byte[]> writer, CancellationToken ct)
 	{
-		for (var i = 0; i < totalFrames && !ct.IsCancellationRequested; i++)
+		for (int i = 0; i < totalFrames && !ct.IsCancellationRequested; i++)
 		{
 			DerivedFrame frame = TelemetryProcessor.FindNearest(derived, i / fps);
-			if (!freeBuffers.TryDequeue(out var pixels)) pixels = new byte[frameBufferSize];
+			if (!freeBuffers.TryDequeue(out byte[]? pixels)) pixels = new byte[frameBufferSize];
 			renderer.RenderInto(frame, pixels);
 			await writer.WriteAsync(pixels, ct);
 		}
@@ -441,7 +449,7 @@ public static class RenderJob
 	private static async Task ProduceComposedAsync(LibavVideoSource pictures, RenderPlan plan, IReadOnlyList<DerivedFrame> derived,
 		OverlayRenderer renderer, double fps, ChannelWriter<byte[]> writer, CancellationToken ct)
 	{
-		var outputFrame = 0;
+		int outputFrame = 0;
 		foreach (RenderPiece piece in plan.Pieces)
 		{
 			LibavVideoSource.PlaybackStream stream = pictures.OpenPlaybackStream(TimeSpan.FromSeconds(piece.SourceStartFrame / fps), ct);
@@ -464,7 +472,7 @@ public static class RenderJob
 	private static void PostProcess(string outputPath, IReadOnlyList<string> inputPaths, ICameraFormat camera, CameraMetadataSelection? metadata,
 		bool fastStart, Action<string> report)
 	{
-		var preserveMetadata = metadata is not null;
+		bool preserveMetadata = metadata is not null;
 		if (metadata is not null)
 		{
 			List<string> parts = [];
@@ -536,7 +544,7 @@ public static class RenderJob
 
 	private static IReadOnlyList<OverlayElement> LoadActiveLayout(int width, int height)
 	{
-		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(width, height);
+		(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load(width, height);
 		OverlayPreset preset = presets.First(p => p.Id == activeId);
 		// Muted (or not soloed) layers stay out of the render as they're out of the preview.
 		return OverlayLayers.Drawn(preset.Elements, preset.Layers);
@@ -561,7 +569,7 @@ internal sealed class RenderRateEstimator(double sourceFps)
 	{
 		if (!_clock.IsRunning) _clock.Start();
 
-		var now = _clock.Elapsed.TotalSeconds;
+		double now = _clock.Elapsed.TotalSeconds;
 		_samples.Enqueue((now, framesWritten));
 		while (_samples.Count > 2 && now - _samples.Peek().Seconds > WindowSeconds)
 			_samples.Dequeue();
@@ -570,7 +578,7 @@ internal sealed class RenderRateEstimator(double sourceFps)
 	/// <summary>Frames per second over the whole render so far (from the first frame written) - what's remembered for the next estimate.</summary>
 	public double? AverageFps(int framesWritten)
 	{
-		var seconds = _clock.Elapsed.TotalSeconds;
+		double seconds = _clock.Elapsed.TotalSeconds;
 		return seconds > 0 ? framesWritten / seconds : null;
 	}
 
@@ -580,14 +588,14 @@ internal sealed class RenderRateEstimator(double sourceFps)
 		if (_clock.Elapsed.TotalSeconds < WarmupSeconds || _samples.Count < 2) return " - estimating time left...";
 
 		(double Seconds, int Frames) oldest = _samples.Peek();
-		var span = _clock.Elapsed.TotalSeconds - oldest.Seconds;
+		double span = _clock.Elapsed.TotalSeconds - oldest.Seconds;
 		if (span <= 0) return "";
 
-		var fps = (framesWritten - oldest.Frames) / span;
+		double fps = (framesWritten - oldest.Frames) / span;
 		if (fps <= 0) return "";
 
-		TimeSpan left = TimeSpan.FromSeconds(Math.Max(totalFrames - framesWritten, 0) / fps);
-		var realtime = sourceFps > 0 ? $" ({fps / sourceFps:0.00}x realtime)" : "";
+		var left = TimeSpan.FromSeconds(Math.Max(totalFrames - framesWritten, 0) / fps);
+		string realtime = sourceFps > 0 ? $" ({fps / sourceFps:0.00}x realtime)" : "";
 		return $" - {fps:0.0} fps{realtime} - {left:hh\\:mm\\:ss} left";
 	}
 }

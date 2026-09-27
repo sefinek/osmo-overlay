@@ -24,10 +24,10 @@ public sealed record ColorTagStatus(
 {
 	public static ColorTagStatus From(VideoInfo video)
 	{
-		var missingPrimaries = IsMissing(video.ColorPrimaries);
-		var missingTransfer = IsMissing(video.ColorTransfer);
-		var missingSpace = IsMissing(video.ColorSpace);
-		var needsFix = missingPrimaries || missingTransfer || missingSpace;
+		bool missingPrimaries = IsMissing(video.ColorPrimaries);
+		bool missingTransfer = IsMissing(video.ColorTransfer);
+		bool missingSpace = IsMissing(video.ColorSpace);
+		bool needsFix = missingPrimaries || missingTransfer || missingSpace;
 
 		// A file that already carries an EXPLICIT tag other than bt709 is real HDR/wide-gamut content
 		// (Rec.2020, PQ/ST.2084, HLG, ...) - forcing bt709 over that would mislabel it, not fix it.
@@ -35,9 +35,9 @@ public sealed record ColorTagStatus(
 		// tag that's present and NOT bt709 makes a file ineligible. This is the only validation this
 		// tool needs: a random non-Osmo/non-Rec.709 file either already has correct tags (nothing to
 		// do) or an explicit conflicting one (refused below) - there's no third case to guard against.
-		var isEligible = (missingPrimaries || IsBt709(video.ColorPrimaries!))
-		                 && (missingTransfer || IsBt709(video.ColorTransfer!))
-		                 && (missingSpace || IsBt709(video.ColorSpace!));
+		bool isEligible = (missingPrimaries || IsBt709(video.ColorPrimaries!))
+		                  && (missingTransfer || IsBt709(video.ColorTransfer!))
+		                  && (missingSpace || IsBt709(video.ColorSpace!));
 
 		return new ColorTagStatus(needsFix && isEligible, isEligible,
 			video.ColorPrimaries, video.ColorTransfer, video.ColorSpace, video.ColorRange);
@@ -71,19 +71,21 @@ public static class ColorTagFixer
 	public static ColorTagFixResult Fix(string inputPath, string? outputPath = null)
 	{
 		SourceInfo before = SourceProbe.Probe(inputPath);
-		ColorTagStatus beforeStatus = ColorTagStatus.From(before.Video);
+		var beforeStatus = ColorTagStatus.From(before.Video);
 
 		if (!beforeStatus.IsEligible)
+		{
 			throw new InvalidOperationException(
 				"This file already has an explicit color tag that isn't Rec.709 (looks like HDR/wide-gamut " +
 				"content) - forcing Rec.709 over it would mislabel the color space instead of fixing it, so " +
 				"this tool won't touch it.");
+		}
 
-		var resolvedOutput = outputPath ?? DefaultFixedPath(inputPath);
+		string resolvedOutput = outputPath ?? DefaultFixedPath(inputPath);
 
 		// hevc_metadata/h264_metadata both take the same field names; colour_primaries=1,
 		// transfer_characteristics=1, matrix_coefficients=1 are the ISO/IEC 23091-4 codes for BT.709.
-		var metadataBsf = before.Video.CodecName switch
+		string metadataBsf = before.Video.CodecName switch
 		{
 			"hevc" => "hevc_metadata",
 			"h264" => "h264_metadata",
@@ -92,7 +94,7 @@ public static class ColorTagFixer
 		};
 
 		// Moved into place only once ffmpeg finished - a failed run never leaves a broken file under the output's name.
-		var partialPath = resolvedOutput + ".partial";
+		string partialPath = resolvedOutput + ".partial";
 		try
 		{
 			ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
@@ -105,7 +107,7 @@ public static class ColorTagFixer
 				"-f", "mp4",
 				partialPath);
 
-			var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+			(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
 			if (exitCode != 0)
 				throw new InvalidOperationException($"ffmpeg exited with an error ({exitCode}): {stderr}{stdout}");
 
@@ -129,9 +131,9 @@ public static class ColorTagFixer
 
 	private static string DefaultFixedPath(string inputPath)
 	{
-		var dir = Path.GetDirectoryName(inputPath) ?? "";
-		var name = Path.GetFileNameWithoutExtension(inputPath);
-		var ext = Path.GetExtension(inputPath);
+		string dir = Path.GetDirectoryName(inputPath) ?? "";
+		string name = Path.GetFileNameWithoutExtension(inputPath);
+		string ext = Path.GetExtension(inputPath);
 		return Path.Combine(dir, $"{name}_fixed{ext}");
 	}
 }

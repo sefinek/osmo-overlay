@@ -19,7 +19,7 @@ internal static class Icons
 
 	private static Geometry Get(string key)
 	{
-		return Application.Current is { } app && app.TryGetResource(key, app.ActualThemeVariant, out var value) && value is Geometry geometry
+		return Application.Current is { } app && app.TryGetResource(key, app.ActualThemeVariant, out object? value) && value is Geometry geometry
 			? geometry
 			: throw new InvalidOperationException($"Icon '{key}' is missing from Icons.axaml.");
 	}

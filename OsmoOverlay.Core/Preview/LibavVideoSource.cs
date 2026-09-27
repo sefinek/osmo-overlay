@@ -71,7 +71,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		double offset = 0;
 		foreach (PlaybackSegment segment in segments)
 		{
-			var start = (long)Math.Round(offset * fps);
+			long start = (long)Math.Round(offset * fps);
 			offset += segment.DurationSeconds;
 			_segments.Add(new Segment(segment.Path, start, (long)Math.Round(offset * fps) - start));
 		}
@@ -81,10 +81,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 
 		// Opened up front: a broken file or a decoder that won't start should fail here, where the caller can
 		// still fall back, not on the first seek.
-		lock (_lock)
-		{
-			SessionFor(0);
-		}
+		lock (_lock) SessionFor(0);
 	}
 
 	public TimeSpan Duration { get; }
@@ -95,17 +92,14 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	{
 		get
 		{
-			lock (_lock)
-			{
-				return _sessions.Count > 0 ? _sessions[0].Hardware ?? "software" : "not opened";
-			}
+			lock (_lock) return _sessions.Count > 0 ? _sessions[0].Hardware ?? "software" : "not opened";
 		}
 	}
 
 	/// <summary>The frame shown at a position (PreviewFrames.IndexAt), or null if <paramref name="ct" /> was cancelled first - a superseded seek is expected, not exceptional.</summary>
 	public VideoFrame? GetFrame(TimeSpan position, SeekAccuracy accuracy, CancellationToken ct)
 	{
-		var target = Math.Clamp(PreviewFrames.IndexAt(position.TotalSeconds, Fps), 0, _totalFrames - 1);
+		long target = Math.Clamp(PreviewFrames.IndexAt(position.TotalSeconds, Fps), 0, _totalFrames - 1);
 		lock (_lock)
 		{
 			ObjectDisposedException.ThrowIf(_disposed, this);
@@ -130,7 +124,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			if (_disposed || _reframer is null || view == _reframer.View) return;
 
 			_reframer = _reframer with { View = view };
-			foreach (var buffer in _backStepCache.Values) _buffers.Return(buffer);
+			foreach (byte[] buffer in _backStepCache.Values) _buffers.Return(buffer);
 			_backStepCache.Clear();
 		}
 	}
@@ -158,21 +152,21 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	/// <summary>Must be called under _lock. Null when cancelled.</summary>
 	private (VideoFrame Frame, long Index)? DecodeAt(long target, SeekAccuracy accuracy, CancellationToken ct)
 	{
-		if (_backStepCache.TryGetValue(target, out var cached)) return (Returned(Copy(cached), target), target);
+		if (_backStepCache.TryGetValue(target, out byte[]? cached)) return (Returned(Copy(cached), target), target);
 
-		var (segmentIndex, localTarget) = Locate(target);
+		(int segmentIndex, long localTarget) = Locate(target);
 		Segment segment = _segments[segmentIndex];
 		DecoderSession session = SessionFor(segmentIndex);
 
 		// The frame the decoder is on, asked for again (a 360 view changed): converted again, not decoded.
 		if (ReferenceEquals(session, _positioned) && target == _nextFrame - 1 && session.HasFrame) return (Returned(Convert(session), target), target);
 
-		var aheadLimit = accuracy == SeekAccuracy.Keyframe ? KeyframeDecodeAheadFrames : DecodeAheadSeconds * Fps;
-		var decodeOn = ReferenceEquals(session, _positioned) && target >= _nextFrame && target - _nextFrame <= aheadLimit;
+		double aheadLimit = accuracy == SeekAccuracy.Keyframe ? KeyframeDecodeAheadFrames : DecodeAheadSeconds * Fps;
+		bool decodeOn = ReferenceEquals(session, _positioned) && target >= _nextFrame && target - _nextFrame <= aheadLimit;
 		if (!decodeOn)
 		{
-			var backStep = target == _lastReturned - 1;
-			foreach (var buffer in _backStepCache.Values) _buffers.Return(buffer);
+			bool backStep = target == _lastReturned - 1;
+			foreach (byte[] buffer in _backStepCache.Values) _buffers.Return(buffer);
 			_backStepCache.Clear();
 
 			session.Seek(localTarget);
@@ -183,7 +177,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			{
 				if (!session.Receive()) throw new InvalidOperationException($"No frame after seeking to frame {target} of {segment.Path}.");
 
-				var keyframe = segment.StartFrame + session.FrameIndex();
+				long keyframe = segment.StartFrame + session.FrameIndex();
 				_nextFrame = keyframe + 1;
 				return (Returned(Convert(session), keyframe), keyframe);
 			}
@@ -206,11 +200,11 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				if (!session.HasFrame) throw new InvalidOperationException($"No frame decoded from {segment.Path} before its end.");
 
 				// Durations are rounded to frames; the file's own last frame is the closest there is.
-				var last = _nextFrame - 1;
+				long last = _nextFrame - 1;
 				return (Returned(Convert(session), last), last);
 			}
 
-			var index = segment.StartFrame + session.FrameIndex();
+			long index = segment.StartFrame + session.FrameIndex();
 			_nextFrame = index + 1;
 			if (index < target)
 			{
@@ -234,7 +228,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		Segment segment = _segments[session.SegmentIndex];
 		if (session.Receive())
 		{
-			var index = segment.StartFrame + session.FrameIndex();
+			long index = segment.StartFrame + session.FrameIndex();
 			_nextFrame = index + 1;
 			return (Returned(Convert(session), index), index);
 		}
@@ -274,24 +268,26 @@ public sealed unsafe class LibavVideoSource : IDisposable
 
 	private VideoFrame Convert(DecoderSession session)
 	{
-		var buffer = _buffers.Rent(_width * _height * 4);
-		var seconds = (_segments[session.SegmentIndex].StartFrame + session.FrameIndex()) / Fps;
+		byte[] buffer = _buffers.Rent(_width * _height * 4);
+		double seconds = (_segments[session.SegmentIndex].StartFrame + session.FrameIndex()) / Fps;
 		session.ConvertInto(buffer, _width, _height, _reframer, seconds);
 		return new VideoFrame(buffer, _width, _height);
 	}
 
 	private VideoFrame Copy(byte[] source)
 	{
-		var buffer = _buffers.Rent(source.Length);
+		byte[] buffer = _buffers.Rent(source.Length);
 		Buffer.BlockCopy(source, 0, buffer, 0, source.Length);
 		return new VideoFrame(buffer, _width, _height);
 	}
 
 	private (int Segment, long LocalFrame) Locate(long frame)
 	{
-		for (var i = _segments.Count - 1; i > 0; i--)
+		for (int i = _segments.Count - 1; i > 0; i--)
+		{
 			if (frame >= _segments[i].StartFrame)
 				return (i, frame - _segments[i].StartFrame);
+		}
 
 		return (0, frame);
 	}
@@ -357,10 +353,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 
 			try
 			{
-				lock (_source._lock)
-				{
-					return !_source._disposed && SkipLocked(frames);
-				}
+				lock (_source._lock) return !_source._disposed && SkipLocked(frames);
 			}
 			catch (InvalidOperationException ex)
 			{
@@ -399,7 +392,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		/// <summary>Under the source's lock.</summary>
 		private bool SkipLocked(int frames)
 		{
-			for (var i = 0; i < frames; i++)
+			for (int i = 0; i < frames; i++)
 			{
 				if (_ct.IsCancellationRequested || !_source.SkipNext(_next, _ct)) return false;
 				_next = _source._nextFrame;
@@ -453,8 +446,11 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			try
 			{
 				if (lenses?.Layout == FisheyeLayout.TwoStreams)
+				{
 					secondLens = LibavStreamDecoder.Open(path, AVMediaType.AVMEDIA_TYPE_VIDEO, true, 1)
 					             ?? throw new InvalidOperationException($"{path} has no second lens stream.");
+				}
+
 				return new DecoderSession(decoder, secondLens, lenses, segmentIndex, fps);
 			}
 			catch
@@ -478,10 +474,13 @@ public sealed unsafe class LibavVideoSource : IDisposable
 			if (!_decoder.Receive()) return false;
 			if (_secondLens is null) return true;
 
-			var index = FrameIndex();
+			long index = FrameIndex();
 			while (!_secondLens.HasFrame || Math.Round(_secondLens.FrameSeconds() * _fps) < index)
+			{
 				if (!_secondLens.Receive())
 					break;
+			}
+
 			return true;
 		}
 
@@ -506,14 +505,14 @@ public sealed unsafe class LibavVideoSource : IDisposable
 					return;
 				}
 
-				var size = _lenses.LensSize;
+				int size = _lenses.LensSize;
 				if (_lensPixels is null) _lensPixels = (byte*)NativeMemory.Alloc((nuint)(2L * size * size * 4));
 
 				LensImage front, back;
 				if (_secondLens is not null)
 				{
 					// The second stream is the front lens (v360's right half).
-					var lensBytes = (long)size * size * 4;
+					long lensBytes = (long)size * size * 4;
 					Scale(InMemory(_secondLens.Frame, _secondTransfer), _lensPixels, lensBytes, size * 4, size, size);
 					Scale(source, _lensPixels + lensBytes, lensBytes, size * 4, size, size);
 					front = new LensImage(_lensPixels, size * 4);

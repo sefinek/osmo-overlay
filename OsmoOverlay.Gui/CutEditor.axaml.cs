@@ -167,7 +167,7 @@ public partial class CutEditor : UserControl
 
 		var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,*,Auto"), ColumnSpacing = 6 };
 		Control[] cells = [number, from, new TextBlock { Text = "-", VerticalAlignment = VerticalAlignment.Center, Opacity = 0.55 }, to, remove];
-		for (var i = 0; i < cells.Length; i++)
+		for (int i = 0; i < cells.Length; i++)
 		{
 			Grid.SetColumn(cells[i], i);
 			row.Children.Add(cells[i]);
@@ -179,7 +179,7 @@ public partial class CutEditor : UserControl
 
 		number.Click += (_, _) =>
 		{
-			if (ReadFrame(from.Text, "", out var start) is null) SeekRequested?.Invoke(start);
+			if (ReadFrame(from.Text, "", out long start) is null) SeekRequested?.Invoke(start);
 		};
 		from.TextChanged += (_, _) => OnEdited(false);
 		to.TextChanged += (_, _) => OnEdited(false);
@@ -195,16 +195,18 @@ public partial class CutEditor : UserControl
 
 	private void RenumberRows()
 	{
-		for (var i = 0; i < CutRows.Children.Count; i++)
+		for (int i = 0; i < CutRows.Children.Count; i++)
+		{
 			if (CutRows.Children[i] is Grid { Children: [Button number, ..] })
 				number.Content = (i + 1).ToString();
+		}
 	}
 
 	private void OnEdited(bool immediately)
 	{
 		if (_populating) return;
 
-		var error = Validate(out List<FrameRange>? cuts);
+		string? error = Validate(out List<FrameRange>? cuts);
 		ShowError(error);
 
 		_applyDelay.Stop();
@@ -229,12 +231,12 @@ public partial class CutEditor : UserControl
 	{
 		cuts = null;
 		List<FrameRange> parsed = [];
-		for (var i = 0; i < _rows.Count; i++)
+		for (int i = 0; i < _rows.Count; i++)
 		{
 			(TextBox fromBox, TextBox toBox) = _rows[i];
-			var name = $"Cut {i + 1}";
-			if (ReadFrame(fromBox.Text, $"{name}: From", out var start) is { } fromError) return fromError;
-			if (ReadFrame(toBox.Text, $"{name}: To", out var end) is { } toError) return toError;
+			string name = $"Cut {i + 1}";
+			if (ReadFrame(fromBox.Text, $"{name}: From", out long start) is { } fromError) return fromError;
+			if (ReadFrame(toBox.Text, $"{name}: To", out long end) is { } toError) return toError;
 			if (start >= _totalFrames) return $"{name}: From is past the end of the recording ({TimeText.Format(_totalFrames / _fps)}).";
 			if (end <= start) return $"{name}: To must come after From.";
 
@@ -252,7 +254,7 @@ public partial class CutEditor : UserControl
 	{
 		frame = 0;
 		if (string.IsNullOrWhiteSpace(text)) return $"{name} is empty.";
-		if (!TimeText.TryParse(text, out var seconds)) return $"{name}: \"{text.Trim()}\" isn't a time - use e.g. 1:30 or 1:30.250.";
+		if (!TimeText.TryParse(text, out double seconds)) return $"{name}: \"{text.Trim()}\" isn't a time - use e.g. 1:30 or 1:30.250.";
 
 		frame = Math.Clamp((long)Math.Round(seconds * _fps), 0, _totalFrames);
 		return null;

@@ -42,22 +42,26 @@ public static class OverlayLayers
 		List<OverlayLayer> result = [];
 		HashSet<string> seen = [];
 		foreach (OverlayLayer layer in layers ?? [])
+		{
 			if (seen.Add(layer.Id))
 				result.Add(layer);
+		}
 
 		// Walked front to back (the layout's end first), so the missing layers land on top in their draw order.
-		var insertAt = 0;
-		foreach (var key in visible.Select(Key).Reverse().Distinct())
+		int insertAt = 0;
+		foreach (string key in visible.Select(Key).Reverse().Distinct())
+		{
 			if (seen.Add(key))
 				result.Insert(insertAt++, new OverlayLayer(key));
+		}
 
 		HashSet<string> used = [.. visible.Select(Key)];
 		result.RemoveAll(layer => !KeptWhenEmpty(layer) && !used.Contains(layer.Id));
 
 		List<OverlayElement> ordered = [.. elements.Where(e => !e.Visible)];
-		for (var i = result.Count - 1; i >= 0; i--)
+		for (int i = result.Count - 1; i >= 0; i--)
 		{
-			var id = result[i].Id;
+			string id = result[i].Id;
 			ordered.AddRange(visible.Where(e => Key(e) == id));
 		}
 
@@ -84,7 +88,7 @@ public static class OverlayLayers
 	{
 		if (layers is null || layers.Count == 0) return [];
 
-		var anySolo = layers.Any(l => l.Solo);
+		bool anySolo = layers.Any(l => l.Solo);
 		return [.. layers.Where(l => l.Muted || (anySolo && !l.Solo)).Select(l => l.Id)];
 	}
 }

@@ -29,14 +29,14 @@ public static class TelemetryProcessor
 	{
 		if (smoothGps) frames = GpsInterpolation.Apply(frames);
 
-		var cumulativeDistances = SteppedDistances(frames);
-		var refIndex = 0;
+		double[] cumulativeDistances = SteppedDistances(frames);
+		int refIndex = 0;
 
-		var speeds = new double[frames.Count];
-		var headings = new double[frames.Count];
-		var gradients = new double[frames.Count];
+		double[] speeds = new double[frames.Count];
+		double[] headings = new double[frames.Count];
+		double[] gradients = new double[frames.Count];
 
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
 			TelemetryFrame current = frames[i];
 
@@ -45,14 +45,14 @@ public static class TelemetryProcessor
 				refIndex++;
 			TelemetryFrame reference = frames[refIndex];
 
-			var dt = current.SampleTimeSeconds - reference.SampleTimeSeconds;
-			var horizontalMeters = TelemetryMath.HaversineMeters(
+			double dt = current.SampleTimeSeconds - reference.SampleTimeSeconds;
+			double horizontalMeters = TelemetryMath.HaversineMeters(
 				reference.Latitude, reference.Longitude, current.Latitude, current.Longitude);
-			var verticalMeters = current.AltitudeMeters - reference.AltitudeMeters;
+			double verticalMeters = current.AltitudeMeters - reference.AltitudeMeters;
 
 			// Prefer the GPS receiver's own measured velocity (when the camera records it) over
 			// differentiating position samples - it's not affected by GPS position quantization/lag.
-			var speedKmh = current.GpsSpeedMs is { } gpsSpeedMs
+			double speedKmh = current.GpsSpeedMs is { } gpsSpeedMs
 				? gpsSpeedMs * 3.6
 				: dt > 0
 					? horizontalMeters / dt * 3.6
@@ -68,19 +68,19 @@ public static class TelemetryProcessor
 		}
 
 		Direction[]? gravity = GravityOf(frames, camera);
-		var (roll, pitch) = gravity is null
+		(double[] roll, double[] pitch) = gravity is null
 			? (new double[frames.Count], new double[frames.Count])
 			: CameraTilt.Compute(frames, gravity, speeds, headings);
 
-		var originLat = frames[0].Latitude;
-		var originLon = frames[0].Longitude;
-		var metersPerDegLat = 111_320.0;
-		var metersPerDegLon = 111_320.0 * Math.Cos(AngleMath.DegToRad(originLat));
+		double originLat = frames[0].Latitude;
+		double originLon = frames[0].Longitude;
+		double metersPerDegLat = 111_320.0;
+		double metersPerDegLon = 111_320.0 * Math.Cos(AngleMath.DegToRad(originLat));
 
 		var result = new List<DerivedFrame>(frames.Count);
-		var smoothedGForce = 0.0;
+		double smoothedGForce = 0.0;
 
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
 			TelemetryFrame current = frames[i];
 
@@ -89,18 +89,20 @@ public static class TelemetryProcessor
 			if (i == 0 || current.StartsAfterGap)
 				smoothedGForce = current.GForce;
 			else
+			{
 				smoothedGForce += Ema(current.SampleTimeSeconds - frames[i - 1].SampleTimeSeconds, GForceTimeConstantSeconds) *
 				                  (current.GForce - smoothedGForce);
+			}
 
 			SunPosition sun = current.GpsTimestamp is { } ts
 				? SunCalculator.Calculate(DateTime.SpecifyKind(ts, DateTimeKind.Utc), current.Latitude,
 					current.Longitude)
 				: default;
 
-			var localEast = (current.Longitude - originLon) * metersPerDegLon;
-			var localNorth = (current.Latitude - originLat) * metersPerDegLat;
+			double localEast = (current.Longitude - originLon) * metersPerDegLon;
+			double localNorth = (current.Latitude - originLat) * metersPerDegLat;
 			// The G-meter's dot: sideways to the right, forward up.
-			var (lateral, longitudinal) = gravity is null ? (0, 0) : (gravity[i].X, -gravity[i].Z);
+			(double lateral, double longitudinal) = gravity is null ? (0, 0) : (gravity[i].X, -gravity[i].Z);
 
 			result.Add(new DerivedFrame(current, speeds[i], headings[i], gradients[i], cumulativeDistances[i], roll[i], pitch[i],
 				sun, localEast, localNorth, smoothedGForce, lateral, longitudinal, current.StartsAfterGap));
@@ -124,10 +126,10 @@ public static class TelemetryProcessor
 	/// </summary>
 	internal static double[] SteppedDistances(IReadOnlyList<TelemetryFrame> frames)
 	{
-		var distances = new double[frames.Count];
+		double[] distances = new double[frames.Count];
 		double total = 0;
-		var lastStep = 0;
-		for (var i = 1; i < frames.Count; i++)
+		int lastStep = 0;
+		for (int i = 1; i < frames.Count; i++)
 		{
 			if (frames[i].StartsAfterGap)
 			{
@@ -140,7 +142,7 @@ public static class TelemetryProcessor
 				continue;
 			}
 
-			var isLast = i == frames.Count - 1;
+			bool isLast = i == frames.Count - 1;
 			if (frames[i].SampleTimeSeconds - frames[lastStep].SampleTimeSeconds >= SpeedWindowSeconds || isLast)
 			{
 				total += TelemetryMath.HaversineMeters(frames[lastStep].Latitude, frames[lastStep].Longitude,
@@ -167,11 +169,11 @@ public static class TelemetryProcessor
 	/// <summary>Index of the first frame at or after `seconds` (the last one past the end) - frames must be sorted by SampleTimeSeconds.</summary>
 	public static int FindIndex(IReadOnlyList<DerivedFrame> frames, double seconds)
 	{
-		var lo = 0;
-		var hi = frames.Count - 1;
+		int lo = 0;
+		int hi = frames.Count - 1;
 		while (lo < hi)
 		{
-			var mid = (lo + hi) / 2;
+			int mid = (lo + hi) / 2;
 			if (frames[mid].Raw.SampleTimeSeconds < seconds) lo = mid + 1;
 			else hi = mid;
 		}
@@ -204,16 +206,16 @@ public static class TelemetryProcessor
 		var ranges = new List<(double Start, double End)>();
 		double? rangeStart = null;
 
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
+		{
 			if (!frames[i].HasGpsFix)
-			{
 				rangeStart ??= frames[i].SampleTimeSeconds;
-			}
 			else if (rangeStart is { } start)
 			{
 				ranges.Add((start, frames[i - 1].SampleTimeSeconds));
 				rangeStart = null;
 			}
+		}
 
 		if (rangeStart is { } tailStart) ranges.Add((tailStart, frames[^1].SampleTimeSeconds));
 
@@ -225,10 +227,10 @@ public static class TelemetryProcessor
 		DerivedFrame first = frames[0];
 		DerivedFrame last = frames[^1];
 
-		var minAltitude = double.MaxValue;
-		var maxAltitude = double.MinValue;
-		var maxSpeed = 0.0;
-		var maxGForce = 0.0;
+		double minAltitude = double.MaxValue;
+		double maxAltitude = double.MinValue;
+		double maxSpeed = 0.0;
+		double maxGForce = 0.0;
 
 		foreach (DerivedFrame f in frames)
 		{

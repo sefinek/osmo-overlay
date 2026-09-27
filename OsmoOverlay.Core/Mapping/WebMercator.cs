@@ -16,11 +16,11 @@ public static class WebMercator
 	/// <summary>World pixel X/Y at the given zoom - the coordinate space tile images are laid out in.</summary>
 	public static (double X, double Y) LatLonToWorldPixel(double lat, double lon, int zoom)
 	{
-		var latRad = AngleMath.DegToRad(lat);
-		var scale = TileSize * Math.Pow(2, zoom);
+		double latRad = AngleMath.DegToRad(lat);
+		double scale = TileSize * Math.Pow(2, zoom);
 
-		var x = (lon + 180.0) / 360.0 * scale;
-		var y = (1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * scale;
+		double x = (lon + 180.0) / 360.0 * scale;
+		double y = (1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * scale;
 		return (x, y);
 	}
 

@@ -42,21 +42,18 @@ internal sealed class Mp4Box
 	public static List<Mp4Box> ParseChildren(ReadOnlySpan<byte> data)
 	{
 		List<Mp4Box> boxes = [];
-		var pos = 0;
+		int pos = 0;
 		while (pos + 8 <= data.Length)
 		{
 			long size = BinaryPrimitives.ReadUInt32BigEndian(data[pos..]);
-			var type = Encoding.Latin1.GetString(data.Slice(pos + 4, 4));
-			var header = 8;
+			string type = Encoding.Latin1.GetString(data.Slice(pos + 4, 4));
+			int header = 8;
 			if (size == 1)
 			{
 				size = (long)BinaryPrimitives.ReadUInt64BigEndian(data[(pos + 8)..]);
 				header = 16;
 			}
-			else if (size == 0)
-			{
-				size = data.Length - pos;
-			}
+			else if (size == 0) size = data.Length - pos;
 
 			if (size < header || pos + size > data.Length)
 				throw new InvalidDataException($"Malformed MP4 box '{type}' at offset {pos}.");
@@ -76,7 +73,7 @@ internal sealed class Mp4Box
 	public Mp4Box? Find(params string[] path)
 	{
 		Mp4Box? current = this;
-		foreach (var type in path)
+		foreach (string type in path)
 		{
 			current = current?.Child(type);
 			if (current is null) return null;
@@ -99,8 +96,10 @@ internal sealed class Mp4Box
 		if (Payload is not null)
 			stream.Write(Payload);
 		else
+		{
 			foreach (Mp4Box child in Children!)
 				child.WriteTo(stream);
+		}
 	}
 
 	public byte[] ToBytes()
@@ -120,25 +119,22 @@ internal static class Mp4File
 	{
 		List<Mp4TopLevelBox> boxes = [];
 		Span<byte> header = stackalloc byte[16];
-		var pos = 0L;
-		var length = stream.Length;
+		long pos = 0L;
+		long length = stream.Length;
 		while (pos + 8 <= length)
 		{
 			stream.Position = pos;
 			stream.ReadExactly(header[..8]);
 			long size = BinaryPrimitives.ReadUInt32BigEndian(header);
-			var type = Encoding.Latin1.GetString(header.Slice(4, 4));
-			var headerSize = 8;
+			string type = Encoding.Latin1.GetString(header.Slice(4, 4));
+			int headerSize = 8;
 			if (size == 1)
 			{
 				stream.ReadExactly(header.Slice(8, 8));
 				size = (long)BinaryPrimitives.ReadUInt64BigEndian(header[8..]);
 				headerSize = 16;
 			}
-			else if (size == 0)
-			{
-				size = length - pos;
-			}
+			else if (size == 0) size = length - pos;
 
 			if (size < headerSize || pos + size > length)
 				throw new InvalidDataException($"Malformed top-level MP4 box '{type}' at offset {pos}.");
@@ -152,7 +148,7 @@ internal static class Mp4File
 
 	public static Mp4Box ReadMoov(Stream stream, Mp4TopLevelBox moov)
 	{
-		var payload = new byte[moov.Size - moov.HeaderSize];
+		byte[] payload = new byte[moov.Size - moov.HeaderSize];
 		stream.Position = moov.Offset + moov.HeaderSize;
 		stream.ReadExactly(payload);
 		return Mp4Box.Parse("moov", payload);
@@ -164,25 +160,25 @@ internal static class Mp4Fields
 {
 	public static uint MovieTimescale(Mp4Box mvhd)
 	{
-		var p = mvhd.Payload!;
+		byte[] p = mvhd.Payload!;
 		return BinaryPrimitives.ReadUInt32BigEndian(p.AsSpan(p[0] == 1 ? 20 : 12));
 	}
 
 	public static uint NextTrackId(Mp4Box mvhd)
 	{
-		var p = mvhd.Payload!;
+		byte[] p = mvhd.Payload!;
 		return BinaryPrimitives.ReadUInt32BigEndian(p.AsSpan(p.Length - 4));
 	}
 
 	public static void SetNextTrackId(Mp4Box mvhd, uint id)
 	{
-		var p = mvhd.Payload!;
+		byte[] p = mvhd.Payload!;
 		BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(p.Length - 4), id);
 	}
 
 	public static (uint Timescale, ulong Duration) MediaTiming(Mp4Box mdhd)
 	{
-		var p = mdhd.Payload!;
+		byte[] p = mdhd.Payload!;
 		return p[0] == 1
 			? (BinaryPrimitives.ReadUInt32BigEndian(p.AsSpan(20)), BinaryPrimitives.ReadUInt64BigEndian(p.AsSpan(24)))
 			: (BinaryPrimitives.ReadUInt32BigEndian(p.AsSpan(12)), BinaryPrimitives.ReadUInt32BigEndian(p.AsSpan(16)));
@@ -190,14 +186,14 @@ internal static class Mp4Fields
 
 	public static void SetMediaDuration(Mp4Box mdhd, ulong duration)
 	{
-		var p = mdhd.Payload!;
+		byte[] p = mdhd.Payload!;
 		if (p[0] == 1) BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(24), duration);
 		else BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(16), (uint)Math.Min(duration, uint.MaxValue));
 	}
 
 	public static void SetTrackIdAndDuration(Mp4Box tkhd, uint trackId, ulong duration)
 	{
-		var p = tkhd.Payload!;
+		byte[] p = tkhd.Payload!;
 		if (p[0] == 1)
 		{
 			BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(20), trackId);
@@ -213,16 +209,16 @@ internal static class Mp4Fields
 	/// <summary>The four-character code of the first sample entry in an stsd box (e.g. "djmd", "hvc1").</summary>
 	public static string? SampleEntryFormat(Mp4Box stsd)
 	{
-		var p = stsd.Payload!;
+		byte[] p = stsd.Payload!;
 		return p.Length >= 16 ? Encoding.Latin1.GetString(p, 12, 4) : null;
 	}
 
 	public static List<(uint Count, uint Delta)> ReadStts(Mp4Box stts)
 	{
 		Span<byte> p = stts.Payload!.AsSpan();
-		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		List<(uint, uint)> entries = new((int)count);
-		for (var i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 			entries.Add((BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 8)..]), BinaryPrimitives.ReadUInt32BigEndian(p[(12 + i * 8)..])));
 		return entries;
 	}
@@ -230,10 +226,10 @@ internal static class Mp4Fields
 	public static uint[] ReadSampleSizes(Mp4Box stsz)
 	{
 		Span<byte> p = stsz.Payload!.AsSpan();
-		var uniform = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
-		var count = BinaryPrimitives.ReadUInt32BigEndian(p[8..]);
-		var sizes = new uint[count];
-		for (var i = 0; i < count; i++)
+		uint uniform = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[8..]);
+		uint[] sizes = new uint[count];
+		for (int i = 0; i < count; i++)
 			sizes[i] = uniform != 0 ? uniform : BinaryPrimitives.ReadUInt32BigEndian(p[(12 + i * 4)..]);
 		return sizes;
 	}
@@ -241,9 +237,9 @@ internal static class Mp4Fields
 	public static List<(uint FirstChunk, uint SamplesPerChunk)> ReadStsc(Mp4Box stsc)
 	{
 		Span<byte> p = stsc.Payload!.AsSpan();
-		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		List<(uint, uint)> entries = new((int)count);
-		for (var i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 			entries.Add((BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 12)..]), BinaryPrimitives.ReadUInt32BigEndian(p[(12 + i * 12)..])));
 		return entries;
 	}
@@ -251,22 +247,25 @@ internal static class Mp4Fields
 	public static ulong[] ReadChunkOffsets(Mp4Box stcoOrCo64)
 	{
 		Span<byte> p = stcoOrCo64.Payload!.AsSpan();
-		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
-		var offsets = new ulong[count];
-		var is64 = stcoOrCo64.Type == "co64";
-		for (var i = 0; i < count; i++)
+		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		ulong[] offsets = new ulong[count];
+		bool is64 = stcoOrCo64.Type == "co64";
+		for (int i = 0; i < count; i++)
 			offsets[i] = is64 ? BinaryPrimitives.ReadUInt64BigEndian(p[(8 + i * 8)..]) : BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 4)..]);
 		return offsets;
 	}
 
 	public static Mp4Box ChunkOffsetBox(IReadOnlyList<ulong> offsets, bool use64)
 	{
-		var entrySize = use64 ? 8 : 4;
-		var p = new byte[8 + offsets.Count * entrySize];
+		int entrySize = use64 ? 8 : 4;
+		byte[] p = new byte[8 + offsets.Count * entrySize];
 		BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(4), (uint)offsets.Count);
-		for (var i = 0; i < offsets.Count; i++)
+		for (int i = 0; i < offsets.Count; i++)
+		{
 			if (use64) BinaryPrimitives.WriteUInt64BigEndian(p.AsSpan(8 + i * 8), offsets[i]);
 			else BinaryPrimitives.WriteUInt32BigEndian(p.AsSpan(8 + i * 4), (uint)offsets[i]);
+		}
+
 		return Mp4Box.Leaf(use64 ? "co64" : "stco", p);
 	}
 
@@ -274,9 +273,9 @@ internal static class Mp4Fields
 	{
 		if (stss is null) return null;
 		Span<byte> p = stss.Payload!.AsSpan();
-		var count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
-		var samples = new uint[count];
-		for (var i = 0; i < count; i++) samples[i] = BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 4)..]);
+		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint[] samples = new uint[count];
+		for (int i = 0; i < count; i++) samples[i] = BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 4)..]);
 		return samples;
 	}
 }

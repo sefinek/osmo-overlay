@@ -47,7 +47,7 @@ public sealed class RotationTests
 	[TestMethod]
 	public void Leveling_KeepsLengths()
 	{
-		Rotation r = Rotation.Leveling(new Direction(0.4, 0.8, -0.3));
+		var r = Rotation.Leveling(new Direction(0.4, 0.8, -0.3));
 		var probe = new Direction(0.2, -0.7, 0.1);
 
 		Assert.AreEqual(probe.Length, r.Apply(probe).Length, 1e-9);

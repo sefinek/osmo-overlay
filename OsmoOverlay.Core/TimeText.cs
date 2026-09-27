@@ -14,12 +14,12 @@ public static class TimeText
 		seconds = 0;
 		if (string.IsNullOrWhiteSpace(text)) return false;
 
-		var parts = text.Trim().Replace(',', '.').Split(':');
+		string[] parts = text.Trim().Replace(',', '.').Split(':');
 		if (parts.Length > 3) return false;
 
-		for (var i = 0; i < parts.Length; i++)
+		for (int i = 0; i < parts.Length; i++)
 		{
-			if (!double.TryParse(parts[i], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var value)) return false;
+			if (!double.TryParse(parts[i], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double value)) return false;
 			// Only the last part may carry a fraction, and minutes/seconds after the first part stay below 60.
 			if (i < parts.Length - 1 && value != Math.Floor(value)) return false;
 			if (i > 0 && value >= 60) return false;
@@ -32,7 +32,7 @@ public static class TimeText
 	/// <summary>"01:30.250", or "1:02:03.250" from an hour on - millisecond precision, finer than a frame.</summary>
 	public static string Format(double seconds)
 	{
-		TimeSpan time = TimeSpan.FromSeconds(Math.Round(Math.Max(0, seconds), 3));
+		var time = TimeSpan.FromSeconds(Math.Round(Math.Max(0, seconds), 3));
 		return time.ToString(time.TotalHours >= 1 ? @"h\:mm\:ss\.fff" : @"mm\:ss\.fff", CultureInfo.InvariantCulture);
 	}
 }

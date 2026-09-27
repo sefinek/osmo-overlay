@@ -76,10 +76,7 @@ internal sealed class PlaybackClock
 	{
 		get
 		{
-			lock (_lock)
-			{
-				return _followsAudio;
-			}
+			lock (_lock) return _followsAudio;
 		}
 	}
 
@@ -90,11 +87,11 @@ internal sealed class PlaybackClock
 		{
 			lock (_lock)
 			{
-				var wall = _wallSeconds();
+				double wall = _wallSeconds();
 				double now;
 				if (_followsAudio)
 				{
-					var device = DevicePosition(out var queued);
+					double device = DevicePosition(out double queued);
 					now = Smooth(device, wall);
 					if (_audioFinished && queued <= 0)
 					{
@@ -104,9 +101,7 @@ internal sealed class PlaybackClock
 					}
 				}
 				else
-				{
 					now = _stopwatchBase + (wall - _stopwatchStart) * _rate;
-				}
 
 				_lastNow = Math.Max(_lastNow, Math.Max(0, now));
 				return _lastNow;
@@ -123,28 +118,19 @@ internal sealed class PlaybackClock
 	{
 		get
 		{
-			lock (_lock)
-			{
-				return _followsAudio && !_audioFinished ? Math.Max(0, DevicePosition(out _)) : null;
-			}
+			lock (_lock) return _followsAudio && !_audioFinished ? Math.Max(0, DevicePosition(out _)) : null;
 		}
 	}
 
 	/// <summary>Sample frames of (tempo-changed) sound pushed to the device.</summary>
 	public void AddPushed(int sampleFrames)
 	{
-		lock (_lock)
-		{
-			_pushedFrames += sampleFrames;
-		}
+		lock (_lock) _pushedFrames += sampleFrames;
 	}
 
 	public void AudioFinished()
 	{
-		lock (_lock)
-		{
-			_audioFinished = true;
-		}
+		lock (_lock) _audioFinished = true;
 	}
 
 	/// <summary>With the first frame: the device starts playing what's already queued, or the stopwatch starts.</summary>
@@ -159,9 +145,7 @@ internal sealed class PlaybackClock
 				_audio!.Start();
 			}
 			else
-			{
 				StartStopwatch(playTime, _wallSeconds());
-			}
 		}
 	}
 
@@ -192,7 +176,7 @@ internal sealed class PlaybackClock
 		{
 			if (!_followsAudio)
 			{
-				var wall = _wallSeconds();
+				double wall = _wallSeconds();
 				StartStopwatch(_stopwatchBase + (wall - _stopwatchStart) * _rate, wall);
 			}
 
@@ -223,7 +207,7 @@ internal sealed class PlaybackClock
 
 	private double Smooth(double device, double wall)
 	{
-		var target = device + _audio!.DeviceLatencySeconds / 2 * _audioRate;
+		double target = device + _audio!.DeviceLatencySeconds / 2 * _audioRate;
 		if (!_smoothing)
 		{
 			_smoothing = true;
@@ -231,8 +215,8 @@ internal sealed class PlaybackClock
 			return target;
 		}
 
-		var predicted = _smoothBase + (wall - _smoothWall) * _audioRate;
-		var error = target - predicted;
+		double predicted = _smoothBase + (wall - _smoothWall) * _audioRate;
+		double error = target - predicted;
 		_smoothBase = Math.Abs(error) > ResyncSeconds ? target : predicted + error * SlewFactor;
 		_smoothWall = wall;
 		return _smoothBase;

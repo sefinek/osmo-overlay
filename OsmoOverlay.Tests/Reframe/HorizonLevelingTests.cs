@@ -29,7 +29,7 @@ public sealed class HorizonLevelingTests
 	public void MapsTheX4sAxes_DownIsZMinusXY()
 	{
 		// The accelerometer reading (x, y, z) = (0, 0, 1): down in v360's space is (z, -x, y) = (1, 0, 0) - to the right.
-		HorizonLeveling leveling = HorizonLeveling.For([Frame(0, 0, 0, 0, 1)], new Insta360Format())!;
+		var leveling = HorizonLeveling.For([Frame(0, 0, 0, 0, 1)], new Insta360Format())!;
 
 		Direction down = leveling.At(0).Apply(new Direction(0, 1, 0));
 		Assert.AreEqual(1, down.X, 1e-9);
@@ -42,7 +42,7 @@ public sealed class HorizonLevelingTests
 	{
 		// Level (down = (0, 1, 0), i.e. accel (-1, 0, 0)) except one frame jolted sideways - the second around it outweighs it.
 		List<TelemetryFrame> frames = [.. Enumerable.Range(0, 120).Select(i => i == 60 ? Frame(i, i / 60.0, 0, 0, 5) : Frame(i, i / 60.0, -1, 0, 0))];
-		HorizonLeveling leveling = HorizonLeveling.For(frames, new Insta360Format())!;
+		var leveling = HorizonLeveling.For(frames, new Insta360Format())!;
 
 		Direction down = leveling.At(1.0).Apply(new Direction(0, 1, 0));
 		Assert.IsTrue(down.Y > 0.99, $"a single jolt barely tilts it: {down}");

@@ -19,7 +19,7 @@ public sealed class OutputTimeline
 		_fps = fps;
 		_outputStartFrames = new long[plan.Pieces.Count];
 		long outputFrame = 0;
-		for (var i = 0; i < plan.Pieces.Count; i++)
+		for (int i = 0; i < plan.Pieces.Count; i++)
 		{
 			_outputStartFrames[i] = outputFrame;
 			outputFrame += plan.Pieces[i].FrameCount;
@@ -34,8 +34,8 @@ public sealed class OutputTimeline
 	/// <summary>Where a moment of the recording lands in the output, or null if it was cut out.</summary>
 	public double? ToOutputSeconds(double recordingSeconds)
 	{
-		var frame = recordingSeconds * _fps;
-		for (var i = 0; i < Plan.Pieces.Count; i++)
+		double frame = recordingSeconds * _fps;
+		for (int i = 0; i < Plan.Pieces.Count; i++)
 		{
 			RenderPiece piece = Plan.Pieces[i];
 			// Half a frame of slack on each side: preview positions sit a little off exact frame times.
@@ -55,10 +55,12 @@ public sealed class OutputTimeline
 	{
 		if (ToOutputSeconds(recordingSeconds) is { } output) return output;
 
-		var frame = recordingSeconds * _fps;
-		for (var i = 0; i < Plan.Pieces.Count; i++)
+		double frame = recordingSeconds * _fps;
+		for (int i = 0; i < Plan.Pieces.Count; i++)
+		{
 			if (frame < Plan.Pieces[i].SourceStartFrame)
 				return _outputStartFrames[i] / _fps;
+		}
 
 		return Plan.TotalFrames / _fps;
 	}
@@ -66,8 +68,8 @@ public sealed class OutputTimeline
 	/// <summary>The moment of the recording shown at a time of the output - the output's end maps to the last piece's end.</summary>
 	public double ToRecordingSeconds(double outputSeconds)
 	{
-		var frame = Math.Max(0, outputSeconds * _fps);
-		for (var i = 0; i < Plan.Pieces.Count; i++)
+		double frame = Math.Max(0, outputSeconds * _fps);
+		for (int i = 0; i < Plan.Pieces.Count; i++)
 		{
 			RenderPiece piece = Plan.Pieces[i];
 			if (frame < _outputStartFrames[i] + piece.FrameCount || i == Plan.Pieces.Count - 1)
@@ -84,12 +86,12 @@ public sealed class OutputTimeline
 	/// </summary>
 	public (double Start, double End)? NextKeptStretch(double recordingSeconds)
 	{
-		var frame = recordingSeconds * _fps;
+		double frame = recordingSeconds * _fps;
 		foreach (RenderPiece piece in Plan.Pieces)
 		{
 			if (frame >= piece.SourceEndFrame - 0.5) continue;
 
-			var start = frame >= piece.SourceStartFrame - 0.5 ? recordingSeconds : piece.SourceStartFrame / _fps;
+			double start = frame >= piece.SourceStartFrame - 0.5 ? recordingSeconds : piece.SourceStartFrame / _fps;
 			return (start, piece.SourceEndFrame / _fps);
 		}
 
@@ -108,24 +110,24 @@ public sealed class OutputTimeline
 		List<DerivedFrame> output = [];
 		double distanceBefore = 0;
 
-		for (var p = 0; p < Plan.Pieces.Count; p++)
+		for (int p = 0; p < Plan.Pieces.Count; p++)
 		{
 			RenderPiece piece = Plan.Pieces[p];
-			var pieceStart = piece.SourceStartFrame / _fps;
-			var pieceEnd = piece.SourceEndFrame / _fps;
-			var outputStart = _outputStartFrames[p] / _fps;
+			double pieceStart = piece.SourceStartFrame / _fps;
+			double pieceEnd = piece.SourceEndFrame / _fps;
+			double outputStart = _outputStartFrames[p] / _fps;
 
-			var first = TelemetryProcessor.FindIndex(recording, pieceStart - 0.5 / _fps);
+			int first = TelemetryProcessor.FindIndex(recording, pieceStart - 0.5 / _fps);
 			List<DerivedFrame> kept = [];
-			for (var i = first; i < recording.Count && recording[i].Raw.SampleTimeSeconds < pieceEnd - 0.5 / _fps; i++)
+			for (int i = first; i < recording.Count && recording[i].Raw.SampleTimeSeconds < pieceEnd - 0.5 / _fps; i++)
 				kept.Add(recording[i]);
 			if (kept.Count == 0) continue;
 
-			var distances = TelemetryProcessor.SteppedDistances([.. kept.Select(f => f.Raw)]);
-			for (var i = 0; i < kept.Count; i++)
+			double[] distances = TelemetryProcessor.SteppedDistances([.. kept.Select(f => f.Raw)]);
+			for (int i = 0; i < kept.Count; i++)
 			{
 				DerivedFrame frame = kept[i];
-				var outputSeconds = outputStart + Math.Max(0, frame.Raw.SampleTimeSeconds - pieceStart);
+				double outputSeconds = outputStart + Math.Max(0, frame.Raw.SampleTimeSeconds - pieceStart);
 				output.Add(frame with
 				{
 					Raw = frame.Raw with { SampleTimeSeconds = outputSeconds, SourceTimeSeconds = frame.Raw.RecordingTimeSeconds },

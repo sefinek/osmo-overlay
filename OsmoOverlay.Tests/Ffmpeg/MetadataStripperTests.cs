@@ -31,7 +31,7 @@ public sealed class MetadataStripperTests
 	private static JsonObject Tagged(JsonObject stream, params (string Key, string Value)[] tags)
 	{
 		var t = new JsonObject();
-		foreach (var (k, v) in tags) t[k] = v;
+		foreach ((string k, string v) in tags) t[k] = v;
 		stream["tags"] = t;
 		return stream;
 	}
@@ -153,7 +153,7 @@ public sealed class MetadataStripperTests
 
 	private static void AssertRejected(JsonObject output, string reasonFragment)
 	{
-		var ex = Assert.ThrowsExactly<InvalidOperationException>(() => MetadataStripper.Verify(Source(), output));
+		InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(() => MetadataStripper.Verify(Source(), output));
 		StringAssert.Contains(ex.Message, reasonFragment);
 	}
 }

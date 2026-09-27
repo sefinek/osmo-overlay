@@ -110,7 +110,7 @@ public static class RenderSpeedHistory
 
 	public static double? TryGet(string key)
 	{
-		return OverlaySettingsStore.Load().RenderFpsHistory?.TryGetValue(key, out var fps) == true ? fps : null;
+		return OverlaySettingsStore.Load().RenderFpsHistory?.TryGetValue(key, out double fps) == true ? fps : null;
 	}
 
 	public static void Record(string key, double fps)
@@ -141,7 +141,7 @@ public static class OverlaySettingsStore
 		{
 			if (File.Exists(StorePath))
 			{
-				var settings = JsonSerializer.Deserialize<OverlaySettings>(File.ReadAllText(StorePath));
+				OverlaySettings? settings = JsonSerializer.Deserialize<OverlaySettings>(File.ReadAllText(StorePath));
 				if (settings is not null) return settings;
 			}
 		}

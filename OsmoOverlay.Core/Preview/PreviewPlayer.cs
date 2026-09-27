@@ -93,7 +93,7 @@ public sealed class PreviewPlayer : IDisposable
 	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight)
 	{
 		Close();
-		var generation = _openGeneration;
+		int generation = _openGeneration;
 
 		if (summary.TelemetryFrames is not { Count: > 0 } rawFrames)
 			throw new InvalidOperationException("File has no telemetry to preview.");
@@ -102,9 +102,9 @@ public sealed class PreviewPlayer : IDisposable
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		ICameraFormat? camera = summary.CameraFormat;
 		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion);
-		OverlayAvailability availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
+		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
-		Reframer? reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
+		var reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
 		var pool = new FrameBufferPool(PooledFrames);
 
 		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread.
@@ -122,10 +122,10 @@ public sealed class PreviewPlayer : IDisposable
 		AppLogger.Info($"Preview decoder: {video.DecoderDescription}");
 		audioOutput?.SetGain(_audioGain);
 
-		var (width, height) = (summary.Video.Width, summary.Video.Height);
-		(List<OverlayPreset> presets, var activeId) = OverlayPresetStore.Load(width, height);
+		(int width, int height) = (summary.Video.Width, summary.Video.Height);
+		(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load(width, height);
 		IReadOnlyList<OverlayElement> layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
-		RouteIntroSettings routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix);
+		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix);
 		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
 				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark, summary.CameraModel,
 				summary.ContainerRecordingStartUtc, settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution,
@@ -208,7 +208,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		if (source is null) return (null, null);
 
-		AudioOutput? output = AudioOutput.TryOpen(source.SampleRate, source.Channels);
+		var output = AudioOutput.TryOpen(source.SampleRate, source.Channels);
 		if (output is not null) return (source, output);
 
 		source.Dispose();
@@ -232,7 +232,7 @@ public sealed class PreviewPlayer : IDisposable
 		// frame on screen again (StopSession).
 		recording.Compositor.ClearStill();
 
-		PlaybackPlan plan = PlaybackPlan.For(_outputTimeline, fromPosition, recording.Video.Duration, Loop, LoopRange);
+		var plan = PlaybackPlan.For(_outputTimeline, fromPosition, recording.Video.Duration, Loop, LoopRange);
 		var session = new PlaybackSession(recording.Video, recording.AudioSource, recording.AudioOutput, recording.Compositor,
 			recording.Pool, plan, PlaybackRate);
 		_session = session;
@@ -297,7 +297,7 @@ public sealed class PreviewPlayer : IDisposable
 		if (loop == Loop && range == LoopRange) return;
 
 		// A new range only matters to a playback that loops (or did until now).
-		var affectsPlayback = loop || Loop;
+		bool affectsPlayback = loop || Loop;
 		Loop = loop;
 		LoopRange = range;
 		if (affectsPlayback && _session is { } session) Play(session.Position);
@@ -420,7 +420,7 @@ public sealed class PreviewPlayer : IDisposable
 	private static byte[] EncodePng(byte[] bgra, int width, int height)
 	{
 		var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
-		GCHandle pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
+		var pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
 		try
 		{
 			using var pixmap = new SKPixmap(info, pin.AddrOfPinnedObject(), info.RowBytes);
@@ -460,7 +460,7 @@ public sealed class PreviewPlayer : IDisposable
 			while (_pendingSeek is { } request && _recording is { } recording)
 			{
 				_pendingSeek = null;
-				var generation = _seekGeneration;
+				int generation = _seekGeneration;
 				CancellationToken ct = _seekCts.Token;
 
 				ComposedPreviewFrame? composed;

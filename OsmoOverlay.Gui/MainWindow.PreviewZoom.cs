@@ -49,8 +49,8 @@ public partial class MainWindow
 	{
 		if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || GetPreviewTransform() is not { } t) return;
 
-		var current = t.Scale * UiScale.DeviceScaling(this) / t.FullResScale;
-		var zoom = current * Math.Pow(WheelZoomStep, e.Delta.Y);
+		double current = t.Scale * UiScale.DeviceScaling(this) / t.FullResScale;
+		double zoom = current * Math.Pow(WheelZoomStep, e.Delta.Y);
 		SetPreviewZoom(zoom <= FitZoom() ? null : Math.Min(zoom, MaxPreviewZoom), e.GetPosition(OverlayDragCanvas));
 		e.Handled = true;
 	}
@@ -60,8 +60,8 @@ public partial class MainWindow
 	{
 		if (_summary is null || _previewFrameSize is not { } frameSize) return 0;
 
-		var bitmapWidth = frameSize.Width;
-		var fitScale = Math.Min(OverlayDragCanvas.Bounds.Width / bitmapWidth, OverlayDragCanvas.Bounds.Height / frameSize.Height);
+		int bitmapWidth = frameSize.Width;
+		double fitScale = Math.Min(OverlayDragCanvas.Bounds.Width / bitmapWidth, OverlayDragCanvas.Bounds.Height / frameSize.Height);
 		return fitScale * UiScale.DeviceScaling(this) * bitmapWidth / _summary.Video.Width;
 	}
 
@@ -77,7 +77,7 @@ public partial class MainWindow
 			_previewPan += pivot - moved;
 
 		_suppressPreviewZoomEvent = true;
-		var preset = Array.IndexOf(PreviewZoomLevels, zoom);
+		int preset = Array.IndexOf(PreviewZoomLevels, zoom);
 		PreviewZoomCombo.SelectedIndex = preset;
 		PreviewZoomCombo.PlaceholderText = preset < 0 && zoom is { } custom ? $"{custom:P0}" : null;
 		_suppressPreviewZoomEvent = false;
@@ -110,8 +110,8 @@ public partial class MainWindow
 		_previewPan = default;
 		if (_previewZoom is null || GetPreviewTransform() is not { } t) return;
 
-		var maxX = Math.Max(0, (t.RenderedWidth - OverlayDragCanvas.Bounds.Width) / 2);
-		var maxY = Math.Max(0, (t.RenderedHeight - OverlayDragCanvas.Bounds.Height) / 2);
+		double maxX = Math.Max(0, (t.RenderedWidth - OverlayDragCanvas.Bounds.Width) / 2);
+		double maxY = Math.Max(0, (t.RenderedHeight - OverlayDragCanvas.Bounds.Height) / 2);
 		_previewPan = new Vector(Math.Clamp(pan.X, -maxX, maxX), Math.Clamp(pan.Y, -maxY, maxY));
 	}
 

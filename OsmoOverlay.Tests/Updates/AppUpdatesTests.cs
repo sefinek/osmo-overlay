@@ -23,7 +23,7 @@ public sealed class AppUpdatesTests
 
 	private static string Asset(string name, string? digest = null)
 	{
-		var digestField = digest is null ? "" : $"\"digest\": \"{digest}\",";
+		string digestField = digest is null ? "" : $"\"digest\": \"{digest}\",";
 		return $$"""{ "name": "{{name}}", {{digestField}} "size": 1234, "browser_download_url": "https://example.test/{{name}}" }""";
 	}
 
@@ -43,7 +43,7 @@ public sealed class AppUpdatesTests
 			Asset("OsmoOverlay-0.2.0-win-x64-setup.exe", "sha256:" + new string('A', 64)),
 			Asset("OsmoOverlay-0.2.0-win-x64-self-contained.zip")));
 
-		(AppRelease release, var sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
+		(AppRelease release, string? sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
 
 		Assert.AreEqual(new Version(0, 2, 0), release.Version);
 		Assert.AreEqual("OsmoOverlay-0.2.0-win-x64-setup.exe", release.Installer?.Name);
@@ -60,7 +60,7 @@ public sealed class AppUpdatesTests
 			Asset("OsmoOverlay-0.2.0-win-x64-setup.exe"),
 			Asset("OsmoOverlay-0.2.0-SHA256SUMS.txt")));
 
-		(AppRelease release, var sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
+		(AppRelease release, string? sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
 
 		Assert.IsNull(release.Installer?.Sha256);
 		Assert.AreEqual("https://example.test/OsmoOverlay-0.2.0-SHA256SUMS.txt", sumsUrl);

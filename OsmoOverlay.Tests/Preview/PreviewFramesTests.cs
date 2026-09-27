@@ -11,7 +11,7 @@ public sealed class PreviewFramesTests
 	public void StepPosition_IsItsOwnFrame()
 	{
 		// Frame stepping seeks a quarter frame before a frame's start (the GUI's SeekToFrame).
-		foreach (var frame in new long[] { 1, 59, 3596, 11954 })
+		foreach (long frame in new long[] { 1, 59, 3596, 11954 })
 			Assert.AreEqual(frame, PreviewFrames.IndexAt((frame - 0.25) / Fps, Fps));
 	}
 

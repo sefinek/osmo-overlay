@@ -46,10 +46,7 @@ public sealed class TimelineThumbnails : IDisposable
 	/// <summary>BGRA, Width x Height - null until generated.</summary>
 	public byte[]? TryGet(int slot)
 	{
-		lock (_lock)
-		{
-			return _thumbnails.GetValueOrDefault(slot);
-		}
+		lock (_lock) return _thumbnails.GetValueOrDefault(slot);
 	}
 
 	/// <summary>The generated slot nearest to this one, at most maxDistance away (the earlier one on a tie); null when none is.</summary>
@@ -59,7 +56,7 @@ public sealed class TimelineThumbnails : IDisposable
 		{
 			if (_thumbnails.ContainsKey(slot)) return slot;
 
-			for (var distance = 1; distance <= maxDistance; distance++)
+			for (int distance = 1; distance <= maxDistance; distance++)
 			{
 				if (_thumbnails.ContainsKey(slot - distance)) return slot - distance;
 				if (_thumbnails.ContainsKey(slot + distance)) return slot + distance;
@@ -72,10 +69,7 @@ public sealed class TimelineThumbnails : IDisposable
 	/// <summary>Replaces what's waiting to be generated with these slots, in this order (the ones already done are skipped).</summary>
 	public void Request(IEnumerable<int> slots)
 	{
-		lock (_lock)
-		{
-			_wanted = new Queue<int>(slots.Where(s => s >= 0 && s < Count && !_thumbnails.ContainsKey(s)).Distinct());
-		}
+		lock (_lock) _wanted = new Queue<int>(slots.Where(s => s >= 0 && s < Count && !_thumbnails.ContainsKey(s)).Distinct());
 
 		if (_wake.CurrentCount == 0) _wake.Release();
 	}
@@ -93,12 +87,9 @@ public sealed class TimelineThumbnails : IDisposable
 					VideoFrame? frame = _source.GetFrame(TimeSpan.FromSeconds(slot), SeekAccuracy.Keyframe, ct);
 					if (frame is null) return;
 
-					var copy = frame.Bgra.ToArray();
+					byte[] copy = frame.Bgra.ToArray();
 					_source.Recycle(frame);
-					lock (_lock)
-					{
-						_thumbnails[slot] = copy;
-					}
+					lock (_lock) _thumbnails[slot] = copy;
 
 					Updated?.Invoke();
 				}
@@ -117,9 +108,11 @@ public sealed class TimelineThumbnails : IDisposable
 	{
 		lock (_lock)
 		{
-			while (_wanted.TryDequeue(out var slot))
+			while (_wanted.TryDequeue(out int slot))
+			{
 				if (!_thumbnails.ContainsKey(slot))
 					return slot;
+			}
 
 			return null;
 		}

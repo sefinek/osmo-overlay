@@ -33,7 +33,7 @@ public sealed class AudioWaveform : IDisposable
 	{
 		_source = source;
 		_segments = segments;
-		var buckets = (int)Math.Ceiling(durationSeconds * BucketsPerSecond) + 1;
+		int buckets = (int)Math.Ceiling(durationSeconds * BucketsPerSecond) + 1;
 		_peaks = [.. Enumerable.Range(0, source.Channels).Select(_ => new float[buckets])];
 		// A thread of its own below normal priority: ~15 s of decoding mustn't take CPU from playback and the UI.
 		_worker = new Thread(Run) { IsBackground = true, Priority = ThreadPriority.BelowNormal, Name = "Timeline waveform" };
@@ -65,7 +65,7 @@ public sealed class AudioWaveform : IDisposable
 			return new AudioWaveform(segments, cached.Peaks, cached.Loudest);
 		}
 
-		LibavAudioSource? source = LibavAudioSource.TryOpen(segments);
+		var source = LibavAudioSource.TryOpen(segments);
 		return source is null ? null : new AudioWaveform(source, segments, segments.Sum(s => s.DurationSeconds));
 	}
 
@@ -74,20 +74,22 @@ public sealed class AudioWaveform : IDisposable
 	{
 		if (peak <= 0) return 0;
 
-		var loudestDb = 20 * Math.Log10(Math.Max(loudestPeak, QuietestReference));
-		var floorDb = Math.Max(loudestDb - DisplayRangeDb, DisplayFloorDb);
+		double loudestDb = 20 * Math.Log10(Math.Max(loudestPeak, QuietestReference));
+		double floorDb = Math.Max(loudestDb - DisplayRangeDb, DisplayFloorDb);
 		return Math.Clamp((20 * Math.Log10(peak) - floorDb) / (loudestDb - floorDb), 0, 1);
 	}
 
 	/// <summary>0-1 peak of a channel over buckets [from, to).</summary>
 	public float Peak(int channel, int from, int to)
 	{
-		var peaks = _peaks[channel];
+		float[] peaks = _peaks[channel];
 		to = Math.Min(to, Math.Min(_available, peaks.Length));
-		var peak = 0f;
-		for (var i = Math.Max(0, from); i < to; i++)
+		float peak = 0f;
+		for (int i = Math.Max(0, from); i < to; i++)
+		{
 			if (peaks[i] > peak)
 				peak = peaks[i];
+		}
 
 		return peak;
 	}
@@ -99,13 +101,13 @@ public sealed class AudioWaveform : IDisposable
 		CancellationToken ct = _cts.Token;
 		try
 		{
-			var channels = _source.Channels;
-			var samplesPerBucket = (double)_source.SampleRate / BucketsPerSecond;
+			int channels = _source.Channels;
+			double samplesPerBucket = (double)_source.SampleRate / BucketsPerSecond;
 			long sampleFrame = 0;
-			var lastUpdate = Environment.TickCount64;
-			var started = lastUpdate;
+			long lastUpdate = Environment.TickCount64;
+			long started = lastUpdate;
 			// Kept locally and published once per read - not a volatile read per sample.
-			var loudest = _loudest;
+			float loudest = _loudest;
 
 			_source.Seek(0);
 			while (!ct.IsCancellationRequested)
@@ -113,14 +115,14 @@ public sealed class AudioWaveform : IDisposable
 				ReadOnlySpan<float> samples = _source.Read(double.MaxValue);
 				if (samples.IsEmpty) break;
 
-				for (var i = 0; i < samples.Length; i += channels, sampleFrame++)
+				for (int i = 0; i < samples.Length; i += channels, sampleFrame++)
 				{
-					var bucket = (int)(sampleFrame / samplesPerBucket);
+					int bucket = (int)(sampleFrame / samplesPerBucket);
 					if (bucket >= _peaks[0].Length) break;
 
-					for (var c = 0; c < channels; c++)
+					for (int c = 0; c < channels; c++)
 					{
-						var level = Math.Abs(samples[i + c]);
+						float level = Math.Abs(samples[i + c]);
 						if (level > _peaks[c][bucket]) _peaks[c][bucket] = level;
 						if (level > loudest) loudest = level;
 					}

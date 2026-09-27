@@ -36,7 +36,7 @@ public static class CameraAudioConverter
 			_ => throw new ArgumentOutOfRangeException(nameof(format))
 		};
 
-		var partialPath = outputPath + ".partial";
+		string partialPath = outputPath + ".partial";
 		try
 		{
 			Run("ffmpeg", [
@@ -70,7 +70,7 @@ public static class CameraAudioConverter
 	private static string Run(string command, string[] args)
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHidden(command, args);
-		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
 		if (exitCode != 0) throw new InvalidOperationException($"{command} exited with an error ({exitCode}): {stderr}");
 		return stdout;
 	}

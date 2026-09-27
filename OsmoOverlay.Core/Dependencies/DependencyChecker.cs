@@ -11,13 +11,13 @@ public static class DependencyChecker
 	/// </summary>
 	public static string? FindExecutable(string command)
 	{
-		var fileName = OperatingSystem.IsWindows() && !Path.HasExtension(command) ? command + ".exe" : command;
+		string fileName = OperatingSystem.IsWindows() && !Path.HasExtension(command) ? command + ".exe" : command;
 		if (FromFfmpegLibraryFolder(command, fileName) is { } sameInstall) return sameInstall;
 
 		IEnumerable<string> directories = new[] { AppContext.BaseDirectory }
 			.Concat(SplitPath(Environment.GetEnvironmentVariable("PATH")));
 
-		foreach (var directory in directories)
+		foreach (string directory in directories)
 		{
 			string candidate;
 			try
@@ -54,16 +54,16 @@ public static class DependencyChecker
 	{
 		if (!RequiredTools.Ffmpeg.Commands.Contains(command)) return null;
 
-		var directory = LibavLoader.IsLoaded ? LibavLoader.LibraryDirectory : LibavLoader.FindLibraryDirectory();
+		string? directory = LibavLoader.IsLoaded ? LibavLoader.LibraryDirectory : LibavLoader.FindLibraryDirectory();
 		if (directory is null) return null;
 
-		var sameFolder = Path.Combine(directory, fileName);
+		string sameFolder = Path.Combine(directory, fileName);
 		if (IsExecutableFile(sameFolder)) return sameFolder;
 
 		directory = Path.TrimEndingDirectorySeparator(directory);
 		if (Path.GetFileName(directory) != "lib" || Path.GetDirectoryName(directory) is not { } prefix) return null;
 
-		var besideLib = Path.Combine(prefix, "bin", fileName);
+		string besideLib = Path.Combine(prefix, "bin", fileName);
 		return IsExecutableFile(besideLib) ? besideLib : null;
 	}
 
@@ -103,15 +103,17 @@ public static class DependencyChecker
 		IEnumerable<string> merged;
 
 		if (OperatingSystem.IsWindows())
+		{
 			merged = SplitPath(Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine))
 				.Concat(SplitPath(Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User)))
 				.Concat(current);
+		}
 		else if (OperatingSystem.IsMacOS())
 			merged = current.Concat(new[] { "/opt/homebrew/bin", "/usr/local/bin" }.Where(Directory.Exists));
 		else
 			return;
 
-		List<string> distinct = merged.Distinct(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal).ToList();
+		var distinct = merged.Distinct(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal).ToList();
 		if (distinct.Count > 0) Environment.SetEnvironmentVariable("PATH", string.Join(Path.PathSeparator, distinct));
 	}
 

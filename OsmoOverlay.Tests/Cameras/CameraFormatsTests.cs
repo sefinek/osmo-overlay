@@ -17,7 +17,7 @@ public sealed class CameraFormatsTests
 
 	private static string Video(int index, int width, int height, bool thumbnail = false)
 	{
-		var attached = thumbnail ? 1 : 0;
+		int attached = thumbnail ? 1 : 0;
 		return $"{{\"index\":{index},\"codec_type\":\"video\",\"width\":{width},\"height\":{height},\"disposition\":{{\"attached_pic\":{attached}}}}}";
 	}
 
@@ -61,7 +61,7 @@ public sealed class CameraFormatsTests
 	[TestMethod]
 	public void Insta360_TiltIsTheBodysAgainstItsFrontLens()
 	{
-		var lean = 20 * Math.PI / 180;
+		double lean = 20 * Math.PI / 180;
 		// Gravity (AccelZ, -AccelX, AccelY): upright is AccelX = -1, leaning right tips gravity toward x.
 		List<TelemetryFrame> upright = [new(0, 0, 0, 0, 0, null, -1, 0, 0, HasGpsFix: false)];
 		List<TelemetryFrame> leaning = [new(0, 0, 0, 0, 0, null, -Math.Cos(lean), 0, Math.Sin(lean), HasGpsFix: false)];

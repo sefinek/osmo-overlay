@@ -36,7 +36,7 @@ internal static class Mp4CameraMetadata
 		if (moovBox.Type is null || moovBox.Offset + moovBox.Size != output.Length)
 			throw new InvalidDataException("The rendered file's moov box isn't at the end of the file - can't append camera metadata.");
 
-		var originalMoov = new byte[moovBox.Size];
+		byte[] originalMoov = new byte[moovBox.Size];
 		output.Position = moovBox.Offset;
 		output.ReadExactly(originalMoov);
 		Mp4Box moov = Mp4File.ReadMoov(output, moovBox);
@@ -58,12 +58,12 @@ internal static class Mp4CameraMetadata
 		bool maskSerial)
 	{
 		Mp4Box mvhd = moov.Child("mvhd") ?? throw new InvalidDataException("Rendered file has no mvhd.");
-		var movieTimescale = Mp4Fields.MovieTimescale(mvhd);
-		var nextTrackId = Mp4Fields.NextTrackId(mvhd);
+		uint movieTimescale = Mp4Fields.MovieTimescale(mvhd);
+		uint nextTrackId = Mp4Fields.NextTrackId(mvhd);
 
 		// Copied samples only up to the rendered video's own length - a frame-limited render is shorter
 		// than the source, and a data track running past the video would misrepresent the file.
-		var videoSeconds = VideoDurationSeconds(moov);
+		double videoSeconds = VideoDurationSeconds(moov);
 
 		output.SetLength(moovOffset);
 		output.Position = moovOffset;
@@ -72,7 +72,7 @@ internal static class Mp4CameraMetadata
 		"mdat"u8.CopyTo(mdatHeader[4..]);
 		output.Write(mdatHeader);
 
-		foreach (var format in TrackFormats)
+		foreach (string format in TrackFormats)
 		{
 			List<SourceTrack> segments = [.. sourceTracks.Where(t => t.Format == format)];
 			if (segments.Count == 0) continue;
@@ -88,7 +88,7 @@ internal static class Mp4CameraMetadata
 			nextTrackId++;
 		}
 
-		var mdatSize = (ulong)(output.Position - moovOffset);
+		ulong mdatSize = (ulong)(output.Position - moovOffset);
 		output.Position = moovOffset + 8;
 		Span<byte> sizeBytes = stackalloc byte[8];
 		BinaryPrimitives.WriteUInt64BigEndian(sizeBytes, mdatSize);
@@ -112,28 +112,29 @@ internal static class Mp4CameraMetadata
 	private static Mp4Box BuildTrack(FileStream output, List<SourceTrack> segments, uint trackId, uint movieTimescale, double videoSeconds,
 		bool maskSerial)
 	{
-		var timescale = segments[0].Timescale;
-		var maxMediaTime = videoSeconds > 0 ? (ulong)Math.Round(videoSeconds * timescale) : ulong.MaxValue;
+		uint timescale = segments[0].Timescale;
+		ulong maxMediaTime = videoSeconds > 0 ? (ulong)Math.Round(videoSeconds * timescale) : ulong.MaxValue;
 
 		List<ulong> newOffsets = [];
 		List<uint> sizes = [];
 		List<(uint Count, uint Delta)> stts = [];
 		List<uint> syncSamples = [];
-		var anySync = segments.Any(s => s.SyncSamples is not null);
+		bool anySync = segments.Any(s => s.SyncSamples is not null);
 		ulong mediaTime = 0;
-		var buffer = new byte[64 * 1024];
+		byte[] buffer = new byte[64 * 1024];
 
 		foreach (SourceTrack segment in segments)
 		{
 			using var source = new FileStream(segment.Path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16);
 			HashSet<uint>? sync = segment.SyncSamples is null ? null : [.. segment.SyncSamples];
-			var sampleIndex = 0;
-			foreach (var (count, delta) in segment.Stts)
-				for (var i = 0; i < count && sampleIndex < segment.Sizes.Length; i++, sampleIndex++)
+			int sampleIndex = 0;
+			foreach ((uint count, uint delta) in segment.Stts)
+			{
+				for (int i = 0; i < count && sampleIndex < segment.Sizes.Length; i++, sampleIndex++)
 				{
 					if (mediaTime >= maxMediaTime) goto done;
 
-					var size = segment.Sizes[sampleIndex];
+					uint size = segment.Sizes[sampleIndex];
 					newOffsets.Add((ulong)output.Position);
 					if (maskSerial) size = CopyDjmdSampleWithoutSerial(source, (long)segment.Offsets[sampleIndex], output, size);
 					else CopyBytes(source, (long)segment.Offsets[sampleIndex], output, size, buffer);
@@ -145,11 +146,12 @@ internal static class Mp4CameraMetadata
 					if (anySync && (sync is null || sync.Contains((uint)sampleIndex + 1))) syncSamples.Add((uint)sizes.Count);
 					mediaTime += delta;
 				}
+			}
 		}
 
 		done:
-		Mp4Box trak = Mp4Box.Parse("trak", segments[0].Trak.ToBytes().AsSpan(8));
-		var movieDuration = mediaTime * movieTimescale / timescale;
+		var trak = Mp4Box.Parse("trak", segments[0].Trak.ToBytes().AsSpan(8));
+		ulong movieDuration = mediaTime * movieTimescale / timescale;
 		trak.Children!.RemoveAll(c => c.Type is "edts" or "tref");
 		// Same single "whole track, starting at 0" edit list the camera writes - without one, tools fall
 		// back to guessing the track's presentation length from the rest of the file.
@@ -175,9 +177,9 @@ internal static class Mp4CameraMetadata
 			BinaryPrimitives.WriteUInt32BigEndian(span[4..], 1);
 			BinaryPrimitives.WriteUInt32BigEndian(span[8..], 1);
 		})));
-		var stsz = new byte[12 + sizes.Count * 4];
+		byte[] stsz = new byte[12 + sizes.Count * 4];
 		BinaryPrimitives.WriteUInt32BigEndian(stsz.AsSpan(8), (uint)sizes.Count);
-		for (var i = 0; i < sizes.Count; i++) BinaryPrimitives.WriteUInt32BigEndian(stsz.AsSpan(12 + i * 4), sizes[i]);
+		for (int i = 0; i < sizes.Count; i++) BinaryPrimitives.WriteUInt32BigEndian(stsz.AsSpan(12 + i * 4), sizes[i]);
 		stbl.Children.Add(Mp4Box.Leaf("stsz", stsz));
 		stbl.Children.Add(Mp4Fields.ChunkOffsetBox(newOffsets, true));
 		return trak;
@@ -185,8 +187,8 @@ internal static class Mp4CameraMetadata
 
 	private static Mp4Box EditList(ulong movieDuration)
 	{
-		var use64 = movieDuration > uint.MaxValue;
-		var elst = new byte[use64 ? 28 : 20];
+		bool use64 = movieDuration > uint.MaxValue;
+		byte[] elst = new byte[use64 ? 28 : 20];
 		elst[0] = (byte)(use64 ? 1 : 0);
 		BinaryPrimitives.WriteUInt32BigEndian(elst.AsSpan(4), 1);
 		if (use64)
@@ -207,9 +209,9 @@ internal static class Mp4CameraMetadata
 
 	private static byte[] Table(int count, int entrySize, SpanAction write)
 	{
-		var payload = new byte[8 + count * entrySize];
+		byte[] payload = new byte[8 + count * entrySize];
 		BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(4), (uint)count);
-		for (var i = 0; i < count; i++) write(payload.AsSpan(8 + i * entrySize, entrySize), i);
+		for (int i = 0; i < count; i++) write(payload.AsSpan(8 + i * entrySize, entrySize), i);
 		return payload;
 	}
 
@@ -218,10 +220,10 @@ internal static class Mp4CameraMetadata
 	private static void CopyBytes(FileStream source, long offset, Stream destination, uint size, byte[] buffer)
 	{
 		source.Position = offset;
-		var remaining = (long)size;
+		long remaining = size;
 		while (remaining > 0)
 		{
-			var read = source.Read(buffer, 0, (int)Math.Min(buffer.Length, remaining));
+			int read = source.Read(buffer, 0, (int)Math.Min(buffer.Length, remaining));
 			if (read == 0) throw new EndOfStreamException("Source file ended inside a camera metadata sample.");
 			destination.Write(buffer, 0, read);
 			remaining -= read;
@@ -241,10 +243,10 @@ internal static class Mp4CameraMetadata
 	/// </summary>
 	private static uint CopyDjmdSampleWithoutSerial(FileStream source, long offset, Stream destination, uint size)
 	{
-		var sample = new byte[size];
+		byte[] sample = new byte[size];
 		source.Position = offset;
 		source.ReadExactly(sample);
-		var cleaned = RemoveField(sample, SerialNumberPath);
+		byte[] cleaned = RemoveField(sample, SerialNumberPath);
 		destination.Write(cleaned);
 		return (uint)cleaned.Length;
 	}
@@ -257,8 +259,8 @@ internal static class Mp4CameraMetadata
 		if (path.Length == 1)
 			return [.. message.AsSpan(0, field.HeaderStart), .. message.AsSpan(field.DataEnd)];
 
-		var inner = message[field.DataStart..field.DataEnd];
-		var newInner = RemoveField(inner, path[1..]);
+		byte[] inner = message[field.DataStart..field.DataEnd];
+		byte[] newInner = RemoveField(inner, path[1..]);
 		if (ReferenceEquals(newInner, inner)) return message;
 
 		return
@@ -277,12 +279,12 @@ internal static class Mp4CameraMetadata
 	/// </summary>
 	private static (int HeaderStart, int TagEnd, int DataStart, int DataEnd)? FindField(byte[] data, int fieldNumber)
 	{
-		var pos = 0;
+		int pos = 0;
 		while (pos < data.Length)
 		{
-			var headerStart = pos;
-			if (!TryReadVarint(data, ref pos, data.Length, out var tag)) return null;
-			var tagEnd = pos;
+			int headerStart = pos;
+			if (!TryReadVarint(data, ref pos, data.Length, out ulong tag)) return null;
+			int tagEnd = pos;
 			switch ((int)(tag & 7))
 			{
 				case 0:
@@ -295,7 +297,7 @@ internal static class Mp4CameraMetadata
 					pos += 4;
 					break;
 				case 2:
-					if (!TryReadVarint(data, ref pos, data.Length, out var length) || length > (ulong)(data.Length - pos)) return null;
+					if (!TryReadVarint(data, ref pos, data.Length, out ulong length) || length > (ulong)(data.Length - pos)) return null;
 					if ((int)(tag >> 3) == fieldNumber) return (headerStart, tagEnd, pos, pos + (int)length);
 					pos += (int)length;
 					break;
@@ -312,7 +314,7 @@ internal static class Mp4CameraMetadata
 		List<byte> bytes = [];
 		do
 		{
-			var b = (byte)(value & 0x7F);
+			byte b = (byte)(value & 0x7F);
 			value >>= 7;
 			bytes.Add(value != 0 ? (byte)(b | 0x80) : b);
 		} while (value != 0);
@@ -323,9 +325,9 @@ internal static class Mp4CameraMetadata
 	private static bool TryReadVarint(byte[] data, ref int pos, int end, out ulong value)
 	{
 		value = 0;
-		for (var shift = 0; pos < end && shift < 64; shift += 7)
+		for (int shift = 0; pos < end && shift < 64; shift += 7)
 		{
-			var b = data[pos++];
+			byte b = data[pos++];
 			value |= (ulong)(b & 0x7F) << shift;
 			if ((b & 0x80) == 0) return true;
 		}
@@ -338,7 +340,7 @@ internal static class Mp4CameraMetadata
 		foreach (Mp4Box trak in moov.Children!.Where(c => c.Type == "trak"))
 		{
 			if (trak.Find("mdia", "hdlr")?.Payload is not { Length: >= 12 } hdlr || !hdlr.AsSpan(8, 4).SequenceEqual("vide"u8)) continue;
-			var (timescale, duration) = Mp4Fields.MediaTiming(trak.Find("mdia", "mdhd")!);
+			(uint timescale, ulong duration) = Mp4Fields.MediaTiming(trak.Find("mdia", "mdhd")!);
 			return timescale > 0 ? duration / (double)timescale : 0;
 		}
 
@@ -359,8 +361,8 @@ internal static class Mp4CameraMetadata
 			Mp4Box? stsd = stbl?.Child("stsd");
 			if (stbl is null || stsd is null || Mp4Fields.SampleEntryFormat(stsd) is not { } format || !TrackFormats.Contains(format)) continue;
 
-			var sizes = Mp4Fields.ReadSampleSizes(stbl.Child("stsz")!);
-			var chunkOffsets = Mp4Fields.ReadChunkOffsets(stbl.Child("stco") ?? stbl.Child("co64")!);
+			uint[] sizes = Mp4Fields.ReadSampleSizes(stbl.Child("stsz")!);
+			ulong[] chunkOffsets = Mp4Fields.ReadChunkOffsets(stbl.Child("stco") ?? stbl.Child("co64")!);
 			tracks.Add(new SourceTrack(path, format, trak, stsd, Mp4Fields.MediaTiming(trak.Find("mdia", "mdhd")!).Timescale,
 				Mp4Fields.ReadStts(stbl.Child("stts")!), sizes,
 				SampleOffsets(Mp4Fields.ReadStsc(stbl.Child("stsc")!), chunkOffsets, sizes),
@@ -373,14 +375,14 @@ internal static class Mp4CameraMetadata
 	/// <summary>Absolute file offset of every sample, from the chunk table (stco/co64 + stsc + stsz).</summary>
 	private static ulong[] SampleOffsets(List<(uint FirstChunk, uint SamplesPerChunk)> stsc, ulong[] chunkOffsets, uint[] sizes)
 	{
-		var offsets = new ulong[sizes.Length];
-		var sample = 0;
-		for (var chunk = 0; chunk < chunkOffsets.Length && sample < sizes.Length; chunk++)
+		ulong[] offsets = new ulong[sizes.Length];
+		int sample = 0;
+		for (int chunk = 0; chunk < chunkOffsets.Length && sample < sizes.Length; chunk++)
 		{
-			var entry = stsc.FindLastIndex(e => e.FirstChunk <= chunk + 1);
-			var perChunk = entry >= 0 ? stsc[entry].SamplesPerChunk : 1;
-			var offset = chunkOffsets[chunk];
-			for (var i = 0; i < perChunk && sample < sizes.Length; i++, sample++)
+			int entry = stsc.FindLastIndex(e => e.FirstChunk <= chunk + 1);
+			uint perChunk = entry >= 0 ? stsc[entry].SamplesPerChunk : 1;
+			ulong offset = chunkOffsets[chunk];
+			for (int i = 0; i < perChunk && sample < sizes.Length; i++, sample++)
 			{
 				offsets[sample] = offset;
 				offset += sizes[sample];

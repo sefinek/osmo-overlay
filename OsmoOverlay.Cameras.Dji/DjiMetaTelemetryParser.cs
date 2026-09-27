@@ -55,8 +55,10 @@ internal static class DjiMetaTelemetryParser
 		process.WaitForExit();
 
 		if (process.ExitCode != 0)
+		{
 			throw new InvalidOperationException(
 				$"ffmpeg exited with an error ({process.ExitCode}) extracting the djmd stream: {stderrTask.Result}");
+		}
 
 		// The underlying buffer instead of ToArray() - the djmd stream of a long recording runs to tens of
 		// MB, no point copying all of it once more just to parse it.
@@ -72,10 +74,10 @@ internal static class DjiMetaTelemetryParser
 		var frames = new List<TelemetryFrame>(records.Count);
 		var gpsFill = new GpsForwardFill();
 
-		for (var i = 0; i < records.Count; i++)
+		for (int i = 0; i < records.Count; i++)
 		{
 			RawRecord r = records[i];
-			var (lat, lon, altitudeMeters, hasFix) = gpsFill.Apply(r.Lat, r.Lon, r.AltitudeMeters);
+			(double lat, double lon, double altitudeMeters, bool hasFix) = gpsFill.Apply(r.Lat, r.Lon, r.AltitudeMeters);
 
 			frames.Add(new TelemetryFrame(
 				i,
@@ -94,16 +96,19 @@ internal static class DjiMetaTelemetryParser
 				hasFix));
 		}
 
-		var cameraModel = records.Select(r => r.DeviceName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
+		string? cameraModel = records.Select(r => r.DeviceName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
 		return new TelemetryExtractionResult(frames, cameraModel);
 	}
 
 	private static List<RawRecord> ParseRawRecords(ReadOnlyMemory<byte> rawData)
 	{
 		var records = new List<RawRecord>();
-		foreach ((var fieldNumber, var wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(rawData))
+		foreach ((int fieldNumber, int wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(rawData))
+		{
 			if (fieldNumber == 3 && wireType == 2)
 				records.Add(ParseSample(bytes));
+		}
+
 		return records;
 	}
 
@@ -118,7 +123,8 @@ internal static class DjiMetaTelemetryParser
 		// this runs once per telemetry sample (tens of thousands per recording).
 		ReadOnlyMemory<byte>? f2 = GetSubmessage(sample, 2);
 		if (f2 is not null)
-			foreach ((var fieldNumber, var wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(f2.Value))
+		{
+			foreach ((int fieldNumber, int wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(f2.Value))
 			{
 				if (wireType != 2) continue;
 
@@ -131,18 +137,18 @@ internal static class DjiMetaTelemetryParser
 						ReadOnlyMemory<byte>? shutterInner = GetSubmessage(bytes, 1);
 						if (shutterInner is { Length: > 0 } inner)
 						{
-							var sp = 0;
-							var numerator = ReadVarint(inner.Span, ref sp);
+							int sp = 0;
+							ulong numerator = ReadVarint(inner.Span, ref sp);
 							if (sp < inner.Length)
 							{
-								var denominator = ReadVarint(inner.Span, ref sp);
+								ulong denominator = ReadVarint(inner.Span, ref sp);
 								if (denominator > 0) shutterSeconds = (double)numerator / denominator;
 							}
 						}
 
 						break;
 					case 6:
-						var ct = GetVarintField(bytes, 1);
+						ulong? ct = GetVarintField(bytes, 1);
 						if (ct is not null) colorTemperatureKelvin = (int)ct.Value;
 						break;
 					case 10:
@@ -152,6 +158,7 @@ internal static class DjiMetaTelemetryParser
 						break;
 				}
 			}
+		}
 
 		double? lat = null, lon = null, altitudeMeters = null, speedMs = null;
 		DateTime? gpsTimestamp = null;
@@ -159,7 +166,8 @@ internal static class DjiMetaTelemetryParser
 
 		ReadOnlyMemory<byte>? gpsMsg = GetSubmessage(sample, 4);
 		if (gpsMsg is not null)
-			foreach ((var fieldNumber, var wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(gpsMsg.Value))
+		{
+			foreach ((int fieldNumber, int wireType, ReadOnlyMemory<byte> bytes, _) in IterFields(gpsMsg.Value))
 			{
 				if (wireType != 2) continue;
 
@@ -170,11 +178,11 @@ internal static class DjiMetaTelemetryParser
 						break;
 					case 2:
 						ReadOnlyMemory<byte>? coordsMsg = GetSubmessage(bytes, 1);
-						var fixType = coordsMsg is not null ? GetVarintField(coordsMsg.Value, 1) : null;
+						ulong? fixType = coordsMsg is not null ? GetVarintField(coordsMsg.Value, 1) : null;
 						if (coordsMsg is not null && fixType is not (null or 0))
 						{
-							var latVal = GetDoubleField(coordsMsg.Value, 2);
-							var lonVal = GetDoubleField(coordsMsg.Value, 3);
+							double? latVal = GetDoubleField(coordsMsg.Value, 2);
+							double? lonVal = GetDoubleField(coordsMsg.Value, 3);
 							if (latVal is not null && lonVal is not null && !(latVal == 0.0 && lonVal == 0.0))
 							{
 								lat = latVal;
@@ -182,13 +190,13 @@ internal static class DjiMetaTelemetryParser
 							}
 						}
 
-						var altMm = GetVarintField(bytes, 2);
+						ulong? altMm = GetVarintField(bytes, 2);
 						if (altMm is not null) altitudeMeters = altMm.Value / 1000.0;
 
 						ReadOnlyMemory<byte>? timestampMsg = GetSubmessage(bytes, 6);
 						if (timestampMsg is not null)
 						{
-							var tsStr = GetStringField(timestampMsg.Value, 1);
+							string? tsStr = GetStringField(timestampMsg.Value, 1);
 							if (tsStr is not null && DateTime.TryParseExact(tsStr, "yyyy-MM-dd HH:mm:ss",
 								    CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt))
 								gpsTimestamp = dt;
@@ -196,12 +204,13 @@ internal static class DjiMetaTelemetryParser
 
 						break;
 					case 3:
-						var vx = GetFloatField(bytes, 1) ?? 0;
-						var vy = GetFloatField(bytes, 2) ?? 0;
+						float vx = GetFloatField(bytes, 1) ?? 0;
+						float vy = GetFloatField(bytes, 2) ?? 0;
 						speedMs = Math.Sqrt(vx * vx + vy * vy);
 						break;
 				}
 			}
+		}
 
 		return new RawRecord(lat, lon, altitudeMeters, gpsTimestamp, accelX, accelY, accelZ, speedMs, deviceName,
 			iso, shutterSeconds, colorTemperatureKelvin);
@@ -210,10 +219,10 @@ internal static class DjiMetaTelemetryParser
 	private static ulong ReadVarint(ReadOnlySpan<byte> data, ref int pos)
 	{
 		ulong result = 0;
-		var shift = 0;
+		int shift = 0;
 		while (pos < data.Length && shift < 70)
 		{
-			var b = data[pos++];
+			byte b = data[pos++];
 			result |= (ulong)(b & 0x7F) << shift;
 			shift += 7;
 			if ((b & 0x80) == 0) break;
@@ -225,12 +234,12 @@ internal static class DjiMetaTelemetryParser
 	private static IEnumerable<(int FieldNumber, int WireType, ReadOnlyMemory<byte> Bytes, ulong Varint)> IterFields(
 		ReadOnlyMemory<byte> data)
 	{
-		var pos = 0;
+		int pos = 0;
 		while (pos < data.Length)
 		{
-			var tag = ReadVarint(data.Span, ref pos);
-			var fieldNumber = (int)(tag >> 3);
-			var wireType = (int)(tag & 0x07);
+			ulong tag = ReadVarint(data.Span, ref pos);
+			int fieldNumber = (int)(tag >> 3);
+			int wireType = (int)(tag & 0x07);
 
 			switch (wireType)
 			{
@@ -243,7 +252,7 @@ internal static class DjiMetaTelemetryParser
 					pos += 8;
 					break;
 				case 2:
-					var length = ReadVarint(data.Span, ref pos);
+					ulong length = ReadVarint(data.Span, ref pos);
 					if (length > (ulong)(data.Length - pos)) yield break;
 					yield return (fieldNumber, wireType, data.Slice(pos, (int)length), 0);
 					pos += (int)length;
@@ -261,33 +270,45 @@ internal static class DjiMetaTelemetryParser
 
 	private static ReadOnlyMemory<byte>? GetSubmessage(ReadOnlyMemory<byte> data, int targetField)
 	{
-		foreach ((var fn, var wt, ReadOnlyMemory<byte> bytes, _) in IterFields(data))
+		foreach ((int fn, int wt, ReadOnlyMemory<byte> bytes, _) in IterFields(data))
+		{
 			if (fn == targetField && wt == 2)
 				return bytes;
+		}
+
 		return null;
 	}
 
 	private static ulong? GetVarintField(ReadOnlyMemory<byte> data, int targetField)
 	{
-		foreach (var (fn, wt, _, varint) in IterFields(data))
+		foreach ((int fn, int wt, ReadOnlyMemory<byte> _, ulong varint) in IterFields(data))
+		{
 			if (fn == targetField && wt == 0)
 				return varint;
+		}
+
 		return null;
 	}
 
 	private static double? GetDoubleField(ReadOnlyMemory<byte> data, int targetField)
 	{
-		foreach ((var fn, var wt, ReadOnlyMemory<byte> bytes, _) in IterFields(data))
+		foreach ((int fn, int wt, ReadOnlyMemory<byte> bytes, _) in IterFields(data))
+		{
 			if (fn == targetField && wt == 1)
 				return BitConverter.ToDouble(bytes.Span);
+		}
+
 		return null;
 	}
 
 	private static float? GetFloatField(ReadOnlyMemory<byte> data, int targetField)
 	{
-		foreach ((var fn, var wt, ReadOnlyMemory<byte> bytes, _) in IterFields(data))
+		foreach ((int fn, int wt, ReadOnlyMemory<byte> bytes, _) in IterFields(data))
+		{
 			if (fn == targetField && wt == 5)
 				return BitConverter.ToSingle(bytes.Span);
+		}
+
 		return null;
 	}
 

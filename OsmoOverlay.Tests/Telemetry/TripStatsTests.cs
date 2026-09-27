@@ -10,7 +10,7 @@ public sealed class TripStatsTests
 	{
 		List<DerivedFrame> frames = [];
 		double distance = 0;
-		for (var i = 0; i < speedsKmh.Length; i++)
+		for (int i = 0; i < speedsKmh.Length; i++)
 		{
 			if (i > 0) distance += speedsKmh[i] / 3.6;
 			var raw = new TelemetryFrame(i, i, 50, 20, altitudes[i], null, 0, 0, -1);
@@ -28,7 +28,7 @@ public sealed class TripStatsTests
 	[TestMethod]
 	public void MaxSpeed_IsTheHighestSoFar()
 	{
-		TripStats stats = TripStats.Compute(Ride([10, 30, 20, 40, 5], Repeat(100, 5)));
+		var stats = TripStats.Compute(Ride([10, 30, 20, 40, 5], Repeat(100, 5)));
 
 		CollectionAssert.AreEqual(new double[] { 10, 30, 30, 40, 40 }, Enumerable.Range(0, 5).Select(stats.MaxSpeedKmh).ToArray());
 	}
@@ -37,7 +37,7 @@ public sealed class TripStatsTests
 	public void MovingTime_LeavesOutStops_AndAverageIsOverIt()
 	{
 		// 3 s at 36 km/h, 3 s standing, 2 s at 36 km/h.
-		TripStats stats = TripStats.Compute(Ride([36, 36, 36, 36, 0, 0, 0, 36, 36], Repeat(100, 9)));
+		var stats = TripStats.Compute(Ride([36, 36, 36, 36, 0, 0, 0, 36, 36], Repeat(100, 9)));
 
 		Assert.AreEqual(5, stats.MovingSeconds(8), 1e-9);
 		Assert.AreEqual(36, stats.AverageSpeedKmh(8), 1e-9);
@@ -46,7 +46,7 @@ public sealed class TripStatsTests
 	[TestMethod]
 	public void Average_IsZeroBeforeASecondOfMovement()
 	{
-		TripStats stats = TripStats.Compute(Ride([0, 0, 50], Repeat(100, 3)));
+		var stats = TripStats.Compute(Ride([0, 0, 50], Repeat(100, 3)));
 
 		Assert.AreEqual(0, stats.AverageSpeedKmh(1));
 	}
@@ -55,7 +55,7 @@ public sealed class TripStatsTests
 	public void ElevationGain_IgnoresGpsWobbleBelowTheThreshold()
 	{
 		// +-2 m of noise on flat ground - a plain sum of every rise would report 12 m.
-		TripStats stats = TripStats.Compute(Ride(Repeat(20, 7), [100, 102, 100, 102, 100, 102, 100]));
+		var stats = TripStats.Compute(Ride(Repeat(20, 7), [100, 102, 100, 102, 100, 102, 100]));
 
 		Assert.AreEqual(0, stats.ElevationGainMeters(6));
 		Assert.AreEqual(0, stats.ElevationLossMeters(6));
@@ -64,7 +64,7 @@ public sealed class TripStatsTests
 	[TestMethod]
 	public void ElevationGainAndLoss_CountRealClimbs()
 	{
-		TripStats stats = TripStats.Compute(Ride(Repeat(20, 7), [100, 104, 110, 108, 104, 100, 101]));
+		var stats = TripStats.Compute(Ride(Repeat(20, 7), [100, 104, 110, 108, 104, 100, 101]));
 
 		Assert.AreEqual(10, stats.ElevationGainMeters(6), 1e-9);
 		Assert.AreEqual(10, stats.ElevationLossMeters(6), 1e-9);
@@ -75,7 +75,7 @@ public sealed class TripStatsTests
 	public void NothingIsCountedAcrossACut()
 	{
 		// The cut-out part climbed 50 m and took the time between the two pieces.
-		TripStats stats = TripStats.Compute(Ride([36, 36, 36, 36], [100, 100, 150, 150], 2));
+		var stats = TripStats.Compute(Ride([36, 36, 36, 36], [100, 100, 150, 150], 2));
 
 		Assert.AreEqual(0, stats.ElevationGainMeters(3));
 		Assert.AreEqual(2, stats.MovingSeconds(3), 1e-9);

@@ -35,7 +35,7 @@ public partial class CompareVideosWindow : Window
 	/// <summary>Opens pre-loaded with the given files, e.g. "Compare files" from the color tag fixer's success dialog.</summary>
 	public CompareVideosWindow(IEnumerable<string> initialPaths) : this()
 	{
-		foreach (var path in initialPaths)
+		foreach (string path in initialPaths)
 		{
 			if (_paths.Count >= MaxFiles) break;
 			if (_paths.Contains(path)) continue;
@@ -68,10 +68,10 @@ public partial class CompareVideosWindow : Window
 
 		if (files.Count == 0) return;
 
-		var skippedForLimit = false;
+		bool skippedForLimit = false;
 		foreach (IStorageFile file in files)
 		{
-			var path = file.Path.LocalPath;
+			string path = file.Path.LocalPath;
 			if (_paths.Contains(path)) continue;
 
 			if (_paths.Count >= MaxFiles)
@@ -87,9 +87,11 @@ public partial class CompareVideosWindow : Window
 		Render();
 
 		if (skippedForLimit)
+		{
 			await ConfirmDialog.ShowAsync(this, "Limit reached",
 				$"Only added the first {MaxFiles} files - this tool compares up to {MaxFiles} at a time.",
 				kind: DialogKind.Info, windowTitle: "Compare videos");
+		}
 	}
 
 	private async void LoadSummary(string path)
@@ -188,37 +190,37 @@ public partial class CompareVideosWindow : Window
 		NoDifferencesText.IsVisible = visible.Count == 0;
 		if (visible.Count == 0) return;
 
-		var sectionId = ComputeSectionIds(allRows);
+		int[] sectionId = ComputeSectionIds(allRows);
 
 		CompareGrid.ColumnDefinitions.Add(new ColumnDefinition(190, GridUnitType.Pixel));
-		foreach (var _ in _paths) CompareGrid.ColumnDefinitions.Add(new ColumnDefinition(270, GridUnitType.Pixel));
+		foreach (string _ in _paths) CompareGrid.ColumnDefinitions.Add(new ColumnDefinition(270, GridUnitType.Pixel));
 
 		// Grid row layout: header, then for each visible row an optional divider row right above it
 		// (whenever its section differs from the previous VISIBLE row's, so filtering out a whole
 		// section never leaves an orphan divider line), then the row itself, then a trailing Remove row.
-		var gridRowOfContent = new int[visible.Count];
-		var nextGridRow = 1;
-		for (var v = 0; v < visible.Count; v++)
+		int[] gridRowOfContent = new int[visible.Count];
+		int nextGridRow = 1;
+		for (int v = 0; v < visible.Count; v++)
 		{
 			if (v > 0 && sectionId[visible[v]] != sectionId[visible[v - 1]]) nextGridRow++;
 			gridRowOfContent[v] = nextGridRow;
 			nextGridRow++;
 		}
 
-		var removeRowIndex = nextGridRow;
-		for (var i = 0; i <= removeRowIndex; i++) CompareGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+		int removeRowIndex = nextGridRow;
+		for (int i = 0; i <= removeRowIndex; i++) CompareGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-		for (var col = 0; col < _paths.Count; col++)
+		for (int col = 0; col < _paths.Count; col++)
 			AddHeaderCell(col);
 
-		for (var v = 0; v < visible.Count; v++)
+		for (int v = 0; v < visible.Count; v++)
 		{
 			if (v > 0 && sectionId[visible[v]] != sectionId[visible[v - 1]]) AddSectionDivider(gridRowOfContent[v] - 1);
-			var rowIdx = visible[v];
+			int rowIdx = visible[v];
 			AddRow(gridRowOfContent[v], allRows[rowIdx].Label, computed[rowIdx].Values, computed[rowIdx].Differs, v % 2 == 1);
 		}
 
-		for (var col = 0; col < _paths.Count; col++)
+		for (int col = 0; col < _paths.Count; col++)
 			AddRemoveCell(col, removeRowIndex);
 	}
 
@@ -232,20 +234,18 @@ public partial class CompareVideosWindow : Window
 	/// <summary>Values for this row across every added file, plus whether the loaded ones disagree - "Loading"/"Error" placeholders never count as a disagreement.</summary>
 	private (string[] Values, bool Differs) ComputeRow(RowSpec row)
 	{
-		var values = new string[_paths.Count];
+		string[] values = new string[_paths.Count];
 		var loadedValues = new List<string>(_paths.Count);
-		for (var col = 0; col < _paths.Count; col++)
+		for (int col = 0; col < _paths.Count; col++)
 		{
-			var path = _paths[col];
+			string path = _paths[col];
 			if (_summaries.TryGetValue(path, out FileSummary? summary) && summary is not null)
 			{
 				values[col] = row.Value(summary);
 				loadedValues.Add(values[col]);
 			}
 			else
-			{
 				values[col] = _errors.ContainsKey(path) ? "Error" : "Loading...";
-			}
 		}
 
 		return (values, loadedValues.Distinct().Count() > 1);
@@ -253,9 +253,9 @@ public partial class CompareVideosWindow : Window
 
 	private static int[] ComputeSectionIds(IReadOnlyList<RowSpec> rows)
 	{
-		var ids = new int[rows.Count];
-		var section = 0;
-		for (var i = 0; i < rows.Count; i++)
+		int[] ids = new int[rows.Count];
+		int section = 0;
+		for (int i = 0; i < rows.Count; i++)
 		{
 			if (i > 0 && rows[i].NewSection) section++;
 			ids[i] = section;
@@ -273,7 +273,7 @@ public partial class CompareVideosWindow : Window
 	{
 		IReadOnlyList<RowSpec> allRows = BuildRows();
 		List<(string[] Values, bool Differs)> computed = [.. allRows.Select(ComputeRow)];
-		var sectionId = ComputeSectionIds(allRows);
+		int[] sectionId = ComputeSectionIds(allRows);
 
 		// Extension is dropped here (unlike in the table) - the heading below is the full path, which
 		// already carries the extension, so repeating it as its own bullet would just be noise.
@@ -283,14 +283,14 @@ public partial class CompareVideosWindow : Window
 		sb.AppendLine($"-- Exported: {DateTime.Now:yyyy-MM-dd HH:mm:ss} --");
 		sb.AppendLine();
 
-		for (var col = 0; col < _paths.Count; col++)
+		for (int col = 0; col < _paths.Count; col++)
 		{
 			if (col > 0) sb.AppendLine();
 			sb.AppendLine($"## {Path.GetFileName(_paths[col])}");
 			sb.AppendLine();
 
 			int? lastSection = null;
-			foreach (var i in visible)
+			foreach (int i in visible)
 			{
 				if (lastSection is not null && sectionId[i] != lastSection) sb.AppendLine();
 				lastSection = sectionId[i];
@@ -312,7 +312,7 @@ public partial class CompareVideosWindow : Window
 
 	private void AddHeaderCell(int col)
 	{
-		var path = _paths[col];
+		string path = _paths[col];
 		var header = new TextBlock
 		{
 			Text = Path.GetFileNameWithoutExtension(path), FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap,
@@ -326,7 +326,7 @@ public partial class CompareVideosWindow : Window
 
 	private void AddRemoveCell(int col, int rowIndex)
 	{
-		var path = _paths[col];
+		string path = _paths[col];
 		var removeButton = new Button
 		{
 			Content = "Remove", Tag = path, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(6)
@@ -354,7 +354,7 @@ public partial class CompareVideosWindow : Window
 		Grid.SetColumn(labelBlock, 0);
 		CompareGrid.Children.Add(labelBlock);
 
-		for (var col = 0; col < _paths.Count; col++)
+		for (int col = 0; col < _paths.Count; col++)
 		{
 			var cell = new TextBlock
 			{

@@ -44,8 +44,8 @@ public sealed class IconView : Control
 	{
 		if (Data is null || Foreground is null) return;
 
-		var size = Math.Min(Bounds.Width, Bounds.Height);
-		var scale = size / GridSize;
+		double size = Math.Min(Bounds.Width, Bounds.Height);
+		double scale = size / GridSize;
 		Matrix transform = Matrix.CreateScale(scale, scale) *
 		                   Matrix.CreateTranslation((Bounds.Width - size) / 2, (Bounds.Height - size) / 2);
 		using (context.PushTransform(transform))

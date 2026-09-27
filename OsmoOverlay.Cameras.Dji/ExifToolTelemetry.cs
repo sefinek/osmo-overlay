@@ -22,7 +22,7 @@ internal static class ExifToolTelemetry
 			"-AccelerometerX", "-AccelerometerY", "-AccelerometerZ",
 			inputPath);
 
-		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
 		if (exitCode != 0)
 			throw new InvalidOperationException($"exiftool exited with an error ({exitCode}): {stderr}");
 
@@ -35,13 +35,13 @@ internal static class ExifToolTelemetry
 		JsonObject fileObject = array[0]!.AsObject();
 		var docs = new Dictionary<string, Dictionary<string, JsonNode?>>();
 
-		foreach ((var key, JsonNode? value) in fileObject)
+		foreach ((string key, JsonNode? value) in fileObject)
 		{
 			if (key == "SourceFile") continue;
 
-			var separatorIndex = key.IndexOf(':');
-			var docLabel = separatorIndex >= 0 ? key[..separatorIndex] : "Doc1";
-			var field = separatorIndex >= 0 ? key[(separatorIndex + 1)..] : key;
+			int separatorIndex = key.IndexOf(':');
+			string docLabel = separatorIndex >= 0 ? key[..separatorIndex] : "Doc1";
+			string field = separatorIndex >= 0 ? key[(separatorIndex + 1)..] : key;
 
 			if (!docs.TryGetValue(docLabel, out Dictionary<string, JsonNode?>? fields))
 				docs[docLabel] = fields = [];
@@ -52,7 +52,7 @@ internal static class ExifToolTelemetry
 		var rawFrames = new List<(int FrameNumber, double SampleTime, double? Lat, double? Lon, double? Alt,
 			DateTime? GpsTimestamp, double AccelX, double AccelY, double AccelZ)>(docs.Count);
 
-		foreach ((var docLabel, Dictionary<string, JsonNode?> fields) in docs)
+		foreach ((string docLabel, Dictionary<string, JsonNode?> fields) in docs)
 		{
 			int frameNumber;
 			if (fields.TryGetValue("FrameNumber", out JsonNode? frameNumberNode) && frameNumberNode is not null)
@@ -78,9 +78,9 @@ internal static class ExifToolTelemetry
 
 		var frames = new List<TelemetryFrame>(rawFrames.Count);
 		var gpsFill = new GpsForwardFill();
-		foreach ((var frameNumber, var sampleTime, var rawLat, var rawLon, var rawAlt, DateTime? gpsTimestamp, var accelX, var accelY, var accelZ) in rawFrames)
+		foreach ((int frameNumber, double sampleTime, double? rawLat, double? rawLon, double? rawAlt, DateTime? gpsTimestamp, double accelX, double accelY, double accelZ) in rawFrames)
 		{
-			var (lat, lon, altitudeMeters, hasFix) = gpsFill.Apply(rawLat, rawLon, rawAlt);
+			(double lat, double lon, double altitudeMeters, bool hasFix) = gpsFill.Apply(rawLat, rawLon, rawAlt);
 
 			frames.Add(new TelemetryFrame(
 				frameNumber,
@@ -95,7 +95,7 @@ internal static class ExifToolTelemetry
 				HasGpsFix: hasFix));
 		}
 
-		var cameraModel = docs.Values
+		string? cameraModel = docs.Values
 			.Select(fields => fields.TryGetValue("Model", out JsonNode? m) ? m?.GetValue<string>() : null)
 			.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
 
@@ -112,14 +112,14 @@ internal static class ExifToolTelemetry
 		if (!fields.TryGetValue(key, out JsonNode? node) || node is null) return null;
 
 		JsonValue value = node.AsValue();
-		if (value.TryGetValue<double>(out var d)) return d;
+		if (value.TryGetValue<double>(out double d)) return d;
 		return double.Parse(value.GetValue<string>(), CultureInfo.InvariantCulture);
 	}
 
 	private static DateTime? GetDateTime(Dictionary<string, JsonNode?> fields, string key)
 	{
 		if (!fields.TryGetValue(key, out JsonNode? node) || node is null) return null;
-		var raw = node.GetValue<string>();
+		string raw = node.GetValue<string>();
 		return DateTime.TryParseExact(raw, "yyyy:MM:dd HH:mm:ss", CultureInfo.InvariantCulture,
 			DateTimeStyles.None, out DateTime dt)
 			? dt

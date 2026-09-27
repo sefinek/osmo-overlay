@@ -206,7 +206,7 @@ public sealed class LayerTimeline : Control
 		get => _tracks;
 		set
 		{
-			var countChanged = value.Count != _tracks.Count;
+			bool countChanged = value.Count != _tracks.Count;
 			_tracks = value;
 			if (countChanged) InvalidateMeasure();
 			Redraw();
@@ -281,23 +281,23 @@ public sealed class LayerTimeline : Control
 	/// <summary>Where the way in ends and the way out starts - as ElementAnimation plays them, the way out never before the way in ends.</summary>
 	private (double FadeIn, double FadeOut) FadeEnds(LayerClip clip)
 	{
-		var (start, end) = Span(clip);
-		var fadeIn = clip.Animation == OverlayAnimationType.None ? start : Math.Min(start + clip.AnimationDurationSeconds, end);
-		var fadeOut = clip.ResolvedOut == OverlayAnimationType.None ? end : Math.Max(end - clip.ResolvedOutSeconds, fadeIn);
+		(double start, double end) = Span(clip);
+		double fadeIn = clip.Animation == OverlayAnimationType.None ? start : Math.Min(start + clip.AnimationDurationSeconds, end);
+		double fadeOut = clip.ResolvedOut == OverlayAnimationType.None ? end : Math.Max(end - clip.ResolvedOutSeconds, fadeIn);
 		return (fadeIn, fadeOut);
 	}
 
 	private (double X1, double X2, double Top, double Bottom) ClipRect(LayerClip clip, int track)
 	{
-		var (start, end) = Span(clip);
-		var x1 = X(start);
+		(double start, double end) = Span(clip);
+		double x1 = X(start);
 		return (x1, Math.Max(X(end), x1 + 2), track * RowHeight + ClipInset, (track + 1) * RowHeight - ClipInset);
 	}
 
 	public override void Render(DrawingContext context)
 	{
-		var width = Bounds.Width;
-		var height = Bounds.Height;
+		double width = Bounds.Width;
+		double height = Bounds.Height;
 		context.FillRectangle(TrackBrush, new Rect(HeaderWidth, 0, Math.Max(0, width - HeaderWidth), height));
 		context.FillRectangle(HeaderBrush, new Rect(0, 0, HeaderWidth, height));
 
@@ -307,7 +307,7 @@ public sealed class LayerTimeline : Control
 			return;
 		}
 
-		for (var i = 0; i < _tracks.Count; i++) DrawHeader(context, _tracks[i], i);
+		for (int i = 0; i < _tracks.Count; i++) DrawHeader(context, _tracks[i], i);
 		if (_drop.Join is { } joined) context.FillRectangle(DropTrackBrush, new Rect(0, joined * RowHeight, width, RowHeight));
 
 		using (context.PushClip(new Rect(HeaderWidth, 0, Math.Max(0, width - HeaderWidth), height)))
@@ -315,10 +315,10 @@ public sealed class LayerTimeline : Control
 			if (_source is not null && OutputDurationSeconds > 0)
 			{
 				// After the video's end nothing can be shown - shaded, so a clip's end reads as one.
-				var end = X(OutputDurationSeconds);
+				double end = X(OutputDurationSeconds);
 				if (end < width) context.FillRectangle(PastEndFill, new Rect(end, 0, width - end, height));
 
-				for (var i = 0; i < _tracks.Count; i++)
+				for (int i = 0; i < _tracks.Count; i++)
 				{
 					if (!_tracks[i].Silenced)
 					{
@@ -334,9 +334,9 @@ public sealed class LayerTimeline : Control
 			}
 		}
 
-		for (var i = 1; i < _tracks.Count; i++) context.DrawLine(RowDivider, new Point(0, i * RowHeight), new Point(width, i * RowHeight));
+		for (int i = 1; i < _tracks.Count; i++) context.DrawLine(RowDivider, new Point(0, i * RowHeight), new Point(width, i * RowHeight));
 
-		var insertLine = _drag == Zone.Header ? _insertIndex : _drop.Insert;
+		int? insertLine = _drag == Zone.Header ? _insertIndex : _drop.Insert;
 		if (insertLine is { } line) context.DrawLine(InsertPen, new Point(0, line * RowHeight), new Point(width, line * RowHeight));
 		if (_dragLabel is { } label) DrawDragLabel(context, label.At, label.Text);
 	}
@@ -348,10 +348,10 @@ public sealed class LayerTimeline : Control
 
 	private void DrawHeader(DrawingContext context, LayerTrack track, int index)
 	{
-		var top = index * RowHeight;
+		double top = index * RowHeight;
 		if (track.Clips.Any(c => c.Id == _selectedId)) context.FillRectangle(SelectedHeaderBrush, new Rect(0, top, HeaderWidth, RowHeight));
 
-		var nameRight = SwitchRect(index, LayerSwitch.Mute).Left - 4;
+		double nameRight = SwitchRect(index, LayerSwitch.Mute).Left - 4;
 		using (context.PushClip(new Rect(0, top, nameRight, RowHeight)))
 			DrawText(context, track.Name, new Point(10, top + (RowHeight - 14) / 2), track.Silenced ? MutedTextBrush : TextBrush, nameRight - 10);
 
@@ -362,7 +362,7 @@ public sealed class LayerTimeline : Control
 
 	private static Rect SwitchRect(int track, LayerSwitch which)
 	{
-		var right = HeaderWidth - 6 - (2 - (int)which) * (SwitchWidth + SwitchGap);
+		double right = HeaderWidth - 6 - (2 - (int)which) * (SwitchWidth + SwitchGap);
 		return new Rect(right - SwitchWidth, track * RowHeight + (RowHeight - SwitchHeight) / 2, SwitchWidth, SwitchHeight);
 	}
 
@@ -371,16 +371,21 @@ public sealed class LayerTimeline : Control
 		Rect rect = SwitchRect(track, which);
 		context.DrawRectangle(on ? onBrush : SwitchOffBrush, null, rect, 3, 3);
 		if (!_switchTexts.TryGetValue((letter, on), out FormattedText? text))
+		{
 			_switchTexts[(letter, on)] = text = new FormattedText(letter, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
 				LabelTypeface, 10, on ? SwitchOnText : MutedTextBrush);
+		}
+
 		context.DrawText(text, new Point(rect.X + (rect.Width - text.Width) / 2, rect.Y + (rect.Height - text.Height) / 2));
 	}
 
 	private static LayerSwitch? SwitchAt(Point point, int track)
 	{
 		foreach (LayerSwitch which in Enum.GetValues<LayerSwitch>())
+		{
 			if (SwitchRect(track, which).Inflate(1).Contains(point))
 				return which;
+		}
 
 		return null;
 	}
@@ -392,9 +397,9 @@ public sealed class LayerTimeline : Control
 
 	private void DrawClip(DrawingContext context, LayerClip clip, int track)
 	{
-		var (x1, x2, top, bottom) = ClipRect(clip, track);
-		var (fadeIn, fadeOut) = FadeEnds(clip);
-		var selected = clip.Id == _selectedId;
+		(double x1, double x2, double top, double bottom) = ClipRect(clip, track);
+		(double fadeIn, double fadeOut) = FadeEnds(clip);
+		bool selected = clip.Id == _selectedId;
 		var rect = new Rect(x1, top, x2 - x1, bottom - top);
 
 		context.DrawRectangle(!clip.Available ? UnavailableClipBrush : selected ? SelectedClipBrush : ClipBrush, null, rect, 3, 3);
@@ -412,7 +417,7 @@ public sealed class LayerTimeline : Control
 		}
 
 		// The label stays in view while the clip's start is scrolled off to the left.
-		var textX = Math.Max(x1, HeaderWidth) + 6;
+		double textX = Math.Max(x1, HeaderWidth) + 6;
 		using (context.PushClip(rect.Deflate(1)))
 			DrawText(context, clip.Label, new Point(textX, top + (bottom - top - 14) / 2), clip.Available ? TextBrush : MutedTextBrush, x2 - textX);
 	}
@@ -439,8 +444,8 @@ public sealed class LayerTimeline : Control
 
 		foreach (TimeRange cut in _source.Cuts)
 		{
-			var x1 = HeaderWidth + _source.XOf(cut.StartSeconds);
-			var x2 = Math.Max(HeaderWidth + _source.XOf(cut.EndSeconds), x1 + 3);
+			double x1 = HeaderWidth + _source.XOf(cut.StartSeconds);
+			double x2 = Math.Max(HeaderWidth + _source.XOf(cut.EndSeconds), x1 + 3);
 			var band = new Rect(x1, 0, x2 - x1, height);
 			context.FillRectangle(CutFill, band);
 			context.DrawLine(CutBorder, band.TopLeft, band.BottomLeft);
@@ -451,8 +456,8 @@ public sealed class LayerTimeline : Control
 	private void DrawDragLabel(DrawingContext context, Point at, string text)
 	{
 		var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelTypeface, 11, TextBrush);
-		var x = Math.Clamp(at.X + 10, HeaderWidth, Math.Max(HeaderWidth, Bounds.Width - formatted.Width - 8));
-		var y = Math.Clamp(at.Y - 22, 0, Math.Max(0, Bounds.Height - formatted.Height - 4));
+		double x = Math.Clamp(at.X + 10, HeaderWidth, Math.Max(HeaderWidth, Bounds.Width - formatted.Width - 8));
+		double y = Math.Clamp(at.Y - 22, 0, Math.Max(0, Bounds.Height - formatted.Height - 4));
 		context.DrawRectangle(LabelBackground, ClipBorder, new Rect(x - 4, y - 1, formatted.Width + 8, formatted.Height + 2), 3, 3);
 		context.DrawText(formatted, new Point(x, y));
 	}
@@ -484,18 +489,18 @@ public sealed class LayerTimeline : Control
 	/// </summary>
 	private (int Track, LayerClip? Clip, Zone Zone) HitAt(Point point)
 	{
-		var track = (int)Math.Floor(point.Y / RowHeight);
+		int track = (int)Math.Floor(point.Y / RowHeight);
 		if (track < 0 || track >= _tracks.Count) return (-1, null, Zone.None);
 		if (point.X < HeaderWidth) return (track, null, SwitchAt(point, track) is null ? Zone.Header : Zone.Switch);
 
 		IReadOnlyList<LayerClip> clips = _tracks[track].Clips;
-		for (var i = clips.Count - 1; i >= 0; i--)
+		for (int i = clips.Count - 1; i >= 0; i--)
 		{
 			LayerClip clip = clips[i];
-			var (x1, x2, top, bottom) = ClipRect(clip, track);
+			(double x1, double x2, double top, double bottom) = ClipRect(clip, track);
 			if (CanEdit(clip, track))
 			{
-				var (fadeIn, fadeOut) = FadeEnds(clip);
+				(double fadeIn, double fadeOut) = FadeEnds(clip);
 				if (point.Y <= top + FadeHandleSize)
 				{
 					if (Math.Abs(point.X - X(fadeIn)) <= FadeHandleSize) return (track, clip, Zone.FadeIn);
@@ -522,7 +527,7 @@ public sealed class LayerTimeline : Control
 		// wheel over the video/audio tracks above, Shift+wheel scrolls it sideways.
 		if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) && !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
 
-		var x = Math.Max(e.GetPosition(this).X - HeaderWidth, 0);
+		double x = Math.Max(e.GetPosition(this).X - HeaderWidth, 0);
 		if (_source?.Wheel(x, e.Delta, e.KeyModifiers & ~KeyModifiers.Control) == true) e.Handled = true;
 	}
 
@@ -530,7 +535,7 @@ public sealed class LayerTimeline : Control
 	{
 		base.OnPointerPressed(e);
 		PointerPoint point = e.GetCurrentPoint(this);
-		(var track, LayerClip? clip, Zone zone) = HitAt(point.Position);
+		(int track, LayerClip? clip, Zone zone) = HitAt(point.Position);
 		if (zone == Zone.None) return;
 
 		if (point.Properties.IsRightButtonPressed && zone is Zone.Header or Zone.Switch)
@@ -585,7 +590,7 @@ public sealed class LayerTimeline : Control
 
 		if (_drag == Zone.None)
 		{
-			(var hoveredTrack, LayerClip? hoveredClip, Zone hovered) = HitAt(point);
+			(int hoveredTrack, LayerClip? hoveredClip, Zone hovered) = HitAt(point);
 			Cursor = hovered switch
 			{
 				Zone.Body or Zone.Empty when IsOnPlayhead(point.X) => ResizeCursor,
@@ -622,19 +627,19 @@ public sealed class LayerTimeline : Control
 	/// </summary>
 	private Drop DropAt(double y)
 	{
-		var track = (int)Math.Floor(y / RowHeight);
+		int track = (int)Math.Floor(y / RowHeight);
 		if (track != _dragTrack) _leftOwnTrack = true;
 		if (!_leftOwnTrack) return default;
 
 		if (track < 0) return new Drop(null, 0);
 		if (track >= _tracks.Count) return new Drop(null, _tracks.Count);
 
-		var within = (y - track * RowHeight) / RowHeight;
+		double within = (y - track * RowHeight) / RowHeight;
 		int? insert = within < InsertZone ? track : within > 1 - InsertZone ? track + 1 : null;
 		if (insert is { } gap)
 		{
 			// Its own layer, if it's alone on it, already sits in the gaps right above and below.
-			var alone = _tracks[_dragTrack].Clips.Count == 1;
+			bool alone = _tracks[_dragTrack].Clips.Count == 1;
 			return alone && (gap == _dragTrack || gap == _dragTrack + 1) ? default : new Drop(null, gap);
 		}
 
@@ -697,7 +702,7 @@ public sealed class LayerTimeline : Control
 		if (_dragTrack >= _tracks.Count || _insertIndex == _dragTrack || _insertIndex == _dragTrack + 1) return;
 
 		List<string> order = [.. _tracks.Select(t => t.Key)];
-		var key = order[_dragTrack];
+		string key = order[_dragTrack];
 		order.RemoveAt(_dragTrack);
 		order.Insert(_insertIndex > _dragTrack ? _insertIndex - 1 : _insertIndex, key);
 		LayersReordered?.Invoke(order);
@@ -723,13 +728,13 @@ public sealed class LayerTimeline : Control
 	/// <summary>`clip` (as it was when the drag began) with the dragged part at output time `at`.</summary>
 	private LayerTiming Drag(LayerClip clip, double at)
 	{
-		var (start, end) = Span(clip);
-		var length = end - start;
+		(double start, double end) = Span(clip);
+		double length = end - start;
 		double? appear = clip.AppearAtSeconds, disappear = clip.DisappearAtSeconds;
 		OverlayAnimationType animation = clip.Animation;
-		var inLength = clip.AnimationDurationSeconds;
+		double inLength = clip.AnimationDurationSeconds;
 		OverlayAnimationType? outAnimation = clip.OutAnimation;
-		var outLength = clip.OutAnimationDurationSeconds;
+		double? outLength = clip.OutAnimationDurationSeconds;
 
 		switch (_drag)
 		{
@@ -746,8 +751,8 @@ public sealed class LayerTimeline : Control
 			case Zone.Body:
 			{
 				// Either edge can catch a snap target - the one closer to its target wins; neither: whole frames.
-				var dragged = at - _grabOffset;
-				var newStart = Math.Round(dragged * Fps) / Fps;
+				double dragged = at - _grabOffset;
+				double newStart = Math.Round(dragged * Fps) / Fps;
 				(double Seconds, double Distance)? startTarget = NearestTarget(dragged, clip.Id);
 				(double Seconds, double Distance)? endTarget = NearestTarget(dragged + length, clip.Id);
 				if (startTarget is { } s && (endTarget is not { } e || s.Distance <= e.Distance)) newStart = s.Seconds;
@@ -760,14 +765,14 @@ public sealed class LayerTimeline : Control
 			case Zone.FadeIn:
 			{
 				// Up to where the way out starts - the two never overlap.
-				var room = clip.ResolvedOut == OverlayAnimationType.None ? length : length - clip.ResolvedOutSeconds;
+				double room = clip.ResolvedOut == OverlayAnimationType.None ? length : length - clip.ResolvedOutSeconds;
 				inLength = AnimationLength(Snap(at, clip.Id) - start, room);
 				if (animation == OverlayAnimationType.None) animation = OverlayAnimationType.Fade;
 				break;
 			}
 			case Zone.FadeOut:
 			{
-				var room = clip.Animation == OverlayAnimationType.None ? length : length - clip.AnimationDurationSeconds;
+				double room = clip.Animation == OverlayAnimationType.None ? length : length - clip.AnimationDurationSeconds;
 				outLength = AnimationLength(end - Snap(at, clip.Id), room);
 				if (clip.ResolvedOut == OverlayAnimationType.None) outAnimation = OverlayAnimationType.Fade;
 				break;
@@ -801,12 +806,12 @@ public sealed class LayerTimeline : Control
 
 	private (double Seconds, double Distance)? NearestTarget(double seconds, string draggedId)
 	{
-		var x = X(seconds);
+		double x = X(seconds);
 		(double, double)? best = null;
-		var bestDistance = SnapPixels;
-		foreach (var target in SnapTargets(draggedId))
+		double bestDistance = SnapPixels;
+		foreach (double target in SnapTargets(draggedId))
 		{
-			var distance = Math.Abs(X(target) - x);
+			double distance = Math.Abs(X(target) - x);
 			if (distance > bestDistance) continue;
 
 			best = (target, distance);
@@ -859,7 +864,7 @@ public sealed class LayerTimeline : Control
 		{
 			if (_owner._source is not { } source || _owner.OutputDurationSeconds <= 0 || _owner._tracks.Count == 0) return;
 
-			var x = Math.Round(HeaderWidth + source.XOf(source.Value)) + 0.5;
+			double x = Math.Round(HeaderWidth + source.XOf(source.Value)) + 0.5;
 			if (x >= HeaderWidth && x <= Bounds.Width) context.DrawLine(PlayheadPen, new Point(x, 0), new Point(x, Bounds.Height));
 		}
 	}

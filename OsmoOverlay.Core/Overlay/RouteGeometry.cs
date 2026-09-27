@@ -61,8 +61,8 @@ internal sealed class RouteGeometry : IDisposable
 
 		if (!afterCut)
 		{
-			var dx = point.X - _previous.X;
-			var dy = point.Y - _previous.Y;
+			float dx = point.X - _previous.X;
+			float dy = point.Y - _previous.Y;
 			if (dx * dx + dy * dy < MinStep * MinStep)
 			{
 				_skipped = (point, speedKmh);
@@ -96,12 +96,10 @@ internal sealed class RouteGeometry : IDisposable
 	private void AddTravelled(SKPoint point, double speedKmh)
 	{
 		if (_buckets is null)
-		{
 			_solid.LineTo(point);
-		}
 		else
 		{
-			var bucket = SpeedColorScale.Bucket((_previousSpeedKmh + speedKmh) / 2 / _speedScaleKmh);
+			int bucket = SpeedColorScale.Bucket((_previousSpeedKmh + speedKmh) / 2 / _speedScaleKmh);
 			Segment path = _buckets[bucket] ??= new Segment();
 			if (bucket != _lastBucket) path.MoveTo(_previous);
 			path.LineTo(point);
@@ -127,12 +125,12 @@ internal sealed class RouteGeometry : IDisposable
 	{
 		if (Count < 2) return;
 
-		var scale = UniformScale(toCanvas);
+		float scale = UniformScale(toCanvas);
 		if (scale <= 0 || !float.IsFinite(scale)) return;
 
 		canvas.Save();
 		canvas.Concat(toCanvas);
-		var localWidth = width / scale;
+		float localWidth = width / scale;
 		stroke.StrokeWidth = localWidth;
 		if (_buckets is null)
 		{
@@ -142,7 +140,7 @@ internal sealed class RouteGeometry : IDisposable
 		else
 		{
 			SKColor[] colors = SpeedColorScale.Colors(color);
-			for (var b = 0; b < _buckets.Length; b++)
+			for (int b = 0; b < _buckets.Length; b++)
 			{
 				if (_buckets[b] is not { } bucket) continue;
 				stroke.Color = colors[b];
@@ -232,8 +230,10 @@ internal sealed class RouteGeometry : IDisposable
 		public IEnumerable<SKPath> Paths()
 		{
 			foreach (Chunk chunk in _chunks)
+			{
 				if (chunk.Points >= 2)
 					yield return chunk.Path;
+			}
 		}
 
 		public void Dispose()

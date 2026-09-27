@@ -18,7 +18,7 @@ public sealed partial class OverlayRenderer
 	{
 		if (string.IsNullOrWhiteSpace(element.ImagePath) || LoadImage(element.ImagePath) is not { } image) return;
 
-		var opacity = Math.Clamp(element.Opacity, 0f, 1f);
+		float opacity = Math.Clamp(element.Opacity, 0f, 1f);
 		if (opacity <= 0f) return;
 
 		canvas.DrawImage(image, 0, 0, _imageSampling, opacity < 1f ? AlphaPaint(opacity) : null);
@@ -30,7 +30,7 @@ public sealed partial class OverlayRenderer
 
 		// A new file picked: the ones no widget shows any more go - an 8192 px picture is 256 MB decoded.
 		HashSet<string> used = new(Layout.OfType<ImageElement>().Select(i => i.ImagePath ?? ""), StringComparer.OrdinalIgnoreCase);
-		foreach (var stale in _images.Keys.Where(k => !used.Contains(k)).ToList())
+		foreach (string stale in _images.Keys.Where(k => !used.Contains(k)).ToList())
 		{
 			_images[stale]?.Dispose();
 			_images.Remove(stale);
@@ -42,7 +42,7 @@ public sealed partial class OverlayRenderer
 			if (OverlayElementBounds.ImageSize(path) is null)
 				throw new InvalidDataException($"not a readable image up to {OverlayElementBounds.MaxImageDimension} px a side");
 
-			using SKBitmap? bitmap = SKBitmap.Decode(path);
+			using var bitmap = SKBitmap.Decode(path);
 			image = bitmap is null ? null : SKImage.FromBitmap(bitmap);
 			if (image is null) throw new InvalidDataException("the file couldn't be decoded");
 		}

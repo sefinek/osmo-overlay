@@ -26,10 +26,7 @@ public static class LibavLoader
 	{
 		get
 		{
-			lock (Gate)
-			{
-				return _loaded;
-			}
+			lock (Gate) return _loaded;
 		}
 	}
 
@@ -43,7 +40,7 @@ public static class LibavLoader
 		{
 			if (_loaded) return null;
 
-			var failure = Load();
+			string? failure = Load();
 			_loaded = failure is null;
 			return failure;
 		}
@@ -55,22 +52,24 @@ public static class LibavLoader
 	/// </summary>
 	public static string? FindLibraryDirectory()
 	{
-		var avcodec = AvcodecFileName();
+		string avcodec = AvcodecFileName();
 		return CandidateDirectories().FirstOrDefault(d => File.Exists(Path.Combine(d, avcodec)));
 	}
 
 	private static string? Load()
 	{
-		var directory = FindLibraryDirectory();
+		string? directory = FindLibraryDirectory();
 		if (directory is null && !OperatingSystem.IsLinux())
+		{
 			return $"{AvcodecFileName()} was not found - it comes with the FFmpeg {SupportedMajorVersion} shared build" +
 			       (OperatingSystem.IsWindows() ? $" (winget install {RequiredTools.Ffmpeg.WingetId})" : "");
+		}
 
 		try
 		{
 			ffmpeg.RootPath = directory ?? "";
 			DynamicallyLoadedBindings.Initialize();
-			var version = ffmpeg.avcodec_version() >> 16;
+			uint version = ffmpeg.avcodec_version() >> 16;
 			if (version != ffmpeg.LIBAVCODEC_VERSION_MAJOR)
 				return $"libavcodec {version} was found, {ffmpeg.LIBAVCODEC_VERSION_MAJOR} is needed";
 
@@ -106,7 +105,7 @@ public static class LibavLoader
 			yield return "/usr/local/lib";
 		}
 
-		foreach (var directory in DependencyChecker.SearchPath())
+		foreach (string directory in DependencyChecker.SearchPath())
 			yield return directory;
 	}
 }

@@ -55,7 +55,7 @@ internal sealed class Proto
 	public static byte[] RawVarints(params ulong[] values)
 	{
 		List<byte> bytes = [];
-		foreach (var v in values) WriteVarint(bytes, v);
+		foreach (ulong v in values) WriteVarint(bytes, v);
 		return [.. bytes];
 	}
 

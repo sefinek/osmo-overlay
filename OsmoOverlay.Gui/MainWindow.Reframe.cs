@@ -54,7 +54,7 @@ public partial class MainWindow
 
 	private void UpdateReframeControls()
 	{
-		var available = Is360 && _phase == UiPhase.SummaryReady;
+		bool available = Is360 && _phase == UiPhase.SummaryReady;
 		ToggleReframeButton.IsVisible = available;
 		ToggleLevelButton.IsVisible = available;
 		ToggleLevelButton.Classes.Set("active", _reframe.Level);
@@ -108,7 +108,7 @@ public partial class MainWindow
 		if (_reframeDragStart is not { } start || GetPreviewTransform() is not { } t) return true;
 
 		// Degrees per on-screen pixel, so the picture moves with the pointer at any zoom or view width.
-		var perPixel = _reframeDragFrom.FovDegrees / t.RenderedWidth;
+		double perPixel = _reframeDragFrom.FovDegrees / t.RenderedWidth;
 		Vector moved = e.GetPosition(OverlayDragCanvas) - start;
 		ApplyReframe(e.KeyModifiers.HasFlag(KeyModifiers.Shift)
 			? _reframeDragFrom with { Roll = _reframeDragFrom.Roll + moved.X * perPixel }

@@ -13,26 +13,26 @@ public static class SmpteTimecode
 	/// <summary>`timecode` moved forward by `frames`, in the same format; null if it doesn't parse.</summary>
 	public static string? AddFrames(string timecode, long frames, double fps)
 	{
-		if (!TryParse(timecode, out var hh, out var mm, out var ss, out var ff, out var dropFrame)) return null;
+		if (!TryParse(timecode, out int hh, out int mm, out int ss, out int ff, out bool dropFrame)) return null;
 
-		var nominal = (int)Math.Round(fps);
+		int nominal = (int)Math.Round(fps);
 		if (nominal <= 0 || ff >= nominal) return null;
 		// Drop-frame only exists for the NTSC rates (29.97 drops 2, 59.94 drops 4).
-		var drop = dropFrame ? nominal / 15 : 0;
+		int drop = dropFrame ? nominal / 15 : 0;
 		if (dropFrame && nominal % 30 != 0) return null;
 
-		var totalMinutes = hh * 60L + mm;
-		var frameNumber = (hh * 3600L + mm * 60L + ss) * nominal + ff - drop * (totalMinutes - totalMinutes / 10);
+		long totalMinutes = hh * 60L + mm;
+		long frameNumber = (hh * 3600L + mm * 60L + ss) * nominal + ff - drop * (totalMinutes - totalMinutes / 10);
 
-		var framesPerDay = 24L * 3600 * nominal - drop * (24L * 60 - 24L * 6);
+		long framesPerDay = 24L * 3600 * nominal - drop * (24L * 60 - 24L * 6);
 		return Format((((frameNumber + frames) % framesPerDay) + framesPerDay) % framesPerDay, nominal, drop, dropFrame);
 	}
 
 	/// <summary>Frame `frame` counted from 00:00:00:00 - drop-frame at the NTSC rates, as an NLE numbers its own timeline.</summary>
 	public static string? FromFrame(long frame, double fps)
 	{
-		var nominal = (int)Math.Round(fps);
-		var dropFrame = nominal > 0 && nominal % 30 == 0 && Math.Abs(fps - nominal) > 0.001;
+		int nominal = (int)Math.Round(fps);
+		bool dropFrame = nominal > 0 && nominal % 30 == 0 && Math.Abs(fps - nominal) > 0.001;
 		return AddFrames(dropFrame ? "00:00:00;00" : "00:00:00:00", frame, fps);
 	}
 
@@ -40,15 +40,15 @@ public static class SmpteTimecode
 	{
 		if (drop > 0)
 		{
-			var framesPer10Minutes = nominal * 600L - drop * 9L;
-			var framesPerMinute = nominal * 60L - drop;
-			var tens = frameNumber / framesPer10Minutes;
-			var remainder = frameNumber % framesPer10Minutes;
+			long framesPer10Minutes = nominal * 600L - drop * 9L;
+			long framesPerMinute = nominal * 60L - drop;
+			long tens = frameNumber / framesPer10Minutes;
+			long remainder = frameNumber % framesPer10Minutes;
 			frameNumber += drop * 9L * tens + (remainder > drop ? drop * ((remainder - drop) / framesPerMinute) : 0);
 		}
 
-		var ff = frameNumber % nominal;
-		var totalSeconds = frameNumber / nominal;
+		long ff = frameNumber % nominal;
+		long totalSeconds = frameNumber / nominal;
 		return string.Create(CultureInfo.InvariantCulture,
 			$"{totalSeconds / 3600 % 24:00}:{totalSeconds / 60 % 60:00}:{totalSeconds % 60:00}{(dropFrame ? ';' : ':')}{ff:00}");
 	}
@@ -57,7 +57,7 @@ public static class SmpteTimecode
 	{
 		hh = mm = ss = ff = 0;
 		dropFrame = timecode.Contains(';') || timecode.Contains('.');
-		var parts = timecode.Split(':', ';', '.');
+		string[] parts = timecode.Split(':', ';', '.');
 		return parts.Length == 4 &&
 		       int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out hh) &&
 		       int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out mm) &&

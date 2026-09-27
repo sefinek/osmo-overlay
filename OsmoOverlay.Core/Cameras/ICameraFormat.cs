@@ -80,8 +80,11 @@ public static class CameraFormats
 	internal static CameraRecording? Detect(string path, JsonArray streams)
 	{
 		foreach (ICameraFormat format in _formats)
+		{
 			if (format.Detect(path, streams) is { } recording)
 				return recording;
+		}
+
 		return null;
 	}
 }

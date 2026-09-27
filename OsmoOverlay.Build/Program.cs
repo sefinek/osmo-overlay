@@ -24,12 +24,12 @@ List<string> rids = [];
 List<Flavor> flavors = [];
 string? versionOverride = null;
 string? outputArg = null;
-var skipTests = false;
-var archive = true;
-var installer = true;
+bool skipTests = false;
+bool archive = true;
+bool installer = true;
 string? isccArg = null;
 
-for (var i = 0; i < args.Length; i++)
+for (int i = 0; i < args.Length; i++)
 {
 	string Value()
 	{
@@ -42,7 +42,7 @@ for (var i = 0; i < args.Length; i++)
 			rids.AddRange(Value().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 			break;
 		case "--flavor":
-			var flavor = Value();
+			string flavor = Value();
 			flavors.AddRange(flavor switch
 			{
 				"self-contained" => [Flavor.SelfContained],
@@ -81,16 +81,16 @@ for (var i = 0; i < args.Length; i++)
 if (rids.Count == 0) rids.AddRange(defaultRids);
 if (flavors.Count == 0) flavors.AddRange([Flavor.SelfContained, Flavor.FrameworkDependent]);
 
-var root = FindRepoRoot();
-var guiProject = Path.Combine(root, "OsmoOverlay.Gui", "OsmoOverlay.Gui.csproj");
-var cliProject = Path.Combine(root, "OsmoOverlay.Cli", "OsmoOverlay.Cli.csproj");
-var version = versionOverride ?? XDocument.Load(Path.Combine(root, "Directory.Build.props")).Descendants("Version").First().Value;
-var displayVersion = ShortVersion(version);
-var outputDir = Path.GetFullPath(outputArg ?? Path.Combine(root, "artifacts"));
-var buildDir = Path.Combine(root, "artifacts", ".build");
+string root = FindRepoRoot();
+string guiProject = Path.Combine(root, "OsmoOverlay.Gui", "OsmoOverlay.Gui.csproj");
+string cliProject = Path.Combine(root, "OsmoOverlay.Cli", "OsmoOverlay.Cli.csproj");
+string version = versionOverride ?? XDocument.Load(Path.Combine(root, "Directory.Build.props")).Descendants("Version").First().Value;
+string displayVersion = ShortVersion(version);
+string outputDir = Path.GetFullPath(outputArg ?? Path.Combine(root, "artifacts"));
+string buildDir = Path.Combine(root, "artifacts", ".build");
 Directory.CreateDirectory(outputDir);
 
-var iscc = installer && rids.Any(r => InstallerArchitecture(r) is not null) && flavors.Contains(Flavor.SelfContained) ? FindIscc() : null;
+string? iscc = installer && rids.Any(r => InstallerArchitecture(r) is not null) && flavors.Contains(Flavor.SelfContained) ? FindIscc() : null;
 if (installer && iscc is null && rids.Any(r => InstallerArchitecture(r) is not null) && flavors.Contains(Flavor.SelfContained))
 	Console.WriteLine("Inno Setup 7 (ISCC.exe) not found - skipping the Windows installers. Pass --iscc <path> or --no-installer.");
 
@@ -103,7 +103,7 @@ try
 	if (!skipTests) Run("dotnet", "test", "--project", Path.Combine(root, "OsmoOverlay.Tests"), "-c", "Release");
 
 	List<string> produced = [];
-	foreach (var rid in rids)
+	foreach (string rid in rids)
 	foreach (Flavor flavor in flavors)
 		produced.AddRange(Package(rid, flavor));
 
@@ -111,7 +111,7 @@ try
 	if (files.Count > 0) WriteChecksums(files);
 
 	Console.WriteLine($"\nDone in {stopwatch.Elapsed:mm\\:ss}:");
-	foreach (var path in produced)
+	foreach (string path in produced)
 		Console.WriteLine($"  {Path.GetFileName(path)}{(File.Exists(path) ? $" ({new FileInfo(path).Length / 1024.0 / 1024.0:0.0} MB)" : "")}");
 	return 0;
 }
@@ -127,24 +127,24 @@ finally
 
 List<string> Package(string rid, Flavor flavor)
 {
-	var name = $"OsmoOverlay-{displayVersion}-{rid}-{Suffix(flavor)}";
-	var packageDir = Path.Combine(outputDir, name);
-	var isWindows = rid.StartsWith("win-", StringComparison.Ordinal);
-	var archivePath = Path.Combine(outputDir, name + (isWindows ? ".zip" : ".tar.gz"));
-	var installerName = $"OsmoOverlay-{displayVersion}-{rid}-setup";
-	var installerPath = Path.Combine(outputDir, installerName + ".exe");
-	var buildInstaller = iscc is not null && flavor == Flavor.SelfContained && InstallerArchitecture(rid) is not null;
+	string name = $"OsmoOverlay-{displayVersion}-{rid}-{Suffix(flavor)}";
+	string packageDir = Path.Combine(outputDir, name);
+	bool isWindows = rid.StartsWith("win-", StringComparison.Ordinal);
+	string archivePath = Path.Combine(outputDir, name + (isWindows ? ".zip" : ".tar.gz"));
+	string installerName = $"OsmoOverlay-{displayVersion}-{rid}-setup";
+	string installerPath = Path.Combine(outputDir, installerName + ".exe");
+	bool buildInstaller = iscc is not null && flavor == Flavor.SelfContained && InstallerArchitecture(rid) is not null;
 
 	Console.WriteLine($"\n=== {name}");
 
-	var isMac = rid.StartsWith("osx-", StringComparison.Ordinal);
-	var publishDir = isMac ? Path.Combine(packageDir, "OsmoOverlay.app", "Contents", "MacOS") : packageDir;
+	bool isMac = rid.StartsWith("osx-", StringComparison.Ordinal);
+	string publishDir = isMac ? Path.Combine(packageDir, "OsmoOverlay.app", "Contents", "MacOS") : packageDir;
 
 	Publish(guiProject, rid, flavor, publishDir);
 	Publish(cliProject, rid, flavor, publishDir);
 	if (isMac) WriteAppBundle(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
 	if (rid.StartsWith("linux-", StringComparison.Ordinal)) WriteDesktopEntryInstaller(packageDir);
-	foreach (var document in new[] { "README.md", "LICENSE" })
+	foreach (string document in new[] { "README.md", "LICENSE" })
 		File.Copy(Path.Combine(root, document), Path.Combine(packageDir, document));
 
 	List<string> produced = [];
@@ -250,27 +250,27 @@ void WriteDesktopEntryInstaller(string packageDir)
 
 void WriteAppBundle(string contentsDir)
 {
-	var resourcesDir = Path.Combine(contentsDir, "Resources");
+	string resourcesDir = Path.Combine(contentsDir, "Resources");
 	Directory.CreateDirectory(resourcesDir);
 	File.Copy(Path.Combine(root, "OsmoOverlay.Gui", "Assets", "OsmoOverlay.icns"), Path.Combine(resourcesDir, "OsmoOverlay.icns"));
 
-	var plist = $"""
-	             <?xml version="1.0" encoding="UTF-8"?>
-	             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-	             <plist version="1.0">
-	             <dict>
-	               <key>CFBundleName</key><string>OsmoOverlay</string>
-	               <key>CFBundleDisplayName</key><string>OsmoOverlay</string>
-	               <key>CFBundleIdentifier</key><string>net.sefinek.osmooverlay</string>
-	               <key>CFBundleExecutable</key><string>OsmoOverlay</string>
-	               <key>CFBundleIconFile</key><string>OsmoOverlay.icns</string>
-	               <key>CFBundlePackageType</key><string>APPL</string>
-	               <key>CFBundleShortVersionString</key><string>{displayVersion}</string>
-	               <key>CFBundleVersion</key><string>{version}</string>
-	               <key>NSHighResolutionCapable</key><true/>
-	             </dict>
-	             </plist>
-	             """;
+	string plist = $"""
+	                <?xml version="1.0" encoding="UTF-8"?>
+	                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+	                <plist version="1.0">
+	                <dict>
+	                  <key>CFBundleName</key><string>OsmoOverlay</string>
+	                  <key>CFBundleDisplayName</key><string>OsmoOverlay</string>
+	                  <key>CFBundleIdentifier</key><string>net.sefinek.osmooverlay</string>
+	                  <key>CFBundleExecutable</key><string>OsmoOverlay</string>
+	                  <key>CFBundleIconFile</key><string>OsmoOverlay.icns</string>
+	                  <key>CFBundlePackageType</key><string>APPL</string>
+	                  <key>CFBundleShortVersionString</key><string>{displayVersion}</string>
+	                  <key>CFBundleVersion</key><string>{version}</string>
+	                  <key>NSHighResolutionCapable</key><true/>
+	                </dict>
+	                </plist>
+	                """;
 	File.WriteAllText(Path.Combine(contentsDir, "Info.plist"), plist);
 }
 
@@ -291,12 +291,12 @@ static void AddDirectory(TarWriter tar, string directory, string entryName)
 
 	tar.WriteEntry(new PaxTarEntry(TarEntryType.Directory, entryName + "/") { Mode = executable });
 
-	foreach (var subdirectory in Directory.GetDirectories(directory).Order(StringComparer.Ordinal))
+	foreach (string subdirectory in Directory.GetDirectories(directory).Order(StringComparer.Ordinal))
 		AddDirectory(tar, subdirectory, $"{entryName}/{Path.GetFileName(subdirectory)}");
 
-	foreach (var path in Directory.GetFiles(directory).Order(StringComparer.Ordinal))
+	foreach (string path in Directory.GetFiles(directory).Order(StringComparer.Ordinal))
 	{
-		var fileName = Path.GetFileName(path);
+		string fileName = Path.GetFileName(path);
 		using FileStream data = File.OpenRead(path);
 		tar.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, $"{entryName}/{fileName}")
 		{
@@ -309,7 +309,7 @@ static void AddDirectory(TarWriter tar, string directory, string entryName)
 
 void WriteChecksums(IEnumerable<string> archives)
 {
-	var checksumPath = Path.Combine(outputDir, $"OsmoOverlay-{displayVersion}-SHA256SUMS.txt");
+	string checksumPath = Path.Combine(outputDir, $"OsmoOverlay-{displayVersion}-SHA256SUMS.txt");
 	File.WriteAllLines(checksumPath, archives.Select(path =>
 	{
 		using FileStream stream = File.OpenRead(path);
@@ -320,7 +320,7 @@ void WriteChecksums(IEnumerable<string> archives)
 void Run(string command, params string[] arguments)
 {
 	var psi = new ProcessStartInfo(command) { UseShellExecute = false, WorkingDirectory = root };
-	foreach (var argument in arguments) psi.ArgumentList.Add(argument);
+	foreach (string argument in arguments) psi.ArgumentList.Add(argument);
 
 	using Process process = Process.Start(psi) ?? throw new BuildFailedException($"Could not start {command}.");
 	process.WaitForExit();
@@ -337,7 +337,7 @@ void Clean()
 	Run("dotnet", "clean", Path.Combine(root, "OsmoOverlay.slnx"), "-c", "Release", "-v", "q", "-nologo");
 
 	DeleteIfExists(buildDir);
-	foreach (var path in Directory.EnumerateFileSystemEntries(outputDir, "OsmoOverlay-*"))
+	foreach (string path in Directory.EnumerateFileSystemEntries(outputDir, "OsmoOverlay-*"))
 		DeleteIfExists(path);
 }
 
@@ -371,15 +371,17 @@ static void DeleteIfExists(string path)
 static string FindRepoRoot()
 {
 	for (DirectoryInfo? dir = new(Directory.GetCurrentDirectory()); dir is not null; dir = dir.Parent)
+	{
 		if (File.Exists(Path.Combine(dir.FullName, "OsmoOverlay.slnx")))
 			return dir.FullName;
+	}
 
 	throw new BuildFailedException("OsmoOverlay.slnx not found - run from inside the repository.");
 }
 
 static string ShortVersion(string version)
 {
-	var parts = version.Split('.');
+	string[] parts = version.Split('.');
 	return parts.Length == 4 && parts[3] == "0" ? string.Join('.', parts[..3]) : version;
 }
 

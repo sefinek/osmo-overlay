@@ -36,7 +36,7 @@ public static class OverlayPresetStore
 			RefreshBuiltInDefault(presets, width, height);
 			if (presets.Count > 0)
 			{
-				var activeId = OverlaySettingsStore.Load().ActivePresetId;
+				string? activeId = OverlaySettingsStore.Load().ActivePresetId;
 				if (activeId is null || presets.All(p => p.Id != activeId)) activeId = presets[0].Id;
 				return (presets, activeId);
 			}
@@ -65,8 +65,8 @@ public static class OverlayPresetStore
 			// Only files this store itself loaded or wrote are candidates for removal - a preset file that
 			// failed to parse (hand-edited, written by a newer version with an unknown widget type) was
 			// never in `presets` to begin with, and must not be silently wiped by the next unrelated edit.
-			HashSet<string> keepFiles = presets.Select(p => PresetPath(p.Id)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-			foreach (var file in KnownPresetFiles.Keys.Where(f => !keepFiles.Contains(f)).ToList())
+			var keepFiles = presets.Select(p => PresetPath(p.Id)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+			foreach (string file in KnownPresetFiles.Keys.Where(f => !keepFiles.Contains(f)).ToList())
 			{
 				File.Delete(file);
 				KnownPresetFiles.Remove(file);
@@ -93,7 +93,7 @@ public static class OverlayPresetStore
 	/// </summary>
 	private static void RefreshBuiltInDefault(List<OverlayPreset> presets, int width, int height)
 	{
-		var index = presets.FindIndex(p => p.Id == DefaultPresetId);
+		int index = presets.FindIndex(p => p.Id == DefaultPresetId);
 		var fresh = OverlayPreset.CreateDefault(DefaultPresetId, "Default", width, height);
 
 		if (index < 0)
@@ -106,9 +106,7 @@ public static class OverlayPresetStore
 			WritePreset(fresh);
 		}
 		else
-		{
 			presets[index] = fresh;
-		}
 	}
 
 	/// <summary>Serializes one preset to an arbitrary file the user picked, so it can be shared/sent to someone else.</summary>
@@ -147,9 +145,9 @@ public static class OverlayPresetStore
 
 	private static void WritePreset(OverlayPreset preset)
 	{
-		var path = PresetPath(preset.Id);
-		var json = JsonSerializer.Serialize(preset);
-		if (KnownPresetFiles.TryGetValue(path, out var onDisk) && onDisk == json) return;
+		string path = PresetPath(preset.Id);
+		string json = JsonSerializer.Serialize(preset);
+		if (KnownPresetFiles.TryGetValue(path, out string? onDisk) && onDisk == json) return;
 
 		AtomicFile.WriteAllText(path, json);
 		KnownPresetFiles[path] = json;
@@ -166,10 +164,11 @@ public static class OverlayPresetStore
 		List<OverlayPreset> presets = [];
 		if (!Directory.Exists(PresetsDir)) return presets;
 
-		foreach (var file in Directory.EnumerateFiles(PresetsDir, "*.json"))
+		foreach (string file in Directory.EnumerateFiles(PresetsDir, "*.json"))
+		{
 			try
 			{
-				var json = File.ReadAllText(file);
+				string json = File.ReadAllText(file);
 				OverlayPreset preset = Validate(JsonSerializer.Deserialize<OverlayPreset>(json));
 				if (presets.Any(p => p.Id == preset.Id))
 				{
@@ -185,6 +184,7 @@ public static class OverlayPresetStore
 				// One corrupt preset file shouldn't take the rest of the presets down with it.
 				AppLogger.Warn(ex, $"Skipping unreadable overlay preset file: {file}");
 			}
+		}
 
 		return presets;
 	}
@@ -213,7 +213,7 @@ public static class OverlayPresetStore
 				: e with { Scale = float.IsFinite(e.Scale) ? Math.Clamp(e.Scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : 1f })
 		];
 
-		List<OverlayLayer>? layers = preset.Layers?.Where(l => l is not null && !string.IsNullOrEmpty(l.Id)).ToList();
+		var layers = preset.Layers?.Where(l => l is not null && !string.IsNullOrEmpty(l.Id)).ToList();
 		return preset with { Name = preset.Name ?? preset.Id, Elements = elements, Layers = layers };
 	}
 }

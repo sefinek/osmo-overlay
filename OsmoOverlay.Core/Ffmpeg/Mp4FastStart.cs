@@ -11,14 +11,14 @@ internal static class Mp4FastStart
 {
 	public static void Apply(string path)
 	{
-		var tempPath = $"{path}.{Guid.NewGuid():N}.faststart.tmp";
+		string tempPath = $"{path}.{Guid.NewGuid():N}.faststart.tmp";
 		try
 		{
 			using (var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 20))
 			{
 				List<Mp4TopLevelBox> topLevel = Mp4File.ReadTopLevel(input);
-				var moovIndex = topLevel.FindIndex(b => b.Type == "moov");
-				var firstMdat = topLevel.FindIndex(b => b.Type == "mdat");
+				int moovIndex = topLevel.FindIndex(b => b.Type == "moov");
+				int firstMdat = topLevel.FindIndex(b => b.Type == "mdat");
 				if (moovIndex < 0 || firstMdat < 0 || moovIndex < firstMdat) return;
 
 				Mp4Box moov = Mp4File.ReadMoov(input, topLevel[moovIndex]);
@@ -31,20 +31,20 @@ internal static class Mp4FastStart
 				}
 
 				// Converting a table to co64 grows moov, which grows the shift - so settle the size first.
-				var force64 = false;
+				bool force64 = false;
 				ulong shift;
 				while (true)
 				{
-					foreach ((Mp4Box stbl, var offsets) in tables) ReplaceChunkOffsets(stbl, offsets, 0, force64);
+					foreach ((Mp4Box stbl, ulong[] offsets) in tables) ReplaceChunkOffsets(stbl, offsets, 0, force64);
 					shift = (ulong)moov.Size;
 					if (force64 || tables.All(t => t.Offsets.Length == 0 || t.Offsets.Max() + shift <= uint.MaxValue)) break;
 					force64 = true;
 				}
 
-				foreach ((Mp4Box stbl, var offsets) in tables) ReplaceChunkOffsets(stbl, offsets, shift, force64);
+				foreach ((Mp4Box stbl, ulong[] offsets) in tables) ReplaceChunkOffsets(stbl, offsets, shift, force64);
 
 				using var outputFile = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1 << 20);
-				var insertAt = topLevel[firstMdat].Offset;
+				long insertAt = topLevel[firstMdat].Offset;
 				CopyRange(input, 0, insertAt, outputFile);
 				moov.WriteTo(outputFile);
 				foreach (Mp4TopLevelBox box in topLevel.Where((b, i) => i >= firstMdat && i != moovIndex))
@@ -61,18 +61,18 @@ internal static class Mp4FastStart
 
 	private static void ReplaceChunkOffsets(Mp4Box stbl, ulong[] offsets, ulong shift, bool force64)
 	{
-		var index = stbl.Children!.FindIndex(c => c.Type is "stco" or "co64");
-		var use64 = force64 || stbl.Children[index].Type == "co64";
+		int index = stbl.Children!.FindIndex(c => c.Type is "stco" or "co64");
+		bool use64 = force64 || stbl.Children[index].Type == "co64";
 		stbl.Children[index] = Mp4Fields.ChunkOffsetBox([.. offsets.Select(o => o + shift)], use64);
 	}
 
 	private static void CopyRange(Stream input, long offset, long length, Stream output)
 	{
-		var buffer = new byte[1 << 20];
+		byte[] buffer = new byte[1 << 20];
 		input.Position = offset;
 		while (length > 0)
 		{
-			var read = input.Read(buffer, 0, (int)Math.Min(buffer.Length, length));
+			int read = input.Read(buffer, 0, (int)Math.Min(buffer.Length, length));
 			if (read == 0) throw new EndOfStreamException();
 			output.Write(buffer, 0, read);
 			length -= read;

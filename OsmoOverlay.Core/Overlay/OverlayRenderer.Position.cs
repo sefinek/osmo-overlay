@@ -72,15 +72,15 @@ public sealed partial class OverlayRenderer
 			return (null, null);
 
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
-		var urlTemplate = ResolveUrlTemplate();
-		var maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
+		string urlTemplate = ResolveUrlTemplate();
+		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
 		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor);
 		_preparedMapKey = key;
 
 		// Fetched with enough tile margin for the widget's own configured zoom-out ceiling (not just
 		// the static 1x window), so a fresh fetch is never short on margin - and MaxZoomOutFactor being
 		// part of the key means bumping this setting always triggers exactly such a fresh fetch.
-		var paddingTiles = (int)Math.Ceiling(maxFactor);
+		int paddingTiles = (int)Math.Ceiling(maxFactor);
 
 		try
 		{
@@ -124,7 +124,7 @@ public sealed partial class OverlayRenderer
 	{
 		if (layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
 			return false;
-		var maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
+		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
 		MapMosaicKey key = (ResolveUrlTemplate(), mapElement.MapZoom, maxFactor);
 		return _preparedMapKey != key;
 	}
@@ -139,7 +139,7 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private string ResolveUrlTemplate()
 	{
-		var template = MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
+		string template = MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
 		return template.Replace("{api_key}", Uri.EscapeDataString(MapApiKey?.Trim() ?? ""));
 	}
 
@@ -159,15 +159,13 @@ public sealed partial class OverlayRenderer
 	{
 		if (_allFrames.Count == 0) return;
 
-		var index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
+		int index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
 		if (index == _trailCacheIndex + 1)
-		{
 			AppendTrailPoint(_allFrames[index]);
-		}
 		else if (index != _trailCacheIndex)
 		{
 			_trail.Clear();
-			for (var i = 0; i <= index; i++)
+			for (int i = 0; i <= index; i++)
 				AppendTrailPoint(_allFrames[i]);
 		}
 
@@ -186,9 +184,7 @@ public sealed partial class OverlayRenderer
 		}
 
 		if (_trail.Count == 0)
-		{
 			(_trailMinEast, _trailMaxEast, _trailMinNorth, _trailMaxNorth) = (east, east, north, north);
-		}
 		else
 		{
 			_trailMinEast = Math.Min(_trailMinEast, east);
@@ -214,7 +210,7 @@ public sealed partial class OverlayRenderer
 
 		DrawOutlined(canvas, "N", 0, -radius + 46, _labelFont, White, SKTextAlign.Center);
 
-		var headingText = $"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
+		string headingText = $"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
 		DrawOutlined(canvas, headingText, radius * 0.55f, radius * 0.7f, _labelFont, White, SKTextAlign.Right);
 	}
 
@@ -229,14 +225,14 @@ public sealed partial class OverlayRenderer
 		if (_trail.Count < 2) return SKPoint.Empty;
 
 		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
-		var centerEast = (Math.Min(_trailMinEast, east) + Math.Max(_trailMaxEast, east)) / 2;
-		var centerNorth = (Math.Min(_trailMinNorth, north) + Math.Max(_trailMaxNorth, north)) / 2;
+		double centerEast = (Math.Min(_trailMinEast, east) + Math.Max(_trailMaxEast, east)) / 2;
+		double centerNorth = (Math.Min(_trailMinNorth, north) + Math.Max(_trailMaxNorth, north)) / 2;
 
-		var maxDistSq = Math.Max(5.0 * 5.0, DistanceSq(east, north, centerEast, centerNorth));
+		double maxDistSq = Math.Max(5.0 * 5.0, DistanceSq(east, north, centerEast, centerNorth));
 		foreach (TrailPoint p in CollectionsMarshal.AsSpan(_trail))
 			maxDistSq = Math.Max(maxDistSq, DistanceSq(p.East, p.North, centerEast, centerNorth));
 
-		var scale = (OverlayElementBounds.CompassRadius - 50) / Math.Sqrt(maxDistSq);
+		double scale = (OverlayElementBounds.CompassRadius - 50) / Math.Sqrt(maxDistSq);
 		// North up: local meters (y growing north) onto the dial (y growing down).
 		var toDial = SKMatrix.CreateScaleTranslation((float)scale, (float)-scale, (float)(-centerEast * scale),
 			(float)(centerNorth * scale));
@@ -254,7 +250,7 @@ public sealed partial class OverlayRenderer
 	private void DrawTrailRoute(SKCanvas canvas, RouteGeometry?[] routes, List<SKPoint>? pixels, SKMatrix toCanvas,
 		TrailOverlayElement element)
 	{
-		var devicePixelsPerUnit = RouteGeometry.UniformScale(canvas.TotalMatrix) * RouteGeometry.UniformScale(toCanvas);
+		float devicePixelsPerUnit = RouteGeometry.UniformScale(canvas.TotalMatrix) * RouteGeometry.UniformScale(toCanvas);
 		RouteGeometry route = SyncRoute(routes, pixels, element.TrailColorBySpeed, 0.5 / devicePixelsPerUnit);
 		DrawRoute(canvas, route, toCanvas, ResolveTrailColor(element.TrailColor), element.TrailWidth);
 	}
@@ -271,7 +267,7 @@ public sealed partial class OverlayRenderer
 	private RouteGeometry SyncRoute(RouteGeometry?[] routes, List<SKPoint>? pixels, bool colorBySpeed, double wantedStep)
 	{
 		ref RouteGeometry? route = ref routes[colorBySpeed ? 1 : 0];
-		var step = route?.MinStep ?? 0;
+		float step = route?.MinStep ?? 0;
 		if (!(wantedStep >= step && wantedStep < step * 4) && double.IsFinite(wantedStep) && wantedStep > 0)
 			step = (float)Math.Pow(2, Math.Floor(Math.Log2(wantedStep)));
 
@@ -282,7 +278,7 @@ public sealed partial class OverlayRenderer
 		}
 
 		route ??= new RouteGeometry(RouteAcrossCuts, colorBySpeed, _trailSpeedScaleKmh, step);
-		for (var i = route.Count; i < _trail.Count; i++)
+		for (int i = route.Count; i < _trail.Count; i++)
 		{
 			TrailPoint p = _trail[i];
 			route.Add(pixels?[i] ?? new SKPoint((float)p.East, (float)p.North), p.SpeedKmh, p.AfterCut);
@@ -293,7 +289,7 @@ public sealed partial class OverlayRenderer
 
 	private static void DisposeRoutes(RouteGeometry?[] routes)
 	{
-		for (var i = 0; i < routes.Length; i++)
+		for (int i = 0; i < routes.Length; i++)
 		{
 			routes[i]?.Dispose();
 			routes[i] = null;
@@ -355,8 +351,8 @@ public sealed partial class OverlayRenderer
 
 		// The farthest trail point should land at MapTrailFitFraction of the crop radius, not right at
 		// its edge, so it stays comfortably inside the circle instead of grazing the rim.
-		var requiredRadius = Math.Sqrt(maxDistSq) / MapTrailFitFraction;
-		var target = Math.Clamp(requiredRadius / radius, 1.0, ClampZoomOutFactor(maxFactor));
+		double requiredRadius = Math.Sqrt(maxDistSq) / MapTrailFitFraction;
+		double target = Math.Clamp(requiredRadius / radius, 1.0, ClampZoomOutFactor(maxFactor));
 
 		return _mapZoomEma.Update(frame.Raw.SampleTimeSeconds, target, MapZoomSmoothingSeconds);
 	}
@@ -388,16 +384,16 @@ public sealed partial class OverlayRenderer
 			// draw below, instead of both re-running the same Web Mercator projection per trail point.
 			List<SKPoint> trailPixels = GetTrailPixels();
 
-			var zoomFactor = element.MapDynamicZoom
+			double zoomFactor = element.MapDynamicZoom
 				? GetMapZoomFactor(frame, center, trailPixels, element.MapDynamicZoomMaxFactor)
 				: 1.0;
-			var cropRadius = radius * (float)zoomFactor;
+			float cropRadius = radius * (float)zoomFactor;
 
 			var src = SKRect.Create(center.X - cropRadius, center.Y - cropRadius, cropRadius * 2, cropRadius * 2);
 			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
 			canvas.DrawImage(_mapMosaic.Image, src, dest, SKSamplingOptions.Default);
 
-			var mapScale = radius / cropRadius;
+			float mapScale = radius / cropRadius;
 			var toWidget = SKMatrix.CreateScaleTranslation(mapScale, mapScale, -center.X * mapScale, -center.Y * mapScale);
 			DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
 
@@ -433,12 +429,9 @@ public sealed partial class OverlayRenderer
 			// Another mosaic places the same points at other pixels.
 			DisposeRoutes(_mapRoutes);
 		}
-		else if (_trailPixels.Count > _trail.Count)
-		{
-			_trailPixels.RemoveRange(_trail.Count, _trailPixels.Count - _trail.Count);
-		}
+		else if (_trailPixels.Count > _trail.Count) _trailPixels.RemoveRange(_trail.Count, _trailPixels.Count - _trail.Count);
 
-		for (var i = _trailPixels.Count; i < _trail.Count; i++)
+		for (int i = _trailPixels.Count; i < _trail.Count; i++)
 			_trailPixels.Add(_mapMosaic!.GetPixel(_trail[i].Lat, _trail[i].Lon));
 		return _trailPixels;
 	}
@@ -493,7 +486,7 @@ public sealed partial class OverlayRenderer
 
 	private static string CardinalDirection(double heading)
 	{
-		var index = (int)Math.Round(AngleMath.NormalizeDegrees(heading) / 45.0) % 8;
+		int index = (int)Math.Round(AngleMath.NormalizeDegrees(heading) / 45.0) % 8;
 		return CardinalNames[index];
 	}
 }

@@ -52,23 +52,24 @@ public static class MapTileFetcher
 	/// <summary>Null after MaxFetchAttempts failures (offline, 404, timeout, corrupt image) - callers draw a placeholder instead of failing the render.</summary>
 	public static async Task<SKBitmap?> FetchAsync(string urlTemplate, int zoom, int x, int y, CancellationToken ct)
 	{
-		var cachePath = CachePath(urlTemplate, zoom, x, y);
+		string cachePath = CachePath(urlTemplate, zoom, x, y);
 		if (File.Exists(cachePath))
 		{
 			// Not a `using` declaration: ownership of the decoded bitmap transfers to the caller
 			// (every call site disposes it), so disposing it here before returning would hand back
 			// an already-disposed SKBitmap on every cache hit - i.e. every render after the first
 			// one for a given route.
-			SKBitmap? cached = SKBitmap.Decode(cachePath);
+			var cached = SKBitmap.Decode(cachePath);
 			if (cached is not null) return cached;
 		}
 
-		var url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
+		string url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
 
-		for (var attempt = 1; attempt <= MaxFetchAttempts; attempt++)
+		for (int attempt = 1; attempt <= MaxFetchAttempts; attempt++)
+		{
 			try
 			{
-				var bytes = await Http.GetByteArrayAsync(url, ct);
+				byte[] bytes = await Http.GetByteArrayAsync(url, ct);
 
 				// Decoded before caching - a provider answering 200 with an error page/JSON instead of an
 				// image must count as a failed attempt, not get written to disk as a "tile" forever.
@@ -103,6 +104,7 @@ public static class MapTileFetcher
 
 				await Task.Delay(TimeSpan.FromMilliseconds(300 * attempt), ct);
 			}
+		}
 
 		return null;
 	}
@@ -114,7 +116,7 @@ public static class MapTileFetcher
 	/// </summary>
 	private static string CachePath(string urlTemplate, int zoom, int x, int y)
 	{
-		var serverId = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(urlTemplate)))[..8];
+		string serverId = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(urlTemplate)))[..8];
 		return Path.Combine(CacheDir, serverId, zoom.ToString(), x.ToString(), $"{y}.png");
 	}
 }

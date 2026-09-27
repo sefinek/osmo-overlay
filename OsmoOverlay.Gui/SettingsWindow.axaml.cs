@@ -69,10 +69,10 @@ public partial class SettingsWindow : Window
 		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
 		MapProviderCombo.ItemsSource = TileProviderOptions;
 
-		var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
+		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
 		AppVersionText.Text = $"OsmoOverlay v{appVersion}";
 
-		var coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
+		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
 		CoreVersionText.Text = $"Core v{coreVersion}";
 		DependencyStatusRows.ShowChecking(DependencyStatusGrid, RequiredTools.All);
 
@@ -89,7 +89,7 @@ public partial class SettingsWindow : Window
 		ShowWatermarkCheck.IsChecked = showWatermark;
 		SmoothGpsMotionCheck.IsChecked = smoothGpsMotion;
 
-		var effectiveUrl = mapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
+		string effectiveUrl = mapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
 		TileProviderOption provider = TileProviderOptions.FirstOrDefault(p => !p.IsCustom && p.UrlTemplate == effectiveUrl)
 		                              ?? TileProviderOption.Custom;
 		MapProviderCombo.SelectedItem = provider;
@@ -169,7 +169,7 @@ public partial class SettingsWindow : Window
 	/// </summary>
 	private void UpdateMetadataOptionsEnabled()
 	{
-		var enabled = PreserveCameraMetadataCheck.IsChecked == true;
+		bool enabled = PreserveCameraMetadataCheck.IsChecked == true;
 		MetadataSerialCheck.IsEnabled = enabled &&
 		                                (MetadataTelemetryCheck.IsChecked == true || MetadataThumbnailsCheck.IsChecked == true);
 
@@ -178,7 +178,7 @@ public partial class SettingsWindow : Window
 		if (MetadataSerialCheck is { IsChecked: true, IsEnabled: true }) kept.Add("serial number");
 		if (MetadataDebugCheck.IsChecked == true) kept.Add("debug track");
 		if (MetadataThumbnailsCheck.IsChecked == true) kept.Add("thumbnails");
-		var summary = kept.Count > 0 ? string.Join(", ", kept) : "nothing selected";
+		string summary = kept.Count > 0 ? string.Join(", ", kept) : "nothing selected";
 		MetadataPartsExpander.Header = $"What to keep: {summary}";
 		MetadataPartsExpander.IsEnabled = enabled;
 	}
@@ -313,7 +313,7 @@ public partial class SettingsWindow : Window
 		if (_latestRelease is null) return;
 
 		AppUpdateButton.IsEnabled = false;
-		var updating = await AppUpdateFlow.UpdateAsync(this, _latestRelease, IsRendering, status => AppUpdateText.Text = status,
+		bool updating = await AppUpdateFlow.UpdateAsync(this, _latestRelease, IsRendering, status => AppUpdateText.Text = status,
 			share => AppUpdateText.Text = $"Downloading OsmoOverlay {_latestRelease.Version}... {share * 100:0}%");
 		if (!updating) AppUpdateButton.IsEnabled = true;
 	}
@@ -346,7 +346,7 @@ public partial class SettingsWindow : Window
 	/// <summary>Shows the API key field only for a template that actually references "{api_key}" - harmless to fill in otherwise, but pointless to show.</summary>
 	private void UpdateMapApiKeyVisibility(string effectiveUrl)
 	{
-		var needsApiKey = effectiveUrl.Contains("{api_key}");
+		bool needsApiKey = effectiveUrl.Contains("{api_key}");
 		MapApiKeyLabel.IsVisible = needsApiKey;
 		MapApiKeyBox.IsVisible = needsApiKey;
 	}
@@ -364,8 +364,8 @@ public partial class SettingsWindow : Window
 	/// </summary>
 	private void UpdateMapApiKeyValidation()
 	{
-		var isCarto = MapProviderCombo.SelectedItem is TileProviderOption { IsCarto: true };
-		var key = MapApiKeyBox.Text;
+		bool isCarto = MapProviderCombo.SelectedItem is TileProviderOption { IsCarto: true };
+		string? key = MapApiKeyBox.Text;
 		MapApiKeyHint.IsVisible = isCarto && !string.IsNullOrWhiteSpace(key) && !CartoApiKeyPattern().IsMatch(key.Trim());
 	}
 
@@ -382,7 +382,7 @@ public partial class SettingsWindow : Window
 
 	private void OnMapShowAttributionChanged(object? sender, RoutedEventArgs e)
 	{
-		var show = MapShowAttributionCheck.IsChecked == true;
+		bool show = MapShowAttributionCheck.IsChecked == true;
 		MapAttributionLabel.IsVisible = show;
 		MapAttributionBox.IsVisible = show;
 	}

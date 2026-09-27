@@ -102,7 +102,7 @@ public partial class ElementTimingEditor : UserControl
 		UpdateDurationPanels();
 		if (_populating) return;
 
-		var inLength = InDurationBox.Value is { } inValue ? (double)inValue : OverlayRenderer.AnimationDurationSecondsDefault;
+		double inLength = InDurationBox.Value is { } inValue ? (double)inValue : OverlayRenderer.AnimationDurationSecondsDefault;
 		// No way out is stored as none at all, like a widget that never had one.
 		OverlayAnimationType? outType = OutType == OverlayAnimationType.None ? null : OutType;
 		double? outLength = outType is not null && OutDurationBox.Value is { } outValue ? (double)outValue : null;

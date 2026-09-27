@@ -63,7 +63,7 @@ public sealed class RouteMapMosaic : IDisposable
 	/// <summary>Pixel position of the given lat/lon within Bitmap.</summary>
 	public SKPoint GetPixel(double lat, double lon)
 	{
-		var (worldX, worldY) = WebMercator.LatLonToWorldPixel(lat, lon, Zoom);
+		(double worldX, double worldY) = WebMercator.LatLonToWorldPixel(lat, lon, Zoom);
 		return new SKPoint((float)(worldX - _originWorldX), (float)(worldY - _originWorldY));
 	}
 
@@ -74,17 +74,17 @@ public sealed class RouteMapMosaic : IDisposable
 	{
 		if (points.Count == 0) return null;
 
-		var minLat = points.Min(p => p.Lat);
-		var maxLat = points.Max(p => p.Lat);
-		var minLon = points.Min(p => p.Lon);
-		var maxLon = points.Max(p => p.Lon);
+		double minLat = points.Min(p => p.Lat);
+		double maxLat = points.Max(p => p.Lat);
+		double minLon = points.Min(p => p.Lon);
+		double maxLon = points.Max(p => p.Lon);
 
-		var zoom = Math.Clamp(requestedZoom, MinZoom, MaxZoom);
+		int zoom = Math.Clamp(requestedZoom, MinZoom, MaxZoom);
 		int minTileX, minTileY, maxTileX, maxTileY;
 		while (true)
 		{
-			var (topLeftX, topLeftY) = WebMercator.LatLonToWorldPixel(maxLat, minLon, zoom);
-			var (bottomRightX, bottomRightY) = WebMercator.LatLonToWorldPixel(minLat, maxLon, zoom);
+			(double topLeftX, double topLeftY) = WebMercator.LatLonToWorldPixel(maxLat, minLon, zoom);
+			(double bottomRightX, double bottomRightY) = WebMercator.LatLonToWorldPixel(minLat, maxLon, zoom);
 			(minTileX, minTileY) = WebMercator.WorldPixelToTile(topLeftX, topLeftY);
 			(maxTileX, maxTileY) = WebMercator.WorldPixelToTile(bottomRightX, bottomRightY);
 
@@ -107,44 +107,44 @@ public sealed class RouteMapMosaic : IDisposable
 				// "Before" the aspect pad below, not before paddingTiles above - the two padding steps
 				// stack (paddingTiles first, then this), though in practice no caller passes both a
 				// non-zero paddingTiles and a targetAspectRatio at once.
-				var tilesWideBeforeAspectPad = maxTileX - minTileX + 1;
-				var tilesHighBeforeAspectPad = maxTileY - minTileY + 1;
-				var currentAspect = (double)tilesWideBeforeAspectPad / tilesHighBeforeAspectPad;
+				int tilesWideBeforeAspectPad = maxTileX - minTileX + 1;
+				int tilesHighBeforeAspectPad = maxTileY - minTileY + 1;
+				double currentAspect = (double)tilesWideBeforeAspectPad / tilesHighBeforeAspectPad;
 				if (currentAspect < targetAspect)
 				{
-					var extra = (int)Math.Ceiling(tilesHighBeforeAspectPad * targetAspect) - tilesWideBeforeAspectPad;
-					var extraLeft = extra / 2;
+					int extra = (int)Math.Ceiling(tilesHighBeforeAspectPad * targetAspect) - tilesWideBeforeAspectPad;
+					int extraLeft = extra / 2;
 					minTileX -= extraLeft;
 					maxTileX += extra - extraLeft;
 				}
 				else if (currentAspect > targetAspect)
 				{
-					var extra = (int)Math.Ceiling(tilesWideBeforeAspectPad / targetAspect) - tilesHighBeforeAspectPad;
-					var extraTop = extra / 2;
+					int extra = (int)Math.Ceiling(tilesWideBeforeAspectPad / targetAspect) - tilesHighBeforeAspectPad;
+					int extraTop = extra / 2;
 					minTileY -= extraTop;
 					maxTileY += extra - extraTop;
 				}
 			}
 
-			var tileCount = (long)(maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
+			long tileCount = (long)(maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
 			if (tileCount <= MaxTiles || zoom <= 2) break;
 			zoom--;
 		}
 
-		var tilesWide = maxTileX - minTileX + 1;
-		var tilesHigh = maxTileY - minTileY + 1;
-		var totalTiles = tilesWide * tilesHigh;
+		int tilesWide = maxTileX - minTileX + 1;
+		int tilesHigh = maxTileY - minTileY + 1;
+		int totalTiles = tilesWide * tilesHigh;
 
 		var bitmap = new SKBitmap(tilesWide * WebMercator.TileSize, tilesHigh * WebMercator.TileSize);
-		var fetchedAny = false;
-		var fetchedCount = 0;
+		bool fetchedAny = false;
+		int fetchedCount = 0;
 		var drawLock = new Lock();
 		// Reported at most a few times a second (plus always the final tile), not on a fixed tile-count
 		// interval - cached tiles resolve from disk in milliseconds, so a count-based throttle (e.g.
 		// every 10 tiles) still spams a dozen near-simultaneous log lines once a route is fully cached;
 		// this only reports again once meaningful wall-clock time has actually passed.
 		var progressStopwatch = Stopwatch.StartNew();
-		var lastReportedMs = 0L;
+		long lastReportedMs = 0L;
 		const int reportIntervalMs = 250;
 		try
 		{
@@ -156,8 +156,8 @@ public sealed class RouteMapMosaic : IDisposable
 			// SKCanvas isn't safe to call into from more than one thread at a time.
 			using var throttle = new SemaphoreSlim(MaxConcurrentFetches);
 			var tasks = new List<Task>(totalTiles);
-			for (var tx = minTileX; tx <= maxTileX; tx++)
-			for (var ty = minTileY; ty <= maxTileY; ty++)
+			for (int tx = minTileX; tx <= maxTileX; tx++)
+			for (int ty = minTileY; ty <= maxTileY; ty++)
 				tasks.Add(FetchAndDrawAsync(tx, ty));
 
 			await Task.WhenAll(tasks);
@@ -214,8 +214,8 @@ public sealed class RouteMapMosaic : IDisposable
 			return null;
 		}
 
-		var originWorldX = minTileX * (double)WebMercator.TileSize;
-		var originWorldY = minTileY * (double)WebMercator.TileSize;
+		double originWorldX = minTileX * (double)WebMercator.TileSize;
+		double originWorldY = minTileY * (double)WebMercator.TileSize;
 		return new RouteMapMosaic(bitmap, originWorldX, originWorldY, zoom, new GeoBounds(minLat, maxLat, minLon, maxLon));
 	}
 }
@@ -226,7 +226,7 @@ public readonly record struct GeoBounds(double MinLat, double MaxLat, double Min
 	public static GeoBounds Of(IEnumerable<(double Lat, double Lon)> points)
 	{
 		double minLat = double.MaxValue, maxLat = double.MinValue, minLon = double.MaxValue, maxLon = double.MinValue;
-		foreach (var (lat, lon) in points)
+		foreach ((double lat, double lon) in points)
 		{
 			minLat = Math.Min(minLat, lat);
 			maxLat = Math.Max(maxLat, lat);

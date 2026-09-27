@@ -14,7 +14,7 @@ internal sealed class GpsForwardFill
 	/// <summary>HasFix is true only when this call was given a real lat/lon (not carried forward from an earlier sample) - see TelemetryFrame.HasGpsFix.</summary>
 	public (double Lat, double Lon, double AltitudeMeters, bool HasFix) Apply(double? lat, double? lon, double? altitudeMeters)
 	{
-		var hasFix = lat is not null && lon is not null;
+		bool hasFix = lat is not null && lon is not null;
 		_lat = lat ?? _lat;
 		_lon = lon ?? _lon;
 		_altitudeMeters = altitudeMeters ?? _altitudeMeters;

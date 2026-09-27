@@ -182,11 +182,11 @@ public sealed class VideoView : Control
 		/// <summary>Frames a second over the last second, counting this one - NaN over less than a quarter of a second.</summary>
 		private double CountShown()
 		{
-			var now = Stopwatch.GetTimestamp();
+			long now = Stopwatch.GetTimestamp();
 			_shownAt.Enqueue(now);
 			while (Stopwatch.GetElapsedTime(_shownAt.Peek(), now).TotalSeconds > 1) _shownAt.Dequeue();
 
-			var span = Stopwatch.GetElapsedTime(_shownAt.Peek(), now).TotalSeconds;
+			double span = Stopwatch.GetElapsedTime(_shownAt.Peek(), now).TotalSeconds;
 			return span >= 0.25 ? (_shownAt.Count - 1) / span : double.NaN;
 		}
 
@@ -218,9 +218,9 @@ public sealed class VideoView : Control
 		private static SKImage? Borrow(ComposedPreviewFrame frame)
 		{
 			var info = new SKImageInfo(frame.Width, frame.Height, SKColorType.Bgra8888, SKAlphaType.Opaque);
-			GCHandle pin = GCHandle.Alloc(frame.Bgra, GCHandleType.Pinned);
+			var pin = GCHandle.Alloc(frame.Bgra, GCHandleType.Pinned);
 			using var pixmap = new SKPixmap(info, pin.AddrOfPinnedObject(), info.RowBytes);
-			SKImage? image = SKImage.FromPixels(pixmap, (_, _) => GiveBack(pin, frame));
+			var image = SKImage.FromPixels(pixmap, (_, _) => GiveBack(pin, frame));
 			if (image is null) GiveBack(pin, frame);
 			return image;
 		}

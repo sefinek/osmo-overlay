@@ -60,7 +60,7 @@ internal static partial class Winget
 		    PackageIdFromPortablePath(executable) is { } portableId)
 			return portableId;
 
-		var (exitCode, stdout, _) = await ProcessHelper.TryRunCapturedAsync(
+		(int exitCode, string stdout, _) = await ProcessHelper.TryRunCapturedAsync(
 			CreateStartInfo(true, "list", "--id", tool.WingetId, "--exact", "--source", Source,
 				"--disable-interactivity", "--accept-source-agreements"), ct);
 
@@ -70,7 +70,7 @@ internal static partial class Winget
 	/// <summary>Every version winget offers for the package; empty when they can't be read.</summary>
 	public static async Task<IReadOnlyList<string>> GetAvailableVersionsAsync(string packageId, CancellationToken ct)
 	{
-		var (exitCode, stdout, _) = await ProcessHelper.TryRunCapturedAsync(
+		(int exitCode, string stdout, _) = await ProcessHelper.TryRunCapturedAsync(
 			CreateStartInfo(true, "show", "--id", packageId, "--exact", "--source", Source, "--versions",
 				"--disable-interactivity", "--accept-source-agreements"), ct);
 		return exitCode == 0 ? ParseVersionList(stdout) : [];
@@ -93,14 +93,14 @@ internal static partial class Winget
 			resolved = executable;
 		}
 
-		var segments = resolved.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-		for (var i = 1; i < segments.Length - 1; i++)
+		string[] segments = resolved.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		for (int i = 1; i < segments.Length - 1; i++)
 		{
 			if (!segments[i - 1].Equals("WinGet", StringComparison.OrdinalIgnoreCase) ||
 			    !segments[i].Equals("Packages", StringComparison.OrdinalIgnoreCase))
 				continue;
 
-			var packageDir = segments[i + 1];
+			string packageDir = segments[i + 1];
 			return packageDir.EndsWith(PortablePackageDirSuffix, StringComparison.OrdinalIgnoreCase)
 				? packageDir[..^PortablePackageDirSuffix.Length]
 				: null;

@@ -41,14 +41,14 @@ public static class ElementAnimation
 		    outType == OverlayAnimationType.None)
 			return ElementState.Shown;
 
-		var appear = element.AppearAtSeconds ?? 0;
-		var disappear = element.DisappearAtSeconds ?? endSeconds;
+		double appear = element.AppearAtSeconds ?? 0;
+		double disappear = element.DisappearAtSeconds ?? endSeconds;
 		if (seconds < appear || seconds >= disappear) return ElementState.Hidden;
 
-		var inLength = inType == OverlayAnimationType.None ? 0 : Math.Max(element.AnimationDurationSeconds, MinDurationSeconds);
-		var outLength = outType == OverlayAnimationType.None ? 0 : Math.Max(OutDuration(element.OutAnimationDurationSeconds), MinDurationSeconds);
-		var inEnd = appear + inLength;
-		var outStart = Math.Max(disappear - outLength, inEnd);
+		double inLength = inType == OverlayAnimationType.None ? 0 : Math.Max(element.AnimationDurationSeconds, MinDurationSeconds);
+		double outLength = outType == OverlayAnimationType.None ? 0 : Math.Max(OutDuration(element.OutAnimationDurationSeconds), MinDurationSeconds);
+		double inEnd = appear + inLength;
+		double outStart = Math.Max(disappear - outLength, inEnd);
 
 		if (inLength > 0 && seconds < inEnd) return new ElementState((float)((seconds - appear) / inLength), inType, false);
 		if (outLength > 0 && seconds > outStart && disappear > outStart)

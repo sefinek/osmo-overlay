@@ -29,6 +29,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 	public TelemetryExtractionResult ExtractTelemetry(string path, SourceInfo source)
 	{
 		if (source.Camera?.TelemetryStream is { } stream)
+		{
 			try
 			{
 				return DjiMetaTelemetryParser.Parse(DjiMetaTelemetryParser.ExtractRawStream(path, stream), source.Video.Fps);
@@ -38,6 +39,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 				// Native djmd decode is verified against DJI Osmo Action 6 firmware; exiftool may still read another layout.
 				AppLogger.Warn(ex, $"Native djmd decode failed for {path}, falling back to exiftool");
 			}
+		}
 
 		return ExifToolTelemetry.Extract(path);
 	}
@@ -57,7 +59,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 
 	public string DescribeTelemetry(IReadOnlyList<TelemetryFrame> frames)
 	{
-		var withCameraSettings = frames.Count(f => f.Iso is not null);
+		int withCameraSettings = frames.Count(f => f.Iso is not null);
 		return withCameraSettings == frames.Count
 			? "Telemetry source: native djmd decoder (ISO/shutter/color temp all present, exiftool not needed)"
 			: withCameraSettings > 0

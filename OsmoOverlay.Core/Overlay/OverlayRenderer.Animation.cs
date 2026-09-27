@@ -31,10 +31,10 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private int BeginElement(SKCanvas canvas, OverlayElement element, ElementState state)
 	{
-		var saveCount = canvas.Save();
-		var (offsetX, offsetY) = SlideOffset(state);
+		int saveCount = canvas.Save();
+		(float offsetX, float offsetY) = SlideOffset(state);
 		canvas.Translate(element.X + offsetX, element.Y + offsetY);
-		var scale = _scale * element.Scale;
+		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
 		if (state.Progress < 1f) canvas.SaveLayer(AlphaPaint(state.Progress));
 		return saveCount;
@@ -46,7 +46,7 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private (float X, float Y) SlideOffset(ElementState state)
 	{
-		var d = (1f - state.Progress) * SlideDistance * _scale * (state.Leaving ? -1 : 1);
+		float d = (1f - state.Progress) * SlideDistance * _scale * (state.Leaving ? -1 : 1);
 		return state.Animation switch
 		{
 			OverlayAnimationType.SlideUp => (0f, d),

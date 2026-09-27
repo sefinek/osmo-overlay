@@ -38,7 +38,7 @@ public sealed partial class OverlayRenderer
 	private void DrawWatermark(SKCanvas canvas, double sampleTimeSeconds, float? anchorX = null,
 		SKTextAlign align = SKTextAlign.Center)
 	{
-		var alpha = WatermarkAlpha(sampleTimeSeconds);
+		float alpha = WatermarkAlpha(sampleTimeSeconds);
 		if (alpha <= 0f) return;
 
 		canvas.Save();
@@ -55,7 +55,7 @@ public sealed partial class OverlayRenderer
 	private void DrawMapAttributionSlide(SKCanvas canvas, double sampleTimeSeconds, string mapAttribution,
 		float? anchorX = null, SKTextAlign align = SKTextAlign.Center)
 	{
-		var alpha = MapAttributionSlideAlpha(sampleTimeSeconds);
+		float alpha = MapAttributionSlideAlpha(sampleTimeSeconds);
 		if (alpha <= 0f) return;
 
 		canvas.Save();
@@ -98,10 +98,10 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private float MapAttributionSlideAlpha(double sampleTimeSeconds)
 	{
-		var start = WatermarkFadeOutEndSeconds;
-		var fadeInEnd = start + 1.0;
-		var end = start + MapAttributionSlideDurationSeconds;
-		var fadeOutStart = end - 1.0;
+		double start = WatermarkFadeOutEndSeconds;
+		double fadeInEnd = start + 1.0;
+		double end = start + MapAttributionSlideDurationSeconds;
+		double fadeOutStart = end - 1.0;
 		return FadeAlpha(sampleTimeSeconds, start, fadeInEnd, fadeOutStart, end);
 	}
 

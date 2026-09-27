@@ -13,7 +13,7 @@ public partial class MainWindow
 {
 	private async Task RunRenderAsync(bool greenScreen)
 	{
-		var normalOutputPath = OutputPathBox.Text ?? "";
+		string normalOutputPath = OutputPathBox.Text ?? "";
 
 		if (string.IsNullOrWhiteSpace(normalOutputPath))
 		{
@@ -24,7 +24,7 @@ public partial class MainWindow
 		// Derived from whatever's in OutputPathBox (respects a location the user picked via "..."),
 		// not a second independent path the user has to manage themselves - this render is a
 		// compositing asset, not an alternative final output, so it shouldn't need its own UI.
-		var outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
+		string outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
@@ -49,7 +49,7 @@ public partial class MainWindow
 		AppendLog(greenScreen ? "Mode: green screen (HUD only, solid background, no audio)" : "Mode: normal");
 		AppendLog($"Output: {outputPath}");
 		AppendLog($"Encoder: {_detectedEncoder}, cuts: {(HasCuts ? DescribeCuts() : "none, whole recording")}");
-		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
+		string? presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
 		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
@@ -69,8 +69,8 @@ public partial class MainWindow
 		if (result.Success)
 		{
 			Progress.Value = 100;
-			var elapsedText = result.Elapsed.ToString(@"hh\:mm\:ss");
-			var sizeText = File.Exists(outputPath) ? FormatHelper.FormatBytes(new FileInfo(outputPath).Length) : "unknown";
+			string elapsedText = result.Elapsed.ToString(@"hh\:mm\:ss");
+			string sizeText = File.Exists(outputPath) ? FormatHelper.FormatBytes(new FileInfo(outputPath).Length) : "unknown";
 			AppendLog($"Done: {outputPath} (time: {elapsedText}, {sizeText})");
 
 			// "Matches the source" doesn't mean anything for a green-screen render - there's no source
@@ -82,7 +82,7 @@ public partial class MainWindow
 
 			// User-facing surfaces (dialog, balloon) show just the filename - the full path is only
 			// useful for the log line above, where it's there to be pasted/searched, not read at a glance.
-			var summary = $"{Path.GetFileName(outputPath)}\nTime: {elapsedText} · Size: {sizeText}";
+			string summary = $"{Path.GetFileName(outputPath)}\nTime: {elapsedText} · Size: {sizeText}";
 			await NotifyRenderFinishedAsync("Render complete", summary, DialogKind.Success, outputPath);
 		}
 		else if (cts.Token.IsCancellationRequested)

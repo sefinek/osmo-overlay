@@ -20,9 +20,9 @@ internal sealed record PlaybackPlan(IReadOnlyList<PlaybackStretch> First, IReadO
 	/// </summary>
 	public static PlaybackPlan For(OutputTimeline? timeline, TimeSpan from, TimeSpan duration, bool loop, TimeRange? loopRange)
 	{
-		var start = loop && loopRange is { } range ? Math.Max(0, range.StartSeconds) : 0;
-		var end = loop && loopRange is { } limit ? Math.Min(limit.EndSeconds, duration.TotalSeconds) : duration.TotalSeconds;
-		var first = from.TotalSeconds;
+		double start = loop && loopRange is { } range ? Math.Max(0, range.StartSeconds) : 0;
+		double end = loop && loopRange is { } limit ? Math.Min(limit.EndSeconds, duration.TotalSeconds) : duration.TotalSeconds;
+		double first = from.TotalSeconds;
 		if (loop && (first < start || first >= end)) first = start;
 
 		return new PlaybackPlan(Kept(timeline, first, end), loop ? Kept(timeline, start, end) : []);
@@ -34,15 +34,17 @@ internal sealed record PlaybackPlan(IReadOnlyList<PlaybackStretch> First, IReadO
 		if (Repeat.Count == 0) yield break;
 
 		while (true)
+		{
 			foreach (PlaybackStretch stretch in Repeat)
 				yield return stretch;
+		}
 	}
 
 	/// <summary>The stretches from a point on the play timeline on, the first one cut to start there.</summary>
 	public IEnumerable<PlaybackStretch> StretchesFrom(double playSeconds)
 	{
 		double stretchStart = 0;
-		var found = false;
+		bool found = false;
 		foreach (PlaybackStretch stretch in Stretches())
 		{
 			if (found)
@@ -51,7 +53,7 @@ internal sealed record PlaybackPlan(IReadOnlyList<PlaybackStretch> First, IReadO
 				continue;
 			}
 
-			var stretchEnd = stretchStart + stretch.Seconds;
+			double stretchEnd = stretchStart + stretch.Seconds;
 			if (playSeconds < stretchEnd)
 			{
 				found = true;
@@ -67,10 +69,10 @@ internal sealed record PlaybackPlan(IReadOnlyList<PlaybackStretch> First, IReadO
 		if (timeline is null) return end > from ? [new PlaybackStretch(TimeSpan.FromSeconds(from), TimeSpan.FromSeconds(end))] : [];
 
 		List<PlaybackStretch> stretches = [];
-		var position = from;
+		double position = from;
 		while (timeline.NextKeptStretch(position) is { } kept && kept.Start < end)
 		{
-			var stretchEnd = Math.Min(kept.End, end);
+			double stretchEnd = Math.Min(kept.End, end);
 			if (stretchEnd > kept.Start) stretches.Add(new PlaybackStretch(TimeSpan.FromSeconds(kept.Start), TimeSpan.FromSeconds(stretchEnd)));
 			position = kept.End;
 		}

@@ -118,7 +118,7 @@ public partial class MainWindow
 		if (ActivePreset is { Layers: null }) NormalizeActivePreset(ActiveElements, null);
 
 		List<OverlayElement> elements = ActiveElements;
-		var editable = !IsActivePresetDefault;
+		bool editable = !IsActivePresetDefault;
 
 		HideHoverIcons();
 		if (_selectedElementId is not null && !elements.Any(e => e.Id == _selectedElementId && IsTypeSupported(e.Type)))
@@ -156,7 +156,7 @@ public partial class MainWindow
 		// canvas as a widget that would just render "--"/0/a placeholder.
 		void SetWidgetAvailability(Border listItem, OverlayElementType type, bool presetEditable)
 		{
-			var dataOk = IsTypeSupported(type);
+			bool dataOk = IsTypeSupported(type);
 			listItem.IsEnabled = presetEditable && dataOk;
 			ToolTip.SetTip(listItem, dataOk ? null : UnsupportedReason(type));
 		}
@@ -245,9 +245,9 @@ public partial class MainWindow
 	{
 		AddedWidgetsList.Children.Clear();
 		List<(OverlayElement Element, string Name)> visible = VisibleWidgetNames();
-		var editable = !IsActivePresetDefault;
+		bool editable = !IsActivePresetDefault;
 
-		foreach ((OverlayElement element, var name) in visible) AddedWidgetsList.Children.Add(BuildAddedWidgetRow(element, name, editable));
+		foreach ((OverlayElement element, string name) in visible) AddedWidgetsList.Children.Add(BuildAddedWidgetRow(element, name, editable));
 
 		AddedWidgetsEmptyHint.IsVisible = visible.Count == 0;
 	}
@@ -264,7 +264,7 @@ public partial class MainWindow
 		List<(OverlayElement, string)> named = [];
 		foreach (OverlayElement el in visible)
 		{
-			var index = seenByType[el.Type] = seenByType.GetValueOrDefault(el.Type) + 1;
+			int index = seenByType[el.Type] = seenByType.GetValueOrDefault(el.Type) + 1;
 			named.Add((el, GetWidgetLabel(el.Type) + (totalByType[el.Type] > 1 ? $" ({index})" : "")));
 		}
 
@@ -280,15 +280,15 @@ public partial class MainWindow
 	/// </summary>
 	private Border BuildAddedWidgetRow(OverlayElement element, string name, bool editable)
 	{
-		var id = element.Id;
-		var supported = IsTypeSupported(element.Type);
+		string id = element.Id;
+		bool supported = IsTypeSupported(element.Type);
 		var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
 
 		var text = new TextBlock { Text = name, Classes = { "overlayListItemText" }, Opacity = supported ? 1 : 0.5 };
 		Grid.SetColumn(text, 0);
 		grid.Children.Add(text);
 
-		var warningTip = !supported
+		string? warningTip = !supported
 			? "Not shown with this file - " + UnsupportedReason(element.Type)
 			: UsesTimeFallback(element.Type)
 				? TimeFallbackTip
@@ -361,7 +361,7 @@ public partial class MainWindow
 			return;
 		}
 
-		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
+		float scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
 		SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
 		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
 		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
@@ -416,7 +416,7 @@ public partial class MainWindow
 		if (_suppressOverlayEvents || IsActivePresetDefault) return;
 
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Id == id);
+		int index = elements.FindIndex(el => el.Id == id);
 		if (index < 0) return;
 
 		elements[index] = update(elements[index]);
@@ -442,7 +442,7 @@ public partial class MainWindow
 
 	private void SetElementLabel(string id, string? label)
 	{
-		var trimmed = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
+		string? trimmed = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
 		UpdateElement(id, el => el is LabeledStatElement stat ? stat with { Label = trimmed } : el);
 	}
 
@@ -458,7 +458,7 @@ public partial class MainWindow
 
 	private void SetElementTrailColor(string id, string? hex)
 	{
-		var trimmed = string.IsNullOrWhiteSpace(hex) ? null : hex.Trim();
+		string? trimmed = string.IsNullOrWhiteSpace(hex) ? null : hex.Trim();
 		UpdateElement(id, el => el is TrailOverlayElement t ? t with { TrailColor = trimmed } : el);
 	}
 
@@ -921,7 +921,7 @@ public partial class MainWindow
 	private void OnElapsedTimeLabelChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		var label = string.IsNullOrWhiteSpace(ElapsedTimeLabelBox.Text) ? null : ElapsedTimeLabelBox.Text.Trim();
+		string? label = string.IsNullOrWhiteSpace(ElapsedTimeLabelBox.Text) ? null : ElapsedTimeLabelBox.Text.Trim();
 		UpdateElement(id, el => el is ElapsedTimeTextElement t ? t with { Label = label } : el);
 		RefreshSelectionHighlight();
 	}
@@ -982,9 +982,9 @@ public partial class MainWindow
 	{
 		if (_suppressOverlayEvents || IsActivePresetDefault || _editingElementId is not { } id) return;
 
-		var text = string.IsNullOrWhiteSpace(TextContentBox.Text) ? OverlayRenderer.TextDefault : TextContentBox.Text;
+		string text = string.IsNullOrWhiteSpace(TextContentBox.Text) ? OverlayRenderer.TextDefault : TextContentBox.Text;
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Id == id);
+		int index = elements.FindIndex(el => el.Id == id);
 		if (index < 0 || elements[index] is not TextElement element || element.Text == text) return;
 
 		elements[index] = element with { Text = text };
@@ -998,7 +998,7 @@ public partial class MainWindow
 	private void OnTextContentChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		var text = string.IsNullOrWhiteSpace(TextContentBox.Text) ? OverlayRenderer.TextDefault : TextContentBox.Text.TrimEnd();
+		string text = string.IsNullOrWhiteSpace(TextContentBox.Text) ? OverlayRenderer.TextDefault : TextContentBox.Text.TrimEnd();
 		if (TextContentBox.Text != text) TextContentBox.Text = text;
 		UpdateElement(id, el => el is TextElement t ? t with { Text = text } : el);
 		RefreshSelectionHighlight();
@@ -1115,7 +1115,7 @@ public partial class MainWindow
 	private void OnTripProgressLabelChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		var label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text)
+		string label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text)
 			? OverlayRenderer.TripArrivedLabelDefault
 			: TripProgressLabelBox.Text.Trim();
 		UpdateElement(id, el => el is TripProgressBarElement t ? t with { TripArrivedLabel = label } : el);
@@ -1131,7 +1131,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 
-		var enabled = MapDynamicZoomCheck.IsChecked == true;
+		bool enabled = MapDynamicZoomCheck.IsChecked == true;
 		MapZoomOutMaxLabel.IsVisible = enabled;
 		MapZoomOutMaxBox.IsVisible = enabled;
 		MapZoomOutMaxHint.IsVisible = enabled;
@@ -1196,7 +1196,7 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var id = Guid.NewGuid().ToString("N");
+		string id = Guid.NewGuid().ToString("N");
 		var preset = OverlayPreset.CreateDefault(id, $"Preset {_overlayPresets.Count + 1}",
 			_summary.Video.Width, _summary.Video.Height);
 		_overlayPresets.Add(preset);
@@ -1211,7 +1211,7 @@ public partial class MainWindow
 	private void OnDuplicatePresetClick(object? sender, RoutedEventArgs e)
 	{
 		OverlayPreset source = _overlayPresets.First(p => p.Id == _activePresetId);
-		var id = Guid.NewGuid().ToString("N");
+		string id = Guid.NewGuid().ToString("N");
 		var copy = new OverlayPreset(id, $"{source.Name} copy", [.. source.Elements]) { Layers = source.Layers?.ToList() };
 		_overlayPresets.Add(copy);
 		_activePresetId = id;
@@ -1230,8 +1230,8 @@ public partial class MainWindow
 			return;
 		}
 
-		var presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name ?? "this preset";
-		var confirmed = await ConfirmDialog.AskAsync(this, "Delete preset",
+		string presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name ?? "this preset";
+		bool confirmed = await ConfirmDialog.AskAsync(this, "Delete preset",
 			$"Delete \"{presetName}\"? This can't be undone.", "Delete", DialogKind.Danger);
 		if (!confirmed) return;
 
@@ -1248,11 +1248,11 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
+		int index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
 		if (index < 0) return;
 
-		var presetName = _overlayPresets[index].Name;
-		var confirmed = await ConfirmDialog.AskAsync(this, "Reset preset",
+		string presetName = _overlayPresets[index].Name;
+		bool confirmed = await ConfirmDialog.AskAsync(this, "Reset preset",
 			$"Reset \"{presetName}\" to the default layout? Your widget positions and settings for it will be lost.",
 			"Reset", DialogKind.Danger);
 		if (!confirmed) return;
@@ -1308,7 +1308,7 @@ public partial class MainWindow
 			return;
 		}
 
-		var id = Guid.NewGuid().ToString("N");
+		string id = Guid.NewGuid().ToString("N");
 		OverlayPreset preset = imported with { Id = id };
 		_overlayPresets.Add(preset);
 		_activePresetId = id;
@@ -1351,10 +1351,10 @@ public partial class MainWindow
 
 	private void CommitPresetRename()
 	{
-		var newName = PresetRenameBox.Text?.Trim();
+		string? newName = PresetRenameBox.Text?.Trim();
 		if (!string.IsNullOrWhiteSpace(newName))
 		{
-			var index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
+			int index = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
 			if (index >= 0)
 			{
 				_overlayPresets[index] = _overlayPresets[index] with { Name = newName };
@@ -1385,21 +1385,21 @@ public partial class MainWindow
 	{
 		if (_summary is null || _previewFrameSize is not { } frameSize) return null;
 
-		var controlWidth = OverlayDragCanvas.Bounds.Width;
-		var controlHeight = OverlayDragCanvas.Bounds.Height;
-		var bitmapWidth = frameSize.Width;
-		var bitmapHeight = frameSize.Height;
+		double controlWidth = OverlayDragCanvas.Bounds.Width;
+		double controlHeight = OverlayDragCanvas.Bounds.Height;
+		int bitmapWidth = frameSize.Width;
+		int bitmapHeight = frameSize.Height;
 		if (controlWidth <= 0 || controlHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0) return null;
 
 		// The preview bitmap is a uniformly downscaled copy of the full render resolution.
-		var fullResScale = _summary.Video.Width / (double)bitmapWidth;
-		var scale = _previewZoom is { } zoom
+		double fullResScale = _summary.Video.Width / (double)bitmapWidth;
+		double scale = _previewZoom is { } zoom
 			? zoom * fullResScale / UiScale.DeviceScaling(this)
 			: Math.Min(controlWidth / bitmapWidth, controlHeight / bitmapHeight);
-		var renderedWidth = bitmapWidth * scale;
-		var renderedHeight = bitmapHeight * scale;
-		var offsetX = (controlWidth - renderedWidth) / 2 + _previewPan.X;
-		var offsetY = (controlHeight - renderedHeight) / 2 + _previewPan.Y;
+		double renderedWidth = bitmapWidth * scale;
+		double renderedHeight = bitmapHeight * scale;
+		double offsetX = (controlWidth - renderedWidth) / 2 + _previewPan.X;
+		double offsetY = (controlHeight - renderedHeight) / 2 + _previewPan.Y;
 
 		return (scale, offsetX, offsetY, renderedWidth, renderedHeight, fullResScale);
 	}
@@ -1408,8 +1408,8 @@ public partial class MainWindow
 	{
 		if (GetPreviewTransform() is not { } t) return null;
 
-		var localX = canvasPoint.X - t.OffsetX;
-		var localY = canvasPoint.Y - t.OffsetY;
+		double localX = canvasPoint.X - t.OffsetX;
+		double localY = canvasPoint.Y - t.OffsetY;
 		if (localX < 0 || localY < 0 || localX > t.RenderedWidth || localY > t.RenderedHeight) return null;
 
 		return new Point(localX / t.Scale * t.FullResScale, localY / t.Scale * t.FullResScale);
@@ -1482,8 +1482,8 @@ public partial class MainWindow
 	/// </summary>
 	private void UpdatePreviewGuides()
 	{
-		var showThirds = _gridMode is PreviewGridMode.Thirds or PreviewGridMode.Both;
-		var showMargin = _gridMode is PreviewGridMode.Margin or PreviewGridMode.Both;
+		bool showThirds = _gridMode is PreviewGridMode.Thirds or PreviewGridMode.Both;
+		bool showMargin = _gridMode is PreviewGridMode.Margin or PreviewGridMode.Both;
 
 		if ((!showThirds && !showMargin) || GetPreviewTransform() is null || _summary is null)
 		{
@@ -1495,8 +1495,8 @@ public partial class MainWindow
 			return;
 		}
 
-		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
-		var margin = OverlayElementBounds.Margin * scale;
+		float scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
+		float margin = OverlayElementBounds.Margin * scale;
 		if (MapFullResPointToCanvas(margin, margin) is not var (left, top) ||
 		    MapFullResPointToCanvas(_summary.Video.Width - margin, _summary.Video.Height - margin) is not { } bottomRight)
 		{
@@ -1511,10 +1511,10 @@ public partial class MainWindow
 		// The rule-of-thirds lines are drawn within the same safe-margin box (not the full video frame) so
 		// both guides share one set of bounds - otherwise the thirds lines poke past the margin box's own
 		// top/bottom border out to the true video edge, which looked broken.
-		var right = bottomRight.X;
-		var bottom = bottomRight.Y;
-		var width = right - left;
-		var height = bottom - top;
+		double right = bottomRight.X;
+		double bottom = bottomRight.Y;
+		double width = right - left;
+		double height = bottom - top;
 
 		PreviewGridVLine1.StartPoint = new Point(left + width / 3, top);
 		PreviewGridVLine1.EndPoint = new Point(left + width / 3, bottom);
@@ -1544,10 +1544,10 @@ public partial class MainWindow
 	/// </summary>
 	private (float[] X, float[] Y) GetGuideTargets()
 	{
-		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
-		var margin = OverlayElementBounds.Margin * scale;
-		var width = _summary.Video.Width - margin * 2;
-		var height = _summary.Video.Height - margin * 2;
+		float scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
+		float margin = OverlayElementBounds.Margin * scale;
+		float width = _summary.Video.Width - margin * 2;
+		float height = _summary.Video.Height - margin * 2;
 
 		float[] x = [margin, margin + width / 3, margin + width * 2 / 3, margin + width];
 		float[] y = [margin, margin + height / 3, margin + height * 2 / 3, margin + height];
@@ -1565,10 +1565,10 @@ public partial class MainWindow
 	{
 		if (!_snapToGuides || _summary is null || GetPreviewTransform() is not { } t) return (x, y);
 
-		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
+		float scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
 		SKRect bounds = GetElementBounds(element, x, y, scale * element.Scale);
-		var (xTargets, yTargets) = GetGuideTargets();
-		var threshold = (float)(SnapThresholdCanvasPixels * t.FullResScale / t.Scale);
+		(float[] xTargets, float[] yTargets) = GetGuideTargets();
+		float threshold = (float)(SnapThresholdCanvasPixels * t.FullResScale / t.Scale);
 
 		float[] xOffsets = bounds.IsEmpty ? [0f] : [bounds.Left - x, bounds.MidX - x, bounds.Right - x];
 		float[] yOffsets = bounds.IsEmpty ? [0f] : [bounds.Top - y, bounds.MidY - y, bounds.Bottom - y];
@@ -1578,14 +1578,14 @@ public partial class MainWindow
 
 	private static float SnapAxis(float anchor, float[] edgeOffsets, float[] targets, float threshold)
 	{
-		var best = anchor;
-		var bestDistance = threshold;
-		foreach (var offset in edgeOffsets)
+		float best = anchor;
+		float bestDistance = threshold;
+		foreach (float offset in edgeOffsets)
 		{
-			var edge = anchor + offset;
-			foreach (var target in targets)
+			float edge = anchor + offset;
+			foreach (float target in targets)
 			{
-				var distance = Math.Abs(edge - target);
+				float distance = Math.Abs(edge - target);
 				if (distance >= bestDistance) continue;
 
 				bestDistance = distance;
@@ -1605,11 +1605,11 @@ public partial class MainWindow
 	{
 		if (_summary is null) return null;
 
-		var scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
+		float scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
 		List<OverlayElement> elements = ActiveElements;
 		// A muted (or unsoloed) layer's widgets aren't drawn, so they can't be picked either.
 		HashSet<string> silenced = OverlayLayers.Silenced(ActiveLayers);
-		for (var i = elements.Count - 1; i >= 0; i--)
+		for (int i = elements.Count - 1; i >= 0; i--)
 		{
 			OverlayElement el = elements[i];
 			if (!el.Visible || !IsTypeSupported(el.Type) || silenced.Contains(OverlayLayers.Key(el))) continue;
@@ -1686,8 +1686,8 @@ public partial class MainWindow
 		if (!CanAcceptWidgetDrop(e, out OverlayElementType type)) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
-		var x = (float)Math.Clamp(pos.X, 0, _summary!.Video.Width);
-		var y = (float)Math.Clamp(pos.Y, 0, _summary.Video.Height);
+		float x = (float)Math.Clamp(pos.X, 0, _summary!.Video.Width);
+		float y = (float)Math.Clamp(pos.Y, 0, _summary.Video.Height);
 		AddElementInstance(type, x, y);
 	}
 
@@ -1753,11 +1753,11 @@ public partial class MainWindow
 		if (_summary is null) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
-		var newX = (float)Math.Clamp(pos.X - _dragAnchorOffset.X, 0, _summary.Video.Width);
-		var newY = (float)Math.Clamp(pos.Y - _dragAnchorOffset.Y, 0, _summary.Video.Height);
+		float newX = (float)Math.Clamp(pos.X - _dragAnchorOffset.X, 0, _summary.Video.Width);
+		float newY = (float)Math.Clamp(pos.Y - _dragAnchorOffset.Y, 0, _summary.Video.Height);
 
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Id == id);
+		int index = elements.FindIndex(el => el.Id == id);
 		if (index < 0) return;
 
 		(newX, newY) = SnapToGuides(elements[index], newX, newY);
@@ -1801,12 +1801,12 @@ public partial class MainWindow
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
 		List<OverlayElement> elements = [.. ActiveElements];
-		var index = elements.FindIndex(el => el.Id == id);
+		int index = elements.FindIndex(el => el.Id == id);
 		if (index < 0) return;
 
 		OverlayElement el = elements[index];
-		var distance = Point.Distance(pos, new Point(el.X, el.Y));
-		var newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale);
+		double distance = Point.Distance(pos, new Point(el.X, el.Y));
+		float newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale);
 
 		elements[index] = el with { Scale = newScale };
 		ReplaceActiveElements(elements);
@@ -1902,7 +1902,7 @@ public partial class MainWindow
 	/// </summary>
 	private void ShowHoverIconsFor(OverlayElement element)
 	{
-		var scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
+		float scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
 		SKRect bounds = GetElementBounds(element, element.X, element.Y, scale * element.Scale);
 		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
 		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
@@ -1917,7 +1917,7 @@ public partial class MainWindow
 			HoverLabelText.Text = VisibleWidgetNames().FirstOrDefault(w => w.Element.Id == element.Id).Name ?? GetWidgetLabel(element.Type);
 		}
 
-		var width = Math.Max(0, bottomRight.X - topLeft.X);
+		double width = Math.Max(0, bottomRight.X - topLeft.X);
 		Canvas.SetLeft(HoverOutline, topLeft.X);
 		Canvas.SetTop(HoverOutline, topLeft.Y);
 		HoverOutline.Width = width;
@@ -1925,10 +1925,10 @@ public partial class MainWindow
 		HoverOutline.Classes.Set("shown", element.Id != _selectedElementId);
 
 		const double labelGap = 4;
-		var editable = !IsActivePresetDefault;
+		bool editable = !IsActivePresetDefault;
 		// Clear of the buttons on the right corner.
 		HoverLabel.MaxWidth = Math.Max(60, width - (editable ? RemoveWidgetButton.Width + WidgetGearHoverButton.Width : 0));
-		var labelTop = topLeft.Y - HoverLabel.Height - labelGap;
+		double labelTop = topLeft.Y - HoverLabel.Height - labelGap;
 		Canvas.SetLeft(HoverLabel, topLeft.X);
 		Canvas.SetTop(HoverLabel, labelTop >= 0 ? labelTop : bottomRight.Y + labelGap);
 		HoverLabel.Classes.Set("shown", true);

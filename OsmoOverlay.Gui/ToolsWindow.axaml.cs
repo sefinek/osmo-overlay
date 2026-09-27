@@ -38,7 +38,7 @@ public partial class ToolsWindow : Window
 
 	private void OnClearCacheClick(object? sender, RoutedEventArgs e)
 	{
-		var deleted = FileSummaryReader.ClearCache();
+		int deleted = FileSummaryReader.ClearCache();
 		AppLogger.Notify($"Cleared {deleted} cached file(s)");
 	}
 
@@ -66,8 +66,8 @@ public partial class ToolsWindow : Window
 
 		if (files.Count == 0) return;
 
-		var path = files[0].Path.LocalPath;
-		var fileName = Path.GetFileName(path);
+		string path = files[0].Path.LocalPath;
+		string fileName = Path.GetFileName(path);
 
 		SelectColorTagFileButton.IsEnabled = false;
 		SelectColorTagFileButton.Content = "Working...";
@@ -89,10 +89,12 @@ public partial class ToolsWindow : Window
 			if (status.NeedsFix)
 				await AskAndFixAsync(path, fileName, status);
 			else
+			{
 				await ConfirmDialog.ShowAsync(this, "Nothing to do",
 					$"\"{fileName}\" already has a correct Rec.709 color tag - there's nothing to fix here.\n\n" +
 					$"Current tags:\n{DescribeTags(status)}",
 					kind: DialogKind.Success, windowTitle: "Fix color tags");
+			}
 		}
 		catch (Exception ex)
 		{
@@ -139,6 +141,7 @@ public partial class ToolsWindow : Window
 			"Fixing...");
 
 		if (fixResult is { } result)
+		{
 			await ConfirmDialog.ShowAsync(this, "Fixed successfully",
 				$"\"{fileName}\" was fixed successfully - the color tag was rewritten to Rec.709 with a " +
 				"lossless stream copy, so picture quality is untouched.\n\n" +
@@ -148,10 +151,13 @@ public partial class ToolsWindow : Window
 				kind: DialogKind.Success, windowTitle: "Fix color tags",
 				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(result.OutputPath),
 				extraText: "Compare files", onExtra: () => OpenCompareWindow(path, result.OutputPath));
+		}
 		else if (fixError is not null)
+		{
 			await ConfirmDialog.ShowAsync(this, "Fix failed",
 				$"Fixing \"{fileName}\" failed.\n\nDetails: {fixError.Message}",
 				kind: DialogKind.Danger, windowTitle: "Fix color tags");
+		}
 	}
 
 	private async void OnSelectStripFileClick(object? sender, RoutedEventArgs e)
@@ -167,7 +173,7 @@ public partial class ToolsWindow : Window
 		});
 		if (files.Count == 0) return;
 
-		var inputPath = files[0].Path.LocalPath;
+		string inputPath = files[0].Path.LocalPath;
 		IStorageFile? target = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
 			Title = "Save the cleaned copy as",
@@ -179,14 +185,14 @@ public partial class ToolsWindow : Window
 		});
 		if (target is null) return;
 
-		var outputPath = target.Path.LocalPath;
+		string outputPath = target.Path.LocalPath;
 		SelectStripFileButton.IsEnabled = false;
 		SelectStripFileButton.Content = "Working...";
 		try
 		{
 			MetadataStripResult result = await Task.Run(() => MetadataStripper.Strip(inputPath, outputPath));
 
-			var removed = result.Removed.Count > 0
+			string removed = result.Removed.Count > 0
 				? string.Join("\n", result.Removed.Select(r => $"    - {r}"))
 				: "    (nothing identifying was found)";
 			await ConfirmDialog.ShowAsync(this, "Metadata removed",
@@ -218,7 +224,7 @@ public partial class ToolsWindow : Window
 	/// </summary>
 	private static string SuggestCleanFileName(string inputPath)
 	{
-		var name = Path.GetFileNameWithoutExtension(inputPath);
+		string name = Path.GetFileNameWithoutExtension(inputPath);
 		return Regex.IsMatch(name, @"\d{8}") ? "clean.mp4" : $"{name}_clean.mp4";
 	}
 
@@ -257,12 +263,12 @@ public partial class ToolsWindow : Window
 		Button[] buttons = [ConvertAudioWavButton, ConvertAudioM4aButton];
 		foreach (Button b in buttons) b.IsEnabled = false;
 		Button active = format == CameraAudioFormat.Wav ? ConvertAudioWavButton : ConvertAudioM4aButton;
-		var idleContent = active.Content;
+		object? idleContent = active.Content;
 
 		List<string> done = [];
 		try
 		{
-			foreach (var (input, output) in jobs)
+			foreach ((string input, string output) in jobs)
 			{
 				active.Content = jobs.Count > 1 ? $"Converting {done.Count + 1}/{jobs.Count}..." : "Converting...";
 				await Task.Run(() => CameraAudioConverter.Convert(input, output, format));
@@ -279,7 +285,7 @@ public partial class ToolsWindow : Window
 		}
 		catch (Exception ex)
 		{
-			var converted = done.Count > 0 ? $"Converted before the error:\n{string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}"))}\n\n" : "";
+			string converted = done.Count > 0 ? $"Converted before the error:\n{string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}"))}\n\n" : "";
 			await ConfirmDialog.ShowAsync(this, "Conversion failed",
 				$"{converted}Nothing was saved for the file that failed.\n\nDetails: {ex.Message}",
 				kind: DialogKind.Danger, windowTitle: "Camera microphone audio");

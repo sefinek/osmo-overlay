@@ -34,7 +34,7 @@ public static class MetadataStripper
 
 		// Written next to the target and only moved into place after Verify passes, so a failed or
 		// unverifiable run can never leave a half-clean file under the name the user picked.
-		var partialPath = outputPath + ".partial";
+		string partialPath = outputPath + ".partial";
 		try
 		{
 			ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
@@ -49,7 +49,7 @@ public static class MetadataStripper
 				"-f", "mp4",
 				partialPath);
 
-			var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+			(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
 			if (exitCode != 0)
 				throw new InvalidOperationException($"ffmpeg exited with an error ({exitCode}): {stderr}{stdout}");
 
@@ -78,13 +78,15 @@ public static class MetadataStripper
 		if (outputStreams.Any(s => !IsKeptStream(s)))
 			throw new InvalidOperationException("Verification failed: the output still contains a data, timecode or thumbnail stream.");
 		if (outputStreams.Count != sourceKept.Count)
+		{
 			throw new InvalidOperationException(
 				$"Verification failed: expected {sourceKept.Count} video/audio stream(s), got {outputStreams.Count}.");
+		}
 
 		if (Tags(output["format"]).Keys.FirstOrDefault(k => !AllowedFormatTags.Contains(k)) is { } formatTag)
 			throw new InvalidOperationException($"Verification failed: the container still has a '{formatTag}' tag.");
 
-		for (var i = 0; i < outputStreams.Count; i++)
+		for (int i = 0; i < outputStreams.Count; i++)
 		{
 			JsonNode before = sourceKept[i];
 			JsonNode after = outputStreams[i];
@@ -98,10 +100,14 @@ public static class MetadataStripper
 				"codec_type", "codec_name", "profile", "level", "width", "height", "pix_fmt",
 				"color_primaries", "color_transfer", "color_space", "color_range", "sample_rate", "channels", "nb_frames"
 			];
-			foreach (var key in mustMatch)
+			foreach (string key in mustMatch)
+			{
 				if (Str(before, key) != Str(after, key))
+				{
 					throw new InvalidOperationException(
 						$"Verification failed: stream #{i} {key} changed ({Str(before, key) ?? "none"} -> {Str(after, key) ?? "none"}).");
+				}
+			}
 
 			if (Rotation(before) != Rotation(after))
 				throw new InvalidOperationException("Verification failed: the video rotation changed.");
@@ -112,6 +118,7 @@ public static class MetadataStripper
 	{
 		List<string> removed = [];
 		foreach (JsonNode stream in Streams(source).Where(s => !IsKeptStream(s)))
+		{
 			removed.Add(Str(stream, "codec_tag_string") switch
 			{
 				"djmd" => "DJI telemetry track (GPS track, sensors, camera serial number)",
@@ -120,8 +127,9 @@ public static class MetadataStripper
 				_ when IsAttachedPicture(stream) => "embedded thumbnail",
 				_ => $"{Str(stream, "codec_type")} stream ({Str(stream, "codec_tag_string") ?? Str(stream, "codec_name")})"
 			});
+		}
 
-		var tagCount = Tags(source["format"]).Keys.Count(k => !AllowedFormatTags.Contains(k)) +
+		int tagCount = Tags(source["format"]).Keys.Count(k => !AllowedFormatTags.Contains(k)) +
 		               Streams(source).Sum(s => Tags(s).Keys.Count(k => !AllowedStreamTags.Contains(k)));
 		if (tagCount > 0) removed.Add($"{tagCount} metadata tag(s) (recording date, timecode, encoder...)");
 		return removed;
@@ -170,7 +178,7 @@ public static class MetadataStripper
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
 			"-v", "error", "-print_format", "json", "-show_streams", "-show_format", path);
 
-		var (exitCode, stdout, stderr) = ProcessHelper.RunCaptured(psi);
+		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
 		if (exitCode != 0) throw new InvalidOperationException($"ffprobe exited with an error ({exitCode}): {stderr}");
 		return JsonNode.Parse(stdout) ?? throw new InvalidOperationException("Empty ffprobe output.");
 	}

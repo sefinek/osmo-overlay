@@ -57,7 +57,7 @@ public sealed partial class OverlayRenderer
 	/// <summary>See PrepareMapAsync (OverlayRenderer.Position.cs) - same shape, independent mosaic/key.</summary>
 	public async Task PrepareRouteIntroMapAsync(Action<int, int>? onTileProgress = null, CancellationToken ct = default)
 	{
-		(RouteMapMosaic? mosaic, var key) = await BuildRouteIntroMosaicAsync(onTileProgress, ct);
+		(RouteMapMosaic? mosaic, string? key) = await BuildRouteIntroMosaicAsync(onTileProgress, ct);
 		ApplyRouteIntroMapMosaic(mosaic, key);
 	}
 
@@ -68,11 +68,11 @@ public sealed partial class OverlayRenderer
 		if (!RouteIntro.Enabled) return (null, null);
 
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
-		var urlTemplate = ResolveUrlTemplate();
+		string urlTemplate = ResolveUrlTemplate();
 		_preparedRouteIntroKey = urlTemplate;
 
 		SKRect mapRect = GetRouteIntroMapRect();
-		var targetAspect = (double)(mapRect.Width / mapRect.Height);
+		double targetAspect = mapRect.Width / mapRect.Height;
 
 		// paddingTiles=0 (not MapWidget's per-zoom-factor padding) - this mosaic is only ever drawn
 		// fit-to-rect as a whole, never panned/cropped, so it needs no extra margin beyond the route's
@@ -123,8 +123,8 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private SKRect GetRouteIntroMapRect()
 	{
-		var refWidth = _width / _scale;
-		var refHeight = _height / _scale;
+		float refWidth = _width / _scale;
+		float refHeight = _height / _scale;
 		const float margin = OverlayElementBounds.Margin;
 		return new SKRect(margin, margin, refWidth * 0.55f, refHeight - margin);
 	}
@@ -156,8 +156,8 @@ public sealed partial class OverlayRenderer
 
 	private void DrawRouteIntro(SKCanvas canvas)
 	{
-		var refWidth = _width / _scale;
-		var refHeight = _height / _scale;
+		float refWidth = _width / _scale;
+		float refHeight = _height / _scale;
 		const float margin = OverlayElementBounds.Margin;
 
 		canvas.Save();
@@ -195,9 +195,9 @@ public sealed partial class OverlayRenderer
 		// mapRect's own aspect ratio (via targetAspectRatio), so the two match up to the rounding from
 		// whole tile counts - cover here only ever trims that sub-tile rounding sliver via the ClipRect
 		// above, not the route itself.
-		var fitScale = Math.Max(mapRect.Width / mosaicImage.Width, mapRect.Height / mosaicImage.Height);
-		var drawWidth = mosaicImage.Width * fitScale;
-		var drawHeight = mosaicImage.Height * fitScale;
+		float fitScale = Math.Max(mapRect.Width / mosaicImage.Width, mapRect.Height / mosaicImage.Height);
+		float drawWidth = mosaicImage.Width * fitScale;
+		float drawHeight = mosaicImage.Height * fitScale;
 		var destRect = SKRect.Create((mapRect.Left + mapRect.Right) / 2 - drawWidth / 2,
 			(mapRect.Top + mapRect.Bottom) / 2 - drawHeight / 2, drawWidth, drawHeight);
 		canvas.DrawImage(mosaicImage, destRect, SKSamplingOptions.Default);
@@ -206,7 +206,7 @@ public sealed partial class OverlayRenderer
 		{
 			// Drawn once per card (see DrawRouteIntroCard), so it's built right here and dropped again.
 			using var route = new RouteGeometry(RouteAcrossCuts, RouteIntro.ColorBySpeed, _trailSpeedScaleKmh);
-			for (var i = 0; i < pixels.Count; i++)
+			for (int i = 0; i < pixels.Count; i++)
 				route.Add(pixels[i], _allFrames[i].SpeedKmh, _allFrames[i].StartsAfterCut);
 
 			DrawRoute(canvas, route, SKMatrix.CreateScaleTranslation(fitScale, fitScale, destRect.Left, destRect.Top), TrailColor, 6);
@@ -237,28 +237,28 @@ public sealed partial class OverlayRenderer
 		(string Label, string Value)? distance = null;
 		if (RouteIntro.ShowDistance)
 		{
-			var (value, unit) = FormatDistance(_totalDistanceMeters, RouteIntro.Units);
+			(string value, string unit) = FormatDistance(_totalDistanceMeters, RouteIntro.Units);
 			distance = ("DISTANCE", $"{value} {unit}");
 		}
 
 		(string Label, string Value)? elevationGain = null;
 		if (RouteIntro.ShowElevationGain)
 		{
-			var (value, unit) = FormatAltitude(_tripStats.Count > 0 ? _tripStats.ElevationGainMeters(_tripStats.Count - 1) : 0, RouteIntro.Units);
+			(string value, string unit) = FormatAltitude(_tripStats.Count > 0 ? _tripStats.ElevationGainMeters(_tripStats.Count - 1) : 0, RouteIntro.Units);
 			elevationGain = ("ELEVATION GAIN", $"{value} {unit}");
 		}
 
 		(string Label, string Value)? maxSpeed = null;
 		if (RouteIntro.ShowMaxSpeed)
 		{
-			var (value, unit) = FormatSpeed(_observedMaxSpeedKmh, RouteIntro.Units);
+			(string value, string unit) = FormatSpeed(_observedMaxSpeedKmh, RouteIntro.Units);
 			maxSpeed = ("MAX SPEED", $"{value} {unit}");
 		}
 
 		(string Label, string Value)? avgSpeed = null;
 		if (RouteIntro.ShowAvgSpeed)
 		{
-			var (value, unit) = FormatSpeed(_tripStats.Count > 0 ? _tripStats.AverageSpeedKmh(_tripStats.Count - 1) : 0, RouteIntro.Units);
+			(string value, string unit) = FormatSpeed(_tripStats.Count > 0 ? _tripStats.AverageSpeedKmh(_tripStats.Count - 1) : 0, RouteIntro.Units);
 			avgSpeed = ("AVG SPEED", $"{value} {unit}");
 		}
 
@@ -277,7 +277,7 @@ public sealed partial class OverlayRenderer
 
 		(string Label, string Value)? camera = RouteIntro.ShowCameraModel ? ("CAMERA", _cameraModel ?? "--") : null;
 
-		var y = startY;
+		float y = startY;
 		// Paired thematically - distance with elevation, the two speeds, date with duration - so
 		// related numbers read side by side instead of the card turning into one long single-file
 		// list; camera has no natural partner, so it stays full-width on its own row.
@@ -304,7 +304,7 @@ public sealed partial class OverlayRenderer
 
 		if (left is not null && right is { } rightItem)
 		{
-			var rightX = x + RouteIntroStatColumnOffset;
+			float rightX = x + RouteIntroStatColumnOffset;
 			DrawOutlined(canvas, rightItem.Label, rightX, y, _routeIntroLabelFont, White);
 			DrawOutlined(canvas, rightItem.Value, rightX, y + 66, _routeIntroValueFont, Accent);
 		}

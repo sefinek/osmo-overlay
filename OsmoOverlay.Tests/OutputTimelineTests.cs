@@ -45,7 +45,7 @@ public sealed class OutputTimelineTests
 		Assert.AreEqual(15, timeline.ToRecordingSeconds(5), 1e-9);
 		Assert.AreEqual(30, timeline.ToRecordingSeconds(10), 1e-9, "the second piece starts after the cut");
 		Assert.AreEqual(60, timeline.ToRecordingSeconds(40), 1e-9, "the output's end is the last piece's end");
-		foreach (var output in new[] { 1.3, 9.9, 12.7, 39.9 })
+		foreach (double output in new[] { 1.3, 9.9, 12.7, 39.9 })
 			Assert.AreEqual(output, timeline.NearestOutputSeconds(timeline.ToRecordingSeconds(output)), 1e-9, "round trip");
 	}
 
@@ -99,7 +99,7 @@ public sealed class OutputTimelineTests
 	{
 		List<DerivedFrame> mapped = Timeline(new TimeRange(20, 30), new TimeRange(40, 45)).MapFrames(Recording());
 
-		var marked = mapped.Select((f, i) => (f, i)).Where(x => x.f.StartsAfterCut).Select(x => x.i).ToArray();
+		int[] marked = mapped.Select((f, i) => (f, i)).Where(x => x.f.StartsAfterCut).Select(x => x.i).ToArray();
 		CollectionAssert.AreEqual(new[] { 100, 200 }, marked, "the first frames at 30 s and 45 s - not the start of the output");
 	}
 

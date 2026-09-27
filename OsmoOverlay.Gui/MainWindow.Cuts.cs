@@ -112,7 +112,7 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var frame = CurrentFrame();
+		long frame = CurrentFrame();
 		switch (action)
 		{
 			case CutAction.MarkIn:
@@ -141,9 +141,9 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var fps = _summary.Video.Fps;
-		var first = (long)Math.Round(start * fps);
-		var afterLast = (long)Math.Round(end * fps);
+		double fps = _summary.Video.Fps;
+		long first = (long)Math.Round(start * fps);
+		long afterLast = (long)Math.Round(end * fps);
 		if (afterLast <= first) return;
 
 		_markIn = first;
@@ -156,7 +156,7 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		var fps = _summary.Video.Fps;
+		double fps = _summary.Video.Fps;
 		List<FrameRange> cuts = CutList.Resize(_cuts, index, (long)Math.Round(start * fps), (long)Math.Round(end * fps), SourceFrames);
 		if (CutList.RemovesEverything(cuts, SourceFrames))
 		{
@@ -263,8 +263,8 @@ public partial class MainWindow
 	{
 		if (_summary is null || _cuts.Count == 0) return null;
 
-		var fps = _summary.Video.Fps;
-		RenderPlan plan = RenderPlan.Resolve(null, null, CutList.ToTimeRanges(_cuts, fps), null, fps, SourceFrames);
+		double fps = _summary.Video.Fps;
+		var plan = RenderPlan.Resolve(null, null, CutList.ToTimeRanges(_cuts, fps), null, fps, SourceFrames);
 		return plan.IsPartial ? new OutputTimeline(plan, fps) : null;
 	}
 
@@ -287,8 +287,8 @@ public partial class MainWindow
 	{
 		if (_summary is null) return "";
 
-		var count = CutList.Normalize(_cuts, SourceFrames).Count;
-		var removed = TimeText.Format(CutList.RemovedFrames(_cuts, SourceFrames) / _summary.Video.Fps);
+		int count = CutList.Normalize(_cuts, SourceFrames).Count;
+		string removed = TimeText.Format(CutList.RemovedFrames(_cuts, SourceFrames) / _summary.Video.Fps);
 		return $"{count} {(count == 1 ? "cut" : "cuts")}, {removed} removed";
 	}
 
@@ -298,14 +298,14 @@ public partial class MainWindow
 		if (_summary is null) return "";
 		if (!HasCuts) return "Nothing is cut - the whole recording gets rendered.";
 
-		var fps = _summary.Video.Fps;
+		double fps = _summary.Video.Fps;
 		return $"Rendered: {TimeText.Format(PlannedFrameCount() / fps)} of {TimeText.Format(SourceFrames / fps)} ({DescribeCuts()})";
 	}
 
 	/// <summary>"04:41.181 - 08:33.363 (03:52.182)" - From/To the way the cut rows show them, then the length.</summary>
 	private string DescribeSelection(FrameRange selection)
 	{
-		var fps = _summary!.Video.Fps;
+		double fps = _summary!.Video.Fps;
 		return $"{TimeText.Format(selection.Start / fps)} - {TimeText.Format(selection.End / fps)} ({TimeText.Format(selection.Length / fps)})";
 	}
 

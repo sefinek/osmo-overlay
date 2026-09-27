@@ -11,7 +11,7 @@ public sealed class GpsForwardFillTests
 		var fill = new GpsForwardFill();
 
 		fill.Apply(50, 20, 300);
-		var (lat, lon, alt, hasFix) = fill.Apply(null, null, null);
+		(double lat, double lon, double alt, bool hasFix) = fill.Apply(null, null, null);
 
 		Assert.AreEqual((50.0, 20.0, 300.0, false), (lat, lon, alt, hasFix));
 	}
@@ -22,7 +22,7 @@ public sealed class GpsForwardFillTests
 		var fill = new GpsForwardFill();
 
 		fill.Apply(50, 20, 300);
-		var (lat, _, alt, hasFix) = fill.Apply(null, null, 310);
+		(double lat, _, double alt, bool hasFix) = fill.Apply(null, null, 310);
 
 		Assert.AreEqual(50.0, lat);
 		Assert.AreEqual(310.0, alt);
@@ -32,7 +32,7 @@ public sealed class GpsForwardFillTests
 	[TestMethod]
 	public void NoFixYet_IsZeroButFlaggedAsNoFix()
 	{
-		var (lat, lon, _, hasFix) = new GpsForwardFill().Apply(null, null, null);
+		(double lat, double lon, _, bool hasFix) = new GpsForwardFill().Apply(null, null, null);
 
 		Assert.AreEqual((0.0, 0.0, false), (lat, lon, hasFix));
 	}

@@ -21,7 +21,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void NoCuts_PlaysToTheEnd()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(3), Duration, false, null);
+		var plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(3), Duration, false, null);
 
 		CollectionAssert.AreEqual(new[] { (3.0, 10.0) }, Seconds(plan.First));
 		Assert.AreEqual(0, plan.Repeat.Count);
@@ -30,7 +30,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Cuts_AreSkipped()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
+		var plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
 
 		CollectionAssert.AreEqual(new[] { (3.0, 4.0), (6.0, 8.0) }, Seconds(plan.First));
 	}
@@ -38,7 +38,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Loop_FinishesFromThePositionThenRepeatsTheRange()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, true, new TimeRange(2.5, 7));
+		var plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, true, new TimeRange(2.5, 7));
 
 		CollectionAssert.AreEqual(new[] { (3.0, 4.0), (6.0, 7.0) }, Seconds(plan.First));
 		CollectionAssert.AreEqual(new[] { (2.5, 4.0), (6.0, 7.0) }, Seconds(plan.Repeat));
@@ -48,7 +48,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Loop_FromOutsideTheRange_StartsAtItsStart()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(9), Duration, true, new TimeRange(1, 2));
+		var plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(9), Duration, true, new TimeRange(1, 2));
 
 		CollectionAssert.AreEqual(new[] { (1.0, 2.0) }, Seconds(plan.First));
 	}
@@ -56,7 +56,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void Loop_WithoutRange_RepeatsTheWholeRecording()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(4), Duration, true, null);
+		var plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(4), Duration, true, null);
 
 		CollectionAssert.AreEqual(new[] { (0.0, 10.0) }, Seconds(plan.Repeat));
 	}
@@ -64,7 +64,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void StretchesFrom_StartsPartWayIntoTheStretchAtThatPlayTime()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
+		var plan = PlaybackPlan.For(Cut, TimeSpan.FromSeconds(3), Duration, false, null);
 
 		// Play time 0-1 is 3-4 s, 1-3 is 6-8 s.
 		CollectionAssert.AreEqual(new[] { (3.5, 4.0), (6.0, 8.0) }, Seconds(plan.StretchesFrom(0.5)));
@@ -75,7 +75,7 @@ public sealed class PlaybackPlanTests
 	[TestMethod]
 	public void StretchesFrom_WhileLooping_GoesOnIntoTheRepeats()
 	{
-		PlaybackPlan plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(1.5), Duration, true, new TimeRange(1, 2));
+		var plan = PlaybackPlan.For(null, TimeSpan.FromSeconds(1.5), Duration, true, new TimeRange(1, 2));
 
 		// Play time 0-0.5 is the first pass (1.5-2 s), then 1 s per repeat.
 		CollectionAssert.AreEqual(new[] { (1.25, 2.0), (1.0, 2.0) }, Seconds(plan.StretchesFrom(0.75).Take(2)));
@@ -201,13 +201,13 @@ public sealed class PlaybackClockTests
 		clock.AddPushed(48000 * 10);
 
 		double? previous = null;
-		for (var i = 0; i < 180; i++)
+		for (int i = 0; i < 180; i++)
 		{
 			wall = i * display;
 			// The device took whole buffers up to now: its position steps every 10 ms, the heard sound doesn't.
-			var taken = Math.Floor(wall / buffer) * buffer;
+			double taken = Math.Floor(wall / buffer) * buffer;
 			audio.QueuedSeconds = 10 - buffer - taken;
-			var now = clock.Now;
+			double now = clock.Now;
 
 			if (i >= 60)
 			{
@@ -286,7 +286,7 @@ public sealed class CatchUpTests
 	public void Behind_NeverSkipsPastTheLead()
 	{
 		// 0.15 s behind with a big step: all it takes is 0.15 s to the sound plus the 0.15 s lead - 18 frames.
-		var frames = PlaybackSession.CatchUpFrames(2.15, 2, Fps, 1, 30);
+		int frames = PlaybackSession.CatchUpFrames(2.15, 2, Fps, 1, 30);
 		Assert.IsTrue(frames is 18 or 19, $"{frames}");
 	}
 
@@ -335,7 +335,7 @@ public sealed class AudioDisplayTests
 	public void DisplayLevel_QuietRecording_RangeStopsAtTheFloor()
 	{
 		// Peak -30 dBFS: the range ends at -72 dBFS instead of -78, so -51 dBFS is halfway.
-		var loudest = (float)Math.Pow(10, -30.0 / 20);
+		float loudest = (float)Math.Pow(10, -30.0 / 20);
 		Assert.AreEqual(0.5, AudioWaveform.DisplayLevel((float)Math.Pow(10, -51.0 / 20), loudest), 1e-6);
 	}
 

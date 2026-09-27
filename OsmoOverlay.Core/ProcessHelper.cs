@@ -40,9 +40,9 @@ internal static class ProcessHelper
 			CreateNoWindow = true,
 			WindowStyle = ProcessWindowStyle.Hidden
 		};
-		foreach (var arg in argList) psi.ArgumentList.Add(arg);
+		foreach (string arg in argList) psi.ArgumentList.Add(arg);
 
-		var line = $"Running: {FormatCommand(command, argList)}";
+		string line = $"Running: {FormatCommand(command, argList)}";
 		if (notify) AppLogger.Notify(line);
 		else AppLogger.Info(line);
 

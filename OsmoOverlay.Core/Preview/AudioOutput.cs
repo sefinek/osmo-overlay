@@ -38,10 +38,7 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 	{
 		get
 		{
-			lock (_lock)
-			{
-				return _disposed ? 0 : (double)SDL3.SDL_GetAudioStreamQueued(_stream) / _bytesPerSecond;
-			}
+			lock (_lock) return _disposed ? 0 : (double)SDL3.SDL_GetAudioStreamQueued(_stream) / _bytesPerSecond;
 		}
 	}
 
@@ -76,10 +73,7 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 		{
 			if (_disposed) return;
 
-			fixed (float* data = samples)
-			{
-				SDL3.SDL_PutAudioStreamData(_stream, (IntPtr)data, samples.Length * sizeof(float));
-			}
+			fixed (float* data = samples) SDL3.SDL_PutAudioStreamData(_stream, (IntPtr)data, samples.Length * sizeof(float));
 		}
 	}
 
@@ -106,9 +100,8 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 	public void Clear()
 	{
 		lock (_lock)
-		{
-			if (!_disposed) SDL3.SDL_ClearAudioStream(_stream);
-		}
+			if (!_disposed)
+				SDL3.SDL_ClearAudioStream(_stream);
 	}
 
 	public void Stop()

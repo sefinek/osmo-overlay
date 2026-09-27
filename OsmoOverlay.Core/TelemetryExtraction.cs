@@ -43,8 +43,8 @@ public static class TelemetryExtraction
 				offsetFrames.Add(frame with { SampleTimeSeconds = frame.SampleTimeSeconds + segment.StartOffsetSeconds });
 
 			DateTime? gpsStart = GpsStartUtc(result.Frames);
-			var gap = previous is { } before ? GapSeconds(before.GpsStart, before.Offset, gpsStart, segment.StartOffsetSeconds) : null;
-			var afterGap = gap > GapToleranceSeconds;
+			double? gap = previous is { } before ? GapSeconds(before.GpsStart, before.Offset, gpsStart, segment.StartOffsetSeconds) : null;
+			bool afterGap = gap > GapToleranceSeconds;
 			if (afterGap)
 			{
 				offsetFrames[0] = offsetFrames[0] with { StartsAfterGap = true };
@@ -104,12 +104,15 @@ public static class TelemetryExtraction
 	/// </summary>
 	private static bool BackfillBeforeFirstFix(List<TelemetryFrame> frames)
 	{
-		var firstFixIndex = frames.FindIndex(f => !IsNullIsland(f));
+		int firstFixIndex = frames.FindIndex(f => !IsNullIsland(f));
 		if (firstFixIndex < 0) return false;
 
 		if (firstFixIndex > 0)
+		{
 			BridgeLeadingGpsGap(frames,
 				(frames[firstFixIndex].Latitude, frames[firstFixIndex].Longitude, frames[firstFixIndex].AltitudeMeters));
+		}
+
 		return true;
 	}
 
@@ -127,7 +130,7 @@ public static class TelemetryExtraction
 	private static void BridgeLeadingGpsGap(List<TelemetryFrame> frames,
 		(double Lat, double Lon, double AltitudeMeters) lastKnownFix)
 	{
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
 			TelemetryFrame frame = frames[i];
 			if (!IsNullIsland(frame)) break;

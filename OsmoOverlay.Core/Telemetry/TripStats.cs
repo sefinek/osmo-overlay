@@ -36,23 +36,21 @@ public sealed class TripStats
 		if (frames.Count == 0) return stats;
 
 		double maxSpeed = 0, moving = 0, gain = 0, loss = 0;
-		var anchor = frames[0].Raw.AltitudeMeters;
+		double anchor = frames[0].Raw.AltitudeMeters;
 
-		for (var i = 0; i < frames.Count; i++)
+		for (int i = 0; i < frames.Count; i++)
 		{
 			DerivedFrame frame = frames[i];
 			maxSpeed = Math.Max(maxSpeed, frame.SpeedKmh);
 
 			if (i > 0 && frame.StartsAfterCut)
-			{
 				anchor = frame.Raw.AltitudeMeters;
-			}
 			else if (i > 0)
 			{
 				if (frame.SpeedKmh >= MovingThresholdKmh)
 					moving += Math.Max(frame.Raw.SampleTimeSeconds - frames[i - 1].Raw.SampleTimeSeconds, 0);
 
-				var change = frame.Raw.AltitudeMeters - anchor;
+				double change = frame.Raw.AltitudeMeters - anchor;
 				if (change >= ClimbThresholdMeters)
 				{
 					gain += change;

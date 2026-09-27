@@ -41,7 +41,7 @@ public sealed class ConcatListWriterTests
 		CultureInfo previous = CultureInfo.CurrentCulture;
 		// A comma-decimal culture must not leak into the list - ffmpeg expects "198.5", not "198,5".
 		CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("pl-PL");
-		var list = ConcatListWriter.WriteAudioOnly([@"C:\clips\a.mp4", @"C:\clips\it's b.mp4"], "0x2", 198.5);
+		string list = ConcatListWriter.WriteAudioOnly([@"C:\clips\a.mp4", @"C:\clips\it's b.mp4"], "0x2", 198.5);
 		try
 		{
 			CollectionAssert.AreEqual(new[]
@@ -64,8 +64,8 @@ public sealed class ConcatListWriterTests
 	[TestMethod]
 	public void DeleteStale_RemovesOnlyOldLists()
 	{
-		var stale = ConcatListWriter.Write(["a.mp4"]);
-		var fresh = ConcatListWriter.Write(["b.mp4"]);
+		string stale = ConcatListWriter.Write(["a.mp4"]);
+		string fresh = ConcatListWriter.Write(["b.mp4"]);
 		File.SetLastWriteTimeUtc(stale, DateTime.UtcNow.AddDays(-2));
 		try
 		{

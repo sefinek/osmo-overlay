@@ -21,7 +21,7 @@ internal static class WaveformCache
 
 	public static (float[][] Peaks, float Loudest)? TryLoad(IReadOnlyList<PlaybackSegment> segments, string? directory = null)
 	{
-		var path = PathFor(segments, directory);
+		string path = PathFor(segments, directory);
 		if (Stamps(segments) is not { } stamps || !File.Exists(path)) return null;
 
 		try
@@ -29,23 +29,25 @@ internal static class WaveformCache
 			using var reader = new BinaryReader(File.OpenRead(path));
 			if (reader.ReadUInt32() != Magic || reader.ReadInt32() != FormatVersion) return null;
 			if (reader.ReadInt32() != stamps.Count) return null;
-			foreach (var (size, ticks) in stamps)
+			foreach ((long size, long ticks) in stamps)
+			{
 				if (reader.ReadInt64() != size || reader.ReadInt64() != ticks)
 					return null;
+			}
 
-			var channels = reader.ReadInt32();
-			var buckets = reader.ReadInt32();
-			var loudest = reader.ReadSingle();
+			int channels = reader.ReadInt32();
+			int buckets = reader.ReadInt32();
+			float loudest = reader.ReadSingle();
 			// Checked against what's left of the file before allocating - a damaged header mustn't ask for gigabytes.
 			if (channels is < 1 or > 16 || buckets < 1 ||
 			    reader.BaseStream.Length - reader.BaseStream.Position != (long)channels * buckets * sizeof(ushort))
 				return null;
 
-			var peaks = new float[channels][];
-			for (var c = 0; c < channels; c++)
+			float[][] peaks = new float[channels][];
+			for (int c = 0; c < channels; c++)
 			{
 				peaks[c] = new float[buckets];
-				for (var i = 0; i < buckets; i++) peaks[c][i] = reader.ReadUInt16() / (float)ushort.MaxValue;
+				for (int i = 0; i < buckets; i++) peaks[c][i] = reader.ReadUInt16() / (float)ushort.MaxValue;
 			}
 
 			return (peaks, loudest);
@@ -62,8 +64,8 @@ internal static class WaveformCache
 	{
 		if (Stamps(segments) is not { } stamps) return;
 
-		var path = PathFor(segments, directory);
-		var temp = path + ".tmp";
+		string path = PathFor(segments, directory);
+		string temp = path + ".tmp";
 		try
 		{
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -72,7 +74,7 @@ internal static class WaveformCache
 				writer.Write(Magic);
 				writer.Write(FormatVersion);
 				writer.Write(stamps.Count);
-				foreach (var (size, ticks) in stamps)
+				foreach ((long size, long ticks) in stamps)
 				{
 					writer.Write(size);
 					writer.Write(ticks);
@@ -81,8 +83,8 @@ internal static class WaveformCache
 				writer.Write(peaks.Length);
 				writer.Write(peaks[0].Length);
 				writer.Write(loudest);
-				foreach (var channel in peaks)
-				foreach (var peak in channel)
+				foreach (float[] channel in peaks)
+				foreach (float peak in channel)
 					writer.Write((ushort)Math.Round(Math.Clamp(peak, 0f, 1f) * ushort.MaxValue));
 			}
 
@@ -109,8 +111,8 @@ internal static class WaveformCache
 
 	private static string PathFor(IReadOnlyList<PlaybackSegment> segments, string? directory)
 	{
-		var joined = string.Join("|", segments.Select(s => Path.GetFullPath(s.Path).ToLowerInvariant()));
-		var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("waveform|" + joined)));
+		string joined = string.Join("|", segments.Select(s => Path.GetFullPath(s.Path).ToLowerInvariant()));
+		string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("waveform|" + joined)));
 		return Path.Combine(directory ?? DefaultDirectory, hash + Extension);
 	}
 

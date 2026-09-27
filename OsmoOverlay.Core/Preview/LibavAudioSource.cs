@@ -45,7 +45,7 @@ public sealed unsafe class LibavAudioSource : IDisposable
 			offset += segment.DurationSeconds;
 		}
 
-		LibavStreamDecoder? first = LibavStreamDecoder.Open(segments[0].Path, AVMediaType.AVMEDIA_TYPE_AUDIO, false);
+		var first = LibavStreamDecoder.Open(segments[0].Path, AVMediaType.AVMEDIA_TYPE_AUDIO, false);
 		return first is null ? null : new LibavAudioSource(withOffsets, first);
 	}
 
@@ -57,12 +57,14 @@ public sealed unsafe class LibavAudioSource : IDisposable
 			if (_disposed) return;
 
 			_segment = 0;
-			for (var i = _segments.Count - 1; i > 0; i--)
+			for (int i = _segments.Count - 1; i > 0; i--)
+			{
 				if (seconds >= _segments[i].StartSeconds)
 				{
 					_segment = i;
 					break;
 				}
+			}
 
 			DecoderFor(_segment)?.Seek(Math.Max(0, seconds - _segments[_segment].StartSeconds));
 			_skipUntil = seconds;
@@ -90,12 +92,12 @@ public sealed unsafe class LibavAudioSource : IDisposable
 				}
 
 				AVFrame* frame = decoder.Frame;
-				var start = _segments[_segment].StartSeconds + decoder.FrameSeconds();
+				double start = _segments[_segment].StartSeconds + decoder.FrameSeconds();
 				if (start >= endSeconds) return [];
 
-				var count = Convert(frame);
-				var skip = (int)Math.Clamp(Math.Round((_skipUntil - start) * SampleRate), 0, count);
-				var keep = (int)Math.Clamp(Math.Round((endSeconds - start) * SampleRate), 0, count);
+				int count = Convert(frame);
+				int skip = (int)Math.Clamp(Math.Round((_skipUntil - start) * SampleRate), 0, count);
+				int keep = (int)Math.Clamp(Math.Round((endSeconds - start) * SampleRate), 0, count);
 				if (keep <= skip) continue;
 
 				return _buffer.AsSpan(skip * Channels, (keep - skip) * Channels);
@@ -118,14 +120,14 @@ public sealed unsafe class LibavAudioSource : IDisposable
 			_resampler = resampler;
 		}
 
-		var needed = frame->nb_samples * Channels;
+		int needed = frame->nb_samples * Channels;
 		if (_buffer.Length < needed) _buffer = new float[needed];
 
 		fixed (float* output = _buffer)
 		{
-			var outputs = stackalloc byte*[1];
+			byte** outputs = stackalloc byte*[1];
 			outputs[0] = (byte*)output;
-			var converted = ffmpeg.swr_convert(_resampler, outputs, frame->nb_samples, frame->extended_data, frame->nb_samples);
+			int converted = ffmpeg.swr_convert(_resampler, outputs, frame->nb_samples, frame->extended_data, frame->nb_samples);
 			LibavStreamDecoder.Check(converted, "convert the audio");
 			return converted;
 		}
