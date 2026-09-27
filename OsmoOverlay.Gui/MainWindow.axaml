@@ -759,7 +759,7 @@
 							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"
 							            Spacing="8">
 								<TextBlock Text="No video loaded" Opacity="0.4" FontSize="14" HorizontalAlignment="Center" />
-								<TextBlock Text="Pick a DJI Osmo Action or Insta360 recording and get its summary to preview the overlay"
+								<TextBlock Text="Pick a DJI Osmo Action recording and get its summary to preview the overlay"
 								           Opacity="0.3" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
 								           MaxWidth="320" TextAlignment="Center" />
 							</StackPanel>

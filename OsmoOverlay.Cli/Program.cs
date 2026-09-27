@@ -11,7 +11,7 @@ CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
 string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view"];
 string[] flags = ["--no-level"];
 const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level]\n" +
-                     "  inputs are the camera's own recordings: DJI Osmo Action .MP4, Insta360 .insv/.lrv\n" +
+                     "  inputs are the camera's own recordings (DJI Osmo Action .MP4)\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
                      "  --cut removes that part from the video and the telemetry; repeat it for several cuts\n" +
                      "  --view <yaw>,<pitch>,<roll>[,<fov>] frames a 360 recording's flat picture, in degrees (default 0,0,0,100),\n" +

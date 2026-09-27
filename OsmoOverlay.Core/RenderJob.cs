@@ -124,8 +124,8 @@ public static class RenderJob
 			if (!segments.AllHaveTelemetry())
 			{
 				return new RenderResult(false,
-					$"{first.InputPath} has no telemetry - it isn't an original recording from a supported camera (DJI Osmo Action's " +
-					"'djmd' stream, Insta360's trailer), e.g. a file exported from another app",
+					$"{first.InputPath} has no telemetry - it isn't an original recording from a supported camera " +
+					"(e.g. a file exported from another app)",
 					sw.Elapsed);
 			}
 
