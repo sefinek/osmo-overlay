@@ -13,7 +13,7 @@ public sealed class OverlayPresetTests
 	[TestMethod]
 	public void CreateDefault_At4K_PlacesWidgetsOnTheMargin()
 	{
-		OverlayPreset preset = OverlayPreset.CreateDefault("d", "Default", 3840, 2160);
+		OverlayPreset preset = OverlayPreset.CreateDefault("d", "Default");
 
 		(OverlayElementType Type, float X, float Y)[] expected =
 		[
@@ -37,16 +37,34 @@ public sealed class OverlayPresetTests
 	}
 
 	[TestMethod]
-	public void CreateDefault_At1080p_IsTheSameLayoutAtHalfSize()
+	public void CreateDefault_StaysInsideTheReferenceFrame()
 	{
-		OverlayPreset full = OverlayPreset.CreateDefault("d", "Default", 3840, 2160);
-		OverlayPreset half = OverlayPreset.CreateDefault("d", "Default", 1920, 1080);
-
-		foreach (OverlayElement element in full.Elements)
+		foreach (OverlayElement element in OverlayPreset.CreateDefault("d", "Default").Elements)
 		{
-			OverlayElement scaled = Get(half, element.Type);
-			Assert.AreEqual(element.X / 2, scaled.X, 0.01, $"{element.Type} X");
-			Assert.AreEqual(element.Y / 2, scaled.Y, 0.01, $"{element.Type} Y");
+			Assert.IsTrue(element.X is >= 0 and <= OverlayElementBounds.ReferenceWidth, $"{element.Type} X {element.X}");
+			Assert.IsTrue(element.Y is >= 0 and <= OverlayElementBounds.ReferenceHeight, $"{element.Type} Y {element.Y}");
 		}
+	}
+
+	[TestMethod]
+	public void ToPixels_ScalesEachAxisOnItsOwn()
+	{
+		(float x, float y) = OverlayElementBounds.ToPixels(3840, 2160, 2560, 1440);
+		Assert.AreEqual(2560f, x, 0.001);
+		Assert.AreEqual(1440f, y, 0.001);
+
+		(x, y) = OverlayElementBounds.ToPixels(1920, 1080, 1440, 1080);
+		Assert.AreEqual(720f, x, 0.001, "a 4:3 frame's width is its own axis");
+		Assert.AreEqual(540f, y, 0.001);
+	}
+
+	[TestMethod]
+	public void ToReference_UndoesToPixels()
+	{
+		(float px, float py) = OverlayElementBounds.ToPixels(1234.5f, 678.9f, 1920, 1080);
+		(float x, float y) = OverlayElementBounds.ToReference(px, py, 1920, 1080);
+
+		Assert.AreEqual(1234.5f, x, 0.01);
+		Assert.AreEqual(678.9f, y, 0.01);
 	}
 }

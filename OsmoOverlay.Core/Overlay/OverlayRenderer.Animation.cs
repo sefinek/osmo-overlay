@@ -33,7 +33,8 @@ public sealed partial class OverlayRenderer
 	{
 		int saveCount = canvas.Save();
 		(float offsetX, float offsetY) = SlideOffset(state);
-		canvas.Translate(element.X + offsetX, element.Y + offsetY);
+		(float anchorX, float anchorY) = OverlayElementBounds.ToPixels(element.X, element.Y, _width, _height);
+		canvas.Translate(anchorX + offsetX, anchorY + offsetY);
 		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
 		if (state.Progress < 1f) canvas.SaveLayer(AlphaPaint(state.Progress));

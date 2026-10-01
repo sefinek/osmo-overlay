@@ -106,7 +106,7 @@ public sealed class OverlayRendererTests
 		try
 		{
 			// The map needs tiles from the network, which a unit test doesn't fetch - its placeholder still draws.
-			foreach (OverlayElement element in OverlayPreset.CreateDefault("test", "Test", Width, Height).Elements)
+			foreach (OverlayElement element in OverlayPreset.CreateDefault("test", "Test").Elements)
 			{
 				OverlayElement shown = (element is ImageElement image ? image with { ImagePath = imagePath } : element) with
 				{

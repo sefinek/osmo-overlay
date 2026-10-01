@@ -88,6 +88,7 @@ public abstract record OverlayElement
 {
 	[JsonIgnore] public abstract OverlayElementType Type { get; }
 
+	/// <summary>The anchor, in OverlayElementBounds' 4K reference space (not the video's pixels) - see OverlayElementBounds.ToPixels.</summary>
 	public required float X { get; init; }
 	public required float Y { get; init; }
 	public bool Visible { get; init; } = true;

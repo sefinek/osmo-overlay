@@ -26,7 +26,7 @@ public partial class MainWindow
 			ApplyPreviewLayout();
 
 			await _previewPlayer.OpenAsync(summary, previewWidth, previewHeight);
-			LoadOverlayPresets(summary.Video.Width, summary.Video.Height);
+			LoadOverlayPresets();
 
 			foreach (PreviewTimeline timeline in Timelines) timeline.Maximum = _previewPlayer.Duration.TotalSeconds;
 			PreviewPlaceholder.IsVisible = false;

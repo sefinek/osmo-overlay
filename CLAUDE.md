@@ -60,6 +60,7 @@ Shared settings (framework, company, `Version` - the one place to bump it, outpu
 
 - `OverlayRenderer` is data-driven: it draws the active preset's `OverlayElement`s. Add a new `OverlayElementType`'s default position/visibility to `OverlayPreset.CreateDefault`. The default preset is read-only in the GUI.
 - Presets have no migrations or backfills for older formats (pre-1.0) - don't add any.
+- A widget's `X`/`Y` are in the 3840x2160 reference space, not the video's pixels, so a preset fits every resolution and aspect ratio; each axis scales on its own (`OverlayElementBounds.ToPixels`/`ToReference`), sizes use the one `GetScale`. The renderer and the editor convert at the edge - the editor itself works in video pixels. `CreateDefault` is resolution-independent.
 - Widget boxes for hit-testing come from `OverlayRenderer.MeasureElement`, not estimates; `OverlayElementBounds.GetBounds` is only a fallback.
 - `BeginElement` (`OverlayRenderer.Animation.cs`) is the one place each widget's draw is set up (anchor, scale, slide, fade); widgets draw around (0, 0) and never do their own Save/Translate/Scale. Timing (`AppearAtSeconds`, in/out animation) is generic for every type: the GUI uses one `ElementTimingEditor` and one `ElementStyleEditor`.
 - Layers (`OverlayLayers`): the renderer never reads a layer - the layout's order is the draw order. Mute/solo go through `OverlayLayers.Drawn`. Widget times are on the output timeline (after cuts); the timeline shows the recording, so convert with `OutputTimeline.ToRecordingSeconds`/`NearestOutputSeconds`.

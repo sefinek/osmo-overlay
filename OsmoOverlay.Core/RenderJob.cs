@@ -173,7 +173,7 @@ public static class RenderJob
 			                              (plan.IsPartial ? $" ({DescribePlan(plan, fps)} of the recording)..." : "..."), 0, totalFrames);
 
 			IReadOnlyList<OverlayElement> layout =
-				options.Layout ?? LoadActiveLayout(first.Source.Video.Width, first.Source.Video.Height);
+				options.Layout ?? LoadActiveLayout();
 			// Forces off any widget this file's telemetry can't support (e.g. Map/Compass checked from
 			// a previous, GPS-capable file) instead of burning a "--"/0/placeholder into the export -
 			// same filter PreviewPlayer applies for the live preview, see OverlayDataRequirements.
@@ -523,9 +523,9 @@ public static class RenderJob
 		}
 	}
 
-	private static IReadOnlyList<OverlayElement> LoadActiveLayout(int width, int height)
+	private static IReadOnlyList<OverlayElement> LoadActiveLayout()
 	{
-		(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load(width, height);
+		(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load();
 		OverlayPreset preset = presets.First(p => p.Id == activeId);
 		// Muted (or not soloed) layers stay out of the render as they're out of the preview.
 		return OverlayLayers.Drawn(preset.Elements, preset.Layers);

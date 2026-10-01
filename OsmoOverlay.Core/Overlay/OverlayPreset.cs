@@ -11,53 +11,52 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	public DateTime? UpdatedUtc { get; init; }
 
 	/// <summary>
-	///     The built-in default layout for a video resolution. All spacing is expressed
-	///     at OverlayElementBounds' 4K reference and scaled down for smaller frames, so elements don't
-	///     end up overlapping on e.g. 1080p footage.
+	///     The built-in default layout, in OverlayElementBounds' 4K reference space - the same space every widget's
+	///     X/Y is in, so it fits any resolution and aspect ratio without being rebuilt for one.
 	/// </summary>
-	public static OverlayPreset CreateDefault(string id, string name, int width, int height)
+	public static OverlayPreset CreateDefault(string id, string name)
 	{
-		float scale = OverlayElementBounds.GetScale(width, height);
-		float m = OverlayElementBounds.Margin * scale;
+		const float width = OverlayElementBounds.ReferenceWidth;
+		const float height = OverlayElementBounds.ReferenceHeight;
+		const float m = OverlayElementBounds.Margin;
 
 		// Widgets sit with their visible edge on the margin, not their nominal radius: a gauge's band, a panel's ring and
 		// a text's cap height reach a little past (or stop short of) the anchor-based box.
-		float speedCx = width - m - (OverlayElementBounds.SpeedRadius + 10) * scale;
-		float speedCy = height - m - (OverlayElementBounds.SpeedRadius - 2) * scale;
-		float rollCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.TiltRadius + 56) * scale;
+		float speedCx = width - m - (OverlayElementBounds.SpeedRadius + 10);
+		float speedCy = height - m - (OverlayElementBounds.SpeedRadius - 2);
+		float rollCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.TiltRadius + 56);
 		// Beside the roll gauge, toward the middle.
-		float pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40) * scale;
+		float pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40);
 
 		float statsX = m;
-		float dateY = m + 34 * scale;
-		float elevationY = dateY + 100 * scale;
-		float gradientY = elevationY + 220 * scale;
-		float distanceY = gradientY + 220 * scale;
+		float dateY = m + 34;
+		float elevationY = dateY + 100;
+		float gradientY = elevationY + 220;
+		float distanceY = gradientY + 220;
 		// Appended after the always-visible stats column instead of spliced between DateTimeText and
 		// Elevation - it's off by default, so it must not shift anything else's default position just
 		// to make room for it.
-		float utcY = distanceY + 240 * scale;
+		float utcY = distanceY + 240;
 		// Same reasoning as UtcTimeText above - off by default, appended after it instead of shifting it.
-		float cameraInfoY = utcY + 240 * scale;
-		float elapsedY = cameraInfoY + 240 * scale;
-		float cameraModelY = elapsedY + 110 * scale;
-		float tripStatY = cameraModelY + 150 * scale;
+		float cameraInfoY = utcY + 240;
+		float elapsedY = cameraInfoY + 240;
+		float cameraModelY = elapsedY + 110;
+		float tripStatY = cameraModelY + 150;
 
-		float mapCx = m + (OverlayElementBounds.MapRadius + 2) * scale;
-		float mapCy = height - m - (OverlayElementBounds.MapRadius + 2) * scale;
-		float compassCx = mapCx + (OverlayElementBounds.MapRadius + 40 + OverlayElementBounds.CompassRadius) * scale;
-		float gMeterCx = width - m - (OverlayElementBounds.GMeterRadius + 3) * scale;
-		float gMeterCy = m + (OverlayElementBounds.GMeterRadius + 3) * scale;
-		float sunCx = width - m - OverlayElementBounds.SunRadius * scale;
-		float sunCy = m + OverlayElementBounds.GMeterRadius * 2 * scale + OverlayElementBounds.SunRadius * scale + 40 * scale;
+		float mapCx = m + (OverlayElementBounds.MapRadius + 2);
+		float mapCy = height - m - (OverlayElementBounds.MapRadius + 2);
+		float compassCx = mapCx + (OverlayElementBounds.MapRadius + 40 + OverlayElementBounds.CompassRadius);
+		float gMeterCx = width - m - (OverlayElementBounds.GMeterRadius + 3);
+		float gMeterCy = m + (OverlayElementBounds.GMeterRadius + 3);
+		float sunCx = width - m - OverlayElementBounds.SunRadius;
+		float sunCy = m + OverlayElementBounds.GMeterRadius * 2 + OverlayElementBounds.SunRadius + 40;
 		// Centered along the bottom edge, clear of Compass (bottom-left) and SpeedGauge (bottom-right)
 		// at their default positions.
 		float progressBarCx = width / 2f;
-		float progressBarCy = height - m - 16 * scale;
+		float progressBarCy = height - m - 16;
 		// Centered above the progress bar, which is as wide.
-		float chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2 * scale;
-		float chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop +
-		                                OverlayElementBounds.ChartHeight) * scale;
+		float chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2;
+		float chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop + OverlayElementBounds.ChartHeight);
 
 		List<OverlayElement> elements =
 		[
@@ -71,7 +70,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new ElapsedTimeTextElement { X = statsX, Y = elapsedY, Visible = false },
 			new CameraModelTextElement { X = statsX, Y = cameraModelY, Visible = false },
 			// MapWidget takes the bottom-left spot, so this sits one slot over.
-			new CompassElement { X = compassCx, Y = height - m - OverlayElementBounds.CompassRadius * scale, Visible = false },
+			new CompassElement { X = compassCx, Y = height - m - OverlayElementBounds.CompassRadius, Visible = false },
 			// GMeter takes the top-right spot, so this sits one slot down.
 			new SunWidgetElement { X = sunCx, Y = sunCy, Visible = false },
 			new SpeedGaugeElement { X = speedCx, Y = speedCy },
@@ -92,7 +91,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new PitchGaugeElement { X = pitchCx, Y = rollCy, Visible = false },
 			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },
 			new TripStatElement { X = statsX, Y = tripStatY, Visible = false },
-			new TextElement { X = width / 2f, Y = m + 40 * scale, Visible = false },
+			new TextElement { X = width / 2f, Y = m + 40, Visible = false },
 			new ImageElement { X = width / 2f, Y = m, Visible = false }
 		];
 

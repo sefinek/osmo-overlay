@@ -74,9 +74,9 @@ public partial class MainWindow
 	/// </summary>
 	private bool IsActivePresetDefault => _activePresetId == OverlayPresetStore.DefaultPresetId;
 
-	private void LoadOverlayPresets(int width, int height)
+	private void LoadOverlayPresets()
 	{
-		(_overlayPresets, _activePresetId) = OverlayPresetStore.Load(width, height);
+		(_overlayPresets, _activePresetId) = OverlayPresetStore.Load();
 		_overlayPresetsLoaded = true;
 		RefreshPresetComboBox();
 		RefreshWidgetList();
@@ -361,8 +361,7 @@ public partial class MainWindow
 			return;
 		}
 
-		float scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
-		SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
+		SKRect bounds = GetElementBounds(el);
 		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
 		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
 		{
@@ -388,6 +387,18 @@ public partial class MainWindow
 	///     above a bar, a value growing a digit), so it frames the widget as it is. Without a preview, or for a widget that
 	///     draws nothing yet (an Image without a file), OverlayElementBounds' estimate for the type.
 	/// </summary>
+	private SKRect GetElementBounds(OverlayElement element)
+	{
+		(float x, float y) = FullResAnchor(element);
+		return GetElementBounds(element, x, y, OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height) * element.Scale);
+	}
+
+	/// <summary>A widget's anchor in the video's own pixels (its X/Y are in the reference space - OverlayElementBounds.ToPixels), the space the editor works in.</summary>
+	private (float X, float Y) FullResAnchor(OverlayElement element)
+	{
+		return OverlayElementBounds.ToPixels(element.X, element.Y, _summary!.Video.Width, _summary.Video.Height);
+	}
+
 	private SKRect GetElementBounds(OverlayElement element, float x, float y, float scale)
 	{
 		if (_previewPlayer.MeasureElement(element, _previewPosition) is { } drawn)
@@ -487,10 +498,11 @@ public partial class MainWindow
 	{
 		if (_summary is null || IsActivePresetDefault) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory", _summary.Video.Width, _summary.Video.Height);
+		var factory = OverlayPreset.CreateDefault("factory", "Factory");
 		if (factory.Elements.FirstOrDefault(e => e.Type == type) is not { } template) return;
 
-		OverlayElement instance = template with { Id = Guid.NewGuid().ToString("N"), X = x, Y = y, Visible = true };
+		(float refX, float refY) = OverlayElementBounds.ToReference(x, y, _summary.Video.Width, _summary.Video.Height);
+		OverlayElement instance = template with { Id = Guid.NewGuid().ToString("N"), X = refX, Y = refY, Visible = true };
 
 		List<OverlayElement> elements = [.. ActiveElements, instance];
 		ReplaceActiveElements(elements);
@@ -538,7 +550,7 @@ public partial class MainWindow
 		OverlayElement? existing = ActiveElements.FirstOrDefault(e => e.Id == id);
 		if (existing is null) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory", _summary.Video.Width, _summary.Video.Height);
+		var factory = OverlayPreset.CreateDefault("factory", "Factory");
 		if (factory.Elements.FirstOrDefault(e => e.Type == existing.Type) is not { } defaults) return;
 
 		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible, LayerId = el.LayerId });
@@ -1197,8 +1209,7 @@ public partial class MainWindow
 		if (_summary is null) return;
 
 		string id = Guid.NewGuid().ToString("N");
-		var preset = OverlayPreset.CreateDefault(id, $"Preset {_overlayPresets.Count + 1}",
-			_summary.Video.Width, _summary.Video.Height);
+		var preset = OverlayPreset.CreateDefault(id, $"Preset {_overlayPresets.Count + 1}");
 		_overlayPresets.Add(preset);
 		_activePresetId = id;
 
@@ -1257,8 +1268,7 @@ public partial class MainWindow
 			"Reset", DialogKind.Danger);
 		if (!confirmed) return;
 
-		_overlayPresets[index] = OverlayPreset.CreateDefault(_activePresetId, presetName,
-			_summary.Video.Width, _summary.Video.Height);
+		_overlayPresets[index] = OverlayPreset.CreateDefault(_activePresetId, presetName);
 
 		RefreshWidgetList();
 		ShowLayout();
@@ -1605,7 +1615,6 @@ public partial class MainWindow
 	{
 		if (_summary is null) return null;
 
-		float scale = OverlayElementBounds.GetScale(_summary.Video.Width, _summary.Video.Height);
 		List<OverlayElement> elements = ActiveElements;
 		// A muted (or unsoloed) layer's widgets aren't drawn, so they can't be picked either.
 		HashSet<string> silenced = OverlayLayers.Silenced(ActiveLayers);
@@ -1614,7 +1623,7 @@ public partial class MainWindow
 			OverlayElement el = elements[i];
 			if (!el.Visible || !IsTypeSupported(el.Type) || silenced.Contains(OverlayLayers.Key(el))) continue;
 
-			SKRect bounds = GetElementBounds(el, el.X, el.Y, scale * el.Scale);
+			SKRect bounds = GetElementBounds(el);
 			if (pos.X >= bounds.Left && pos.X <= bounds.Right && pos.Y >= bounds.Top && pos.Y <= bounds.Bottom) return el;
 		}
 
@@ -1721,7 +1730,8 @@ public partial class MainWindow
 		}
 
 		_draggingElementId = el.Id;
-		_dragAnchorOffset = new Point(pos.X - el.X, pos.Y - el.Y);
+		(float anchorX, float anchorY) = FullResAnchor(el);
+		_dragAnchorOffset = new Point(pos.X - anchorX, pos.Y - anchorY);
 		e.Pointer.Capture(OverlayDragCanvas);
 		OverlayDragCanvas.Cursor = SizeAllCursor;
 		HideHoverIcons();
@@ -1762,7 +1772,8 @@ public partial class MainWindow
 
 		(newX, newY) = SnapToGuides(elements[index], newX, newY);
 
-		elements[index] = elements[index] with { X = newX, Y = newY };
+		(float refX, float refY) = OverlayElementBounds.ToReference(newX, newY, _summary.Video.Width, _summary.Video.Height);
+		elements[index] = elements[index] with { X = refX, Y = refY };
 		ReplaceActiveElements(elements);
 		ShowLayout();
 		if (_selectedElementId == id) RefreshSelectionHighlight();
@@ -1789,7 +1800,8 @@ public partial class MainWindow
 
 		_resizingElementId = id;
 		_resizeStartScale = el.Scale;
-		_resizeStartDistance = Math.Max(Point.Distance(pos, new Point(el.X, el.Y)), 1);
+		(float anchorX, float anchorY) = FullResAnchor(el);
+		_resizeStartDistance = Math.Max(Point.Distance(pos, new Point(anchorX, anchorY)), 1);
 		e.Pointer.Capture(OverlayDragCanvas);
 		e.Handled = true;
 		HideHoverIcons();
@@ -1805,7 +1817,8 @@ public partial class MainWindow
 		if (index < 0) return;
 
 		OverlayElement el = elements[index];
-		double distance = Point.Distance(pos, new Point(el.X, el.Y));
+		(float anchorX, float anchorY) = FullResAnchor(el);
+		double distance = Point.Distance(pos, new Point(anchorX, anchorY));
 		float newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale);
 
 		elements[index] = el with { Scale = newScale };
@@ -1902,8 +1915,7 @@ public partial class MainWindow
 	/// </summary>
 	private void ShowHoverIconsFor(OverlayElement element)
 	{
-		float scale = OverlayElementBounds.GetScale(_summary!.Video.Width, _summary.Video.Height);
-		SKRect bounds = GetElementBounds(element, element.X, element.Y, scale * element.Scale);
+		SKRect bounds = GetElementBounds(element);
 		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
 		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
 		{

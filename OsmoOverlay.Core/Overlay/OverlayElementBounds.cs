@@ -98,6 +98,22 @@ public static class OverlayElementBounds
 	}
 
 	/// <summary>
+	///     A widget's X/Y live in the ReferenceWidth x ReferenceHeight space, so a preset fits any resolution and aspect
+	///     ratio: each axis scales on its own (a widget at the right margin stays there on a 4:3 frame), while sizes use
+	///     the single GetScale factor. This is the position in the video's own pixels.
+	/// </summary>
+	public static (float X, float Y) ToPixels(float x, float y, int width, int height)
+	{
+		return (x * width / ReferenceWidth, y * height / ReferenceHeight);
+	}
+
+	/// <summary>The inverse of ToPixels: a position in video pixels as a widget's X/Y.</summary>
+	public static (float X, float Y) ToReference(float x, float y, int width, int height)
+	{
+		return (x * ReferenceWidth / width, y * ReferenceHeight / height);
+	}
+
+	/// <summary>
 	///     The exact bold system-font fallback chain OverlayRenderer draws every HUD widget with - here
 	///     (rather than duplicated) so GetBounds measures with the identical typeface.
 	/// </summary>

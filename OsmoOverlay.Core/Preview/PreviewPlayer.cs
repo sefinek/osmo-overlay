@@ -127,7 +127,7 @@ public sealed class PreviewPlayer : IDisposable
 		IReadOnlyList<OverlayElement> layout = [];
 		if (!plain)
 		{
-			(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load(width, height);
+			(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load();
 			layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
 		}
 

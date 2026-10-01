@@ -32,12 +32,12 @@ public static class OverlayPresetStore
 	// from a preset that's merely being written out again.
 	private static readonly Dictionary<string, string> KnownPresetContent = new(StringComparer.OrdinalIgnoreCase);
 
-	public static (List<OverlayPreset> Presets, string ActivePresetId) Load(int width, int height)
+	public static (List<OverlayPreset> Presets, string ActivePresetId) Load()
 	{
 		try
 		{
 			List<OverlayPreset> presets = LoadPresetFiles();
-			RefreshBuiltInDefault(presets, width, height);
+			RefreshBuiltInDefault(presets);
 			if (presets.Count > 0)
 			{
 				string? activeId = OverlaySettingsStore.Load().ActivePresetId;
@@ -54,7 +54,7 @@ public static class OverlayPresetStore
 			KnownPresetContent.Clear();
 		}
 
-		var defaultPreset = OverlayPreset.CreateDefault(DefaultPresetId, "Default", width, height);
+		var defaultPreset = OverlayPreset.CreateDefault(DefaultPresetId, "Default");
 		return ([defaultPreset], defaultPreset.Id);
 	}
 
@@ -100,10 +100,10 @@ public static class OverlayPresetStore
 	///     removes files, never restores one). Cheap to recompute, so this always overwrites rather than
 	///     checking whether anything actually changed. Also keeps it first in the list.
 	/// </summary>
-	private static void RefreshBuiltInDefault(List<OverlayPreset> presets, int width, int height)
+	private static void RefreshBuiltInDefault(List<OverlayPreset> presets)
 	{
 		int index = presets.FindIndex(p => p.Id == DefaultPresetId);
-		var fresh = OverlayPreset.CreateDefault(DefaultPresetId, "Default", width, height);
+		var fresh = OverlayPreset.CreateDefault(DefaultPresetId, "Default");
 
 		if (index < 0)
 		{
