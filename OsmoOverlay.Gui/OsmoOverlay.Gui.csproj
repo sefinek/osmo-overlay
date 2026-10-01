@@ -10,14 +10,14 @@
     <ApplicationIcon>Assets\OsmoOverlay.ico</ApplicationIcon>
 
     <AssemblyTitle>OsmoOverlay</AssemblyTitle>
-    <Description>HUD overlay renderer for DJI Osmo Action series footage.</Description>
+    <Description>Telemetry HUD overlay renderer for DJI Osmo Action and Insta360 footage.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
   </ItemGroup>
 
   <ItemGroup>

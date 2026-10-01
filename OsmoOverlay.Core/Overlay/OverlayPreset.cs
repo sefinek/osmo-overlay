@@ -57,18 +57,14 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new ElevationElement { X = statsX, Y = elevationY },
 			new GradientElement { X = statsX, Y = gradientY },
 			new DistanceElement { X = statsX, Y = distanceY },
-			// Off by default - most users only need one clock; UTC is an opt-in extra for syncing
-			// footage against UTC-timestamped external data (flight logs, other sensors, etc.).
+			// The ones below are off by default; each sits in its own slot so enabling it moves nothing.
 			new UtcTimeTextElement { X = statsX, Y = utcY, Visible = false },
-			// Off by default - niche/photographer-oriented metadata most riders/pilots don't need burned in.
 			new CameraInfoElement { X = statsX, Y = cameraInfoY, Visible = false },
-			// Off by default - a stopwatch duplicates what most editors already show in their timeline.
 			new ElapsedTimeTextElement { X = statsX, Y = elapsedY, Visible = false },
-			// Off by default - purely cosmetic branding of which camera shot the clip.
 			new CameraModelTextElement { X = statsX, Y = cameraModelY, Visible = false },
-			// Off by default - MapWidget takes the bottom-left spot, so this sits one slot over in case it's enabled.
+			// MapWidget takes the bottom-left spot, so this sits one slot over.
 			new CompassElement { X = mapCx, Y = height - m - OverlayElementBounds.CompassRadius * scale, Visible = false },
-			// Off by default - GMeter takes the top-right spot, so this sits one slot down in case it's enabled.
+			// GMeter takes the top-right spot, so this sits one slot down.
 			new SunWidgetElement { X = sunCx, Y = sunCy, Visible = false },
 			new SpeedGaugeElement { X = speedCx, Y = speedCy },
 			new RollGaugeElement { X = speedCx, Y = rollCy },

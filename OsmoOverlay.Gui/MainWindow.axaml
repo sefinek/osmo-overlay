@@ -81,6 +81,9 @@
 		<Style Selector="ListBox#InputFilesList ListBoxItem">
 			<Setter Property="Padding" Value="8,4" />
 			<Setter Property="MinHeight" Value="0" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 		</Style>
 		<Style Selector="local|IconView.checkIcon">
 			<Setter Property="Width" Value="13" />
@@ -374,7 +377,13 @@
 									<TextBlock Text="Add several segments of the same auto-split recording to stitch them into one render"
 									           Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
 									           TextWrapping="Wrap" />
-									<ListBox Name="InputFilesList" Height="56" SelectionMode="Single" />
+									<ListBox Name="InputFilesList" MinHeight="34" MaxHeight="132" SelectionMode="Single">
+										<ListBox.ItemTemplate>
+											<DataTemplate x:DataType="x:String">
+												<TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+											</DataTemplate>
+										</ListBox.ItemTemplate>
+									</ListBox>
 									<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
 										<Button Grid.Column="0" Content="Add..." Click="OnAddInputFilesClick"
 										        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />

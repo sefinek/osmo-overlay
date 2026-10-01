@@ -248,43 +248,27 @@ public static class RenderJob
 				plan, options.GreenScreen, pictures is not null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
-			// `using Process ffmpeg` above only releases managed handles on Dispose - it does NOT
-			// terminate the OS process. Every path out of the try below - including one that has
-			// nothing to do with cancellation, e.g. a genuine exception thrown by renderer.RenderInto() -
-			// must still guarantee ffmpeg.exe is dead before this method returns; otherwise it's
-			// orphaned running against a closed stdin, and for a green-screen render (infinite main
-			// input, see FfmpegPipeline.StartRender) that can mean forever, not just "a while".
+			// Disposing the Process doesn't terminate it: every path out of the try below must leave ffmpeg dead,
+			// or it's orphaned (forever, for a green-screen render with its infinite input).
 			try
 			{
 				Stream stdin = ffmpeg.StandardInput.BaseStream;
 				Task<string> stderrTask = ffmpeg.StandardError.ReadToEndAsync(ct);
 
-				// stdin.Write below is a plain blocking write with no cancellation of its own - if ffmpeg
-				// ever stops draining its input (a genuine hang), that write would otherwise block forever
-				// with no way for Cancel to interrupt it. Killing the process here breaks the pipe, which
-				// unblocks the write as an IOException (caught below) instead.
+				// stdin.Write can't be cancelled; killing ffmpeg breaks the pipe and unblocks it as an IOException (caught below).
 				using CancellationTokenRegistration killOnCancel = ct.Register(() => KillFfmpegIfRunning(ffmpeg));
 
-				// Rendering the overlay (CPU-bound SkiaSharp drawing) and feeding ffmpeg (I/O-bound,
-				// throttled by however fast the encoder drains its input) are two different bottlenecks -
-				// running them on separate threads lets one overlap the other instead of strictly
-				// alternating "render a frame, then sit idle waiting for ffmpeg to catch up, repeat".
-				// RenderInto() itself stays strictly sequential - see its own doc comment, its cached paint
-				// objects aren't safe to call concurrently - only this one producer thread ever calls it.
+				// Drawing (CPU) and feeding ffmpeg (I/O) overlap on two threads. RenderInto() isn't safe to call
+				// concurrently - only the producer thread calls it.
 				var channel = Channel.CreateBounded<byte[]>(
 					new BoundedChannelOptions(RenderPrefetchFrames) { SingleReader = true, SingleWriter = true });
 
-				// Linked, not just `ct` directly: if the consumer loop below stops for a reason that has
-				// nothing to do with `ct` (e.g. stdin.Write hits an IOException because ffmpeg crashed on
-				// its own), the producer can otherwise be left blocked forever on a full channel nobody is
-				// draining anymore - awaiting it in the consumer's finally would then hang too. Cancelling
-				// this in that finally, unconditionally, guarantees the producer can always be unblocked
-				// regardless of why the consumer stopped.
+				// Linked so the consumer's finally can always unblock the producer, even when the consumer stopped
+				// for a reason other than `ct` (ffmpeg crashing) and nobody drains the channel any more.
 				using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 				CancellationToken producerCt = producerCts.Token;
 
-				// Frame buffers go back here once written to ffmpeg - the bounded channel caps how many are
-				// ever in flight, so a render allocates only a handful of them instead of one per frame.
+				// Written frames' buffers come back here; the bounded channel caps how many exist.
 				var freeBuffers = new ConcurrentQueue<byte[]>();
 				int frameBufferSize = renderer.FrameBufferSize();
 
@@ -332,10 +316,7 @@ public static class RenderJob
 				}
 				catch (OperationCanceledException)
 				{
-					// Observed directly by this loop's own ReadAllAsync(ct) - the cancelled check below
-					// (not this catch alone) is what decides whether to report a cancellation, since the
-					// producer noticing ct first and completing the channel normally takes this same path
-					// without throwing here.
+					// The cancelled check below decides whether to report it - the producer may also stop first and end the channel normally.
 				}
 				catch (IOException)
 				{

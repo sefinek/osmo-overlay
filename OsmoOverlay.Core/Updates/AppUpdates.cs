@@ -142,42 +142,45 @@ public static class AppUpdates
 		string path = Path.Combine(Path.GetTempPath(), Path.GetFileName(installer.Name));
 		string partialPath = path + ".partial";
 
-		using (HttpResponseMessage response = await Http.GetAsync(installer.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct))
-		{
-			response.EnsureSuccessStatusCode();
-			long total = response.Content.Headers.ContentLength ?? installer.Size;
-			await using Stream source = await response.Content.ReadAsStreamAsync(ct);
-			await using FileStream target = File.Create(partialPath);
-
-			byte[] buffer = new byte[81920];
-			long received = 0;
-			int read;
-			while ((read = await source.ReadAsync(buffer, ct)) > 0)
-			{
-				await target.WriteAsync(buffer.AsMemory(0, read), ct);
-				received += read;
-				if (total > 0) progress?.Report((double)received / total);
-			}
-		}
-
 		if (installer.Sha256 is null)
-		{
-			AppLogger.Warn($"{installer.Name} has no published SHA-256 - installing it unverified");
-		}
-		else
-		{
-			await using FileStream downloaded = File.OpenRead(partialPath);
-			string actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(downloaded, ct));
-			if (actual != installer.Sha256)
-			{
-				downloaded.Close();
-				File.Delete(partialPath);
-				throw new InvalidDataException($"{installer.Name} doesn't match its published SHA-256 - the download is corrupt or was tampered with.");
-			}
-		}
+			throw new InvalidDataException($"{installer.Name} has no published SHA-256, so it can't be verified - install it from the release page.");
 
-		File.Move(partialPath, path, true);
-		return path;
+		try
+		{
+			using (HttpResponseMessage response = await Http.GetAsync(installer.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct))
+			{
+				response.EnsureSuccessStatusCode();
+				long total = response.Content.Headers.ContentLength ?? installer.Size;
+				await using Stream source = await response.Content.ReadAsStreamAsync(ct);
+				await using FileStream target = File.Create(partialPath);
+
+				byte[] buffer = new byte[81920];
+				long received = 0;
+				int read;
+				while ((read = await source.ReadAsync(buffer, ct)) > 0)
+				{
+					await target.WriteAsync(buffer.AsMemory(0, read), ct);
+					received += read;
+					if (total > 0) progress?.Report((double)received / total);
+				}
+			}
+
+			await using (FileStream downloaded = File.OpenRead(partialPath))
+			{
+				string actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(downloaded, ct));
+				if (actual != installer.Sha256)
+					throw new InvalidDataException($"{installer.Name} doesn't match its published SHA-256 - the download is corrupt or was tampered with.");
+			}
+
+			File.Move(partialPath, path, true);
+			return path;
+		}
+		catch
+		{
+			try { File.Delete(partialPath); }
+			catch (IOException) { }
+			throw;
+		}
 	}
 
 	/// <summary>

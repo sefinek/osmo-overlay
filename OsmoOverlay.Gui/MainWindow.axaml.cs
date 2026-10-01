@@ -60,12 +60,8 @@ public partial class MainWindow : Window
 	private long _previewFrame;
 	private (PreviewTimeFormat Format, TimeSpan Duration, FileSummary? Summary, string Text)? _timeEndText;
 	private List<OverlayPreset> _overlayPresets = [];
-	// Guards a real race: SetPhase(SummaryReady) can run before LoadOverlayPresets (an earlier await
-	// in OpenPreviewAsync) has populated _overlayPresets. Without this, the Overlay panel's "New"/
-	// "Duplicate" buttons become clickable in that gap and can create a preset against an empty list,
-	// which OverlayPresetStore.Save's cleanup then treats as authoritative - deleting every other
-	// preset file on disk, including default.json. Keeping OverlayContent hidden until this is true
-	// closes the race at the source.
+	// SetPhase(SummaryReady) can run before LoadOverlayPresets finishes. New/Duplicate on the empty list would make
+	// OverlayPresetStore.Save's cleanup delete every other preset file, so OverlayContent stays hidden until this is true.
 	private bool _overlayPresetsLoaded;
 	private UiPhase _phase = UiPhase.Idle;
 	// The preview's frame size in pixels - null while no recording is open in the preview.
@@ -154,11 +150,7 @@ public partial class MainWindow : Window
 		// Map tile progress arrives from thread-pool threads (see OverlayRenderer.BuildMapMosaicAsync).
 		_previewPlayer.Message += message => Dispatcher.UIThread.Post(() => AppendLog(message));
 
-		// See AppLogger.Notified for the general contract. Concretely: ffmpeg/ffprobe/exiftool
-		// invocations (from this window, ToolsWindow, or CompareVideosWindow), one-off status lines,
-		// and every Warn/Error - a failed map tile fetch, a corrupt preset file, a failed render.
-		// AppendLogLine (not AppendLog) skips re-logging
-		// to AppLogger, since the call that raised Notified already did its own logging.
+		// See AppLogger.Notified. AppendLogLine (not AppendLog) doesn't log again - the raising call already did.
 		AppLogger.Notified += (message, level) => Dispatcher.UIThread.Post(() =>
 			LogBox.AppendLogLine(LogScroll, message, level switch
 			{
@@ -335,10 +327,7 @@ public partial class MainWindow : Window
 			_previewPlayer.SetShowWatermark(_showWatermark);
 		}
 
-		// Unlike ShowWatermark, this changes the actual per-frame position data the renderer was built
-		// with (see PreviewPlayer.OpenAsync), not just a draw-time flag - there's no cheap "swap it live"
-		// path, so a changed setting only takes effect on the next preview open. Reopen here instead of
-		// leaving the user staring at a preview that doesn't match the checkbox they just changed.
+		// Unlike ShowWatermark, GPS smoothing is baked into the renderer at OpenAsync, so a change reopens the preview.
 		bool needsPreviewReopen = false;
 		if (settings.SmoothGpsMotion != _smoothGpsMotion)
 		{
@@ -347,12 +336,8 @@ public partial class MainWindow : Window
 			needsPreviewReopen = true;
 		}
 
-		// Same "baked in at OpenAsync, no live-swap path" category as SmoothGpsMotion
-		// above - the map tile source and route-intro card are both fetched/laid out when the preview
-		// (or a render) starts, not per frame. Reloaded fresh (not the pre-dialog currentSettings)
-		// since the ShowWatermark/SmoothGpsMotion blocks above may have already saved
-		// their own changes to disk; OverlaySettings' structural equality then does this whole group's
-		// change-detection in one comparison instead of one `if` per field.
+		// Also baked in at OpenAsync (map tiles, route-intro card). Loaded fresh, since the blocks above may have saved
+		// already; OverlaySettings' structural equality then detects the whole group's change at once.
 		OverlaySettings beforeMapAndRouteIntroChanges = OverlaySettingsStore.Load();
 		OverlaySettings updatedSettings = beforeMapAndRouteIntroChanges with
 		{
