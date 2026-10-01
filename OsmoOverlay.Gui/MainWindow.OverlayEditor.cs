@@ -166,8 +166,7 @@ public partial class MainWindow
 	// (see OverlayRenderer.DrawTimeText) - not real GPS-recorded time, so a driving log synced
 	// against this against other GPS-timestamped data could be off by however stale the camera's
 	// own clock is.
-	private const string TimeFallbackTip = "This recording has no GPS timestamp - showing the file's own recording-start " +
-	                                       "time instead (from the camera's clock, not GPS-synced)";
+	private const string TimeFallbackTip = "This file has no GPS time, so the recording start time from the camera's own clock is used instead. It is not GPS-synced.";
 
 	private bool IsTypeSupported(OverlayElementType type)
 	{
@@ -184,12 +183,12 @@ public partial class MainWindow
 		return type switch
 		{
 			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText =>
-				"This file has no GPS timestamp and no usable recording-start time, so this widget can't show a time",
-			OverlayElementType.SunWidget => "This file has no GPS fix or no GPS timestamp, so the sun's position can't be computed",
+				"Unavailable: this file has no GPS time and no recording start time.",
+			OverlayElementType.SunWidget => "Unavailable: the sun's position needs a GPS fix and GPS time, and this file is missing one of them.",
 			OverlayElementType.RollGauge or OverlayElementType.PitchGauge or OverlayElementType.GMeter =>
-				"This camera's accelerometer axes aren't known here (a 360 camera's export can face any way), so its tilt can't be shown",
-			OverlayElementType.CameraInfo => "This file's telemetry has no ISO or color temperature",
-			_ => "This file has no GPS fix, so this widget has nothing to show"
+				"Unavailable: the axes of this camera's accelerometer are unknown, so tilt can't be calculated.",
+			OverlayElementType.CameraInfo => "Unavailable: this file has no ISO or color temperature data.",
+			_ => "Unavailable: this widget needs GPS, and this file has no GPS fix."
 		};
 	}
 
@@ -289,7 +288,7 @@ public partial class MainWindow
 		grid.Children.Add(text);
 
 		string? warningTip = !supported
-			? "Not shown with this file - " + UnsupportedReason(element.Type)
+			? UnsupportedReason(element.Type)
 			: UsesTimeFallback(element.Type)
 				? TimeFallbackTip
 				: null;

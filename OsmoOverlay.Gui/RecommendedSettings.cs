@@ -1,3 +1,5 @@
+using OsmoOverlay.Cameras.Dji;
+
 namespace OsmoOverlay.Gui;
 
 /// <summary>
@@ -13,7 +15,7 @@ public sealed record RecommendedSettings(
 	long MinVideoBitrate,
 	long MinAudioBitrate)
 {
-	private static readonly RecommendedSettings DjiOsmoAction6 = new(
+	private static readonly RecommendedSettings DjiOsmo4K60 = new(
 		3840,
 		2160,
 		59.94,
@@ -21,7 +23,7 @@ public sealed record RecommendedSettings(
 		256_000);
 
 	private static readonly Dictionary<string, RecommendedSettings> ByCameraModel =
-		new(StringComparer.OrdinalIgnoreCase) { ["DJI AC006"] = DjiOsmoAction6 };
+		new(StringComparer.OrdinalIgnoreCase) { [DjiModels.OsmoAction5Pro] = DjiOsmo4K60, [DjiModels.OsmoAction6] = DjiOsmo4K60 };
 
 	public static RecommendedSettings? ForCameraModel(string? cameraModel)
 	{

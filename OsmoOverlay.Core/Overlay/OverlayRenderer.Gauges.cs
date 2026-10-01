@@ -8,23 +8,11 @@ public sealed partial class OverlayRenderer
 {
 	private const double KmhToMph = 0.621371;
 
-	// GMeter plots dynamic acceleration (cornering/braking-style forces), not the camera's raw
-	// orientation - a raw reading sits permanently off-center depending on how the camera happens to
-	// be mounted, since gravity itself shows up on whichever axis is "down" for that mount.
-	// GMeterBaselineSeconds is a slow-moving average acting as each axis's own "at rest" zero point, so
-	// the dot reads relative to it instead of an absolute, mount-dependent reading - mirrors
-	// GetMapZoomFactor's smoothing/jump-reset shape. GMeterSmoothingSeconds is a second, much faster
-	// EMA applied to the signal itself (same time constant as TelemetryProcessor's Pitch/GForce
-	// smoothing) - raw per-sample accelerometer readings are noisy (vibration, bumps), and unlike
-	// those two gauges this one never went through TelemetryProcessor, so without this the dot/reading
-	// would jitter with every sample instead of tracking actual cornering/braking swings.
-	// Which accelerometer axes are sideways and forward is the camera format's (ICameraFormat.Gravity,
-	// DerivedFrame.LateralAccelG/LongitudinalAccelG). This still only reads REORIENTATION (tilting the camera itself),
-	// not necessarily translational G-force - a single accelerometer without a gyroscope cannot tell
-	// "the sensor rotated" apart from "the sensor felt a real force", so a deliberate/incidental tilt
-	// still shows up here same as a real cornering/braking G would.
-	private const double GMeterBaselineSeconds = 8.0;
-	private const double GMeterSmoothingSeconds = 0.3;
+	// GMeter plots dynamic acceleration (cornering/braking-style forces) relative to the camera's own baseline, not its raw
+	// orientation - see GMeterDeltas. Which accelerometer axes are sideways and forward is the camera format's
+	// (ICameraFormat.Gravity, DerivedFrame.LateralAccelG/LongitudinalAccelG). This still only reads REORIENTATION (tilting
+	// the camera itself), not necessarily translational G-force - a single accelerometer without a gyroscope cannot tell
+	// "the sensor rotated" apart from "the sensor felt a real force".
 
 	// User-configurable per widget (OverlayElement.GMeterFullScaleG) - how many G's the dot needs to
 	// reach the ring's edge. Unlike Map's zoom factor, there's no "correct" value to derive from the
@@ -41,10 +29,6 @@ public sealed partial class OverlayRenderer
 	public const double TripArrivedToleranceMetersDefault = 1.5;
 	public const string TripArrivedLabelDefault = "FINISH";
 
-	private readonly ResettableEma _gMeterBaselineLateralEma = new();
-	private readonly ResettableEma _gMeterBaselineLongitudinalEma = new();
-	private readonly ResettableEma _gMeterSmoothedLateralEma = new();
-	private readonly ResettableEma _gMeterSmoothedLongitudinalEma = new();
 
 	private static SKPaint CreateGaugeBandPaint(SKColor color)
 	{
@@ -160,7 +144,7 @@ public sealed partial class OverlayRenderer
 		canvas.DrawLine(cx, cy - radius, cx, cy + radius, _thinStroke2White70);
 
 		double fullScaleG = Math.Clamp(element.GMeterFullScaleG, GMeterFullScaleGMin, GMeterFullScaleGMax);
-		(double lateral, double longitudinal) = SmoothGMeterDelta(frame);
+		(double lateral, double longitudinal) = GMeterDelta(frame);
 		float dotX = cx + (float)Math.Clamp(lateral / fullScaleG, -1, 1) * radius;
 		float dotY = cy - (float)Math.Clamp(longitudinal / fullScaleG, -1, 1) * radius;
 
@@ -173,24 +157,10 @@ public sealed partial class OverlayRenderer
 			outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 	}
 
-	/// <summary>
-	///     Dynamic acceleration relative to the camera's own slow-moving baseline (see GMeterBaselineSeconds
-	///     above `DrawGMeter`), with the signal itself run through a second, much faster EMA
-	///     (GMeterSmoothingSeconds) to tame per-sample noise - two EMAs at different time constants
-	///     racing toward the same raw reading, not a "smoothed minus itself" no-op. Both are driven by the
-	///     same ResettableEma GetMapZoomFactor uses, and since all four instances below are always updated
-	///     together with the same `seconds`, their independent jump-reset checks stay in lockstep - a
-	///     backwards/large time gap resets all four straight to the raw reading, same as if they shared
-	///     one clock.
-	/// </summary>
-	private (double Lateral, double Longitudinal) SmoothGMeterDelta(DerivedFrame frame)
+	private (double Lateral, double Longitudinal) GMeterDelta(DerivedFrame frame)
 	{
-		double seconds = frame.Raw.SampleTimeSeconds;
-		double baselineLateral = _gMeterBaselineLateralEma.Update(seconds, frame.LateralAccelG, GMeterBaselineSeconds);
-		double baselineLongitudinal = _gMeterBaselineLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterBaselineSeconds);
-		double smoothedLateral = _gMeterSmoothedLateralEma.Update(seconds, frame.LateralAccelG, GMeterSmoothingSeconds);
-		double smoothedLongitudinal = _gMeterSmoothedLongitudinalEma.Update(seconds, frame.LongitudinalAccelG, GMeterSmoothingSeconds);
-		return (smoothedLateral - baselineLateral, smoothedLongitudinal - baselineLongitudinal);
+		int index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
+		return index < _gMeterDeltas.Length ? _gMeterDeltas[index] : (0, 0);
 	}
 
 	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)

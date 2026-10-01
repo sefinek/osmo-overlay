@@ -16,8 +16,6 @@ public partial class MainWindow
 	{
 		ClosePreview();
 
-		if (summary.DerivedFrames is not { Count: > 0 }) return;
-
 		try
 		{
 			double scale = Math.Min(1.0, (double)_previewMaxWidth / summary.Video.Width);
@@ -158,7 +156,7 @@ public partial class MainWindow
 	/// <summary>Reopens the preview for a setting baked in at open (quality, GPS smoothing, map/route intro), back at the same moment of the recording.</summary>
 	private async Task ReopenPreviewAsync()
 	{
-		if (_summary is not { HasTelemetry: true } summary || _phase != UiPhase.SummaryReady) return;
+		if (_summary is not { } summary || _phase != UiPhase.SummaryReady) return;
 
 		double position = PreviewTimeline.Value;
 		await OpenPreviewAsync(summary);

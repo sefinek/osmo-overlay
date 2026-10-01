@@ -25,7 +25,7 @@ namespace OsmoOverlay.Cameras.Dji;
 ///     │   ├── f6 (message) → f1 (varint)  - color temperature, Kelvin
 ///     │   └── f10 (message)               - accelerometer: f2/f3/f4 (float) = X/Y/Z
 ///     └── f4 (message)              - GPS data
-///     ├── f1 (message) → f4 (string)  - device name, e.g. "DJI AC006"
+///     ├── f1 (message) → f4 (string)  - device name, DJI's internal model code, e.g. "DJI AC006" (see DjiModels)
 ///     ├── f2 (message)              - GPS fix
 ///     │   ├── f1 (message)
 ///     │   │   ├── f1 (varint)  - GPS fix type (0 = no fix)

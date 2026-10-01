@@ -11,7 +11,7 @@ internal static class FileSummaryCache
 {
 	// Bump whenever telemetry extraction or derivation logic changes, so stale cache
 	// entries computed with the old logic are treated as a cache miss automatically.
-	public const int FormatVersion = 25;
+	public const int FormatVersion = 26;
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "cache");

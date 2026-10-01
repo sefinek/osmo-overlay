@@ -46,9 +46,13 @@ public interface ICameraFormat
 
 	/// <summary>
 	///     What a user should know about this camera's support before relying on it (e.g. little tested), shown once when
-	///     its recording is loaded - null when it's fully supported.
+	///     its recording is loaded - null when it's fully supported. `cameraModel` is the model the telemetry names, for a
+	///     format that supports some of its cameras and not others.
 	/// </summary>
-	string? SupportNotice => null;
+	string? SupportNotice(string? cameraModel)
+	{
+		return null;
+	}
 
 	/// <summary>Whether CopyMetadata has anything to carry over into a render.</summary>
 	bool HasMetadataToCopy => false;

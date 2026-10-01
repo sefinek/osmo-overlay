@@ -20,7 +20,7 @@
 			<Setter Property="Margin" Value="0,0,0,3" />
 		</Style>
 		<Style Selector="TextBlock.cardTitleText">
-			<Setter Property="FontSize" Value="15" />
+			<Setter Property="FontSize" Value="14" />
 			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="Opacity" Value="0.85" />
 			<Setter Property="LetterSpacing" Value="1" />
@@ -436,7 +436,7 @@
 							</StackPanel>
 						</Border>
 
-						<StackPanel Name="SummaryPanel" Spacing="10" IsVisible="False">
+						<StackPanel Name="SummaryPanel" Spacing="10" IsVisible="False" Grid.IsSharedSizeScope="True">
 
 							<Border Classes="card" Name="FileInfoCard" IsVisible="False">
 								<StackPanel Spacing="2">
@@ -444,8 +444,15 @@
 										<TextBlock Classes="cardTitleText" Text="INPUT" />
 									</StackPanel>
 
-									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto" RowSpacing="2"
+									<Grid RowDefinitions="Auto,Auto" RowSpacing="2"
 									      ColumnSpacing="8">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+										<ColumnDefinition Width="3*" />
+										<ColumnDefinition Width="24" />
+										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+										<ColumnDefinition Width="2*" />
+									</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Camera" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Telemetry" />
@@ -461,8 +468,15 @@
 									</Grid>
 
 									<TextBlock Text="VIDEO" Classes="sectionLabel" />
-									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
+									<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
 									      ColumnSpacing="8">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+										<ColumnDefinition Width="3*" />
+										<ColumnDefinition Width="24" />
+										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+										<ColumnDefinition Width="2*" />
+									</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
 										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
@@ -489,14 +503,8 @@
 											<local:IconView Classes="checkIcon" Name="InfoBitrateCheck" />
 										</StackPanel>
 
-										<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Pixel format" />
+										<TextBlock Grid.Row="2" Grid.Column="0" Classes="infoLabel" Text="Color" />
 										<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10"
-										            VerticalAlignment="Center">
-											<TextBlock Classes="infoValue" Name="InfoPixFmt" Margin="0" />
-											<local:IconView Classes="checkIcon" Name="InfoPixFmtCheck" />
-										</StackPanel>
-										<TextBlock Grid.Row="2" Grid.Column="3" Classes="infoLabel" Text="Color" />
-										<StackPanel Background="Transparent" Grid.Row="2" Grid.Column="4" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
 											<TextBlock Classes="infoValue" Name="InfoColor" Margin="0" TextWrapping="Wrap" />
 											<local:IconView Classes="checkIcon" Name="InfoColorCheck" />
@@ -504,8 +512,15 @@
 									</Grid>
 
 									<TextBlock Text="AUDIO" Classes="sectionLabel" />
-									<Grid Name="AudioGrid" ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto"
+									<Grid Name="AudioGrid" RowDefinitions="Auto,Auto"
 									      RowSpacing="2" ColumnSpacing="8">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+										<ColumnDefinition Width="3*" />
+										<ColumnDefinition Width="24" />
+										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+										<ColumnDefinition Width="2*" />
+									</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Codec" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoAudioCodec" />
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Sample rate" />
@@ -529,8 +544,14 @@
 									<StackPanel Classes="cardTitle">
 										<TextBlock Classes="cardTitleText" Text="TELEMETRY" />
 									</StackPanel>
-									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
-									      ColumnSpacing="8">
+									<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2" ColumnSpacing="8">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="24" />
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+											<ColumnDefinition Width="2*" />
+										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Samples" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="TeleSamples" />
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Duration" />
@@ -557,11 +578,18 @@
 									<StackPanel Classes="cardTitle">
 										<TextBlock Classes="cardTitleText" Text="OUTPUT" />
 									</StackPanel>
-									<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
+									<Grid RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="24" />
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+											<ColumnDefinition Width="2*" />
+										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Encoder" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Audio" />
-										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutAudio" />
+										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutAudio" TextWrapping="Wrap" />
 										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="Frames" Name="OutFrameCountLabel" />
 										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutFrameCount" />
 										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="Est. render time" Name="OutEstimatedTimeLabel" />
@@ -573,8 +601,14 @@
 
 									<StackPanel Name="OutMeasuredPanel" Spacing="4" IsVisible="False">
 										<TextBlock Text="MEASURED (EXPORTED FILE)" Classes="sectionLabel" />
-										<Grid ColumnDefinitions="Auto,*,24,Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
-										      ColumnSpacing="8">
+										<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2" ColumnSpacing="8">
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+												<ColumnDefinition Width="3*" />
+												<ColumnDefinition Width="24" />
+												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+												<ColumnDefinition Width="2*" />
+											</Grid.ColumnDefinitions>
 											<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
 											<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 											            VerticalAlignment="Center">
@@ -615,7 +649,14 @@
 											</StackPanel>
 										</Grid>
 
-										<Grid ColumnDefinitions="Auto,*,24,Auto,*" ColumnSpacing="8">
+										<Grid ColumnSpacing="8">
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+												<ColumnDefinition Width="3*" />
+												<ColumnDefinition Width="24" />
+												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+												<ColumnDefinition Width="2*" />
+											</Grid.ColumnDefinitions>
 											<TextBlock Grid.Column="0" Classes="infoLabel" Text="Duration" />
 											<TextBlock Grid.Column="1" Classes="infoValue" Name="OutMeasuredDuration" />
 											<TextBlock Grid.Column="3" Classes="infoLabel" Text="File size" />

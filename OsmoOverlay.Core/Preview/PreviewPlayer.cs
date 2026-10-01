@@ -95,8 +95,9 @@ public sealed class PreviewPlayer : IDisposable
 		Close();
 		int generation = _openGeneration;
 
-		if (summary.TelemetryFrames is not { Count: > 0 } rawFrames)
-			throw new InvalidOperationException("File has no telemetry to preview.");
+		// A recording without telemetry (not from a known camera) only plays: stand-in frames, no overlay.
+		bool plain = summary.TelemetryFrames is not { Count: > 0 };
+		IReadOnlyList<TelemetryFrame> rawFrames = plain ? PlainRecordingFrames.Create(summary.DurationSeconds) : summary.TelemetryFrames!;
 
 		// Recomputed rather than taken from summary.DerivedFrames, so a changed SmoothGpsMotion applies on every open.
 		OverlaySettings settings = OverlaySettingsStore.Load();
@@ -123,11 +124,16 @@ public sealed class PreviewPlayer : IDisposable
 		audioOutput?.SetGain(_audioGain);
 
 		(int width, int height) = (summary.Video.Width, summary.Video.Height);
-		(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load(width, height);
-		IReadOnlyList<OverlayElement> layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
+		IReadOnlyList<OverlayElement> layout = [];
+		if (!plain)
+		{
+			(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load(width, height);
+			layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
+		}
+
 		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix);
 		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
-				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark, summary.CameraModel,
+				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
 				summary.ContainerRecordingStartUtc, settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution,
 				settings.MapApiKey, routeIntro) { RouteAcrossCuts = settings.RouteAcrossCuts },
 			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool);

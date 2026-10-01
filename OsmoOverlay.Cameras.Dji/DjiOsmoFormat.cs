@@ -20,6 +20,15 @@ public sealed class DjiOsmoFormat : ICameraFormat
 	public string DisplayName => "DJI Osmo Action";
 	public bool HasMetadataToCopy => true;
 
+	public string? SupportNotice(string? cameraModel)
+	{
+		return DjiModels.IsSupported(cameraModel)
+			? null
+			: $"{cameraModel ?? "This DJI camera"} isn't officially supported. OsmoOverlay is tested on the DJI Osmo Action 6 and Action 5 Pro. " +
+			  "The telemetry will most likely still be read, but some widgets may be unavailable or read wrong " +
+			  "(tilt, G-meter) and the recording settings check won't apply.";
+	}
+
 	public CameraRecording? Detect(string path, JsonArray streams)
 	{
 		JsonNode? djmd = streams.FirstOrDefault(s => s?["codec_type"]?.GetValue<string>() == "data" && s["codec_tag_string"]?.GetValue<string>() == "djmd");
@@ -27,6 +36,12 @@ public sealed class DjiOsmoFormat : ICameraFormat
 	}
 
 	public TelemetryExtractionResult ExtractTelemetry(string path, SourceInfo source)
+	{
+		TelemetryExtractionResult result = Extract(path, source);
+		return result with { CameraModel = DjiModels.DisplayName(result.CameraModel) };
+	}
+
+	private static TelemetryExtractionResult Extract(string path, SourceInfo source)
 	{
 		if (source.Camera?.TelemetryStream is { } stream)
 		{
@@ -36,7 +51,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 			}
 			catch (Exception ex)
 			{
-				// Native djmd decode is verified against DJI Osmo Action 6 firmware; exiftool may still read another layout.
+				// Native djmd decode is verified against DJI Osmo Action 6 and Action 5 Pro firmware; exiftool may still read another layout.
 				AppLogger.Warn(ex, $"Native djmd decode failed for {path}, falling back to exiftool");
 			}
 		}

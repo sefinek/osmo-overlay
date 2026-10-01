@@ -76,8 +76,8 @@ public partial class MainWindow
 			}
 			else
 			{
-				AppendLog("No telemetry found - this file cannot be rendered. Add the camera's original recording " +
-				          $"({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}), not a file exported from another app", LogLevel.Error);
+				AppendLog("No telemetry found - this file can be played but not rendered. Add the camera's original recording " +
+				          $"({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}), not a file exported from another app", LogLevel.Warn);
 			}
 
 			if (summary.TelemetryFrames is { Count: > 0 } rawFrames)
@@ -159,8 +159,7 @@ public partial class MainWindow
 			ActionButton.IsEnabled = summary.HasTelemetry;
 			GreenScreenButton.IsEnabled = summary.HasTelemetry;
 
-			if (summary.HasTelemetry)
-				await OpenPreviewAsync(summary);
+			await OpenPreviewAsync(summary);
 
 			await ShowSupportNoticeAsync(summary, inputPaths);
 		}
@@ -179,7 +178,7 @@ public partial class MainWindow
 	/// <summary>The camera's SupportNotice, once per set of files - not again when the same recording is read again.</summary>
 	private async Task ShowSupportNoticeAsync(FileSummary summary, List<string> inputPaths)
 	{
-		if (summary.CameraFormat?.SupportNotice is not { } notice) return;
+		if (summary.CameraFormat?.SupportNotice(summary.CameraModel) is not { } notice) return;
 
 		string key = string.Join('|', inputPaths);
 		if (key == _supportNoticeShownFor) return;
@@ -211,14 +210,11 @@ public partial class MainWindow
 		InfoCodec.Text = string.IsNullOrEmpty(summary.Video.Profile)
 			? summary.Video.CodecName
 			: $"{summary.Video.CodecName} ({summary.Video.Profile})";
+		ToolTip.SetTip(InfoCodec, $"Pixel format: {summary.Video.PixFmt}");
 		SetCheck(InfoCodecCheck,
 			Check(_ => summary.Video.CodecName.Equals("hevc", StringComparison.OrdinalIgnoreCase) &&
-			           summary.Video.Profile.Contains("10", StringComparison.OrdinalIgnoreCase)),
+			           summary.Video.PixFmt.Contains("10le", StringComparison.OrdinalIgnoreCase)),
 			"HEVC (H.265), 10-bit");
-
-		InfoPixFmt.Text = summary.Video.PixFmt;
-		SetCheck(InfoPixFmtCheck, Check(_ => summary.Video.PixFmt.Contains("10le", StringComparison.OrdinalIgnoreCase)),
-			"10-bit (yuv420p10le)");
 
 		string primaries = summary.Video.ColorPrimaries ?? "?";
 		string transfer = summary.Video.ColorTransfer ?? "?";
@@ -293,16 +289,15 @@ public partial class MainWindow
 
 		TeleSamples.Text = $"{t.SampleCount}";
 		TeleDuration.Text = TimeSpan.FromSeconds(t.DurationSeconds).ToString(@"hh\:mm\:ss");
-		TeleDistance.Text = $"{t.TotalDistanceMeters / 1000.0:0.00} km";
-		TeleMaxSpeed.Text = $"{t.MaxSpeedKmh:0.#} km/h";
-		TeleAltitude.Text = $"{t.MinAltitudeMeters:0} - {t.MaxAltitudeMeters:0} m";
 		TeleMaxG.Text = $"{t.MaxGForce:0.00} G";
 		TeleRecordedAt.Text = t.RecordedAtUtc is { } utc ? utc.ToLocalFromUtc().ToString("yyyy-MM-dd HH:mm:ss") : "Unknown";
 
-		// A flat "0.00 km" / "0 - 0 m" here reads the same whether the recording genuinely never
-		// moved/climbed or - as for a file with no GPS fix at all - the position data needed to
-		// compute them simply doesn't exist. Same tooltip signal as InfoTelemetry's "No GPS fix" pill.
-		string? noGpsFixTip = _availability.GpsFix ? null : "No GPS fix in this recording - this reads 0, not a real measurement.";
+		// Without a GPS fix there's nothing to measure: a dash, not a "0.00 km" that reads like a recording that never moved.
+		bool hasGps = _availability.GpsFix;
+		TeleDistance.Text = hasGps ? $"{t.TotalDistanceMeters / 1000.0:0.00} km" : "-";
+		TeleMaxSpeed.Text = hasGps ? $"{t.MaxSpeedKmh:0.#} km/h" : "-";
+		TeleAltitude.Text = hasGps ? $"{t.MinAltitudeMeters:0} - {t.MaxAltitudeMeters:0} m" : "-";
+		string? noGpsFixTip = hasGps ? null : "No GPS fix in this recording.";
 		ToolTip.SetTip(TeleDistance, noGpsFixTip);
 		ToolTip.SetTip(TeleMaxSpeed, noGpsFixTip);
 		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
@@ -343,7 +338,7 @@ public partial class MainWindow
 		// Same condition FfmpegPipeline uses: pieces joined by the concat filter can't have their audio stream-copied.
 		OutAudio.Text = summary.Audio is null ? "None"
 			: _outputTimeline?.Plan.Pieces.Count > 1 ? "AAC at the source bitrate (re-encoded to join the cuts)"
-			: "Copied (no re-encode)";
+			: "Copied unchanged";
 		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) + (HasCuts ? $" ({DescribeCuts()})" : "");
 
 		// Speed measured by the last full render of this same shape (RenderSpeedHistory) - there's no

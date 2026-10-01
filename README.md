@@ -30,7 +30,7 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Windows, Linux and macOS** - x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable, Linux and macOS are experimental.
 
 ## Supported cameras
-Only the DJI Osmo Action 6 is currently supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for the Action 6.
+The DJI Osmo Action 6 and Action 5 Pro are supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for these two.
 
 ## Important information
 Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit H.264 at a lower bitrate, which reduces its quality.

@@ -19,9 +19,11 @@ public sealed class Insta360Format : ICameraFormat
 	public string Id => "insta360";
 	public string DisplayName => "Insta360";
 
-	public string SupportNotice =>
-		"OsmoOverlay is made mainly for the DJI Osmo Action 6. Insta360 recordings haven't been tested much, and their GPS " +
-		"data isn't supported at all. Some widgets may be unavailable or read wrong.";
+	public string? SupportNotice(string? cameraModel)
+	{
+		return "OsmoOverlay is made mainly for the DJI Osmo Action 6. Insta360 recordings haven't been tested much, and their GPS " +
+		       "data isn't supported at all. Some widgets may be unavailable or read wrong.";
+	}
 
 	public CameraRecording? Detect(string path, JsonArray streams)
 	{

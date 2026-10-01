@@ -44,6 +44,7 @@ Shared settings (framework, company, `Version` - the one place to bump it, outpu
 - `TelemetryProcessor.Process`: windows and EMA time constants are in **seconds**, not samples (independent of sampling rate). Speed prefers the receiver's `GpsSpeedMs` over differentiating position.
 - **Tilt**: `CameraTilt` over `Gravity` - roll = asin(g_x), pitch = -asin(g_z), with the vehicle's own acceleration (from GPS) taken out. DJI's gravity is (-AccelY, -AccelZ, -AccelX), Insta360 X4's is (AccelZ, -AccelX, AccelY) - all verified empirically on real recordings. Don't change axes, signs or compensation without similar verification.
 - **No GPS fix / no GPS time**: `OverlayDataRequirements` forces off widgets that need missing data at every point a layout reaches the renderer. `DateTimeText`/`UtcTimeText` fall back to the container's `creation_time` (the camera's own clock, flagged in the GUI).
+- **No telemetry at all** (a file no camera format knows): the preview still plays it with stand-in frames (`PlainRecordingFrames`) and an empty layout; render stays disabled.
 - **Multi-file recordings**: files are joined back to back. A file starting over 2 s after the previous one ended by the GPS clock gets `TelemetryFrame.StartsAfterGap`, and smoothing/windows/routes don't run across it. Without GPS time the files stay joined.
 
 ### DJI Osmo Action (`Cameras.Dji`)
@@ -62,6 +63,7 @@ Shared settings (framework, company, `Version` - the one place to bump it, outpu
 - Widget boxes for hit-testing come from `OverlayRenderer.MeasureElement`, not estimates; `OverlayElementBounds.GetBounds` is only a fallback.
 - `BeginElement` (`OverlayRenderer.Animation.cs`) is the one place each widget's draw is set up (anchor, scale, slide, fade); widgets draw around (0, 0) and never do their own Save/Translate/Scale. Timing (`AppearAtSeconds`, in/out animation) is generic for every type: the GUI uses one `ElementTimingEditor` and one `ElementStyleEditor`.
 - Layers (`OverlayLayers`): the renderer never reads a layer - the layout's order is the draw order. Mute/solo go through `OverlayLayers.Drawn`. Widget times are on the output timeline (after cuts); the timeline shows the recording, so convert with `OutputTimeline.ToRecordingSeconds`/`NearestOutputSeconds`.
+- Drawing a frame must be idempotent: a widget's value may depend only on the frame (and the set of frames), never on which frames were drawn before it - a paused or re-composed still draws the same frame again. That's why the G-meter's smoothing is precomputed per frame (`GMeterDeltas`) instead of an EMA updated while drawing.
 - Overlay text style (`DrawOutlined`: thin outline + soft shadow) is deliberate - don't change it without an explicit request.
 - The overlay is drawn premultiplied (Skia's unpremultiplied path is ~10x slower) and converted to straight alpha in `BgraAlpha`.
 - Statistics (`TripStats`): nothing counted across a cut or a gap, moving time from 3 km/h, elevation with a 3 m hysteresis (the plain sum gave 3-10x too much).

@@ -47,6 +47,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	// The telemetry the whole render draws from - handed in at construction, replaced by SetFrames when the preview's
 	// cuts change. Everything below it is computed once from it (ApplyFrames) rather than on every frame.
 	private IReadOnlyList<DerivedFrame> _allFrames = [];
+	private (double Lateral, double Longitudinal)[] _gMeterDeltas = [];
 	private double _startAltitude;
 	private double _observedMaxSpeedKmh;
 	private double _totalDistanceMeters;
@@ -311,6 +312,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
 		_tripStats = TripStats.Compute(allFrames);
 		_trailSpeedScaleKmh = ComputeTrailSpeedScale(allFrames);
+		_gMeterDeltas = GMeterDeltas.Compute(allFrames);
 		ClearProfiles();
 	}
 
@@ -649,8 +651,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>
 	///     A single EMA-smoothed value driven by SampleTimeSeconds instead of wall-clock time, used by
-	///     both GetMapZoomFactor (map crop) and SmoothGMeterDelta (G-meter baseline/signal) - both need
-	///     the same shape: smooth toward a per-frame target normally, but snap straight to it when time
+	///     GetMapZoomFactor (map crop), which needs this shape: smooth toward a per-frame target normally, but snap straight to it when time
 	///     goes backwards or jumps forward by more than resetGapSeconds, since that means a scrub/seek
 	///     landed on a new position, not a continuous run of frames to smooth across.
 	/// </summary>

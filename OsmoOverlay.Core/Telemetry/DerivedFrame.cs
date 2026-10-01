@@ -14,7 +14,7 @@ public sealed record DerivedFrame(
 	double LocalNorthMeters,
 	double SmoothedGForce,
 	// The accelerometer sideways (positive = right) and forward (positive = forward), unsmoothed, from the camera's
-	// gravity (ICameraFormat.Gravity) - 0 when the camera's axes aren't known. The G-meter smooths it itself (OverlayRenderer.SmoothGMeterDelta).
+	// gravity (ICameraFormat.Gravity) - 0 when the camera's axes aren't known. The G-meter smooths it (GMeterDeltas).
 	double LateralAccelG,
 	double LongitudinalAccelG,
 	// The first frame after a cut (OutputTimeline.MapFrames) or after a gap between files (TelemetryFrame.StartsAfterGap) -
