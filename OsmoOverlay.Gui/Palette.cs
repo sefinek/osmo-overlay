@@ -9,6 +9,8 @@ internal static class Palette
 	public static IBrush Accent => Brush("AccentBrush");
 	public static IBrush Success => Brush("SuccessBrush");
 	public static IBrush Warning => Brush("WarningBrush");
+	public static IBrush Caution => Brush("CautionBrush");
+	public static IBrush Alert => Brush("AlertBrush");
 	public static IBrush Danger => Brush("DangerBrush");
 	public static IBrush TextMuted => Brush("TextMutedBrush");
 	public static IBrush TextPrimary => Brush("TextPrimaryBrush");
@@ -17,6 +19,22 @@ internal static class Palette
 	public static IBrush Stroke => Brush("StrokeBrush");
 	public static IBrush StrokeStrong => Brush("StrokeStrongBrush");
 	public static IBrush SubtleFill => Brush("SubtleFillBrush");
+
+	/// <summary>The color `t` (0..1) of the way along `stops`, blended between the two neighbouring ones.</summary>
+	public static IBrush Blend(double t, params IBrush[] stops)
+	{
+		double position = Math.Clamp(t, 0, 1) * (stops.Length - 1);
+		int from = Math.Min((int)position, stops.Length - 2);
+		Color a = ((ISolidColorBrush)stops[from]).Color;
+		Color b = ((ISolidColorBrush)stops[from + 1]).Color;
+		double share = position - from;
+		return new SolidColorBrush(Color.FromRgb(Mix(a.R, b.R, share), Mix(a.G, b.G, share), Mix(a.B, b.B, share)));
+	}
+
+	private static byte Mix(byte from, byte to, double share)
+	{
+		return (byte)Math.Round(from + (to - from) * share);
+	}
 
 	/// <summary>A palette color as a translucent fill, e.g. a status pill's background behind text in the same color.</summary>
 	public static IBrush Tint(IBrush brush, double opacity)

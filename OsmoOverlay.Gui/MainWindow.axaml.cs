@@ -142,6 +142,7 @@ public partial class MainWindow : Window
 		WireLayers();
 		WirePreviewZoom();
 		WirePreviewShortcuts();
+		WirePreviewFullscreen();
 		WireReframe();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
@@ -163,7 +164,11 @@ public partial class MainWindow : Window
 		// The rule-of-thirds/safe-margin guide lines are positioned in absolute canvas pixels, so a
 		// window resize (which resizes OverlayDragCanvas itself, independent of when a new preview
 		// bitmap loads) needs to redraw them.
-		OverlayDragCanvas.SizeChanged += (_, _) => ApplyPreviewLayout();
+		OverlayDragCanvas.SizeChanged += (_, _) =>
+		{
+			ApplyPreviewLayout();
+			QueueAutoQuality();
+		};
 
 		// XAML hardcodes the "Both"/snap-on look as a starting point for the designer - reconcile the
 		// toolbar buttons with whatever was actually loaded from settings.json above.
@@ -320,6 +325,7 @@ public partial class MainWindow : Window
 		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);
 		bool interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
 		SetTimeFormat(PreviewTimeFormats.Parse(withExportChanges.PreviewTimeFormat), false);
+		ApplyLayerRows(withExportChanges.LayerRowsVisible);
 
 		if (settings.ShowWatermark != _showWatermark)
 		{

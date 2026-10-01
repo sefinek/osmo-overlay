@@ -19,10 +19,16 @@ public partial class MainWindow
 	private OverlayPreset? ActivePreset => _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId);
 	private IReadOnlyList<OverlayLayer> ActiveLayers => ActivePreset?.Layers ?? [];
 
+	/// <summary>Sizes the layer list to show this many tracks before it scrolls (Settings' "Layer rows").</summary>
+	private void ApplyLayerRows(int rows)
+	{
+		LayerScroll.MaxHeight = Math.Clamp(rows, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks) * LayerTimeline.RowHeight;
+	}
+
 	private void WireLayers()
 	{
 		TimelineTracksGrid.ColumnDefinitions[0].Width = new GridLength(LayerTimeline.HeaderWidth);
-		LayerScroll.MaxHeight = LayerTimeline.VisibleTracks * LayerTimeline.RowHeight;
+		ApplyLayerRows(OverlaySettingsStore.Load().LayerRowsVisible);
 		LayerTracks.Source = ExpandedTimeline;
 		LayerTracks.TimingEdited += OnLayerTimingEdited;
 		LayerTracks.ClipClicked += OnLayerClipClicked;

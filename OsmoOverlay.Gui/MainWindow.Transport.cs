@@ -66,6 +66,7 @@ public partial class MainWindow
 			Key.L => () => StepSpeed(1),
 			Key.M => ToggleMute,
 			Key.H => ToggleOverlay,
+			Key.F11 => TogglePreviewFullscreen,
 			_ => null
 		};
 		if (action is null) return;

@@ -80,6 +80,7 @@ Shared settings (framework, company, `Version` - the one place to bump it, outpu
 - `PlaybackClock` follows the audio device (smoothed against its stepping); a stopwatch without audio. Two sessions never share the decoder or the device (`_sessionsStopped`).
 - Seeks: latest wins; keyframe while dragging, exact on release. Cancellation is a cooperative `null`, not an exception.
 - `PreviewFrames.IndexAt` is the one rule for "which frame is on screen", shared by the decoder and the GUI's `CurrentFrame()`.
+- Full screen preview (`MainWindow.PreviewFullscreen.cs`): the viewport (`PreviewViewport`) is moved into a window and back, never mirrored - a played frame goes to exactly one `VideoView`, and a `VideoView` starts empty when attached, so playback pauses for the move and the frame is shown again after it. The monitor is `OverlaySettings.PreviewMonitor` (`MonitorChoice`).
 - In the GUI the overlay element list is **copy-on-write** (`ReplaceActiveElements`) because the compose thread may be enumerating it. Dragging an element pauses playback.
 
 ## Render

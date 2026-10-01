@@ -11,8 +11,10 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class MainWindow
 {
-	// Below this share of what the playback speed calls for (PreviewPlayer.PlaybackFrameRate), the frame rate goes amber.
-	private const double SlowPlaybackShare = 0.9;
+	// Below this share of what the playback speed calls for (PreviewPlayer.PlaybackFrameRate), the frame rate turns yellow,
+	// then amber, orange and red the further it falls - fully red from RedPlaybackShare down.
+	private const double SlowPlaybackShare = 0.95;
+	private const double RedPlaybackShare = 0.4;
 
 	// The frame rate changes a few times a second rather than with every frame, so it can be read.
 	private static readonly TimeSpan PlaybackFpsRefresh = TimeSpan.FromMilliseconds(250);
@@ -70,8 +72,10 @@ public partial class MainWindow
 		bool measured = _previewPlayer.IsPlaying && double.IsFinite(_playbackFps);
 		StatusDisplayText.Text = measured ? string.Create(CultureInfo.InvariantCulture, $"{size}; {_playbackFps:0.000}") : size;
 
-		if (measured && _playbackFps < _previewPlayer.PlaybackFrameRate * SlowPlaybackShare)
-			StatusDisplayText.Foreground = Palette.Warning;
+		double share = measured ? _playbackFps / _previewPlayer.PlaybackFrameRate : 1;
+		if (share < SlowPlaybackShare)
+			StatusDisplayText.Foreground = Palette.Blend((SlowPlaybackShare - share) / (SlowPlaybackShare - RedPlaybackShare),
+				Palette.Caution, Palette.Warning, Palette.Alert, Palette.Danger);
 		else
 			StatusDisplayText.ClearValue(TextBlock.ForegroundProperty);
 	}

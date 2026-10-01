@@ -67,8 +67,10 @@ public sealed class LayerTimeline : Control
 {
 	public const double HeaderWidth = 150;
 	public const double RowHeight = 26;
-	// How many tracks show before the list scrolls (MainWindow.WireLayers sizes the ScrollViewer around this).
-	public const int VisibleTracks = 5;
+	// How many tracks show before the list scrolls - Settings' "Layer rows", clamped to this range.
+	public const int MinVisibleTracks = 1;
+	public const int MaxVisibleTracks = 12;
+	public const int DefaultVisibleTracks = 4;
 
 	private const double ClipInset = 3;
 	private const double EdgeGrabPixels = 5;

@@ -83,6 +83,7 @@ public partial class MainWindow
 		_suppressPreviewZoomEvent = false;
 
 		ApplyPreviewLayout();
+		QueueAutoQuality();
 	}
 
 	/// <summary>Sizes and places the preview image per GetPreviewTransform, then everything the editor draws over it.</summary>

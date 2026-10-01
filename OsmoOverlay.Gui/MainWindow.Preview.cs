@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
@@ -18,7 +19,9 @@ public partial class MainWindow
 
 		try
 		{
-			double scale = Math.Min(1.0, (double)_previewMaxWidth / summary.Video.Width);
+			_openedPreviewMaxWidth = ResolvePreviewMaxWidth(summary);
+			ShowQualityPicker();
+			double scale = Math.Min(1.0, (double)_openedPreviewMaxWidth / summary.Video.Width);
 			int previewWidth = (int)(summary.Video.Width * scale) & ~1;
 			int previewHeight = (int)(summary.Video.Height * scale) & ~1;
 
@@ -118,12 +121,14 @@ public partial class MainWindow
 		ShowPlayingState(false);
 		UpdatePreviewTimeText();
 		ResetPlaybackFps();
+		QueueAutoQuality();
 	}
 
 	// Width-based (not "720p" height labels): _previewMaxWidth caps the preview by width (OpenPreviewAsync), and a
 	// height would depend on the recording's aspect ratio.
 	private static readonly List<PreviewQualityOption> PreviewQualityOptions =
 	[
+		new("Auto", AutoPreviewWidth),
 		new("Low · 640 px", 640),
 		new("Medium · 960 px", 960),
 		new("High · 1280 px", 1280),
@@ -131,14 +136,85 @@ public partial class MainWindow
 		new("Full resolution", int.MaxValue)
 	];
 
+	// OverlaySettings.PreviewMaxWidth of "Auto": the preview is sized to how big it is on screen (ResolvePreviewMaxWidth).
+	private const int AutoPreviewWidth = 0;
+
+	// A quality counts as enough when it has at least this share of the pixels the preview takes on screen - a step
+	// up for the last few percent would only cost decoding speed.
+	private const double AutoQualityTolerance = 0.9;
+
+	private readonly DispatcherTimer _autoQualityDelay = new() { Interval = TimeSpan.FromMilliseconds(800) };
 	private bool _suppressPreviewQualityEvent;
+	// The width cap the open preview was sized with - what Auto compares a new size against.
+	private int _openedPreviewMaxWidth;
 
 	private void WirePreviewQuality()
 	{
+		ShowQualityPicker();
+		_autoQualityDelay.Tick += (_, _) => ApplyAutoQuality();
+	}
+
+	/// <summary>The picker with the chosen quality selected - and while it's Auto, the quality it picked in its label ("Auto · 1280 px"), once a preview is open.</summary>
+	private void ShowQualityPicker()
+	{
+		List<PreviewQualityOption> options = [.. PreviewQualityOptions];
+		if (_previewMaxWidth == AutoPreviewWidth && _openedPreviewMaxWidth > 0)
+		{
+			string picked = _openedPreviewMaxWidth == int.MaxValue ? "Full resolution" : $"{_openedPreviewMaxWidth} px";
+			options[0] = new PreviewQualityOption($"Auto · {picked}", AutoPreviewWidth);
+		}
+
 		_suppressPreviewQualityEvent = true;
-		PreviewQualityCombo.ItemsSource = PreviewQualityOptions;
-		PreviewQualityCombo.SelectedItem = PreviewQualityOptions.FirstOrDefault(o => o.MaxWidth == _previewMaxWidth) ?? PreviewQualityOptions[2];
+		PreviewQualityCombo.ItemsSource = options;
+		PreviewQualityCombo.SelectedItem = options.FirstOrDefault(o => o.MaxWidth == _previewMaxWidth) ?? options[3];
 		_suppressPreviewQualityEvent = false;
+	}
+
+	/// <summary>The width cap to open `summary`'s preview at: the chosen quality's, or for Auto the smallest one that fills the preview's size on screen.</summary>
+	private int ResolvePreviewMaxWidth(FileSummary summary)
+	{
+		if (_previewMaxWidth != AutoPreviewWidth) return _previewMaxWidth;
+
+		double needed = NeededPreviewWidth(summary);
+		foreach (PreviewQualityOption option in PreviewQualityOptions)
+		{
+			if (option.MaxWidth == AutoPreviewWidth) continue;
+
+			if (Math.Min(option.MaxWidth, summary.Video.Width) >= needed * AutoQualityTolerance) return option.MaxWidth;
+		}
+
+		return int.MaxValue;
+	}
+
+	/// <summary>The preview's width in device pixels as it's shown now: the fitted frame, or at a zoom the source's width times it (100% is one source pixel per device pixel).</summary>
+	private double NeededPreviewWidth(FileSummary summary)
+	{
+		if (_previewZoom is { } zoom) return summary.Video.Width * zoom;
+
+		double aspect = summary.Video.Width / (double)summary.Video.Height;
+		double fitted = Math.Min(OverlayDragCanvas.Bounds.Width, OverlayDragCanvas.Bounds.Height * aspect);
+		// Not laid out yet - the same width the quality was fixed at before Auto.
+		return fitted > 0 ? fitted * UiScale.DeviceScaling(this) : 1280;
+	}
+
+	/// <summary>The preview's size on screen changed (the window, the zoom, full screen) - once it settles, Auto may need another quality.</summary>
+	private void QueueAutoQuality()
+	{
+		if (_previewMaxWidth != AutoPreviewWidth) return;
+
+		_autoQualityDelay.Stop();
+		_autoQualityDelay.Start();
+	}
+
+	private void ApplyAutoQuality()
+	{
+		_autoQualityDelay.Stop();
+		if (_summary is not { } summary || _phase != UiPhase.SummaryReady || _previewMaxWidth != AutoPreviewWidth) return;
+
+		// Reopening stops the playback - it's looked at again when the playback ends (OnPreviewPlaybackStopped).
+		if (_previewPlayer.IsPlaying || _timelineScrubbing || ResolvePreviewMaxWidth(summary) == _openedPreviewMaxWidth) return;
+
+		_ = ReopenPreviewAsync();
 	}
 
 	/// <summary>The decoder and the preview bitmap are sized at open, so a new quality reopens the preview - where it was.</summary>

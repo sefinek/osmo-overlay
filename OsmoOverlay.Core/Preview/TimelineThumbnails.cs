@@ -81,7 +81,7 @@ public sealed class TimelineThumbnails : IDisposable
 		{
 			while (!ct.IsCancellationRequested)
 			{
-				await _wake.WaitAsync(ct);
+				if (!await _wake.WaitQuietlyAsync(ct)) return;
 				while (NextWanted() is { } slot)
 				{
 					VideoFrame? frame = _source.GetFrame(TimeSpan.FromSeconds(slot), SeekAccuracy.Keyframe, ct);
@@ -94,9 +94,6 @@ public sealed class TimelineThumbnails : IDisposable
 					Updated?.Invoke();
 				}
 			}
-		}
-		catch (OperationCanceledException)
-		{
 		}
 		catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
 		{

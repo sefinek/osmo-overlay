@@ -87,7 +87,11 @@ public sealed record OverlaySettings(
 	double InterfaceScale = 1.0,
 	// Off: the main window always starts maximized. On: it comes back as MainWindowPlacement left it.
 	bool RestoreWindowPlacement = true,
-	WindowPlacement? MainWindowPlacement = null);
+	WindowPlacement? MainWindowPlacement = null,
+	// How many layer tracks the expanded timeline shows before the list scrolls (the GUI clamps it to its own range).
+	int LayerRowsVisible = 4,
+	// The monitor the full screen preview opens on - the GUI's MonitorChoice.KeyOf; null = the one the main window is on.
+	string? PreviewMonitor = null);
 
 /// <summary>
 ///     The main window's last normal (not maximized) bounds and whether it was maximized. X/Y are the window's position

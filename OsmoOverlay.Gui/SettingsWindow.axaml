@@ -248,6 +248,21 @@
 						</StackPanel>
 
 						<StackPanel Spacing="6">
+							<TextBlock Text="Full screen preview" Classes="infoLabel" />
+							<ComboBox Name="PreviewMonitorCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="The monitor the preview's full screen button (F11) opens on - handy for judging the overlay on a second display. Esc leaves it." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Layer rows" Classes="infoLabel" />
+							<NumericUpDown Name="LayerRowsBox" Minimum="1" Maximum="12" Increment="1" FormatString="0"
+							               HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="How many layers the timeline under the preview shows before it scrolls. Applies as soon as you close Settings." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
 							<TextBlock Text="Main window" Classes="infoLabel" />
 							<CheckBox Name="RestoreWindowPlacementCheck" Content="Open where it was closed" />
 							<TextBlock Classes="hint"

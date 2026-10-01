@@ -292,6 +292,8 @@ internal sealed class PlaybackSession
 		{
 			foreach (PlaybackStretch stretch in _plan.Stretches())
 			{
+				if (ct.IsCancellationRequested) break;
+
 				LibavVideoSource.PlaybackStream stream = _video.OpenPlaybackStream(stretch.Start, ct);
 				double playStart = playOffset;
 				playOffset += stretch.Seconds;
@@ -325,7 +327,8 @@ internal sealed class PlaybackSession
 					}
 
 					double playTime = playStart + (stream.Position - stretch.Start).TotalSeconds;
-					await WriteOrRecycleAsync(writer, new DecodedFrame(frame, stream.Position, playTime, startsStretch), frame.Bgra, ct);
+					if (!await WriteOrRecycleAsync(writer, new DecodedFrame(frame, stream.Position, playTime, startsStretch), frame.Bgra, ct)) break;
+
 					startsStretch = false;
 				}
 
@@ -338,10 +341,6 @@ internal sealed class PlaybackSession
 
 			writer.TryComplete();
 		}
-		catch (OperationCanceledException)
-		{
-			writer.TryComplete();
-		}
 		catch (Exception ex)
 		{
 			writer.TryComplete(ex);
@@ -352,27 +351,33 @@ internal sealed class PlaybackSession
 	private async Task ComposeAsync()
 	{
 		ChannelWriter<PlaybackFrame> writer = _composed.Writer;
+		ChannelReader<DecodedFrame> reader = _decoded.Reader;
 		CancellationToken ct = _stop.Token;
 		try
 		{
-			await foreach (DecodedFrame decoded in _decoded.Reader.ReadAllAsync(ct))
+			bool open = true;
+			while (open && await reader.WaitToReadQuietlyAsync(ct))
 			{
-				if (_clock.AudioPosition is { } audio && (audio - decoded.PlayTime) / Rate > LateFrameSeconds)
+				// Frames left in the channel after a stop go back to the pool in StopAsync.
+				while (open && !ct.IsCancellationRequested && reader.TryRead(out DecodedFrame decoded))
 				{
-					_pool.Return(decoded.Frame.Bgra);
-					Interlocked.Increment(ref _droppedLate);
-					continue;
+					if (_clock.AudioPosition is { } audio && (audio - decoded.PlayTime) / Rate > LateFrameSeconds)
+					{
+						_pool.Return(decoded.Frame.Bgra);
+						Interlocked.Increment(ref _droppedLate);
+						continue;
+					}
+
+					if (_compositor.ComposeInPlace(decoded.Frame, decoded.Position) is not { } composed)
+					{
+						open = false;
+						break;
+					}
+
+					open = await WriteOrRecycleAsync(writer, new PlaybackFrame(composed, decoded.PlayTime, decoded.StartsStretch), composed.Bgra, ct);
 				}
-
-				if (_compositor.ComposeInPlace(decoded.Frame, decoded.Position) is not { } composed) break;
-
-				await WriteOrRecycleAsync(writer, new PlaybackFrame(composed, decoded.PlayTime, decoded.StartsStretch), composed.Bgra, ct);
 			}
 
-			writer.TryComplete();
-		}
-		catch (OperationCanceledException)
-		{
 			writer.TryComplete();
 		}
 		catch (Exception ex)
@@ -381,17 +386,18 @@ internal sealed class PlaybackSession
 		}
 	}
 
-	private async Task WriteOrRecycleAsync<T>(ChannelWriter<T> writer, T item, byte[] buffer, CancellationToken ct)
+	/// <summary>Writes the item, waiting while the channel is full - false (the buffer back in the pool) once the playback is stopped.</summary>
+	private async ValueTask<bool> WriteOrRecycleAsync<T>(ChannelWriter<T> writer, T item, byte[] buffer, CancellationToken ct)
 	{
-		try
+		while (!writer.TryWrite(item))
 		{
-			await writer.WriteAsync(item, ct);
-		}
-		catch (OperationCanceledException)
-		{
+			if (await writer.WaitToWriteQuietlyAsync(ct)) continue;
+
 			_pool.Return(buffer);
-			throw;
+			return false;
 		}
+
+		return true;
 	}
 
 	/// <summary>
@@ -420,11 +426,9 @@ internal sealed class PlaybackSession
 
 				try
 				{
-					await FeedAsync(source, output, stretches, rate, stretchCts.Token);
-					return;
-				}
-				catch (OperationCanceledException) when (!_stop.IsCancellationRequested)
-				{
+					// Only a rate change cancels the stretch's token without the playback stopping.
+					if (await FeedAsync(source, output, stretches, rate, stretchCts.Token) || _stop.IsCancellationRequested) return;
+
 					double playTime;
 					lock (_audioRestartLock)
 					{
@@ -443,9 +447,6 @@ internal sealed class PlaybackSession
 				}
 			}
 		}
-		catch (OperationCanceledException)
-		{
-		}
 		catch (InvalidOperationException ex)
 		{
 			AppLogger.Warn(ex, "Preview audio stopped");
@@ -456,7 +457,8 @@ internal sealed class PlaybackSession
 		}
 	}
 
-	private async Task FeedAsync(LibavAudioSource source, AudioOutput output, IEnumerable<PlaybackStretch> stretches, double rate,
+	/// <summary>True when every stretch's sound went out; false when `ct` was cancelled first (a stop, or a speed change).</summary>
+	private async Task<bool> FeedAsync(LibavAudioSource source, AudioOutput output, IEnumerable<PlaybackStretch> stretches, double rate,
 		CancellationToken ct)
 	{
 		using AudioTempo? tempo = rate != 1 ? new AudioTempo(rate, source.SampleRate, source.Channels) : null;
@@ -465,8 +467,12 @@ internal sealed class PlaybackSession
 			source.Seek(stretch.Start.TotalSeconds);
 			while (true)
 			{
-				ct.ThrowIfCancellationRequested();
-				while (output.QueuedSeconds > AudioQueueSeconds) await Task.Delay(10, ct);
+				if (ct.IsCancellationRequested) return false;
+
+				while (output.QueuedSeconds > AudioQueueSeconds)
+				{
+					if (!await CooperativeWaits.DelayAsync(TimeSpan.FromMilliseconds(10), ct)) return false;
+				}
 
 				ReadOnlySpan<float> samples = source.Read(stretch.End.TotalSeconds);
 				if (samples.IsEmpty) break;
@@ -476,6 +482,8 @@ internal sealed class PlaybackSession
 				_clock.AddPushed(samples.Length / source.Channels);
 			}
 		}
+
+		return true;
 	}
 
 	private readonly record struct DecodedFrame(VideoFrame Frame, TimeSpan Position, double PlayTime, bool StartsStretch);

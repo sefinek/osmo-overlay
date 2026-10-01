@@ -353,7 +353,7 @@ public partial class MainWindow
 		// The selection's solid box replaces the hover's dashed one on the same widget.
 		HoverOutline.Classes.Set("shown", _hoveredElementId is not null && _hoveredElementId != _selectedElementId);
 		// Nothing to frame for a widget that isn't drawn - no data for it, or its layer muted/unsoloed.
-		if (_selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
+		if (_previewFullscreen || _selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
 		    !IsTypeSupported(el.Type) || OverlayLayers.Silenced(ActiveLayers).Contains(OverlayLayers.Key(el)))
 		{
 			SelectionHighlightBox.IsVisible = false;
@@ -1495,7 +1495,7 @@ public partial class MainWindow
 		bool showThirds = _gridMode is PreviewGridMode.Thirds or PreviewGridMode.Both;
 		bool showMargin = _gridMode is PreviewGridMode.Margin or PreviewGridMode.Both;
 
-		if ((!showThirds && !showMargin) || GetPreviewTransform() is null || _summary is null)
+		if (_previewFullscreen || (!showThirds && !showMargin) || GetPreviewTransform() is null || _summary is null)
 		{
 			PreviewGridVLine1.IsVisible = false;
 			PreviewGridVLine2.IsVisible = false;

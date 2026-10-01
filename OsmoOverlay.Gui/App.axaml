@@ -40,6 +40,8 @@
 			<Color x:Key="WarningColor">#E5A83E</Color>
 			<Color x:Key="WarningHoverColor">#FFC15C</Color>
 			<Color x:Key="WarningPressedColor">#C98A2E</Color>
+			<Color x:Key="CautionColor">#E6D24E</Color>
+			<Color x:Key="AlertColor">#EA7B3B</Color>
 			<Color x:Key="DangerColor">#E5484D</Color>
 			<Color x:Key="DangerHoverColor">#FF6369</Color>
 			<Color x:Key="DangerPressedColor">#C93E42</Color>
@@ -75,6 +77,8 @@
 			<SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
 			<SolidColorBrush x:Key="WarningHoverBrush" Color="{StaticResource WarningHoverColor}" />
 			<SolidColorBrush x:Key="WarningPressedBrush" Color="{StaticResource WarningPressedColor}" />
+			<SolidColorBrush x:Key="CautionBrush" Color="{StaticResource CautionColor}" />
+			<SolidColorBrush x:Key="AlertBrush" Color="{StaticResource AlertColor}" />
 			<SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
 			<SolidColorBrush x:Key="DangerHoverBrush" Color="{StaticResource DangerHoverColor}" />
 			<SolidColorBrush x:Key="DangerPressedBrush" Color="{StaticResource DangerPressedColor}" />

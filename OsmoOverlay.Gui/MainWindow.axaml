@@ -57,7 +57,8 @@
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
 		<Style Selector="TextBlock.timelineTrackName">
-			<Setter Property="Margin" Value="10,6,0,0" />
+			<Setter Property="Margin" Value="10,0,0,0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="FontSize" Value="12" />
 			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
 		</Style>
@@ -145,6 +146,12 @@
 			<Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
 			<Setter Property="HorizontalContentAlignment" Value="Center" />
 			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.previewToolButton.comboLike">
+			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}" />
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
 		<Style Selector="Button.previewToolButton:pointerover /template/ ContentPresenter">
 			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
@@ -717,7 +724,7 @@
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
 				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
-					<Grid Grid.Row="0">
+					<Grid Grid.Row="0" Height="32">
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
 							<ComboBox Name="PreviewQualityCombo" VerticalAlignment="Center" MinWidth="150"
 							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewQualityChanged"
@@ -725,6 +732,11 @@
 							<ComboBox Name="PreviewZoomCombo" VerticalAlignment="Center" MinWidth="80"
 							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewZoomChanged"
 							          ToolTip.Tip="Preview zoom - 100% is one source pixel per screen pixel. Ctrl+wheel zooms at the pointer, the middle mouse button pans. Pixel-peeping wants the Full resolution preview quality." />
+							<Button Name="FullscreenButton" Classes="previewToolButton comboLike" Click="OnToggleFullscreenClick"
+							        Width="{Binding #PreviewQualityCombo.Bounds.Height}" Height="{Binding #PreviewQualityCombo.Bounds.Height}"
+							        ToolTip.Tip="Full screen preview (F11) - on the monitor chosen in Settings, Interface. Esc leaves it.">
+								<local:IconView Data="{StaticResource IconFullscreen}" Width="14" Height="14" />
+							</Button>
 						</StackPanel>
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
 							<Button Name="ToggleGridButton" Classes="previewToolButton active"
@@ -783,16 +795,28 @@
 								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
 							</Button>
 						</StackPanel>
-						<StackPanel Name="AudioPanel" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" IsEnabled="False"
-						            ToolTip.ShowOnDisabled="True">
-							<Button Name="MuteButton" Classes="previewToolButton" Click="OnMuteClick" ToolTip.Tip="Unmute (M)">
+						<Grid Name="AudioPanel" ColumnDefinitions="Auto,Auto" ColumnSpacing="6" HorizontalAlignment="Right" IsEnabled="False"
+						      ToolTip.ShowOnDisabled="True">
+							<Button Grid.Column="0" Name="MuteButton" Classes="previewToolButton" VerticalAlignment="Center" Click="OnMuteClick"
+							        ToolTip.Tip="Unmute (M)">
 								<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" Width="14" Height="14" />
 							</Button>
-							<Slider Name="VolumeSlider" Minimum="0" Maximum="1" Width="90" VerticalAlignment="Center"
+							<Slider Grid.Column="1" Name="VolumeSlider" Minimum="0" Maximum="1" Width="90" Height="32" MinHeight="0" VerticalAlignment="Center"
 							        ValueChanged="OnVolumeChanged" ToolTip.Tip="Preview volume" />
-						</StackPanel>
+						</Grid>
 					</Grid>
-					<Border Grid.Row="1" Background="Black" CornerRadius="6" ClipToBounds="True">
+					<Border Grid.Row="1" Name="PreviewFullscreenNotice" Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6"
+					        IsVisible="False">
+						<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+							<local:IconView Data="{StaticResource IconFullscreen}" Width="28" Height="28" Opacity="0.5"
+							                HorizontalAlignment="Center" />
+							<TextBlock Text="The preview is full screen" FontSize="14" HorizontalAlignment="Center" />
+							<TextBlock Name="PreviewFullscreenNoticeText" Opacity="0.55" FontSize="12" TextWrapping="Wrap" MaxWidth="360"
+							           TextAlignment="Center" />
+							<Button Content="Bring it back" HorizontalAlignment="Center" Padding="14,6" Click="OnToggleFullscreenClick" />
+						</StackPanel>
+					</Border>
+					<Border Grid.Row="1" Name="PreviewViewport" Background="Black" CornerRadius="6" ClipToBounds="True">
 						<Grid>
 							<Canvas>
 								<local:VideoView Name="PreviewVideo" />
@@ -888,7 +912,7 @@
 								<TextBlock Name="StatusSourceText" />
 							</StackPanel>
 							<StackPanel Classes="previewStatus"
-							            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar)">
+							            ToolTip.Tip="Preview - the resolution the preview decodes at (the quality picker on the left of the toolbar; Auto fits it to the preview's size on screen)">
 								<local:IconView Data="{StaticResource IconMonitor}" />
 								<TextBlock Name="StatusPreviewText" />
 							</StackPanel>
@@ -902,7 +926,7 @@
 								<TextBlock Name="StatusFrameText" MinWidth="50" />
 							</StackPanel>
 							<StackPanel Classes="previewStatus"
-							            ToolTip.Tip="Display - the preview's size on screen, and while playing the frames a second that reach it (amber when fewer than the playback speed calls for)">
+							            ToolTip.Tip="Display - the preview's size on screen, and while playing the frames a second that reach it (yellow, then orange and red the further they fall below what the playback speed calls for)">
 								<local:IconView Data="{StaticResource IconDisplay}" />
 								<TextBlock Name="StatusDisplayText" MinWidth="118" />
 							</StackPanel>
@@ -1550,10 +1574,19 @@
 		</Grid>
 
 		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
-			<!-- Column 0 is LayerTimeline.HeaderWidth wide (set in WireLayers): the tracks' names, the layers' own headers under them. -->
-			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="2">
+			<!-- Column 0 is LayerTimeline.HeaderWidth wide (set in WireLayers): the tracks' names (the ruler's slot holds the new-layer button), the layers' own headers under them. -->
+			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
 				<StackPanel Grid.Row="0" Grid.Column="0" Background="{StaticResource ControlBrush}">
-					<Border Height="{x:Static local:PreviewTimeline.RulerHeight}" />
+					<Border Height="{x:Static local:PreviewTimeline.RulerHeight}">
+						<StackPanel Orientation="Horizontal" Margin="10,0,0,0" Spacing="8" VerticalAlignment="Center">
+							<TextBlock Text="LAYERS" Classes="sectionLabel" Margin="0" VerticalAlignment="Center" />
+							<Button Name="NewLayerButton" Classes="iconButton" Padding="6,0" MinWidth="0" MinHeight="0" Height="20"
+							        VerticalAlignment="Center"
+							        ToolTip.Tip="New layer - an empty one on top, drag widgets' clips onto it" Click="OnNewLayerClick">
+								<local:IconView Data="{StaticResource IconPlus}" Width="11" Height="11" />
+							</Button>
+						</StackPanel>
+					</Border>
 					<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
 					<Border Height="{x:Static local:PreviewTimeline.VideoTrackHeight}">
 						<TextBlock Classes="timelineTrackName" Text="Video" />
@@ -1567,16 +1600,11 @@
 					<local:PreviewTimeline Name="ExpandedTimeline" Expanded="True" Minimum="0" Maximum="1" IsEnabled="False"
 					                       ValueChanged="OnExpandedTimelineValueChanged" />
 				</Border>
-				<Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="*,Auto" Margin="10,4,6,2">
-					<TextBlock Grid.Column="0" Text="LAYERS" Classes="sectionLabel" Margin="0" VerticalAlignment="Center" />
-					<Button Grid.Column="1" Name="NewLayerButton" Classes="toolbar" Content="+ New layer" Padding="8,2"
-					        ToolTip.Tip="An empty layer on top - drag widgets' clips onto it" Click="OnNewLayerClick" />
-				</Grid>
-				<ScrollViewer Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Name="LayerScroll"
+				<ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Name="LayerScroll"
 				              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
 					<local:LayerTimeline Name="LayerTracks" />
 				</ScrollViewer>
-				<ScrollBar Grid.Row="3" Grid.Column="1" Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False"
+				<ScrollBar Grid.Row="2" Grid.Column="1" Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False"
 				           IsVisible="False" Scroll="OnTimelineScroll" />
 			</Grid>
 		</Border>

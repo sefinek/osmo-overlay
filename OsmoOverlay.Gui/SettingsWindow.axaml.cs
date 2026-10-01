@@ -140,6 +140,17 @@ public partial class SettingsWindow : Window
 		PreviewTimeFormat timeFormat = PreviewTimeFormats.Parse(settings.PreviewTimeFormat);
 		TimeFormatCombo.SelectedItem = PreviewTimeFormats.Options.First(o => o.Value == timeFormat);
 		RestoreWindowPlacementCheck.IsChecked = settings.RestoreWindowPlacement;
+		LayerRowsBox.Value = Math.Clamp(settings.LayerRowsVisible, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks);
+		LoadPreviewMonitors(settings.PreviewMonitor);
+	}
+
+	/// <summary>The screens connected now - a chosen one that's gone (see MonitorChoice) shows as the main window's.</summary>
+	private void LoadPreviewMonitors(string? chosen)
+	{
+		List<ChoiceOption<string?>> options = [new("Same screen as the main window (default)", null)];
+		options.AddRange(Screens.All.Select((screen, index) => new ChoiceOption<string?>(MonitorChoice.Describe(screen, index), MonitorChoice.KeyOf(screen))));
+		PreviewMonitorCombo.ItemsSource = options;
+		PreviewMonitorCombo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
 	}
 
 	private void OnTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
@@ -198,7 +209,9 @@ public partial class SettingsWindow : Window
 			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true,
 			InterfaceScale = (InterfaceScaleCombo.SelectedItem as ChoiceOption<double> ?? InterfaceScaleOptions[1]).Value,
 			PreviewTimeFormat = (TimeFormatCombo.SelectedItem as ChoiceOption<PreviewTimeFormat> ?? PreviewTimeFormats.Options[0]).Value.ToString(),
-			RestoreWindowPlacement = RestoreWindowPlacementCheck.IsChecked == true
+			RestoreWindowPlacement = RestoreWindowPlacementCheck.IsChecked == true,
+			PreviewMonitor = (PreviewMonitorCombo.SelectedItem as ChoiceOption<string?>)?.Value,
+			LayerRowsVisible = Math.Clamp((int)(LayerRowsBox.Value ?? LayerTimeline.DefaultVisibleTracks), LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks)
 		};
 	}
 
