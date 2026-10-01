@@ -28,6 +28,10 @@ public static class OverlayPresetStore
 	// change (Save runs on every single settings-field edit, for every preset).
 	private static readonly Dictionary<string, string> KnownPresetFiles = new(StringComparer.OrdinalIgnoreCase);
 
+	// The same files' content without the dates - what Save compares to tell a real edit (which bumps UpdatedUtc)
+	// from a preset that's merely being written out again.
+	private static readonly Dictionary<string, string> KnownPresetContent = new(StringComparer.OrdinalIgnoreCase);
+
 	public static (List<OverlayPreset> Presets, string ActivePresetId) Load(int width, int height)
 	{
 		try
@@ -47,6 +51,7 @@ public static class OverlayPresetStore
 			AppLogger.Warn(ex, "Overlay presets are corrupt or unreadable, falling back to the default preset");
 			// The fallback below isn't what's on disk - don't let the next Save treat it as authoritative.
 			KnownPresetFiles.Clear();
+			KnownPresetContent.Clear();
 		}
 
 		var defaultPreset = OverlayPreset.CreateDefault(DefaultPresetId, "Default", width, height);
@@ -59,8 +64,11 @@ public static class OverlayPresetStore
 		{
 			Directory.CreateDirectory(PresetsDir);
 
-			foreach (OverlayPreset preset in presets)
-				WritePreset(preset);
+			for (int i = 0; i < presets.Count; i++)
+			{
+				if (presets[i].Id != DefaultPresetId) presets[i] = Stamp(presets[i]);
+				WritePreset(presets[i]);
+			}
 
 			// Only files this store itself loaded or wrote are candidates for removal - a preset file that
 			// failed to parse (hand-edited, written by a newer version with an unknown widget type) was
@@ -70,6 +78,7 @@ public static class OverlayPresetStore
 			{
 				File.Delete(file);
 				KnownPresetFiles.Remove(file);
+				KnownPresetContent.Remove(file);
 			}
 
 			OverlaySettings settings = OverlaySettingsStore.Load();
@@ -89,7 +98,7 @@ public static class OverlayPresetStore
 	///     against both a later CreateDefault change leaving old installs with outdated positions, and
 	///     default.json going missing entirely (e.g. deleted by hand - Save()'s cleanup only ever
 	///     removes files, never restores one). Cheap to recompute, so this always overwrites rather than
-	///     checking whether anything actually changed.
+	///     checking whether anything actually changed. Also keeps it first in the list.
 	/// </summary>
 	private static void RefreshBuiltInDefault(List<OverlayPreset> presets, int width, int height)
 	{
@@ -107,7 +116,9 @@ public static class OverlayPresetStore
 		}
 		else
 		{
-			presets[index] = fresh;
+			// Files load in directory order, so Default sits wherever its file does - the list always starts with it.
+			presets.RemoveAt(index);
+			presets.Insert(0, fresh);
 		}
 	}
 
@@ -153,6 +164,22 @@ public static class OverlayPresetStore
 
 		AtomicFile.WriteAllText(path, json);
 		KnownPresetFiles[path] = json;
+		KnownPresetContent[path] = Content(preset);
+	}
+
+	private static string Content(OverlayPreset preset)
+	{
+		return JsonSerializer.Serialize(preset with { CreatedUtc = null, UpdatedUtc = null });
+	}
+
+	/// <summary>The preset with its dates brought up to date: created on its first save, updated whenever its content differs from what was last written.</summary>
+	private static OverlayPreset Stamp(OverlayPreset preset)
+	{
+		bool changed = !KnownPresetContent.TryGetValue(PresetPath(preset.Id), out string? known) || known != Content(preset);
+		if (!changed && preset is { CreatedUtc: not null, UpdatedUtc: not null }) return preset;
+
+		DateTime now = DateTime.UtcNow;
+		return preset with { CreatedUtc = preset.CreatedUtc ?? now, UpdatedUtc = changed ? now : preset.UpdatedUtc ?? now };
 	}
 
 	private static string PresetPath(string id)
@@ -163,6 +190,7 @@ public static class OverlayPresetStore
 	private static List<OverlayPreset> LoadPresetFiles()
 	{
 		KnownPresetFiles.Clear();
+		KnownPresetContent.Clear();
 		List<OverlayPreset> presets = [];
 		if (!Directory.Exists(PresetsDir)) return presets;
 
@@ -178,8 +206,13 @@ public static class OverlayPresetStore
 					continue;
 				}
 
+				// A file saved before presets carried dates: its own timestamps stand in until the next write records them.
+				DateTime modified = File.GetLastWriteTimeUtc(file);
+				DateTime created = File.GetCreationTimeUtc(file);
+				preset = preset with { CreatedUtc = preset.CreatedUtc ?? (created < modified ? created : modified), UpdatedUtc = preset.UpdatedUtc ?? modified };
 				presets.Add(preset);
 				KnownPresetFiles[file] = json;
+				KnownPresetContent[file] = Content(preset);
 			}
 			catch (Exception ex)
 			{

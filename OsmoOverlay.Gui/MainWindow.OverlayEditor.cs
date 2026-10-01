@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -101,7 +102,7 @@ public partial class MainWindow
 	private void RefreshPresetComboBox()
 	{
 		_suppressOverlayEvents = true;
-		PresetComboBox.ItemsSource = _overlayPresets.Select(p => p.Name).ToList();
+		PresetComboBox.ItemsSource = _overlayPresets.Select(p => new PresetOption(p.Id, p.Name)).ToList();
 		PresetComboBox.SelectedIndex = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
 		_suppressOverlayEvents = false;
 	}
@@ -1308,7 +1309,7 @@ public partial class MainWindow
 		}
 
 		string id = Guid.NewGuid().ToString("N");
-		OverlayPreset preset = imported with { Id = id };
+		OverlayPreset preset = imported with { Id = id, CreatedUtc = null, UpdatedUtc = null };
 		_overlayPresets.Add(preset);
 		_activePresetId = id;
 
@@ -1978,6 +1979,26 @@ public partial class MainWindow
 			return Display;
 		}
 	}
+
+	/// <summary>When the preset was created and last changed - read when a list item is built, as Save stamps the dates after the list is filled. The built-in Default has none.</summary>
+	private string? PresetDatesTooltip(string id)
+	{
+		if (_overlayPresets.FirstOrDefault(p => p.Id == id) is not { CreatedUtc: { } created, UpdatedUtc: { } updated }) return null;
+
+		return $"Created: {created.ToLocalTime():g}\nLast updated: {updated.ToLocalTime():g}";
+	}
+
+	private IDataTemplate PresetItemTemplate()
+	{
+		return new FuncDataTemplate<PresetOption>((option, _) =>
+		{
+			var text = new TextBlock { Text = option?.Name, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+			if (option is not null) ToolTip.SetTip(text, PresetDatesTooltip(option.Id));
+			return text;
+		});
+	}
+
+	private sealed record PresetOption(string Id, string Name);
 
 	private sealed record LocaleOption(string Display, string? CultureName)
 	{

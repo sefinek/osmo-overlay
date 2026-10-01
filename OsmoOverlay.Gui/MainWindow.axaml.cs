@@ -104,6 +104,7 @@ public partial class MainWindow : Window
 		UtcTimeFormatCombo.ItemsSource = DateFormatOptions;
 		UtcTimeLocaleCombo.ItemsSource = LocaleOptions;
 		TripStatCombo.ItemsSource = TripStatOptions;
+		PresetComboBox.ItemTemplate = PresetItemTemplate();
 
 		ElementTimingEditor[] timingEditors =
 		[

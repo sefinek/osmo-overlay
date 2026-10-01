@@ -583,23 +583,31 @@ public sealed partial class OverlayRenderer : IDisposable
 			raster.DrawPicture(picture);
 		}
 
+		if (VisibleBounds(bitmap) is not { } visible) return null;
+
+		visible.Offset(bounds.Left, bounds.Top);
+		return visible;
+	}
+
+	/// <summary>The box of the pixels in an Alpha8 bitmap that are visible (at least MeasureMinAlpha), or null when there are none.</summary>
+	private static SKRect? VisibleBounds(SKBitmap bitmap)
+	{
 		ReadOnlySpan<byte> alpha = bitmap.GetPixelSpan();
-		int minX = width, minY = height, maxX = -1, maxY = -1;
-		for (int y = 0; y < height; y++)
+		int minX = bitmap.Width, minY = bitmap.Height, maxX = -1, maxY = -1;
+		for (int y = 0; y < bitmap.Height; y++)
 		{
-			ReadOnlySpan<byte> row = alpha.Slice(y * bitmap.RowBytes, width);
-			for (int x = 0; x < width; x++)
+			ReadOnlySpan<byte> row = alpha.Slice(y * bitmap.RowBytes, bitmap.Width);
+			for (int x = 0; x < row.Length; x++)
 			{
 				if (row[x] < MeasureMinAlpha) continue;
-				if (x < minX) minX = x;
-				if (x > maxX) maxX = x;
-				if (y < minY) minY = y;
+				minX = Math.Min(minX, x);
+				maxX = Math.Max(maxX, x);
+				minY = Math.Min(minY, y);
 				maxY = y;
 			}
 		}
 
-		if (maxX < 0) return null;
-		return new SKRect(bounds.Left + minX, bounds.Top + minY, bounds.Left + maxX + 1, bounds.Top + maxY + 1);
+		return maxX < 0 ? null : new SKRect(minX, minY, maxX + 1, maxY + 1);
 	}
 
 	/// <summary>
