@@ -15,6 +15,9 @@ using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
 
+/// <summary>A key moment on the timeline: where it is, in recording seconds, and its name.</summary>
+public sealed record TimelineMoment(double Seconds, string Name);
+
 /// <summary>
 ///     The preview's timeline, in two forms of one control (MainWindow has one of each - the compact one in the
 ///     transport row, the expanded one in the bottom panel, see Expanded): compact, a slider-like track with the same
@@ -55,6 +58,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double CompactTrackHeight = 6;
 	private const double CompactCutHeight = 16;
 	private const double CompactSelectionHeight = 24;
+	private const double MomentGrabPixels = 7;
 	// Room after the recording's end on the expanded timeline, so the end - and whatever ends there, a cut or a widget's
 	// layer - sits in view and can be grabbed rather than on the control's last pixel.
 	private const double ExpandedEndPadding = 32;
@@ -74,6 +78,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen WaveformCenterPen = new Pen(Palette.Tint(Palette.Accent, 0.3));
 	private static readonly IBrush PlayedBrush = Palette.Accent;
 	private static readonly IBrush GpsLossBrush = Palette.Warning;
+	private static readonly IBrush MomentBrush = Palette.Caution;
+	private static readonly IPen MomentPen = new Pen(Palette.Caution, 1.5);
 	private static readonly IBrush CutFill = Palette.Tint(Palette.SurfaceSunken, 0.6);
 	private static readonly IPen CutBorder = new Pen(Palette.Tint(Palette.Danger, 0.9));
 	private static readonly IPen CutStripe = new Pen(Palette.Tint(Palette.Danger, 0.55), 2);
@@ -93,6 +99,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private DispatcherTimer? _stripeTimer;
 	private IReadOnlyList<TimeRange> _cuts = [];
 	private IReadOnlyList<TimeRange> _gpsLoss = [];
+	private IReadOnlyList<TimelineMoment> _moments = [];
+	private TimelineMoment? _momentTip;
 	private TimeRange? _selection;
 	private TimelineThumbnails? _thumbnails;
 	private AudioWaveform? _waveform;
@@ -213,6 +221,18 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	/// <summary>The key moments - drawn as flags, the name in a tip while the pointer is on one.</summary>
+	public IReadOnlyList<TimelineMoment> Moments
+	{
+		get => _moments;
+		set
+		{
+			_moments = value;
+			UpdateMomentTip(null);
+			InvalidateVisual();
+		}
+	}
+
 	public TimeRange? Selection
 	{
 		get => _selection;
@@ -305,6 +325,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		DrawCuts(context, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
 		if (_selection is { } selection)
 			DrawSelection(context, selection, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2);
+		DrawMoments(context, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2 - 4);
 
 		context.DrawEllipse(PlayedBrush, null, new Point(X(Value), middle), CompactThumbRadius, CompactThumbRadius);
 	}
@@ -336,6 +357,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		DrawCuts(context, videoTop, bottom);
 		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
+		DrawMoments(context, 0, bottom);
 
 		if (_hoverX is { } hover) context.DrawLine(HoverPen, new Point(hover, 0), new Point(hover, bottom));
 		DrawPlayhead(context, bottom);
@@ -579,6 +601,28 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	/// <summary>A flag per key moment: a line at its time with a pennant at the top.</summary>
+	private void DrawMoments(DrawingContext context, double top, double bottom)
+	{
+		foreach (TimelineMoment moment in _moments)
+		{
+			double x = Math.Round(X(moment.Seconds)) + 0.5;
+			if (x < -8 || x > Bounds.Width + 8) continue;
+
+			context.DrawLine(MomentPen, new Point(x, top), new Point(x, bottom));
+			var pennant = new StreamGeometry();
+			using (StreamGeometryContext stream = pennant.Open())
+			{
+				stream.BeginFigure(new Point(x, top));
+				stream.LineTo(new Point(x + 9, top + 3.5));
+				stream.LineTo(new Point(x, top + 7));
+				stream.EndFigure(true);
+			}
+
+			context.DrawGeometry(MomentBrush, null, pennant);
+		}
+	}
+
 	private void DrawPlayhead(DrawingContext context, double bottom)
 	{
 		double x = Math.Round(X(Value)) + 0.5;
@@ -794,6 +838,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 				break;
 			default:
 				Cursor = EdgeAt(x) is null ? HandCursor : ResizeCursor;
+				UpdateMomentTip(MomentAt(x));
 				break;
 		}
 
@@ -807,6 +852,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnPointerExited(e);
 		_hoverX = null;
+		UpdateMomentTip(null);
 		InvalidateVisual();
 	}
 
@@ -860,6 +906,40 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 
 		return null;
+	}
+
+	private TimelineMoment? MomentAt(double x)
+	{
+		TimelineMoment? nearest = null;
+		double best = MomentGrabPixels;
+		foreach (TimelineMoment moment in _moments)
+		{
+			double distance = Math.Abs(X(moment.Seconds) - x);
+			if (distance > best) continue;
+
+			best = distance;
+			nearest = moment;
+		}
+
+		return nearest;
+	}
+
+	/// <summary>Opened by hand: a tip set while the pointer is already over the control isn't shown by the usual hover delay.</summary>
+	private void UpdateMomentTip(TimelineMoment? moment)
+	{
+		if (moment == _momentTip) return;
+
+		_momentTip = moment;
+		if (moment is null)
+		{
+			ToolTip.SetIsOpen(this, false);
+			ToolTip.SetTip(this, null);
+			return;
+		}
+
+		string name = string.IsNullOrWhiteSpace(moment.Name) ? "Key moment" : moment.Name;
+		ToolTip.SetTip(this, $"{name}  -  {TimeText.Format(moment.Seconds)}");
+		ToolTip.SetIsOpen(this, true);
 	}
 
 	private int? CutIndexAt(double seconds)

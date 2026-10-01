@@ -25,6 +25,9 @@ public sealed record OverlayProject(
 
 	public int Format { get; init; } = CurrentFormat;
 
+	/// <summary>The key moments the user marked (frames of the combined recording) - absent in projects saved before they existed.</summary>
+	public List<KeyMoment> Moments { get; init; } = [];
+
 	private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
 	public void Save(string path)

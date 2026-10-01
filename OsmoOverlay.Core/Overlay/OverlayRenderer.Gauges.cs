@@ -163,8 +163,64 @@ public sealed partial class OverlayRenderer
 		return index < _gMeterDeltas.Length ? _gMeterDeltas[index] : (0, 0);
 	}
 
+	private const float RingArcStartAngle = 92f;
+	private const float RingArcSweep = 298f;
+	private const float RingArcRadius = 180f;
+	private const float RingOuterRadius = 220f;
+
+	private static SKPath CreateRingNeedle()
+	{
+		using var builder = new SKPathBuilder();
+		builder.MoveTo(RingArcRadius - 15, 0);
+		builder.LineTo(RingOuterRadius + 30, -22);
+		builder.LineTo(RingOuterRadius + 30, 22);
+		builder.Close();
+		return builder.Detach();
+	}
+
+	private void DrawRingSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
+	{
+		bool imperial = element.Units == UnitSystem.Imperial;
+		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
+		double fraction = Math.Clamp(displaySpeed / GaugeMaxSpeed(element.Units), 0, 1);
+
+		// The outer ring spans the same angles as the colored arc.
+		var outerRect = new SKRect(-RingOuterRadius, -RingOuterRadius, RingOuterRadius, RingOuterRadius);
+		_speedRingOuterPaint.StrokeWidth = 22;
+		_speedRingOuterPaint.Color = new SKColor(255, 255, 255, 70);
+		canvas.DrawArc(outerRect, RingArcStartAngle, RingArcSweep, false, _speedRingOuterPaint);
+		var edgeRect = SKRect.Inflate(outerRect, 11, 11);
+		var innerEdgeRect = SKRect.Inflate(outerRect, -11, -11);
+		canvas.DrawArc(edgeRect, RingArcStartAngle, RingArcSweep, false, _ringStroke3White160);
+		canvas.DrawArc(innerEdgeRect, RingArcStartAngle, RingArcSweep, false, _ringStroke3White160);
+
+		var arcRect = new SKRect(-RingArcRadius, -RingArcRadius, RingArcRadius, RingArcRadius);
+		canvas.DrawArc(arcRect, RingArcStartAngle, RingArcSweep, false, _speedRingArcPaint);
+
+		canvas.Save();
+		canvas.RotateDegrees((float)(RingArcStartAngle + RingArcSweep * fraction));
+		canvas.DrawPath(_speedRingNeedle, _whiteFill);
+		canvas.Restore();
+
+		SKFont speedFont = TextFont(element, 133);
+		SKFont speedUnitFont = TextFont(element, 44);
+		SKColor textColor = TextColorOf(element);
+		SKColor outlineColor = OutlineColorOf(element);
+
+		DrawOutlined(canvas, F(displaySpeed, "0"), 0, 106, speedFont, textColor, SKTextAlign.Center,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", 32, 156, speedUnitFont, textColor, SKTextAlign.Left,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+	}
+
 	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
 	{
+		if (element.Theme == SpeedGaugeTheme.Ring)
+		{
+			DrawRingSpeedGauge(canvas, element, speedKmh);
+			return;
+		}
+
 		float cx = 0;
 		float cy = 0;
 

@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+             x:Class="OsmoOverlay.Gui.KeyMomentsEditor">
+
+	<StackPanel Spacing="14">
+		<StackPanel Spacing="6">
+			<TextBlock Text="Mark the frame on screen" Classes="infoLabel" Margin="0" />
+			<Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnAddClick"
+			        ToolTip.Tip="Adds a key moment at the frame on screen (B)">
+				<StackPanel Orientation="Horizontal" Spacing="7">
+					<local:IconView Data="{StaticResource IconFlag}" Width="13" Height="13" VerticalAlignment="Center" />
+					<TextBlock Text="Add key moment (B)" VerticalAlignment="Center" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
+
+		<StackPanel Spacing="6">
+			<TextBlock Text="Jump to" Classes="infoLabel" Margin="0" />
+			<StackPanel Name="PeakRows" Spacing="6" />
+			<TextBlock Name="NoPeaksText" Classes="hint" IsVisible="False" Text="This recording has no telemetry to find a peak in." />
+		</StackPanel>
+
+		<StackPanel Name="MomentListPanel" Spacing="6" IsVisible="False">
+			<TextBlock Text="Key moments" Classes="infoLabel" Margin="0" />
+			<StackPanel Name="MomentRows" Spacing="6" />
+		</StackPanel>
+
+		<TextBlock Classes="hint"
+		           Text="A key moment is a named point of the recording, drawn as a flag on the timeline - Up and Down jump from one to the next. They don't change the render. The jump buttons find where the telemetry peaks; the flag next to one saves that spot as a key moment. Moments are saved with the project." />
+	</StackPanel>
+</UserControl>

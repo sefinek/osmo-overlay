@@ -592,6 +592,8 @@ public partial class MainWindow
 
 		CutsColumnScroll.IsVisible = false;
 		UpdateCutsButton();
+		MomentsColumnScroll.IsVisible = false;
+		UpdateMomentsButton();
 		SourceColumnScroll.IsVisible = false;
 		WidgetSettingsColumnScroll.IsVisible = true;
 		WidgetSettingsColumnScroll.Offset = default;
@@ -611,7 +613,7 @@ public partial class MainWindow
 	{
 		_editingElementId = null;
 		WidgetSettingsColumnScroll.IsVisible = false;
-		SourceColumnScroll.IsVisible = !CutsColumnScroll.IsVisible;
+		SourceColumnScroll.IsVisible = !CutsColumnScroll.IsVisible && !MomentsColumnScroll.IsVisible;
 	}
 
 	/// <summary>
@@ -735,6 +737,8 @@ public partial class MainWindow
 			{
 				var x = (SpeedGaugeElement)el;
 				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, x.Units);
+				SpeedThemeClassicRadio.IsChecked = x.Theme == SpeedGaugeTheme.Classic;
+				SpeedThemeRingRadio.IsChecked = x.Theme == SpeedGaugeTheme.Ring;
 				SpeedStyle.Populate(x);
 				SpeedTiming.Populate(x);
 				break;

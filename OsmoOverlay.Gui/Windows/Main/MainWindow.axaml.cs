@@ -141,6 +141,7 @@ public partial class MainWindow : Window
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
 
 		WireCuts();
+		WireMoments();
 		WirePreviewTimeline();
 		WireAudio();
 		WirePreviewQuality();

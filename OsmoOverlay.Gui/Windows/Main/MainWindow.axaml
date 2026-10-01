@@ -739,6 +739,26 @@
 						<local:CutEditor Name="CutsEditor" />
 					</StackPanel>
 				</ScrollViewer>
+
+					<ScrollViewer Name="MomentsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+						<StackPanel Spacing="10">
+							<Grid ColumnDefinitions="Auto,*,Auto">
+								<Button Grid.Column="0" Classes="toolbar" Padding="10,7" FontSize="12" HorizontalAlignment="Left"
+								        Click="OnMomentsBackClick">
+									<StackPanel Orientation="Horizontal" Spacing="6">
+										<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
+										<TextBlock Text="Back" VerticalAlignment="Center" />
+									</StackPanel>
+								</Button>
+								<TextBlock Grid.Column="1" Text="KEY MOMENTS" FontSize="14" FontWeight="SemiBold"
+								           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+								<Button Grid.Column="2" Classes="toolbar" Content="Clear all" Padding="10,7" FontSize="12"
+								        HorizontalAlignment="Right" Click="OnClearMomentsClick" ToolTip.Tip="Remove every key moment" />
+							</Grid>
+							<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
+							<local:KeyMomentsEditor Name="MomentsEditor" />
+						</StackPanel>
+					</ScrollViewer>
 			</Grid>
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
@@ -813,6 +833,10 @@
 							        ToolTip.Tip="Cut parts out of the render">
 								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
 							</Button>
+								<Button Name="ToggleMomentsButton" Classes="previewToolButton" Click="OnToggleMomentsPanelClick"
+								        ToolTip.Tip="Key moments - flags on the timeline, and jumps to the top speed, the highest point and more">
+									<local:IconView Data="{StaticResource IconFlag}" Width="14" Height="14" />
+								</Button>
 						</StackPanel>
 						<StackPanel Name="AudioPanel" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center"
 						            IsEnabled="False" ToolTip.ShowOnDisabled="True">
@@ -1254,6 +1278,17 @@
 										</Border>
 										<Border Name="SpeedSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="THEME" Classes="settingsGroupTitle" />
+														<StackPanel Orientation="Horizontal" Spacing="12">
+															<RadioButton Name="SpeedThemeClassicRadio" Content="Classic"
+															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged" />
+															<RadioButton Name="SpeedThemeRingRadio" Content="Ring"
+															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged" />
+														</StackPanel>
+													</StackPanel>
+												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="UNITS" Classes="settingsGroupTitle" />

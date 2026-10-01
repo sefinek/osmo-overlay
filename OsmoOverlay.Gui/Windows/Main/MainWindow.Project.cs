@@ -94,7 +94,10 @@ public partial class MainWindow
 			loaded && Is360 ? _reframe : null,
 			loaded ? CurrentFrame() : 0,
 			preset?.Id,
-			preset);
+			preset)
+		{
+			Moments = loaded ? [.. _moments] : []
+		};
 	}
 
 	private async Task OpenProjectAsync(string path)
@@ -152,6 +155,13 @@ public partial class MainWindow
 				_cuts = cuts;
 				ApplyCuts();
 			}
+		}
+
+		List<KeyMoment> moments = KeyMoments.Normalize(project.Moments, SourceFrames);
+		if (moments.Count > 0)
+		{
+			_moments = moments;
+			RefreshMoments();
 		}
 
 		if (project.Reframe is { } view && Is360)

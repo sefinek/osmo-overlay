@@ -61,7 +61,7 @@ public partial class MainWindow
 			};
 		}
 
-		CutsEditor.SeekRequested += SeekToFrame;
+		CutsEditor.SeekRequested += frame => SeekToFrame(frame);
 	}
 
 	/// <summary>The scissors button swaps the left column to the cut editor, the same way a widget's settings open (OpenElementSettings).</summary>
@@ -74,6 +74,8 @@ public partial class MainWindow
 		}
 
 		CloseElementSettings();
+		MomentsColumnScroll.IsVisible = false;
+		UpdateMomentsButton();
 		// Cutting is done on the timeline - the expanded one shows where each cut falls.
 		if (!TimelineCard.IsVisible) SetTimelineExpanded(true, false);
 		SourceColumnScroll.IsVisible = false;

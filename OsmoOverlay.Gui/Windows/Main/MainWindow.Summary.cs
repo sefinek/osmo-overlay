@@ -26,6 +26,7 @@ public partial class MainWindow
 		_availability = new OverlayAvailability(false, false, false, false, false);
 		// Cuts, thumbnails and the waveform belong to the recording they were made for.
 		ClearCuts();
+		ClearMoments();
 		ReleaseTimelineTracks();
 		LogBox.ClearLog();
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself

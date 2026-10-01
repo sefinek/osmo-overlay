@@ -96,6 +96,11 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _speedBandYellow;
 	private readonly SKPaint _speedBandOrange;
 	private readonly SKPaint _speedBandRed;
+	private readonly SKPaint _speedRingOuterPaint;
+	private readonly SKPaint _speedRingArcPaint;
+	private readonly SKShader _speedRingShader;
+	private readonly SKPath _speedRingNeedle = CreateRingNeedle();
+	private readonly SKPaint _whiteFill = new() { Color = SKColors.White, IsAntialias = true, Style = SKPaintStyle.Fill };
 
 	// Mutable paints reused by DrawOutlined/DrawPanelShadow (see below) - unlike the fixed-style paints
 	// above, color/stroke width/blur radius vary per call (font size, requested color, fade opacity), so
@@ -187,6 +192,12 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedBandYellow = CreateGaugeBandPaint(new SKColor(230, 200, 60));
 		_speedBandOrange = CreateGaugeBandPaint(new SKColor(235, 140, 50));
 		_speedBandRed = CreateGaugeBandPaint(new SKColor(220, 60, 60));
+		_speedRingOuterPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
+		_speedRingShader = SKShader.CreateSweepGradient(new SKPoint(0, 0),
+			[new SKColor(60, 190, 70), new SKColor(245, 180, 40), new SKColor(240, 120, 40), new SKColor(225, 40, 50)],
+			[0f, 0.4f, 0.72f, 1f], SKShaderTileMode.Clamp, 0, RingArcSweep, SKMatrix.CreateRotationDegrees(RingArcStartAngle));
+		_speedRingArcPaint = new SKPaint
+			{ IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 20, StrokeCap = SKStrokeCap.Butt, Shader = _speedRingShader };
 
 		_outlineShadowPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
 		_outlineStrokePaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
@@ -249,6 +260,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedBandYellow.Dispose();
 		_speedBandOrange.Dispose();
 		_speedBandRed.Dispose();
+		_speedRingOuterPaint.Dispose();
+		_speedRingArcPaint.Dispose();
+		_speedRingShader.Dispose();
+		_speedRingNeedle.Dispose();
+		_whiteFill.Dispose();
 		_outlineShadowPaint.Dispose();
 		_outlineStrokePaint.Dispose();
 		_outlineFillPaint.Dispose();

@@ -36,7 +36,9 @@ public partial class MainWindow
 			UpdatePreviewStatus();
 			TransportPanel.IsEnabled = true;
 			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
+			MomentsEditor.Attach(summary.Video.Fps, SourceFrames, summary.DerivedFrames, UnitSystem.Metric);
 			RefreshCutViews();
+			RefreshMoments();
 			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;
 			UpdateAudioPanel();
 			_ = LoadTimelineTracksAsync(summary);
@@ -60,6 +62,7 @@ public partial class MainWindow
 		ShowPlayingState(false);
 		TransportPanel.IsEnabled = false;
 		CutsEditor.Attach(0, 0);
+		MomentsEditor.Attach(0, 0, null, UnitSystem.Metric);
 		foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = false;
 		UpdateAudioPanel();
 

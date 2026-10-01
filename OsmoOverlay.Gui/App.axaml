@@ -5,7 +5,7 @@
 	<Application.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<ResourceInclude Source="avares://OsmoOverlay/Icons.axaml" />
+				<ResourceInclude Source="avares://OsmoOverlay/Resources/Icons.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 
 			<Color x:Key="WindowBackgroundColor">#111113</Color>

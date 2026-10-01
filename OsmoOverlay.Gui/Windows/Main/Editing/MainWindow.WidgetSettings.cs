@@ -212,6 +212,13 @@ public partial class MainWindow
 		SetElementUnits(id, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
+	private void OnSpeedThemeChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id) return;
+		SpeedGaugeTheme theme = SpeedThemeRingRadio.IsChecked == true ? SpeedGaugeTheme.Ring : SpeedGaugeTheme.Classic;
+		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { Theme = theme } : el);
+	}
+
 	private void OnTripProgressUnitsChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;

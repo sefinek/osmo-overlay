@@ -9,7 +9,7 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     Preview transport - go to start/end, frame step, play/pause - and every preview keyboard shortcut, NLE
-///     style: Space play/pause, Left/Right one frame, Home/End, I/O mark the start/end of a part to cut out and X/Delete cuts it (MainWindow.Cuts.cs), M mutes (MainWindow.Audio.cs), H hides the overlay (MainWindow.PreviewTools.cs).
+///     style: Space play/pause, Left/Right one frame, Home/End, I/O mark the start/end of a part to cut out and X/Delete cuts it (MainWindow.Cuts.cs), B flags a key moment (MainWindow.Moments.cs), M mutes (MainWindow.Audio.cs), H hides the overlay (MainWindow.PreviewTools.cs).
 /// </summary>
 public partial class MainWindow
 {
@@ -61,6 +61,7 @@ public partial class MainWindow
 			Key.Delete => DeleteSelectedCutOrCutSelection,
 			Key.Up => () => JumpToMarker(-1),
 			Key.Down => () => JumpToMarker(1),
+			Key.B => AddMomentAtCurrentFrame,
 			Key.Q => ToggleLoop,
 			Key.J => () => StepSpeed(-1),
 			Key.K => PausePlayback,
@@ -126,7 +127,7 @@ public partial class MainWindow
 		_previewPlayer.SetLoop(_loopEnabled, range);
 	}
 
-	/// <summary>Up/Down: to the previous/next edge of a cut, the selection or a GPS loss, or the start/end (TimelineMarkers).</summary>
+	/// <summary>Up/Down: to the previous/next edge of a cut, the selection or a GPS loss, a key moment, or the start/end (TimelineMarkers).</summary>
 	private void JumpToMarker(int direction)
 	{
 		if (_summary is null) return;
@@ -134,10 +135,10 @@ public partial class MainWindow
 		double fps = _summary.Video.Fps;
 		IEnumerable<FrameRange> gpsLoss = PreviewTimeline.GpsLoss.Select(r =>
 			new FrameRange((long)Math.Round(r.StartSeconds * fps), (long)Math.Round(r.EndSeconds * fps)));
-		SortedSet<long> markers = TimelineMarkers.Collect(SourceFrames, CutList.Normalize(_cuts, SourceFrames), Selection, gpsLoss);
+		SortedSet<long> markers = TimelineMarkers.Collect(SourceFrames, CutList.Normalize(_cuts, SourceFrames), Selection, gpsLoss, _moments);
 		long current = CurrentFrame();
 		if ((direction > 0 ? TimelineMarkers.Next(markers, current) : TimelineMarkers.Previous(markers, current)) is { } target)
-			SeekToFrame(target);
+			SeekToFrame(target, true);
 	}
 
 	private bool _suppressSpeedEvent;
@@ -246,9 +247,18 @@ public partial class MainWindow
 	///     at or after a position, so aiming exactly at a frame's timestamp could round past it and skip a frame
 	///     on every step.
 	/// </summary>
-	private void SeekToFrame(long frame)
+	/// <param name="keepPlaying">A running playback carries on from the frame (the way a scrub's end resumes it) instead of pausing there.</param>
+	private void SeekToFrame(long frame, bool keepPlaying = false)
 	{
 		if (_summary is null) return;
+
+		if (keepPlaying && _previewPlayer.IsPlaying)
+		{
+			BeginTimelineScrub();
+			PreviewTimeline.Value = Math.Clamp((frame - 0.25) / _summary.Video.Fps, 0, PreviewTimeline.Maximum);
+			EndTimelineScrub();
+			return;
+		}
 
 		if (_previewPlayer.IsPlaying)
 		{
