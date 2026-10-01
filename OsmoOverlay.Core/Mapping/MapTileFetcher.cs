@@ -11,19 +11,17 @@ namespace OsmoOverlay.Core.Mapping;
 ///     change), so re-rendering the same or an overlapping route doesn't re-fetch what's already on
 ///     disk. Identifies itself with a real User-Agent per OpenStreetMap's tile usage policy
 ///     (https://operations.osmfoundation.org/policies/tiles/) for the built-in OSM source; a custom
-///     MapTileUrlTemplate is the user's own responsibility to use within its provider's terms.
+///     tile URL (OverlaySettings.CustomMapUrlTemplate) is the user's own responsibility to use within its provider's terms.
 /// </summary>
 public static class MapTileFetcher
 {
-	// Named after the source, not "Default" - OverlaySettings defaults to SatelliteUrlTemplate below.
-	// Used as the lower-level fallback wherever OverlaySettings.MapTileUrlTemplate is null (see
-	// MainWindow.TileProviderOptions).
+	// Named after the source, not "Default" - the default provider is the satellite one below. Also the fallback
+	// for an empty custom URL (MapSources.UrlTemplate).
 	public const string OpenStreetMapUrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 	public const string OpenStreetMapAttribution = "© OpenStreetMap contributors";
 
-	// OverlaySettings.MapTileUrlTemplate defaults to this (rather than OpenStreetMapUrlTemplate) -
-	// satellite imagery reads better than a street map over HUD-style overlays at a glance. Shared here (not just duplicated in the GUI's provider list) so Core
-	// and the GUI can't drift on what "the satellite option" actually points to.
+	// The default provider (MapProviders.DefaultId) rather than OpenStreetMapUrlTemplate -
+	// satellite imagery reads better than a street map over HUD-style overlays at a glance.
 	public const string SatelliteUrlTemplate =
 		"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 	public const string SatelliteAttribution = "Esri, Maxar, Earthstar Geographics";

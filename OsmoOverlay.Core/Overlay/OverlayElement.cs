@@ -250,19 +250,33 @@ public abstract record TrailOverlayElement : OverlayElement
 	// Colors the route by the speed it was travelled at - TrailColor while slow, warming to red (SpeedColorScale).
 	public bool TrailColorBySpeed { get; init; } = true;
 	public float TrailWidth { get; init; } = 4.5f;
+	// False draws the dial/map without the route - just the marker.
+	public bool TrailVisible { get; init; } = true;
 	public bool TrailUseArrow { get; init; } = true;
+	// The marker's size relative to the built-in one; MarkerColor null is the accent color.
+	public float MarkerScale { get; init; } = 1f;
+	public string? MarkerColor { get; init; }
+	// The widget turns so the direction of travel is always up (north then moves around instead of staying at the top).
+	public bool RotateWithHeading { get; init; }
 }
 
+/// <summary>
+///     CenterOnPosition keeps the marker in the middle of the dial and moves the trail around it (the trail is scaled to
+///     fit from there), instead of fitting the whole route into the dial with the marker travelling along it.
+/// </summary>
 public sealed record CompassElement : TrailOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Compass;
+	public bool CenterOnPosition { get; init; }
+	public bool ShowNorthLabel { get; init; } = true;
+	public bool ShowHeadingText { get; init; } = true;
 }
 
 /// <summary>
 ///     MapZoom is the fixed close-up zoom the panning widget draws at; MapDynamicZoomMaxFactor caps how
-///     far MapDynamicZoom can zoom out (see OverlayRenderer.GetMapZoomFactor). The tile source itself
-///     (URL template/attribution/API key) is a global setting shared by every map-based widget - see
-///     OverlaySettings - not a per-element field, so it can't drift between MapWidget instances.
+///     far MapDynamicZoom can zoom out (see OverlayRenderer.GetMapZoomFactor). MapProviderId picks the tile server from
+///     MapProviders (null = the default); the API keys and the custom server's URL are shared settings - see
+///     OverlaySettings.
 /// </summary>
 public sealed record MapWidgetElement : TrailOverlayElement
 {
@@ -270,6 +284,7 @@ public sealed record MapWidgetElement : TrailOverlayElement
 	public int MapZoom { get; init; } = 16;
 	public bool MapDynamicZoom { get; init; }
 	public double MapDynamicZoomMaxFactor { get; init; } = OverlayRenderer.MapDynamicZoomMaxFactorDefault;
+	public string? MapProviderId { get; init; }
 }
 
 /// <summary>

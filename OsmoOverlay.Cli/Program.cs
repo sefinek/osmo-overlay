@@ -20,7 +20,7 @@ string[] flags = ["--no-level"];
 const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level]\n" +
                      "  inputs are the camera's own recordings (DJI Osmo Action .MP4)\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
-                     "  --cut removes that part from the video and the telemetry; repeat it for several cuts\n" +
+                     "  --cut removes that part from the video and the telemetry; repeat it for several cuts. Add @fade or @white (optionally =seconds, e.g. 1:00-1:10@fade=1) to fade through black or white where the cut joins the kept parts, or @cross, @wipeleft, @wiperight, @slideleft, @slideright to blend them (the output gets shorter by that length)\n" +
                      "  --view <yaw>,<pitch>,<roll>[,<fov>] frames a 360 recording's flat picture, in degrees (default 0,0,0,100),\n" +
                      "         leveled by the camera's accelerometer unless --no-level\n" +
                      "       OsmoOverlay.Cli --install-dependencies [ffmpeg] [exiftool]\n" +
@@ -86,9 +86,21 @@ for (; i < args.Length; i++)
 		case "--to" when TimeText.TryParse(value, out double to):
 			rangeEnd = to;
 			break;
-		case "--cut" when value.Split('-') is [var cutFrom, var cutTo] &&
+		case "--cut" when value.Split('@') is [var cutRange, ..var cutExtra] && cutExtra.Length <= 1 && cutRange.Split('-') is [var cutFrom, var cutTo] &&
 		                  TimeText.TryParse(cutFrom, out double cutStart) && TimeText.TryParse(cutTo, out double cutEnd) && cutEnd > cutStart:
-			cutOuts.Add(new TimeRange(cutStart, cutEnd));
+			CutTransition? transition = null;
+			if (cutExtra.Length == 1)
+			{
+				if (!CutTransition.TryParse(cutExtra[0], out CutTransition parsedTransition))
+				{
+					Console.Error.WriteLine($"Error: invalid transition in --cut: '{cutExtra[0]}' (use fade, white, cross, wipeleft, wiperight, slideleft or slideright, optionally with =seconds)");
+					return 1;
+				}
+
+				transition = parsedTransition;
+			}
+
+			cutOuts.Add(new TimeRange(cutStart, cutEnd, transition));
 			break;
 		case "--view" when ReframeView.TryParse(value, out ReframeView parsedView):
 			view = parsedView;

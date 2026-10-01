@@ -187,6 +187,8 @@ internal sealed class OverlayCompositor : IDisposable
 
 	private void DrawOverlayLocked(byte[] bgra, int width, int height, TimeSpan position)
 	{
+		// The picture's fade into a cut comes first, so the overlay is drawn over it - as in the render.
+		if (_timeline?.TransitionAt(position.TotalSeconds) is { } fade) CutTransitionFade.Apply(bgra, fade.Amount, fade.White);
 		if (!_showOverlay || OutputSeconds(position) is not { } seconds) return;
 
 		Renderer.RenderOnto(TelemetryProcessor.FindNearest(_frames, seconds), bgra, width, height);

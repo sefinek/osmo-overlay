@@ -427,15 +427,54 @@ public static class FfmpegPipeline
 
 			if (withVideo)
 			{
-				graph.Append($"{video}trim=end_frame={piece.FrameCount},setpts=PTS-STARTPTS[p{p}v];");
+				graph.Append($"{video}trim=end_frame={piece.FrameCount},setpts=PTS-STARTPTS{VideoFades(piece, num / (double)den)}[p{p}v];");
 				joined.Append($"[p{p}v]");
 			}
 
 			if (!hasAudio) continue;
 
 			string pieceSeconds = (piece.FrameCount * den / (double)num).ToString("R", CultureInfo.InvariantCulture);
-			graph.Append($"{audio}atrim=end={pieceSeconds},asetpts=PTS-STARTPTS[p{p}a];");
+			graph.Append($"{audio}atrim=end={pieceSeconds},asetpts=PTS-STARTPTS{AudioFades(piece, num / (double)den)}[p{p}a];");
 			joined.Append($"[p{p}a]");
+		}
+
+		// Overlapping transitions (xfade/acrossfade) can't go through one concat: the parts are joined one after another,
+		// each by the concat or the transition its cut asks for. Every piece's frames are exact, so the offsets are too.
+		if (plan.Pieces.Any(p => p.OverlapIn > 0))
+		{
+			string Seconds(double frames)
+			{
+				return (frames * den / num).ToString("R", CultureInfo.InvariantCulture);
+			}
+
+			string joinedVideo = "[p0v]", joinedAudio = "[p0a]";
+			long outputFrames = plan.Pieces[0].FrameCount;
+			for (int p = 1; p < plan.Pieces.Count; p++)
+			{
+				RenderPiece piece = plan.Pieces[p];
+				int overlap = piece.OverlapIn;
+				if (withVideo)
+				{
+					graph.Append(overlap > 0
+						? $"{joinedVideo}[p{p}v]xfade=transition={piece.TransitionIn!.XfadeName}:duration={Seconds(overlap)}:offset={Seconds(outputFrames - overlap)}[x{p}v];"
+						: $"{joinedVideo}[p{p}v]concat=n=2:v=1:a=0[x{p}v];");
+					joinedVideo = $"[x{p}v]";
+				}
+
+				if (hasAudio)
+				{
+					graph.Append(overlap > 0
+						? $"{joinedAudio}[p{p}a]acrossfade=d={Seconds(overlap)}:c1=tri:c2=tri[x{p}a];"
+						: $"{joinedAudio}[p{p}a]concat=n=2:v=0:a=1[x{p}a];");
+					joinedAudio = $"[x{p}a]";
+				}
+
+				outputFrames += piece.FrameCount - overlap;
+			}
+
+			if (hasAudio) graph.Append($"{joinedAudio}anull[cuta];");
+			if (withVideo) graph.Append($"{joinedVideo}setpts=N*{den}/{num}/TB,");
+			return new SourceInputs(input, graph.ToString(), hasAudio ? "[cuta]" : null, startSource!, startLocalFrame, true);
 		}
 
 		if (!withVideo)
@@ -450,6 +489,44 @@ public static class FfmpegPipeline
 		graph.Append($"{joined}concat=n={plan.Pieces.Count}:v=1:a={(hasAudio ? 1 : 0)}[cutv]{(hasAudio ? "[cuta]" : "")};" +
 		             $"[cutv]setpts=N*{den}/{num}/TB,");
 		return new SourceInputs(input, graph.ToString(), hasAudio ? "[cuta]" : null, startSource!, startLocalFrame, true);
+	}
+
+	/// <summary>
+	///     A piece's fades for the cuts around it (CutTransition), inside its own frames - the filters that follow the piece's
+	///     timestamps being rebuilt. Same curve as CutTransitionFade, which the pictures made in C# use.
+	/// </summary>
+	private static string VideoFades(RenderPiece piece, double fps)
+	{
+		var filters = new StringBuilder();
+		if (piece.TransitionIn is { Overlaps: false } fadeIn)
+			filters.Append($",fade=t=in:s=0:n={fadeIn.HalfFrames(fps, piece.FrameCount)}:color={fadeIn.ColorName}");
+		if (piece.TransitionOut is { Overlaps: false } fadeOut)
+		{
+			int n = fadeOut.HalfFrames(fps, piece.FrameCount);
+			filters.Append($",fade=t=out:s={piece.FrameCount - n}:n={n}:color={fadeOut.ColorName}");
+		}
+
+		return filters.ToString();
+	}
+
+	/// <summary>The sound fades with the picture - to silence either way, a white fade has no sound of its own.</summary>
+	private static string AudioFades(RenderPiece piece, double fps)
+	{
+		string Seconds(double frames)
+		{
+			return (frames / fps).ToString("R", CultureInfo.InvariantCulture);
+		}
+
+		var filters = new StringBuilder();
+		if (piece.TransitionIn is { Overlaps: false } fadeIn)
+			filters.Append($",afade=t=in:st=0:d={Seconds(fadeIn.HalfFrames(fps, piece.FrameCount))}");
+		if (piece.TransitionOut is { Overlaps: false } fadeOut)
+		{
+			int n = fadeOut.HalfFrames(fps, piece.FrameCount);
+			filters.Append($",afade=t=out:st={Seconds(piece.FrameCount - n)}:d={Seconds(n)}");
+		}
+
+		return filters.ToString();
 	}
 
 	private static void DeleteTempFiles(List<string> paths)

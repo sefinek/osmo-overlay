@@ -134,8 +134,7 @@ public sealed class PreviewPlayer : IDisposable
 		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix);
 		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
 				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
-				summary.ContainerRecordingStartUtc, settings.MapTileUrlTemplate, settings.MapAttribution, settings.MapShowAttribution,
-				settings.MapApiKey, routeIntro) { RouteAcrossCuts = settings.RouteAcrossCuts },
+				summary.ContainerRecordingStartUtc, MapSources.From(settings), routeIntro) { RouteAcrossCuts = settings.RouteAcrossCuts },
 			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool);
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
 			routeIntro.Enabled, reframer);
@@ -381,6 +380,20 @@ public sealed class PreviewPlayer : IDisposable
 
 		recording.Video.SetView(view);
 		if (!IsPlaying) RequestSeek(position);
+	}
+
+	/// <summary>
+	///     The shared map settings (API keys, the custom server) changed - the renderer takes them and fetches again the
+	///     tiles whose URL they changed, for the Map widget and the route overview alike.
+	/// </summary>
+	public void SetMapSources(MapSources sources)
+	{
+		if (_recording is not { } recording) return;
+
+		PublishStill(recording, recording.Compositor.Change(r => r.MapSources = sources));
+		OverlayRenderer renderer = recording.Compositor.Renderer;
+		if (renderer.NeedsMapPrepare(renderer.Layout)) StartMapWidgetPreparation(recording);
+		if (renderer.NeedsRouteIntroPrepare()) StartRouteIntroPreparation(recording);
 	}
 
 	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>

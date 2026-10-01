@@ -72,7 +72,7 @@ public sealed partial class OverlayRenderer
 			return (null, null);
 
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
-		string urlTemplate = ResolveUrlTemplate();
+		string urlTemplate = MapSources.UrlTemplate(mapElement.MapProviderId);
 		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
 		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor);
 		_preparedMapKey = key;
@@ -125,22 +125,14 @@ public sealed partial class OverlayRenderer
 		if (layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
 			return false;
 		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		MapMosaicKey key = (ResolveUrlTemplate(), mapElement.MapZoom, maxFactor);
+		MapMosaicKey key = (MapSources.UrlTemplate(mapElement.MapProviderId), mapElement.MapZoom, maxFactor);
 		return _preparedMapKey != key;
 	}
 
-	/// <summary>
-	///     The tile URL template actually used for fetching: the global MapTileUrlTemplate (or the
-	///     default source) with a literal "{api_key}" placeholder filled from the global MapApiKey - a
-	///     no-op for templates without that placeholder. Baking the key into the URL means an API key
-	///     edit alone already changes this string, so NeedsMapPrepare/BuildMapMosaicAsync's key
-	///     comparisons catch it for free. Shared by DrawMapWidget's mosaic and the route-intro overview
-	///     mosaic - both draw from the same configured tile source.
-	/// </summary>
-	private string ResolveUrlTemplate()
+	/// <summary>The route overview's counterpart of NeedsMapPrepare - its provider or a key changed since the last fetch.</summary>
+	public bool NeedsRouteIntroPrepare()
 	{
-		string template = MapTileUrlTemplate ?? MapTileFetcher.OpenStreetMapUrlTemplate;
-		return template.Replace("{api_key}", Uri.EscapeDataString(MapApiKey?.Trim() ?? ""));
+		return RouteIntro.Enabled && _preparedRouteIntroKey != MapSources.UrlTemplate(RouteIntro.MapProviderId);
 	}
 
 	/// <summary>Keeps a hand-edited or out-of-range preset value from pushing the crop/fetch math outside sane bounds.</summary>
@@ -209,19 +201,33 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(0, 0, radius, _panelFillPaint);
 		canvas.DrawCircle(0, 0, radius, _ringStroke3White160);
 
+		// Turning the dial: the trail and the marker go with it (the arrow ends up pointing up), the labels stay readable.
+		int saveCount = canvas.Save();
+		if (element.RotateWithHeading) canvas.RotateDegrees((float)-frame.HeadingDegrees);
 		SKPoint marker = DrawTrail(canvas, frame, element);
-		DrawTrailMarker(canvas, marker.X, marker.Y, frame.HeadingDegrees, element.TrailUseArrow);
+		DrawTrailMarker(canvas, marker.X, marker.Y, frame.HeadingDegrees, element);
+		canvas.RestoreToCount(saveCount);
 
-		DrawOutlined(canvas, "N", 0, -radius + 46, _labelFont, White, SKTextAlign.Center);
+		if (element.ShowNorthLabel)
+		{
+			SKPoint north = element.RotateWithHeading
+				? SKMatrix.CreateRotationDegrees((float)-frame.HeadingDegrees).MapPoint(0, -radius + 46)
+				: new SKPoint(0, -radius + 46);
+			DrawOutlined(canvas, "N", north.X, north.Y, _labelFont, White, SKTextAlign.Center);
+		}
 
-		string headingText = $"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
-		DrawOutlined(canvas, headingText, radius * 0.55f, radius * 0.7f, _labelFont, White, SKTextAlign.Right);
+		if (element.ShowHeadingText)
+		{
+			string headingText = $"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
+			DrawOutlined(canvas, headingText, radius * 0.55f, radius * 0.7f, _labelFont, White, SKTextAlign.Right);
+		}
 	}
 
 	/// <summary>
 	///     Fits the whole trail plus the current position into the dial: centered on their bounding box, not on the
 	///     current position, so a route that went off to one side fills the dial instead of half of it. The marker
-	///     therefore moves around the dial; the fit radius leaves room for the heading arrow inside the rim.
+	///     therefore moves around the dial; the fit radius leaves room for the heading arrow inside the rim. A Compass with
+	///     CenterOnPosition is centered on the current position instead - the marker stays in the middle.
 	///     Returns where the marker goes.
 	/// </summary>
 	private SKPoint DrawTrail(SKCanvas canvas, DerivedFrame frame, TrailOverlayElement element)
@@ -229,8 +235,9 @@ public sealed partial class OverlayRenderer
 		if (_trail.Count < 2) return SKPoint.Empty;
 
 		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
-		double centerEast = (Math.Min(_trailMinEast, east) + Math.Max(_trailMaxEast, east)) / 2;
-		double centerNorth = (Math.Min(_trailMinNorth, north) + Math.Max(_trailMaxNorth, north)) / 2;
+		bool centered = element is CompassElement { CenterOnPosition: true };
+		double centerEast = centered ? east : (Math.Min(_trailMinEast, east) + Math.Max(_trailMaxEast, east)) / 2;
+		double centerNorth = centered ? north : (Math.Min(_trailMinNorth, north) + Math.Max(_trailMaxNorth, north)) / 2;
 
 		double maxDistSq = Math.Max(5.0 * 5.0, DistanceSq(east, north, centerEast, centerNorth));
 		foreach (TrailPoint p in CollectionsMarshal.AsSpan(_trail))
@@ -240,7 +247,7 @@ public sealed partial class OverlayRenderer
 		// North up: local meters (y growing north) onto the dial (y growing down).
 		var toDial = SKMatrix.CreateScaleTranslation((float)scale, (float)-scale, (float)(-centerEast * scale),
 			(float)(centerNorth * scale));
-		DrawTrailRoute(canvas, _compassRoutes, null, toDial, element);
+		if (element.TrailVisible) DrawTrailRoute(canvas, _compassRoutes, null, toDial, element);
 		return new SKPoint((float)((east - centerEast) * scale), (float)(-(north - centerNorth) * scale));
 	}
 
@@ -393,20 +400,22 @@ public sealed partial class OverlayRenderer
 				: 1.0;
 			float cropRadius = radius * (float)zoomFactor;
 
+			// The circle looks the same from every angle, so the square it is cut from covers it turned too.
+			if (element.RotateWithHeading) canvas.RotateDegrees((float)-frame.HeadingDegrees);
 			var src = SKRect.Create(center.X - cropRadius, center.Y - cropRadius, cropRadius * 2, cropRadius * 2);
 			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
 			canvas.DrawImage(_mapMosaic.Image, src, dest, SKSamplingOptions.Default);
 
 			float mapScale = radius / cropRadius;
 			var toWidget = SKMatrix.CreateScaleTranslation(mapScale, mapScale, -center.X * mapScale, -center.Y * mapScale);
-			DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
+			if (element.TrailVisible) DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
 
 			canvas.Restore();
 
 			// Same marker choice/paint as the Compass (DrawTrailMarker) by default - both widgets are
 			// north-up, so "pointing in the direction of travel" means the same thing in both - but each
 			// widget's TrailUseArrow is its own independent setting, so they can be styled differently.
-			DrawTrailMarker(canvas, 0, 0, frame.HeadingDegrees, element.TrailUseArrow);
+			DrawTrailMarker(canvas, 0, 0, element.RotateWithHeading ? 0 : frame.HeadingDegrees, element);
 
 			// The required OSM attribution isn't drawn inside this small circle (unreadable over busy map
 			// tiles) - DrawFrame draws it bottom-center instead, see DrawWatermark/DrawMapAttributionOnly.
@@ -450,28 +459,30 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, a static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>
-	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, bool useArrow)
+	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, TrailOverlayElement element)
 	{
-		if (useArrow)
-			DrawHeadingArrow(canvas, cx, cy, headingDegrees);
-		else
-			DrawTrailDot(canvas, cx, cy);
-	}
+		// Only a marker with its own color needs a paint of its own - the default one is built once.
+		using SKPaint? custom = element.MarkerColor is null
+			? null
+			: new SKPaint { Color = ResolveColor(element.MarkerColor, Accent), IsAntialias = true, Style = SKPaintStyle.Fill };
+		SKPaint fill = custom ?? _dotFillAccent;
 
-	private void DrawTrailDot(SKCanvas canvas, float cx, float cy)
-	{
-		canvas.DrawCircle(cx, cy, 9, _dotOutlineBlackFill);
-		canvas.DrawCircle(cx, cy, 6, _dotFillAccent);
-	}
-
-	private void DrawHeadingArrow(SKCanvas canvas, float cx, float cy, double headingDegrees)
-	{
 		canvas.Save();
 		canvas.Translate(cx, cy);
-		// Clockwise from north, the way a heading turns on screen (y grows down).
-		canvas.RotateDegrees((float)headingDegrees);
-		canvas.DrawPath(_headingArrow, _dotFillAccent);
-		canvas.DrawPath(_headingArrow, _blackStroke3);
+		canvas.Scale(Math.Clamp(element.MarkerScale, 0.3f, 4f));
+		if (element.TrailUseArrow)
+		{
+			// Clockwise from north, the way a heading turns on screen (y grows down).
+			canvas.RotateDegrees((float)headingDegrees);
+			canvas.DrawPath(_headingArrow, fill);
+			canvas.DrawPath(_headingArrow, _blackStroke3);
+		}
+		else
+		{
+			canvas.DrawCircle(0, 0, 9, _dotOutlineBlackFill);
+			canvas.DrawCircle(0, 0, 6, fill);
+		}
+
 		canvas.Restore();
 	}
 

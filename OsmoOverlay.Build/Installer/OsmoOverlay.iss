@@ -5,6 +5,8 @@
 #define AppGuid "285212C3-78F8-4A92-AE19-52D33596D266"
 #define AppMutexName "Global\OsmoOverlay-" + AppGuid
 #define AppExeName "OsmoOverlay.exe"
+#define ProjectExt ".ovproj"
+#define ProjectProgId "OsmoOverlay.Project"
 
 [Setup]
 AppId={{{#AppGuid}}
@@ -33,6 +35,7 @@ DisableProgramGroupPage=yes
 AlwaysShowDirOnReadyPage=yes
 ShowLanguageDialog=auto
 CloseApplications=yes
+ChangesAssociations=yes
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=classic dark
@@ -85,6 +88,7 @@ polish.AppCloseFailed=Nie udało się zamknąć OsmoOverlay. Zamknij go ręcznie
 [Tasks]
 Name: "CreateDesktopIcon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Check: not IsUpdating
 Name: "CreateStartMenuIcon"; Description: "{cm:CreateStartMenuIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Check: not IsUpdating
+Name: "AssociateProjects"; Description: "{cm:AssocFileExtension,OsmoOverlay,{#ProjectExt}}"; Check: not IsUpdating
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -98,6 +102,13 @@ Name: "{autodesktop}\OsmoOverlay"; Filename: "{app}\{#AppExeName}"; Tasks: Creat
 Name: "{autoprograms}\OsmoOverlay"; Filename: "{app}\{#AppExeName}"; Check: KeepStartMenuShortcut
 Name: "{autoprograms}\OsmoOverlay"; Filename: "{app}\{#AppExeName}"; Tasks: CreateStartMenuIcon; Check: not IsUpdating
 
+[Registry]
+; The same keys as the app's Settings > Interface > Project files (ProjectFileAssociation).
+Root: HKCU; Subkey: "Software\Classes\{#ProjectExt}"; ValueType: string; ValueData: "{#ProjectProgId}"; Flags: uninsdeletekey; Check: ShouldAssociateProjects
+Root: HKCU; Subkey: "Software\Classes\{#ProjectProgId}"; ValueType: string; ValueData: "OsmoOverlay project"; Flags: uninsdeletekey; Check: ShouldAssociateProjects
+Root: HKCU; Subkey: "Software\Classes\{#ProjectProgId}\DefaultIcon"; ValueType: string; ValueData: """{app}\{#AppExeName}"",0"; Check: ShouldAssociateProjects
+Root: HKCU; Subkey: "Software\Classes\{#ProjectProgId}\shell\open\command"; ValueType: string; ValueData: """{app}\{#AppExeName}"" ""%1"""; Check: ShouldAssociateProjects
+
 [Run]
 Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,OsmoOverlay}"; Flags: nowait postinstall skipifsilent; Check: not IsUpdating
 Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"; Flags: nowait postinstall; Check: IsUpdating
@@ -106,6 +117,8 @@ Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"; Flags: nowait postinstall;
 var
   // Taken before the previous version's uninstaller runs - it deletes the shortcuts unconditionally.
   HadDesktopShortcut, HadStartMenuShortcut: Boolean;
+  // Likewise the file association - the previous version's uninstaller deletes its registry keys.
+  HadProjectAssociation: Boolean;
 
 function IsUpdating(): Boolean;
 var
@@ -128,6 +141,11 @@ end;
 function KeepStartMenuShortcut(): Boolean;
 begin
   Result := IsUpdating() and HadStartMenuShortcut;
+end;
+
+function ShouldAssociateProjects(): Boolean;
+begin
+  Result := WizardIsTaskSelected('AssociateProjects') or (IsUpdating() and HadProjectAssociation);
 end;
 
 function GetUninstallString(): String;
@@ -154,6 +172,7 @@ begin
 
   HadDesktopShortcut := FileExists(ExpandConstant('{autodesktop}\OsmoOverlay.lnk'));
   HadStartMenuShortcut := FileExists(ExpandConstant('{autoprograms}\OsmoOverlay.lnk'));
+  HadProjectAssociation := RegKeyExists(HKCU, 'Software\Classes\{#ProjectExt}');
   Result := True;
 end;
 

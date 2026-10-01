@@ -68,7 +68,7 @@ public sealed partial class OverlayRenderer
 		if (!RouteIntro.Enabled) return (null, null);
 
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
-		string urlTemplate = ResolveUrlTemplate();
+		string urlTemplate = MapSources.UrlTemplate(RouteIntro.MapProviderId);
 		_preparedRouteIntroKey = urlTemplate;
 
 		SKRect mapRect = GetRouteIntroMapRect();

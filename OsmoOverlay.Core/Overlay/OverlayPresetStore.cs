@@ -137,17 +137,29 @@ public static class OverlayPresetStore
 	{
 		try
 		{
-			OverlayPreset preset = Validate(JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath)));
-			return preset with
-			{
-				Elements = [.. preset.Elements.Select(e => e is ImageElement { ImagePath: { } path } image && !IsLocalFilePath(path) ? image with { ImagePath = null } : e)]
-			};
+			return Sanitize(JsonSerializer.Deserialize<OverlayPreset>(File.ReadAllText(filePath)));
 		}
 		catch (Exception ex)
 		{
 			AppLogger.Warn(ex, $"Failed to import overlay preset from: {filePath}");
 			return null;
 		}
+	}
+
+	/// <summary>A preset that came from outside (an import, a project file): validated, with non-local image links dropped. Throws when it can't be used.</summary>
+	public static OverlayPreset Sanitize(OverlayPreset? preset)
+	{
+		preset = Validate(preset);
+		return preset with
+		{
+			Elements = [.. preset.Elements.Select(e => e is ImageElement { ImagePath: { } path } image && !IsLocalFilePath(path) ? image with { ImagePath = null } : e)]
+		};
+	}
+
+	/// <summary>Whether two presets have the same layout, ignoring name and dates.</summary>
+	public static bool SameLayout(OverlayPreset a, OverlayPreset b)
+	{
+		return Content(a with { Name = "" }) == Content(b with { Name = "" });
 	}
 
 	/// <summary>A fully qualified path on a local drive - not UNC (\\host, //host) or a device path (\\?\, \\.\).</summary>

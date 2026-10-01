@@ -17,7 +17,8 @@ public sealed record RouteIntroSettings(
 	bool ShowCameraModel,
 	bool ShowElevationGain,
 	UnitSystem Units,
-	bool ColorBySpeed)
+	bool ColorBySpeed,
+	string? MapProviderId = null)
 {
 	public static readonly RouteIntroSettings Disabled =
 		new(false, 0, false, false, false, false, false, false, false, UnitSystem.Metric, false);
@@ -27,7 +28,8 @@ public sealed record RouteIntroSettings(
 		return new RouteIntroSettings(settings.ShowRouteIntro, settings.RouteIntroDurationSeconds,
 			settings.RouteIntroShowDistance, settings.RouteIntroShowMaxSpeed, settings.RouteIntroShowAvgSpeed,
 			settings.RouteIntroShowDate, settings.RouteIntroShowDuration, settings.RouteIntroShowCameraModel,
-			settings.RouteIntroShowElevationGain, settings.RouteIntroUnits, settings.RouteIntroColorBySpeed);
+			settings.RouteIntroShowElevationGain, settings.RouteIntroUnits, settings.RouteIntroColorBySpeed,
+			settings.RouteIntroMapProvider);
 	}
 
 	/// <summary>

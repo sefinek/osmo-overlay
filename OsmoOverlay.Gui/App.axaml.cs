@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Gui;
@@ -35,8 +36,14 @@ public class App : Application
 		};
 
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-			desktop.MainWindow = new MainWindow();
+			desktop.MainWindow = new MainWindow { StartupProject = StartupProjectFrom(desktop.Args) };
 
 		base.OnFrameworkInitializationCompleted();
+	}
+
+	/// <summary>The project file Explorer passed on double-click (the association's "%1").</summary>
+	private static string? StartupProjectFrom(string[]? args)
+	{
+		return args?.FirstOrDefault(a => a.EndsWith(OverlayProject.Extension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
 	}
 }

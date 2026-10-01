@@ -132,8 +132,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	public OverlayRenderer(int width, int height, double startAltitude, IReadOnlyList<OverlayElement> layout,
 		IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh = 0, bool showWatermark = true,
 		string? cameraModel = null, DateTime? containerRecordingStartUtc = null,
-		string? mapTileUrlTemplate = null, string? mapAttribution = null, bool mapShowAttribution = true,
-		string? mapApiKey = null, RouteIntroSettings? routeIntro = null)
+		MapSources? mapSources = null, RouteIntroSettings? routeIntro = null)
 	{
 		_width = width;
 		_height = height;
@@ -145,10 +144,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		Layout = layout;
 		ShowWatermark = showWatermark;
-		MapTileUrlTemplate = mapTileUrlTemplate;
-		MapAttribution = mapAttribution;
-		MapShowAttribution = mapShowAttribution;
-		MapApiKey = mapApiKey;
+		MapSources = mapSources ?? new MapSources();
 		RouteIntro = routeIntro ?? RouteIntroSettings.Disabled;
 
 		_hudTypeface = OverlayElementBounds.CreateHudTypeface();
@@ -212,12 +208,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// <summary>Mutable so the GUI can toggle it live from Settings without recreating the renderer.</summary>
 	public bool ShowWatermark { get; set; }
 
-	// Mutable for the same reason as ShowWatermark above - see OverlaySettings for why these are
-	// global rather than per-element.
-	public string? MapTileUrlTemplate { get; set; }
-	public string? MapAttribution { get; set; }
-	public bool MapShowAttribution { get; set; }
-	public string? MapApiKey { get; set; }
+	/// <summary>Mutable for the same reason as ShowWatermark above: a key typed in the GUI applies without a new renderer.</summary>
+	public MapSources MapSources { get; set; }
 
 	/// <summary>Mutable so the GUI can toggle/reconfigure it live from Settings without recreating the renderer.</summary>
 	public RouteIntroSettings RouteIntro { get; set; }
@@ -407,9 +399,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		string? routeIntroMapAttribution()
 		{
-			return _routeIntroMosaic is not null && MapShowAttribution
-				? MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution
-				: null;
+			return _routeIntroMosaic is not null ? MapSources.Attribution(RouteIntro.MapProviderId) : null;
 		}
 
 		string? mapAttribution;
@@ -473,7 +463,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 			int saveCount = BeginElement(canvas, element, state);
 			DrawElement(canvas, element, frame);
-			if (element is MapWidgetElement && MapShowAttribution) mapAttribution = MapAttribution ?? MapTileFetcher.OpenStreetMapAttribution;
+			if (element is MapWidgetElement map) mapAttribution = MapSources.Attribution(map.MapProviderId) ?? mapAttribution;
 			canvas.RestoreToCount(saveCount);
 		}
 
@@ -557,6 +547,14 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// </summary>
 	public SKRect? MeasureElement(OverlayElement element, DerivedFrame frame)
 	{
+		// A round widget is always its disc plus the ring's half stroke. Drawing it to measure it would rasterize the whole map
+		// (and advance the dynamic zoom's smoothing) on every pointer move.
+		const float ringHalfStroke = 1.5f;
+		if (element is MapWidgetElement) return SKRect.Create(-OverlayElementBounds.MapRadius - ringHalfStroke, -OverlayElementBounds.MapRadius - ringHalfStroke,
+			(OverlayElementBounds.MapRadius + ringHalfStroke) * 2, (OverlayElementBounds.MapRadius + ringHalfStroke) * 2);
+		if (element is CompassElement) return SKRect.Create(-OverlayElementBounds.CompassRadius - ringHalfStroke, -OverlayElementBounds.CompassRadius - ringHalfStroke,
+			(OverlayElementBounds.CompassRadius + ringHalfStroke) * 2, (OverlayElementBounds.CompassRadius + ringHalfStroke) * 2);
+
 		using var recorder = new SKPictureRecorder();
 		SKCanvas canvas = recorder.BeginRecording(MeasureArea, true);
 		_measuring = true;

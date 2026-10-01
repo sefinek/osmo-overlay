@@ -13,13 +13,12 @@ namespace OsmoOverlay.Core.Overlay;
 ///     interpolates between two already-real, already-known fixes (never extrapolates into unknown
 ///     territory), and MapWidget - the widget it benefits most - is itself on by default, so most
 ///     renders would otherwise ship with the jumpier trail nobody actually prefers.
-///     Map* is the tile source shared by every map-based widget (MapWidget, the route-intro
-///     overview) - one place to set it instead of a per-widget field, so it can't drift between
-///     widgets. Defaults to satellite imagery since it reads better than a street map alongside the
-///     rest of the HUD. MapShowAttribution should normally stay on - most tile providers require
-///     visible credit wherever the map is shown, and turning it off moves that responsibility onto
-///     the user. MapApiKey fills a literal "{api_key}" placeholder for providers that need one (e.g.
-///     CARTO), and is a no-op otherwise.
+///     Which tile server a map uses is picked per consumer (MapWidgetElement.MapProviderId, RouteIntroMapProvider) from the
+///     one list in MapProviders; what they share is kept here once, so it is the same wherever it's edited: MapApiKeys
+///     (one key per MapProvider.KeyGroup, filling a literal "{api_key}" in the URL) and the custom provider's
+///     CustomMapUrlTemplate/CustomMapAttribution. Defaults to satellite imagery since it reads better than a street map
+///     alongside the rest of the HUD. Most providers require visible credit wherever the map is shown - MapShowAttribution
+///     (one switch for every map) should normally stay on; turning it off moves that responsibility onto the user.
 ///     RouteIntro* configures the optional fullscreen "whole route" card shown for the first
 ///     RouteIntroDurationSeconds of the render - on by default, same as MapWidget, even though it
 ///     also needs network access to fetch map tiles. The RouteIntroShow* flags let the user pick which stats
@@ -35,10 +34,11 @@ public sealed record OverlaySettings(
 	// scrub/playback responsiveness. Does not affect the exported render, which always uses the
 	// source's full resolution regardless of this setting.
 	int PreviewMaxWidth = 1280,
-	string? MapTileUrlTemplate = MapTileFetcher.SatelliteUrlTemplate,
-	string? MapAttribution = MapTileFetcher.SatelliteAttribution,
+	Dictionary<string, string>? MapApiKeys = null,
+	string? CustomMapUrlTemplate = null,
+	string? CustomMapAttribution = null,
+	string? RouteIntroMapProvider = null,
 	bool MapShowAttribution = true,
-	string? MapApiKey = null,
 	bool ShowRouteIntro = true,
 	double RouteIntroDurationSeconds = 12.0,
 	bool RouteIntroShowDistance = true,
