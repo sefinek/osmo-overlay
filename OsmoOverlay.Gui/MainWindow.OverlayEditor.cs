@@ -61,6 +61,9 @@ public partial class MainWindow
 	private static readonly DataFormat<string> WidgetDragFormat =
 		DataFormat.CreateInProcessFormat<string>("OsmoOverlay.OverlayElementType");
 
+	private const double DragDropThreshold = 4;
+	private (OverlayElementType Type, PointerPressedEventArgs Pressed)? _widgetDragStart;
+
 	// FirstOrDefault, not First: there's a narrow window right after picking a file where
 	// _summary is already set but LoadOverlayPresets (an earlier await) hasn't finished yet, so a
 	// pointer click on the drag canvas in that gap must not crash on an empty/stale preset list.
@@ -1665,15 +1668,39 @@ public partial class MainWindow
 
 	/// <summary>
 	///     Starts an OS-level drag from a palette row - the counterpart to OnOverlayCanvasDrop,
-	///     which turns the drop into a brand-new widget instance (see AddElementInstance).
+	///     which turns the drop into a brand-new widget instance (see AddElementInstance). Only once the pointer
+	///     has moved past the system drag threshold with the left button held: a bare click must not open a drag
+	///     session, whose ghost image can be left on screen.
 	/// </summary>
-	private async void OnWidgetItemPointerPressed(object? sender, PointerPressedEventArgs e)
+	private void OnWidgetItemPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
 		if (sender is not Border { Tag: OverlayElementType type } item || !item.IsEnabled) return;
+		if (!e.GetCurrentPoint(item).Properties.IsLeftButtonPressed) return;
 
+		_widgetDragStart = (type, e);
+	}
+
+	private async void OnWidgetItemPointerMoved(object? sender, PointerEventArgs e)
+	{
+		if (_widgetDragStart is not var (type, pressed) || sender is not Border item) return;
+		if (!e.GetCurrentPoint(item).Properties.IsLeftButtonPressed)
+		{
+			_widgetDragStart = null;
+			return;
+		}
+
+		Point delta = e.GetPosition(item) - pressed.GetPosition(item);
+		if (Math.Abs(delta.X) < DragDropThreshold && Math.Abs(delta.Y) < DragDropThreshold) return;
+
+		_widgetDragStart = null;
 		var data = new DataTransfer();
 		data.Add(DataTransferItem.Create(WidgetDragFormat, type.ToString()));
-		await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move);
+		await DragDrop.DoDragDropAsync(pressed, data, DragDropEffects.Move);
+	}
+
+	private void OnWidgetItemPointerEnded(object? sender, RoutedEventArgs e)
+	{
+		_widgetDragStart = null;
 	}
 
 	private bool CanAcceptWidgetDrop(DragEventArgs e, out OverlayElementType type)

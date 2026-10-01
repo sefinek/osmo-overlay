@@ -45,6 +45,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const int MaxThumbnailBitmaps = 240;
 	private const double MinMajorTickPixels = 90;
 	private const double MaxPixelsPerFrame = 24;
+	private const double WheelSeekSeconds = 5;
+	private static readonly TimeSpan WheelScrubIdle = TimeSpan.FromMilliseconds(200);
+	private DispatcherTimer? _wheelScrubTimer;
 	private const double WheelZoomStep = 1.25;
 	private const double EdgeGrabPixels = 5;
 	private const double SnapPixels = 6;
@@ -666,7 +669,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
 	{
 		base.OnPointerWheelChanged(e);
-		if (Wheel(e.GetPosition(this).X, e.Delta, e.KeyModifiers)) e.Handled = true;
+		if (Wheel(e.GetPosition(this).X, e.Delta, e.KeyModifiers) || SeekByWheel(e.Delta.Y)) e.Handled = true;
 	}
 
 	/// <summary>
@@ -690,6 +693,33 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			SetView(zoom, anchor - x / (FitPixelsPerSecond * zoom));
 		}
 
+		return true;
+	}
+
+	/// <summary>
+	///     The compact timeline has no zoom, so the wheel steps the playhead: up forward, down back. A burst of ticks is one
+	///     scrub (ScrubStarted ... ScrubEnded after a pause): playback stops for it, so its frames don't pull the playhead
+	///     back between the ticks.
+	/// </summary>
+	private bool SeekByWheel(double deltaY)
+	{
+		if (_expanded || !IsEnabled || deltaY == 0) return false;
+
+		if (_wheelScrubTimer is null)
+		{
+			_wheelScrubTimer = new DispatcherTimer { Interval = WheelScrubIdle };
+			_wheelScrubTimer.Tick += (_, _) =>
+			{
+				_wheelScrubTimer.Stop();
+				ScrubEnded?.Invoke();
+			};
+		}
+
+		if (!_wheelScrubTimer.IsEnabled) ScrubStarted?.Invoke();
+		_wheelScrubTimer.Stop();
+		_wheelScrubTimer.Start();
+
+		Value = Math.Clamp(Value + Math.Sign(deltaY) * WheelSeekSeconds, Minimum, Maximum);
 		return true;
 	}
 

@@ -64,7 +64,9 @@ public partial class MainWindow
 	private void ApplyAudio()
 	{
 		_previewPlayer.SetAudioVolume(_audioVolume, _audioMuted);
-		MuteIcon.Data = _audioMuted || _audioVolume <= 0 ? Icons.VolumeMuted : Icons.Volume;
+		bool silent = _audioMuted || _audioVolume <= 0;
+		MuteIcon.Data = silent ? Icons.VolumeMuted : Icons.Volume;
+		MuteSlash.IsVisible = silent;
 		ToolTip.SetTip(MuteButton, _audioMuted ? "Unmute (M)" : "Mute (M)");
 	}
 

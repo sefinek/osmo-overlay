@@ -163,6 +163,16 @@
 		<Style Selector="Button.previewToolButton.active /template/ ContentPresenter">
 			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
 		</Style>
+		<Style Selector="Slider.compact">
+			<Style.Resources>
+				<x:Double x:Key="SliderHorizontalThumbWidth">12</x:Double>
+				<x:Double x:Key="SliderHorizontalThumbHeight">12</x:Double>
+				<CornerRadius x:Key="SliderThumbCornerRadius">6</CornerRadius>
+				<GridLength x:Key="SliderPreContentMargin">*</GridLength>
+				<GridLength x:Key="SliderPostContentMargin">*</GridLength>
+				<x:Double x:Key="SliderHorizontalHeight">28</x:Double>
+			</Style.Resources>
+		</Style>
 		<Style Selector="StackPanel.settingsFlyout">
 			<Setter Property="Spacing" Value="8" />
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -795,15 +805,18 @@
 								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
 							</Button>
 						</StackPanel>
-						<Grid Name="AudioPanel" ColumnDefinitions="Auto,Auto" ColumnSpacing="6" HorizontalAlignment="Right" IsEnabled="False"
-						      ToolTip.ShowOnDisabled="True">
-							<Button Grid.Column="0" Name="MuteButton" Classes="previewToolButton" VerticalAlignment="Center" Click="OnMuteClick"
+						<StackPanel Name="AudioPanel" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center"
+						            IsEnabled="False" ToolTip.ShowOnDisabled="True">
+							<Button Name="MuteButton" Classes="previewToolButton" VerticalAlignment="Center" Click="OnMuteClick"
 							        ToolTip.Tip="Unmute (M)">
-								<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" Width="14" Height="14" />
+								<Panel Width="14" Height="14">
+									<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" />
+									<local:IconView Name="MuteSlash" Data="{StaticResource IconMuteSlash}" Foreground="{StaticResource DangerHoverBrush}" />
+								</Panel>
 							</Button>
-							<Slider Grid.Column="1" Name="VolumeSlider" Minimum="0" Maximum="1" Width="90" Height="32" MinHeight="0" VerticalAlignment="Center"
+							<Slider Name="VolumeSlider" Classes="compact" Minimum="0" Maximum="1" Width="90" VerticalAlignment="Center"
 							        ValueChanged="OnVolumeChanged" ToolTip.Tip="Preview volume" />
-						</Grid>
+						</StackPanel>
 					</Grid>
 					<Border Grid.Row="1" Name="PreviewFullscreenNotice" Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6"
 					        IsVisible="False">
@@ -995,7 +1008,8 @@
 									<Grid ColumnDefinitions="*,Auto,Auto">
 										<Border Grid.Column="0" Name="DateTimeListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.DateTimeText}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<Grid ColumnDefinitions="*,Auto">
 												<TextBlock Classes="overlayListItemText" Text="Date &amp; time" />
 												<Border Grid.Column="1" Name="DateTimeFallbackWarningIcon" Classes="fallbackWarning" IsVisible="False">
@@ -1024,7 +1038,8 @@
 									<Grid ColumnDefinitions="*,Auto,Auto">
 										<Border Grid.Column="0" Name="UtcTimeListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.UtcTimeText}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<Grid ColumnDefinitions="*,Auto">
 												<TextBlock Classes="overlayListItemText" Text="UTC time" />
 												<Border Grid.Column="1" Name="UtcTimeFallbackWarningIcon" Classes="fallbackWarning" IsVisible="False">
@@ -1053,7 +1068,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="CameraInfoListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.CameraInfo}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Camera info" />
 										</Border>
 										<Border Name="CameraInfoSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1074,7 +1090,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="CompassListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.Compass}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Compass" />
 										</Border>
 										<Border Name="CompassSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1111,7 +1128,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="MapListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.MapWidget}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Map" />
 										</Border>
 										<Border Name="MapSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1187,7 +1205,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="SpeedListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.SpeedGauge}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Speed gauge" />
 										</Border>
 										<Border Name="SpeedSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1211,7 +1230,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="RollListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.RollGauge}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Roll gauge" />
 										</Border>
 										<Border Name="RollSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1229,7 +1249,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="PitchListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.PitchGauge}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Pitch gauge" />
 										</Border>
 										<Border Name="PitchSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1247,7 +1268,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="SunListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.SunWidget}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Sun / G-force" />
 										</Border>
 										<Border Name="SunSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1263,7 +1285,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="GMeterListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.GMeter}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="G-meter" />
 										</Border>
 										<Border Name="GMeterSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1287,7 +1310,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="ElapsedTimeListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.ElapsedTimeText}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Elapsed time" />
 										</Border>
 										<Border Name="ElapsedTimeSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1309,7 +1333,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="CameraModelListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.CameraModelText}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Camera model" />
 										</Border>
 										<Border Name="CameraModelSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1325,7 +1350,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="TripProgressBarListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.TripProgressBar}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Trip progress bar" />
 										</Border>
 										<Border Name="TripProgressBarSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1356,7 +1382,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="ProfileChartListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.ProfileChart}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Elevation / speed chart" />
 										</Border>
 										<Border Name="ProfileChartSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1400,7 +1427,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="TripStatListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.TripStat}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Trip statistic" />
 										</Border>
 										<Border Name="TripStatSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1432,7 +1460,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="ElevationListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.Elevation}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Elevation" />
 										</Border>
 										<Border Name="ElevationSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1469,7 +1498,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="GradientListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.Gradient}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Gradient" />
 										</Border>
 										<Border Name="GradientSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1490,7 +1520,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="DistanceListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.Distance}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Total distance" />
 										</Border>
 										<Border Name="DistanceSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1518,7 +1549,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="TextListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.Text}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Text" />
 										</Border>
 										<Border Name="TextSettingsPanel" Grid.Column="1" IsVisible="False">
@@ -1539,7 +1571,8 @@
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="ImageListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.Image}"
-										        PointerPressed="OnWidgetItemPointerPressed">
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 											<TextBlock Classes="overlayListItemText" Text="Image / logo" />
 										</Border>
 										<Border Name="ImageSettingsPanel" Grid.Column="1" IsVisible="False">
