@@ -99,11 +99,31 @@ public partial class MainWindow
 	/// <summary>The last reading while the native window still exists - once closed, Position reads (0, 0).</summary>
 	protected override void OnClosing(WindowClosingEventArgs e)
 	{
+		// Before base: its Closing event sets _closing from e.Cancel.
+		if (_phase == UiPhase.Rendering && !_closeConfirmed && OverlaySettingsStore.Load().ConfirmCloseWhileRendering)
+		{
+			e.Cancel = true;
+			_ = ConfirmCloseDuringRenderAsync();
+		}
+
 		base.OnClosing(e);
 		if (e.Cancel) return;
 
 		UpdatePlacement();
 		_placementFinal = true;
+	}
+
+	private bool _closeConfirmed;
+
+	private async Task ConfirmCloseDuringRenderAsync()
+	{
+		bool close = await ConfirmDialog.AskAsync(this, "Render in progress",
+			"Closing OsmoOverlay now ends the render and leaves a partial file.", "Close and cancel", DialogKind.Warning);
+		if (!close) return;
+
+		_closeConfirmed = true;
+		_cts?.Cancel();
+		Close();
 	}
 
 	/// <summary>Saved even with the setting off - it only decides whether the placement is used at startup.</summary>

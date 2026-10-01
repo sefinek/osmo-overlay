@@ -87,6 +87,7 @@ Shared settings (framework, company, `Version` - the one place to bump it, outpu
 - Seeks: latest wins; keyframe while dragging, exact on release. Cancellation is a cooperative `null`, not an exception.
 - `PreviewFrames.IndexAt` is the one rule for "which frame is on screen", shared by the decoder and the GUI's `CurrentFrame()`.
 - Full screen preview (`MainWindow.PreviewFullscreen.cs`): the viewport (`PreviewViewport`) is moved into a window and back, never mirrored - a played frame goes to exactly one `VideoView`, and a `VideoView` starts empty when attached, so playback pauses for the move and the frame is shown again after it. The monitor is `OverlaySettings.PreviewMonitor` (`MonitorChoice`).
+- Second screen (`MainWindow.SecondScreen.cs`, F9, `OverlaySettings.SecondScreenEnabled`): a `SecondScreenWindow` shows the log (every line goes through `AppendLog`/`AppendLogLine`/`ClearLogPanels`, which feed both panels) and takes the viewport while the preview plays, the same move as the full screen's, so `_movingViewport` keeps the pause/restart of a move from starting another one. Never together with the full screen preview.
 - In the GUI the overlay element list is **copy-on-write** (`ReplaceActiveElements`) because the compose thread may be enumerating it. Dragging an element pauses playback.
 
 ## Render

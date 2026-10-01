@@ -39,6 +39,15 @@ public partial class SettingsWindow : Window
 		new("200%", 2.0)
 	];
 
+	private static readonly List<ChoiceOption<int>> AutoSaveOptions =
+	[
+		new("Off (default)", 0),
+		new("Every minute", 1),
+		new("Every 2 minutes", 2),
+		new("Every 5 minutes", 5),
+		new("Every 10 minutes", 10)
+	];
+
 	/// <summary>Whether the main window is rendering - an FFmpeg update that restarts the app is held off until it isn't.</summary>
 	public Func<bool> IsRendering { get; init; } = () => false;
 
@@ -49,6 +58,7 @@ public partial class SettingsWindow : Window
 		BitrateCombo.ItemsSource = BitrateOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
 		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
+		AutoSaveCombo.ItemsSource = AutoSaveOptions;
 
 		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
 		AppVersionText.Text = $"OsmoOverlay v{appVersion}";
@@ -107,6 +117,12 @@ public partial class SettingsWindow : Window
 		RestoreWindowPlacementCheck.IsChecked = settings.RestoreWindowPlacement;
 		LayerRowsBox.Value = Math.Clamp(settings.LayerRowsVisible, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks);
 		LoadPreviewMonitors(settings.PreviewMonitor);
+		LoadSecondScreenMonitors(settings.SecondScreenMonitor);
+		SecondScreenCheck.IsChecked = settings.SecondScreenEnabled;
+		ReopenLastProjectCheck.IsChecked = settings.ReopenLastProject;
+		AutoSaveCombo.SelectedItem = AutoSaveOptions.FirstOrDefault(o => o.Value == settings.AutoSaveMinutes) ?? AutoSaveOptions[0];
+		LoopByDefaultCheck.IsChecked = settings.LoopByDefault;
+		ConfirmCloseWhileRenderingCheck.IsChecked = settings.ConfirmCloseWhileRendering;
 		ProjectFilesGroup.IsVisible = ProjectFileAssociation.IsSupported;
 		ShowProjectAssociation();
 	}
@@ -118,6 +134,14 @@ public partial class SettingsWindow : Window
 		options.AddRange(Screens.All.Select((screen, index) => new ChoiceOption<string?>(MonitorChoice.Describe(screen, index), MonitorChoice.KeyOf(screen))));
 		PreviewMonitorCombo.ItemsSource = options;
 		PreviewMonitorCombo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
+	}
+
+	private void LoadSecondScreenMonitors(string? chosen)
+	{
+		List<ChoiceOption<string?>> options = [new("First screen other than the main window's (default)", null)];
+		options.AddRange(Screens.All.Select((screen, index) => new ChoiceOption<string?>(MonitorChoice.Describe(screen, index), MonitorChoice.KeyOf(screen))));
+		SecondScreenMonitorCombo.ItemsSource = options;
+		SecondScreenMonitorCombo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
 	}
 
 	private void OnTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
@@ -178,6 +202,12 @@ public partial class SettingsWindow : Window
 			PreviewTimeFormat = (TimeFormatCombo.SelectedItem as ChoiceOption<PreviewTimeFormat> ?? PreviewTimeFormats.Options[0]).Value.ToString(),
 			RestoreWindowPlacement = RestoreWindowPlacementCheck.IsChecked == true,
 			PreviewMonitor = (PreviewMonitorCombo.SelectedItem as ChoiceOption<string?>)?.Value,
+			SecondScreenEnabled = SecondScreenCheck.IsChecked == true,
+			SecondScreenMonitor = (SecondScreenMonitorCombo.SelectedItem as ChoiceOption<string?>)?.Value,
+			ReopenLastProject = ReopenLastProjectCheck.IsChecked == true,
+			AutoSaveMinutes = (AutoSaveCombo.SelectedItem as ChoiceOption<int> ?? AutoSaveOptions[0]).Value,
+			LoopByDefault = LoopByDefaultCheck.IsChecked == true,
+			ConfirmCloseWhileRendering = ConfirmCloseWhileRenderingCheck.IsChecked == true,
 			LayerRowsVisible = Math.Clamp((int)(LayerRowsBox.Value ?? LayerTimeline.DefaultVisibleTracks), LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks)
 		};
 	}
@@ -217,15 +247,16 @@ public partial class SettingsWindow : Window
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (RenderingPanel is null || RouteIntroPanel is null || InterfacePanel is null || AboutPanel is null)
+		if (RenderingPanel is null || RouteIntroPanel is null || InterfacePanel is null || BehaviorPanel is null || AboutPanel is null)
 			return;
 
 		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 0;
 		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 1;
 		InterfacePanel.IsVisible = CategoryList.SelectedIndex == 2;
-		AboutPanel.IsVisible = CategoryList.SelectedIndex == 3;
+		BehaviorPanel.IsVisible = CategoryList.SelectedIndex == 3;
+		AboutPanel.IsVisible = CategoryList.SelectedIndex == 4;
 
-		if (CategoryList.SelectedIndex == 3 && !_updatesShown)
+		if (CategoryList.SelectedIndex == 4 && !_updatesShown)
 		{
 			_updatesShown = true;
 			_ = ShowUpdatesAsync(UpdateChecks.Latest);

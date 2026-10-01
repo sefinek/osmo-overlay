@@ -283,6 +283,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_routeStrokePaint.Dispose();
 		_routeDashPaint.Dispose();
 		_alphaPaint.Dispose();
+		_shadowPaint.Dispose();
 		_headingArrow.Dispose();
 		foreach (SKPathEffect effect in _dashEffects.Values) effect.Dispose();
 		DisposeRoutes(_compassRoutes);

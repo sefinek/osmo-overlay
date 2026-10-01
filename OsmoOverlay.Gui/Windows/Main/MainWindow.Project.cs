@@ -41,6 +41,19 @@ public partial class MainWindow
 		else await SaveProjectAsync(_projectPath);
 	}
 
+	/// <summary>Ctrl+S saves to the project's file (the Save as dialog while it has none), Ctrl+Shift+S always asks where.</summary>
+	private async void SaveProjectFromShortcut(bool saveAs)
+	{
+		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering)
+		{
+			AppendLog("Can't save the project while a recording is loading or rendering.", LogLevel.Warn);
+			return;
+		}
+
+		if (saveAs || _projectPath is null) await SaveProjectAsAsync();
+		else await SaveProjectAsync(_projectPath);
+	}
+
 	private async void OnSaveProjectAsClick(object? sender, RoutedEventArgs e)
 	{
 		await SaveProjectAsAsync();
@@ -225,5 +238,6 @@ public partial class MainWindow
 	{
 		_projectPath = path;
 		Title = $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}";
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { LastProject = path });
 	}
 }

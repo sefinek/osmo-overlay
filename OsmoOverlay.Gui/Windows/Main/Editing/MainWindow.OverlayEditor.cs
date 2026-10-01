@@ -569,6 +569,21 @@ public partial class MainWindow
 		});
 	}
 
+	private void OnElementShadowChanged(ElementShadow shadow)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		UpdateElement(id, el => el with
+		{
+			ShadowEnabled = shadow.Enabled,
+			ShadowColor = shadow.Color,
+			ShadowOpacity = Math.Clamp(shadow.Opacity, 0f, 1f),
+			ShadowBlur = Math.Clamp(shadow.Blur, 0f, OverlayRenderer.ShadowBlurMax),
+			ShadowOffsetX = Math.Clamp(shadow.OffsetX, -OverlayRenderer.ShadowOffsetMax, OverlayRenderer.ShadowOffsetMax),
+			ShadowOffsetY = Math.Clamp(shadow.OffsetY, -OverlayRenderer.ShadowOffsetMax, OverlayRenderer.ShadowOffsetMax)
+		});
+	}
+
 	/// <summary>
 	///     Populates one widget instance's settings panel and swaps the left column over to show it (in
 	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings. Not a
@@ -634,6 +649,7 @@ public partial class MainWindow
 				DateTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == x.Locale) ?? LocaleOptions[0];
 				DateTimeStyle.Populate(x);
 				DateTimeTiming.Populate(x);
+				DateTimeShadow.Populate(x);
 				break;
 			}
 
@@ -644,6 +660,7 @@ public partial class MainWindow
 				UtcTimeLocaleCombo.SelectedItem = LocaleOptions.FirstOrDefault(o => o.CultureName == x.Locale) ?? LocaleOptions[0];
 				UtcTimeStyle.Populate(x);
 				UtcTimeTiming.Populate(x);
+				UtcTimeShadow.Populate(x);
 				break;
 			}
 
@@ -656,6 +673,7 @@ public partial class MainWindow
 				ElevationSeaLevelRadio.IsChecked = x.Reference == ElevationReference.SeaLevel;
 				ElevationStyle.Populate(x);
 				ElevationTiming.Populate(x);
+				ElevationShadow.Populate(x);
 				break;
 			}
 
@@ -665,6 +683,7 @@ public partial class MainWindow
 				GradientLabelBox.Text = x.Label ?? DefaultGradientLabel;
 				GradientStyle.Populate(x);
 				GradientTiming.Populate(x);
+				GradientShadow.Populate(x);
 				break;
 			}
 
@@ -675,6 +694,7 @@ public partial class MainWindow
 				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, x.Units);
 				DistanceStyle.Populate(x);
 				DistanceTiming.Populate(x);
+				DistanceShadow.Populate(x);
 				break;
 			}
 
@@ -684,6 +704,7 @@ public partial class MainWindow
 				CameraInfoLabelBox.Text = x.Label ?? DefaultCameraInfoLabel;
 				CameraInfoStyle.Populate(x);
 				CameraInfoTiming.Populate(x);
+				CameraInfoShadow.Populate(x);
 				break;
 			}
 
@@ -697,6 +718,7 @@ public partial class MainWindow
 				CompassTrail.Populate(x);
 				CompassMarker.Populate(x);
 				CompassTiming.Populate(x);
+				CompassShadow.Populate(x);
 				break;
 			}
 
@@ -705,6 +727,7 @@ public partial class MainWindow
 				var x = (SunWidgetElement)el;
 				SunStyle.Populate(x);
 				SunTiming.Populate(x);
+				SunShadow.Populate(x);
 				break;
 			}
 
@@ -713,6 +736,7 @@ public partial class MainWindow
 				var x = (RollGaugeElement)el;
 				RollStyle.Populate(x);
 				RollTiming.Populate(x);
+				RollShadow.Populate(x);
 				break;
 			}
 
@@ -721,6 +745,7 @@ public partial class MainWindow
 				var x = (PitchGaugeElement)el;
 				PitchStyle.Populate(x);
 				PitchTiming.Populate(x);
+				PitchShadow.Populate(x);
 				break;
 			}
 
@@ -730,6 +755,7 @@ public partial class MainWindow
 				GMeterFullScaleBox.Value = (decimal)x.GMeterFullScaleG;
 				GMeterStyle.Populate(x);
 				GMeterTiming.Populate(x);
+				GMeterShadow.Populate(x);
 				break;
 			}
 
@@ -742,6 +768,7 @@ public partial class MainWindow
 				SpeedThemeRingRadio.IsChecked = x.Theme == SpeedGaugeTheme.Ring;
 				SpeedStyle.Populate(x);
 				SpeedTiming.Populate(x);
+				SpeedShadow.Populate(x);
 				break;
 			}
 
@@ -759,6 +786,7 @@ public partial class MainWindow
 				MapTrail.Populate(x);
 				MapMarker.Populate(x);
 				MapTiming.Populate(x);
+				MapShadow.Populate(x);
 				break;
 			}
 
@@ -768,6 +796,7 @@ public partial class MainWindow
 				ElapsedTimeLabelBox.Text = x.Label;
 				ElapsedTimeStyle.Populate(x);
 				ElapsedTimeTiming.Populate(x);
+				ElapsedTimeShadow.Populate(x);
 				break;
 			}
 
@@ -776,6 +805,7 @@ public partial class MainWindow
 				var x = (CameraModelTextElement)el;
 				CameraModelStyle.Populate(x);
 				CameraModelTiming.Populate(x);
+				CameraModelShadow.Populate(x);
 				break;
 			}
 
@@ -786,6 +816,7 @@ public partial class MainWindow
 				TripProgressToleranceBox.Value = (decimal)x.TripArrivedToleranceMeters;
 				TripProgressLabelBox.Text = x.TripArrivedLabel;
 				TripProgressBarTiming.Populate(x);
+				TripProgressBarShadow.Populate(x);
 				break;
 			}
 
@@ -801,6 +832,7 @@ public partial class MainWindow
 				SetUnitsRadio(ProfileMetricRadio, ProfileImperialRadio, x.Units);
 				ProfileChartStyle.Populate(x);
 				ProfileChartTiming.Populate(x);
+				ProfileChartShadow.Populate(x);
 				break;
 			}
 
@@ -813,6 +845,7 @@ public partial class MainWindow
 				SetUnitsRadio(TripStatMetricRadio, TripStatImperialRadio, x.Units);
 				TripStatStyle.Populate(x);
 				TripStatTiming.Populate(x);
+				TripStatShadow.Populate(x);
 				break;
 			}
 
@@ -822,6 +855,7 @@ public partial class MainWindow
 				TextContentBox.Text = x.Text;
 				TextStyle.Populate(x);
 				TextTiming.Populate(x);
+				TextShadow.Populate(x);
 				break;
 			}
 
@@ -831,6 +865,7 @@ public partial class MainWindow
 				ShowImagePath(x.ImagePath);
 				ImageOpacityBox.Value = (decimal)Math.Round(x.Opacity * 100);
 				ImageTiming.Populate(x);
+				ImageShadow.Populate(x);
 				break;
 			}
 		}

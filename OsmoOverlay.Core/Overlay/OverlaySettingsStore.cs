@@ -91,7 +91,20 @@ public sealed record OverlaySettings(
 	// How many layer tracks the expanded timeline shows before the list scrolls (the GUI clamps it to its own range).
 	int LayerRowsVisible = 4,
 	// The monitor the full screen preview opens on - the GUI's MonitorChoice.KeyOf; null = the one the main window is on.
-	string? PreviewMonitor = null);
+	string? PreviewMonitor = null,
+	// A window on another monitor showing the log, and the preview while it plays (the GUI's SecondScreenWindow).
+	// SecondScreenMonitor null = the first screen the main window isn't on.
+	bool SecondScreenEnabled = false,
+	string? SecondScreenMonitor = null,
+	// Startup: the project last saved or opened comes back, unless the app was started with one.
+	bool ReopenLastProject = false,
+	string? LastProject = null,
+	// A backup copy of the open project every this many minutes (0 = off), kept apart from the project's own file.
+	int AutoSaveMinutes = 0,
+	// Playback loops from the start of a session (the toolbar's Loop button still toggles it).
+	bool LoopByDefault = false,
+	// Closing the window mid-render asks first.
+	bool ConfirmCloseWhileRendering = true);
 
 /// <summary>
 ///     The main window's last normal (not maximized) bounds and whether it was maximized. X/Y are the window's position

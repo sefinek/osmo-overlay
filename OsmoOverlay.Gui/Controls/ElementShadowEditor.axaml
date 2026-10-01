@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="OsmoOverlay.Gui.ElementShadowEditor">
+
+	<StackPanel Spacing="8">
+		<CheckBox Name="EnabledCheck" Content="Drop shadow" />
+		<StackPanel Name="OptionsPanel" Spacing="8">
+			<TextBlock Text="Color" Classes="infoLabel" Margin="0" />
+			<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+				<Border Grid.Column="0" Name="ColorPreview" Width="20" Height="20"
+				        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
+				<TextBox Grid.Column="1" Name="ColorBox" PlaceholderText="#000000" />
+			</Grid>
+			<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+				<StackPanel Grid.Column="0" Spacing="8">
+					<TextBlock Text="Opacity (%)" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="OpacityBox" Minimum="0" Maximum="100" Increment="5" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+				<StackPanel Grid.Column="1" Spacing="8">
+					<TextBlock Text="Blur" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="BlurBox" Minimum="0" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+			</Grid>
+			<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+				<StackPanel Grid.Column="0" Spacing="8">
+					<TextBlock Text="Offset X" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="OffsetXBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+				<StackPanel Grid.Column="1" Spacing="8">
+					<TextBlock Text="Offset Y" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="OffsetYBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+			</Grid>
+		</StackPanel>
+	</StackPanel>
+</UserControl>

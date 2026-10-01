@@ -100,6 +100,7 @@ public partial class MainWindow
 	{
 		PreviewVideo.StartPlayback(_previewPlayer.Frames);
 		ResetPlaybackFps();
+		OnSecondScreenPlaybackStarted();
 	}
 
 	private void ShowPreviewPosition(TimeSpan position)
@@ -125,6 +126,7 @@ public partial class MainWindow
 		UpdatePreviewTimeText();
 		ResetPlaybackFps();
 		QueueAutoQuality();
+		OnSecondScreenPlaybackStopped();
 	}
 
 	// Width-based (not "720p" height labels): _previewMaxWidth caps the preview by width (OpenPreviewAsync), and a

@@ -59,6 +59,7 @@
 					<ListBoxItem Content="Rendering" />
 					<ListBoxItem Content="Route intro" />
 					<ListBoxItem Content="Interface" />
+					<ListBoxItem Content="Behavior" />
 					<ListBoxItem Content="About" />
 				</ListBox>
 			</Border>
@@ -221,25 +222,31 @@
 						</StackPanel>
 
 						<StackPanel Spacing="6">
-							<TextBlock Text="Full screen preview" Classes="infoLabel" />
-							<ComboBox Name="PreviewMonitorCombo" HorizontalAlignment="Stretch" />
-							<TextBlock Classes="hint"
-							           Text="The monitor the preview's full screen button (F11) opens on - handy for judging the overlay on a second display. Esc leaves it." />
-						</StackPanel>
-
-						<StackPanel Spacing="6">
 							<TextBlock Text="Layer rows" Classes="infoLabel" />
 							<NumericUpDown Name="LayerRowsBox" Minimum="1" Maximum="12" Increment="1" FormatString="0"
 							               HorizontalAlignment="Stretch" />
 							<TextBlock Classes="hint"
 							           Text="How many layers the timeline under the preview shows before it scrolls. Applies as soon as you close Settings." />
 						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="BehaviorPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<TextBlock Text="Startup" Classes="sectionHeader" />
 
 						<StackPanel Spacing="6">
 							<TextBlock Text="Main window" Classes="infoLabel" />
 							<CheckBox Name="RestoreWindowPlacementCheck" Content="Open where it was closed" />
 							<TextBlock Classes="hint"
 							           Text="Brings back the window's size, position and screen, maximized or not. Off, it always starts maximized." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Last project" Classes="infoLabel" />
+							<CheckBox Name="ReopenLastProjectCheck" Content="Reopen the last project at startup" />
+							<TextBlock Classes="hint"
+							           Text="Loads the project you last saved or opened. A project you start the app with (double-click in Explorer) wins." />
 						</StackPanel>
 
 						<StackPanel Name="ProjectFilesGroup" Spacing="6" IsVisible="False">
@@ -250,6 +257,46 @@
 							</StackPanel>
 							<TextBlock Classes="hint"
 							           Text="Opens .ovproj project files with this app when you double-click them in Explorer. Applies right away and only for your user." />
+						</StackPanel>
+
+						<TextBlock Text="Editing" Classes="sectionHeader" Margin="0,12,0,0" />
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Auto-save backup" Classes="infoLabel" />
+							<ComboBox Name="AutoSaveCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="Writes a backup copy of the open project now and then, in the app's data folder and apart from the project's own file - which only Save changes." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Playback" Classes="infoLabel" />
+							<CheckBox Name="LoopByDefaultCheck" Content="Loop playback by default" />
+							<TextBlock Classes="hint"
+							           Text="The preview loops the In/Out selection, or the whole recording without one, from the moment the app starts. The Loop button (Q) still toggles it." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Closing" Classes="infoLabel" />
+							<CheckBox Name="ConfirmCloseWhileRenderingCheck" Content="Ask before closing while a render is running" />
+							<TextBlock Classes="hint"
+							           Text="Closing the window ends a running render and leaves a partial file. On by default." />
+						</StackPanel>
+
+						<TextBlock Text="Monitors" Classes="sectionHeader" Margin="0,12,0,0" />
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Full screen preview" Classes="infoLabel" />
+							<ComboBox Name="PreviewMonitorCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="The monitor the preview's full screen button (F11) opens on - handy for judging the overlay on a second display. Esc leaves it." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
+							<TextBlock Text="Second screen" Classes="infoLabel" />
+							<CheckBox Name="SecondScreenCheck" Content="Use a second screen (F9)" />
+							<ComboBox Name="SecondScreenMonitorCombo" HorizontalAlignment="Stretch" />
+							<TextBlock Classes="hint"
+							           Text="A full screen window on that monitor: the log while nothing plays (a render too), the preview while it plays - it comes back to the main window when you pause. Esc or F9 there closes it." />
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>

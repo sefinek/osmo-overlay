@@ -108,6 +108,17 @@ public abstract record OverlayElement
 	///     The renderer doesn't read it - the layout's order is the draw order, which the GUI keeps grouped by layer.
 	/// </summary>
 	public string? LayerId { get; init; }
+
+	/// <summary>
+	///     Drop shadow of the whole widget (OverlayRenderer.BeginElement), on top of the soft shadows panels and text already
+	///     have. Offset/Blur are in the 4K reference space and scale with the widget; ShadowColor null is black.
+	/// </summary>
+	public bool ShadowEnabled { get; init; }
+	public string? ShadowColor { get; init; }
+	public float ShadowOpacity { get; init; } = OverlayRenderer.ShadowOpacityDefault;
+	public float ShadowBlur { get; init; } = OverlayRenderer.ShadowBlurDefault;
+	public float ShadowOffsetX { get; init; } = OverlayRenderer.ShadowOffsetXDefault;
+	public float ShadowOffsetY { get; init; } = OverlayRenderer.ShadowOffsetYDefault;
 }
 
 /// <summary>

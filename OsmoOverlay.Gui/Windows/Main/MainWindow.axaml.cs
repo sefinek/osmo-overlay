@@ -117,6 +117,15 @@ public partial class MainWindow : Window
 			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming
 		];
 		foreach (ElementTimingEditor timing in timingEditors) timing.TimingChanged += OnElementTimingChanged;
+
+		ElementShadowEditor[] shadowEditors =
+		[
+			DateTimeShadow, UtcTimeShadow, CameraInfoShadow, CompassShadow, MapShadow,
+			SpeedShadow, RollShadow, PitchShadow, SunShadow, GMeterShadow, ElapsedTimeShadow,
+			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
+			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow
+		];
+		foreach (ElementShadowEditor shadow in shadowEditors) shadow.ShadowChanged += OnElementShadowChanged;
 		MapSourceEditor.SelectionChanged += OnMapSourceChanged;
 		foreach (TrailStyleEditor trail in new[] { CompassTrail, MapTrail }) trail.Changed += OnTrailStyleChanged;
 		foreach (MarkerStyleEditor marker in new[] { CompassMarker, MapMarker }) marker.Changed += OnMarkerStyleChanged;
@@ -151,6 +160,8 @@ public partial class MainWindow : Window
 		WirePreviewZoom();
 		WirePreviewShortcuts();
 		WirePreviewFullscreen();
+		WireSecondScreen();
+		WireAutoSave();
 		WireReframe();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
@@ -162,7 +173,7 @@ public partial class MainWindow : Window
 
 		// See AppLogger.Notified. AppendLogLine (not AppendLog) doesn't log again - the raising call already did.
 		AppLogger.Notified += (message, level) => Dispatcher.UIThread.Post(() =>
-			LogBox.AppendLogLine(LogScroll, message, level switch
+			AppendLogLine(message, level switch
 			{
 				AppLogLevel.Warn => LogLevel.Warn,
 				AppLogLevel.Error => LogLevel.Error,
@@ -196,7 +207,24 @@ public partial class MainWindow : Window
 		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
 		if (missing.Any(t => !t.IsOptional)) await new DependencyPromptWindow(missing).ShowDialog(this);
 
+		OverlaySettings startup = OverlaySettingsStore.Load();
+		if (startup.LoopByDefault && !_loopEnabled) ToggleLoop();
+		if (startup.SecondScreenEnabled) OpenSecondScreen();
+		ApplyAutoSave(startup.AutoSaveMinutes);
+
 		if (StartupProject is { } project) await OpenProjectAsync(project);
+		else if (startup is { ReopenLastProject: true, LastProject: { } last })
+		{
+			if (File.Exists(last))
+			{
+				AppendLog($"Reopening the last project: {last}");
+				await OpenProjectAsync(last);
+			}
+			else
+			{
+				AppendLog($"The last project is gone: {last}", LogLevel.Warn);
+			}
+		}
 
 		await OfferAppUpdateAsync(await UpdateChecks.Latest);
 	}
@@ -335,6 +363,8 @@ public partial class MainWindow : Window
 		bool interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
 		SetTimeFormat(PreviewTimeFormats.Parse(withExportChanges.PreviewTimeFormat), false);
 		ApplyLayerRows(withExportChanges.LayerRowsVisible);
+		ApplySecondScreenSettings(withExportChanges);
+		ApplyAutoSave(withExportChanges.AutoSaveMinutes);
 
 		if (settings.ShowWatermark != _showWatermark)
 		{
@@ -487,6 +517,20 @@ public partial class MainWindow : Window
 	private void AppendLog(string message, LogLevel level = LogLevel.Info)
 	{
 		LogBox.AppendLog(LogScroll, message, level);
+		_secondScreen?.AppendLog(message, level);
+	}
+
+	/// <summary>A line AppLogger already logged - to the LOG panel and the second screen's, not again to the file.</summary>
+	private void AppendLogLine(string message, LogLevel level)
+	{
+		LogBox.AppendLogLine(LogScroll, message, level);
+		_secondScreen?.AppendLog(message, level);
+	}
+
+	private void ClearLogPanels()
+	{
+		LogBox.ClearLog();
+		_secondScreen?.ClearLog();
 	}
 
 	/// <summary>The startup banner (AppBanner) in the LOG panel - and through it in app.log.</summary>

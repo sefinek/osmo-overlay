@@ -108,6 +108,13 @@ public partial class MainWindow
 	private void OnEditShortcutKeyDown(object? sender, KeyEventArgs e)
 	{
 		if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Alt)) return;
+		if (e.Key == Key.S)
+		{
+			e.Handled = true;
+			SaveProjectFromShortcut(e.KeyModifiers.HasFlag(KeyModifiers.Shift));
+			return;
+		}
+
 		if (_summary is null || FocusManager?.GetFocusedElement() is TextBox) return;
 
 		bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);

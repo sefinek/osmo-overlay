@@ -425,9 +425,9 @@
 								<Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
 									<Button Grid.Column="0" Content="Open project" Click="OnOpenProjectClick"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-									<Button Grid.Column="1" Content="Save" Click="OnSaveProjectClick" ToolTip.Tip="Save the project"
+									<Button Grid.Column="1" Content="Save" Click="OnSaveProjectClick" ToolTip.Tip="Save the project (Ctrl+S)"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-									<Button Grid.Column="2" Content="Save as..." Click="OnSaveProjectAsClick"
+									<Button Grid.Column="2" Content="Save as..." Click="OnSaveProjectAsClick" ToolTip.Tip="Save as a new file (Ctrl+Shift+S)"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 								</Grid>
 
@@ -856,7 +856,7 @@
 						<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
 							<local:IconView Data="{StaticResource IconFullscreen}" Width="28" Height="28" Opacity="0.5"
 							                HorizontalAlignment="Center" />
-							<TextBlock Text="The preview is full screen" FontSize="14" HorizontalAlignment="Center" />
+							<TextBlock Name="PreviewFullscreenNoticeTitle" Text="The preview is full screen" FontSize="14" HorizontalAlignment="Center" />
 							<TextBlock Name="PreviewFullscreenNoticeText" Opacity="0.55" FontSize="12" TextWrapping="Wrap" MaxWidth="360"
 							           TextAlignment="Center" />
 							<Button Content="Bring it back" HorizontalAlignment="Center" Padding="14,6" Click="OnToggleFullscreenClick" />
@@ -1071,6 +1071,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="DateTimeShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="DateTimeTiming" />
 													</StackPanel>
@@ -1112,6 +1118,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="UtcTimeShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="UtcTimeTiming" />
 													</StackPanel>
@@ -1141,6 +1153,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="CameraInfoStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="CameraInfoShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1185,6 +1203,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="MARKER" Classes="settingsGroupTitle" />
 														<local:MarkerStyleEditor Name="CompassMarker" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="CompassShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1261,6 +1285,12 @@
 
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="MapShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="MapTiming" />
 													</StackPanel>
@@ -1312,6 +1342,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="SpeedShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="SpeedTiming" />
 													</StackPanel>
@@ -1336,6 +1372,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="RollStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="RollShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1368,6 +1410,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="PitchShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="PitchTiming" />
 													</StackPanel>
@@ -1388,6 +1436,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="SunStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="SunShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1428,6 +1482,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="GMeterShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="GMeterTiming" />
 													</StackPanel>
@@ -1462,6 +1522,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="ElapsedTimeShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="ElapsedTimeTiming" />
 													</StackPanel>
@@ -1482,6 +1548,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="CameraModelStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="CameraModelShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1522,6 +1594,12 @@
 														<TextBlock Text="Arrived label" Classes="infoLabel" Margin="0" />
 														<TextBox Name="TripProgressLabelBox" PlaceholderText="FINISH"
 														         LostFocus="OnTripProgressLabelChanged" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="TripProgressBarShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1582,6 +1660,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="ProfileChartShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="ProfileChartTiming" />
 													</StackPanel>
@@ -1621,6 +1705,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="TripStatStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="TripStatShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1674,6 +1764,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="ElevationShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="ElevationTiming" />
 													</StackPanel>
@@ -1703,6 +1799,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="GradientStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="GradientShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1747,6 +1849,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="DistanceShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="TIMING" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="DistanceTiming" />
 													</StackPanel>
@@ -1776,6 +1884,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="TextStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="TextShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1815,6 +1929,12 @@
 														<NumericUpDown Name="ImageOpacityBox" Minimum="0" Maximum="100" Increment="5"
 														               FormatString="0" HorizontalAlignment="Stretch"
 														               ValueChanged="OnImageOpacityChanged" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="ImageShadow" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

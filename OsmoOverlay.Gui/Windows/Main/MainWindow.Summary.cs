@@ -28,7 +28,7 @@ public partial class MainWindow
 		ClearCuts();
 		ClearMoments();
 		ReleaseTimelineTracks();
-		LogBox.ClearLog();
+		ClearLogPanels();
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);

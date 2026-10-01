@@ -34,6 +34,12 @@ public partial class MainWindow
 
 	private void OnToggleFullscreenClick(object? sender, RoutedEventArgs e)
 	{
+		if (_viewportOnSecondScreen)
+		{
+			PausePlayback();
+			return;
+		}
+
 		TogglePreviewFullscreen();
 	}
 
@@ -57,6 +63,7 @@ public partial class MainWindow
 
 		Screen? screen = PreviewMonitor();
 		var window = new PreviewFullscreenWindow(DetachViewport(host), screen);
+		PreviewFullscreenNoticeTitle.Text = "The preview is full screen";
 		PreviewFullscreenNoticeText.Text = $"It's showing on {DescribeScreen(screen)}. Press Esc or F11 there, or the button below, to bring it back here.";
 		PreviewFullscreenNotice.IsVisible = true;
 		window.AddHandler(KeyDownEvent, OnPreviewSpaceKeyDown, RoutingStrategies.Tunnel);

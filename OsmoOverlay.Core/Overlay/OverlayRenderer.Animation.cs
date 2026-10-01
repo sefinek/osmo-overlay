@@ -17,6 +17,15 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	public double OutputDurationSeconds { get; set; } = double.PositiveInfinity;
 
+	public const float ShadowOpacityDefault = 0.6f;
+	public const float ShadowBlurDefault = 8f;
+	public const float ShadowBlurMax = 60f;
+	public const float ShadowOffsetXDefault = 0f;
+	public const float ShadowOffsetYDefault = 0f;
+	public const float ShadowOffsetMax = 60f;
+
+	private readonly SKPaint _shadowPaint = new();
+
 	// How far (at the 4K reference resolution - see OverlayElementBounds) a sliding widget travels from
 	// its resting position at progress 0. Scaled by _scale like every other layout constant, so it reads
 	// as the same proportional distance at any actual render resolution.
@@ -38,7 +47,22 @@ public sealed partial class OverlayRenderer
 		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
 		if (state.Progress < 1f) canvas.SaveLayer(AlphaPaint(state.Progress));
+		if (element.ShadowEnabled) BeginShadow(canvas, element);
 		return saveCount;
+	}
+
+	// Inside the fade's layer, so the shadow fades with the widget. Not part of MeasureElement (it draws through DrawElement,
+	// not BeginElement) - hover and selection frame the widget itself, not its shadow.
+	private void BeginShadow(SKCanvas canvas, OverlayElement element)
+	{
+		SKColor color = ResolveColor(element.ShadowColor, SKColors.Black);
+		float opacity = Math.Clamp(element.ShadowOpacity, 0f, 1f);
+		float sigma = Math.Clamp(element.ShadowBlur, 0f, ShadowBlurMax) / 2f;
+		using SKImageFilter filter = SKImageFilter.CreateDropShadow(element.ShadowOffsetX, element.ShadowOffsetY, sigma, sigma,
+			color.WithAlpha((byte)Math.Round(color.Alpha * opacity)));
+		_shadowPaint.ImageFilter = filter;
+		canvas.SaveLayer(_shadowPaint);
+		_shadowPaint.ImageFilter = null;
 	}
 
 	/// <summary>

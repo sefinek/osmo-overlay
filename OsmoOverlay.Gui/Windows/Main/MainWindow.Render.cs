@@ -28,7 +28,7 @@ public partial class MainWindow
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
-		LogBox.ClearLog();
+		ClearLogPanels();
 		AppendBanner();
 		Progress.Value = 0;
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
