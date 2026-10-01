@@ -55,6 +55,10 @@ public sealed partial class OverlayRenderer : IDisposable
 	private TripStats _tripStats = TripStats.Compute([]);
 	// Far wider than any widget draws around its anchor - only bounds what MeasureElement records.
 	private static readonly SKRect MeasureArea = new(-100_000, -100_000, 100_000, 100_000);
+	private const int MeasureMaxPixels = 16_000_000;
+	private const byte MeasureMinAlpha = 16;
+	// MeasureElement skips the panels' soft shadow: its blur reaches far past the widget and would inflate the box.
+	private bool _measuring;
 	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
 	private double _trailSpeedScaleKmh;
 
@@ -546,18 +550,56 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>
 	///     What `element` draws at `frame`, around its anchor in reference pixels (before its X/Y and scale) - measured from
-	///     the drawing itself, shadow and outline included: recorded with an R-tree, Skia trims the picture's CullRect to what
-	///     was drawn. So hit-testing and the selection box frame the widget as it really is, text that grows included. Null
-	///     when it draws nothing (an Image without a file).
+	///     the drawing itself, outline included, the panels' soft shadow not: recorded with an R-tree, Skia trims the
+	///     picture's CullRect to what was drawn - but pads strokes, so the picture is then rasterized and cut down to its
+	///     visible pixels. Hit-testing and the selection box frame the widget as it really is, text that grows included.
+	///     Null when it draws nothing (an Image without a file).
 	/// </summary>
 	public SKRect? MeasureElement(OverlayElement element, DerivedFrame frame)
 	{
 		using var recorder = new SKPictureRecorder();
 		SKCanvas canvas = recorder.BeginRecording(MeasureArea, true);
-		DrawElement(canvas, element, frame);
+		_measuring = true;
+		try
+		{
+			DrawElement(canvas, element, frame);
+		}
+		finally
+		{
+			_measuring = false;
+		}
+
 		using SKPicture picture = recorder.EndRecording();
 		SKRect bounds = picture.CullRect;
-		return bounds.IsEmpty ? null : bounds;
+		if (bounds.IsEmpty) return null;
+
+		int width = (int)Math.Ceiling(bounds.Width), height = (int)Math.Ceiling(bounds.Height);
+		if ((long)width * height > MeasureMaxPixels) return bounds;
+
+		using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Alpha8, SKAlphaType.Premul));
+		using (var raster = new SKCanvas(bitmap))
+		{
+			raster.Translate(-bounds.Left, -bounds.Top);
+			raster.DrawPicture(picture);
+		}
+
+		ReadOnlySpan<byte> alpha = bitmap.GetPixelSpan();
+		int minX = width, minY = height, maxX = -1, maxY = -1;
+		for (int y = 0; y < height; y++)
+		{
+			ReadOnlySpan<byte> row = alpha.Slice(y * bitmap.RowBytes, width);
+			for (int x = 0; x < width; x++)
+			{
+				if (row[x] < MeasureMinAlpha) continue;
+				if (x < minX) minX = x;
+				if (x > maxX) maxX = x;
+				if (y < minY) minY = y;
+				maxY = y;
+			}
+		}
+
+		if (maxX < 0) return null;
+		return new SKRect(bounds.Left + minX, bounds.Top + minY, bounds.Left + maxX + 1, bounds.Top + maxY + 1);
 	}
 
 	/// <summary>
@@ -576,6 +618,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// </summary>
 	private void DrawPanelShadow(SKCanvas canvas, float cx, float cy, float radius)
 	{
+		if (_measuring) return;
+
 		_panelShadowPaint.MaskFilter = GetBlurMaskFilter(radius * 0.12f);
 		canvas.DrawCircle(cx, cy + radius * 0.06f, radius * 0.97f, _panelShadowPaint);
 	}

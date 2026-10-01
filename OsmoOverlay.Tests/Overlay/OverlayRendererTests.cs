@@ -67,6 +67,17 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
+	public void MeasureElement_RoundWidgetFitsItsDrawing()
+	{
+		List<DerivedFrame> frames = Route(100, 0);
+		using OverlayRenderer renderer = Create(frames);
+
+		SKRect gauge = renderer.MeasureElement(new SpeedGaugeElement { X = 0, Y = 0 }, frames[50])!.Value;
+
+		Assert.IsTrue(gauge.Width < OverlayElementBounds.SpeedRadius * 2 + 20 + 2, $"{gauge}");
+	}
+
+	[TestMethod]
 	public void SetFrames_DrawsLikeARendererBuiltForThoseFrames()
 	{
 		List<DerivedFrame> before = Route(300, 0);
