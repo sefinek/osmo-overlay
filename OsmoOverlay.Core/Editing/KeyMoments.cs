@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core;
@@ -26,6 +27,11 @@ public static class KeyMoments
 	private const double MinSpeedKmh = 1;
 	private const double MinGradientPercent = 1;
 	private const double MinLeanDegrees = 1;
+	// A slope is measured over at least this much distance travelled: the GPS altitude wanders a few meters on its own, so over a
+	// second or two of walking it reads as a 10% climb on a flat bridge (the gradient widget's per-second value).
+	private const double SlopeWindowMeters = 100;
+	// The peaks of one category listed together are at least this far apart in time.
+	private const double MinPeakSeparationSeconds = 10;
 
 	public static string Label(PeakKind kind)
 	{
@@ -42,44 +48,104 @@ public static class KeyMoments
 		};
 	}
 
-	/// <summary>The first frame where `kind` peaks, or null when the data has none (no GPS fix, a standstill, unknown axes).</summary>
+	/// <summary>The single highest peak of `kind`, or null when the data has none (no GPS fix, a standstill, unknown axes).</summary>
 	public static Peak? Find(IReadOnlyList<DerivedFrame> frames, PeakKind kind, double fps, long totalFrames)
 	{
-		if (frames.Count == 0 || fps <= 0 || totalFrames <= 0) return null;
+		List<Peak> top = FindTop(frames, kind, fps, totalFrames, 1);
+		return top.Count > 0 ? top[0] : null;
+	}
+
+	/// <summary>
+	///     The `count` highest peaks of `kind`, best first, at least MinPeakSeparationSeconds apart - the neighbouring frames of
+	///     one peak are all nearly as high and would otherwise fill the list. Fewer (or none) when the data has no more such peaks.
+	/// </summary>
+	public static List<Peak> FindTop(IReadOnlyList<DerivedFrame> frames, PeakKind kind, double fps, long totalFrames, int count)
+	{
+		if (frames.Count == 0 || fps <= 0 || totalFrames <= 0 || count <= 0) return [];
 
 		bool gpsKind = kind is not (PeakKind.StrongestG or PeakKind.MaxLean);
-		DerivedFrame? best = null;
-		double bestValue = double.NegativeInfinity;
-		foreach (DerivedFrame frame in frames)
+		// The G-meter's own reading (dynamic acceleration against its baseline), so the peak is the number the widget shows there.
+		var deltas = kind == PeakKind.StrongestG ? GMeterDeltas.Compute(frames) : null;
+		double[]? slopes = kind is PeakKind.SteepestClimb or PeakKind.SteepestDescent
+			? Slopes(frames, kind == PeakKind.SteepestClimb ? 1 : -1)
+			: null;
+
+		List<(int Index, double Value)> candidates = [];
+		for (int i = 0; i < frames.Count; i++)
 		{
+			DerivedFrame frame = frames[i];
 			if (gpsKind && !frame.Raw.HasGpsFix) continue;
 
-			double value = ValueOf(frame, kind);
-			if (double.IsNaN(value) || value <= bestValue) continue;
-
-			best = frame;
-			bestValue = value;
+			double value = slopes is not null
+				? slopes[i]
+				: deltas is null
+					? ValueOf(frame, kind)
+					: Math.Sqrt(deltas[i].Lateral * deltas[i].Lateral + deltas[i].Longitudinal * deltas[i].Longitudinal);
+			if (!double.IsNaN(value) && IsMeaningful(kind, value)) candidates.Add((i, value));
 		}
 
-		if (best is null) return null;
+		List<Peak> peaks = [];
+		List<double> times = [];
+		foreach ((int index, double value) in candidates.OrderByDescending(c => c.Value))
+		{
+			double time = frames[index].Raw.RecordingTimeSeconds;
+			if (times.Any(t => Math.Abs(t - time) < MinPeakSeparationSeconds)) continue;
 
-		double shown = kind switch
+			times.Add(time);
+			double shown = kind is PeakKind.LowestPoint or PeakKind.SteepestDescent ? -value : value;
+			peaks.Add(new Peak(Math.Clamp((long)Math.Round(time * fps), 0, totalFrames - 1), shown));
+			if (peaks.Count == count) break;
+		}
+
+		return peaks;
+	}
+
+	/// <summary>Below these a recording just stood still or had no such data - there's no peak to show.</summary>
+	private static bool IsMeaningful(PeakKind kind, double value)
+	{
+		return kind switch
 		{
-			PeakKind.LowestPoint or PeakKind.SteepestDescent => -bestValue,
-			_ => bestValue
-		};
-		bool meaningful = kind switch
-		{
-			PeakKind.TopSpeed => bestValue >= MinSpeedKmh,
-			PeakKind.SteepestClimb or PeakKind.SteepestDescent => bestValue >= MinGradientPercent,
-			PeakKind.MaxLean => bestValue >= MinLeanDegrees,
-			PeakKind.StrongestG => bestValue > 0,
+			PeakKind.TopSpeed => value >= MinSpeedKmh,
+			PeakKind.SteepestClimb or PeakKind.SteepestDescent => value >= MinGradientPercent,
+			PeakKind.MaxLean => value >= MinLeanDegrees,
+			PeakKind.StrongestG => value > 0,
 			_ => true
 		};
-		if (!meaningful) return null;
+	}
 
-		long frameIndex = Math.Clamp((long)Math.Round(best.Raw.RecordingTimeSeconds * fps), 0, totalFrames - 1);
-		return new Peak(frameIndex, shown);
+	/// <summary>
+	///     The slope (percent, times `sign`) over the last SlopeWindowMeters travelled, put on the frame in the middle of that
+	///     stretch; NaN everywhere else. Stretches don't run across a cut or a gap between files, nor over frames without a fix.
+	/// </summary>
+	private static double[] Slopes(IReadOnlyList<DerivedFrame> frames, int sign)
+	{
+		double[] slopes = new double[frames.Count];
+		Array.Fill(slopes, double.NaN);
+
+		int start = 0;
+		int from = 0;
+		for (int i = 0; i < frames.Count; i++)
+		{
+			if (frames[i].StartsAfterCut) start = from = i;
+			if (!frames[i].Raw.HasGpsFix)
+			{
+				start = from = i + 1;
+				continue;
+			}
+
+			// The newest start that still spans the window - the shortest stretch of at least SlopeWindowMeters.
+			while (from + 1 < i && frames[i].CumulativeDistanceMeters - frames[from + 1].CumulativeDistanceMeters >= SlopeWindowMeters) from++;
+			if (from < start || from >= i) continue;
+
+			double distance = frames[i].CumulativeDistanceMeters - frames[from].CumulativeDistanceMeters;
+			if (distance < SlopeWindowMeters) continue;
+
+			double slope = (frames[i].Raw.AltitudeMeters - frames[from].Raw.AltitudeMeters) / distance * 100 * sign;
+			int middle = (from + i) / 2;
+			if (double.IsNaN(slopes[middle]) || slope > slopes[middle]) slopes[middle] = slope;
+		}
+
+		return slopes;
 	}
 
 	/// <summary>The value to maximize - lows and descents are negated.</summary>
@@ -90,9 +156,6 @@ public static class KeyMoments
 			PeakKind.TopSpeed => frame.SpeedKmh,
 			PeakKind.HighestPoint => frame.Raw.AltitudeMeters,
 			PeakKind.LowestPoint => -frame.Raw.AltitudeMeters,
-			PeakKind.StrongestG => frame.SmoothedGForce,
-			PeakKind.SteepestClimb => frame.GradientPercent,
-			PeakKind.SteepestDescent => -frame.GradientPercent,
 			PeakKind.MaxLean => Math.Abs(frame.RollDegrees),
 			_ => double.NaN
 		};

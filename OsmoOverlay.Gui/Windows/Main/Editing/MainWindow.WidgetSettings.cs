@@ -215,7 +215,9 @@ public partial class MainWindow
 	private void OnSpeedThemeChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		SpeedGaugeTheme theme = SpeedThemeRingRadio.IsChecked == true ? SpeedGaugeTheme.Ring : SpeedGaugeTheme.Classic;
+		SpeedGaugeTheme theme = SpeedThemeRingRadio.IsChecked == true ? SpeedGaugeTheme.Ring
+			: SpeedThemeLegacyRadio.IsChecked == true ? SpeedGaugeTheme.Legacy
+			: SpeedGaugeTheme.Default;
 		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { Theme = theme } : el);
 	}
 

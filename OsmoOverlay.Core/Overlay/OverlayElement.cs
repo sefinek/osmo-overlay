@@ -203,18 +203,23 @@ public sealed record CameraModelTextElement : StyledOverlayElement
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.CameraModelText;
 }
 
-/// <summary>Classic: the dark dial with colored bands and a needle. Ring: no panel, a gradient arc that fills up to the speed and a large italic number.</summary>
+/// <summary>
+///     Default: the dark dial with a gradient arc that lights up to the speed, a scale and a needle. Legacy: the earlier dial
+///     with four colored bands. Ring: no panel, an open ring with a gradient arc and a needle that travels around it.
+///     The numbers are fixed because they're saved in presets.
+/// </summary>
 public enum SpeedGaugeTheme
 {
-	Classic,
-	Ring
+	Default = 0,
+	Ring = 1,
+	Legacy = 2
 }
 
 public sealed record SpeedGaugeElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SpeedGauge;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
-	public SpeedGaugeTheme Theme { get; init; } = SpeedGaugeTheme.Classic;
+	public SpeedGaugeTheme Theme { get; init; } = SpeedGaugeTheme.Default;
 }
 
 /// <summary>Left/right lean - DerivedFrame.RollDegrees.</summary>

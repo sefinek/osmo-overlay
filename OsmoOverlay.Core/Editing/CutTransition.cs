@@ -37,6 +37,9 @@ public sealed record CutTransition(CutTransitionKind Kind, double LengthSeconds 
 	public const double MinLengthSeconds = 0.2;
 	public const double MaxLengthSeconds = 5.0;
 
+	/// <summary>What a cut made in the GUI starts with when it joins two kept parts - the most natural way across a jump within one continuous recording.</summary>
+	public static readonly CutTransition Default = new(CutTransitionKind.Crossfade);
+
 	public bool IsWhite => Kind == CutTransitionKind.FadeWhite;
 
 	/// <summary>True for the transitions that overlap the two parts (and shorten the output) instead of fading through a color.</summary>

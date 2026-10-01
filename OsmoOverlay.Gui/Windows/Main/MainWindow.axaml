@@ -1282,10 +1282,13 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="THEME" Classes="settingsGroupTitle" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
-															<RadioButton Name="SpeedThemeClassicRadio" Content="Classic"
+															<RadioButton Name="SpeedThemeDefaultRadio" Content="Default"
 															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged" />
 															<RadioButton Name="SpeedThemeRingRadio" Content="Ring"
 															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged" />
+															<RadioButton Name="SpeedThemeLegacyRadio" Content="Legacy"
+															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged"
+															             ToolTip.Tip="The earlier default look - four colored bands and a thin needle. Kept for presets that use it." />
 														</StackPanel>
 													</StackPanel>
 												</Border>

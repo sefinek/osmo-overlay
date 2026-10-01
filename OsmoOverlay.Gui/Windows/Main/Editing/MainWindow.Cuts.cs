@@ -195,6 +195,9 @@ public partial class MainWindow
 	{
 		if (Selection is not { } selection) return;
 
+		// Only a cut between two kept parts has anything to join - one from the very start or to the very end has no transition.
+		if (selection.Start > 0 && selection.End < SourceFrames) selection = selection with { Transition = CutTransition.Default };
+
 		List<FrameRange> cuts = CutList.Add(_cuts, selection, SourceFrames);
 		if (CutList.RemovesEverything(cuts, SourceFrames))
 		{

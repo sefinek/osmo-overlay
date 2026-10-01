@@ -737,7 +737,8 @@ public partial class MainWindow
 			{
 				var x = (SpeedGaugeElement)el;
 				SetUnitsRadio(SpeedMetricRadio, SpeedImperialRadio, x.Units);
-				SpeedThemeClassicRadio.IsChecked = x.Theme == SpeedGaugeTheme.Classic;
+				SpeedThemeDefaultRadio.IsChecked = x.Theme == SpeedGaugeTheme.Default;
+				SpeedThemeLegacyRadio.IsChecked = x.Theme == SpeedGaugeTheme.Legacy;
 				SpeedThemeRingRadio.IsChecked = x.Theme == SpeedGaugeTheme.Ring;
 				SpeedStyle.Populate(x);
 				SpeedTiming.Populate(x);

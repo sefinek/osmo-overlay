@@ -99,6 +99,9 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _speedRingOuterPaint;
 	private readonly SKPaint _speedRingArcPaint;
 	private readonly SKShader _speedRingShader;
+	private readonly SKPaint _speedDefaultArcPaint;
+	private readonly SKShader _speedDefaultShader;
+	private readonly SKPath _speedDefaultNeedle = CreateDefaultNeedle();
 	private readonly SKPath _speedRingNeedle = CreateRingNeedle();
 	private readonly SKPaint _whiteFill = new() { Color = SKColors.White, IsAntialias = true, Style = SKPaintStyle.Fill };
 
@@ -192,6 +195,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedBandYellow = CreateGaugeBandPaint(new SKColor(230, 200, 60));
 		_speedBandOrange = CreateGaugeBandPaint(new SKColor(235, 140, 50));
 		_speedBandRed = CreateGaugeBandPaint(new SKColor(220, 60, 60));
+		_speedDefaultShader = SKShader.CreateSweepGradient(new SKPoint(0, 0),
+			[new SKColor(60, 190, 70), new SKColor(235, 200, 50), new SKColor(240, 130, 40), new SKColor(225, 45, 50)],
+			[0f, 0.42f, 0.74f, 1f], SKShaderTileMode.Clamp, 0, 270, SKMatrix.CreateRotationDegrees(135));
+		_speedDefaultArcPaint = new SKPaint
+			{ IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 20, StrokeCap = SKStrokeCap.Butt, Shader = _speedDefaultShader };
 		_speedRingOuterPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
 		_speedRingShader = SKShader.CreateSweepGradient(new SKPoint(0, 0),
 			[new SKColor(60, 190, 70), new SKColor(245, 180, 40), new SKColor(240, 120, 40), new SKColor(225, 40, 50)],
@@ -263,6 +271,9 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedRingOuterPaint.Dispose();
 		_speedRingArcPaint.Dispose();
 		_speedRingShader.Dispose();
+		_speedDefaultArcPaint.Dispose();
+		_speedDefaultShader.Dispose();
+		_speedDefaultNeedle.Dispose();
 		_speedRingNeedle.Dispose();
 		_whiteFill.Dispose();
 		_outlineShadowPaint.Dispose();

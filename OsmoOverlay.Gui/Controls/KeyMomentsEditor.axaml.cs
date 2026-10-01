@@ -17,6 +17,8 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class KeyMomentsEditor : UserControl
 {
+	private const int PeaksPerCategory = 3;
+
 	private static readonly PeakKind[] PeakKinds = Enum.GetValues<PeakKind>();
 
 	private List<KeyMoment> _moments = [];
@@ -45,9 +47,10 @@ public partial class KeyMomentsEditor : UserControl
 		{
 			foreach (PeakKind kind in PeakKinds)
 			{
-				if (KeyMoments.Find(frames, kind, fps, totalFrames) is not { } peak) continue;
+				List<Peak> peaks = KeyMoments.FindTop(frames, kind, fps, totalFrames, PeaksPerCategory);
+				if (peaks.Count == 0) continue;
 
-				AddPeakRow(kind, peak, units);
+				AddPeakCategory(kind, peaks, units);
 				any = true;
 			}
 		}
@@ -69,30 +72,55 @@ public partial class KeyMomentsEditor : UserControl
 		AddRequested?.Invoke();
 	}
 
-	private void AddPeakRow(PeakKind kind, Peak peak, UnitSystem units)
+	/// <summary>One category as an expander - its name and best value on the header, the top peaks inside, each with its own jump and flag.</summary>
+	private void AddPeakCategory(PeakKind kind, List<Peak> peaks, UnitSystem units)
 	{
 		string label = KeyMoments.Label(kind);
-		var name = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center };
-		var value = new TextBlock
+		var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
+		var best = new TextBlock
 		{
-			Text = $"{FormatValue(kind, peak.Value, units)}  -  {TimeText.Format(peak.Frame / _fps)}",
+			Text = FormatValue(kind, peaks[0].Value, units),
 			Opacity = 0.6,
 			FontSize = 12,
 			VerticalAlignment = VerticalAlignment.Center
 		};
+		Grid.SetColumn(best, 1);
+		header.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center });
+		header.Children.Add(best);
+
+		var rows = new StackPanel { Spacing = 6 };
+		for (int i = 0; i < peaks.Count; i++) rows.Children.Add(CreatePeakRow(kind, peaks[i], i, units));
+
+		PeakRows.Children.Add(new Expander
+		{
+			Header = header,
+			Content = rows,
+			HorizontalAlignment = HorizontalAlignment.Stretch,
+			HorizontalContentAlignment = HorizontalAlignment.Stretch,
+			CornerRadius = new CornerRadius(8),
+			IsExpanded = PeakRows.Children.Count == 0
+		});
+	}
+
+	private Grid CreatePeakRow(PeakKind kind, Peak peak, int rank, UnitSystem units)
+	{
+		string label = KeyMoments.Label(kind);
+		var value = new TextBlock { Text = $"{rank + 1}.  {FormatValue(kind, peak.Value, units)}", VerticalAlignment = VerticalAlignment.Center };
+		var time = new TextBlock
+		{
+			Text = TimeText.Format(peak.Frame / _fps),
+			Opacity = 0.6,
+			FontSize = 12,
+			VerticalAlignment = VerticalAlignment.Center
+		};
+		Grid.SetColumn(time, 1);
 		var jump = new Button
 		{
-			Content = new Grid
-			{
-				ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-				ColumnSpacing = 8,
-				Children = { name, value }
-			},
+			Content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8, Children = { value, time } },
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			HorizontalContentAlignment = HorizontalAlignment.Stretch
 		};
-		Grid.SetColumn(value, 1);
-		ToolTip.SetTip(jump, $"Go to the {label.ToLowerInvariant()}");
+		ToolTip.SetTip(jump, $"Go to this {label.ToLowerInvariant()}");
 		jump.Click += (_, _) => SeekRequested?.Invoke(peak.Frame);
 
 		var save = new Button
@@ -102,13 +130,14 @@ public partial class KeyMomentsEditor : UserControl
 			VerticalAlignment = VerticalAlignment.Stretch
 		};
 		ToolTip.SetTip(save, "Save it as a key moment");
-		save.Click += (_, _) => MomentAdded?.Invoke(new KeyMoment(peak.Frame, label));
+		string name = rank == 0 ? label : $"{label} ({rank + 1})";
+		save.Click += (_, _) => MomentAdded?.Invoke(new KeyMoment(peak.Frame, name));
 
 		var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 6 };
 		Grid.SetColumn(save, 1);
 		row.Children.Add(jump);
 		row.Children.Add(save);
-		PeakRows.Children.Add(row);
+		return row;
 	}
 
 	private void AddMomentRow(int index)

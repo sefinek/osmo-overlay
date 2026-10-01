@@ -163,6 +163,7 @@ public sealed partial class OverlayRenderer
 		return index < _gMeterDeltas.Length ? _gMeterDeltas[index] : (0, 0);
 	}
 
+	private const float DefaultArcRadius = 222f;
 	private const float RingArcStartAngle = 92f;
 	private const float RingArcSweep = 298f;
 	private const float RingArcRadius = 180f;
@@ -213,12 +214,89 @@ public sealed partial class OverlayRenderer
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 	}
 
+	private static SKPath CreateDefaultNeedle()
+	{
+		using var builder = new SKPathBuilder();
+		builder.MoveTo(0, -7);
+		builder.LineTo(DefaultArcRadius - 10, -2.5f);
+		builder.LineTo(DefaultArcRadius - 10, 2.5f);
+		builder.LineTo(0, 7);
+		builder.Close();
+		return builder.Detach();
+	}
+
+	/// <summary>The step between the scale's labels: the smallest of a few round ones that keeps it to six intervals or fewer.</summary>
+	private static double ScaleStep(double max)
+	{
+		foreach (double step in new[] { 5.0, 10, 20, 25, 50, 100, 200 })
+		{
+			if (max / step <= 6) return step;
+		}
+
+		return 500;
+	}
+
+	private void DrawDefaultSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
+	{
+		const float radius = OverlayElementBounds.SpeedRadius;
+		const float startAngle = 135f;
+		const float sweep = 270f;
+
+		bool imperial = element.Units == UnitSystem.Imperial;
+		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
+		double max = GaugeMaxSpeed(element.Units);
+		double fraction = Math.Clamp(displaySpeed / max, 0, 1);
+
+		DrawPanelShadow(canvas, 0, 0, radius - 4);
+		canvas.DrawCircle(0, 0, radius - 4, _panelFillPaint);
+		canvas.DrawCircle(0, 0, radius - 4, _ringStroke3White140);
+
+		SKFont labelFont = TextFont(element, 26);
+		SKColor textColor = TextColorOf(element);
+		SKColor outlineColor = OutlineColorOf(element);
+		double step = ScaleStep(max);
+		for (double value = 0; value <= max + 0.001; value += step)
+		{
+			double angle = AngleMath.DegToRad(startAngle + sweep * (value / max));
+			(float cos, float sin) = ((float)Math.Cos(angle), (float)Math.Sin(angle));
+			canvas.DrawLine(cos * (DefaultArcRadius - 16), sin * (DefaultArcRadius - 16), cos * (DefaultArcRadius - 26), sin * (DefaultArcRadius - 26),
+				_ringStroke3White160);
+			DrawOutlined(canvas, F(value, "0"), cos * (DefaultArcRadius - 52), sin * (DefaultArcRadius - 52) + 9, labelFont, textColor,
+				SKTextAlign.Center, 0.8f, outlineColor, element.OutlineWidth);
+		}
+
+		var arcRect = new SKRect(-DefaultArcRadius, -DefaultArcRadius, DefaultArcRadius, DefaultArcRadius);
+		_speedDefaultArcPaint.Color = new SKColor(255, 255, 255, 70);
+		canvas.DrawArc(arcRect, startAngle, sweep, false, _speedDefaultArcPaint);
+		if (fraction > 0)
+		{
+			_speedDefaultArcPaint.Color = SKColors.White;
+			canvas.DrawArc(arcRect, startAngle, (float)(sweep * fraction), false, _speedDefaultArcPaint);
+		}
+
+		canvas.Save();
+		canvas.RotateDegrees((float)(startAngle + sweep * fraction));
+		canvas.DrawPath(_speedDefaultNeedle, _whiteFill);
+		canvas.Restore();
+		canvas.DrawCircle(0, 0, 13, _dotOutlineBlackFill);
+		canvas.DrawCircle(0, 0, 8, _dotFillAccent);
+
+		DrawOutlined(canvas, F(displaySpeed, "0"), 0, 160, TextFont(element, 120), textColor, SKTextAlign.Center,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", 0, 205, TextFont(element, 36), textColor, SKTextAlign.Center, 0.75f,
+			outlineColor, element.OutlineWidth);
+	}
+
 	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
 	{
-		if (element.Theme == SpeedGaugeTheme.Ring)
+		switch (element.Theme)
 		{
-			DrawRingSpeedGauge(canvas, element, speedKmh);
-			return;
+			case SpeedGaugeTheme.Default:
+				DrawDefaultSpeedGauge(canvas, element, speedKmh);
+				return;
+			case SpeedGaugeTheme.Ring:
+				DrawRingSpeedGauge(canvas, element, speedKmh);
+				return;
 		}
 
 		float cx = 0;

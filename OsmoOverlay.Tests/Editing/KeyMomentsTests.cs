@@ -90,4 +90,63 @@ public sealed class KeyMomentsTests
 
 		CollectionAssert.AreEqual(new long[] { 0, 120, 299 }, markers.ToArray());
 	}
+
+	// 2 m per sample (about 7 km/h at 1 sample a second), `altitude` per sample index.
+	private static List<DerivedFrame> Walk(int count, Func<int, double> altitude)
+	{
+		List<DerivedFrame> frames = [];
+		for (int i = 0; i < count; i++)
+		{
+			var raw = new TelemetryFrame(i * 30, i, 50, 20, altitude(i), null, 0, 0, 1);
+			frames.Add(new DerivedFrame(raw, 7, 0, 0, i * 2.0, 0, 0, default, 0, 0, 1, 0, 0));
+		}
+
+		return frames;
+	}
+
+	[TestMethod]
+	public void Find_SteepestClimb_IgnoresAltitudeNoiseOnTheFlat()
+	{
+		// +-1.5 m of GPS wobble from sample to sample: 2 m apart that reads as a 75% slope, over 100 m it's nothing.
+		List<DerivedFrame> frames = Walk(300, i => 140 + (i % 2 == 0 ? 1.5 : -1.5));
+
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.SteepestClimb, Fps, 9000));
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.SteepestDescent, Fps, 9000));
+	}
+
+	[TestMethod]
+	public void Find_SteepestClimb_FindsARealRampInTheMiddleOfIt()
+	{
+		// Flat, then 100 samples (200 m) rising 10 m (5%), then flat.
+		List<DerivedFrame> frames = Walk(400, i => 100 + Math.Clamp(i - 150, 0, 100) * 0.1);
+
+		Peak? peak = KeyMoments.Find(frames, PeakKind.SteepestClimb, Fps, 12000);
+
+		Assert.AreEqual(5, peak!.Value.Value, 0.5);
+		Assert.IsTrue(peak.Value.Frame is > 150 * 30 and < 250 * 30, $"{peak.Value.Frame}");
+	}
+
+	[TestMethod]
+	public void Find_SteepestDescent_IsReportedNegative()
+	{
+		List<DerivedFrame> frames = Walk(400, i => 200 - Math.Clamp(i - 150, 0, 100) * 0.1);
+
+		Peak? peak = KeyMoments.Find(frames, PeakKind.SteepestDescent, Fps, 12000);
+
+		Assert.AreEqual(-5, peak!.Value.Value, 0.5);
+	}
+
+	[TestMethod]
+	public void FindTop_ListsSeparatePeaksBestFirst()
+	{
+		double[] peaks = new double[300];
+		(peaks[50], peaks[51], peaks[150], peaks[250]) = (40, 39, 30, 20);
+		List<DerivedFrame> frames = Walk(300, _ => 0);
+		for (int i = 0; i < frames.Count; i++) frames[i] = frames[i] with { SpeedKmh = 10 + peaks[i] };
+
+		List<Peak> top = KeyMoments.FindTop(frames, PeakKind.TopSpeed, Fps, 9000, 3);
+
+		CollectionAssert.AreEqual(new long[] { 50 * 30, 150 * 30, 250 * 30 }, top.Select(p => p.Frame).ToArray());
+		CollectionAssert.AreEqual(new double[] { 50, 40, 30 }, top.Select(p => p.Value).ToArray());
+	}
 }

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
@@ -213,7 +214,14 @@ public partial class CutEditor : UserControl
 		}
 
 		var unit = (TextBlock)transitionCells[2];
-		var row = new StackPanel { Spacing = 4, Children = { times, transition } };
+		var overlapNote = new TextBlock
+		{
+			Text = "The preview doesn't show this blend - it plays the end of the earlier part, then goes on after the later part's start. The render has it, and is shorter by the transition's length.",
+			Classes = { "hint" },
+			TextWrapping = TextWrapping.Wrap,
+			IsVisible = false
+		};
+		var row = new StackPanel { Spacing = 4, Children = { times, transition, overlapNote } };
 		var entry = new CutRow(from, to, kind, length);
 		void RefreshTransitionRow()
 		{
@@ -222,6 +230,8 @@ public partial class CutEditor : UserControl
 			             start > 0 && end < _totalFrames;
 			transition.IsVisible = joins;
 			length.IsVisible = unit.IsVisible = kind.SelectedIndex > 0;
+			overlapNote.IsVisible = joins && TransitionKinds[Math.Max(0, kind.SelectedIndex)].Kind is { } selected &&
+			                        new CutTransition(selected, CutTransition.DefaultLengthSeconds).Overlaps;
 		}
 
 		RefreshTransitionRow();
