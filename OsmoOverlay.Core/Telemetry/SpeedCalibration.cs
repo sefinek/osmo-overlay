@@ -36,21 +36,24 @@ public static class SpeedCalibration
 		return factor == 1 ? frames : [.. frames.Select(f => f with { SpeedKmh = f.SpeedKmh * factor })];
 	}
 
-	/// <summary>How long a speed has to be held to count as a recording's top speed for calibration (SustainedTopSpeedKmh).</summary>
-	public const double SustainedSeconds = 3;
+	/// <summary>The stretch the shown speed is averaged over before CruisingSpeedKmh looks at it - takes out the receiver's jitter.</summary>
+	public const double CruisingWindowSeconds = 3;
+
+	private const double CruisingBinKmh = 0.5;
 
 	/// <summary>
-	///     The highest speed held for SustainedSeconds: the best average over any such stretch, never across a gap. The shown
-	///     speed is the receiver's own per sample, which jitters by around half a km/h - its single highest sample is a spike
-	///     more than a top speed, and calibrating on it sets the correction off by that much. A vehicle at its limiter holds
-	///     its top speed, so the sustained one is what to compare with the real figure. 0 without frames; a recording
-	///     shorter than the stretch gives its overall average.
+	///     The speed a recording was ridden at most of the time when going fast - what to hold against the speedometer or a
+	///     limiter. Not a top speed: over a long ride even a few seconds' maximum is the moment the GPS read highest (the
+	///     shown speed is the receiver's own per sample, jittering by about half a km/h), so it sets the correction off.
+	///     The speed is averaged over CruisingWindowSeconds (never across a gap); of the moving time (TripStats'
+	///     threshold), the faster half's most common speed is taken, as the mean of the samples around it. A vehicle at its
+	///     limiter rides one plateau, and this finds it. 0 without moving frames.
 	/// </summary>
-	public static double SustainedTopSpeedKmh(IReadOnlyList<DerivedFrame> frames, double seconds = SustainedSeconds)
+	public static double CruisingSpeedKmh(IReadOnlyList<DerivedFrame> frames)
 	{
-		double best = 0, sum = 0;
+		List<double> moving = [];
+		double sum = 0;
 		int start = 0;
-		bool full = false;
 		for (int end = 0; end < frames.Count; end++)
 		{
 			if (frames[end].Raw.StartsAfterGap)
@@ -60,24 +63,26 @@ public static class SpeedCalibration
 			}
 
 			sum += frames[end].SpeedKmh;
-			while (start < end && frames[end].Raw.SampleTimeSeconds - frames[start + 1].Raw.SampleTimeSeconds >= seconds)
+			while (start < end && frames[end].Raw.SampleTimeSeconds - frames[start].Raw.SampleTimeSeconds > CruisingWindowSeconds)
 				sum -= frames[start++].SpeedKmh;
 
 			double average = sum / (end - start + 1);
-			if (frames[end].Raw.SampleTimeSeconds - frames[start].Raw.SampleTimeSeconds >= seconds)
-			{
-				best = full ? Math.Max(best, average) : average;
-				full = true;
-			}
-			else if (!full) best = Math.Max(best, average);
+			if (average >= TripStats.MovingThresholdKmh) moving.Add(average);
 		}
 
-		return best;
+		if (moving.Count == 0) return 0;
+
+		moving.Sort();
+		List<double> faster = moving[(moving.Count / 2)..];
+		// The fullest bin of the faster half; a tie goes to the faster bin.
+		int mode = faster.GroupBy(v => (int)Math.Floor(v / CruisingBinKmh)).MaxBy(g => (g.Count(), g.Key))!.Key;
+		double center = (mode + 0.5) * CruisingBinKmh;
+		return faster.Where(v => Math.Abs(v - center) <= 1.5 * CruisingBinKmh).Average();
 	}
 
 	/// <summary>
-	///     The percentage that makes a top speed of `shown` (as the overlay showed it, carrying `currentPercent`) come out as
-	///     `actual` (the same unit). Rounded down to Step, so the corrected top speed never ends up above the real one; within
+	///     The percentage that makes a speed of `shown` (as the overlay showed it, carrying `currentPercent`) come out as
+	///     `actual` (the same unit). Rounded down to Step, so the corrected speed never ends up above the real one; within
 	///     0..MaxPercent, 0 for a speed that makes no sense.
 	/// </summary>
 	public static double PercentFor(double actual, double shown, double currentPercent)

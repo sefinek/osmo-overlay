@@ -35,8 +35,8 @@ public partial class WelcomeWindow : Window
 	}
 
 	/// <param name="offerOpenRecording">The last step offers to open a recording right away (OpenRecordingRequested) - first run only.</param>
-	/// <param name="recordingTopSpeedKmh">The loaded recording's measured top speed, for the speed calibration; null when none is loaded.</param>
-	public WelcomeWindow(bool offerOpenRecording, double? recordingTopSpeedKmh = null)
+	/// <param name="recordingCruisingSpeedKmh">The loaded recording's measured cruising speed, for the speed calibration; null when none is loaded.</param>
+	public WelcomeWindow(bool offerOpenRecording, double? recordingCruisingSpeedKmh = null)
 	{
 		InitializeComponent();
 		_offerOpenRecording = offerOpenRecording;
@@ -46,7 +46,7 @@ public partial class WelcomeWindow : Window
 		VersionText.Text = $"Version {AppUpdates.CurrentVersion}";
 
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		SpeedEditor.Load(settings.SpeedCorrectionPercent, recordingTopSpeedKmh);
+		SpeedEditor.Load(settings.SpeedCorrectionPercent, recordingCruisingSpeedKmh);
 		SmoothGpsCheck.IsChecked = settings.SmoothGpsMotion;
 		WatermarkCheck.IsChecked = settings.ShowWatermark;
 		OutputFolderBox.Text = settings.DefaultOutputFolder;

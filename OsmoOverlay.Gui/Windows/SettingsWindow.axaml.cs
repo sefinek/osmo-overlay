@@ -48,8 +48,8 @@ public partial class SettingsWindow : Window
 		new("Every 10 minutes", 10)
 	];
 
-	/// <summary>The loaded recording's measured top speed (no correction), for the speed calibration; null when none is loaded.</summary>
-	public double? RecordingTopSpeedKmh { get; init; }
+	/// <summary>The loaded recording's measured cruising speed (no correction), for the speed calibration; null when none is loaded.</summary>
+	public double? RecordingCruisingSpeedKmh { get; init; }
 
 	/// <summary>The speed correction as edited on the Speed tab - the main window saves it.</summary>
 	public double SpeedCorrectionPercent => SpeedEditor.Percent;
@@ -107,7 +107,7 @@ public partial class SettingsWindow : Window
 	/// <summary>Fills the export options (Rendering category) - kept separate from the constructor's already long parameter list.</summary>
 	public void LoadExportSettings(OverlaySettings settings)
 	{
-		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingTopSpeedKmh);
+		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
 		NvencPresetCombo.SelectedItem = NvencPresetOptions.FirstOrDefault(o => o.Value == settings.NvencPreset) ?? NvencPresetOptions[0];
 		BitrateCombo.SelectedItem = BitrateOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.OutputBitrateMultiplier) < 0.001)
 		                            ?? BitrateOptions[0];
@@ -351,13 +351,13 @@ public partial class SettingsWindow : Window
 
 	private async void OnWelcomeClick(object? sender, RoutedEventArgs e)
 	{
-		await new WelcomeWindow(false, RecordingTopSpeedKmh).ShowDialog(this);
+		await new WelcomeWindow(false, RecordingCruisingSpeedKmh).ShowDialog(this);
 
 		// The welcome window saved these itself; the checkboxes would otherwise write the old state back on close.
 		OverlaySettings saved = OverlaySettingsStore.Load();
 		ShowWatermarkCheck.IsChecked = saved.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = saved.SmoothGpsMotion;
-		SpeedEditor.Load(saved.SpeedCorrectionPercent, RecordingTopSpeedKmh);
+		SpeedEditor.Load(saved.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
 		ShowProjectAssociation();
 	}
 

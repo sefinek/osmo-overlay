@@ -5,12 +5,12 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     OverlaySettings.SpeedCorrectionPercent as edited in the welcome window and Settings' Speed tab: the percentage, and a
-///     calculator that works it out from a known top speed (SpeedCalibration.PercentFor). The calculator takes the measured top
+///     calculator that works it out from a known cruising speed (SpeedCalibration.PercentFor). The calculator takes the measured
 ///     speed - before any correction - so its result never depends on the correction already set. The owner reads Percent and saves it.
 /// </summary>
 public partial class SpeedCalibrationEditor : UserControl
 {
-	private double? _recordingTopSpeedKmh;
+	private double? _recordingCruisingSpeedKmh;
 	private double? _calculatedPercent;
 
 	public SpeedCalibrationEditor()
@@ -23,7 +23,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		ApplyButton.Click += (_, _) => ApplyCalculation();
 		UseRecordingButton.Click += (_, _) =>
 		{
-			if (_recordingTopSpeedKmh is { } measured) ShownSpeedBox.Value = (decimal)Math.Round(measured, 2);
+			if (_recordingCruisingSpeedKmh is { } measured) ShownSpeedBox.Value = (decimal)Math.Round(measured, 2);
 		};
 		UpdateCorrectionText();
 		UpdateCalculation();
@@ -36,17 +36,17 @@ public partial class SpeedCalibrationEditor : UserControl
 	public bool HasCalculation => _calculatedPercent is not null;
 
 	/// <param name="savedPercent">The correction in settings.json.</param>
-	/// <param name="recordingTopSpeedKmh">The loaded recording's top speed as measured (no correction), to fill in exactly; null when none is loaded.</param>
-	public void Load(double savedPercent, double? recordingTopSpeedKmh)
+	/// <param name="recordingCruisingSpeedKmh">The loaded recording's cruising speed as measured (no correction, SpeedCalibration.CruisingSpeedKmh), to fill in; null when none is loaded.</param>
+	public void Load(double savedPercent, double? recordingCruisingSpeedKmh)
 	{
-		_recordingTopSpeedKmh = recordingTopSpeedKmh is > 0 ? recordingTopSpeedKmh : null;
+		_recordingCruisingSpeedKmh = recordingCruisingSpeedKmh is > 0 ? recordingCruisingSpeedKmh : null;
 		CorrectionBox.Value = (decimal)SpeedCalibration.Clamp(savedPercent);
 
 		// Filled in straight away: the exact value, so nobody reads a rounded or already corrected one off the screen instead.
-		UseRecordingButton.IsVisible = _recordingTopSpeedKmh is not null;
-		if (_recordingTopSpeedKmh is { } measured)
+		UseRecordingButton.IsVisible = _recordingCruisingSpeedKmh is not null;
+		if (_recordingCruisingSpeedKmh is { } measured)
 		{
-			UseRecordingButton.Content = $"Reset to the loaded recording's sustained top speed ({measured:0.##} km/h)";
+			UseRecordingButton.Content = $"Reset to the loaded recording's cruising speed ({measured:0.##} km/h)";
 			ShownSpeedBox.Value = (decimal)Math.Round(measured, 2);
 		}
 
@@ -85,7 +85,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		ResultText.Foreground = _calculatedPercent is null ? Palette.TextMuted : Palette.TextPrimary;
 		if (_calculatedPercent is not { } percent)
 		{
-			ResultText.Text = "Example: a scooter that tops out at 25 km/h, measured at 22 at most - enter 25 and 22.";
+			ResultText.Text = "Example: the speedometer reads 25 at full speed, the GPS measured 22 - enter 25 and 22.";
 			return;
 		}
 
@@ -95,6 +95,6 @@ public partial class SpeedCalibrationEditor : UserControl
 		ResultText.Text = percent <= 0
 			? "The GPS already measured this speed or more - no correction needed."
 			: $"With {percent:0.0}% the measured {measured:0.##} becomes {corrected:0.##} - the widget shows {Math.Round(corrected, MidpointRounding.AwayFromZero):0}. " +
-			  "Rounded down to 0.1%, so the held top speed never comes out above the real one.";
+			  "Rounded down to 0.1%, so it never comes out above the real speed.";
 	}
 }

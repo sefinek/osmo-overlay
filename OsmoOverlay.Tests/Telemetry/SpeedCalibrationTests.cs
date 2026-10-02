@@ -49,29 +49,27 @@ public sealed class SpeedCalibrationTests
 	}
 
 	[TestMethod]
-	public void SustainedTopSpeed_IgnoresASingleSpike()
+	public void CruisingSpeed_FindsThePlateauNotTheFastestMoment()
 	{
-		double[] kmh = [.. Enumerable.Repeat(22.0, 100)];
-		kmh[50] = 26;
+		// 10 Hz: two minutes at the limiter (22 km/h, jittering), a minute at 12, and a few seconds at 26 down a hill.
+		var random = new Random(7);
+		List<double> kmh = [];
+		for (int i = 0; i < 1200; i++) kmh.Add(22 + (random.NextDouble() - 0.5) * 1.2);
+		for (int i = 0; i < 600; i++) kmh.Add(12 + (random.NextDouble() - 0.5) * 1.2);
+		for (int i = 0; i < 60; i++) kmh.Add(26);
+		for (int i = 0; i < 600; i++) kmh.Add(22 + (random.NextDouble() - 0.5) * 1.2);
 
-		double sustained = SpeedCalibration.SustainedTopSpeedKmh(Speeds(10, kmh));
-
-		Assert.AreEqual(22.0, sustained, 0.2);
+		Assert.AreEqual(22.0, SpeedCalibration.CruisingSpeedKmh(Speeds(10, [.. kmh])), 0.2);
 	}
 
 	[TestMethod]
-	public void SustainedTopSpeed_FindsTheFastestHeldStretch()
+	public void CruisingSpeed_IgnoresStandingStill_AndIsZeroWithoutMoving()
 	{
-		double[] kmh = [.. Enumerable.Repeat(15.0, 50), .. Enumerable.Repeat(24.0, 40), .. Enumerable.Repeat(18.0, 50)];
+		double[] kmh = [.. Enumerable.Repeat(0.0, 500), .. Enumerable.Repeat(18.0, 300)];
 
-		Assert.AreEqual(24.0, SpeedCalibration.SustainedTopSpeedKmh(Speeds(10, kmh)), 1e-9);
-	}
-
-	[TestMethod]
-	public void SustainedTopSpeed_OfAShortRecordingIsItsAverage_AndZeroWithoutFrames()
-	{
-		Assert.AreEqual(21.0, SpeedCalibration.SustainedTopSpeedKmh(Speeds(10, 20, 22)), 1e-9);
-		Assert.AreEqual(0.0, SpeedCalibration.SustainedTopSpeedKmh([]));
+		Assert.AreEqual(18.0, SpeedCalibration.CruisingSpeedKmh(Speeds(10, kmh)), 1e-9);
+		Assert.AreEqual(0.0, SpeedCalibration.CruisingSpeedKmh(Speeds(10, 0, 0, 1)));
+		Assert.AreEqual(0.0, SpeedCalibration.CruisingSpeedKmh([]));
 	}
 
 	[TestMethod]

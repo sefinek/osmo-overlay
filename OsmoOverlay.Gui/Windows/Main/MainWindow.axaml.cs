@@ -384,15 +384,15 @@ public partial class MainWindow : Window
 	}
 
 	/// <summary>
-	///     The loaded recording's sustained top speed as the GPS measured it (SpeedCalibration.SustainedTopSpeedKmh) - processed
-	///     like the preview (GPS smoothing included) but without the correction - for the speed calibration.
+	///     The loaded recording's cruising speed as the GPS measured it (SpeedCalibration.CruisingSpeedKmh) - processed like the
+	///     preview (GPS smoothing included) but without the correction - for the speed calibration.
 	/// </summary>
-	private double? RecordingTopSpeedKmh()
+	private double? RecordingCruisingSpeedKmh()
 	{
 		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return null;
 
-		double top = SpeedCalibration.SustainedTopSpeedKmh(TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion));
-		return top > 0 ? top : null;
+		double cruising = SpeedCalibration.CruisingSpeedKmh(TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion));
+		return cruising > 0 ? cruising : null;
 	}
 
 	/// <summary>The loaded recording's top speed as the overlay shows it: the highest sample, with the correction.</summary>
@@ -413,7 +413,7 @@ public partial class MainWindow : Window
 	{
 		OverlaySettings currentSettings = OverlaySettingsStore.Load();
 		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion, RouteIntroSettings.From(currentSettings))
-			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingTopSpeedKmh = RecordingTopSpeedKmh() };
+			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingCruisingSpeedKmh = RecordingCruisingSpeedKmh() };
 		settings.LoadExportSettings(currentSettings);
 		await settings.ShowDialog(this);
 
