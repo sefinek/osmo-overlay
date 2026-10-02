@@ -79,12 +79,28 @@
 			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
 			<Setter Property="BorderThickness" Value="1" />
 		</Style>
+		<Style Selector="ListBox#InputFilesList">
+			<Setter Property="Padding" Value="3" />
+		</Style>
 		<Style Selector="ListBox#InputFilesList ListBoxItem">
 			<Setter Property="Padding" Value="8,4" />
 			<Setter Property="MinHeight" Value="0" />
 			<Setter Property="Height" Value="32" />
+			<Setter Property="CornerRadius" Value="4" />
 			<Setter Property="VerticalContentAlignment" Value="Center" />
 			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		</Style>
+		<Style Selector="ListBox#InputFilesList ListBoxItem:pointerover /template/ ContentPresenter, ListBox#InputFilesList ListBoxItem:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
+		</Style>
+		<Style Selector="ListBox#InputFilesList ListBoxItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
+		<Style Selector="ListBox#InputFilesList ListBoxItem:selected:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
+		</Style>
+		<Style Selector="ListBox#InputFilesList ListBoxItem:selected:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
 		</Style>
 		<Style Selector="local|IconView.checkIcon">
 			<Setter Property="Width" Value="13" />
@@ -397,7 +413,7 @@
 									<TextBlock Text="Add several segments of the same auto-split recording to stitch them into one render"
 									           Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
 									           TextWrapping="Wrap" />
-									<ListBox Name="InputFilesList" MinHeight="34" MaxHeight="132" SelectionMode="Single">
+									<ListBox Name="InputFilesList" MinHeight="40" MaxHeight="136" SelectionMode="Single">
 										<ListBox.ItemTemplate>
 											<DataTemplate x:DataType="x:String">
 												<TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />

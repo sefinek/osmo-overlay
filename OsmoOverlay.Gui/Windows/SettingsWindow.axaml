@@ -77,9 +77,6 @@
 			<Setter Property="BorderThickness" Value="0" />
 			<Setter Property="Padding" Value="0" />
 		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem:selected /template/ ContentPresenter">
-			<Setter Property="Background" Value="Transparent" />
-		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
 		</Style>
@@ -120,10 +117,10 @@
 			<Setter Property="FontWeight" Value="SemiBold" />
 		</Style>
 		<Style Selector="TextBlock.rowHint">
-			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontSize" Value="13" />
 			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
 			<Setter Property="TextWrapping" Value="Wrap" />
-			<Setter Property="LineHeight" Value="17" />
+			<Setter Property="LineHeight" Value="18" />
 			<Setter Property="Margin" Value="0,3,0,0" />
 		</Style>
 		<Style Selector="Grid.settingRow > ComboBox, Grid.settingRow > NumericUpDown">

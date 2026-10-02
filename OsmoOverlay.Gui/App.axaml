@@ -50,6 +50,21 @@
 				<GradientStop Offset="0" Color="{StaticResource AccentColor}" />
 				<GradientStop Offset="1" Color="{StaticResource AccentGlowColor}" />
 			</LinearGradientBrush>
+
+			<Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
+			<StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="ControlBrush" />
+			<StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="StrokeBrush" />
+			<StaticResource x:Key="ComboBoxItemBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+			<StaticResource x:Key="ComboBoxItemBackgroundPressed" ResourceKey="ControlPressedBrush" />
+			<StaticResource x:Key="ComboBoxItemBackgroundSelected" ResourceKey="AccentSubtleBrush" />
+			<StaticResource x:Key="ComboBoxItemBackgroundSelectedPointerOver" ResourceKey="ControlHoverBrush" />
+			<StaticResource x:Key="ComboBoxItemBackgroundSelectedPressed" ResourceKey="AccentSubtleBrush" />
+			<StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="ControlBrush" />
+			<StaticResource x:Key="MenuFlyoutPresenterBorderBrush" ResourceKey="StrokeBrush" />
+			<StaticResource x:Key="MenuFlyoutItemBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+			<StaticResource x:Key="MenuFlyoutItemBackgroundPressed" ResourceKey="ControlPressedBrush" />
+			<StaticResource x:Key="FlyoutPresenterBackground" ResourceKey="ControlBrush" />
+			<StaticResource x:Key="FlyoutBorderThemeBrush" ResourceKey="StrokeBrush" />
 		</ResourceDictionary>
 	</Application.Resources>
 
@@ -198,12 +213,6 @@
 		</Style>
 		<Style Selector="ComboBox:pressed /template/ Border#Background">
 			<Setter Property="Background" Value="{StaticResource ControlPressedBrush}" />
-		</Style>
-		<Style Selector="ComboBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
-		</Style>
-		<Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter, ListBoxItem:selected:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
 		</Style>
 
 		<Style Selector="ToolTip">
