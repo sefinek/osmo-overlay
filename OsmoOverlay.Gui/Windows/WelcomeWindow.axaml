@@ -41,6 +41,10 @@
 			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
 			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
 		</Style>
+		<Style Selector="Button.wizard, Button.ghost">
+			<Setter Property="Height" Value="34" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
 		<Style Selector="Button.wizard">
 			<Setter Property="MinWidth" Value="88" />
 			<Setter Property="Padding" Value="16,7" />
