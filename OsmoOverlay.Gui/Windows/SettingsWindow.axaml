@@ -57,6 +57,7 @@
 			<Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" Padding="10">
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
 					<ListBoxItem Content="Rendering" />
+					<ListBoxItem Content="Speed" />
 					<ListBoxItem Content="Route intro" />
 					<ListBoxItem Content="Interface" />
 					<ListBoxItem Content="Behavior" />
@@ -150,6 +151,17 @@
 								</StackPanel>
 							</Expander>
 						</StackPanel>
+					</StackPanel>
+				</ScrollViewer>
+
+				<ScrollViewer Name="SpeedPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+					<StackPanel Margin="24,20" Spacing="20">
+						<StackPanel Spacing="6">
+							<TextBlock Text="Speed calibration" Classes="sectionHeader" />
+							<TextBlock Classes="hint"
+							           Text="A camera's GPS tends to read speed low, peaks most of all. The correction raises every shown speed - the speed widgets, top and average speed, the route intro - in the preview and in every render. It's one setting for all recordings, saved when you close Settings; an open preview reloads with it." />
+						</StackPanel>
+						<local:SpeedCalibrationEditor Name="SpeedEditor" />
 					</StackPanel>
 				</ScrollViewer>
 
@@ -250,10 +262,10 @@
 							</StackPanel>
 
 							<StackPanel Spacing="6">
-								<TextBlock Text="Setup and speed calibration" Classes="infoLabel" />
+								<TextBlock Text="Setup" Classes="infoLabel" />
 								<Button Content="Open the welcome window..." HorizontalAlignment="Left" Click="OnWelcomeClick" />
 								<TextBlock Classes="hint"
-								           Text="First-run setup: tools, speed correction for a GPS that reads low, the default output folder and project file association. A changed speed correction takes effect when the preview is reopened." />
+								           Text="The first-run guide: tools, speed calibration, the default output folder and project file association." />
 							</StackPanel>
 
 							<StackPanel Spacing="6">

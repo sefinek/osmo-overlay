@@ -48,6 +48,12 @@ public partial class SettingsWindow : Window
 		new("Every 10 minutes", 10)
 	];
 
+	/// <summary>The loaded recording's measured top speed (no correction), for the speed calibration; null when none is loaded.</summary>
+	public double? RecordingTopSpeedKmh { get; init; }
+
+	/// <summary>The speed correction as edited on the Speed tab - the main window saves it.</summary>
+	public double SpeedCorrectionPercent => SpeedEditor.Percent;
+
 	/// <summary>Whether the main window is rendering - an FFmpeg update that restarts the app is held off until it isn't.</summary>
 	public Func<bool> IsRendering { get; init; } = () => false;
 
@@ -100,6 +106,7 @@ public partial class SettingsWindow : Window
 	/// <summary>Fills the export options (Rendering category) - kept separate from the constructor's already long parameter list.</summary>
 	public void LoadExportSettings(OverlaySettings settings)
 	{
+		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingTopSpeedKmh);
 		NvencPresetCombo.SelectedItem = NvencPresetOptions.FirstOrDefault(o => o.Value == settings.NvencPreset) ?? NvencPresetOptions[0];
 		BitrateCombo.SelectedItem = BitrateOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.OutputBitrateMultiplier) < 0.001)
 		                            ?? BitrateOptions[0];
@@ -263,16 +270,18 @@ public partial class SettingsWindow : Window
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (RenderingPanel is null || RouteIntroPanel is null || InterfacePanel is null || BehaviorPanel is null || AboutPanel is null)
+		if (RenderingPanel is null || SpeedPanel is null || RouteIntroPanel is null || InterfacePanel is null || BehaviorPanel is null ||
+		    AboutPanel is null)
 			return;
 
 		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 0;
-		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 1;
-		InterfacePanel.IsVisible = CategoryList.SelectedIndex == 2;
-		BehaviorPanel.IsVisible = CategoryList.SelectedIndex == 3;
-		AboutPanel.IsVisible = CategoryList.SelectedIndex == 4;
+		SpeedPanel.IsVisible = CategoryList.SelectedIndex == 1;
+		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
+		InterfacePanel.IsVisible = CategoryList.SelectedIndex == 3;
+		BehaviorPanel.IsVisible = CategoryList.SelectedIndex == 4;
+		AboutPanel.IsVisible = CategoryList.SelectedIndex == 5;
 
-		if (CategoryList.SelectedIndex == 4 && !_updatesShown)
+		if (CategoryList.SelectedIndex == 5 && !_updatesShown)
 		{
 			_updatesShown = true;
 			_ = ShowUpdatesAsync(UpdateChecks.Latest);
@@ -341,12 +350,13 @@ public partial class SettingsWindow : Window
 
 	private async void OnWelcomeClick(object? sender, RoutedEventArgs e)
 	{
-		await new WelcomeWindow().ShowDialog(this);
+		await new WelcomeWindow(false, RecordingTopSpeedKmh).ShowDialog(this);
 
 		// The welcome window saved these itself; the checkboxes would otherwise write the old state back on close.
 		OverlaySettings saved = OverlaySettingsStore.Load();
 		ShowWatermarkCheck.IsChecked = saved.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = saved.SmoothGpsMotion;
+		SpeedEditor.Load(saved.SpeedCorrectionPercent, RecordingTopSpeedKmh);
 		ShowProjectAssociation();
 	}
 

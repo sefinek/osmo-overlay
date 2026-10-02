@@ -12,6 +12,7 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
+using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Updates;
 using OsmoOverlay.Gui.Native;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
@@ -382,6 +383,18 @@ public partial class MainWindow : Window
 		ActionButton.IsEnabled = _inputPaths.Count > 0;
 	}
 
+	/// <summary>
+	///     The loaded recording's top speed as the GPS measured it - processed like the preview (GPS smoothing included) but
+	///     without the correction, so the calibration can work from the exact value instead of the widget's rounded one.
+	/// </summary>
+	private double? RecordingTopSpeedKmh()
+	{
+		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return null;
+
+		double top = TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion).Max(f => f.SpeedKmh);
+		return top > 0 ? top : null;
+	}
+
 	private void RefreshInputFilesList()
 	{
 		InputFilesList.ItemsSource = _inputPaths.Select(Path.GetFileName).ToList();
@@ -391,7 +404,7 @@ public partial class MainWindow : Window
 	{
 		OverlaySettings currentSettings = OverlaySettingsStore.Load();
 		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion, RouteIntroSettings.From(currentSettings))
-			{ IsRendering = () => _phase == UiPhase.Rendering };
+			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingTopSpeedKmh = RecordingTopSpeedKmh() };
 		settings.LoadExportSettings(currentSettings);
 		await settings.ShowDialog(this);
 
@@ -413,7 +426,11 @@ public partial class MainWindow : Window
 			_previewPlayer.SetShowWatermark(_showWatermark);
 		}
 
-		// Unlike ShowWatermark, GPS smoothing (and the speed correction, set in the welcome window) is baked in at OpenAsync, so a change reopens the preview.
+		// Saved unless the welcome window (opened from Settings) already saved its own value - then the Speed tab shows that one too.
+		if (Math.Abs(settings.SpeedCorrectionPercent - OverlaySettingsStore.Load().SpeedCorrectionPercent) > 1e-9)
+			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { SpeedCorrectionPercent = settings.SpeedCorrectionPercent });
+
+		// Unlike ShowWatermark, GPS smoothing and the speed correction are baked in at OpenAsync, so a change reopens the preview.
 		bool needsPreviewReopen = Math.Abs(OverlaySettingsStore.Load().SpeedCorrectionPercent - currentSettings.SpeedCorrectionPercent) > 1e-9;
 		if (settings.SmoothGpsMotion != _smoothGpsMotion)
 		{

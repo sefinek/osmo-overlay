@@ -8,15 +8,29 @@ public sealed class SpeedCalibrationTests
 	[TestMethod]
 	public void PercentFor_WorksOutTheCorrectionFromTheKnownSpeed()
 	{
-		Assert.AreEqual(13.5, SpeedCalibration.PercentFor(25, 22, 0));
+		Assert.AreEqual(13.6, SpeedCalibration.PercentFor(25, 22, 0), 1e-9);
 		Assert.AreEqual(0.0, SpeedCalibration.PercentFor(22, 22, 0));
+		Assert.AreEqual(10.0, SpeedCalibration.PercentFor(22, 20, 0), 1e-9);
+	}
+
+	[TestMethod]
+	public void PercentFor_NeverTakesTheTopSpeedAboveTheRealOne()
+	{
+		foreach ((double actual, double shown) in new[] { (25.0, 22.0), (25.0, 22.4), (32.0, 29.7), (45.0, 41.3), (25.0, 24.95) })
+		{
+			double percent = SpeedCalibration.PercentFor(actual, shown, 0);
+			double corrected = SpeedCalibration.Corrected(shown, percent);
+			Assert.IsTrue(corrected <= actual + 1e-9, $"{shown} -> {corrected} > {actual}");
+			Assert.IsTrue(actual - corrected < shown * SpeedCalibration.Step / 100 + 1e-9, $"{shown} -> {corrected} is more than a step short of {actual}");
+		}
 	}
 
 	[TestMethod]
 	public void PercentFor_StartsFromWhatTheReceiverReadWhenACorrectionIsAlreadyOn()
 	{
-		Assert.AreEqual(10.0, SpeedCalibration.PercentFor(25, 22.727, 0), 0.5);
-		Assert.AreEqual(10.0, SpeedCalibration.PercentFor(25, 25, 10), 0.5);
+		Assert.AreEqual(10.0, SpeedCalibration.PercentFor(25, 22.7272, 0), 1e-9);
+		Assert.AreEqual(10.0, SpeedCalibration.PercentFor(25, 25, 10), 1e-9);
+		Assert.AreEqual(13.6, SpeedCalibration.PercentFor(25, 24.2, 10), 1e-9);
 	}
 
 	[TestMethod]

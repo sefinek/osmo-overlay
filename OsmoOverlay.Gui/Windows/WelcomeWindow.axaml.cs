@@ -29,14 +29,14 @@ public partial class WelcomeWindow : Window
 	private readonly Border[] _dots;
 	private readonly bool _offerOpenRecording;
 	private int _step;
-	private double? _calculatedPercent;
 
 	public WelcomeWindow() : this(false)
 	{
 	}
 
 	/// <param name="offerOpenRecording">The last step offers to open a recording right away (OpenRecordingRequested) - first run only.</param>
-	public WelcomeWindow(bool offerOpenRecording)
+	/// <param name="recordingTopSpeedKmh">The loaded recording's measured top speed, for the speed calibration; null when none is loaded.</param>
+	public WelcomeWindow(bool offerOpenRecording, double? recordingTopSpeedKmh = null)
 	{
 		InitializeComponent();
 		_offerOpenRecording = offerOpenRecording;
@@ -45,10 +45,8 @@ public partial class WelcomeWindow : Window
 		_dots = [.. _steps.Select((_, i) => StepDot(i))];
 		VersionText.Text = $"Version {AppUpdates.CurrentVersion}";
 
-		CorrectionBox.Maximum = (decimal)SpeedCalibration.MaxPercent;
-
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		CorrectionBox.Value = (decimal)SpeedCalibration.Clamp(settings.SpeedCorrectionPercent);
+		SpeedEditor.Load(settings.SpeedCorrectionPercent, recordingTopSpeedKmh);
 		SmoothGpsCheck.IsChecked = settings.SmoothGpsMotion;
 		WatermarkCheck.IsChecked = settings.ShowWatermark;
 		OutputFolderBox.Text = settings.DefaultOutputFolder;
@@ -56,7 +54,6 @@ public partial class WelcomeWindow : Window
 		ProjectAssociationCheck.IsVisible = ProjectFileAssociation.IsSupported;
 		ProjectAssociationCheck.IsChecked = ProjectFileAssociation.IsSupported && ProjectFileAssociation.IsRegistered();
 
-		UpdateCalculation();
 		ShowTools();
 		ShowStep(0);
 		AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Bubble, true);
@@ -133,7 +130,7 @@ public partial class WelcomeWindow : Window
 				Close();
 				break;
 			case Key.Enter when typing && _steps[_step] == SpeedStep:
-				if (_calculatedPercent is not null) ApplyCalculation();
+				SpeedEditor.ApplyCalculation();
 				break;
 			case Key.Enter when !typing && !e.Handled:
 				GoForward();
@@ -324,47 +321,12 @@ public partial class WelcomeWindow : Window
 		ToolsHint.Text = result.Message;
 	}
 
-	private void OnKnownSpeedChanged(object? sender, NumericUpDownValueChangedEventArgs e)
-	{
-		UpdateCalculation();
-	}
-
-	/// <summary>The correction for the two known speeds, shown as they're typed; Apply (or Enter) puts it into the field above.</summary>
-	private void UpdateCalculation()
-	{
-		_calculatedPercent = RealSpeedBox.Value is { } real && ShownSpeedBox.Value is { } shown
-			? SpeedCalibration.PercentFor((double)real, (double)shown, (double)(CorrectionBox.Value ?? 0))
-			: null;
-
-		ApplyCalculationButton.IsEnabled = _calculatedPercent is not null;
-		CalculationText.Foreground = _calculatedPercent is null ? Palette.TextMuted : Palette.TextPrimary;
-		CalculationText.Text = _calculatedPercent is { } percent
-			? $"{RealSpeedBox.Value:0.#} instead of {ShownSpeedBox.Value:0.#} needs a {percent:0.#}% correction."
-			: "Example: your scooter tops out at 25 km/h, but the speed widget usually peaks at 22 km/h. Enter 25 and 22 (same unit for both).";
-	}
-
-	private void OnApplyCalculationClick(object? sender, RoutedEventArgs e)
-	{
-		ApplyCalculation();
-	}
-
-	private void ApplyCalculation()
-	{
-		if (_calculatedPercent is not { } percent) return;
-
-		CorrectionBox.Value = (decimal)percent;
-		RealSpeedBox.Value = null;
-		ShownSpeedBox.Value = null;
-		CalculationText.Foreground = Palette.Success;
-		CalculationText.Text = $"Correction set to {percent:0.#}%.";
-	}
-
 	private void ShowSummary()
 	{
-		double correction = SpeedCalibration.Clamp((double)(CorrectionBox.Value ?? 0));
+		double correction = SpeedEditor.Percent;
 		List<(string Label, string Value)> rows =
 		[
-			("Speed correction", correction > 0 ? $"+{correction:0.#}%" : "None"),
+			("Speed correction", correction > 0 ? $"+{correction:0.0}%" : "None"),
 			("GPS smoothing", SmoothGpsCheck.IsChecked == true ? "On" : "Off"),
 			("Watermark", WatermarkCheck.IsChecked == true ? "On" : "Off"),
 			("Output folder", string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? "Next to the source file" : OutputFolderBox.Text)
@@ -410,7 +372,7 @@ public partial class WelcomeWindow : Window
 	{
 		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with
 		{
-			SpeedCorrectionPercent = SpeedCalibration.Clamp((double)(CorrectionBox.Value ?? 0)),
+			SpeedCorrectionPercent = SpeedEditor.Percent,
 			SmoothGpsMotion = SmoothGpsCheck.IsChecked == true,
 			ShowWatermark = WatermarkCheck.IsChecked == true,
 			DefaultOutputFolder = string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? null : OutputFolderBox.Text,

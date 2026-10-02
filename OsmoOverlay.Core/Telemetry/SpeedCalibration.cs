@@ -9,7 +9,8 @@ public static class SpeedCalibration
 	/// <summary>The most a speed can be raised by - a calibration, not a way to invent speed.</summary>
 	public const double MaxPercent = 50;
 
-	private const double Step = 0.5;
+	/// <summary>The precision of a worked-out correction: at 25 km/h, 0.1% is 0.025 km/h - well below what the widget shows.</summary>
+	public const double Step = 0.1;
 
 	public static double Clamp(double percent)
 	{
@@ -22,6 +23,12 @@ public static class SpeedCalibration
 		return 1 + Clamp(percent) / 100;
 	}
 
+	/// <summary>A measured speed as the overlay shows it with `percent`.</summary>
+	public static double Corrected(double speed, double percent)
+	{
+		return speed * Factor(percent);
+	}
+
 	/// <summary>Frames that were derived without a correction (a cached summary's), with their speeds raised like TelemetryProcessor.Process does.</summary>
 	public static IReadOnlyList<DerivedFrame> Apply(IReadOnlyList<DerivedFrame> frames, double percent)
 	{
@@ -30,15 +37,17 @@ public static class SpeedCalibration
 	}
 
 	/// <summary>
-	///     The percentage that turns what the overlay `shown` into `actual` (the same unit). `shown` already carries
-	///     `currentPercent`, so the receiver's own reading is worked out from it first. Rounded to half a percent, within
-	///     0..MaxPercent; 0 for a speed that makes no sense.
+	///     The percentage that makes a top speed of `shown` (as the overlay showed it, carrying `currentPercent`) come out as
+	///     `actual` (the same unit). Rounded down to Step, so the corrected top speed never ends up above the real one; within
+	///     0..MaxPercent, 0 for a speed that makes no sense.
 	/// </summary>
 	public static double PercentFor(double actual, double shown, double currentPercent)
 	{
 		if (!(actual > 0) || !(shown > 0)) return 0;
 
 		double measured = shown / Factor(currentPercent);
-		return Clamp(Math.Round((actual / measured - 1) * 100 / Step) * Step);
+		double exact = (actual / measured - 1) * 100;
+		// The epsilon keeps an exact result (e.g. 10.0 from 1.1 * x) from flooring a step lower on a floating-point hair.
+		return Clamp(Math.Round(Math.Floor(exact / Step + 1e-9) * Step, 1));
 	}
 }
