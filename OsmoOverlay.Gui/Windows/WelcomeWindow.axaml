@@ -10,7 +10,7 @@
         Icon="/Assets/OsmoOverlay.ico"
         Title="Welcome to OsmoOverlay">
 
-	<Grid ColumnDefinitions="330,*">
+	<Grid ColumnDefinitions="270,*">
 		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}"
 		        BorderBrush="{StaticResource StrokeBrush}" BorderThickness="0,0,1,0">
 			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
