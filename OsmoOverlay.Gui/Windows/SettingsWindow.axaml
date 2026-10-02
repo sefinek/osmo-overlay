@@ -74,23 +74,8 @@
 			<Setter Property="RenderTransform" Value="translateX(3px)" />
 		</Style>
 
-		<!-- Pages: the one shown fades and slides in; the one left goes at once, so it never flashes half-faded -->
 		<Style Selector="ScrollViewer.page.hidden">
 			<Setter Property="IsVisible" Value="False" />
-		</Style>
-		<Style Selector="ScrollViewer.page.entering">
-			<Style.Animations>
-				<Animation Duration="0:0:0.22" Easing="CubicEaseOut" FillMode="Forward">
-					<KeyFrame Cue="0%">
-						<Setter Property="Opacity" Value="0" />
-						<Setter Property="TranslateTransform.Y" Value="10" />
-					</KeyFrame>
-					<KeyFrame Cue="100%">
-						<Setter Property="Opacity" Value="1" />
-						<Setter Property="TranslateTransform.Y" Value="0" />
-					</KeyFrame>
-				</Animation>
-			</Style.Animations>
 		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
