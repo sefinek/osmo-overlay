@@ -31,7 +31,7 @@
     <value>{0} nie jest oficjalnie obsługiwany. OsmoOverlay jest testowany na DJI Osmo Action 6 i Action 5 Pro. Telemetria najpewniej i tak zostanie odczytana, ale niektóre widżety mogą być niedostępne lub pokazywać błędne wartości (przechył, miernik G), a sprawdzanie ustawień nagrywania nie zadziała.</value>
   </data>
   <data name="Dji_SourceExifTool" xml:space="preserve">
-    <value>Źródło telemetrii: exiftool awaryjnie (natywne dekodowanie djmd nie powiodło się lub brak ISO/migawki/temperatury)</value>
+    <value>Źródło telemetrii: awaryjnie exiftool (natywne dekodowanie djmd nie powiodło się lub brak ISO/migawki/temperatury)</value>
   </data>
   <data name="Dji_SourceNative" xml:space="preserve">
     <value>Źródło telemetrii: natywny dekoder djmd (ISO, migawka i temperatura barwowa obecne, exiftool niepotrzebny)</value>
@@ -46,7 +46,7 @@
     <value>Ścieżka kamery '{0}' różni się między segmentami (timescale/opis próbek) - nie skopiowano</value>
   </data>
   <data name="Insta360_Source" xml:space="preserve">
-    <value>Źródło telemetrii: blok końcowy Insta360 (akcelerometr uśredniony na klatkę, ekspozycja)</value>
+    <value>Źródło telemetrii: blok danych na końcu pliku Insta360 (akcelerometr uśredniony na klatkę, ekspozycja)</value>
   </data>
   <data name="Insta360_SupportNotice" xml:space="preserve">
     <value>OsmoOverlay powstał głównie dla DJI Osmo Action 6. Nagrania z Insta360 nie były dużo testowane, a ich dane GPS w ogóle nie są obsługiwane. Niektóre widżety mogą być niedostępne lub pokazywać błędne wartości.</value>
@@ -79,13 +79,13 @@
     <value>Nie znaleziono obsługiwanego menedżera pakietów (apt, dnf, pacman). Zainstaluj {0} ręcznie</value>
   </data>
   <data name="Install_NoSupportedVersion" xml:space="preserve">
-    <value>Nie znaleziono {0} {1}.x w winget ({2}) - to jedyna główna wersja, której może używać ta wersja OsmoOverlay</value>
+    <value>Nie znaleziono {0} {1}.x w winget ({2}) - tylko tej głównej wersji może używać ta wersja OsmoOverlay</value>
   </data>
   <data name="Install_NotFromWinget" xml:space="preserve">
-    <value>{0} nie został zainstalowany przez winget, więc nie można go stąd zaktualizować - zaktualizuj go tak, jak go zainstalowano</value>
+    <value>{0} nie został zainstalowany przez winget, więc nie da się go stąd zaktualizować - zaktualizuj go w ten sam sposób, w jaki go zainstalowano</value>
   </data>
   <data name="Install_NotOnPath" xml:space="preserve">
-    <value>Menedżer pakietów zgłasza {0} jako zainstalowany, ale {1} wciąż nie ma w PATH. Uruchom aplikację ponownie albo dodaj jego folder do PATH ręcznie</value>
+    <value>Menedżer pakietów zgłasza, że {0} jest zainstalowany, ale {1} nadal nie ma w PATH. Uruchom ponownie aplikację albo ręcznie dodaj jego folder do PATH</value>
   </data>
   <data name="Install_PreviewCantUse" xml:space="preserve">
     <value>{0} jest zainstalowany, ale podgląd nie może go użyć: {1}. Zaktualizuj go (lub zainstaluj nowszą wersję) i spróbuj ponownie</value>
@@ -121,10 +121,10 @@
     <value>{0} ({1}) nie pasuje do {2} ({3}) - aby połączyć pliki, muszą mieć tę samą rozdzielczość, liczbę klatek i format pikseli.</value>
   </data>
   <data name="Join_DifferentLens" xml:space="preserve">
-    <value>{0} i {1} nie zostały nagrane w tym samym układzie obiektywów (360 lub płaski).</value>
+    <value>{0} i {1} nie zostały nagrane w tym samym trybie obiektywu (360 lub płaski).</value>
   </data>
   <data name="Join_UnknownCamera" xml:space="preserve">
-    <value>kamery bez telemetrii odczytywanej przez aplikację</value>
+    <value>kamery, której telemetrii aplikacja nie odczytuje</value>
   </data>
   <data name="Libav_CantDecodeAudio" xml:space="preserve">
     <value>Podgląd nie może dekodować dźwięku: {0}</value>
@@ -136,7 +136,7 @@
     <value>nie udało się wczytać bibliotek FFmpeg: {0}</value>
   </data>
   <data name="Libav_NotFound" xml:space="preserve">
-    <value>Nie znaleziono {0} - jest częścią FFmpeg {1} w wersji shared</value>
+    <value>Nie znaleziono {0} - ten plik jest częścią FFmpeg {1} w wersji shared</value>
   </data>
   <data name="Libav_WrongVersion" xml:space="preserve">
     <value>Znaleziono libavcodec {0}, potrzebny jest {1}</value>
@@ -280,7 +280,7 @@
     <value>szacowanie pozostałego czasu...</value>
   </data>
   <data name="Render_Extracted" xml:space="preserve">
-    <value>Wyodrębniono próbki telemetrii: {0}</value>
+    <value>Wyodrębniono próbki telemetrii ({0})</value>
   </data>
   <data name="Render_Extracting" xml:space="preserve">
     <value>Wyodrębnianie telemetrii...</value>
@@ -349,10 +349,10 @@
     <value>Nie udało się usunąć niepełnego pliku wyjściowego {0}</value>
   </data>
   <data name="Render_Rendering" xml:space="preserve">
-    <value>Renderowanie klatek ({0}) do {1}...</value>
+    <value>Renderowanie do {1} (klatki: {0})...</value>
   </data>
   <data name="Render_RenderingPartial" xml:space="preserve">
-    <value>Renderowanie klatek ({0}) do {1} ({2} nagrania)...</value>
+    <value>Renderowanie do {1} (klatki: {0}, fragmenty nagrania: {2})...</value>
   </data>
   <data name="Render_Segments" xml:space="preserve">
     <value>{0} segment|{0} segmenty|{0} segmentów</value>
@@ -361,7 +361,7 @@
     <value>zostało {0}</value>
   </data>
   <data name="Render_UsingExtractedSamples" xml:space="preserve">
-    <value>Używam wcześniej wyodrębnionych próbek telemetrii: {0}</value>
+    <value>Używam wcześniej wyodrębnionych próbek telemetrii ({0})</value>
   </data>
   <data name="Settings_Unreadable" xml:space="preserve">
     <value>Plik ustawień jest uszkodzony lub nieczytelny - używam domyślnych</value>
@@ -385,7 +385,7 @@
     <value>osadzona miniatura</value>
   </data>
   <data name="Strip_Timecode" xml:space="preserve">
-    <value>ścieżka timecode (pora dnia)</value>
+    <value>ścieżka timecode (godzina nagrania)</value>
   </data>
   <data name="Updates_Available" xml:space="preserve">
     <value>Dostępny jest OsmoOverlay {0} (masz {1})</value>
@@ -409,7 +409,7 @@
     <value>{0}: niezainstalowany albo nie udało się odczytać wersji</value>
   </data>
   <data name="Versions_Unsupported" xml:space="preserve">
-    <value>Wyszedł {0} {1}, ale ta wersja OsmoOverlay obsługuje tylko {2}.x</value>
+    <value>Dostępny jest już {0} {1}, ale ta wersja OsmoOverlay obsługuje tylko {2}.x</value>
   </data>
   <data name="Versions_UpdateAvailable" xml:space="preserve">
     <value>{0}: zainstalowana {1}, dostępna aktualizacja ({2})</value>

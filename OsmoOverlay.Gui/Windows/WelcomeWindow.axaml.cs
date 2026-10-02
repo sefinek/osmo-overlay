@@ -23,7 +23,7 @@ public partial class WelcomeWindow : Window
 {
 	private static readonly string[] StepNames =
 	[
-		Strings.Welcome_StepWelcome, Strings.Welcome_YourCamera, Strings.Common_Tools, Strings.Common_SpeedCalibration,
+		Strings.Welcome_StepWelcome, Strings.Welcome_SupportedCameras, Strings.Common_Tools, Strings.Common_SpeedCalibration,
 		Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
 	];
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
