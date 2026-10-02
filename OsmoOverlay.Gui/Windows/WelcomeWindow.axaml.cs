@@ -21,26 +21,28 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class WelcomeWindow : Window
 {
+	private static readonly string[] StepNames = ["Welcome", "Your camera", "Tools", "Speed calibration", "Rendering and files", "All set"];
+	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
+
 	private readonly Control[] _steps;
 	private readonly Control[] _arts;
 	private readonly Border[] _dots;
+	private readonly bool _offerOpenRecording;
 	private int _step;
+	private double? _calculatedPercent;
 
-	public WelcomeWindow()
+	public WelcomeWindow() : this(false)
+	{
+	}
+
+	/// <param name="offerOpenRecording">The last step offers to open a recording right away (OpenRecordingRequested) - first run only.</param>
+	public WelcomeWindow(bool offerOpenRecording)
 	{
 		InitializeComponent();
-		_steps = [WelcomeStep, ToolsStep, SpeedStep, PreferencesStep, SupportStep];
-		_arts = [WelcomeArt, ToolsArt, SpeedArt, PreferencesArt, SupportArt];
-		_dots =
-		[
-			.. _steps.Select(_ => new Border
-			{
-				Height = 6,
-				CornerRadius = new CornerRadius(3),
-				Transitions = new Transitions { new DoubleTransition { Property = Border.WidthProperty, Duration = TimeSpan.FromMilliseconds(160) } }
-			})
-		];
-		foreach (Border dot in _dots) StepDots.Children.Add(dot);
+		_offerOpenRecording = offerOpenRecording;
+		_steps = [WelcomeStep, CameraStep, ToolsStep, SpeedStep, PreferencesStep, FinishStep];
+		_arts = [WelcomeArt, CameraArt, ToolsArt, SpeedArt, PreferencesArt, FinishArt];
+		_dots = [.. _steps.Select((_, i) => StepDot(i))];
 		VersionText.Text = $"Version {AppUpdates.CurrentVersion}";
 
 		CorrectionBox.Maximum = (decimal)SpeedCalibration.MaxPercent;
@@ -54,8 +56,10 @@ public partial class WelcomeWindow : Window
 		ProjectAssociationCheck.IsVisible = ProjectFileAssociation.IsSupported;
 		ProjectAssociationCheck.IsChecked = ProjectFileAssociation.IsSupported && ProjectFileAssociation.IsRegistered();
 
+		UpdateCalculation();
 		ShowTools();
 		ShowStep(0);
+		AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Bubble, true);
 		Closed += (_, _) =>
 		{
 			OverlaySettings now = OverlaySettingsStore.Load();
@@ -63,21 +67,87 @@ public partial class WelcomeWindow : Window
 		};
 	}
 
+	/// <summary>Finished with "Open a recording": the caller opens the file picker once this window is closed.</summary>
+	public bool OpenRecordingRequested { get; private set; }
+
+	private bool IsLastStep => _step == _steps.Length - 1;
+
+	/// <summary>A step indicator in the side panel: a dot, a pill for the current step, and a way to jump straight to any step.</summary>
+	private Border StepDot(int index)
+	{
+		Border dot = new()
+		{
+			Height = 6,
+			CornerRadius = new CornerRadius(3),
+			Transitions = new Transitions { new DoubleTransition { Property = Border.WidthProperty, Duration = TimeSpan.FromMilliseconds(160) } }
+		};
+		Border hitArea = new() { Background = Brushes.Transparent, Padding = new Thickness(3, 8), Cursor = HandCursor, Child = dot };
+		ToolTip.SetTip(hitArea, StepNames[index]);
+		hitArea.PointerPressed += (_, _) => ShowStep(index);
+		StepDots.Children.Add(hitArea);
+		return dot;
+	}
+
+	/// <summary>Every step stays laid out on top of the others, so switching only cross-fades (the Opacity transition) and nothing jumps.</summary>
 	private void ShowStep(int step)
 	{
 		_step = step;
 		for (int i = 0; i < _steps.Length; i++)
 		{
-			_steps[i].IsVisible = i == step;
-			_arts[i].IsVisible = i == step;
-			_dots[i].Width = i == step ? 20 : 6;
-			_dots[i].Background = i == step ? Palette.Accent : Palette.StrokeStrong;
+			bool current = i == step;
+			_steps[i].Opacity = current ? 1 : 0;
+			_steps[i].IsHitTestVisible = current;
+			_steps[i].IsEnabled = current;
+			_arts[i].Opacity = current ? 1 : 0;
+			_dots[i].Width = current ? 20 : 6;
+			_dots[i].Background = current ? Palette.Accent : Palette.StrokeStrong;
 		}
 
 		StepLabel.Text = $"STEP {step + 1} OF {_steps.Length}";
+		if (IsLastStep) ShowSummary();
 
+		SkipButton.IsVisible = !IsLastStep;
 		BackButton.IsVisible = step > 0;
-		NextButton.Content = step == _steps.Length - 1 ? "Finish" : "Next";
+		NextButton.Content = IsLastStep ? "Finish" : "Next";
+		NextButton.Classes.Set("accent", !(IsLastStep && _offerOpenRecording));
+		OpenRecordingButton.IsVisible = IsLastStep && _offerOpenRecording;
+	}
+
+	private void GoForward()
+	{
+		if (!IsLastStep) ShowStep(_step + 1);
+		else if (_offerOpenRecording) OpenRecording();
+		else Save();
+	}
+
+	// Bubbling with handled events too: a NumericUpDown commits its text on Enter (and marks it handled) before this runs.
+	private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+	{
+		if (e.KeyModifiers != KeyModifiers.None) return;
+
+		bool typing = FocusManager?.GetFocusedElement() is TextBox;
+		switch (e.Key)
+		{
+			case Key.Escape:
+				Close();
+				break;
+			case Key.Enter when typing && _steps[_step] == SpeedStep:
+				if (_calculatedPercent is not null) ApplyCalculation();
+				break;
+			case Key.Enter when !typing && !e.Handled:
+				GoForward();
+				break;
+			case Key.Left when !typing && !e.Handled && _step > 0:
+				ShowStep(_step - 1);
+				break;
+			case Key.Right when !typing && !e.Handled && !IsLastStep:
+				ShowStep(_step + 1);
+				break;
+			default:
+				return;
+		}
+
+		e.Handled = true;
 	}
 
 	private void OnLinkButtonClick(object? sender, RoutedEventArgs e)
@@ -97,47 +167,87 @@ public partial class WelcomeWindow : Window
 
 	private void OnNextClick(object? sender, RoutedEventArgs e)
 	{
-		if (_step < _steps.Length - 1) ShowStep(_step + 1);
-		else Save();
+		if (IsLastStep) Save();
+		else ShowStep(_step + 1);
 	}
 
-	private void ShowTools()
+	private void OnOpenRecordingClick(object? sender, RoutedEventArgs e)
 	{
+		OpenRecording();
+	}
+
+	private void OpenRecording()
+	{
+		OpenRecordingRequested = true;
+		Save();
+	}
+
+	private void OnSkipClick(object? sender, RoutedEventArgs e)
+	{
+		Close();
+	}
+
+	// Found tools show up at once; their versions follow when the tools have answered.
+	private async void ShowTools()
+	{
+		ToolRows.Children.Clear();
 		bool requiredMissing = false;
+		bool canInstall = DependencyInstaller.CanAttemptAutoInstall();
+		List<(ExternalTool Tool, TextBlock Status)> found = [];
 		foreach (ExternalTool tool in RequiredTools.All)
 		{
-			bool found = DependencyChecker.IsAvailable(tool);
-			requiredMissing |= !found && !tool.IsOptional;
-			ToolRows.Children.Add(ToolRow(tool, found));
+			bool available = DependencyChecker.IsAvailable(tool);
+			requiredMissing |= !available && !tool.IsOptional;
+			ToolRows.Children.Add(ToolRow(tool, available, canInstall, out TextBlock? status));
+			if (status is not null) found.Add((tool, status));
 		}
 
 		ToolsHint.Text = requiredMissing
-			? "A required tool is missing. Install it from Settings, About tab, or the app offers to at startup."
-			: "Missing optional tools can be installed from Settings, About tab.";
+			? "FFmpeg is needed for the preview and every render. Install it here, or later from Settings > About."
+			: "Optional tools can also be installed later from Settings > About.";
+
+		foreach ((ExternalTool tool, TextBlock status) in found)
+		{
+			if (await InstalledVersionAsync(tool) is { } version) status.Text = version;
+		}
 	}
 
-	private static Border ToolRow(ExternalTool tool, bool found)
+	private static async Task<string?> InstalledVersionAsync(ExternalTool tool)
 	{
-		IBrush status = found ? Palette.Success : tool.IsOptional ? Palette.Warning : Palette.Danger;
+		try
+		{
+			using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+			return await DependencyVersionChecker.GetInstalledVersionAsync(tool, timeout.Token);
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Info($"Could not read the {tool.DisplayName} version: {ex.Message}");
+			return null;
+		}
+	}
+
+	/// <param name="status">The found tool's status text (its version goes there once known); null when the tool is missing.</param>
+	private Border ToolRow(ExternalTool tool, bool found, bool canInstall, out TextBlock? status)
+	{
+		IBrush color = found ? Palette.Success : tool.IsOptional ? Palette.Warning : Palette.Danger;
 		Grid row = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 12 };
 
-		Border badge = new()
+		row.Children.Add(new Border
 		{
 			Width = 28,
 			Height = 28,
 			CornerRadius = new CornerRadius(14),
-			Background = Palette.Tint(status, 0.15),
+			Background = Palette.Tint(color, 0.15),
 			Child = new IconView
 			{
 				Data = found ? Icons.Check : Icons.Warning,
-				Foreground = status,
+				Foreground = color,
 				Width = 14,
 				Height = 14,
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center
 			}
-		};
-		row.Children.Add(badge);
+		});
 
 		StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
 		name.Children.Add(new TextBlock { Text = tool.DisplayName, FontWeight = FontWeight.SemiBold });
@@ -145,27 +255,132 @@ public partial class WelcomeWindow : Window
 		Grid.SetColumn(name, 1);
 		row.Children.Add(name);
 
-		Border pill = new()
+		Control side;
+		status = null;
+		if (!found && canInstall)
 		{
-			Padding = new Thickness(10, 3),
-			CornerRadius = new CornerRadius(10),
-			VerticalAlignment = VerticalAlignment.Center,
-			Background = Palette.Tint(status, 0.15),
-			Child = new TextBlock { Text = found ? "Found" : "Not found", FontSize = 12, FontWeight = FontWeight.SemiBold, Foreground = status }
-		};
-		Grid.SetColumn(pill, 2);
-		row.Children.Add(pill);
+			Button install = new() { Content = "Install", VerticalAlignment = VerticalAlignment.Center };
+			if (!tool.IsOptional) install.Classes.Add("accent");
+			install.Classes.Add("wizard");
+			install.Click += async (_, _) => await InstallAsync(tool, install);
+			side = install;
+		}
+		else
+		{
+			TextBlock text = new() { Text = found ? "Found" : "Not found", FontSize = 12, FontWeight = FontWeight.SemiBold, Foreground = color };
+			if (found) status = text;
+			side = new Border
+			{
+				Padding = new Thickness(10, 3),
+				CornerRadius = new CornerRadius(10),
+				VerticalAlignment = VerticalAlignment.Center,
+				Background = Palette.Tint(color, 0.15),
+				Child = text
+			};
+		}
+
+		Grid.SetColumn(side, 2);
+		row.Children.Add(side);
 
 		Border card = new() { Padding = new Thickness(12, 10), Child = row };
 		card.Classes.Add("card");
 		return card;
 	}
 
-	private void OnCalculateClick(object? sender, RoutedEventArgs e)
+	// AppLogger.Notify, as Settings' About tab does, so the package manager's output lands in the main window's log.
+	private async Task InstallAsync(ExternalTool tool, Button button)
 	{
-		if (RealSpeedBox.Value is not { } real || ShownSpeedBox.Value is not { } shown) return;
+		button.IsEnabled = false;
+		button.Content = "Installing...";
+		ToolsHint.Text = $"Installing {tool.DisplayName}. This can take a minute - the main window's log shows the progress.";
+		AppLogger.Notify($"Installing {tool.DisplayName}...");
 
-		CorrectionBox.Value = (decimal)SpeedCalibration.PercentFor((double)real, (double)shown, (double)(CorrectionBox.Value ?? 0));
+		InstallResult result;
+		try
+		{
+			result = await DependencyInstaller.InstallAsync(tool, AppLogger.Notify, CancellationToken.None);
+		}
+		catch (Exception ex)
+		{
+			result = new InstallResult(false, ex.Message);
+		}
+
+		AppLogger.Notify(result.Message);
+		if (result.Success)
+		{
+			ShowTools();
+			return;
+		}
+
+		button.Content = "Retry";
+		button.IsEnabled = true;
+		ToolsHint.Text = result.Message;
+	}
+
+	private void OnKnownSpeedChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		UpdateCalculation();
+	}
+
+	/// <summary>The correction for the two known speeds, shown as they're typed; Apply (or Enter) puts it into the field above.</summary>
+	private void UpdateCalculation()
+	{
+		_calculatedPercent = RealSpeedBox.Value is { } real && ShownSpeedBox.Value is { } shown
+			? SpeedCalibration.PercentFor((double)real, (double)shown, (double)(CorrectionBox.Value ?? 0))
+			: null;
+
+		ApplyCalculationButton.IsEnabled = _calculatedPercent is not null;
+		CalculationText.Foreground = _calculatedPercent is null ? Palette.TextMuted : Palette.TextPrimary;
+		CalculationText.Text = _calculatedPercent is { } percent
+			? $"{RealSpeedBox.Value:0.#} instead of {ShownSpeedBox.Value:0.#} needs a {percent:0.#}% correction."
+			: "Example: your scooter tops out at 25 km/h, but the speed widget usually peaks at 22 km/h. Enter 25 and 22 (same unit for both).";
+	}
+
+	private void OnApplyCalculationClick(object? sender, RoutedEventArgs e)
+	{
+		ApplyCalculation();
+	}
+
+	private void ApplyCalculation()
+	{
+		if (_calculatedPercent is not { } percent) return;
+
+		CorrectionBox.Value = (decimal)percent;
+		RealSpeedBox.Value = null;
+		ShownSpeedBox.Value = null;
+		CalculationText.Foreground = Palette.Success;
+		CalculationText.Text = $"Correction set to {percent:0.#}%.";
+	}
+
+	private void ShowSummary()
+	{
+		double correction = SpeedCalibration.Clamp((double)(CorrectionBox.Value ?? 0));
+		List<(string Label, string Value)> rows =
+		[
+			("Speed correction", correction > 0 ? $"+{correction:0.#}%" : "None"),
+			("GPS smoothing", SmoothGpsCheck.IsChecked == true ? "On" : "Off"),
+			("Watermark", WatermarkCheck.IsChecked == true ? "On" : "Off"),
+			("Output folder", string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? "Next to the source file" : OutputFolderBox.Text)
+		];
+		if (ProjectFileAssociation.IsSupported)
+			rows.Add((".ovproj files", ProjectAssociationCheck.IsChecked == true ? "Open with OsmoOverlay" : "Not associated"));
+
+		SummaryGrid.RowDefinitions.Clear();
+		SummaryGrid.Children.Clear();
+		for (int i = 0; i < rows.Count; i++)
+		{
+			SummaryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+			TextBlock label = new() { Text = rows[i].Label, FontSize = 13, Foreground = Palette.TextMuted };
+			Grid.SetRow(label, i);
+			SummaryGrid.Children.Add(label);
+
+			TextBlock value = new() { Text = rows[i].Value, FontSize = 13, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
+			ToolTip.SetTip(value, rows[i].Value);
+			Grid.SetRow(value, i);
+			Grid.SetColumn(value, 1);
+			SummaryGrid.Children.Add(value);
+		}
 	}
 
 	private async void OnBrowseOutputClick(object? sender, RoutedEventArgs e)
@@ -196,11 +411,6 @@ public partial class WelcomeWindow : Window
 		});
 
 		ApplyProjectAssociation();
-		Close();
-	}
-
-	private void OnSkipClick(object? sender, RoutedEventArgs e)
-	{
 		Close();
 	}
 

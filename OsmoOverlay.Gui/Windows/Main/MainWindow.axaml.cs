@@ -229,9 +229,12 @@ public partial class MainWindow : Window
 		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
 		if (missing.Any(t => !t.IsOptional)) await new DependencyPromptWindow(missing).ShowDialog(this);
 
+		bool openRecording = false;
 		if (!OverlaySettingsStore.Load().WelcomeShown)
 		{
-			await new WelcomeWindow().ShowDialog(this);
+			var welcome = new WelcomeWindow(StartupProject is null);
+			await welcome.ShowDialog(this);
+			openRecording = welcome.OpenRecordingRequested;
 			OverlaySettings welcomed = OverlaySettingsStore.Load();
 			_showWatermark = welcomed.ShowWatermark;
 			_smoothGpsMotion = welcomed.SmoothGpsMotion;
@@ -242,7 +245,8 @@ public partial class MainWindow : Window
 		if (startup.SecondScreenEnabled) OpenSecondScreen();
 		ApplyAutoSave(startup.AutoSaveMinutes);
 
-		if (StartupProject is { } project) await OpenProjectAsync(project);
+		if (openRecording) await AddInputFilesAsync();
+		else if (StartupProject is { } project) await OpenProjectAsync(project);
 		else if (startup is { ReopenLastProject: true, LastProject: { } last })
 		{
 			if (File.Exists(last))
@@ -292,6 +296,11 @@ public partial class MainWindow : Window
 	}
 
 	private async void OnAddInputFilesClick(object? sender, RoutedEventArgs e)
+	{
+		await AddInputFilesAsync();
+	}
+
+	private async Task AddInputFilesAsync()
 	{
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;

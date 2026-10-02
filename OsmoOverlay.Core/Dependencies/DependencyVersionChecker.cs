@@ -93,7 +93,8 @@ public static partial class DependencyVersionChecker
 			: $"{displayName}: installed {installed}, {latest} is available - not installed through the package manager, update it manually";
 	}
 
-	private static async Task<string?> GetInstalledVersionAsync(ExternalTool tool, CancellationToken ct)
+	/// <summary>The installed version alone (null when unknown), without asking the package manager what is out - fast enough to show right away.</summary>
+	public static async Task<string?> GetInstalledVersionAsync(ExternalTool tool, CancellationToken ct)
 	{
 		(int exitCode, string stdout, string stderr) = await RunAsync(tool.VersionCommand, [.. tool.VersionArgs], ct);
 		if (exitCode != 0) return null;
