@@ -87,7 +87,7 @@
 		</Border>
 
 		<Grid Grid.Column="1" RowDefinitions="*,Auto">
-			<StackPanel Grid.Row="0" Margin="32,28,32,12" Spacing="6">
+			<StackPanel Grid.Row="0" Margin="24,20,24,12" Spacing="6">
 				<TextBlock Name="StepLabel" Classes="stepLabel" />
 
 				<StackPanel Name="WelcomeStep" Spacing="12">
