@@ -1344,9 +1344,9 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="SCALE" Classes="settingsGroupTitle" />
 														<TextBlock Text="Top of the scale" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="SpeedMaxBox" Minimum="10" Maximum="500" Increment="5" FormatString="0"
+														<NumericUpDown Name="SpeedMaxBox" FormatString="0"
 														               PlaceholderText="Auto" HorizontalAlignment="Stretch" ValueChanged="OnSpeedMaxChanged" />
-														<TextBlock Classes="hint" Text="In the gauge's units. Empty follows the recording's top speed, rounded up." />
+														<TextBlock Classes="hint" Text="In the gauge's units. Empty follows the recording's top speed, rounded up to 10." />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

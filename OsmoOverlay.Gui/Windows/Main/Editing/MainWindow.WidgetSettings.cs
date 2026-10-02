@@ -209,7 +209,22 @@ public partial class MainWindow
 	private void OnSpeedUnitsChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		SetElementUnits(id, SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+		UnitSystem units = SpeedImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric;
+		UpdateElement(id, el => el is SpeedGaugeElement s
+			? s with { Units = units, MaxSpeed = s.MaxSpeed is { } max ? OverlayRenderer.ConvertGaugeMaxSpeed(max, s.Units, units) : null }
+			: el);
+
+		bool wasSuppressed = _suppressOverlayEvents;
+		_suppressOverlayEvents = true;
+		SpeedMaxBox.Value = (decimal?)(EditedElement as SpeedGaugeElement)?.MaxSpeed;
+		_suppressOverlayEvents = wasSuppressed;
+		UpdateSpeedMaxPlaceholder(units);
+	}
+
+	/// <summary>An empty scale box says what Auto comes to for the open recording, in the gauge's units.</summary>
+	private void UpdateSpeedMaxPlaceholder(UnitSystem units)
+	{
+		SpeedMaxBox.PlaceholderText = _previewPlayer.AutoGaugeMaxSpeed(units) is { } auto ? $"Auto ({auto:0})" : "Auto";
 	}
 
 	private void OnSpeedThemeChanged(object? sender, RoutedEventArgs e)
@@ -226,7 +241,13 @@ public partial class MainWindow
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
 
-		double? max = SpeedMaxBox.Value is { } value ? (double)value : null;
+		double? max = SpeedMaxBox.Value is { } value ? OverlayRenderer.SnapGaugeMaxSpeed((double)value) : null;
+		if (max is { } snapped && (decimal)snapped != SpeedMaxBox.Value)
+		{
+			SpeedMaxBox.Value = (decimal)snapped;
+			return;
+		}
+
 		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { MaxSpeed = max } : el);
 	}
 

@@ -29,6 +29,12 @@ public sealed record OverlaySettings(
 	string? ActivePresetId = null,
 	bool ShowWatermark = true,
 	bool SmoothGpsMotion = true,
+	// Percent added to every speed the camera's GPS gives, for a receiver that reads low (TelemetryProcessor.Process).
+	double SpeedCorrectionPercent = 0,
+	// The first-run welcome window was shown (Settings can open it again).
+	bool WelcomeShown = false,
+	// Where a render goes by default; null = next to the source (RenderOptions.DefaultOutputPath).
+	string? DefaultOutputFolder = null,
 	// How wide (in pixels) the live preview is decoded/composited at - capped down from the source
 	// resolution (never upscaled, see MainWindow.OpenPreviewAsync), trading preview sharpness for
 	// scrub/playback responsiveness. Does not affect the exported render, which always uses the

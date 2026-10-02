@@ -70,6 +70,15 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 
+	/// <summary>The scale top a speed gauge without its own MaxSpeed gets for this recording (OverlayRenderer.AutoGaugeMaxSpeed).</summary>
+	public double AutoGaugeMaxSpeed(UnitSystem units)
+	{
+		lock (_lock)
+		{
+			return Renderer.AutoGaugeMaxSpeed(units);
+		}
+	}
+
 	/// <summary>Changes the renderer (layout, watermark, route joins, a map mosaic) and composes the still again.</summary>
 	public ComposedPreviewFrame? Change(Action<OverlayRenderer> change)
 	{

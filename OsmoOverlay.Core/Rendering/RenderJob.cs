@@ -34,10 +34,10 @@ public sealed record RenderOptions(
 	// Where the flat picture of a 360 recording looks - the default (leveled, straight ahead) when null; ignored for a flat video.
 	ReframeView? Reframe = null)
 {
-	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths)
+	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
 		string inputPath = inputPaths[0];
-		string dir = Path.GetDirectoryName(inputPath) ?? ".";
+		string dir = !string.IsNullOrWhiteSpace(outputFolder) && Directory.Exists(outputFolder) ? outputFolder : Path.GetDirectoryName(inputPath) ?? ".";
 		string name = Path.GetFileNameWithoutExtension(inputPath);
 		return Path.Combine(dir, $"{name}_overlay.mp4");
 	}
@@ -158,7 +158,7 @@ public static class RenderJob
 			var plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
 				fps, segments.TotalFrameCount());
 			// The overlay describes the video as rendered: telemetry moved onto the output's own timeline.
-			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps));
+			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps, settings.SpeedCorrectionPercent));
 			double startAltitude = derived[0].Raw.AltitudeMeters;
 			double maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 

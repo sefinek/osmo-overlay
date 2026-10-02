@@ -36,7 +36,9 @@ public partial class MainWindow
 			UpdatePreviewStatus();
 			TransportPanel.IsEnabled = true;
 			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
-			MomentsEditor.Attach(summary.Video.Fps, SourceFrames, summary.DerivedFrames, UnitSystem.Metric);
+			MomentsEditor.Attach(summary.Video.Fps, SourceFrames,
+				summary.DerivedFrames is { } derived ? SpeedCalibration.Apply(derived, OverlaySettingsStore.Load().SpeedCorrectionPercent) : null,
+				UnitSystem.Metric);
 			RefreshCutViews();
 			RefreshMoments();
 			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;

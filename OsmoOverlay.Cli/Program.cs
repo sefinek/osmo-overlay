@@ -4,6 +4,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 
 AppDomain.CurrentDomain.UnhandledException += (_, e) =>
@@ -112,7 +113,7 @@ for (; i < args.Length; i++)
 }
 
 if (string.IsNullOrEmpty(outputPath))
-	outputPath = RenderOptions.DefaultOutputPath(inputPaths);
+	outputPath = RenderOptions.DefaultOutputPath(inputPaths, OverlaySettingsStore.Load().DefaultOutputFolder);
 
 var progress = new Progress<RenderStatus>(status =>
 {

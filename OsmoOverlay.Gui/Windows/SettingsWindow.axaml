@@ -243,6 +243,13 @@
 							</StackPanel>
 
 							<StackPanel Spacing="6">
+								<TextBlock Text="Setup and speed calibration" Classes="infoLabel" />
+								<Button Content="Open the welcome window..." HorizontalAlignment="Left" Click="OnWelcomeClick" />
+								<TextBlock Classes="hint"
+								           Text="First-run setup: tools, speed correction for a GPS that reads low, the default output folder and project file association. A changed speed correction takes effect when the preview is reopened." />
+							</StackPanel>
+
+							<StackPanel Spacing="6">
 								<TextBlock Text="Last project" Classes="infoLabel" />
 								<CheckBox Name="ReopenLastProjectCheck" Content="Reopen the last project at startup" />
 								<TextBlock Classes="hint"

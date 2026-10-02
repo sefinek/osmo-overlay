@@ -167,6 +167,9 @@ public partial class MainWindow : Window
 		MapZoomBox.Maximum = RouteMapMosaic.MaxZoom;
 		MapZoomOutMaxBox.Minimum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
+		SpeedMaxBox.Minimum = (decimal)OverlayRenderer.SpeedGaugeMaxMin;
+		SpeedMaxBox.Maximum = (decimal)OverlayRenderer.SpeedGaugeMaxMax;
+		SpeedMaxBox.Increment = (decimal)OverlayRenderer.SpeedGaugeMaxStep;
 
 		WireCuts();
 		WireMoments();
@@ -225,6 +228,14 @@ public partial class MainWindow : Window
 		// Only a missing required tool brings the prompt up - it then offers the missing optional ones alongside.
 		IReadOnlyList<ExternalTool> missing = DependencyChecker.FindMissing(RequiredTools.All);
 		if (missing.Any(t => !t.IsOptional)) await new DependencyPromptWindow(missing).ShowDialog(this);
+
+		if (!OverlaySettingsStore.Load().WelcomeShown)
+		{
+			await new WelcomeWindow().ShowDialog(this);
+			OverlaySettings welcomed = OverlaySettingsStore.Load();
+			_showWatermark = welcomed.ShowWatermark;
+			_smoothGpsMotion = welcomed.SmoothGpsMotion;
+		}
 
 		OverlaySettings startup = OverlaySettingsStore.Load();
 		if (startup.LoopByDefault && !_loopEnabled) ToggleLoop();
@@ -307,7 +318,7 @@ public partial class MainWindow : Window
 		RefreshInputFilesList();
 
 		if (wasEmpty)
-			OutputPathBox.Text = RenderOptions.DefaultOutputPath(_inputPaths);
+			OutputPathBox.Text = RenderOptions.DefaultOutputPath(_inputPaths, OverlaySettingsStore.Load().DefaultOutputFolder);
 
 		ClosePreview();
 		SetPhase(UiPhase.Idle);
@@ -392,8 +403,8 @@ public partial class MainWindow : Window
 			_previewPlayer.SetShowWatermark(_showWatermark);
 		}
 
-		// Unlike ShowWatermark, GPS smoothing is baked into the renderer at OpenAsync, so a change reopens the preview.
-		bool needsPreviewReopen = false;
+		// Unlike ShowWatermark, GPS smoothing (and the speed correction, set in the welcome window) is baked in at OpenAsync, so a change reopens the preview.
+		bool needsPreviewReopen = Math.Abs(OverlaySettingsStore.Load().SpeedCorrectionPercent - currentSettings.SpeedCorrectionPercent) > 1e-9;
 		if (settings.SmoothGpsMotion != _smoothGpsMotion)
 		{
 			_smoothGpsMotion = settings.SmoothGpsMotion;

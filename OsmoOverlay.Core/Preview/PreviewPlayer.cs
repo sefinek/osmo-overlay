@@ -102,7 +102,7 @@ public sealed class PreviewPlayer : IDisposable
 		// Recomputed rather than taken from summary.DerivedFrames, so a changed SmoothGpsMotion applies on every open.
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		ICameraFormat? camera = summary.CameraFormat;
-		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion);
+		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent);
 		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
 		var reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
@@ -358,6 +358,12 @@ public sealed class PreviewPlayer : IDisposable
 		layout = recording.Compositor.Filter(layout);
 		PublishStill(recording, recording.Compositor.Change(r => r.Layout = layout));
 		if (recording.Compositor.Renderer.NeedsMapPrepare(layout)) StartMapWidgetPreparation(recording);
+	}
+
+	/// <summary>The scale top a speed gauge gets on its own for the open recording - null with none open.</summary>
+	public double? AutoGaugeMaxSpeed(UnitSystem units)
+	{
+		return _recording?.Compositor.AutoGaugeMaxSpeed(units);
 	}
 
 	/// <summary>

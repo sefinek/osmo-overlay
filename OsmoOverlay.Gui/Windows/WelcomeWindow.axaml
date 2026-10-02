@@ -1,0 +1,116 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        x:Class="OsmoOverlay.Gui.WelcomeWindow"
+        Width="900" Height="600" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="Welcome to OsmoOverlay">
+
+	<Grid ColumnDefinitions="330,*">
+		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}"
+		        BorderBrush="{StaticResource StrokeBrush}" BorderThickness="0,0,1,0">
+			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="14">
+				<Image Source="/Assets/OsmoOverlay.png" Width="96" Height="96" Opacity="0.9" />
+				<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+				<TextBlock Text="Illustration goes here" Classes="hint" HorizontalAlignment="Center" />
+			</StackPanel>
+		</Border>
+
+		<Grid Grid.Column="1" RowDefinitions="*,Auto">
+			<Grid Grid.Row="0" Margin="36,32,36,16">
+				<StackPanel Name="WelcomeStep" Spacing="14">
+					<TextBlock Text="Welcome to OsmoOverlay" FontSize="22" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					           Text="Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera." />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					           Text="A few quick steps get you ready for the first render: checking the tools, calibrating the speed and picking where videos go." />
+					<TextBlock Classes="hint" TextWrapping="Wrap"
+					           Text="Everything here can be changed later in Settings, and this guide can be opened again from there." />
+				</StackPanel>
+
+				<StackPanel Name="ToolsStep" Spacing="12" IsVisible="False">
+					<TextBlock Text="Tools" FontSize="22" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					           Text="OsmoOverlay renders with FFmpeg. ExifTool is optional and only used for cameras whose telemetry it can't read on its own." />
+					<StackPanel Name="ToolRows" Spacing="6" Margin="0,6,0,0" />
+					<TextBlock Name="ToolsHint" Classes="hint" TextWrapping="Wrap" />
+				</StackPanel>
+
+				<StackPanel Name="SpeedStep" Spacing="8" IsVisible="False">
+					<TextBlock Text="Speed calibration" FontSize="22" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					           Text="Speed from a camera's GPS is never 100% exact. Peaks tend to come out low, and the signal quality moves it either way." />
+					<TextBlock Classes="hint" TextWrapping="Wrap"
+					           Text="If you know what your vehicle really does, raise every shown speed by a percentage. It's a rough correction, so judge it over several rides rather than one peak." />
+					<TextBlock Text="Correction (%)" Classes="infoLabel" Margin="0,8,0,0" />
+					<NumericUpDown Name="CorrectionBox" Minimum="0" Increment="0.5" FormatString="0.#" HorizontalAlignment="Stretch" />
+					<TextBlock Text="Not sure? Work it out from a known speed" Classes="infoLabel" Margin="0,10,0,0" />
+					<Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
+						<StackPanel Grid.Column="0" Spacing="4">
+							<TextBlock Text="Real top speed" Classes="hint" />
+							<NumericUpDown Name="RealSpeedBox" Minimum="1" Maximum="500" Increment="1" FormatString="0.#" HorizontalAlignment="Stretch" />
+						</StackPanel>
+						<StackPanel Grid.Column="1" Spacing="4">
+							<TextBlock Text="Shown by the overlay" Classes="hint" />
+							<NumericUpDown Name="ShownSpeedBox" Minimum="1" Maximum="500" Increment="1" FormatString="0.#" HorizontalAlignment="Stretch" />
+						</StackPanel>
+						<Button Grid.Column="2" Content="Calculate" VerticalAlignment="Bottom" Click="OnCalculateClick" />
+					</Grid>
+					<TextBlock Classes="hint" TextWrapping="Wrap"
+					           Text="Same unit for both, e.g. your scooter's own speedometer and the top speed the overlay showed. The result fills in the field above." />
+				</StackPanel>
+
+				<StackPanel Name="PreferencesStep" Spacing="10" IsVisible="False">
+					<TextBlock Text="Rendering and files" FontSize="22" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85" Text="Defaults for the first render. You can change any of them later." />
+					<CheckBox Name="SmoothGpsCheck" Content="Smooth GPS-derived motion" Margin="0,8,0,0" />
+					<CheckBox Name="WatermarkCheck" Content="Show attribution watermark" />
+					<TextBlock Text="Default output folder" Classes="infoLabel" Margin="0,10,0,0" />
+					<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+						<TextBox Grid.Column="0" Name="OutputFolderBox" IsReadOnly="True" PlaceholderText="Next to the source file" />
+						<Button Grid.Column="1" Content="Browse..." Click="OnBrowseOutputClick" />
+						<Button Grid.Column="2" Content="Clear" Click="OnClearOutputClick" />
+					</Grid>
+					<StackPanel Name="ProjectFilesGroup" Spacing="6" Margin="0,10,0,0">
+						<TextBlock Text="Project files" Classes="infoLabel" />
+						<CheckBox Name="ProjectAssociationCheck" Content="Open .ovproj project files with OsmoOverlay" />
+					</StackPanel>
+				</StackPanel>
+
+				<StackPanel Name="SupportStep" Spacing="12" IsVisible="False">
+					<TextBlock Text="You're all set" FontSize="22" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					           Text="OsmoOverlay is made and maintained by one person, in spare time, and it's free for non-commercial use." />
+					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					           Text="If it saves you time, a star on GitHub helps other people find it, and it's the quickest way to say thanks. Supporting the author helps keep the project going." />
+					<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+						<Button Content="Star on GitHub" Classes="accent" Tag="https://github.com/sefinek/osmo-overlay" Click="OnLinkButtonClick" />
+						<Button Content="Support on Ko-fi" Tag="https://ko-fi.com/sefinek" Click="OnLinkButtonClick" />
+					</StackPanel>
+					<StackPanel Orientation="Horizontal" Spacing="6">
+						<TextBlock Text="Other ways:" Classes="hint" />
+						<TextBlock Text="GitHub Sponsors" Classes="link" Tag="https://github.com/sponsors/sefinek" PointerPressed="OnLinkPressed" />
+						<TextBlock Text="Open Collective" Classes="link" Tag="https://opencollective.com/sefinek24" PointerPressed="OnLinkPressed" />
+						<TextBlock Text="PayPal" Classes="link" Tag="https://www.paypal.me/sefinek24" PointerPressed="OnLinkPressed" />
+					</StackPanel>
+					<TextBlock Classes="hint" TextWrapping="Wrap"
+					           Text="Bugs and ideas are welcome in the repository's issues. Press Finish to save your choices and start." />
+				</StackPanel>
+			</Grid>
+
+			<Border Grid.Row="1" Padding="36,14" BorderBrush="{StaticResource StrokeBrush}" BorderThickness="0,1,0,0">
+				<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+					<Button Grid.Column="0" Content="Skip" Click="OnSkipClick" />
+					<StackPanel Grid.Column="1" Name="StepDots" Orientation="Horizontal" Spacing="8"
+					            HorizontalAlignment="Center" VerticalAlignment="Center" />
+					<Button Grid.Column="2" Name="BackButton" Content="Back" Click="OnBackClick" />
+					<Button Grid.Column="3" Name="NextButton" Content="Next" Classes="accent" MinWidth="80" Click="OnNextClick" />
+				</Grid>
+			</Border>
+		</Grid>
+	</Grid>
+</Window>

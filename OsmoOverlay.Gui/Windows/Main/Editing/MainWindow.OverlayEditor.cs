@@ -449,7 +449,6 @@ public partial class MainWindow
 		{
 			ElevationElement e => e with { Units = units },
 			DistanceElement e => e with { Units = units },
-			SpeedGaugeElement e => e with { Units = units },
 			TripProgressBarElement e => e with { Units = units },
 			ProfileChartElement e => e with { Units = units },
 			TripStatElement e => e with { Units = units },
@@ -758,6 +757,7 @@ public partial class MainWindow
 				SpeedThemeRingRadio.IsChecked = x.Theme == SpeedGaugeTheme.Ring;
 				SpeedPanelGroup.IsVisible = x.Theme != SpeedGaugeTheme.Ring;
 				SpeedMaxBox.Value = (decimal?)x.MaxSpeed;
+				UpdateSpeedMaxPlaceholder(x.Units);
 				SpeedStyle.Populate(x);
 				SpeedPanelFill.Populate(x);
 				SpeedTiming.Populate(x);

@@ -25,8 +25,14 @@ public static class TelemetryProcessor
 	///     Reads the accelerometer's axes (ICameraFormat.Gravity) for roll, pitch and the G-meter - all 0 without it or
 	///     when it doesn't know them.
 	/// </param>
-	public static List<DerivedFrame> Process(IReadOnlyList<TelemetryFrame> frames, ICameraFormat? camera, bool smoothGps = false)
+	/// <param name="speedCorrectionPercent">
+	///     Added to every shown speed (DerivedFrame.SpeedKmh) for a GPS that reads low - a scale, since a receiver's error grows
+	///     with speed and standing still must stay 0. Tilt, heading and distance keep the measured values.
+	/// </param>
+	public static List<DerivedFrame> Process(IReadOnlyList<TelemetryFrame> frames, ICameraFormat? camera, bool smoothGps = false,
+		double speedCorrectionPercent = 0)
 	{
+		double speedFactor = SpeedCalibration.Factor(speedCorrectionPercent);
 		if (smoothGps) frames = GpsInterpolation.Apply(frames);
 
 		double[] cumulativeDistances = SteppedDistances(frames);
@@ -106,7 +112,7 @@ public static class TelemetryProcessor
 			// The G-meter's dot: sideways to the right, forward up.
 			(double lateral, double longitudinal) = gravity is null ? (0, 0) : (gravity[i].X, -gravity[i].Z);
 
-			result.Add(new DerivedFrame(current, speeds[i], headings[i], gradients[i], cumulativeDistances[i], roll[i], pitch[i],
+			result.Add(new DerivedFrame(current, speeds[i] * speedFactor, headings[i], gradients[i], cumulativeDistances[i], roll[i], pitch[i],
 				sun, localEast, localNorth, smoothedGForce, lateral, longitudinal, current.StartsAfterGap));
 		}
 

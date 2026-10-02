@@ -27,11 +27,13 @@ public sealed partial class OverlayRenderer
 	// DrawTripProgressBar's remarks for why a tolerance is needed at all. 1.5m default: comfortably
 	// above typical consumer GPS jitter, negligible next to any real trip distance.
 	public const double TripArrivedToleranceMetersDefault = 1.5;
-
-	// The range a speed gauge's own MaxSpeed is held to (in the gauge's units).
-	public const double SpeedGaugeMaxMin = 10;
-	public const double SpeedGaugeMaxMax = 500;
 	public const string TripArrivedLabelDefault = "FINISH";
+
+	// A speed gauge's scale top (in the gauge's units) moves in steps of 10, floored at 20 - the same grid the automatic
+	// scale rounds the recording's top speed up to, so a hand-picked value and the automatic one are interchangeable.
+	public const double SpeedGaugeMaxStep = 10;
+	public const double SpeedGaugeMaxMin = 20;
+	public const double SpeedGaugeMaxMax = 500;
 
 
 	private static SKPaint CreateGaugeBandPaint(SKColor color)
@@ -43,27 +45,38 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>
-	///     Rounds the recording's actual max speed up to the next 10 km/h so the gauge scale matches
-	///     this ride instead of a fixed 60 km/h that's meaningless for a walk or absurdly low for a car.
-	///     A 20 km/h floor keeps the needle from pinning near full-scale on a near-stationary clip.
+	///     Rounds a speed up to the next step of the gauge's scale (10), within SpeedGaugeMaxMin..Max. For the recording's
+	///     actual top speed this makes the scale match the ride instead of a fixed 60 km/h that's meaningless for a walk or
+	///     absurdly low for a car; the floor keeps the needle from pinning near full-scale on a near-stationary clip.
 	/// </summary>
-	private static double ComputeGaugeMaxSpeed(double observedSpeed)
+	public static double SnapGaugeMaxSpeed(double speed)
 	{
-		double rounded = Math.Ceiling(Math.Max(observedSpeed, 1) / 10.0) * 10.0;
-		return Math.Max(rounded, 20.0);
+		double rounded = Math.Ceiling(Math.Max(speed, 1) / SpeedGaugeMaxStep) * SpeedGaugeMaxStep;
+		return Math.Clamp(rounded, SpeedGaugeMaxMin, SpeedGaugeMaxMax);
+	}
+
+	/// <summary>A scale top carried over to another unit system (a switched gauge keeps its look), snapped to the new unit's grid.</summary>
+	public static double ConvertGaugeMaxSpeed(double max, UnitSystem from, UnitSystem to)
+	{
+		if (from == to) return max;
+
+		return SnapGaugeMaxSpeed(to == UnitSystem.Imperial ? max * KmhToMph : max / KmhToMph);
+	}
+
+	/// <summary>The scale top a gauge without its own MaxSpeed gets: the recording's top speed in `units`, snapped.</summary>
+	public double AutoGaugeMaxSpeed(UnitSystem units)
+	{
+		return SnapGaugeMaxSpeed(units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh);
 	}
 
 	/// <summary>
-	///     The scale's top: the widget's own MaxSpeed, or the same "round up to a nice number" rule as ComputeGaugeMaxSpeed,
-	///     computed per unit system at draw time instead of once in km/h - converting an already-rounded km/h max into mph
-	///     would produce an ugly non-round number (e.g. 60 km/h -&gt; 37.28 mph).
+	///     The scale's top: the widget's own MaxSpeed, or AutoGaugeMaxSpeed - computed per unit system at draw time instead
+	///     of once in km/h, as converting an already-rounded km/h max into mph would produce an ugly non-round number
+	///     (e.g. 60 km/h -&gt; 37.28 mph).
 	/// </summary>
 	private double GaugeMaxSpeed(SpeedGaugeElement element)
 	{
-		if (element.MaxSpeed is { } fixedMax) return Math.Clamp(fixedMax, SpeedGaugeMaxMin, SpeedGaugeMaxMax);
-
-		double observed = element.Units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh;
-		return ComputeGaugeMaxSpeed(observed);
+		return element.MaxSpeed is { } fixedMax ? SnapGaugeMaxSpeed(fixedMax) : AutoGaugeMaxSpeed(element.Units);
 	}
 
 	private void DrawSunWidget(SKCanvas canvas, DerivedFrame frame, SunWidgetElement element)
@@ -126,7 +139,7 @@ public sealed partial class OverlayRenderer
 			TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 	}
 
-	private void DrawTiltPanel<T>(SKCanvas canvas, T element) where T : OverlayElement, IPanelElement
+	private void DrawTiltPanel(SKCanvas canvas, IPanelElement element)
 	{
 		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, PanelFillPaint(element));
 		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, _ringStroke5White150);

@@ -13,12 +13,7 @@ public sealed class ShadowReachTests
 	[TestMethod]
 	public void Shadow_ReachesEverySideOfARoundWidget()
 	{
-		List<DerivedFrame> frames = [];
-		for (int i = 0; i < 60; i++)
-		{
-			var raw = new TelemetryFrame(i, i / 30.0, 50, 20, 200, null, 0, 0, 1);
-			frames.Add(new DerivedFrame(raw, 20, 0, 2, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
-		}
+		List<DerivedFrame> frames = CreateFrames();
 
 		var element = new SpeedGaugeElement { X = 1920, Y = 1080, ShadowRadius = 45, ShadowOpacity = 1f };
 		using var renderer = new OverlayRenderer(Width, Height, 200, [element], frames, 30, false);
@@ -45,12 +40,7 @@ public sealed class ShadowReachTests
 	[TestMethod]
 	public void ShadowOff_LeavesNothingOutsideTheWidget()
 	{
-		List<DerivedFrame> frames = [];
-		for (int i = 0; i < 60; i++)
-		{
-			var raw = new TelemetryFrame(i, i / 30.0, 50, 20, 200, null, 0, 0, 1);
-			frames.Add(new DerivedFrame(raw, 20, 0, 2, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
-		}
+		List<DerivedFrame> frames = CreateFrames();
 
 		var element = new SpeedGaugeElement { X = 1920, Y = 1080, ShadowEnabled = false };
 		using var renderer = new OverlayRenderer(Width, Height, 200, [element], frames, 30, false);
@@ -84,6 +74,16 @@ public sealed class ShadowReachTests
 
 	private static (byte[] Buffer, SKRect Bounds) RenderWithBounds(OverlayElement element)
 	{
+		List<DerivedFrame> frames = CreateFrames();
+
+		using var renderer = new OverlayRenderer(Width, Height, 200, [element], frames, 30, false);
+		byte[] buffer = new byte[renderer.FrameBufferSize()];
+		renderer.RenderInto(frames[10], buffer, premultiplied: true);
+		return (buffer, renderer.MeasureElement(element, frames[10])!.Value);
+	}
+
+	private static List<DerivedFrame> CreateFrames()
+	{
 		List<DerivedFrame> frames = [];
 		for (int i = 0; i < 60; i++)
 		{
@@ -91,9 +91,6 @@ public sealed class ShadowReachTests
 			frames.Add(new DerivedFrame(raw, 20, 0, 2, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
 		}
 
-		using var renderer = new OverlayRenderer(Width, Height, 200, [element], frames, 30, false);
-		byte[] buffer = new byte[renderer.FrameBufferSize()];
-		renderer.RenderInto(frames[10], buffer, premultiplied: true);
-		return (buffer, renderer.MeasureElement(element, frames[10])!.Value);
+		return frames;
 	}
 }

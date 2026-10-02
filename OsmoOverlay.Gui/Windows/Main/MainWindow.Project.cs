@@ -131,7 +131,7 @@ public partial class MainWindow
 		_inputPaths.Clear();
 		_inputPaths.AddRange(project.InputPaths);
 		RefreshInputFilesList();
-		OutputPathBox.Text = string.IsNullOrWhiteSpace(project.OutputPath) ? RenderOptions.DefaultOutputPath(_inputPaths) : project.OutputPath;
+		OutputPathBox.Text = string.IsNullOrWhiteSpace(project.OutputPath) ? RenderOptions.DefaultOutputPath(_inputPaths, OverlaySettingsStore.Load().DefaultOutputFolder) : project.OutputPath;
 		SetPhase(UiPhase.Idle);
 		ActionButton.IsEnabled = _inputPaths.Count > 0;
 		SetProjectPath(path);

@@ -329,6 +329,17 @@ public partial class SettingsWindow : Window
 		if (!updating) AppUpdateButton.IsEnabled = true;
 	}
 
+	private async void OnWelcomeClick(object? sender, RoutedEventArgs e)
+	{
+		await new WelcomeWindow().ShowDialog(this);
+
+		// The welcome window saved these itself; the checkboxes would otherwise write the old state back on close.
+		OverlaySettings saved = OverlaySettingsStore.Load();
+		ShowWatermarkCheck.IsChecked = saved.ShowWatermark;
+		SmoothGpsMotionCheck.IsChecked = saved.SmoothGpsMotion;
+		ShowProjectAssociation();
+	}
+
 	private void ShowProjectAssociation()
 	{
 		bool registered = ProjectFileAssociation.IsRegistered();
