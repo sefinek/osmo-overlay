@@ -46,7 +46,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		UseRecordingButton.IsVisible = _recordingTopSpeedKmh is not null;
 		if (_recordingTopSpeedKmh is { } measured)
 		{
-			UseRecordingButton.Content = $"Reset to the loaded recording's ({measured:0.##} km/h)";
+			UseRecordingButton.Content = $"Reset to the loaded recording's sustained top speed ({measured:0.##} km/h)";
 			ShownSpeedBox.Value = (decimal)Math.Round(measured, 2);
 		}
 
@@ -95,6 +95,6 @@ public partial class SpeedCalibrationEditor : UserControl
 		ResultText.Text = percent <= 0
 			? "The GPS already measured this speed or more - no correction needed."
 			: $"With {percent:0.0}% the measured {measured:0.##} becomes {corrected:0.##} - the widget shows {Math.Round(corrected, MidpointRounding.AwayFromZero):0}. " +
-			  "Rounded down to 0.1%, so it never shows more than the real top speed.";
+			  "Rounded down to 0.1%, so the held top speed never comes out above the real one.";
 	}
 }

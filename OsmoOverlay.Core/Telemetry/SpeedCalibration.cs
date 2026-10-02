@@ -36,6 +36,45 @@ public static class SpeedCalibration
 		return factor == 1 ? frames : [.. frames.Select(f => f with { SpeedKmh = f.SpeedKmh * factor })];
 	}
 
+	/// <summary>How long a speed has to be held to count as a recording's top speed for calibration (SustainedTopSpeedKmh).</summary>
+	public const double SustainedSeconds = 3;
+
+	/// <summary>
+	///     The highest speed held for SustainedSeconds: the best average over any such stretch, never across a gap. The shown
+	///     speed is the receiver's own per sample, which jitters by around half a km/h - its single highest sample is a spike
+	///     more than a top speed, and calibrating on it sets the correction off by that much. A vehicle at its limiter holds
+	///     its top speed, so the sustained one is what to compare with the real figure. 0 without frames; a recording
+	///     shorter than the stretch gives its overall average.
+	/// </summary>
+	public static double SustainedTopSpeedKmh(IReadOnlyList<DerivedFrame> frames, double seconds = SustainedSeconds)
+	{
+		double best = 0, sum = 0;
+		int start = 0;
+		bool full = false;
+		for (int end = 0; end < frames.Count; end++)
+		{
+			if (frames[end].Raw.StartsAfterGap)
+			{
+				start = end;
+				sum = 0;
+			}
+
+			sum += frames[end].SpeedKmh;
+			while (start < end && frames[end].Raw.SampleTimeSeconds - frames[start + 1].Raw.SampleTimeSeconds >= seconds)
+				sum -= frames[start++].SpeedKmh;
+
+			double average = sum / (end - start + 1);
+			if (frames[end].Raw.SampleTimeSeconds - frames[start].Raw.SampleTimeSeconds >= seconds)
+			{
+				best = full ? Math.Max(best, average) : average;
+				full = true;
+			}
+			else if (!full) best = Math.Max(best, average);
+		}
+
+		return best;
+	}
+
 	/// <summary>
 	///     The percentage that makes a top speed of `shown` (as the overlay showed it, carrying `currentPercent`) come out as
 	///     `actual` (the same unit). Rounded down to Step, so the corrected top speed never ends up above the real one; within

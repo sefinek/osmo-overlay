@@ -42,6 +42,38 @@ public sealed class SpeedCalibrationTests
 		Assert.AreEqual(0.0, SpeedCalibration.PercentFor(25, double.NaN, 0));
 	}
 
+	private static List<DerivedFrame> Speeds(double sampleRate, params double[] kmh)
+	{
+		return [.. kmh.Select((v, i) => new DerivedFrame(new TelemetryFrame(i, i / sampleRate, 50, 20, 200, null, 0, 0, 1), v, 0, 0, 0, 0, 0,
+			default, 0, 0, 0, 0, 0, false))];
+	}
+
+	[TestMethod]
+	public void SustainedTopSpeed_IgnoresASingleSpike()
+	{
+		double[] kmh = [.. Enumerable.Repeat(22.0, 100)];
+		kmh[50] = 26;
+
+		double sustained = SpeedCalibration.SustainedTopSpeedKmh(Speeds(10, kmh));
+
+		Assert.AreEqual(22.0, sustained, 0.2);
+	}
+
+	[TestMethod]
+	public void SustainedTopSpeed_FindsTheFastestHeldStretch()
+	{
+		double[] kmh = [.. Enumerable.Repeat(15.0, 50), .. Enumerable.Repeat(24.0, 40), .. Enumerable.Repeat(18.0, 50)];
+
+		Assert.AreEqual(24.0, SpeedCalibration.SustainedTopSpeedKmh(Speeds(10, kmh)), 1e-9);
+	}
+
+	[TestMethod]
+	public void SustainedTopSpeed_OfAShortRecordingIsItsAverage_AndZeroWithoutFrames()
+	{
+		Assert.AreEqual(21.0, SpeedCalibration.SustainedTopSpeedKmh(Speeds(10, 20, 22)), 1e-9);
+		Assert.AreEqual(0.0, SpeedCalibration.SustainedTopSpeedKmh([]));
+	}
+
 	[TestMethod]
 	public void Factor_HoldsThePercentToItsRange()
 	{

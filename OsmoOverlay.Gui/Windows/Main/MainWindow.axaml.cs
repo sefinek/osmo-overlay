@@ -384,15 +384,24 @@ public partial class MainWindow : Window
 	}
 
 	/// <summary>
-	///     The loaded recording's top speed as the GPS measured it - processed like the preview (GPS smoothing included) but
-	///     without the correction, so the calibration can work from the exact value instead of the widget's rounded one.
+	///     The loaded recording's sustained top speed as the GPS measured it (SpeedCalibration.SustainedTopSpeedKmh) - processed
+	///     like the preview (GPS smoothing included) but without the correction - for the speed calibration.
 	/// </summary>
 	private double? RecordingTopSpeedKmh()
 	{
 		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return null;
 
-		double top = TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion).Max(f => f.SpeedKmh);
+		double top = SpeedCalibration.SustainedTopSpeedKmh(TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion));
 		return top > 0 ? top : null;
+	}
+
+	/// <summary>The loaded recording's top speed as the overlay shows it: the highest sample, with the correction.</summary>
+	private double? RecordingPeakSpeedKmh()
+	{
+		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return null;
+
+		double peak = TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion).Max(f => f.SpeedKmh);
+		return peak > 0 ? peak : null;
 	}
 
 	private void RefreshInputFilesList()
