@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
@@ -12,6 +13,7 @@ namespace OsmoOverlay.Gui;
 public partial class MainWindow
 {
 	private readonly DispatcherTimer _autoSaveTimer = new();
+	private string? _lastBackupHash;
 
 	private static string AutoSaveFolder => Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "autosave");
@@ -40,6 +42,11 @@ public partial class MainWindow
 		{
 			Directory.CreateDirectory(AutoSaveFolder);
 			BuildProject().Save(path);
+			// Written every time (cheap), but only worth a log line when the project changed since the last backup.
+			string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+			if (hash == _lastBackupHash) return;
+
+			_lastBackupHash = hash;
 			AppendLog($"Auto-saved a backup: {path}");
 		}
 		catch (Exception ex)

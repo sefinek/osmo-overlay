@@ -238,6 +238,7 @@ public partial class MainWindow
 	{
 		_projectPath = path;
 		Title = $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}";
-		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { LastProject = path });
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		if (settings.LastProject != path) OverlaySettingsStore.Save(settings with { LastProject = path });
 	}
 }

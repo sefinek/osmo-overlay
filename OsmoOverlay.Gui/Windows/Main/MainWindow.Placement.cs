@@ -103,7 +103,7 @@ public partial class MainWindow
 		if (_phase == UiPhase.Rendering && !_closeConfirmed && OverlaySettingsStore.Load().ConfirmCloseWhileRendering)
 		{
 			e.Cancel = true;
-			_ = ConfirmCloseDuringRenderAsync();
+			if (!_askingToClose) _ = ConfirmCloseDuringRenderAsync();
 		}
 
 		base.OnClosing(e);
@@ -114,11 +114,14 @@ public partial class MainWindow
 	}
 
 	private bool _closeConfirmed;
+	private bool _askingToClose;
 
 	private async Task ConfirmCloseDuringRenderAsync()
 	{
+		_askingToClose = true;
 		bool close = await ConfirmDialog.AskAsync(this, "Render in progress",
 			"Closing OsmoOverlay now ends the render and leaves a partial file.", "Close and cancel", DialogKind.Warning);
+		_askingToClose = false;
 		if (!close) return;
 
 		_closeConfirmed = true;

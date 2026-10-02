@@ -16,7 +16,7 @@ internal sealed class SecondScreenWindow : Window
 {
 	private readonly SelectableTextBlock _log;
 	private readonly ScrollViewer _logScroll;
-	private readonly ContentControl _viewportHost = new();
+	private readonly Panel _viewportHost = new();
 
 	public SecondScreenWindow(Screen screen)
 	{
@@ -42,26 +42,22 @@ internal sealed class SecondScreenWindow : Window
 	/// <summary>Esc or F9 here - the main window closes it, and remembers it's off.</summary>
 	public event Action? CloseRequested;
 
-	public bool ShowsViewport => _viewportHost.Content is not null;
-
 	public void ShowLog()
 	{
-		_viewportHost.Content = null;
 		_logScroll.IsVisible = true;
 		_logScroll.ScrollToEnd();
 	}
 
+	/// <summary>A Panel, not a ContentControl: that one leaves its content at its own size in the corner instead of filling the screen.</summary>
 	public void ShowViewport(Control viewport)
 	{
 		_logScroll.IsVisible = false;
-		_viewportHost.Content = viewport;
+		_viewportHost.Children.Add(viewport);
 	}
 
-	public Control? TakeViewport()
+	public void TakeViewport()
 	{
-		var viewport = _viewportHost.Content as Control;
-		_viewportHost.Content = null;
-		return viewport;
+		_viewportHost.Children.Clear();
 	}
 
 	public void AppendLog(string message, LogLevel level)

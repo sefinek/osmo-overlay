@@ -34,7 +34,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	// ~39% - much lower and the gauge panels read as barely-there on bright footage (sky, water, sand),
 	// making their footprint (which matches the GUI's selection/hit box exactly, see OverlayElementBounds)
 	// look like mostly-empty padding.
-	private static readonly SKColor PanelFill = new(0, 0, 0, 100);
+	private static readonly SKColor PanelFill = new(0, 0, 0, 48);
 
 	// Canvas dimensions and the per-resolution scale every widget draws at (see OverlayElementBounds.GetScale).
 	private readonly int _width;
@@ -284,6 +284,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_routeDashPaint.Dispose();
 		_alphaPaint.Dispose();
 		_shadowPaint.Dispose();
+		DisposeShadowFilters();
 		_headingArrow.Dispose();
 		foreach (SKPathEffect effect in _dashEffects.Values) effect.Dispose();
 		DisposeRoutes(_compassRoutes);
@@ -489,7 +490,7 @@ public sealed partial class OverlayRenderer : IDisposable
 			ElementState state = ElementAnimation.At(element, sampleTime, OutputDurationSeconds);
 			if (state.Progress <= 0f) continue;
 
-			int saveCount = BeginElement(canvas, element, state);
+			int saveCount = BeginElement(canvas, element, state, element.ShadowEnabled ? ContentBounds(element, frame) : null);
 			DrawElement(canvas, element, frame);
 			if (element is MapWidgetElement map) mapAttribution = MapSources.Attribution(map.MapProviderId) ?? mapAttribution;
 			canvas.RestoreToCount(saveCount);
@@ -575,27 +576,9 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// </summary>
 	public SKRect? MeasureElement(OverlayElement element, DerivedFrame frame)
 	{
-		// A round widget is always its disc plus the ring's half stroke. Drawing it to measure it would rasterize the whole map
-		// (and advance the dynamic zoom's smoothing) on every pointer move.
-		const float ringHalfStroke = 1.5f;
-		if (element is MapWidgetElement) return SKRect.Create(-OverlayElementBounds.MapRadius - ringHalfStroke, -OverlayElementBounds.MapRadius - ringHalfStroke,
-			(OverlayElementBounds.MapRadius + ringHalfStroke) * 2, (OverlayElementBounds.MapRadius + ringHalfStroke) * 2);
-		if (element is CompassElement) return SKRect.Create(-OverlayElementBounds.CompassRadius - ringHalfStroke, -OverlayElementBounds.CompassRadius - ringHalfStroke,
-			(OverlayElementBounds.CompassRadius + ringHalfStroke) * 2, (OverlayElementBounds.CompassRadius + ringHalfStroke) * 2);
+		if (RoundWidgetBounds(element) is { } round) return round;
 
-		using var recorder = new SKPictureRecorder();
-		SKCanvas canvas = recorder.BeginRecording(MeasureArea, true);
-		_measuring = true;
-		try
-		{
-			DrawElement(canvas, element, frame);
-		}
-		finally
-		{
-			_measuring = false;
-		}
-
-		using SKPicture picture = recorder.EndRecording();
+		using SKPicture picture = RecordElement(element, frame);
 		SKRect bounds = picture.CullRect;
 		if (bounds.IsEmpty) return null;
 
@@ -613,6 +596,52 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		visible.Offset(bounds.Left, bounds.Top);
 		return visible;
+	}
+
+	/// <summary>
+	///     A round widget is always its disc plus the ring's half stroke. Drawing it to measure it would rasterize the whole map
+	///     (and advance the dynamic zoom's smoothing) on every pointer move.
+	/// </summary>
+	private static SKRect? RoundWidgetBounds(OverlayElement element)
+	{
+		const float ringHalfStroke = 1.5f;
+		float radius = element switch
+		{
+			MapWidgetElement => OverlayElementBounds.MapRadius,
+			CompassElement => OverlayElementBounds.CompassRadius,
+			_ => 0f
+		};
+		return radius == 0f ? null : SKRect.Create(-radius - ringHalfStroke, -radius - ringHalfStroke, (radius + ringHalfStroke) * 2, (radius + ringHalfStroke) * 2);
+	}
+
+	/// <summary>
+	///     What `element` draws, as a recording's bounds - no rasterizing, so cheap enough for every frame: the area a widget's
+	///     shadow layer covers (BeginShadow) instead of the whole frame. Null when it draws nothing.
+	/// </summary>
+	private SKRect? ContentBounds(OverlayElement element, DerivedFrame frame)
+	{
+		if (RoundWidgetBounds(element) is { } round) return round;
+
+		using SKPicture picture = RecordElement(element, frame);
+		return picture.CullRect.IsEmpty ? null : picture.CullRect;
+	}
+
+	/// <summary>`element` drawn into a picture around its anchor - with the panels' soft shadow left out (_measuring), and an R-tree that trims CullRect to what was drawn.</summary>
+	private SKPicture RecordElement(OverlayElement element, DerivedFrame frame)
+	{
+		using var recorder = new SKPictureRecorder();
+		SKCanvas canvas = recorder.BeginRecording(MeasureArea, true);
+		_measuring = true;
+		try
+		{
+			DrawElement(canvas, element, frame);
+		}
+		finally
+		{
+			_measuring = false;
+		}
+
+		return recorder.EndRecording();
 	}
 
 	/// <summary>The box of the pixels in an Alpha8 bitmap that are visible (at least MeasureMinAlpha), or null when there are none.</summary>

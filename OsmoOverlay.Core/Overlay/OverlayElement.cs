@@ -111,9 +111,10 @@ public abstract record OverlayElement
 
 	/// <summary>
 	///     Drop shadow of the whole widget (OverlayRenderer.BeginElement), on top of the soft shadows panels and text already
-	///     have. Offset/Blur are in the 4K reference space and scale with the widget; ShadowColor null is black.
+	///     have. On by default, softer on text and bigger on the round widgets and images (their constructors set the blur).
+	///     Offset/Blur are in the 4K reference space and scale with the widget; ShadowColor null is black.
 	/// </summary>
-	public bool ShadowEnabled { get; init; }
+	public bool ShadowEnabled { get; init; } = true;
 	public string? ShadowColor { get; init; }
 	public float ShadowOpacity { get; init; } = OverlayRenderer.ShadowOpacityDefault;
 	public float ShadowBlur { get; init; } = OverlayRenderer.ShadowBlurDefault;
@@ -229,6 +230,11 @@ public enum SpeedGaugeTheme
 public sealed record SpeedGaugeElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SpeedGauge;
+	public SpeedGaugeElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 	public SpeedGaugeTheme Theme { get; init; } = SpeedGaugeTheme.Default;
 }
@@ -237,17 +243,32 @@ public sealed record SpeedGaugeElement : StyledOverlayElement
 public sealed record RollGaugeElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.RollGauge;
+	public RollGaugeElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 }
 
 /// <summary>Nose up/down - DerivedFrame.PitchDegrees.</summary>
 public sealed record PitchGaugeElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.PitchGauge;
+	public PitchGaugeElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 }
 
 public sealed record SunWidgetElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SunWidget;
+	public SunWidgetElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 }
 
 /// <summary>
@@ -258,6 +279,11 @@ public sealed record SunWidgetElement : StyledOverlayElement
 public sealed record GMeterElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.GMeter;
+	public GMeterElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 	public double GMeterFullScaleG { get; init; } = OverlayRenderer.GMeterFullScaleGDefault;
 }
 
@@ -291,6 +317,11 @@ public abstract record TrailOverlayElement : OverlayElement
 public sealed record CompassElement : TrailOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Compass;
+	public CompassElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 	public bool CenterOnPosition { get; init; }
 	public bool ShowNorthLabel { get; init; } = true;
 	public bool ShowHeadingText { get; init; } = true;
@@ -305,6 +336,11 @@ public sealed record CompassElement : TrailOverlayElement
 public sealed record MapWidgetElement : TrailOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.MapWidget;
+	public MapWidgetElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+	}
+
 	public int MapZoom { get; init; } = 16;
 	public bool MapDynamicZoom { get; init; }
 	public double MapDynamicZoomMaxFactor { get; init; } = OverlayRenderer.MapDynamicZoomMaxFactorDefault;
@@ -378,6 +414,11 @@ public sealed record TextElement : StyledOverlayElement
 public sealed record ImageElement : OverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Image;
+	public ImageElement()
+	{
+		ShadowBlur = OverlayRenderer.ShadowBlurMedium;
+	}
+
 	public string? ImagePath { get; init; }
 	public float Opacity { get; init; } = 1f;
 }

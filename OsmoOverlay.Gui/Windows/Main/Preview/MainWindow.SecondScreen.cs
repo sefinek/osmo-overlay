@@ -161,6 +161,9 @@ public partial class MainWindow
 			_viewportHost = host;
 			_viewportIndex = host.Children.IndexOf(PreviewViewport);
 			host.Children.RemoveAt(_viewportIndex);
+			// Settled while it's in no window: moved with a layout pass still queued for it here, the main window's
+			// pass throws "InvalidateArrange on wrong LayoutManager" and the viewport is never arranged.
+			UpdateLayout();
 			PreviewViewport.CornerRadius = default;
 			window.ShowViewport(PreviewViewport);
 			_viewportOnSecondScreen = true;
@@ -175,6 +178,7 @@ public partial class MainWindow
 		MoveViewport(() =>
 		{
 			window.TakeViewport();
+			window.UpdateLayout();
 			window.ShowLog();
 			PreviewViewport.CornerRadius = new CornerRadius(6);
 			_viewportHost!.Children.Insert(_viewportIndex, PreviewViewport);

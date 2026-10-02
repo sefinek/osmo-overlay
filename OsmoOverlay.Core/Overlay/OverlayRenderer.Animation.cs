@@ -17,8 +17,11 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	public double OutputDurationSeconds { get; set; } = double.PositiveInfinity;
 
-	public const float ShadowOpacityDefault = 0.6f;
-	public const float ShadowBlurDefault = 8f;
+	public const float ShadowOpacityDefault = 0.5f;
+	// Text and bars; the round widgets and images are bigger, so their shadow is too (see their constructors).
+	public const float ShadowBlurDefault = 4f;
+	public const float ShadowBlurMedium = 6f;
+	public const float ShadowBlurLarge = 8f;
 	public const float ShadowBlurMax = 60f;
 	public const float ShadowOffsetXDefault = 0f;
 	public const float ShadowOffsetYDefault = 0f;
@@ -38,7 +41,7 @@ public sealed partial class OverlayRenderer
 	///     `state` (ElementAnimation.At). The fade's SaveLayer only exists while a widget is fading in or out - a
 	///     widget with no timing set, or between its two ramps, draws straight onto the frame.
 	/// </summary>
-	private int BeginElement(SKCanvas canvas, OverlayElement element, ElementState state)
+	private int BeginElement(SKCanvas canvas, OverlayElement element, ElementState state, SKRect? shadowContent = null)
 	{
 		int saveCount = canvas.Save();
 		(float offsetX, float offsetY) = SlideOffset(state);
@@ -47,22 +50,51 @@ public sealed partial class OverlayRenderer
 		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
 		if (state.Progress < 1f) canvas.SaveLayer(AlphaPaint(state.Progress));
-		if (element.ShadowEnabled) BeginShadow(canvas, element);
+		if (element.ShadowEnabled && shadowContent is { } content) BeginShadow(canvas, element, content);
 		return saveCount;
 	}
 
-	// Inside the fade's layer, so the shadow fades with the widget. Not part of MeasureElement (it draws through DrawElement,
-	// not BeginElement) - hover and selection frame the widget itself, not its shadow.
-	private void BeginShadow(SKCanvas canvas, OverlayElement element)
+	/// <summary>
+	///     Opens the layer a widget's drop shadow is made from, inside the fade's layer so the shadow fades with the widget.
+	///     The layer covers only `content` (what the widget draws, ContentBounds) and where the shadow reaches - a whole-frame
+	///     layer would blur the whole frame for every shadowed widget. Not part of MeasureElement (it draws through
+	///     DrawElement, not BeginElement): hover and selection frame the widget itself, not its shadow.
+	/// </summary>
+	private void BeginShadow(SKCanvas canvas, OverlayElement element, SKRect content)
 	{
-		SKColor color = ResolveColor(element.ShadowColor, SKColors.Black);
-		float opacity = Math.Clamp(element.ShadowOpacity, 0f, 1f);
+		float offsetX = Math.Clamp(element.ShadowOffsetX, -ShadowOffsetMax, ShadowOffsetMax);
+		float offsetY = Math.Clamp(element.ShadowOffsetY, -ShadowOffsetMax, ShadowOffsetMax);
 		float sigma = Math.Clamp(element.ShadowBlur, 0f, ShadowBlurMax) / 2f;
-		using SKImageFilter filter = SKImageFilter.CreateDropShadow(element.ShadowOffsetX, element.ShadowOffsetY, sigma, sigma,
-			color.WithAlpha((byte)Math.Round(color.Alpha * opacity)));
-		_shadowPaint.ImageFilter = filter;
-		canvas.SaveLayer(_shadowPaint);
+
+		_shadowPaint.ImageFilter = ShadowFilter(ResolveColor(element.ShadowColor, SKColors.Black), Math.Clamp(element.ShadowOpacity, 0f, 1f), sigma, offsetX, offsetY);
+		float reach = sigma * 3f + 2f;
+		canvas.SaveLayer(new SKRect(content.Left + Math.Min(0f, offsetX) - reach, content.Top + Math.Min(0f, offsetY) - reach,
+			content.Right + Math.Max(0f, offsetX) + reach, content.Bottom + Math.Max(0f, offsetY) + reach), _shadowPaint);
 		_shadowPaint.ImageFilter = null;
+	}
+
+	private readonly record struct ShadowKey(SKColor Color, float Opacity, float Sigma, float OffsetX, float OffsetY);
+
+	// A drop shadow filter per distinct look, kept for the renderer's lifetime like the blur mask filters: the same few are
+	// asked for every frame. Editing a shadow's values makes a new look each step, so the cache starts over when it grows.
+	private readonly Dictionary<ShadowKey, SKImageFilter> _shadowFilters = [];
+	private const int ShadowFilterCacheMax = 32;
+
+	private SKImageFilter ShadowFilter(SKColor color, float opacity, float sigma, float offsetX, float offsetY)
+	{
+		var key = new ShadowKey(color, opacity, sigma, offsetX, offsetY);
+		if (_shadowFilters.TryGetValue(key, out SKImageFilter? filter)) return filter;
+
+		if (_shadowFilters.Count >= ShadowFilterCacheMax) DisposeShadowFilters();
+		filter = SKImageFilter.CreateDropShadow(offsetX, offsetY, sigma, sigma, color.WithAlpha((byte)Math.Round(color.Alpha * opacity)));
+		_shadowFilters[key] = filter;
+		return filter;
+	}
+
+	private void DisposeShadowFilters()
+	{
+		foreach (SKImageFilter filter in _shadowFilters.Values) filter.Dispose();
+		_shadowFilters.Clear();
 	}
 
 	/// <summary>

@@ -119,6 +119,7 @@ public partial class SettingsWindow : Window
 		LoadPreviewMonitors(settings.PreviewMonitor);
 		LoadSecondScreenMonitors(settings.SecondScreenMonitor);
 		SecondScreenCheck.IsChecked = settings.SecondScreenEnabled;
+		SecondScreenMonitorCombo.IsEnabled = settings.SecondScreenEnabled;
 		ReopenLastProjectCheck.IsChecked = settings.ReopenLastProject;
 		AutoSaveCombo.SelectedItem = AutoSaveOptions.FirstOrDefault(o => o.Value == settings.AutoSaveMinutes) ?? AutoSaveOptions[0];
 		LoopByDefaultCheck.IsChecked = settings.LoopByDefault;
@@ -134,6 +135,11 @@ public partial class SettingsWindow : Window
 		options.AddRange(Screens.All.Select((screen, index) => new ChoiceOption<string?>(MonitorChoice.Describe(screen, index), MonitorChoice.KeyOf(screen))));
 		PreviewMonitorCombo.ItemsSource = options;
 		PreviewMonitorCombo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
+	}
+
+	private void OnSecondScreenChanged(object? sender, RoutedEventArgs e)
+	{
+		SecondScreenMonitorCombo.IsEnabled = SecondScreenCheck.IsChecked == true;
 	}
 
 	private void LoadSecondScreenMonitors(string? chosen)
