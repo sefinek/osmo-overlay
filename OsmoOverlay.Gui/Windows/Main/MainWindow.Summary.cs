@@ -138,7 +138,7 @@ public partial class MainWindow
 			{
 				AppendLog(
 					$"Telemetry summary: {tele.TotalDistanceMeters / 1000.0:0.00} km, " +
-					$"max speed {tele.MaxSpeedKmh:0.#} km/h, altitude {tele.MinAltitudeMeters:0}-{tele.MaxAltitudeMeters:0} m, " +
+					$"max speed {tele.MaxSpeedKmh:0.#} km/h (as measured, before smoothing and the speed correction), altitude {tele.MinAltitudeMeters:0}-{tele.MaxAltitudeMeters:0} m, " +
 					$"max G {tele.MaxGForce:0.00}");
 				AppendLog(tele.RecordedAtUtc is { } recordedUtc
 					? $"Recorded at: {recordedUtc.ToLocalFromUtc():yyyy-MM-dd HH:mm:ss} (local)"
@@ -321,12 +321,31 @@ public partial class MainWindow
 		// Without a GPS fix there's nothing to measure: a dash, not a "0.00 km" that reads like a recording that never moved.
 		bool hasGps = _availability.GpsFix;
 		TeleDistance.Text = hasGps ? $"{t.TotalDistanceMeters / 1000.0:0.00} km" : "-";
-		TeleMaxSpeed.Text = hasGps ? $"{t.MaxSpeedKmh:0.#} km/h" : "-";
 		TeleAltitude.Text = hasGps ? $"{t.MinAltitudeMeters:0} - {t.MaxAltitudeMeters:0} m" : "-";
 		string? noGpsFixTip = hasGps ? null : "No GPS fix in this recording.";
 		ToolTip.SetTip(TeleDistance, noGpsFixTip);
-		ToolTip.SetTip(TeleMaxSpeed, noGpsFixTip);
 		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
+		ShowMaxSpeedInfo();
+	}
+
+	/// <summary>
+	///     The top speed as the overlay shows it - processed like the preview, with the speed correction - not the cached
+	///     summary's measured one, so this card and the speed widgets agree. Again after Settings changes either.
+	/// </summary>
+	private void ShowMaxSpeedInfo()
+	{
+		if (!_availability.GpsFix || RecordingTopSpeedKmh() is not { } measured)
+		{
+			TeleMaxSpeed.Text = "-";
+			ToolTip.SetTip(TeleMaxSpeed, _summary?.Telemetry is null ? null : "No GPS fix in this recording.");
+			return;
+		}
+
+		double percent = OverlaySettingsStore.Load().SpeedCorrectionPercent;
+		TeleMaxSpeed.Text = $"{SpeedCalibration.Corrected(measured, percent):0.#} km/h";
+		ToolTip.SetTip(TeleMaxSpeed, percent > 0
+			? $"As the overlay shows it: {measured:0.##} km/h measured by the GPS, +{percent:0.0}% speed correction (Settings > Speed)."
+			: $"As the overlay shows it: measured by the GPS, no speed correction (Settings > Speed).");
 	}
 
 	private void LogCacheEvent(FileSummaryCacheEvent e)

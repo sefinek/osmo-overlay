@@ -30,7 +30,7 @@
 					<Button Grid.Column="1" Name="ApplyButton" Classes="accent" IsVisible="False" VerticalAlignment="Center" />
 				</Grid>
 				<TextBlock Classes="hint"
-				           Text="Same unit for both. The measured speed is the GPS reading before any correction: take it from the loaded recording (exact), or read the widget's top speed with the correction at 0 (the widget rounds to whole numbers). A speedometer usually reads a little high; a speed limiter or a GPS app is a better reference for the real one." />
+				           Text="Same unit for both. The measured top speed is the GPS reading before any correction - with a recording loaded it's filled in exactly; otherwise set the correction to 0 and read the widget's top speed (rounded to whole numbers). A speedometer usually reads a little high; a speed limiter or a GPS app is a better reference for the real speed." />
 			</StackPanel>
 		</Border>
 	</StackPanel>

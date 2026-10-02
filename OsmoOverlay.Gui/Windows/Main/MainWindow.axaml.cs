@@ -439,6 +439,8 @@ public partial class MainWindow : Window
 			needsPreviewReopen = true;
 		}
 
+		if (_summary is not null) ShowMaxSpeedInfo();
+
 		// Also baked in at OpenAsync (the route-intro card). Loaded fresh, since the blocks above may have saved
 		// already; OverlaySettings' structural equality then detects the whole group's change at once.
 		OverlaySettings beforeMapAndRouteIntroChanges = OverlaySettingsStore.Load();
