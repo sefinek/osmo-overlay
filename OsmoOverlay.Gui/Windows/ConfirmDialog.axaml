@@ -18,14 +18,16 @@
 			<Image Name="DangerArt" Source="/Assets/Dialogs/Error.webp" IsVisible="False" />
 		</Panel>
 		<StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Center">
-			<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-				<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" VerticalAlignment="Center">
-					<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
-					                HorizontalAlignment="Center" VerticalAlignment="Center" />
-				</Border>
-				<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+			<StackPanel Spacing="6">
+				<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+					<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" VerticalAlignment="Center">
+						<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
+						                HorizontalAlignment="Center" VerticalAlignment="Center" />
+					</Border>
+					<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+				</StackPanel>
+				<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
 			</StackPanel>
-			<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
 			<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
 				<TextBlock Grid.Column="0" />
 				<Button Grid.Column="1" Name="CancelButton" Content="Cancel" Click="OnCancelClick" />
