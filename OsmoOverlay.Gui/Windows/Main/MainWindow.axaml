@@ -136,21 +136,6 @@
 			<Setter Property="Opacity" Value="0.8" />
 			<Setter Property="Margin" Value="0,8,0,2" />
 		</Style>
-		<Style Selector="Button.gearButton">
-			<Setter Property="Background" Value="Transparent" />
-			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-			<Setter Property="Opacity" Value="0.55" />
-			<Setter Property="Padding" Value="6,0" />
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="MinWidth" Value="0" />
-			<Setter Property="VerticalAlignment" Value="Center" />
-		</Style>
-		<Style Selector="Button.gearButton /template/ ContentPresenter, Button.addedWidgetRemove /template/ ContentPresenter">
-			<Setter Property="Transitions" Value="{x:Null}" />
-		</Style>
-		<Style Selector="Button.gearButton:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
-		</Style>
 		<Style Selector="Button.previewToolButton">
 			<Setter Property="Focusable" Value="False" />
 			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
@@ -277,19 +262,26 @@
 			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
 			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
 		</Style>
-		<Style Selector="Button.addedWidgetRemove">
+		<Style Selector="Button.addedWidgetAction">
 			<Setter Property="Background" Value="Transparent" />
-			<Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-			<Setter Property="Padding" Value="6,0" />
-			<Setter Property="FontSize" Value="12" />
-			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Width" Value="24" />
+			<Setter Property="Height" Value="24" />
+			<Setter Property="Padding" Value="0" />
 			<Setter Property="MinWidth" Value="0" />
 			<Setter Property="CornerRadius" Value="4" />
-			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
 		</Style>
-		<Style Selector="Button.addedWidgetRemove:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource DangerBrush}" />
-			<Setter Property="Foreground" Value="White" />
+		<Style Selector="Button.addedWidgetAction:pointerover /template/ ContentPresenter, Button.addedWidgetAction:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
+		</Style>
+		<Style Selector="Button.addedWidgetAction:pointerover">
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+		</Style>
+		<Style Selector="Button.addedWidgetAction.remove:pointerover">
+			<Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
 		</Style>
 		<Style Selector="Button.widgetHoverButton">
 			<Setter Property="Width" Value="20" />

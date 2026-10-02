@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using OsmoOverlay.Core.Overlay;
 using SkiaSharp;
@@ -12,8 +13,8 @@ namespace OsmoOverlay.Gui;
 ///     The Overlay card: preset management, the widget palette (drag onto the preview canvas to add -
 ///     several instances of the same type are allowed, see AddElementInstance), the "on overlay" list of
 ///     what's currently placed, and dragging/removing/configuring elements on the preview canvas itself.
-///     A widget's settings open only from the canvas (the gear shown on hover, next to the remove button) - the
-///     palette and "on overlay" list are for adding/reviewing/selecting, not editing.
+///     A widget's settings open from its gear - on the canvas (shown on hover, next to the remove button) and on its
+///     "on overlay" row - or from its clip on the layer timeline; the palette is for adding only.
 /// </summary>
 public partial class MainWindow
 {
@@ -272,17 +273,20 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Clicking a row only selects it (highlights it on the canvas) - it does not open
-	///     settings, which stays a canvas-only action (see the class doc) so there's one consistent place
-	///     to configure a widget regardless of how many instances of its type exist. A widget this file
-	///     has no data for stays in the preset (it comes back with a file that has the data) but isn't
-	///     drawn, so its row is dimmed, flagged with the warning icon and not selectable - only removable.
+	///     Clicking a row selects it (highlights it on the canvas); its gear opens the settings and its X removes it, as the
+	///     canvas's do. A widget this file has no data for stays in the preset (it comes back with a file that has the data)
+	///     but isn't drawn, so its row is dimmed, flagged with the warning icon and not selectable - only removable.
 	/// </summary>
 	private Border BuildAddedWidgetRow(OverlayElement element, string name, bool editable)
 	{
 		string id = element.Id;
 		bool supported = IsTypeSupported(element.Type);
 		var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+
+		void OpenSettings()
+		{
+			if (ActiveElements.FirstOrDefault(e => e.Id == id) is { } current) OpenElementSettings(current);
+		}
 
 		var text = new TextBlock { Text = name, Classes = { "overlayListItemText" }, Opacity = supported ? 1 : 0.5 };
 		Grid.SetColumn(text, 0);
@@ -303,15 +307,22 @@ public partial class MainWindow
 
 		if (editable)
 		{
-			var removeButton = new Button
+			var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Margin = new Thickness(6, 0, 0, 0) };
+			if (supported)
 			{
-				Content = new IconView { Data = Icons.Close, Width = 10, Height = 10 },
-				Classes = { "addedWidgetRemove" },
-				Margin = new Thickness(8, 0, 0, 0)
-			};
+				var settingsButton = new Button { Content = new IconView { Data = Icons.Gear, Width = 12, Height = 12 }, Classes = { "addedWidgetAction" } };
+				ToolTip.SetTip(settingsButton, "Widget settings");
+				settingsButton.Click += (_, _) => OpenSettings();
+				buttons.Children.Add(settingsButton);
+			}
+
+			var removeButton = new Button { Content = new IconView { Data = Icons.Close, Width = 10, Height = 10 }, Classes = { "addedWidgetAction", "remove" } };
+			ToolTip.SetTip(removeButton, "Remove from overlay");
 			removeButton.Click += (_, _) => RemoveElementInstance(id);
-			Grid.SetColumn(removeButton, 2);
-			grid.Children.Add(removeButton);
+			buttons.Children.Add(removeButton);
+
+			Grid.SetColumn(buttons, 2);
+			grid.Children.Add(buttons);
 		}
 
 		var row = new Border { Classes = { "addedWidgetRow" }, Child = grid };

@@ -9,6 +9,7 @@ internal static class Icons
 	public static Geometry Play => Get("IconPlay");
 	public static Geometry Pause => Get("IconPause");
 	public static Geometry Close => Get("IconClose");
+	public static Geometry Gear => Get("IconGear");
 	public static Geometry Check => Get("IconCheck");
 	public static Geometry Warning => Get("IconWarning");
 	public static Geometry Exclamation => Get("IconExclamation");
