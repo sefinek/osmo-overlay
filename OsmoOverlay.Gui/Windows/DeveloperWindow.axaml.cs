@@ -66,6 +66,12 @@ public partial class DeveloperWindow : Window
 				result = await _main.AskLowDiskSpaceAsync(Path.Combine(Path.GetTempPath(), "render.mp4"), 4_200_000_000, 8_400_000_000,
 					3_100_000_000);
 				break;
+			case "no-telemetry" when _main is not null:
+				await _main.ShowNoTelemetryNoticeAsync();
+				break;
+			case "no-gps" when _main is not null:
+				await _main.ShowNoGpsNoticeAsync();
+				break;
 			case "balloon":
 				BalloonNotifier.Show(this, SampleTitle, SampleMessage);
 				break;

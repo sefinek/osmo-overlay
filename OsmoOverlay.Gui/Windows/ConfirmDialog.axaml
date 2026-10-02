@@ -17,6 +17,7 @@
 			<Image Name="WarningArt" Source="/Assets/Dialogs/Warning.webp" IsVisible="False" />
 			<Image Name="InfoArt" Source="/Assets/Dialogs/Info.webp" IsVisible="False" />
 			<Image Name="DangerArt" Source="/Assets/Dialogs/Error.webp" IsVisible="False" />
+			<Image Name="NoGpsArt" Source="/Assets/Dialogs/NoGps.webp" IsVisible="False" />
 		</Panel>
 		<StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Center">
 			<StackPanel Spacing="6">

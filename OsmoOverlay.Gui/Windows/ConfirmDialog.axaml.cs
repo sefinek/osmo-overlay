@@ -5,6 +5,13 @@ using Avalonia.Media;
 namespace OsmoOverlay.Gui;
 
 /// <summary>Severity/intent of a ConfirmDialog - drives the primary button's color and the small dot next to the title.</summary>
+/// <summary>The illustration beside a dialog's text: the kind's own, or one for a particular situation.</summary>
+public enum DialogArt
+{
+	ForKind,
+	NoGps
+}
+
 public enum DialogKind
 {
 	Neutral,
@@ -34,7 +41,7 @@ public partial class ConfirmDialog : Window
 
 	private ConfirmDialog(string title, string message, string confirmText, DialogKind kind, bool alert,
 		string? windowTitle, Func<Task>? onConfirm, string? workingText, string? secondaryText, Action? onSecondary,
-		string? extraText, Action? onExtra) : this()
+		string? extraText, Action? onExtra, DialogArt art = DialogArt.ForKind) : this()
 	{
 		// windowTitle (the OS window chrome/taskbar text) is deliberately separate from `title` (the
 		// heading shown in the body) - a caller that shows several outcomes for the same action (e.g.
@@ -47,7 +54,7 @@ public partial class ConfirmDialog : Window
 		ConfirmButton.Classes.Add(ButtonClassFor(kind));
 		KindDot.Background = DotBrushFor(kind);
 		KindIcon.Data = IconFor(kind);
-		ShowArt(kind);
+		ShowArt(kind, art);
 		_onConfirm = onConfirm;
 		_workingText = workingText;
 		_onSecondary = onSecondary;
@@ -88,20 +95,22 @@ public partial class ConfirmDialog : Window
 	/// </summary>
 	public static Task ShowAsync(Window owner, string title, string message, string closeText = "OK",
 		DialogKind kind = DialogKind.Info, string? windowTitle = null, string? secondaryText = null, Action? onSecondary = null,
-		string? extraText = null, Action? onExtra = null)
+		string? extraText = null, Action? onExtra = null, DialogArt art = DialogArt.ForKind)
 	{
-		return new ConfirmDialog(title, message, closeText, kind, true, windowTitle, null, null, secondaryText, onSecondary, extraText, onExtra).ShowDialog(owner);
+		return new ConfirmDialog(title, message, closeText, kind, true, windowTitle, null, null, secondaryText, onSecondary, extraText, onExtra, art)
+			.ShowDialog(owner);
 	}
 
 	/// <summary>The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one.</summary>
-	private void ShowArt(DialogKind kind)
+	private void ShowArt(DialogKind kind, DialogArt situation)
 	{
-		Control? art = kind switch
+		Control? art = (situation, kind) switch
 		{
-			DialogKind.Info => InfoArt,
-			DialogKind.Success => SuccessArt,
-			DialogKind.Warning => WarningArt,
-			DialogKind.Danger => DangerArt,
+			(DialogArt.NoGps, _) => NoGpsArt,
+			(_, DialogKind.Info) => InfoArt,
+			(_, DialogKind.Success) => SuccessArt,
+			(_, DialogKind.Warning) => WarningArt,
+			(_, DialogKind.Danger) => DangerArt,
 			_ => null
 		};
 		if (art is null) return;

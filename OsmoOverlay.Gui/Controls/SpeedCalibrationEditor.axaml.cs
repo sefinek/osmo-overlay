@@ -5,11 +5,11 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     OverlaySettings.SpeedCorrectionPercent as edited in the welcome window and Settings' Speed tab: the percentage, and a
-///     calculator that works it out from a known top speed (SpeedCalibration.PercentFor). The owner reads Percent and saves it.
+///     calculator that works it out from a known top speed (SpeedCalibration.PercentFor). The calculator takes the measured top
+///     speed - before any correction - so its result never depends on the correction already set. The owner reads Percent and saves it.
 /// </summary>
 public partial class SpeedCalibrationEditor : UserControl
 {
-	private double _savedPercent;
 	private double? _recordingTopSpeedKmh;
 	private double? _calculatedPercent;
 
@@ -23,8 +23,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		ApplyButton.Click += (_, _) => ApplyCalculation();
 		UseRecordingButton.Click += (_, _) =>
 		{
-			if (_recordingTopSpeedKmh is { } measured)
-				ShownSpeedBox.Value = (decimal)Math.Round(SpeedCalibration.Corrected(measured, _savedPercent), 2);
+			if (_recordingTopSpeedKmh is { } measured) ShownSpeedBox.Value = (decimal)Math.Round(measured, 2);
 		};
 		UpdateCorrectionText();
 		UpdateCalculation();
@@ -36,17 +35,16 @@ public partial class SpeedCalibrationEditor : UserControl
 	/// <summary>Whether Enter in one of the calculator's fields should apply its result.</summary>
 	public bool HasCalculation => _calculatedPercent is not null;
 
-	/// <param name="savedPercent">The correction in settings.json - what a top speed the overlay showed already carries.</param>
+	/// <param name="savedPercent">The correction in settings.json.</param>
 	/// <param name="recordingTopSpeedKmh">The loaded recording's top speed as measured (no correction), to fill in exactly; null when none is loaded.</param>
 	public void Load(double savedPercent, double? recordingTopSpeedKmh)
 	{
-		_savedPercent = SpeedCalibration.Clamp(savedPercent);
 		_recordingTopSpeedKmh = recordingTopSpeedKmh is > 0 ? recordingTopSpeedKmh : null;
-		CorrectionBox.Value = (decimal)_savedPercent;
+		CorrectionBox.Value = (decimal)SpeedCalibration.Clamp(savedPercent);
 
 		UseRecordingButton.IsVisible = _recordingTopSpeedKmh is not null;
 		if (_recordingTopSpeedKmh is { } measured)
-			UseRecordingButton.Content = $"Use the loaded recording's top speed ({SpeedCalibration.Corrected(measured, _savedPercent):0.##} km/h)";
+			UseRecordingButton.Content = $"Use the loaded recording's measured top speed ({measured:0.##} km/h)";
 		UpdateCalculation();
 	}
 
@@ -75,21 +73,21 @@ public partial class SpeedCalibrationEditor : UserControl
 	private void UpdateCalculation()
 	{
 		_calculatedPercent = RealSpeedBox.Value is { } real && ShownSpeedBox.Value is { } shown
-			? SpeedCalibration.PercentFor((double)real, (double)shown, _savedPercent)
+			? SpeedCalibration.PercentFor((double)real, (double)shown, 0)
 			: null;
 
 		ApplyButton.IsVisible = _calculatedPercent is { } candidate && Math.Abs(candidate - Percent) > 1e-9;
 		ResultText.Foreground = _calculatedPercent is null ? Palette.TextMuted : Palette.TextPrimary;
 		if (_calculatedPercent is not { } percent)
 		{
-			ResultText.Text = "Example: a scooter that tops out at 25 km/h, shown peaking at 22 - enter 25 and 22.";
+			ResultText.Text = "Example: a scooter that tops out at 25 km/h, measured at 22 at most - enter 25 and 22.";
 			return;
 		}
 
-		double measured = (double)ShownSpeedBox.Value!.Value / SpeedCalibration.Factor(_savedPercent);
+		double measured = (double)ShownSpeedBox.Value!.Value;
 		ApplyButton.Content = $"Use {percent:0.0}%";
 		ResultText.Text = percent <= 0
-			? "The overlay already shows this speed or more - no correction needed."
-			: $"With {percent:0.0}% the top speed is shown as {SpeedCalibration.Corrected(measured, percent):0.0} instead of {(double)ShownSpeedBox.Value:0.0}.";
+			? "The GPS already measured this speed or more - no correction needed."
+			: $"With {percent:0.0}% a measured {measured:0.0} is shown as {SpeedCalibration.Corrected(measured, percent):0.0}.";
 	}
 }

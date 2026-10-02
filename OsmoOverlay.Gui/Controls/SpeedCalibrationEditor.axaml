@@ -19,7 +19,7 @@
 						               HorizontalAlignment="Stretch" />
 					</StackPanel>
 					<StackPanel Grid.Column="1" Spacing="4">
-						<TextBlock Text="Top speed the overlay showed" Classes="infoLabel" />
+						<TextBlock Text="Measured top speed (no correction)" Classes="infoLabel" />
 						<NumericUpDown Name="ShownSpeedBox" PlaceholderText="e.g. 22" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
 						               HorizontalAlignment="Stretch" />
 					</StackPanel>
@@ -30,7 +30,7 @@
 					<Button Grid.Column="1" Name="ApplyButton" Classes="accent" IsVisible="False" VerticalAlignment="Center" />
 				</Grid>
 				<TextBlock Classes="hint"
-				           Text="Same unit for both. The widget rounds to whole numbers - a loaded recording's top speed is exact. A speedometer usually reads a little high; a speed limiter or a GPS app is a better reference." />
+				           Text="Same unit for both. The measured speed is the GPS reading before any correction: take it from the loaded recording (exact), or read the widget's top speed with the correction at 0 (the widget rounds to whole numbers). A speedometer usually reads a little high; a speed limiter or a GPS app is a better reference for the real one." />
 			</StackPanel>
 		</Border>
 	</StackPanel>

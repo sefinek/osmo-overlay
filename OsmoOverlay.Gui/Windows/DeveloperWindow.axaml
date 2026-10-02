@@ -48,11 +48,13 @@
 
 		<Border Classes="card" Padding="14,12,6,4">
 			<StackPanel Spacing="8">
-				<TextBlock Text="RENDER" Classes="sectionLabel" />
+				<TextBlock Text="RECORDING AND RENDER" Classes="sectionLabel" />
 				<WrapPanel>
 					<Button Content="Render complete" Tag="render-done" Click="OnActionClick" />
 					<Button Content="Render failed" Tag="render-failed" Click="OnActionClick" />
 					<Button Content="Not enough disk space" Tag="disk-space" Click="OnActionClick" />
+					<Button Content="No telemetry" Tag="no-telemetry" Click="OnActionClick" />
+					<Button Content="No GPS" Tag="no-gps" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>

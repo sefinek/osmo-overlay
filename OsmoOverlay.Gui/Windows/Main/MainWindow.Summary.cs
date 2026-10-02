@@ -177,17 +177,41 @@ public partial class MainWindow
 		}
 	}
 
-	/// <summary>The camera's SupportNotice, once per set of files - not again when the same recording is read again.</summary>
+	/// <summary>
+	///     Once per set of files (not again when the same recording is read again): the camera's SupportNotice, or else what the
+	///     recording lacks - no telemetry at all, or no GPS fix - since the log alone is easy to miss. A camera with a
+	///     SupportNotice (Insta360: no GPS read yet) says the second already.
+	/// </summary>
 	private async Task ShowSupportNoticeAsync(FileSummary summary, List<string> inputPaths)
 	{
-		if (summary.CameraFormat?.SupportNotice(summary.CameraModel) is not { } notice) return;
-
 		string key = string.Join('|', inputPaths);
 		if (key == _supportNoticeShownFor) return;
 		_supportNoticeShownFor = key;
 
-		AppendLog(notice, LogLevel.Warn);
-		await ConfirmDialog.ShowAsync(this, $"Limited {summary.CameraFormat.DisplayName} support", notice, kind: DialogKind.Warning);
+		if (summary.CameraFormat?.SupportNotice(summary.CameraModel) is { } notice)
+		{
+			AppendLog(notice, LogLevel.Warn);
+			await ConfirmDialog.ShowAsync(this, $"Limited {summary.CameraFormat.DisplayName} support", notice, kind: DialogKind.Warning);
+		}
+		else if (!summary.HasTelemetry) await ShowNoTelemetryNoticeAsync();
+		else if (!_availability.GpsFix) await ShowNoGpsNoticeAsync();
+	}
+
+	internal Task ShowNoTelemetryNoticeAsync()
+	{
+		return ConfirmDialog.ShowAsync(this, "No telemetry in this file",
+			"This file carries no camera telemetry, so it can be previewed but not rendered.\n\n" +
+			$"Use the original recording from the camera's card ({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}) - " +
+			"a copy exported from DJI Mimo or another app loses the telemetry.", kind: DialogKind.Warning);
+	}
+
+	internal Task ShowNoGpsNoticeAsync()
+	{
+		return ConfirmDialog.ShowAsync(this, "No GPS in this recording",
+			"The camera never got a GPS fix while recording, so speed, distance, route, map, elevation and compass widgets are off. " +
+			"Tilt, G-force and camera settings still work.\n\n" +
+			"For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix " +
+			"before you start.", kind: DialogKind.Warning, art: DialogArt.NoGps);
 	}
 
 	private void PopulateInputInfo(FileSummary summary)
