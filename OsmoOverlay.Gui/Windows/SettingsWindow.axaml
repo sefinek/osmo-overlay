@@ -43,8 +43,52 @@
 			<Setter Property="Margin" Value="0,0,0,2" />
 			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
 		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem /template/ ContentPresenter">
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="Background" Duration="0:0:0.15" />
+				</Transitions>
+			</Setter>
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem:pointerover">
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected">
 			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem StackPanel">
+			<Setter Property="RenderTransform" Value="translateX(0px)" />
+			<Setter Property="Transitions">
+				<Transitions>
+					<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" />
+				</Transitions>
+			</Setter>
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem:pointerover StackPanel">
+			<Setter Property="RenderTransform" Value="translateX(3px)" />
+		</Style>
+
+		<!-- Pages: all laid out on top of each other, switching fades and slides the new one in -->
+		<Style Selector="ScrollViewer.page">
+			<Setter Property="RenderTransform" Value="translateY(0px)" />
+			<Setter Property="Transitions">
+				<Transitions>
+					<DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+					<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+				</Transitions>
+			</Setter>
+		</Style>
+		<Style Selector="ScrollViewer.page.hidden">
+			<Setter Property="Opacity" Value="0" />
+			<Setter Property="RenderTransform" Value="translateY(10px)" />
+			<Setter Property="IsHitTestVisible" Value="False" />
+			<Setter Property="IsEnabled" Value="False" />
 		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
@@ -156,7 +200,7 @@
 
 		<Grid Grid.Column="1">
 			<!-- Rendering -->
-			<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="RenderingPanel" Classes="page" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Rendering" Classes="pageTitle" />
@@ -275,7 +319,7 @@
 			</ScrollViewer>
 
 			<!-- Speed -->
-			<ScrollViewer Name="SpeedPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+			<ScrollViewer Name="SpeedPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Speed calibration" Classes="pageTitle" />
@@ -289,7 +333,7 @@
 			</ScrollViewer>
 
 			<!-- Route intro -->
-			<ScrollViewer Name="RouteIntroPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+			<ScrollViewer Name="RouteIntroPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Route intro" Classes="pageTitle" />
@@ -356,7 +400,7 @@
 			</ScrollViewer>
 
 			<!-- Interface -->
-			<ScrollViewer Name="InterfacePanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+			<ScrollViewer Name="InterfacePanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Interface" Classes="pageTitle" />
@@ -403,7 +447,7 @@
 			</ScrollViewer>
 
 			<!-- Behavior -->
-			<ScrollViewer Name="BehaviorPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+			<ScrollViewer Name="BehaviorPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Behavior" Classes="pageTitle" />
@@ -508,7 +552,7 @@
 			</ScrollViewer>
 
 			<!-- About -->
-			<ScrollViewer Name="AboutPanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
+			<ScrollViewer Name="AboutPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<Border Classes="settingsCard" Padding="18,16">
 						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">

@@ -56,10 +56,10 @@
 	<Application.Styles>
 		<FluentTheme />
 
-		<Style Selector="Button, RepeatButton, ToggleButton, CheckBox, RadioButton, ComboBoxItem, ListBoxItem">
+		<Style Selector="Button, RepeatButton, ToggleButton, ToggleSwitch, CheckBox, RadioButton, ComboBox, ComboBoxItem, ListBoxItem">
 			<Setter Property="Cursor" Value="Hand" />
 		</Style>
-		<Style Selector="Button:disabled, ToggleButton:disabled, CheckBox:disabled, RadioButton:disabled, ComboBoxItem:disabled, ListBoxItem:disabled">
+		<Style Selector="Button:disabled, ToggleButton:disabled, ToggleSwitch:disabled, CheckBox:disabled, RadioButton:disabled, ComboBox:disabled, ComboBoxItem:disabled, ListBoxItem:disabled">
 			<Setter Property="Cursor" Value="Arrow" />
 		</Style>
 

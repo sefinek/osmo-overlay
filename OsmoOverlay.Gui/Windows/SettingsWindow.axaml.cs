@@ -263,11 +263,11 @@ public partial class SettingsWindow : Window
 
 	/// <summary>
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
-	///     - switching category just swaps which one is visible instead of reparenting content.
+	///     - switching category just swaps which one is shown instead of reparenting content.
 	///     CategoryList's SelectedIndex="0" in XAML fires this event during InitializeComponent, before
 	///     the panel fields further down the visual tree have been assigned yet - harmless to skip then,
-	///     since RenderingPanel is already the one visible by default in XAML (every other panel starts
-	///     with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
+	///     since RenderingPanel is already the one shown by default in XAML (every other panel starts
+	///     with the "hidden" class), matching SelectedIndex 0 without this handler's help.
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
@@ -275,12 +275,9 @@ public partial class SettingsWindow : Window
 		    AboutPanel is null)
 			return;
 
-		RenderingPanel.IsVisible = CategoryList.SelectedIndex == 0;
-		SpeedPanel.IsVisible = CategoryList.SelectedIndex == 1;
-		RouteIntroPanel.IsVisible = CategoryList.SelectedIndex == 2;
-		InterfacePanel.IsVisible = CategoryList.SelectedIndex == 3;
-		BehaviorPanel.IsVisible = CategoryList.SelectedIndex == 4;
-		AboutPanel.IsVisible = CategoryList.SelectedIndex == 5;
+		// "hidden" fades and slides a page out (SettingsWindow.axaml); every page stays laid out, so nothing jumps.
+		ScrollViewer[] pages = [RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
+		for (int i = 0; i < pages.Length; i++) pages[i].Classes.Set("hidden", i != CategoryList.SelectedIndex);
 
 		if (CategoryList.SelectedIndex == 5 && !_updatesShown)
 		{
