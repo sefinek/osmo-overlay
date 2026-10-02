@@ -185,6 +185,7 @@ public partial class MainWindow : Window
 		WireSecondScreen();
 		WireAutoSave();
 		WireReframe();
+		WireDeveloperWindow();
 
 		_previewPlayer.FrameReady += OnPreviewFrameReady;
 		_previewPlayer.PlaybackStarted += OnPreviewPlaybackStarted;

@@ -25,6 +25,7 @@ public partial class MainWindow
 		// not a second independent path the user has to manage themselves - this render is a
 		// compositing asset, not an alternative final output, so it shouldn't need its own UI.
 		string outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
+		if (!await ConfirmDiskSpaceAsync(outputPath)) return;
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
@@ -157,7 +158,38 @@ public partial class MainWindow
 	///     shown, just not the visible surface right now - could otherwise go unnoticed until the user
 	///     switches back to it.
 	/// </summary>
-	private async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind, string? outputPath = null)
+	/// <summary>
+	///     Before a render: whether the output's drive has room for it (RenderDiskSpace). Too little asks first, and a
+	///     balloon carries the warning when the window isn't in front. True to go on, also when the space can't be read.
+	/// </summary>
+	private async Task<bool> ConfirmDiskSpaceAsync(string outputPath)
+	{
+		if (_summary is null) return true;
+
+		long estimate = RenderDiskSpace.EstimateOutputBytes(_summary.FileSizeBytes, SourceFrames, PlannedFrameCount());
+		long required = RenderDiskSpace.RequiredBytes(estimate);
+		if (estimate <= 0 || RenderDiskSpace.AvailableBytes(outputPath) is not { } available || available >= required) return true;
+
+		AppendLog($"Low disk space: the render needs about {FormatHelper.FormatBytes(required)}, " +
+		          $"{FormatHelper.FormatBytes(available)} is free on the output's drive", LogLevel.Warn);
+		return await AskLowDiskSpaceAsync(outputPath, estimate, required, available);
+	}
+
+	internal async Task<bool> AskLowDiskSpaceAsync(string outputPath, long estimate, long required, long available)
+	{
+		const string title = "Not enough disk space";
+		string drive = Path.GetPathRoot(Path.GetFullPath(outputPath)) ?? outputPath;
+		string message = $"The render will be about {FormatHelper.FormatBytes(estimate)}, and finishing it can briefly need the same again - " +
+		                 $"{FormatHelper.FormatBytes(required)} in all. Only {FormatHelper.FormatBytes(available)} is free on {drive}.\n\n" +
+		                 "Free up some space or pick an output folder on another drive. If the drive fills up, the render fails.";
+
+		SystemSound.PlayNotification();
+		if (!IsActive) BalloonNotifier.Show(this, title, $"{FormatHelper.FormatBytes(available)} free, about {FormatHelper.FormatBytes(required)} needed");
+
+		return await ConfirmDialog.AskAsync(this, title, message, "Render anyway", DialogKind.Warning);
+	}
+
+	internal async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind, string? outputPath = null)
 	{
 		SystemSound.PlayNotification();
 
