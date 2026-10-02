@@ -69,6 +69,7 @@ public partial class SettingsWindow : Window
 
 		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
 		AppVersionText.Text = $"OsmoOverlay v{appVersion}";
+		SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
 
 		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
 		CoreVersionText.Text = $"Core v{coreVersion}";
