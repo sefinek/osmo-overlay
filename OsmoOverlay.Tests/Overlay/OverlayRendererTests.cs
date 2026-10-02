@@ -92,6 +92,26 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
+	public void Trail_DrawsTheSameWhicheverFramesCameBefore()
+	{
+		List<DerivedFrame> frames = Route(300, 0);
+		using OverlayRenderer sequential = Create(frames);
+		using OverlayRenderer skipping = Create(frames);
+		using OverlayRenderer rewound = Create(frames);
+
+		byte[] expected = Render(sequential, frames);
+		byte[] skipped = new byte[skipping.FrameBufferSize()];
+		for (int i = 0; i < 150; i += 7) skipping.RenderInto(frames[i], skipped, premultiplied: true);
+		skipping.RenderInto(frames[149], skipped, premultiplied: true);
+		byte[] back = new byte[rewound.FrameBufferSize()];
+		rewound.RenderInto(frames[280], back, premultiplied: true);
+		rewound.RenderInto(frames[149], back, premultiplied: true);
+
+		CollectionAssert.AreEqual(expected, skipped, "a forward jump extends the trail by the frames skipped");
+		CollectionAssert.AreEqual(expected, back, "a jump back builds it again from the start");
+	}
+
+	[TestMethod]
 	public void EveryWidgetType_DrawsSomething()
 	{
 		List<DerivedFrame> frames = Route(300, 0);
