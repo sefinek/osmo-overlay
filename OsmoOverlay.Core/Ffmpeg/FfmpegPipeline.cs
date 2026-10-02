@@ -427,7 +427,10 @@ public static class FfmpegPipeline
 
 			if (withVideo)
 			{
-				graph.Append($"{video}trim=end_frame={piece.FrameCount},setpts=PTS-STARTPTS{VideoFades(piece, num / (double)den)}[p{p}v];");
+				// Every piece gets a time base of one frame and its timestamps from the frame number: a piece run through
+				// the concat filter (into the next file) comes out in 1/1000000 with a gap at the join, and xfade refuses
+				// inputs with different time bases - and times its offset by timestamps, so the gap would cost a frame.
+				graph.Append($"{video}trim=end_frame={piece.FrameCount},settb={den}/{num},setpts=N{VideoFades(piece, num / (double)den)}[p{p}v];");
 				joined.Append($"[p{p}v]");
 			}
 

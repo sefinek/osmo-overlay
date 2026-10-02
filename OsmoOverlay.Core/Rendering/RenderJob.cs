@@ -370,9 +370,9 @@ public static class RenderJob
 
 				if (ffmpeg.ExitCode != 0)
 				{
-					string message = string.Format(CoreStrings.Render_FfmpegFailed, ffmpeg.ExitCode, stderr);
-					AppLogger.Error(message);
-					return new RenderResult(false, message, sw.Elapsed);
+					AppLogger.Error(string.Format(CoreStrings.Render_FfmpegFailed, ffmpeg.ExitCode, stderr));
+					return new RenderResult(false,
+						string.Format(CoreStrings.Render_FfmpegFailedSummary, ffmpeg.ExitCode, FfmpegErrorSummary(stderr)), sw.Elapsed);
 				}
 
 				// Short renders are dominated by the route intro and ffmpeg's spin-up, not representative of
@@ -514,6 +514,20 @@ public static class RenderJob
 				AppLogger.Warn(ex, CoreStrings.Render_FastStartFailed);
 			}
 		}
+	}
+
+	/// <summary>
+	///     The lines of ffmpeg's output that say what went wrong, for a dialog - the full output (every input described)
+	///     goes to the log. An error while running comes after the "Stream mapping" block; one before it, at the end.
+	/// </summary>
+	internal static string FfmpegErrorSummary(string stderr, int maxLines = 8)
+	{
+		string[] lines = stderr.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		int mapping = Array.FindLastIndex(lines, l => l.StartsWith("Stream mapping:", StringComparison.Ordinal));
+		IEnumerable<string> picked = mapping >= 0
+			? lines.Skip(mapping + 1).Where(l => !l.Contains(" -> ", StringComparison.Ordinal)).Take(maxLines)
+			: lines.TakeLast(maxLines);
+		return string.Join('\n', picked);
 	}
 
 	/// <summary>"01:00.000 - 01:30.000, 02:10.000 - 05:00.000" - the kept pieces on the recording's timeline.</summary>

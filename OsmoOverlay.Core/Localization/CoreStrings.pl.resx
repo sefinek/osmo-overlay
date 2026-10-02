@@ -309,6 +309,9 @@
   <data name="Render_FfmpegFailed" xml:space="preserve">
     <value>ffmpeg zakończył się błędem ({0}): {1}</value>
   </data>
+  <data name="Render_FfmpegFailedSummary" xml:space="preserve">
+    <value>ffmpeg zakończył się błędem ({0}). Pełne wyjście jest w logu, najważniejsza część:\n\n{1}</value>
+  </data>
   <data name="Render_FileNotFound" xml:space="preserve">
     <value>Nie znaleziono pliku: {0}</value>
   </data>

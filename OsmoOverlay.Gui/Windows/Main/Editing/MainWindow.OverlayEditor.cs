@@ -311,7 +311,7 @@ public partial class MainWindow
 			if (supported)
 			{
 				var settingsButton = new Button { Content = new IconView { Data = Icons.Gear, Width = 12, Height = 12 }, Classes = { "addedWidgetAction" } };
-				ToolTip.SetTip(settingsButton, Strings.Main_WidgetSettings2);
+				ToolTip.SetTip(settingsButton, Strings.Main_WidgetSettings);
 				settingsButton.Click += (_, _) => OpenSettings();
 				buttons.Children.Add(settingsButton);
 			}

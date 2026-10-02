@@ -91,7 +91,7 @@
     <value>Użyj {0:0.0}%</value>
   </data>
   <data name="Calibration_UseRecording" xml:space="preserve">
-    <value>Użyj prędkości z wczytanego nagrania ({0:0.##} km/h)</value>
+    <value>Przywróć prędkość z wczytanego nagrania ({0:0.##} km/h)</value>
   </data>
   <data name="Close_CloseAndCancel" xml:space="preserve">
     <value>Zamknij i przerwij</value>
@@ -128,6 +128,9 @@
   </data>
   <data name="Common_Imperial" xml:space="preserve">
     <value>Imperialne</value>
+  </data>
+  <data name="Common_Language" xml:space="preserve">
+    <value>Język</value>
   </data>
   <data name="Common_MaxSpeed" xml:space="preserve">
     <value>Prędkość maks.</value>
@@ -616,7 +619,7 @@
     <value>Dodaje kluczowy moment w klatce widocznej na ekranie (B)</value>
   </data>
   <data name="KeyMoments_AKeyMomentIsA" xml:space="preserve">
-    <value>Kluczowy moment to nazwany punkt nagrania, oznaczony flagą na osi czasu - strzałki w górę i w dół przeskakują między nimi. Nie wpływają na render. Każda kategoria pokazuje trzy najwyższe wartości - możesz do nich przejść albo zapisać je jako kluczowy moment przyciskiem z flagą. Momenty zapisują się w projekcie.</value>
+    <value>Kluczowy moment to nazwany punkt nagrania, oznaczony flagą na osi czasu. Strzałki w górę i w dół przeskakują między znacznikami na osi czasu, w tym między momentami. Momenty nie wpływają na render. Każda kategoria pokazuje trzy najwyższe wartości - możesz do nich przejść albo zapisać je jako kluczowy moment przyciskiem z flagą. Momenty zapisują się w projekcie.</value>
   </data>
   <data name="KeyMoments_GoToMoment" xml:space="preserve">
     <value>Przejdź do tego momentu</value>
@@ -700,10 +703,10 @@
     <value>Etykieta po dotarciu</value>
   </data>
   <data name="Main_Audio" xml:space="preserve">
-    <value>DŹWIĘK</value>
-  </data>
-  <data name="Main_Audio2" xml:space="preserve">
     <value>Dźwięk</value>
+  </data>
+  <data name="Main_AudioHeader" xml:space="preserve">
+    <value>DŹWIĘK</value>
   </data>
   <data name="Main_Auto" xml:space="preserve">
     <value>Auto</value>
@@ -749,6 +752,9 @@
   </data>
   <data name="Main_Compass" xml:space="preserve">
     <value>Kompas</value>
+  </data>
+  <data name="Main_CompassHeadingUpHint" xml:space="preserve">
+    <value>Kierunek jazdy jest zawsze na górze, a północ przesuwa się po obwodzie.</value>
   </data>
   <data name="Main_Content" xml:space="preserve">
     <value>TREŚĆ</value>
@@ -817,7 +823,7 @@
     <value>Enkoder</value>
   </data>
   <data name="Main_EstRenderTime" xml:space="preserve">
-    <value>Szac. czas renderu</value>
+    <value>Czas renderu</value>
   </data>
   <data name="Main_EvenlyWithTheVideoStops" xml:space="preserve">
     <value>Równo z filmem, razem z postojami</value>
@@ -838,25 +844,25 @@
     <value>META</value>
   </data>
   <data name="Main_Format" xml:space="preserve">
-    <value>FORMAT</value>
-  </data>
-  <data name="Main_Format2" xml:space="preserve">
     <value>Format</value>
   </data>
+  <data name="Main_FormatHeader" xml:space="preserve">
+    <value>FORMAT</value>
+  </data>
   <data name="Main_FrameRate" xml:space="preserve">
-    <value>Klatki na sekundę</value>
+    <value>Klatki/s</value>
   </data>
   <data name="Main_Frames" xml:space="preserve">
     <value>Klatki</value>
   </data>
   <data name="Main_FrameThe360ViewDrag" xml:space="preserve">
-    <value>Ustaw kadr widoku 360 - przeciągnij obraz, aby go obrócić, z Shiftem, aby go pochylić; kółkiem myszy poszerzysz lub zawęzisz kadr, a dwuklikiem go zresetujesz. Render używa tego widoku.</value>
+    <value>Ustaw kadr widoku 360 - przeciągnij obraz, aby go obrócić i pochylić, z Shiftem, aby przechylić go na bok; kółkiem myszy poszerzysz lub zawęzisz kadr, a dwuklikiem go zresetujesz. Render używa tego widoku.</value>
   </data>
   <data name="Main_FullScaleRangeG" xml:space="preserve">
     <value>Pełny zakres skali (G)</value>
   </data>
   <data name="Main_FullScreenPreviewF11On" xml:space="preserve">
-    <value>Podgląd na pełnym ekranie (F11) - na monitorze wybranym w Ustawieniach (Interfejs). Esc go zamyka.</value>
+    <value>Podgląd na pełnym ekranie (F11) - na monitorze wybranym w Ustawienia &gt; Zachowanie. Esc go zamyka.</value>
   </data>
   <data name="Main_GetSummary" xml:space="preserve">
     <value>Pobierz podsumowanie</value>
@@ -922,13 +928,10 @@
     <value>Kluczowe momenty - flagi na osi czasu i szybkie przejście do prędkości maksymalnej, najwyższego punktu i innych</value>
   </data>
   <data name="Main_Label" xml:space="preserve">
-    <value>ETYKIETA</value>
-  </data>
-  <data name="Main_Label2" xml:space="preserve">
     <value>Etykieta</value>
   </data>
-  <data name="Main_Language" xml:space="preserve">
-    <value>Język</value>
+  <data name="Main_LabelHeader" xml:space="preserve">
+    <value>ETYKIETA</value>
   </data>
   <data name="Main_Layers" xml:space="preserve">
     <value>WARSTWY</value>
@@ -948,6 +951,9 @@
   <data name="Main_Map" xml:space="preserve">
     <value>Mapa</value>
   </data>
+  <data name="Main_MapHeadingUpHint" xml:space="preserve">
+    <value>Na górze jest zawsze kierunek jazdy, a nie północ.</value>
+  </data>
   <data name="Main_MapSource" xml:space="preserve">
     <value>ŹRÓDŁO MAPY</value>
   </data>
@@ -955,7 +961,7 @@
     <value>ZNACZNIK</value>
   </data>
   <data name="Main_MaxGForce" xml:space="preserve">
-    <value>Maks. przeciążenie</value>
+    <value>Maks. G</value>
   </data>
   <data name="Main_MaxZoomOutX" xml:space="preserve">
     <value>Maks. oddalenie (x)</value>
@@ -1117,7 +1123,7 @@
     <value>Margines bezpieczeństwa</value>
   </data>
   <data name="Main_SampleRate" xml:space="preserve">
-    <value>Częstotliwość próbkowania</value>
+    <value>Próbkowanie</value>
   </data>
   <data name="Main_Samples" xml:space="preserve">
     <value>Próbki</value>
@@ -1171,10 +1177,10 @@
     <value>Prędkościomierz</value>
   </data>
   <data name="Main_Statistic" xml:space="preserve">
-    <value>STATYSTYKA</value>
-  </data>
-  <data name="Main_Statistic2" xml:space="preserve">
     <value>Statystyka</value>
+  </data>
+  <data name="Main_StatisticHeader" xml:space="preserve">
+    <value>STATYSTYKA</value>
   </data>
   <data name="Main_StopsTakeNoRoomThe" xml:space="preserve">
     <value>Postoje nie zajmują miejsca - klasyczny profil wysokości</value>
@@ -1186,10 +1192,10 @@
     <value>Słońce / przeciążenie</value>
   </data>
   <data name="Main_Telemetry" xml:space="preserve">
-    <value>TELEMETRIA</value>
-  </data>
-  <data name="Main_Telemetry2" xml:space="preserve">
     <value>Telemetria</value>
+  </data>
+  <data name="Main_TelemetryHeader" xml:space="preserve">
+    <value>TELEMETRIA</value>
   </data>
   <data name="Main_Text" xml:space="preserve">
     <value>Tekst</value>
@@ -1214,12 +1220,6 @@
   </data>
   <data name="Main_ThePreviewIsFullScreen" xml:space="preserve">
     <value>Podgląd jest na pełnym ekranie</value>
-  </data>
-  <data name="Main_TheWayYouAreHeading" xml:space="preserve">
-    <value>Kierunek jazdy jest zawsze na górze, a północ przesuwa się po obwodzie.</value>
-  </data>
-  <data name="Main_TheWayYouAreHeading2" xml:space="preserve">
-    <value>Na górze jest zawsze kierunek jazdy, a nie północ.</value>
   </data>
   <data name="Main_TheWholeRecordingSProfile" xml:space="preserve">
     <value>Profil całego nagrania - pokonany odcinek jest wyróżniony, a znacznik podąża za filmem.</value>
@@ -1276,10 +1276,10 @@
     <value>Czas UTC</value>
   </data>
   <data name="Main_Video" xml:space="preserve">
-    <value>WIDEO</value>
-  </data>
-  <data name="Main_Video2" xml:space="preserve">
     <value>Wideo</value>
+  </data>
+  <data name="Main_VideoHeader" xml:space="preserve">
+    <value>WIDEO</value>
   </data>
   <data name="Main_View" xml:space="preserve">
     <value>WIDOK</value>
@@ -1288,10 +1288,10 @@
     <value>WIDŻETY</value>
   </data>
   <data name="Main_WidgetSettings" xml:space="preserve">
-    <value>USTAWIENIA WIDŻETU -</value>
-  </data>
-  <data name="Main_WidgetSettings2" xml:space="preserve">
     <value>Ustawienia widżetu</value>
+  </data>
+  <data name="Main_WidgetSettingsHeader" xml:space="preserve">
+    <value>USTAWIENIA WIDŻETU -</value>
   </data>
   <data name="Main_Zoom219" xml:space="preserve">
     <value>Zoom (2-19)</value>
@@ -1652,9 +1652,6 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   <data name="Settings_ColorTheRouteBySpeed" xml:space="preserve">
     <value>Koloruj trasę według prędkości</value>
   </data>
-  <data name="Settings_ConfigLastUpdated" xml:space="preserve">
-    <value>Ostatnia zmiana konfiguracji: -</value>
-  </data>
   <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
     <value>Ostatnia zmiana konfiguracji: {0}</value>
   </data>
@@ -1750,9 +1747,6 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   </data>
   <data name="Settings_KeepThumbnails" xml:space="preserve">
     <value>miniatury</value>
-  </data>
-  <data name="Settings_Language" xml:space="preserve">
-    <value>Język</value>
   </data>
   <data name="Settings_LanguageHint" xml:space="preserve">
     <value>Wymaga restartu - bez wczytanego pliku aplikacja uruchomi się ponownie po zamknięciu Ustawień.</value>
@@ -1887,7 +1881,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Przewodnik pierwszego uruchomienia: narzędzia, kalibracja prędkości, folder wyjściowy i pliki projektów.</value>
   </data>
   <data name="Settings_TheGpsReportsAFew" xml:space="preserve">
-    <value>GPS podaje tylko kilka pozycji na sekundę, więc ślad kompasu i mapa najpierw stoją, a potem skaczą. Ta opcja interpoluje ruch między pozycjami. Działa od następnego otwarcia nagrania.</value>
+    <value>GPS podaje tylko kilka pozycji na sekundę, więc ślad kompasu i mapa najpierw stoją, a potem skaczą. Ta opcja interpoluje ruch między pozycjami. Działa od razu - otwarty podgląd wczyta się ponownie.</value>
   </data>
   <data name="Settings_Theme" xml:space="preserve">
     <value>Motyw</value>
@@ -1944,7 +1938,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Co zachować: {0}</value>
   </data>
   <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
-    <value>Wpisz prędkość, z jaką zwykle jedziesz, a nie chwilowy szczyt - szczyt to moment, w którym GPS akurat zawyżył odczyt. Po wczytaniu nagrania aplikacja sama podpowie jego prędkość przelotową (typową prędkość jazdy, uśrednioną z 3 sekund). Obie wartości podaj w tej samej jednostce.</value>
+    <value>Wpisz prędkość, z jaką zwykle jedziesz, a nie chwilowy szczyt - szczyt to moment, w którym GPS akurat zawyżył odczyt. Gdy nagranie jest wczytane, pole Prędkość z GPS wypełnia się samo jego prędkością przelotową: najczęstszą prędkością w szybszej połowie jazdy, uśrednioną z 3 sekund. Obie wartości podaj w tej samej jednostce.</value>
   </data>
   <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
     <value>np. 22</value>
@@ -1974,7 +1968,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Skopiowany bez zmian</value>
   </data>
   <data name="Summary_AudioReencoded" xml:space="preserve">
-    <value>AAC z bitrate źródła (przekodowany, aby połączyć fragmenty po cięciach)</value>
+    <value>AAC (przekodowany przez cięcia)</value>
   </data>
   <data name="Summary_CantJoinTitle" xml:space="preserve">
     <value>Tych plików nie można połączyć</value>
@@ -2058,7 +2052,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Widżety przechyłu, pochylenia i miernika G są niedostępne dla tej kamery - osie jej akcelerometru względem obrazu nie są znane</value>
   </data>
   <data name="Summary_LogNoGps" xml:space="preserve">
-    <value>GPS: brak w tym nagraniu - widżety oparte na pozycji (Kompas, Mapa, Wysokość, Nachylenie, Dystans, Prędkość) są niedostępne i wyszarzone</value>
+    <value>GPS: brak w tym nagraniu - widżety oparte na pozycji (Kompas, Mapa, Wysokość, Nachylenie, Dystans, Prędkościomierz, Pasek postępu trasy, Wykres wysokości / prędkości, Statystyka trasy, Słońce) są niedostępne i wyszarzone</value>
   </data>
   <data name="Summary_LogNoGpsTime" xml:space="preserve">
     <value>Znacznik czasu GPS: brak w tym nagraniu, nie ma też użytecznego czasu rozpoczęcia nagrania - Data i godzina oraz Czas UTC są niedostępne i wyszarzone</value>
@@ -2103,7 +2097,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Brak pozycji GPS w tym nagraniu.</value>
   </data>
   <data name="Summary_NoGpsMessage" xml:space="preserve">
-    <value>Kamera nie złapała sygnału GPS podczas nagrywania, więc widżety prędkości, dystansu, trasy, mapy, wysokości i kompasu są wyłączone. Przechył, przeciążenie i ustawienia kamery działają normalnie.
+    <value>Kamera nie złapała sygnału GPS podczas nagrywania, więc widżety oparte na pozycji (prędkość, dystans, trasa, mapa, wysokość, kompas, statystyki przejazdu) są wyłączone. Przechył, przeciążenie i ustawienia kamery działają normalnie.
 
 Aby mieć GPS, nagrywaj z pilotem DJI GPS Bluetooth Remote (lub z GPS telefonu przez DJI Mimo) i przed startem poczekaj, aż złapie satelity.</value>
   </data>
@@ -2162,7 +2156,7 @@ Aby mieć GPS, nagrywaj z pilotem DJI GPS Bluetooth Remote (lub z GPS telefonu p
     <value>Brak pozycji GPS</value>
   </data>
   <data name="Summary_TelemetryNoGpsFixTip" xml:space="preserve">
-    <value>To nagranie nigdy nie złapało pozycji GPS - odczytano tylko dane z akcelerometru i ustawienia kamery. Prędkość, dystans, wysokość, mapa i kompas są niedostępne.</value>
+    <value>To nagranie nigdy nie złapało pozycji GPS - odczytano tylko dane z akcelerometru i ustawienia kamery. Prędkość, dystans, wysokość, mapa, kompas i statystyki przejazdu są niedostępne.</value>
   </data>
   <data name="Summary_TelemetryNotFound" xml:space="preserve">
     <value>Nie znaleziono</value>
@@ -2258,7 +2252,7 @@ Aby mieć GPS, nagrywaj z pilotem DJI GPS Bluetooth Remote (lub z GPS telefonu p
     <value>DANE APLIKACJI</value>
   </data>
   <data name="Tools_CacheCleared" xml:space="preserve">
-    <value>Usunięto zapisaną analizę {0} pliku|Usunięto zapisaną analizę {0} plików|Usunięto zapisaną analizę {0} plików</value>
+    <value>Usunięto {0} zapisaną analizę|Usunięto {0} zapisane analizy|Usunięto {0} zapisanych analiz</value>
   </data>
   <data name="Tools_CameraAudio" xml:space="preserve">
     <value>Dźwięk z kamery</value>
@@ -2549,7 +2543,7 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
     <value>Miejsce zapisu gotowych filmów. Puste pole oznacza zapis obok nagrania źródłowego.</value>
   </data>
   <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
-    <value>Zapisany projekt (cięcia, nakładka, widok 360) otworzy się w tej aplikacji po dwukliku.</value>
+    <value>Zapisany projekt (cięcia, kluczowe momenty, nakładka, widok 360) otworzy się w tej aplikacji po dwukliku.</value>
   </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Renderowanie i pliki</value>

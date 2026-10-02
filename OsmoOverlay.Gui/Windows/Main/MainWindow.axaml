@@ -490,7 +490,7 @@
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Camera}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
-										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_Telemetry2}" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_Telemetry}" />
 										<Border Grid.Row="0" Grid.Column="4" Classes="pill" Name="TelemetryPill"
 										        HorizontalAlignment="Left">
 											<TextBlock Name="InfoTelemetry" FontWeight="SemiBold" FontSize="12" />
@@ -502,7 +502,7 @@
 										<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="InfoFileSize" />
 									</Grid>
 
-									<TextBlock Text="{x:Static local:Strings.Main_Video}" Classes="sectionLabel" />
+									<TextBlock Text="{x:Static local:Strings.Main_VideoHeader}" Classes="sectionLabel" />
 									<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
 									      ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
@@ -546,7 +546,7 @@
 										</StackPanel>
 									</Grid>
 
-									<TextBlock Text="{x:Static local:Strings.Main_Audio}" Classes="sectionLabel" />
+									<TextBlock Text="{x:Static local:Strings.Main_AudioHeader}" Classes="sectionLabel" />
 									<Grid Name="AudioGrid" RowDefinitions="Auto,Auto"
 									      RowSpacing="2" ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
@@ -577,7 +577,7 @@
 							<Border Classes="card" Name="TelemetryCard" IsVisible="False">
 								<StackPanel Spacing="4">
 									<StackPanel Classes="cardTitle">
-										<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Main_Telemetry}" />
+										<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Main_TelemetryHeader}" />
 									</StackPanel>
 									<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2" ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
@@ -603,7 +603,7 @@
 										<TextBlock Grid.Row="2" Grid.Column="4" Classes="infoValue" Name="TeleMaxG" />
 									</Grid>
 									<TextBlock Classes="infoLabel" Margin="0,10,0,0">
-										<Run Text="{x:Static local:Strings.Main_Recorded}" /><Run Name="TeleRecordedAt" />
+										<Run Text="{x:Static local:Strings.Main_Recorded}" /><Run Text=" " /><Run Name="TeleRecordedAt" />
 									</TextBlock>
 								</StackPanel>
 							</Border>
@@ -623,7 +623,7 @@
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Encoder}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
-										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_Audio2}" />
+										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_Audio}" />
 										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutAudio" TextWrapping="Wrap" />
 										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Frames}" Name="OutFrameCountLabel" />
 										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutFrameCount" />
@@ -717,8 +717,8 @@
 								</StackPanel>
 							</Button>
 							<TextBlock Grid.Column="1" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
-								<Run Text="{x:Static local:Strings.Main_WidgetSettings}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" />
-								<Run Name="WidgetSettingsTitleRun" Text="{x:Static local:Strings.Main_WidgetSettings2}" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+								<Run Text="{x:Static local:Strings.Main_WidgetSettingsHeader}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" />
+								<Run Name="WidgetSettingsTitleRun" Text="{x:Static local:Strings.Main_WidgetSettings}" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
 							</TextBlock>
 							<Button Grid.Column="2" Name="WidgetSettingsResetButton" Classes="toolbar"
 							        Content="{x:Static local:Strings.Main_ResetToDefault}" Padding="10,7" FontSize="12" HorizontalAlignment="Right"
@@ -911,7 +911,7 @@
 
 								<Button Name="WidgetGearHoverButton" Classes="widgetHoverButton widgetGearButton"
 								        IsVisible="False" Click="OnWidgetGearHoverButtonClick"
-								        ToolTip.Tip="{x:Static local:Strings.Main_WidgetSettings2}">
+								        ToolTip.Tip="{x:Static local:Strings.Main_WidgetSettings}">
 									<local:IconView Data="{StaticResource IconGear}" Width="11" Height="11" />
 								</Button>
 								<Button Name="RemoveWidgetButton" Classes="widgetHoverButton removeWidgetButton"
@@ -1065,11 +1065,11 @@
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
-														<TextBlock Text="{x:Static local:Strings.Main_Format}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Format2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_FormatHeader}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Format}" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="DateTimeFormatCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnDateTimeFormatChanged" />
-														<TextBlock Text="{x:Static local:Strings.Main_Language}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Common_Language}" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="DateTimeLocaleCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnDateTimeLocaleChanged" />
 													</StackPanel>
@@ -1112,11 +1112,11 @@
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
-														<TextBlock Text="{x:Static local:Strings.Main_Format}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Format2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_FormatHeader}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Format}" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="UtcTimeFormatCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnUtcTimeFormatChanged" />
-														<TextBlock Text="{x:Static local:Strings.Main_Language}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Common_Language}" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="UtcTimeLocaleCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnUtcTimeLocaleChanged" />
 													</StackPanel>
@@ -1154,8 +1154,8 @@
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
-														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_LabelHeader}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="CameraInfoLabelBox" PlaceholderText="{x:Static local:Strings.Main_Camera}"
 														         LostFocus="OnCameraInfoLabelChanged" />
 													</StackPanel>
@@ -1199,7 +1199,7 @@
 														           Text="{x:Static local:Strings.Main_TheMarkerStaysInThe}" />
 														<CheckBox Name="CompassRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
 														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
-														           Text="{x:Static local:Strings.Main_TheWayYouAreHeading}" />
+														           Text="{x:Static local:Strings.Main_CompassHeadingUpHint}" />
 														<CheckBox Name="CompassNorthCheck" Content="{x:Static local:Strings.Main_ShowTheNLabel}" Click="OnCompassOptionChanged" />
 														<CheckBox Name="CompassHeadingTextCheck" Content="{x:Static local:Strings.Main_ShowTheHeadingEG}" Click="OnCompassOptionChanged" />
 													</StackPanel>
@@ -1284,7 +1284,7 @@
 														<TextBlock Text="{x:Static local:Strings.Main_View}" Classes="settingsGroupTitle" />
 														<CheckBox Name="MapRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
 														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
-														           Text="{x:Static local:Strings.Main_TheWayYouAreHeading2}" />
+														           Text="{x:Static local:Strings.Main_MapHeadingUpHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1562,8 +1562,8 @@
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
-														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_LabelHeader}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="ElapsedTimeLabelBox" PlaceholderText="{x:Static local:Strings.Main_NoneJustTheTime}"
 														         LostFocus="OnElapsedTimeLabelChanged" />
 														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
@@ -1703,7 +1703,7 @@
 															             GroupName="ProfileAxis" Click="OnProfileAxisChanged"
 															             ToolTip.Tip="{x:Static local:Strings.Main_EvenlyWithTheVideoStops}" />
 														</StackPanel>
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="ProfileLabelBox" LostFocus="OnProfileLabelChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
@@ -1752,13 +1752,13 @@
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
-														<TextBlock Text="{x:Static local:Strings.Main_Statistic}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Statistic2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_StatisticHeader}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Statistic}" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="TripStatCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnTripStatKindChanged" />
 														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_CountedUpToTheMoment}" />
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="TripStatLabelBox" LostFocus="OnTripStatLabelChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
@@ -1803,7 +1803,7 @@
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="ElevationLabelBox" PlaceholderText="{x:Static local:Strings.Main_Elevation}"
 														         LostFocus="OnElevationLabelChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
@@ -1857,8 +1857,8 @@
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
-														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_LabelHeader}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="GradientLabelBox" PlaceholderText="{x:Static local:Strings.Main_Gradient}"
 														         LostFocus="OnGradientLabelChanged" />
 													</StackPanel>
@@ -1897,7 +1897,7 @@
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
-														<TextBlock Text="{x:Static local:Strings.Main_Label2}" Classes="infoLabel" Margin="0" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="DistanceLabelBox" PlaceholderText="{x:Static local:Strings.Common_TotalDistance}"
 														         LostFocus="OnDistanceLabelChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
@@ -2037,11 +2037,11 @@
 					</Border>
 					<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
 					<Border Height="{x:Static local:PreviewTimeline.VideoTrackHeight}">
-						<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Video2}" />
+						<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Video}" />
 					</Border>
 					<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
 					<Border Height="{x:Static local:PreviewTimeline.AudioTrackHeight}">
-						<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Audio2}" />
+						<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Audio}" />
 					</Border>
 				</StackPanel>
 				<Border Grid.Row="0" Grid.Column="1" Name="ExpandedTimelineFrame" CornerRadius="4" ClipToBounds="True">

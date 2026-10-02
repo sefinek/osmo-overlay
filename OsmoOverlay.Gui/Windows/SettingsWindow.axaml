@@ -390,7 +390,7 @@
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="{x:Static local:Strings.Settings_Language}" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Common_Language}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LanguageHint}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="LanguageCombo" />
@@ -598,7 +598,7 @@
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
 								<TextBlock Text="{x:Static local:Strings.Settings_Configuration}" Classes="rowTitle" Width="110" />
-								<TextBlock Grid.Column="1" Name="ConfigLastUpdatedText" Text="{x:Static local:Strings.Settings_ConfigLastUpdated}" />
+								<TextBlock Grid.Column="1" Name="ConfigLastUpdatedText" />
 							</Grid>
 						</StackPanel>
 					</Border>

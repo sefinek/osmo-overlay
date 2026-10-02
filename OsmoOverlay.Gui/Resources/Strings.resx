@@ -91,7 +91,7 @@
     <value>Use {0:0.0}%</value>
   </data>
   <data name="Calibration_UseRecording" xml:space="preserve">
-    <value>Use the loaded recording's speed ({0:0.##} km/h)</value>
+    <value>Reset to the loaded recording's speed ({0:0.##} km/h)</value>
   </data>
   <data name="Close_CloseAndCancel" xml:space="preserve">
     <value>Close and cancel</value>
@@ -128,6 +128,9 @@
   </data>
   <data name="Common_Imperial" xml:space="preserve">
     <value>Imperial</value>
+  </data>
+  <data name="Common_Language" xml:space="preserve">
+    <value>Language</value>
   </data>
   <data name="Common_MaxSpeed" xml:space="preserve">
     <value>Max speed</value>
@@ -616,7 +619,7 @@
     <value>Adds a key moment at the frame on screen (B)</value>
   </data>
   <data name="KeyMoments_AKeyMomentIsA" xml:space="preserve">
-    <value>A key moment is a named point in the recording, shown as a flag on the timeline - the Up and Down arrow keys jump between them. They don't change the render. Each category lists its three highest peaks - jump to one, or save it as a key moment with the flag button next to it. Moments are saved with the project.</value>
+    <value>A key moment is a named point in the recording, shown as a flag on the timeline. The Up and Down arrow keys jump between the timeline's markers, moments included. Moments don't change the render. Each category lists its three highest peaks - jump to one, or save it as a key moment with the flag button next to it. Moments are saved with the project.</value>
   </data>
   <data name="KeyMoments_GoToMoment" xml:space="preserve">
     <value>Go to this moment</value>
@@ -700,10 +703,10 @@
     <value>Label on arrival</value>
   </data>
   <data name="Main_Audio" xml:space="preserve">
-    <value>AUDIO</value>
-  </data>
-  <data name="Main_Audio2" xml:space="preserve">
     <value>Audio</value>
+  </data>
+  <data name="Main_AudioHeader" xml:space="preserve">
+    <value>AUDIO</value>
   </data>
   <data name="Main_Auto" xml:space="preserve">
     <value>Auto</value>
@@ -749,6 +752,9 @@
   </data>
   <data name="Main_Compass" xml:space="preserve">
     <value>Compass</value>
+  </data>
+  <data name="Main_CompassHeadingUpHint" xml:space="preserve">
+    <value>Your direction of travel is always at the top, and north moves around the rim.</value>
   </data>
   <data name="Main_Content" xml:space="preserve">
     <value>CONTENT</value>
@@ -838,10 +844,10 @@
     <value>FINISH</value>
   </data>
   <data name="Main_Format" xml:space="preserve">
-    <value>FORMAT</value>
-  </data>
-  <data name="Main_Format2" xml:space="preserve">
     <value>Format</value>
+  </data>
+  <data name="Main_FormatHeader" xml:space="preserve">
+    <value>FORMAT</value>
   </data>
   <data name="Main_FrameRate" xml:space="preserve">
     <value>Frame rate</value>
@@ -850,13 +856,13 @@
     <value>Frames</value>
   </data>
   <data name="Main_FrameThe360ViewDrag" xml:space="preserve">
-    <value>Frame the 360 view - drag the video to turn it, Shift+drag to tilt it, use the mouse wheel to widen or narrow it, and double-click to reset. The render uses this view.</value>
+    <value>Frame the 360 view - drag the video to turn and tilt it, Shift+drag to roll it, use the mouse wheel to widen or narrow it, and double-click to reset. The render uses this view.</value>
   </data>
   <data name="Main_FullScaleRangeG" xml:space="preserve">
     <value>Full-scale range (G)</value>
   </data>
   <data name="Main_FullScreenPreviewF11On" xml:space="preserve">
-    <value>Full screen preview (F11) - on the monitor chosen in Settings, Interface. Esc leaves it.</value>
+    <value>Full screen preview (F11) - on the monitor chosen in Settings &gt; Behavior. Esc exits it.</value>
   </data>
   <data name="Main_GetSummary" xml:space="preserve">
     <value>Get Summary</value>
@@ -922,13 +928,10 @@
     <value>Key moments - flags on the timeline, plus quick jumps to the top speed, the highest point and more</value>
   </data>
   <data name="Main_Label" xml:space="preserve">
-    <value>LABEL</value>
-  </data>
-  <data name="Main_Label2" xml:space="preserve">
     <value>Label</value>
   </data>
-  <data name="Main_Language" xml:space="preserve">
-    <value>Language</value>
+  <data name="Main_LabelHeader" xml:space="preserve">
+    <value>LABEL</value>
   </data>
   <data name="Main_Layers" xml:space="preserve">
     <value>LAYERS</value>
@@ -947,6 +950,9 @@
   </data>
   <data name="Main_Map" xml:space="preserve">
     <value>Map</value>
+  </data>
+  <data name="Main_MapHeadingUpHint" xml:space="preserve">
+    <value>Your direction of travel is always at the top, instead of north.</value>
   </data>
   <data name="Main_MapSource" xml:space="preserve">
     <value>MAP SOURCE</value>
@@ -1063,7 +1069,7 @@
     <value>RANGE</value>
   </data>
   <data name="Main_Recorded" xml:space="preserve">
-    <value>Recorded: </value>
+    <value>Recorded:</value>
   </data>
   <data name="Main_RecordingTheSourceVideoS" xml:space="preserve">
     <value>Recording - the source video's resolution and frame rate</value>
@@ -1171,10 +1177,10 @@
     <value>Speed gauge</value>
   </data>
   <data name="Main_Statistic" xml:space="preserve">
-    <value>STATISTIC</value>
-  </data>
-  <data name="Main_Statistic2" xml:space="preserve">
     <value>Statistic</value>
+  </data>
+  <data name="Main_StatisticHeader" xml:space="preserve">
+    <value>STATISTIC</value>
   </data>
   <data name="Main_StopsTakeNoRoomThe" xml:space="preserve">
     <value>Stops take no room - the classic elevation profile</value>
@@ -1186,10 +1192,10 @@
     <value>Sun / G-force</value>
   </data>
   <data name="Main_Telemetry" xml:space="preserve">
-    <value>TELEMETRY</value>
-  </data>
-  <data name="Main_Telemetry2" xml:space="preserve">
     <value>Telemetry</value>
+  </data>
+  <data name="Main_TelemetryHeader" xml:space="preserve">
+    <value>TELEMETRY</value>
   </data>
   <data name="Main_Text" xml:space="preserve">
     <value>Text</value>
@@ -1214,12 +1220,6 @@
   </data>
   <data name="Main_ThePreviewIsFullScreen" xml:space="preserve">
     <value>The preview is full screen</value>
-  </data>
-  <data name="Main_TheWayYouAreHeading" xml:space="preserve">
-    <value>Your direction of travel is always at the top, and north moves around the rim.</value>
-  </data>
-  <data name="Main_TheWayYouAreHeading2" xml:space="preserve">
-    <value>Your direction of travel is always at the top, instead of north.</value>
   </data>
   <data name="Main_TheWholeRecordingSProfile" xml:space="preserve">
     <value>The whole recording's profile - the part already covered is highlighted and the marker follows the video.</value>
@@ -1276,10 +1276,10 @@
     <value>UTC time</value>
   </data>
   <data name="Main_Video" xml:space="preserve">
-    <value>VIDEO</value>
-  </data>
-  <data name="Main_Video2" xml:space="preserve">
     <value>Video</value>
+  </data>
+  <data name="Main_VideoHeader" xml:space="preserve">
+    <value>VIDEO</value>
   </data>
   <data name="Main_View" xml:space="preserve">
     <value>VIEW</value>
@@ -1288,10 +1288,10 @@
     <value>WIDGETS</value>
   </data>
   <data name="Main_WidgetSettings" xml:space="preserve">
-    <value>WIDGET SETTINGS -</value>
-  </data>
-  <data name="Main_WidgetSettings2" xml:space="preserve">
     <value>Widget settings</value>
+  </data>
+  <data name="Main_WidgetSettingsHeader" xml:space="preserve">
+    <value>WIDGET SETTINGS -</value>
   </data>
   <data name="Main_Zoom219" xml:space="preserve">
     <value>Zoom (2-19)</value>
@@ -1650,9 +1650,6 @@
   <data name="Settings_ColorTheRouteBySpeed" xml:space="preserve">
     <value>Color the route by speed</value>
   </data>
-  <data name="Settings_ConfigLastUpdated" xml:space="preserve">
-    <value>Config last updated: -</value>
-  </data>
   <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
     <value>Config last updated: {0}</value>
   </data>
@@ -1748,9 +1745,6 @@
   </data>
   <data name="Settings_KeepThumbnails" xml:space="preserve">
     <value>thumbnails</value>
-  </data>
-  <data name="Settings_Language" xml:space="preserve">
-    <value>Language</value>
   </data>
   <data name="Settings_LanguageHint" xml:space="preserve">
     <value>Needs a restart - with no file loaded, the app restarts when you close Settings.</value>
@@ -1885,7 +1879,7 @@
     <value>The first-run guide: tools, speed calibration, output folder and project files.</value>
   </data>
   <data name="Settings_TheGpsReportsAFew" xml:space="preserve">
-    <value>The GPS reports only a few fixes per second, so the compass trail and the map pause, then jump. This interpolates between fixes. Applies the next time a recording is opened.</value>
+    <value>The GPS reports only a few fixes per second, so the compass trail and the map pause, then jump. This interpolates between fixes. Applies right away - the open preview reloads.</value>
   </data>
   <data name="Settings_Theme" xml:space="preserve">
     <value>Theme</value>
@@ -1942,7 +1936,7 @@
     <value>What to keep: {0}</value>
   </data>
   <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
-    <value>Enter the speed you usually ride at, not a momentary peak - a peak is where the GPS happened to read high. With a recording loaded, the app suggests its cruising speed (the typical riding speed, averaged over 3 seconds). Use the same unit for both.</value>
+    <value>Enter the speed you usually ride at, not a momentary peak - a peak is where the GPS happened to read high. With a recording loaded, the GPS speed field fills in with its cruising speed: the most common speed in the faster half of the ride, averaged over 3 seconds. Use the same unit for both.</value>
   </data>
   <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
     <value>e.g. 22</value>
@@ -1972,7 +1966,7 @@
     <value>Copied unchanged</value>
   </data>
   <data name="Summary_AudioReencoded" xml:space="preserve">
-    <value>AAC at the source bitrate (re-encoded to join the cuts)</value>
+    <value>AAC (re-encoded for the cuts)</value>
   </data>
   <data name="Summary_CantJoinTitle" xml:space="preserve">
     <value>These files can't be joined</value>
@@ -2056,7 +2050,7 @@
     <value>Roll, pitch and G-meter widgets aren't available for this camera - its accelerometer's axes relative to the picture are unknown</value>
   </data>
   <data name="Summary_LogNoGps" xml:space="preserve">
-    <value>GPS: not present in this recording - position-based widgets (Compass, Map, Elevation, Gradient, Distance, Speed) are unavailable and greyed out</value>
+    <value>GPS: not present in this recording - position-based widgets (Compass, Map, Elevation, Gradient, Distance, Speed gauge, Trip progress bar, Elevation / speed chart, Trip statistic, Sun) are unavailable and greyed out</value>
   </data>
   <data name="Summary_LogNoGpsTime" xml:space="preserve">
     <value>GPS timestamp: not present in this recording, and no usable recording-start time either - Date &amp; time / UTC time are unavailable and greyed out</value>
@@ -2101,7 +2095,9 @@
     <value>No GPS fix in this recording.</value>
   </data>
   <data name="Summary_NoGpsMessage" xml:space="preserve">
-    <value>The camera never got a GPS fix while recording, so speed, distance, route, map, elevation and compass widgets are off. Tilt, G-force and camera settings still work.\n\nFor GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix before you start.</value>
+    <value>The camera never got a GPS fix while recording, so the position-based widgets (speed, distance, route, map, elevation, compass, trip stats) are off. Tilt, G-force and camera settings still work.
+
+For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix before you start.</value>
   </data>
   <data name="Summary_NoGpsTitle" xml:space="preserve">
     <value>No GPS in this recording</value>
@@ -2158,7 +2154,7 @@
     <value>No GPS fix</value>
   </data>
   <data name="Summary_TelemetryNoGpsFixTip" xml:space="preserve">
-    <value>This recording never acquired a GPS fix - only accelerometer/camera-settings data was decoded. Speed, distance, elevation, map and compass are unavailable.</value>
+    <value>This recording never acquired a GPS fix - only accelerometer and camera-settings data was decoded. Speed, distance, elevation, map, compass and trip stats are unavailable.</value>
   </data>
   <data name="Summary_TelemetryNotFound" xml:space="preserve">
     <value>Not found</value>
@@ -2254,7 +2250,7 @@
     <value>APP DATA</value>
   </data>
   <data name="Tools_CacheCleared" xml:space="preserve">
-    <value>Cleared the cached analysis of {0} file|Cleared the cached analysis of {0} files</value>
+    <value>Removed {0} saved analysis|Removed {0} saved analyses</value>
   </data>
   <data name="Tools_CameraAudio" xml:space="preserve">
     <value>Camera audio</value>
@@ -2527,7 +2523,7 @@ Current tags:
     <value>Where finished videos are saved. Empty means next to the source recording.</value>
   </data>
   <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
-    <value>A saved project (cuts, overlay, 360 view) opens in this app with a double-click.</value>
+    <value>A saved project (cuts, key moments, overlay, 360 view) opens in this app with a double-click.</value>
   </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Rendering and files</value>

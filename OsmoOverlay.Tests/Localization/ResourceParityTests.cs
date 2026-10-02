@@ -39,6 +39,8 @@ public sealed partial class ResourceParityTests
 			string translated = pl[key];
 			Assert.IsFalse(string.IsNullOrWhiteSpace(translated), $"{key} is empty in Polish");
 			CollectionAssert.AreEquivalent(Placeholders(english), Placeholders(translated), $"{key}: placeholders differ");
+			Assert.AreEqual(char.IsWhiteSpace(english[0]), char.IsWhiteSpace(translated[0]), $"{key}: leading whitespace differs");
+			Assert.AreEqual(char.IsWhiteSpace(english[^1]), char.IsWhiteSpace(translated[^1]), $"{key}: trailing whitespace differs");
 
 			int englishForms = english.Split('|').Length;
 			int polishForms = translated.Split('|').Length;

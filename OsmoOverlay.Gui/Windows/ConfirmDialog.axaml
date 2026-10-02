@@ -28,7 +28,9 @@
 					</Border>
 					<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
 				</StackPanel>
-				<TextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
+				<ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+					<SelectableTextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
+				</ScrollViewer>
 			</StackPanel>
 			<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
 				<TextBlock Grid.Column="0" />

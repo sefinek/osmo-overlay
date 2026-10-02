@@ -397,7 +397,7 @@ public partial class CompareVideosWindow : Window
 			new RowSpec(Strings.Main_Duration, s => TimeSpan.FromSeconds(s.DurationSeconds).ToString(@"hh\:mm\:ss"), true),
 			new RowSpec(Strings.Main_FileSize, s => FormatHelper.FormatBytes(s.FileSizeBytes)),
 
-			new RowSpec(Strings.Main_Telemetry2, s => s.HasTelemetry ? Strings.Summary_TelemetryDetected : Strings.Summary_TelemetryNotFound, true),
+			new RowSpec(Strings.Main_Telemetry, s => s.HasTelemetry ? Strings.Summary_TelemetryDetected : Strings.Summary_TelemetryNotFound, true),
 			new RowSpec(Strings.Common_MaxSpeed, s => s.Telemetry is { } t ? $"{t.MaxSpeedKmh:0.#} km/h" : "-"),
 			new RowSpec(Strings.Main_Distance, s => s.Telemetry is { } t ? $"{t.TotalDistanceMeters / 1000.0:0.00} km" : "-"),
 			new RowSpec(Strings.Compare_AltitudeRange, s => s.Telemetry is { } t ? $"{t.MinAltitudeMeters:0}-{t.MaxAltitudeMeters:0} m" : "-"),
