@@ -110,16 +110,28 @@ public abstract record OverlayElement
 	public string? LayerId { get; init; }
 
 	/// <summary>
-	///     Drop shadow of the whole widget (OverlayRenderer.BeginElement), on top of the soft shadows panels and text already
-	///     have. On by default, softer on text and bigger on the round widgets and images (their constructors set the blur).
-	///     Offset/Blur are in the 4K reference space and scale with the widget; ShadowColor null is black.
+	///     Drop shadow of the whole widget (OverlayRenderer.BeginElement), the only one a panel has. On by default, softer on
+	///     text and wider on the round widgets and images (their constructors set the radius). ShadowRadius is how far the
+	///     shadow's soft edge reaches past the widget; it and the offset are in the 4K reference space and scale with the
+	///     widget. ShadowColor null is black.
 	/// </summary>
 	public bool ShadowEnabled { get; init; } = true;
 	public string? ShadowColor { get; init; }
 	public float ShadowOpacity { get; init; } = OverlayRenderer.ShadowOpacityDefault;
-	public float ShadowBlur { get; init; } = OverlayRenderer.ShadowBlurDefault;
+	public float ShadowRadius { get; init; } = OverlayRenderer.ShadowRadiusDefault;
 	public float ShadowOffsetX { get; init; } = OverlayRenderer.ShadowOffsetXDefault;
 	public float ShadowOffsetY { get; init; } = OverlayRenderer.ShadowOffsetYDefault;
+}
+
+/// <summary>
+///     A widget drawn on a dark panel (the round gauges, the compass, the progress bar's track, the profile chart): what the
+///     panel is filled with. PanelOpacity 0 leaves just the ring and the content, the look of the Ring speed gauge on any of them.
+///     Null PanelColor is black.
+/// </summary>
+public interface IPanelElement
+{
+	string? PanelColor { get; }
+	float PanelOpacity { get; }
 }
 
 /// <summary>
@@ -227,48 +239,59 @@ public enum SpeedGaugeTheme
 	Legacy = 2
 }
 
-public sealed record SpeedGaugeElement : StyledOverlayElement
+public sealed record SpeedGaugeElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SpeedGauge;
 	public SpeedGaugeElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
+
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 	public SpeedGaugeTheme Theme { get; init; } = SpeedGaugeTheme.Default;
+	// The scale's top in the gauge's units; null follows the recording's top speed (OverlayRenderer.GaugeMaxSpeed).
+	public double? MaxSpeed { get; init; }
 }
 
 /// <summary>Left/right lean - DerivedFrame.RollDegrees.</summary>
-public sealed record RollGaugeElement : StyledOverlayElement
+public sealed record RollGaugeElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.RollGauge;
 	public RollGaugeElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
 
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 }
 
 /// <summary>Nose up/down - DerivedFrame.PitchDegrees.</summary>
-public sealed record PitchGaugeElement : StyledOverlayElement
+public sealed record PitchGaugeElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.PitchGauge;
 	public PitchGaugeElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
 
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 }
 
-public sealed record SunWidgetElement : StyledOverlayElement
+public sealed record SunWidgetElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SunWidget;
 	public SunWidgetElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
 
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 }
 
 /// <summary>
@@ -276,13 +299,16 @@ public sealed record SunWidgetElement : StyledOverlayElement
 ///     across activities (a bike ride and a track day see very different real G ranges), see
 ///     OverlayRenderer.DrawGMeter.
 /// </summary>
-public sealed record GMeterElement : StyledOverlayElement
+public sealed record GMeterElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.GMeter;
 	public GMeterElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
+
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 
 	public double GMeterFullScaleG { get; init; } = OverlayRenderer.GMeterFullScaleGDefault;
 }
@@ -314,13 +340,16 @@ public abstract record TrailOverlayElement : OverlayElement
 ///     CenterOnPosition keeps the marker in the middle of the dial and moves the trail around it (the trail is scaled to
 ///     fit from there), instead of fitting the whole route into the dial with the marker travelling along it.
 /// </summary>
-public sealed record CompassElement : TrailOverlayElement
+public sealed record CompassElement : TrailOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Compass;
 	public CompassElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
+
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 
 	public bool CenterOnPosition { get; init; }
 	public bool ShowNorthLabel { get; init; } = true;
@@ -338,7 +367,7 @@ public sealed record MapWidgetElement : TrailOverlayElement
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.MapWidget;
 	public MapWidgetElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurLarge;
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
 
 	public int MapZoom { get; init; } = 16;
@@ -353,9 +382,12 @@ public sealed record MapWidgetElement : TrailOverlayElement
 ///     OverlayRenderer.DrawTripProgressBar. No style fields - this widget always draws in its own fixed
 ///     white/black look, never the per-element FontFamily/TextColor/etc.
 /// </summary>
-public sealed record TripProgressBarElement : OverlayElement
+public sealed record TripProgressBarElement : OverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.TripProgressBar;
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
+
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 	public double TripArrivedToleranceMeters { get; init; } = OverlayRenderer.TripArrivedToleranceMetersDefault;
 	public string TripArrivedLabel { get; init; } = OverlayRenderer.TripArrivedLabelDefault;
@@ -374,9 +406,11 @@ public enum ProfileAxis
 }
 
 /// <summary>The whole recording's elevation or speed as a chart, what's been covered so far highlighted - see OverlayRenderer.Charts.cs.</summary>
-public sealed record ProfileChartElement : LabeledStatElement
+public sealed record ProfileChartElement : LabeledStatElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ProfileChart;
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 	public ProfileSeries Series { get; init; } = ProfileSeries.Elevation;
 	public ProfileAxis Axis { get; init; } = ProfileAxis.Distance;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
@@ -416,7 +450,7 @@ public sealed record ImageElement : OverlayElement
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Image;
 	public ImageElement()
 	{
-		ShadowBlur = OverlayRenderer.ShadowBlurMedium;
+		ShadowRadius = OverlayRenderer.ShadowRadiusMedium;
 	}
 
 	public string? ImagePath { get; init; }

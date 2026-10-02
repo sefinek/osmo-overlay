@@ -569,21 +569,6 @@ public partial class MainWindow
 		});
 	}
 
-	private void OnElementShadowChanged(ElementShadow shadow)
-	{
-		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
-
-		UpdateElement(id, el => el with
-		{
-			ShadowEnabled = shadow.Enabled,
-			ShadowColor = shadow.Color,
-			ShadowOpacity = Math.Clamp(shadow.Opacity, 0f, 1f),
-			ShadowBlur = Math.Clamp(shadow.Blur, 0f, OverlayRenderer.ShadowBlurMax),
-			ShadowOffsetX = Math.Clamp(shadow.OffsetX, -OverlayRenderer.ShadowOffsetMax, OverlayRenderer.ShadowOffsetMax),
-			ShadowOffsetY = Math.Clamp(shadow.OffsetY, -OverlayRenderer.ShadowOffsetMax, OverlayRenderer.ShadowOffsetMax)
-		});
-	}
-
 	/// <summary>
 	///     Populates one widget instance's settings panel and swaps the left column over to show it (in
 	///     place of the SOURCE/ACTION/summary cards) - the single entry point for opening settings. Not a
@@ -717,6 +702,7 @@ public partial class MainWindow
 				CompassHeadingTextCheck.IsChecked = x.ShowHeadingText;
 				CompassTrail.Populate(x);
 				CompassMarker.Populate(x);
+				CompassPanelFill.Populate(x);
 				CompassTiming.Populate(x);
 				CompassShadow.Populate(x);
 				break;
@@ -726,6 +712,7 @@ public partial class MainWindow
 			{
 				var x = (SunWidgetElement)el;
 				SunStyle.Populate(x);
+				SunPanelFill.Populate(x);
 				SunTiming.Populate(x);
 				SunShadow.Populate(x);
 				break;
@@ -735,6 +722,7 @@ public partial class MainWindow
 			{
 				var x = (RollGaugeElement)el;
 				RollStyle.Populate(x);
+				RollPanelFill.Populate(x);
 				RollTiming.Populate(x);
 				RollShadow.Populate(x);
 				break;
@@ -744,6 +732,7 @@ public partial class MainWindow
 			{
 				var x = (PitchGaugeElement)el;
 				PitchStyle.Populate(x);
+				PitchPanelFill.Populate(x);
 				PitchTiming.Populate(x);
 				PitchShadow.Populate(x);
 				break;
@@ -754,6 +743,7 @@ public partial class MainWindow
 				var x = (GMeterElement)el;
 				GMeterFullScaleBox.Value = (decimal)x.GMeterFullScaleG;
 				GMeterStyle.Populate(x);
+				GMeterPanelFill.Populate(x);
 				GMeterTiming.Populate(x);
 				GMeterShadow.Populate(x);
 				break;
@@ -766,7 +756,10 @@ public partial class MainWindow
 				SpeedThemeDefaultRadio.IsChecked = x.Theme == SpeedGaugeTheme.Default;
 				SpeedThemeLegacyRadio.IsChecked = x.Theme == SpeedGaugeTheme.Legacy;
 				SpeedThemeRingRadio.IsChecked = x.Theme == SpeedGaugeTheme.Ring;
+				SpeedPanelGroup.IsVisible = x.Theme != SpeedGaugeTheme.Ring;
+				SpeedMaxBox.Value = (decimal?)x.MaxSpeed;
 				SpeedStyle.Populate(x);
+				SpeedPanelFill.Populate(x);
 				SpeedTiming.Populate(x);
 				SpeedShadow.Populate(x);
 				break;
@@ -815,6 +808,7 @@ public partial class MainWindow
 				SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, x.Units);
 				TripProgressToleranceBox.Value = (decimal)x.TripArrivedToleranceMeters;
 				TripProgressLabelBox.Text = x.TripArrivedLabel;
+				TripProgressBarPanelFill.Populate(x);
 				TripProgressBarTiming.Populate(x);
 				TripProgressBarShadow.Populate(x);
 				break;
@@ -831,6 +825,7 @@ public partial class MainWindow
 				ProfileLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultProfileLabel(x.Series));
 				SetUnitsRadio(ProfileMetricRadio, ProfileImperialRadio, x.Units);
 				ProfileChartStyle.Populate(x);
+				ProfileChartPanelFill.Populate(x);
 				ProfileChartTiming.Populate(x);
 				ProfileChartShadow.Populate(x);
 				break;

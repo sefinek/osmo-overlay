@@ -38,6 +38,7 @@ public partial class ElementStyleEditor : UserControl
 		TextColorBox.LostFocus += (_, _) => OnChanged();
 		AccentColorBox.LostFocus += (_, _) => OnChanged();
 		OutlineColorBox.LostFocus += (_, _) => OnChanged();
+		ApplyToAllButton.Click += (_, _) => ApplyToAllRequested?.Invoke();
 	}
 
 	public bool HasAccentColor
@@ -53,6 +54,8 @@ public partial class ElementStyleEditor : UserControl
 
 	/// <summary>Raised on user edits only, not while Populate fills the controls.</summary>
 	public event Action<ElementStyle>? StyleChanged;
+
+	public event Action? ApplyToAllRequested;
 
 	public void Populate(StyledOverlayElement element)
 	{

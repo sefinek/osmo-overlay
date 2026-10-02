@@ -125,7 +125,22 @@ public partial class MainWindow : Window
 			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
 			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow
 		];
-		foreach (ElementShadowEditor shadow in shadowEditors) shadow.ShadowChanged += OnElementShadowChanged;
+		foreach (ElementShadowEditor shadow in shadowEditors)
+		{
+			shadow.ShadowChanged += OnElementShadowChanged;
+			shadow.ApplyToAllRequested += ApplyShadowToAll;
+		}
+
+		ElementPanelEditor[] panelEditors =
+		[
+			SunPanelFill, RollPanelFill, PitchPanelFill, GMeterPanelFill, SpeedPanelFill,
+			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill
+		];
+		foreach (ElementPanelEditor panel in panelEditors)
+		{
+			panel.PanelChanged += OnElementPanelChanged;
+			panel.ApplyToAllRequested += ApplyPanelToAll;
+		}
 		MapSourceEditor.SelectionChanged += OnMapSourceChanged;
 		foreach (TrailStyleEditor trail in new[] { CompassTrail, MapTrail }) trail.Changed += OnTrailStyleChanged;
 		foreach (MarkerStyleEditor marker in new[] { CompassMarker, MapMarker }) marker.Changed += OnMarkerStyleChanged;
@@ -139,7 +154,11 @@ public partial class MainWindow : Window
 			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
 			ProfileChartStyle, TripStatStyle, TextStyle
 		];
-		foreach (ElementStyleEditor style in styleEditors) style.StyleChanged += OnElementStyleChanged;
+		foreach (ElementStyleEditor style in styleEditors)
+		{
+			style.StyleChanged += OnElementStyleChanged;
+			style.ApplyToAllRequested += ApplyStyleToAll;
+		}
 
 		// Bounds pulled from Core's own clamps (RouteMapMosaic.BuildAsync, OverlayRenderer's
 		// MapDynamicZoomMaxFactorMin/Max) instead of separate hardcoded Minimum/Maximum literals in

@@ -196,9 +196,7 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.CompassRadius;
 
-		DrawPanelShadow(canvas, 0, 0, radius);
-
-		canvas.DrawCircle(0, 0, radius, _panelFillPaint);
+		canvas.DrawCircle(0, 0, radius, PanelFillPaint(element));
 		canvas.DrawCircle(0, 0, radius, _ringStroke3White160);
 
 		// Turning the dial: the trail and the marker go with it (the arrow ends up pointing up), the labels stay readable.
@@ -377,11 +375,9 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.MapRadius;
 
-		DrawPanelShadow(canvas, 0, 0, radius);
-
 		if (_mapMosaic is null)
 		{
-			canvas.DrawCircle(0, 0, radius, _panelFillPaint);
+			canvas.DrawCircle(0, 0, radius, PanelFillPaint(null, PanelOpacityDefault));
 			DrawOutlined(canvas, "MAP", 0, -10, _labelFont, White, SKTextAlign.Center);
 			DrawOutlined(canvas, "UNAVAILABLE", 0, 24, _smallFont, White, SKTextAlign.Center);
 		}

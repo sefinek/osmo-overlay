@@ -30,5 +30,7 @@
 		</Grid>
 		<TextBlock Text="Outline width" Classes="infoLabel" Margin="0" />
 		<NumericUpDown Name="OutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+		<Button Name="ApplyToAllButton" Content="Apply font and colors to all widgets" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+		        ToolTip.Tip="Gives every text widget this font, text color and outline (the text size and value color stay as they are)" />
 	</StackPanel>
 </UserControl>

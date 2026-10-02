@@ -1207,6 +1207,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="CompassPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
 														<local:ElementShadowEditor Name="CompassShadow" />
 													</StackPanel>
@@ -1336,8 +1342,23 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="SCALE" Classes="settingsGroupTitle" />
+														<TextBlock Text="Top of the scale" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SpeedMaxBox" Minimum="10" Maximum="500" Increment="5" FormatString="0"
+														               PlaceholderText="Auto" HorizontalAlignment="Stretch" ValueChanged="OnSpeedMaxChanged" />
+														<TextBlock Classes="hint" Text="In the gauge's units. Empty follows the recording's top speed, rounded up." />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="SpeedStyle" />
+													</StackPanel>
+												</Border>
+												<Border Name="SpeedPanelGroup" Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="SpeedPanelFill" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1376,6 +1397,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="RollPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
 														<local:ElementShadowEditor Name="RollShadow" />
 													</StackPanel>
@@ -1410,6 +1437,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="PitchPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
 														<local:ElementShadowEditor Name="PitchShadow" />
 													</StackPanel>
@@ -1436,6 +1469,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="SunStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="SunPanelFill" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1478,6 +1517,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="GMeterStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="GMeterPanelFill" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1598,6 +1643,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="TripProgressBarPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="SHADOW" Classes="settingsGroupTitle" />
 														<local:ElementShadowEditor Name="TripProgressBarShadow" />
 													</StackPanel>
@@ -1656,6 +1707,12 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="STYLE" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="ProfileChartStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="PANEL" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="ProfileChartPanelFill" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

@@ -27,6 +27,10 @@ public sealed partial class OverlayRenderer
 	// DrawTripProgressBar's remarks for why a tolerance is needed at all. 1.5m default: comfortably
 	// above typical consumer GPS jitter, negligible next to any real trip distance.
 	public const double TripArrivedToleranceMetersDefault = 1.5;
+
+	// The range a speed gauge's own MaxSpeed is held to (in the gauge's units).
+	public const double SpeedGaugeMaxMin = 10;
+	public const double SpeedGaugeMaxMax = 500;
 	public const string TripArrivedLabelDefault = "FINISH";
 
 
@@ -50,13 +54,15 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>
-	///     Same "round up to a nice number" rule as ComputeGaugeMaxSpeed, but computed per unit system
-	///     at draw time instead of once in km/h - converting an already-rounded km/h max into mph would
-	///     produce an ugly non-round number (e.g. 60 km/h -&gt; 37.28 mph).
+	///     The scale's top: the widget's own MaxSpeed, or the same "round up to a nice number" rule as ComputeGaugeMaxSpeed,
+	///     computed per unit system at draw time instead of once in km/h - converting an already-rounded km/h max into mph
+	///     would produce an ugly non-round number (e.g. 60 km/h -&gt; 37.28 mph).
 	/// </summary>
-	private double GaugeMaxSpeed(UnitSystem units)
+	private double GaugeMaxSpeed(SpeedGaugeElement element)
 	{
-		double observed = units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh;
+		if (element.MaxSpeed is { } fixedMax) return Math.Clamp(fixedMax, SpeedGaugeMaxMin, SpeedGaugeMaxMax);
+
+		double observed = element.Units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh;
 		return ComputeGaugeMaxSpeed(observed);
 	}
 
@@ -65,9 +71,7 @@ public sealed partial class OverlayRenderer
 		const float cx = 0;
 		const float cy = 0;
 
-		DrawPanelShadow(canvas, cx, cy, OverlayElementBounds.SunRadius);
-
-		canvas.DrawCircle(cx, cy, OverlayElementBounds.SunRadius, _panelFillPaint);
+		canvas.DrawCircle(cx, cy, OverlayElementBounds.SunRadius, PanelFillPaint(element));
 		canvas.DrawCircle(cx, cy, OverlayElementBounds.SunRadius, _ringStroke3White140);
 
 		double relativeAzimuthRad = AngleMath.DegToRad(frame.Sun.AzimuthDegrees - frame.HeadingDegrees);
@@ -91,7 +95,7 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.TiltRadius;
 
-		DrawTiltPanel(canvas);
+		DrawTiltPanel(canvas, element);
 
 		// Roll is +-90 at most, so doubling it maps the full physical range onto the full ring - level sits at
 		// the top, and either direction sweeps round to meet at the bottom for a full 90 degree lean.
@@ -110,7 +114,7 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.TiltRadius;
 
-		DrawTiltPanel(canvas);
+		DrawTiltPanel(canvas, element);
 		canvas.DrawLine(radius - 18, 0, radius, 0, _ringStroke3White160);
 
 		double angleRad = AngleMath.DegToRad(-Math.Clamp(pitchDegrees, -90, 90));
@@ -122,10 +126,9 @@ public sealed partial class OverlayRenderer
 			TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 	}
 
-	private void DrawTiltPanel(SKCanvas canvas)
+	private void DrawTiltPanel<T>(SKCanvas canvas, T element) where T : OverlayElement, IPanelElement
 	{
-		DrawPanelShadow(canvas, 0, 0, OverlayElementBounds.TiltRadius);
-		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, _panelFillPaint);
+		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, PanelFillPaint(element));
 		canvas.DrawCircle(0, 0, OverlayElementBounds.TiltRadius, _ringStroke5White150);
 	}
 
@@ -135,8 +138,7 @@ public sealed partial class OverlayRenderer
 		const float cy = 0;
 		const float radius = OverlayElementBounds.GMeterRadius;
 
-		DrawPanelShadow(canvas, cx, cy, radius);
-		canvas.DrawCircle(cx, cy, radius, _panelFillPaint);
+		canvas.DrawCircle(cx, cy, radius, PanelFillPaint(element));
 		canvas.DrawCircle(cx, cy, radius, _ringStroke5White150);
 		canvas.DrawCircle(cx, cy, radius * 0.5f, _thinStroke2White70);
 
@@ -183,7 +185,7 @@ public sealed partial class OverlayRenderer
 	{
 		bool imperial = element.Units == UnitSystem.Imperial;
 		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
-		double fraction = Math.Clamp(displaySpeed / GaugeMaxSpeed(element.Units), 0, 1);
+		double fraction = Math.Clamp(displaySpeed / GaugeMaxSpeed(element), 0, 1);
 
 		// The outer ring spans the same angles as the colored arc.
 		var outerRect = new SKRect(-RingOuterRadius, -RingOuterRadius, RingOuterRadius, RingOuterRadius);
@@ -244,11 +246,10 @@ public sealed partial class OverlayRenderer
 
 		bool imperial = element.Units == UnitSystem.Imperial;
 		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
-		double max = GaugeMaxSpeed(element.Units);
+		double max = GaugeMaxSpeed(element);
 		double fraction = Math.Clamp(displaySpeed / max, 0, 1);
 
-		DrawPanelShadow(canvas, 0, 0, radius - 4);
-		canvas.DrawCircle(0, 0, radius - 4, _panelFillPaint);
+		canvas.DrawCircle(0, 0, radius - 4, PanelFillPaint(element));
 		canvas.DrawCircle(0, 0, radius - 4, _ringStroke3White140);
 
 		SKFont labelFont = TextFont(element, 26);
@@ -304,16 +305,14 @@ public sealed partial class OverlayRenderer
 
 		bool imperial = element.Units == UnitSystem.Imperial;
 		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
-		double maxDisplaySpeed = GaugeMaxSpeed(element.Units);
+		double maxDisplaySpeed = GaugeMaxSpeed(element);
 
 		float radius = OverlayElementBounds.SpeedRadius;
 		var rect = new SKRect(cx - radius, cy - radius, cx + radius, cy + radius);
 		const float startAngle = 135f;
 		const float sweep = 270f;
 
-		DrawPanelShadow(canvas, cx, cy, radius - 4);
-
-		canvas.DrawCircle(cx, cy, radius - 4, _panelFillPaint);
+		canvas.DrawCircle(cx, cy, radius - 4, PanelFillPaint(element));
 		canvas.DrawCircle(cx, cy, radius - 4, _ringStroke3White140);
 
 		canvas.DrawArc(rect, startAngle, sweep * 0.45f, false, _speedBandGreen);
@@ -361,7 +360,7 @@ public sealed partial class OverlayRenderer
 			: 0.0;
 
 		var trackRect = new SKRect(-halfWidth, -trackHeight / 2, halfWidth, trackHeight / 2);
-		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, _panelFillPaint);
+		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, PanelFillPaint(element));
 		canvas.DrawRoundRect(trackRect, trackHeight / 2, trackHeight / 2, _thinStroke2White70);
 
 		float dotX = -halfWidth + (float)(OverlayElementBounds.ProgressBarWidth * progress);

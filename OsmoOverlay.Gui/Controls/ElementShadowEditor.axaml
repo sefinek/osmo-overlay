@@ -17,8 +17,8 @@
 					<NumericUpDown Name="OpacityBox" Minimum="0" Maximum="100" Increment="5" FormatString="0" HorizontalAlignment="Stretch" />
 				</StackPanel>
 				<StackPanel Grid.Column="1" Spacing="8">
-					<TextBlock Text="Blur" Classes="infoLabel" Margin="0" />
-					<NumericUpDown Name="BlurBox" Minimum="0" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+					<TextBlock Text="Radius" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="RadiusBox" Minimum="0" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
 				</StackPanel>
 			</Grid>
 			<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
@@ -31,6 +31,8 @@
 					<NumericUpDown Name="OffsetYBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
 				</StackPanel>
 			</Grid>
+			<Button Name="ApplyToAllButton" Content="Apply to all widgets" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+			        ToolTip.Tip="Gives every widget this shadow" />
 		</StackPanel>
 	</StackPanel>
 </UserControl>

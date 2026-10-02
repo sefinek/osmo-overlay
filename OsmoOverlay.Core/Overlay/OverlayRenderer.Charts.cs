@@ -44,7 +44,7 @@ public sealed partial class OverlayRenderer
 			SKTextAlign.Right, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 
 		var panel = new SKRect(0, top, width, top + height);
-		canvas.DrawRoundRect(panel, ProfileCornerRadius, ProfileCornerRadius, _panelFillPaint);
+		canvas.DrawRoundRect(panel, ProfileCornerRadius, ProfileCornerRadius, PanelFillPaint(element));
 		canvas.DrawRoundRect(panel, ProfileCornerRadius, ProfileCornerRadius, _thinStroke2White70);
 
 		if (Profile(element.Series, element.Axis) is not { } profile) return;

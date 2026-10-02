@@ -31,10 +31,6 @@ public sealed partial class OverlayRenderer : IDisposable
 	private static readonly SKColor TrailColor = SKColor.Parse(DefaultTrailColorHex);
 	private static readonly SKColor SunColor = new(255, 175, 45);
 	private static readonly SKColor Shadow = SKColor.Parse(DefaultOutlineColorHex);
-	// ~39% - much lower and the gauge panels read as barely-there on bright footage (sky, water, sand),
-	// making their footprint (which matches the GUI's selection/hit box exactly, see OverlayElementBounds)
-	// look like mostly-empty padding.
-	private static readonly SKColor PanelFill = new(0, 0, 0, 48);
 
 	// Canvas dimensions and the per-resolution scale every widget draws at (see OverlayElementBounds.GetScale).
 	private readonly int _width;
@@ -53,12 +49,14 @@ public sealed partial class OverlayRenderer : IDisposable
 	private double _totalDistanceMeters;
 	private double _totalDurationSeconds;
 	private TripStats _tripStats = TripStats.Compute([]);
+	// A panel's fill when a widget doesn't set its own: black at 55% - much lower and the panels read as barely-there on
+	// bright footage (sky, water, sand), their footprint (which matches the GUI's selection/hit box, see OverlayElementBounds)
+	// looking like mostly-empty padding.
+	public const float PanelOpacityDefault = 0.55f;
 	// Far wider than any widget draws around its anchor - only bounds what MeasureElement records.
 	private static readonly SKRect MeasureArea = new(-100_000, -100_000, 100_000, 100_000);
 	private const int MeasureMaxPixels = 16_000_000;
 	private const byte MeasureMinAlpha = 16;
-	// MeasureElement skips the panels' soft shadow: its blur reaches far past the widget and would inflate the box.
-	private bool _measuring;
 	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
 	private double _trailSpeedScaleKmh;
 
@@ -105,7 +103,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPath _speedRingNeedle = CreateRingNeedle();
 	private readonly SKPaint _whiteFill = new() { Color = SKColors.White, IsAntialias = true, Style = SKPaintStyle.Fill };
 
-	// Mutable paints reused by DrawOutlined/DrawPanelShadow (see below) - unlike the fixed-style paints
+	// Mutable paints reused by DrawOutlined (see below) - unlike the fixed-style paints
 	// above, color/stroke width/blur radius vary per call (font size, requested color, fade opacity), so
 	// these can't be assigned once at construction - instead their properties are overwritten right
 	// before each draw and the same instances are reused, avoiding a fresh SKPaint (and, for the blur
@@ -115,7 +113,6 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPaint _outlineShadowPaint;
 	private readonly SKPaint _outlineStrokePaint;
 	private readonly SKPaint _outlineFillPaint;
-	private readonly SKPaint _panelShadowPaint;
 	// Recolored/resized per route by RouteGeometry.Draw, and set to a layer's or image's opacity by AlphaPaint.
 	private readonly SKPaint _routeStrokePaint;
 	private readonly SKPaint _routeDashPaint;
@@ -167,7 +164,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_routeIntroLabelFont = new SKFont(_hudTypeface, 36);
 		_routeIntroValueFont = new SKFont(_hudTypeface, 56);
 
-		_panelFillPaint = new SKPaint { Color = PanelFill, IsAntialias = true, Style = SKPaintStyle.Fill };
+		_panelFillPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
 		_ringStroke3White160 = new SKPaint
 			{ Color = new SKColor(255, 255, 255, 160), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 3 };
 		_ringStroke3White140 = new SKPaint
@@ -210,7 +207,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		_outlineShadowPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
 		_outlineStrokePaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
 		_outlineFillPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-		_panelShadowPaint = new SKPaint { Color = new SKColor(0, 0, 0, 120), IsAntialias = true, Style = SKPaintStyle.Fill };
 		_routeStrokePaint = new SKPaint
 		{
 			IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round
@@ -279,7 +275,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		_outlineShadowPaint.Dispose();
 		_outlineStrokePaint.Dispose();
 		_outlineFillPaint.Dispose();
-		_panelShadowPaint.Dispose();
 		_routeStrokePaint.Dispose();
 		_routeDashPaint.Dispose();
 		_alphaPaint.Dispose();
@@ -490,8 +485,17 @@ public sealed partial class OverlayRenderer : IDisposable
 			ElementState state = ElementAnimation.At(element, sampleTime, OutputDurationSeconds);
 			if (state.Progress <= 0f) continue;
 
-			int saveCount = BeginElement(canvas, element, state, element.ShadowEnabled ? ContentBounds(element, frame) : null);
-			DrawElement(canvas, element, frame);
+			// A shadowed widget is recorded once and played back, so its fade and shadow layers cover just what it drew, not the
+			// whole frame. The round ones draw directly: their size is known and they read the canvas matrix (DrawTrailRoute).
+			bool shadowed = IsShadowed(element);
+			SKRect? round = shadowed ? RoundWidgetBounds(element) : null;
+			using SKPicture? recorded = shadowed && round is null ? RecordElement(element, frame) : null;
+			SKRect? content = round ?? (recorded is { CullRect.IsEmpty: false } ? recorded.CullRect : null);
+			if (shadowed && content is null) continue;
+
+			int saveCount = BeginElement(canvas, element, state, content);
+			if (recorded is null) DrawElement(canvas, element, frame);
+			else canvas.DrawPicture(recorded);
 			if (element is MapWidgetElement map) mapAttribution = MapSources.Attribution(map.MapProviderId) ?? mapAttribution;
 			canvas.RestoreToCount(saveCount);
 		}
@@ -569,7 +573,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>
 	///     What `element` draws at `frame`, around its anchor in reference pixels (before its X/Y and scale) - measured from
-	///     the drawing itself, outline included, the panels' soft shadow not: recorded with an R-tree, Skia trims the
+	///     the drawing itself, outline included, the widget's drop shadow not: recorded with an R-tree, Skia trims the
 	///     picture's CullRect to what was drawn - but pads strokes, so the picture is then rasterized and cut down to its
 	///     visible pixels. Hit-testing and the selection box frame the widget as it really is, text that grows included.
 	///     Null when it draws nothing (an Image without a file).
@@ -614,33 +618,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		return radius == 0f ? null : SKRect.Create(-radius - ringHalfStroke, -radius - ringHalfStroke, (radius + ringHalfStroke) * 2, (radius + ringHalfStroke) * 2);
 	}
 
-	/// <summary>
-	///     What `element` draws, as a recording's bounds - no rasterizing, so cheap enough for every frame: the area a widget's
-	///     shadow layer covers (BeginShadow) instead of the whole frame. Null when it draws nothing.
-	/// </summary>
-	private SKRect? ContentBounds(OverlayElement element, DerivedFrame frame)
-	{
-		if (RoundWidgetBounds(element) is { } round) return round;
-
-		using SKPicture picture = RecordElement(element, frame);
-		return picture.CullRect.IsEmpty ? null : picture.CullRect;
-	}
-
-	/// <summary>`element` drawn into a picture around its anchor - with the panels' soft shadow left out (_measuring), and an R-tree that trims CullRect to what was drawn.</summary>
+	/// <summary>`element` drawn into a picture around its anchor, with an R-tree that trims CullRect to what was drawn.</summary>
 	private SKPicture RecordElement(OverlayElement element, DerivedFrame frame)
 	{
 		using var recorder = new SKPictureRecorder();
-		SKCanvas canvas = recorder.BeginRecording(MeasureArea, true);
-		_measuring = true;
-		try
-		{
-			DrawElement(canvas, element, frame);
-		}
-		finally
-		{
-			_measuring = false;
-		}
-
+		DrawElement(recorder.BeginRecording(MeasureArea, true), element, frame);
 		return recorder.EndRecording();
 	}
 
@@ -676,18 +658,6 @@ public sealed partial class OverlayRenderer : IDisposable
 	}
 
 	/// <summary>
-	///     Soft blurred disc drawn behind a round panel/gauge, offset slightly down, so it reads as a
-	///     drop shadow lifting the widget off the video instead of floating flat on top of it.
-	/// </summary>
-	private void DrawPanelShadow(SKCanvas canvas, float cx, float cy, float radius)
-	{
-		if (_measuring) return;
-
-		_panelShadowPaint.MaskFilter = GetBlurMaskFilter(radius * 0.12f);
-		canvas.DrawCircle(cx, cy + radius * 0.06f, radius * 0.97f, _panelShadowPaint);
-	}
-
-	/// <summary>
 	///     `outlineColor`/`outlineWidthScale` default to the built-in near-black outline at its normal
 	///     width - only the text widgets' per-element OutlineColor/OutlineWidth override them (see
 	///     OverlayRenderer.TextWidgets.cs); every other caller gets the defaults.
@@ -707,6 +677,19 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		_outlineFillPaint.Color = color.WithAlpha((byte)(color.Alpha * opacity));
 		canvas.DrawText(text, x, y, align, font, _outlineFillPaint);
+	}
+
+	/// <summary>The fill of `element`'s panel: its PanelColor at its PanelOpacity. One shared paint, recolored per widget like the text paints.</summary>
+	private SKPaint PanelFillPaint(IPanelElement element)
+	{
+		return PanelFillPaint(element.PanelColor, element.PanelOpacity);
+	}
+
+	private SKPaint PanelFillPaint(string? colorHex, float opacity)
+	{
+		SKColor color = ResolveColor(colorHex, SKColors.Black);
+		_panelFillPaint.Color = color.WithAlpha((byte)Math.Round(color.Alpha * Math.Clamp(opacity, 0f, 1f)));
+		return _panelFillPaint;
 	}
 
 	/// <summary>Hex string (e.g. "#FFFFFF"), or `fallback` when null/unparsable - fails soft, same policy as TrailColor/DateFormat/Locale. Shared by every per-element color override (TrailColor, and TextColor/AccentColor/OutlineColor below).</summary>

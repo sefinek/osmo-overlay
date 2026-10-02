@@ -218,7 +218,16 @@ public partial class MainWindow
 		SpeedGaugeTheme theme = SpeedThemeRingRadio.IsChecked == true ? SpeedGaugeTheme.Ring
 			: SpeedThemeLegacyRadio.IsChecked == true ? SpeedGaugeTheme.Legacy
 			: SpeedGaugeTheme.Default;
+		SpeedPanelGroup.IsVisible = theme != SpeedGaugeTheme.Ring;
 		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { Theme = theme } : el);
+	}
+
+	private void OnSpeedMaxChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		double? max = SpeedMaxBox.Value is { } value ? (double)value : null;
+		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { MaxSpeed = max } : el);
 	}
 
 	private void OnTripProgressUnitsChanged(object? sender, RoutedEventArgs e)
