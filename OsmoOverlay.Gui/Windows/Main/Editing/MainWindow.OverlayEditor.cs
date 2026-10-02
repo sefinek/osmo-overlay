@@ -1,12 +1,8 @@
-using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using SkiaSharp;
 

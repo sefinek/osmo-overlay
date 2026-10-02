@@ -1,7 +1,6 @@
 using System.Text.Json;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
-using OsmoOverlay.Core.Mapping;
 
 namespace OsmoOverlay.Core.Overlay;
 

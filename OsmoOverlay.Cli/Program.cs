@@ -87,7 +87,7 @@ for (; i < args.Length; i++)
 		case "--to" when TimeText.TryParse(value, out double to):
 			rangeEnd = to;
 			break;
-		case "--cut" when value.Split('@') is [var cutRange, ..var cutExtra] && cutExtra.Length <= 1 && cutRange.Split('-') is [var cutFrom, var cutTo] &&
+		case "--cut" when value.Split('@') is [var cutRange, .. var cutExtra] && cutExtra.Length <= 1 && cutRange.Split('-') is [var cutFrom, var cutTo] &&
 		                  TimeText.TryParse(cutFrom, out double cutStart) && TimeText.TryParse(cutTo, out double cutEnd) && cutEnd > cutStart:
 			CutTransition? transition = null;
 			if (cutExtra.Length == 1)

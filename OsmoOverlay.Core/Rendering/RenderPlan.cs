@@ -9,7 +9,11 @@ public sealed record TimeRange(double StartSeconds, double EndSeconds, CutTransi
 ///     within the piece's own frames; an overlapping transition (CutTransition.Overlaps) instead shows this piece's first
 ///     OverlapIn frames together with the previous piece's last ones, so those frames take no time of their own in the output.
 /// </summary>
-public sealed record RenderPiece(long SourceStartFrame, long FrameCount, CutTransition? TransitionIn = null, CutTransition? TransitionOut = null,
+public sealed record RenderPiece(
+	long SourceStartFrame,
+	long FrameCount,
+	CutTransition? TransitionIn = null,
+	CutTransition? TransitionOut = null,
 	int OverlapIn = 0)
 {
 	public long SourceEndFrame => SourceStartFrame + FrameCount;

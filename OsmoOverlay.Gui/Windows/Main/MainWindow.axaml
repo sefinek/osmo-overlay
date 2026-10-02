@@ -472,13 +472,13 @@
 
 									<Grid RowDefinitions="Auto,Auto" RowSpacing="2"
 									      ColumnSpacing="8">
-									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-										<ColumnDefinition Width="3*" />
-										<ColumnDefinition Width="24" />
-										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-										<ColumnDefinition Width="2*" />
-									</Grid.ColumnDefinitions>
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="24" />
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+											<ColumnDefinition Width="2*" />
+										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Camera" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Telemetry" />
@@ -496,13 +496,13 @@
 									<TextBlock Text="VIDEO" Classes="sectionLabel" />
 									<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2"
 									      ColumnSpacing="8">
-									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-										<ColumnDefinition Width="3*" />
-										<ColumnDefinition Width="24" />
-										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-										<ColumnDefinition Width="2*" />
-									</Grid.ColumnDefinitions>
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="24" />
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+											<ColumnDefinition Width="2*" />
+										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Resolution" />
 										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
 										            VerticalAlignment="Center">
@@ -540,13 +540,13 @@
 									<TextBlock Text="AUDIO" Classes="sectionLabel" />
 									<Grid Name="AudioGrid" RowDefinitions="Auto,Auto"
 									      RowSpacing="2" ColumnSpacing="8">
-									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-										<ColumnDefinition Width="3*" />
-										<ColumnDefinition Width="24" />
-										<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-										<ColumnDefinition Width="2*" />
-									</Grid.ColumnDefinitions>
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
+											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="24" />
+											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
+											<ColumnDefinition Width="2*" />
+										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="Codec" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoAudioCodec" />
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="Sample rate" />
@@ -740,25 +740,25 @@
 					</StackPanel>
 				</ScrollViewer>
 
-					<ScrollViewer Name="MomentsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
-						<StackPanel Spacing="10">
-							<Grid ColumnDefinitions="Auto,*,Auto">
-								<Button Grid.Column="0" Classes="toolbar" Padding="10,7" FontSize="12" HorizontalAlignment="Left"
-								        Click="OnMomentsBackClick">
-									<StackPanel Orientation="Horizontal" Spacing="6">
-										<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
-										<TextBlock Text="Back" VerticalAlignment="Center" />
-									</StackPanel>
-								</Button>
-								<TextBlock Grid.Column="1" Text="KEY MOMENTS" FontSize="14" FontWeight="SemiBold"
-								           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-								<Button Grid.Column="2" Classes="toolbar" Content="Clear all" Padding="10,7" FontSize="12"
-								        HorizontalAlignment="Right" Click="OnClearMomentsClick" ToolTip.Tip="Remove every key moment" />
-							</Grid>
-							<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
-							<local:KeyMomentsEditor Name="MomentsEditor" />
-						</StackPanel>
-					</ScrollViewer>
+				<ScrollViewer Name="MomentsColumnScroll" HorizontalScrollBarVisibility="Disabled" IsVisible="False">
+					<StackPanel Spacing="10">
+						<Grid ColumnDefinitions="Auto,*,Auto">
+							<Button Grid.Column="0" Classes="toolbar" Padding="10,7" FontSize="12" HorizontalAlignment="Left"
+							        Click="OnMomentsBackClick">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<local:IconView Data="{StaticResource IconArrowLeft}" Width="12" Height="12" VerticalAlignment="Center" />
+									<TextBlock Text="Back" VerticalAlignment="Center" />
+								</StackPanel>
+							</Button>
+							<TextBlock Grid.Column="1" Text="KEY MOMENTS" FontSize="14" FontWeight="SemiBold"
+							           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+							<Button Grid.Column="2" Classes="toolbar" Content="Clear all" Padding="10,7" FontSize="12"
+							        HorizontalAlignment="Right" Click="OnClearMomentsClick" ToolTip.Tip="Remove every key moment" />
+						</Grid>
+						<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
+						<local:KeyMomentsEditor Name="MomentsEditor" />
+					</StackPanel>
+				</ScrollViewer>
 			</Grid>
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
@@ -833,10 +833,10 @@
 							        ToolTip.Tip="Cut parts out of the render">
 								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
 							</Button>
-								<Button Name="ToggleMomentsButton" Classes="previewToolButton" Click="OnToggleMomentsPanelClick"
-								        ToolTip.Tip="Key moments - flags on the timeline, and jumps to the top speed, the highest point and more">
-									<local:IconView Data="{StaticResource IconFlag}" Width="14" Height="14" />
-								</Button>
+							<Button Name="ToggleMomentsButton" Classes="previewToolButton" Click="OnToggleMomentsPanelClick"
+							        ToolTip.Tip="Key moments - flags on the timeline, and jumps to the top speed, the highest point and more">
+								<local:IconView Data="{StaticResource IconFlag}" Width="14" Height="14" />
+							</Button>
 						</StackPanel>
 						<StackPanel Name="AudioPanel" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center"
 						            IsEnabled="False" ToolTip.ShowOnDisabled="True">

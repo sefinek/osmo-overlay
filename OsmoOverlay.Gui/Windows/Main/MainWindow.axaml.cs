@@ -142,6 +142,7 @@ public partial class MainWindow : Window
 			panel.PanelChanged += OnElementPanelChanged;
 			panel.ApplyToAllRequested += ApplyPanelToAll;
 		}
+
 		MapSourceEditor.SelectionChanged += OnMapSourceChanged;
 		foreach (TrailStyleEditor trail in new[] { CompassTrail, MapTrail }) trail.Changed += OnTrailStyleChanged;
 		foreach (MarkerStyleEditor marker in new[] { CompassMarker, MapMarker }) marker.Changed += OnMarkerStyleChanged;

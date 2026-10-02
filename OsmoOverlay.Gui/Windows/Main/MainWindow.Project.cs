@@ -63,7 +63,9 @@ public partial class MainWindow
 	{
 		string suggested = _projectPath is not null
 			? Path.GetFileNameWithoutExtension(_projectPath)
-			: _inputPaths.Count > 0 ? Path.GetFileNameWithoutExtension(_inputPaths[0]) : "project";
+			: _inputPaths.Count > 0
+				? Path.GetFileNameWithoutExtension(_inputPaths[0])
+				: "project";
 
 		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{

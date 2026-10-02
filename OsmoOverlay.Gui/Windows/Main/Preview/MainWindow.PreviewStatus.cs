@@ -74,8 +74,10 @@ public partial class MainWindow
 
 		double share = measured ? _playbackFps / _previewPlayer.PlaybackFrameRate : 1;
 		if (share < SlowPlaybackShare)
+		{
 			StatusDisplayText.Foreground = Palette.Blend((SlowPlaybackShare - share) / (SlowPlaybackShare - RedPlaybackShare),
 				Palette.Caution, Palette.Warning, Palette.Alert, Palette.Danger);
+		}
 		else
 			StatusDisplayText.ClearValue(TextBlock.ForegroundProperty);
 	}

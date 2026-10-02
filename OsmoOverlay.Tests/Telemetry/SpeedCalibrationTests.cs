@@ -44,8 +44,11 @@ public sealed class SpeedCalibrationTests
 
 	private static List<DerivedFrame> Speeds(double sampleRate, params double[] kmh)
 	{
-		return [.. kmh.Select((v, i) => new DerivedFrame(new TelemetryFrame(i, i / sampleRate, 50, 20, 200, null, 0, 0, 1), v, 0, 0, 0, 0, 0,
-			default, 0, 0, 0, 0, 0, false))];
+		return
+		[
+			.. kmh.Select((v, i) => new DerivedFrame(new TelemetryFrame(i, i / sampleRate, 50, 20, 200, null, 0, 0, 1), v, 0, 0, 0, 0, 0,
+				default, 0, 0, 0, 0, 0))
+		];
 	}
 
 	[TestMethod]

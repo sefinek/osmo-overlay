@@ -223,6 +223,7 @@ public partial class CutEditor : UserControl
 		};
 		var row = new StackPanel { Spacing = 4, Children = { times, transition, overlapNote } };
 		var entry = new CutRow(from, to, kind, length);
+
 		void RefreshTransitionRow()
 		{
 			// Only between two kept parts is there anything to fade (a cut from the very start or to the very end has no join).
@@ -231,7 +232,7 @@ public partial class CutEditor : UserControl
 			transition.IsVisible = joins;
 			length.IsVisible = unit.IsVisible = kind.SelectedIndex > 0;
 			overlapNote.IsVisible = joins && TransitionKinds[Math.Max(0, kind.SelectedIndex)].Kind is { } selected &&
-			                        new CutTransition(selected, CutTransition.DefaultLengthSeconds).Overlaps;
+			                        new CutTransition(selected).Overlaps;
 		}
 
 		RefreshTransitionRow();

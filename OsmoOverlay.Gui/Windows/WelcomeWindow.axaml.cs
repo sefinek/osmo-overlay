@@ -1,3 +1,4 @@
+using System.Security;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Controls;
@@ -9,7 +10,6 @@ using Avalonia.Platform.Storage;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
-using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Updates;
 using OsmoOverlay.Gui.Native;
 
@@ -77,7 +77,7 @@ public partial class WelcomeWindow : Window
 		{
 			Height = 6,
 			CornerRadius = new CornerRadius(3),
-			Transitions = new Transitions { new DoubleTransition { Property = Border.WidthProperty, Duration = TimeSpan.FromMilliseconds(160) } }
+			Transitions = new Transitions { new DoubleTransition { Property = WidthProperty, Duration = TimeSpan.FromMilliseconds(160) } }
 		};
 		Border hitArea = new() { Background = Brushes.Transparent, Padding = new Thickness(3, 8), Cursor = HandCursor, Child = dot };
 		ToolTip.SetTip(hitArea, StepNames[index]);
@@ -395,7 +395,7 @@ public partial class WelcomeWindow : Window
 			if (wanted) ProjectFileAssociation.Register();
 			else ProjectFileAssociation.Unregister();
 		}
-		catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+		catch (Exception ex) when (ex is UnauthorizedAccessException or SecurityException or IOException)
 		{
 			AppLogger.Error(ex, $"Could not change the .ovproj association: {ex.Message}");
 		}

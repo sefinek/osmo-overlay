@@ -157,6 +157,7 @@ public partial class KeyMomentsEditor : UserControl
 		time.Click += (_, _) => SeekRequested?.Invoke(moment.Frame);
 
 		var name = new TextBox { Text = moment.Name, PlaceholderText = "Name" };
+
 		void CommitName()
 		{
 			string text = name.Text?.Trim() ?? "";

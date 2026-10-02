@@ -345,7 +345,7 @@ public partial class MainWindow
 		TeleMaxSpeed.Text = $"{SpeedCalibration.Corrected(measured, percent):0.#} km/h";
 		ToolTip.SetTip(TeleMaxSpeed, percent > 0
 			? $"As the overlay shows it: {measured:0.##} km/h measured by the GPS, +{percent:0.0}% speed correction (Settings > Speed)."
-			: $"As the overlay shows it: measured by the GPS, no speed correction (Settings > Speed).");
+			: "As the overlay shows it: measured by the GPS, no speed correction (Settings > Speed).");
 	}
 
 	private void LogCacheEvent(FileSummaryCacheEvent e)

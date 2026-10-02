@@ -13,7 +13,7 @@ public sealed class OverlayPresetTests
 	[TestMethod]
 	public void CreateDefault_At4K_PlacesWidgetsOnTheMargin()
 	{
-		OverlayPreset preset = OverlayPreset.CreateDefault("d", "Default");
+		var preset = OverlayPreset.CreateDefault("d", "Default");
 
 		(OverlayElementType Type, float X, float Y)[] expected =
 		[

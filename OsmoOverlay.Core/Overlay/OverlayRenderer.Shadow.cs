@@ -86,15 +86,15 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	private static SKImageFilter CreateShadowFilter(ShadowStyle style)
 	{
-		using SKColorFilter solid = SKColorFilter.CreateColorMatrix([
+		using var solid = SKColorFilter.CreateColorMatrix([
 			1, 0, 0, 0, 0,
 			0, 1, 0, 0, 0,
 			0, 0, 1, 0, 0,
 			0, 0, 0, FootprintAlphaGain, 0
 		]);
-		using SKImageFilter footprint = SKImageFilter.CreateColorFilter(solid);
-		using SKImageFilter cast = SKImageFilter.CreateDropShadowOnly(style.OffsetX, style.OffsetY, style.Sigma, style.Sigma, style.Color, footprint);
-		using SKImageFilter outside = SKImageFilter.CreateBlendMode(SKBlendMode.DstOut, cast, footprint);
+		using var footprint = SKImageFilter.CreateColorFilter(solid);
+		using var cast = SKImageFilter.CreateDropShadowOnly(style.OffsetX, style.OffsetY, style.Sigma, style.Sigma, style.Color, footprint);
+		using var outside = SKImageFilter.CreateBlendMode(SKBlendMode.DstOut, cast, footprint);
 		return SKImageFilter.CreateMerge(outside, null);
 	}
 

@@ -123,8 +123,12 @@ public partial class MainWindow
 		}
 
 		foreach (TimeRange cut in cutOuts)
-			parts.AddRange(["--cut", $"{cut.StartSeconds.ToString("0.###", CultureInfo.InvariantCulture)}-{cut.EndSeconds.ToString("0.###", CultureInfo.InvariantCulture)}" +
-			                         (cut.Transition is { } transition ? $"@{transition.ToArgument()}" : "")]);
+		{
+			parts.AddRange([
+				"--cut", $"{cut.StartSeconds.ToString("0.###", CultureInfo.InvariantCulture)}-{cut.EndSeconds.ToString("0.###", CultureInfo.InvariantCulture)}" +
+				         (cut.Transition is { } transition ? $"@{transition.ToArgument()}" : "")
+			]);
+		}
 
 		return string.Join(' ', parts);
 	}

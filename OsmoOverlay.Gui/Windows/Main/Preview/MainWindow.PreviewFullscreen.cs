@@ -1,11 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using OsmoOverlay.Core.Overlay;
-using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Gui;
 

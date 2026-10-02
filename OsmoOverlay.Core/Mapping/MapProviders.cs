@@ -1,3 +1,5 @@
+using OsmoOverlay.Core.Overlay;
+
 namespace OsmoOverlay.Core.Mapping;
 
 /// <summary>
@@ -41,12 +43,15 @@ public static class MapProviders
 ///     consumer - the API keys (one per KeyGroup, so a key typed for a widget is the same one the route overview uses) and
 ///     the custom provider's URL and credit. Built from OverlaySettings (From) and handed to the renderer.
 /// </summary>
-public sealed record MapSources(IReadOnlyDictionary<string, string>? ApiKeys = null, string? CustomUrlTemplate = null,
-	string? CustomAttribution = null, bool ShowAttribution = true)
+public sealed record MapSources(
+	IReadOnlyDictionary<string, string>? ApiKeys = null,
+	string? CustomUrlTemplate = null,
+	string? CustomAttribution = null,
+	bool ShowAttribution = true)
 {
 	public const string CustomKeyGroup = "custom";
 
-	public static MapSources From(Overlay.OverlaySettings settings)
+	public static MapSources From(OverlaySettings settings)
 	{
 		return new MapSources(settings.MapApiKeys, settings.CustomMapUrlTemplate, settings.CustomMapAttribution, settings.MapShowAttribution);
 	}

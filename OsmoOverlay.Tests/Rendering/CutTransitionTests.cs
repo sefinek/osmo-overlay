@@ -5,13 +5,13 @@ namespace OsmoOverlay.Tests;
 [TestClass]
 public sealed class CutTransitionTests
 {
-	private static readonly CutTransition Fade = new(CutTransitionKind.FadeBlack, 1);
+	private static readonly CutTransition Fade = new(CutTransitionKind.FadeBlack);
 	private static readonly CutTransition White = new(CutTransitionKind.FadeWhite, 0.5);
 
 	[TestMethod]
 	public void Resolve_PutsTheCutsTransitionOnBothSidesOfTheJoin()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Fade), new TimeRange(40, 50, White)], null, 30, 30 * 100);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Fade), new TimeRange(40, 50, White)], null, 30, 30 * 100);
 
 		Assert.AreEqual(3, plan.Pieces.Count);
 		Assert.IsNull(plan.Pieces[0].TransitionIn);
@@ -25,7 +25,7 @@ public sealed class CutTransitionTests
 	[TestMethod]
 	public void Resolve_IgnoresTheTransitionOfACutAtTheStartOrTheEnd()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(0, 5, Fade), new TimeRange(90, 100, Fade)], null, 30, 30 * 100);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(0, 5, Fade), new TimeRange(90, 100, Fade)], null, 30, 30 * 100);
 
 		Assert.AreEqual(1, plan.Pieces.Count);
 		Assert.IsNull(plan.Pieces[0].TransitionIn);
@@ -35,8 +35,8 @@ public sealed class CutTransitionTests
 	[TestMethod]
 	public void Resolve_KeepsTheFirstTransitionOfOverlappingCuts_AndTheFrameCountsUnchanged()
 	{
-		RenderPlan with = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Fade), new TimeRange(15, 25, White)], null, 30, 30 * 100);
-		RenderPlan without = RenderPlan.Resolve(null, null, [new TimeRange(10, 25)], null, 30, 30 * 100);
+		var with = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Fade), new TimeRange(15, 25, White)], null, 30, 30 * 100);
+		var without = RenderPlan.Resolve(null, null, [new TimeRange(10, 25)], null, 30, 30 * 100);
 
 		Assert.AreEqual(Fade, with.Pieces[0].TransitionOut);
 		Assert.AreEqual(without.TotalFrames, with.TotalFrames);
@@ -102,12 +102,12 @@ public sealed class CutTransitionTests
 		CollectionAssert.AreEqual(new byte[] { 10, 20, 30, 255 }, untouched);
 	}
 
-	private static readonly CutTransition Cross = new(CutTransitionKind.Crossfade, 1);
+	private static readonly CutTransition Cross = new(CutTransitionKind.Crossfade);
 
 	[TestMethod]
 	public void Resolve_OverlapShortensTheOutputByTheTransitionLength()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Cross)], null, 30, 30 * 100);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Cross)], null, 30, 30 * 100);
 
 		Assert.AreEqual(30, plan.Pieces[1].OverlapIn);
 		Assert.AreEqual(0, plan.Pieces[0].OverlapIn);
@@ -117,7 +117,7 @@ public sealed class CutTransitionTests
 	[TestMethod]
 	public void Resolve_OverlapIsAtMostHalfOfTheShorterPart_SoNeighbouringTransitionsNeverMeet()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(2, 3, Cross), new TimeRange(4, 5, Cross)], null, 30, 30 * 10);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(2, 3, Cross), new TimeRange(4, 5, Cross)], null, 30, 30 * 10);
 
 		Assert.AreEqual(15, plan.Pieces[1].OverlapIn);
 		Assert.AreEqual(15, plan.Pieces[2].OverlapIn);
@@ -127,10 +127,10 @@ public sealed class CutTransitionTests
 	[TestMethod]
 	public void Resolve_APartTooShortToOverlapIsAPlainCut()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(1.0, 5, Cross)], null, 30, 30 * 10);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(1.0, 5, Cross)], null, 30, 30 * 10);
 		Assert.IsTrue(plan.Pieces[1].OverlapIn > 0);
 
-		RenderPlan tiny = RenderPlan.Resolve(null, null, [new TimeRange(0.03, 5, Cross)], null, 30, 30 * 10);
+		var tiny = RenderPlan.Resolve(null, null, [new TimeRange(0.03, 5, Cross)], null, 30, 30 * 10);
 		Assert.AreEqual(2, tiny.Pieces.Count);
 		Assert.AreEqual(0, tiny.Pieces[1].OverlapIn);
 		Assert.AreEqual(tiny.Pieces.Sum(p => p.FrameCount), tiny.TotalFrames);
@@ -139,7 +139,7 @@ public sealed class CutTransitionTests
 	[TestMethod]
 	public void OutputTimeline_StartsAnOverlappingPieceWhileTheEarlierOneIsStillOnScreen()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Cross)], null, 30, 30 * 100);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Cross)], null, 30, 30 * 100);
 		var timeline = new OutputTimeline(plan, 30);
 
 		Assert.AreEqual(plan.TotalFrames / 30.0, timeline.DurationSeconds, 1e-9);
@@ -178,7 +178,7 @@ public sealed class CutTransitionTests
 	[TestMethod]
 	public void Resolve_FrameLimitLeavesNoTransitionAtTheArtificialEnd()
 	{
-		RenderPlan plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Fade)], 400, 30, 30 * 100);
+		var plan = RenderPlan.Resolve(null, null, [new TimeRange(10, 20, Fade)], 400, 30, 30 * 100);
 
 		Assert.AreEqual(2, plan.Pieces.Count);
 		Assert.IsNull(plan.Pieces[1].TransitionOut);

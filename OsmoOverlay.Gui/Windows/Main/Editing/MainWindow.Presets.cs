@@ -1,14 +1,10 @@
-using System.Globalization;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
-using SkiaSharp;
 
 namespace OsmoOverlay.Gui;
 
@@ -206,7 +202,6 @@ public partial class MainWindow
 		RefreshPresetComboBox();
 	}
 
-
 	/// <summary>When the preset was created and last changed - read when a list item is built, as Save stamps the dates after the list is filled. The built-in Default has none.</summary>
 	private string? PresetDatesTooltip(string id)
 	{
@@ -219,7 +214,7 @@ public partial class MainWindow
 	{
 		return new FuncDataTemplate<PresetOption>((option, _) =>
 		{
-			var text = new TextBlock { Text = option?.Name, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+			var text = new TextBlock { Text = option?.Name, VerticalAlignment = VerticalAlignment.Center };
 			if (option is not null) ToolTip.SetTip(text, PresetDatesTooltip(option.Id));
 			return text;
 		});

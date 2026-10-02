@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -371,7 +372,7 @@ public partial class SettingsWindow : Window
 			if (ProjectFileAssociation.IsRegistered()) ProjectFileAssociation.Unregister();
 			else ProjectFileAssociation.Register();
 		}
-		catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+		catch (Exception ex) when (ex is UnauthorizedAccessException or SecurityException or IOException)
 		{
 			AppLogger.Error(ex, $"Could not change the .ovproj association: {ex.Message}");
 		}

@@ -7,8 +7,12 @@ namespace OsmoOverlay.Core;
 ///     What Undo and Redo move between: the active preset's layout, the cuts and the 360 view. Elements and layers are
 ///     immutable records in lists the GUI only ever replaces (copy-on-write), so a snapshot just keeps the references.
 /// </summary>
-public sealed class EditSnapshot(string? presetId, IReadOnlyList<OverlayElement> elements, IReadOnlyList<OverlayLayer>? layers,
-	IReadOnlyList<FrameRange> cuts, ReframeView reframe)
+public sealed class EditSnapshot(
+	string? presetId,
+	IReadOnlyList<OverlayElement> elements,
+	IReadOnlyList<OverlayLayer>? layers,
+	IReadOnlyList<FrameRange> cuts,
+	ReframeView reframe)
 {
 	public string? PresetId { get; } = presetId;
 	public IReadOnlyList<OverlayElement> Elements { get; } = elements;
@@ -36,7 +40,6 @@ public sealed class EditHistory
 
 	private readonly List<EditSnapshot> _undo = [];
 	private readonly List<EditSnapshot> _redo = [];
-	private EditSnapshot? _current;
 	private string? _openKey;
 	private DateTime _lastCommit;
 
@@ -44,14 +47,14 @@ public sealed class EditHistory
 	public bool CanRedo => _redo.Count > 0;
 
 	/// <summary>The state as of the last commit, undo or redo - null before the first Reset.</summary>
-	public EditSnapshot? Current => _current;
+	public EditSnapshot? Current { get; private set; }
 
 	/// <summary>The given state is the baseline now (a recording or project was loaded) - nothing before it can be undone.</summary>
 	public void Reset(EditSnapshot state)
 	{
 		_undo.Clear();
 		_redo.Clear();
-		_current = state;
+		Current = state;
 		_openKey = null;
 	}
 
@@ -63,24 +66,24 @@ public sealed class EditHistory
 
 	public void Commit(EditSnapshot state, string? coalesceKey = null)
 	{
-		if (_current is null || _current.PresetId != state.PresetId)
+		if (Current is null || Current.PresetId != state.PresetId)
 		{
 			Reset(state);
 			return;
 		}
 
-		if (_current.SameAs(state)) return;
+		if (Current.SameAs(state)) return;
 
 		DateTime now = DateTime.UtcNow;
 		bool coalesce = coalesceKey is not null && coalesceKey == _openKey && now - _lastCommit < CoalesceWindow && _undo.Count > 0;
 		if (!coalesce)
 		{
-			_undo.Add(_current);
+			_undo.Add(Current);
 			if (_undo.Count > MaxSteps) _undo.RemoveAt(0);
 		}
 
 		_redo.Clear();
-		_current = state;
+		Current = state;
 		_openKey = coalesceKey;
 		_lastCommit = now;
 	}
@@ -88,23 +91,23 @@ public sealed class EditHistory
 	/// <summary>The state to go back to, or null when there is nothing to undo.</summary>
 	public EditSnapshot? Undo()
 	{
-		if (_current is null || _undo.Count == 0) return null;
+		if (Current is null || _undo.Count == 0) return null;
 
-		_redo.Add(_current);
-		_current = _undo[^1];
+		_redo.Add(Current);
+		Current = _undo[^1];
 		_undo.RemoveAt(_undo.Count - 1);
 		_openKey = null;
-		return _current;
+		return Current;
 	}
 
 	public EditSnapshot? Redo()
 	{
-		if (_current is null || _redo.Count == 0) return null;
+		if (Current is null || _redo.Count == 0) return null;
 
-		_undo.Add(_current);
-		_current = _redo[^1];
+		_undo.Add(Current);
+		Current = _redo[^1];
 		_redo.RemoveAt(_redo.Count - 1);
 		_openKey = null;
-		return _current;
+		return Current;
 	}
 }

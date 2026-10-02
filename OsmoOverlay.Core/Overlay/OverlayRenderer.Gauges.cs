@@ -35,7 +35,6 @@ public sealed partial class OverlayRenderer
 	public const double SpeedGaugeMaxMin = 20;
 	public const double SpeedGaugeMaxMax = 500;
 
-
 	private static SKPaint CreateGaugeBandPaint(SKColor color)
 	{
 		return new SKPaint
@@ -225,7 +224,7 @@ public sealed partial class OverlayRenderer
 
 		DrawOutlined(canvas, F(displaySpeed, "0"), 0, 106, speedFont, textColor, SKTextAlign.Center,
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
-		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", 32, 156, speedUnitFont, textColor, SKTextAlign.Left,
+		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", 32, 156, speedUnitFont, textColor,
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 	}
 

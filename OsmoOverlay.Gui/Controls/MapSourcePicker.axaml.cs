@@ -17,7 +17,7 @@ public sealed partial class MapSourcePicker : UserControl
 	private static readonly List<ProviderOption> Options =
 	[
 		.. MapProviders.BuiltIn.Select(p => new ProviderOption(p.Id, p.Name)),
-		new ProviderOption(MapProviders.CustomId, "Custom...")
+		new(MapProviders.CustomId, "Custom...")
 	];
 
 	private bool _loading;

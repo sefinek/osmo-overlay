@@ -1,6 +1,6 @@
 using OsmoOverlay.Core.Overlay;
-using SkiaSharp;
 using OsmoOverlay.Core.Telemetry;
+using SkiaSharp;
 
 namespace OsmoOverlay.Tests.Overlay;
 

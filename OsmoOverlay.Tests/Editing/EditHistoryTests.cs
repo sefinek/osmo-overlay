@@ -1,5 +1,4 @@
 using OsmoOverlay.Core;
-using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 
 namespace OsmoOverlay.Tests;

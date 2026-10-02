@@ -65,7 +65,7 @@ public static class KeyMoments
 
 		bool gpsKind = kind is not (PeakKind.StrongestG or PeakKind.MaxLean);
 		// The G-meter's own reading (dynamic acceleration against its baseline), so the peak is the number the widget shows there.
-		var deltas = kind == PeakKind.StrongestG ? GMeterDeltas.Compute(frames) : null;
+		(double Lateral, double Longitudinal)[]? deltas = kind == PeakKind.StrongestG ? GMeterDeltas.Compute(frames) : null;
 		double[]? slopes = kind is PeakKind.SteepestClimb or PeakKind.SteepestDescent
 			? Slopes(frames, kind == PeakKind.SteepestClimb ? 1 : -1)
 			: null;
@@ -174,7 +174,10 @@ public static class KeyMoments
 	{
 		if (moments is null) return [];
 
-		return [.. moments.Where(m => m is not null && m.Frame >= 0 && m.Frame < totalFrames)
-			.GroupBy(m => m.Frame).Select(g => g.Last()).OrderBy(m => m.Frame)];
+		return
+		[
+			.. moments.Where(m => m is not null && m.Frame >= 0 && m.Frame < totalFrames)
+				.GroupBy(m => m.Frame).Select(g => g.Last()).OrderBy(m => m.Frame)
+		];
 	}
 }

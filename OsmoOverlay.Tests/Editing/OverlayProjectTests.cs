@@ -10,14 +10,14 @@ public sealed class OverlayProjectTests
 	[TestMethod]
 	public void SaveAndLoad_RoundTripsEverything()
 	{
-		OverlayPreset preset = OverlayPreset.CreateDefault("p1", "Mine");
+		var preset = OverlayPreset.CreateDefault("p1", "Mine");
 		var project = new OverlayProject([Path.GetFullPath("a.mp4"), Path.GetFullPath("b.mp4")], Path.GetFullPath("out.mp4"), [new FrameRange(10, 20, new CutTransition(CutTransitionKind.FadeWhite, 0.8))], new ReframeView(10, 5, 0, 90, false), 42, "p1", preset);
 		string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{OverlayProject.Extension}");
 
 		try
 		{
 			project.Save(path);
-			OverlayProject loaded = OverlayProject.Load(path);
+			var loaded = OverlayProject.Load(path);
 
 			CollectionAssert.AreEqual(project.InputPaths, loaded.InputPaths);
 			CollectionAssert.AreEqual(project.Cuts, loaded.Cuts);

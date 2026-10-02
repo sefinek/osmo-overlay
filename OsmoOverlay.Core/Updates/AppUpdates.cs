@@ -177,8 +177,14 @@ public static class AppUpdates
 		}
 		catch
 		{
-			try { File.Delete(partialPath); }
-			catch (IOException) { }
+			try
+			{
+				File.Delete(partialPath);
+			}
+			catch (IOException)
+			{
+			}
+
 			throw;
 		}
 	}

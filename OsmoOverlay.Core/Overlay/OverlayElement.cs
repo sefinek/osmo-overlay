@@ -242,6 +242,7 @@ public enum SpeedGaugeTheme
 public sealed record SpeedGaugeElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SpeedGauge;
+
 	public SpeedGaugeElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -260,6 +261,7 @@ public sealed record SpeedGaugeElement : StyledOverlayElement, IPanelElement
 public sealed record RollGaugeElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.RollGauge;
+
 	public RollGaugeElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -273,6 +275,7 @@ public sealed record RollGaugeElement : StyledOverlayElement, IPanelElement
 public sealed record PitchGaugeElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.PitchGauge;
+
 	public PitchGaugeElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -285,6 +288,7 @@ public sealed record PitchGaugeElement : StyledOverlayElement, IPanelElement
 public sealed record SunWidgetElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.SunWidget;
+
 	public SunWidgetElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -302,6 +306,7 @@ public sealed record SunWidgetElement : StyledOverlayElement, IPanelElement
 public sealed record GMeterElement : StyledOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.GMeter;
+
 	public GMeterElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -343,6 +348,7 @@ public abstract record TrailOverlayElement : OverlayElement
 public sealed record CompassElement : TrailOverlayElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Compass;
+
 	public CompassElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -365,6 +371,7 @@ public sealed record CompassElement : TrailOverlayElement, IPanelElement
 public sealed record MapWidgetElement : TrailOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.MapWidget;
+
 	public MapWidgetElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
@@ -448,6 +455,7 @@ public sealed record TextElement : StyledOverlayElement
 public sealed record ImageElement : OverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Image;
+
 	public ImageElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusMedium;
