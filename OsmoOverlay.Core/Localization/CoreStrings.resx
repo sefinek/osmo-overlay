@@ -310,7 +310,9 @@
     <value>ffmpeg exited with an error ({0}): {1}</value>
   </data>
   <data name="Render_FfmpegFailedSummary" xml:space="preserve">
-    <value>ffmpeg exited with an error ({0}). Its full output is in the log; the important part:\n\n{1}</value>
+    <value>ffmpeg exited with an error ({0}). Its full output is in the log; the important part:
+
+{1}</value>
   </data>
   <data name="Render_FileNotFound" xml:space="preserve">
     <value>File not found: {0}</value>

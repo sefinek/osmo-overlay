@@ -1264,10 +1264,18 @@
     <value>Aktualizuj</value>
   </data>
   <data name="Main_UpdateAvailableDownload" xml:space="preserve">
-    <value>Dostępny jest OsmoOverlay {0} - masz {1}.\n\nOtworzyć stronę pobierania?\n\nJeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustawienia &gt; O programie.</value>
+    <value>Dostępny jest OsmoOverlay {0} - masz {1}.
+
+Otworzyć stronę pobierania?
+
+Jeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustawienia &gt; O programie.</value>
   </data>
   <data name="Main_UpdateAvailableInstall" xml:space="preserve">
-    <value>Dostępny jest OsmoOverlay {0} - masz {1}.\n\nZaktualizować teraz? OsmoOverlay pobierze go, zamknie się, zainstaluje i uruchomi ponownie.\n\nJeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustawienia &gt; O programie.</value>
+    <value>Dostępny jest OsmoOverlay {0} - masz {1}.
+
+Zaktualizować teraz? OsmoOverlay pobierze go, zamknie się, zainstaluje i uruchomi ponownie.
+
+Jeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustawienia &gt; O programie.</value>
   </data>
   <data name="Main_UpdateAvailableTitle" xml:space="preserve">
     <value>Dostępna aktualizacja</value>
@@ -1360,7 +1368,8 @@
     <value>{0} - kopia</value>
   </data>
   <data name="Presets_Dates" xml:space="preserve">
-    <value>Utworzono: {0:g}\nOstatnia zmiana: {1:g}</value>
+    <value>Utworzono: {0:g}
+Ostatnia zmiana: {1:g}</value>
   </data>
   <data name="Presets_DeleteMessage" xml:space="preserve">
     <value>Usunąć „{0}”? Tego nie można cofnąć.</value>
@@ -1456,7 +1465,11 @@
     <value>Preset „{0}”, z którym utworzono ten projekt, już nie istnieje.</value>
   </data>
   <data name="Project_RecordingsMissing" xml:space="preserve">
-    <value>Brakuje tych nagrań:\n\n{0}\n\nCięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu nagrań.</value>
+    <value>Brakuje tych nagrań:
+
+{0}
+
+Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu nagrań.</value>
   </data>
   <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
     <value>Nie znaleziono nagrań</value>
@@ -2105,7 +2118,9 @@ Aby mieć GPS, nagrywaj z pilotem DJI GPS Bluetooth Remote (lub z GPS telefonu p
     <value>Brak GPS w tym nagraniu</value>
   </data>
   <data name="Summary_NoTelemetryMessage" xml:space="preserve">
-    <value>Ten plik nie zawiera telemetrii z kamery, więc można go podejrzeć, ale nie wyrenderować.\n\nUżyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mimo lub innej aplikacji traci telemetrię.</value>
+    <value>Ten plik nie zawiera telemetrii z kamery, więc można go podejrzeć, ale nie wyrenderować.
+
+Użyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mimo lub innej aplikacji traci telemetrię.</value>
   </data>
   <data name="Summary_NoTelemetryTitle" xml:space="preserve">
     <value>Brak telemetrii w tym pliku</value>
@@ -2273,7 +2288,9 @@ Obecne znaczniki:
     <value>Nie można naprawić tego pliku</value>
   </data>
   <data name="Tools_CantReadMessage" xml:space="preserve">
-    <value>Nie udało się odczytać tego pliku - może być uszkodzony, wciąż zapisywany albo w ogóle nie jest plikiem wideo.\n\nSzczegóły: {0}</value>
+    <value>Nie udało się odczytać tego pliku - może być uszkodzony, wciąż zapisywany albo w ogóle nie jest plikiem wideo.
+
+Szczegóły: {0}</value>
   </data>
   <data name="Tools_CantReadTitle" xml:space="preserve">
     <value>Nie udało się odczytać pliku</value>
@@ -2299,7 +2316,8 @@ Szczegóły: {0}</value>
     <value>Konwersja nie powiodła się</value>
   </data>
   <data name="Tools_ConvertedBeforeError" xml:space="preserve">
-    <value>Skonwertowano przed błędem:\n{0}</value>
+    <value>Skonwertowano przed błędem:
+{0}</value>
   </data>
   <data name="Tools_ConvertedMessage" xml:space="preserve">
     <value>Zapisano i sprawdzono - plik dekoduje się do dokładnie tych samych próbek co oryginał:
@@ -2349,7 +2367,9 @@ Zapisano do: {3}</value>
     <value>Naprawiono</value>
   </data>
   <data name="Tools_FixFailedMessage" xml:space="preserve">
-    <value>Naprawa „{0}” nie powiodła się.\n\nSzczegóły: {1}</value>
+    <value>Naprawa „{0}” nie powiodła się.
+
+Szczegóły: {1}</value>
   </data>
   <data name="Tools_FixFailedTitle" xml:space="preserve">
     <value>Naprawa nie powiodła się</value>
@@ -2375,7 +2395,10 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
     <value>(nie znaleziono niczego identyfikującego)</value>
   </data>
   <data name="Tools_NothingToDoMessage" xml:space="preserve">
-    <value>„{0}” ma już poprawny znacznik kolorów Rec.709 - nie ma tu czego naprawiać.\n\nObecne znaczniki:\n{1}</value>
+    <value>„{0}” ma już poprawny znacznik kolorów Rec.709 - nie ma tu czego naprawiać.
+
+Obecne znaczniki:
+{1}</value>
   </data>
   <data name="Tools_NothingToDoTitle" xml:space="preserve">
     <value>Nic do zrobienia</value>
@@ -2408,7 +2431,8 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
     <value>Zastąp</value>
   </data>
   <data name="Tools_ReplaceExistingMessage" xml:space="preserve">
-    <value>Te pliki już istnieją i zostaną zastąpione:\n{0}</value>
+    <value>Te pliki już istnieją i zostaną zastąpione:
+{0}</value>
   </data>
   <data name="Tools_ReplaceExistingTitle" xml:space="preserve">
     <value>Zastąpić istniejące pliki?</value>
@@ -2423,7 +2447,9 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
     <value>Wybierz plik...</value>
   </data>
   <data name="Tools_StripFailedMessage" xml:space="preserve">
-    <value>Nie zapisano żadnego pliku.\n\nSzczegóły: {0}</value>
+    <value>Nie zapisano żadnego pliku.
+
+Szczegóły: {0}</value>
   </data>
   <data name="Tools_StripFailedTitle" xml:space="preserve">
     <value>Nie udało się usunąć metadanych</value>

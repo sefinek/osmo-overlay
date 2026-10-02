@@ -518,16 +518,24 @@ public static class RenderJob
 
 	/// <summary>
 	///     The lines of ffmpeg's output that say what went wrong, for a dialog - the full output (every input described)
-	///     goes to the log. An error while running comes after the "Stream mapping" block; one before it, at the end.
+	///     goes to the log. An error while running comes after the "Stream mapping" block, among the output's description
+	///     (indented) and the progress lines (split by \r); one before it, at the end.
 	/// </summary>
 	internal static string FfmpegErrorSummary(string stderr, int maxLines = 8)
 	{
-		string[] lines = stderr.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		string[] lines = stderr.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 		int mapping = Array.FindLastIndex(lines, l => l.StartsWith("Stream mapping:", StringComparison.Ordinal));
-		IEnumerable<string> picked = mapping >= 0
-			? lines.Skip(mapping + 1).Where(l => !l.Contains(" -> ", StringComparison.Ordinal)).Take(maxLines)
-			: lines.TakeLast(maxLines);
-		return string.Join('\n', picked);
+		IEnumerable<string> picked = mapping >= 0 ? lines.Skip(mapping + 1).Where(IsMessage) : lines;
+		return string.Join('\n', picked.Select(l => l.Trim()).Where(l => l.Length > 0).TakeLast(maxLines));
+
+		static bool IsMessage(string line)
+		{
+			return !char.IsWhiteSpace(line[0]) &&
+			       !line.StartsWith("frame=", StringComparison.Ordinal) &&
+			       !line.StartsWith("size=", StringComparison.Ordinal) &&
+			       !line.StartsWith("Press [q]", StringComparison.Ordinal) &&
+			       !line.StartsWith("Output #", StringComparison.Ordinal);
+		}
 	}
 
 	/// <summary>"01:00.000 - 01:30.000, 02:10.000 - 05:00.000" - the kept pieces on the recording's timeline.</summary>

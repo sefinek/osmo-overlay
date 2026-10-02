@@ -1264,10 +1264,18 @@
     <value>Update</value>
   </data>
   <data name="Main_UpdateAvailableDownload" xml:space="preserve">
-    <value>OsmoOverlay {0} is available - you have {1}.\n\nOpen the download page?\n\nIf you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
+    <value>OsmoOverlay {0} is available - you have {1}.
+
+Open the download page?
+
+If you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
   </data>
   <data name="Main_UpdateAvailableInstall" xml:space="preserve">
-    <value>OsmoOverlay {0} is available - you have {1}.\n\nUpdate now? OsmoOverlay will download it, close, install it and start again.\n\nIf you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
+    <value>OsmoOverlay {0} is available - you have {1}.
+
+Update now? OsmoOverlay will download it, close, install it and start again.
+
+If you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
   </data>
   <data name="Main_UpdateAvailableTitle" xml:space="preserve">
     <value>Update available</value>
@@ -1360,7 +1368,8 @@
     <value>{0} copy</value>
   </data>
   <data name="Presets_Dates" xml:space="preserve">
-    <value>Created: {0:g}\nLast updated: {1:g}</value>
+    <value>Created: {0:g}
+Last updated: {1:g}</value>
   </data>
   <data name="Presets_DeleteMessage" xml:space="preserve">
     <value>Delete "{0}"? This can't be undone.</value>
@@ -1456,7 +1465,11 @@
     <value>The preset "{0}" this project was made with no longer exists.</value>
   </data>
   <data name="Project_RecordingsMissing" xml:space="preserve">
-    <value>These recordings are missing:\n\n{0}\n\nThe project's cuts, view and overlay are applied only after the recordings are found.</value>
+    <value>These recordings are missing:
+
+{0}
+
+The project's cuts, view and overlay are applied only after the recordings are found.</value>
   </data>
   <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
     <value>Recordings not found</value>
@@ -1528,7 +1541,9 @@
     <value>{0} free, about {1} needed</value>
   </data>
   <data name="Render_LowDiskMessage" xml:space="preserve">
-    <value>The render will be about {0}, and finishing it can briefly need the same again - {1} in all. Only {2} is free on {3}.\n\nFree up some space or pick an output folder on another drive. If the drive fills up, the render fails.</value>
+    <value>The render will be about {0}, and finishing it can briefly need the same again - {1} in all. Only {2} is free on {3}.
+
+Free up some space or pick an output folder on another drive. If the drive fills up, the render fails.</value>
   </data>
   <data name="Render_LowDiskTitle" xml:space="preserve">
     <value>Not enough disk space</value>
@@ -2103,7 +2118,9 @@ For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through D
     <value>No GPS in this recording</value>
   </data>
   <data name="Summary_NoTelemetryMessage" xml:space="preserve">
-    <value>This file carries no camera telemetry, so it can be previewed but not rendered.\n\nUse the original recording from the camera's card ({0}) - a copy exported from DJI Mimo or another app loses the telemetry.</value>
+    <value>This file carries no camera telemetry, so it can be previewed but not rendered.
+
+Use the original recording from the camera's card ({0}) - a copy exported from DJI Mimo or another app loses the telemetry.</value>
   </data>
   <data name="Summary_NoTelemetryTitle" xml:space="preserve">
     <value>No telemetry in this file</value>
@@ -2262,13 +2279,18 @@ For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through D
     <value>Camera microphone audio (.AAC)</value>
   </data>
   <data name="Tools_CantFixMessage" xml:space="preserve">
-    <value>"{0}" already has an explicit color tag that isn't Rec.709 - it looks like HDR or wide-gamut content, not a plain Rec.709 export. Forcing Rec.709 over that would mislabel the color space instead of fixing it, so this tool won't touch this file.\n\nCurrent tags:\n{1}</value>
+    <value>"{0}" already has an explicit color tag that isn't Rec.709 - it looks like HDR or wide-gamut content, not a plain Rec.709 export. Forcing Rec.709 over that would mislabel the color space instead of fixing it, so this tool won't touch this file.
+
+Current tags:
+{1}</value>
   </data>
   <data name="Tools_CantFixTitle" xml:space="preserve">
     <value>Can't fix this file</value>
   </data>
   <data name="Tools_CantReadMessage" xml:space="preserve">
-    <value>Could not read this file - it may be corrupted, still being written, or not a video file at all.\n\nDetails: {0}</value>
+    <value>Could not read this file - it may be corrupted, still being written, or not a video file at all.
+
+Details: {0}</value>
   </data>
   <data name="Tools_CantReadTitle" xml:space="preserve">
     <value>Couldn't read file</value>
@@ -2286,13 +2308,16 @@ For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through D
     <value>Compare files</value>
   </data>
   <data name="Tools_ConversionFailedMessage" xml:space="preserve">
-    <value>Nothing was saved for the file that failed.\n\nDetails: {0}</value>
+    <value>Nothing was saved for the file that failed.
+
+Details: {0}</value>
   </data>
   <data name="Tools_ConversionFailedTitle" xml:space="preserve">
     <value>Conversion failed</value>
   </data>
   <data name="Tools_ConvertedBeforeError" xml:space="preserve">
-    <value>Converted before the error:\n{0}</value>
+    <value>Converted before the error:
+{0}</value>
   </data>
   <data name="Tools_ConvertedMessage" xml:space="preserve">
     <value>Saved and verified - it decodes to exactly the same samples as the original:
@@ -2328,13 +2353,23 @@ Current tags:
     <value>Fix color tags</value>
   </data>
   <data name="Tools_FixedMessage" xml:space="preserve">
-    <value>"{0}" was fixed successfully - the color tag was rewritten to Rec.709 with a lossless stream copy, so picture quality is untouched.\n\nBefore:\n{1}\n\nAfter:\n{2}\n\nSaved to: {3}</value>
+    <value>"{0}" was fixed successfully - the color tag was rewritten to Rec.709 with a lossless stream copy, so picture quality is untouched.
+
+Before:
+{1}
+
+After:
+{2}
+
+Saved to: {3}</value>
   </data>
   <data name="Tools_FixedTitle" xml:space="preserve">
     <value>Fixed successfully</value>
   </data>
   <data name="Tools_FixFailedMessage" xml:space="preserve">
-    <value>Fixing "{0}" failed.\n\nDetails: {1}</value>
+    <value>Fixing "{0}" failed.
+
+Details: {1}</value>
   </data>
   <data name="Tools_FixFailedTitle" xml:space="preserve">
     <value>Fix failed</value>
@@ -2343,7 +2378,12 @@ Current tags:
     <value>Fixing...</value>
   </data>
   <data name="Tools_MetadataRemovedMessage" xml:space="preserve">
-    <value>Saved a clean copy as "{0}" and verified it: only picture and sound are left, bit-for-bit identical, with the same color profile and rotation.\n\nRemoved:\n{1}\n\nThe file name itself isn't metadata - camera file names like DJI_20260916100634 contain the recording date and time, so rename it before sharing if that matters.</value>
+    <value>Saved a clean copy as "{0}" and verified it: only picture and sound are left, bit-for-bit identical, with the same color profile and rotation.
+
+Removed:
+{1}
+
+The file name itself isn't metadata - camera file names like DJI_20260916100634 contain the recording date and time, so rename it before sharing if that matters.</value>
   </data>
   <data name="Tools_MetadataRemovedTitle" xml:space="preserve">
     <value>Metadata removed</value>
@@ -2355,7 +2395,10 @@ Current tags:
     <value>(nothing identifying was found)</value>
   </data>
   <data name="Tools_NothingToDoMessage" xml:space="preserve">
-    <value>"{0}" already has a correct Rec.709 color tag - there's nothing to fix here.\n\nCurrent tags:\n{1}</value>
+    <value>"{0}" already has a correct Rec.709 color tag - there's nothing to fix here.
+
+Current tags:
+{1}</value>
   </data>
   <data name="Tools_NothingToDoTitle" xml:space="preserve">
     <value>Nothing to do</value>
@@ -2388,7 +2431,8 @@ Current tags:
     <value>Replace</value>
   </data>
   <data name="Tools_ReplaceExistingMessage" xml:space="preserve">
-    <value>These already exist and will be replaced:\n{0}</value>
+    <value>These already exist and will be replaced:
+{0}</value>
   </data>
   <data name="Tools_ReplaceExistingTitle" xml:space="preserve">
     <value>Replace existing files?</value>
@@ -2403,7 +2447,9 @@ Current tags:
     <value>Select file...</value>
   </data>
   <data name="Tools_StripFailedMessage" xml:space="preserve">
-    <value>No file was saved.\n\nDetails: {0}</value>
+    <value>No file was saved.
+
+Details: {0}</value>
   </data>
   <data name="Tools_StripFailedTitle" xml:space="preserve">
     <value>Couldn't remove metadata</value>

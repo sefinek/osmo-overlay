@@ -262,7 +262,7 @@ public static class FfmpegPipeline
 		if (!greenScreen && source.StartSource.ContainerCreationTimeUtc is { } createdUtc)
 		{
 			DateTime firstFrameUtc = createdUtc.ToUniversalTime().AddSeconds(source.LocalStartFrame * den / (double)num);
-			args.AddRange(["-metadata", $"creation_time={firstFrameUtc:yyyy-MM-ddTHH:mm:ss.ffffffZ}"]);
+			args.AddRange(["-metadata", "creation_time=" + firstFrameUtc.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ", CultureInfo.InvariantCulture)]);
 		}
 
 		if (!greenScreen && source.StartSource.Video.Timecode is { } timecode &&
