@@ -209,6 +209,13 @@
 				<ScrollViewer Name="InterfacePanel" VerticalScrollBarVisibility="Auto" IsVisible="False">
 					<StackPanel Margin="24,20" Spacing="20">
 						<StackPanel Spacing="6">
+							<TextBlock Text="Theme" Classes="infoLabel" />
+							<ComboBox Name="ThemeCombo" HorizontalAlignment="Stretch" SelectionChanged="OnThemeChanged" />
+							<TextBlock Classes="hint"
+							           Text="Applies right away. A few details (glows, gradients in some windows) follow the next time their window opens." />
+						</StackPanel>
+
+						<StackPanel Spacing="6">
 							<TextBlock Text="Interface scale" Classes="infoLabel" />
 							<ComboBox Name="InterfaceScaleCombo" HorizontalAlignment="Stretch" />
 							<TextBlock Classes="hint"

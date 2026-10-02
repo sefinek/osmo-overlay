@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
 
@@ -12,6 +13,7 @@ public class App : Application
 	public override void Initialize()
 	{
 		AvaloniaXamlLoader.Load(this);
+		AppThemes.Apply(OverlaySettingsStore.Load().AppTheme);
 		UiScale.Configure(this);
 	}
 

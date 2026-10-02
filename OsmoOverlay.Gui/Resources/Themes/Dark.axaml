@@ -1,0 +1,52 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<!--
+		Neutral dark greys with the mascot's blue accent - the default.
+		Every theme defines the same keys (AppThemes applies one over another); the brushes are App.axaml's.
+	-->
+	<Color x:Key="WindowBackgroundColor">#111113</Color>
+	<Color x:Key="SurfaceColor">#19191C</Color>
+	<Color x:Key="SurfaceInsetColor">#151518</Color>
+	<Color x:Key="SurfaceSunkenColor">#0C0C0E</Color>
+	<Color x:Key="ControlColor">#222226</Color>
+	<Color x:Key="ControlHoverColor">#2C2C31</Color>
+	<Color x:Key="ControlPressedColor">#1C1C20</Color>
+	<Color x:Key="ControlBorderColor">#2E2E34</Color>
+	<Color x:Key="ControlBorderHoverColor">#3C3C43</Color>
+	<Color x:Key="CardBorderColor">#12FFFFFF</Color>
+	<Color x:Key="StrokeColor">#24FFFFFF</Color>
+	<Color x:Key="StrokeStrongColor">#40FFFFFF</Color>
+	<Color x:Key="SubtleFillColor">#0AFFFFFF</Color>
+	<Color x:Key="TextPrimaryColor">#EDEDEF</Color>
+	<Color x:Key="TextSecondaryColor">#C7C7CC</Color>
+	<Color x:Key="TextMutedColor">#85858D</Color>
+	<Color x:Key="OnVideoColor">#CC18181B</Color>
+	<Color x:Key="OnVideoBorderColor">#60FFFFFF</Color>
+	<Color x:Key="ScrimColor">#A6000000</Color>
+	<Color x:Key="AccentColor">#2F7BFF</Color>
+	<Color x:Key="AccentHoverColor">#4C8FFF</Color>
+	<Color x:Key="AccentPressedColor">#2263D9</Color>
+	<Color x:Key="AccentSubtleColor">#172537</Color>
+	<Color x:Key="AccentCalloutBorderColor">#26405C</Color>
+	<Color x:Key="AccentGlowFadeColor">#0026405C</Color>
+	<Color x:Key="AccentGlowColor">#1AAFF5</Color>
+	<Color x:Key="SuccessColor">#14B85A</Color>
+	<Color x:Key="SuccessHoverColor">#22D16C</Color>
+	<Color x:Key="SuccessPressedColor">#0E9447</Color>
+	<Color x:Key="SuccessSubtleColor">#15291D</Color>
+	<Color x:Key="WarningColor">#F7C51E</Color>
+	<Color x:Key="WarningHoverColor">#FFD84A</Color>
+	<Color x:Key="WarningPressedColor">#D9A80F</Color>
+	<Color x:Key="CautionColor">#E6D24E</Color>
+	<Color x:Key="AlertColor">#F07A2E</Color>
+	<Color x:Key="DangerColor">#E3132F</Color>
+	<Color x:Key="DangerHoverColor">#F23A52</Color>
+	<Color x:Key="DangerPressedColor">#B80E26</Color>
+	<Color x:Key="SystemAccentColor">#2F7BFF</Color>
+	<Color x:Key="SystemAccentColorDark1">#2263D9</Color>
+	<Color x:Key="SystemAccentColorDark2">#1A4DAA</Color>
+	<Color x:Key="SystemAccentColorDark3">#12357A</Color>
+	<Color x:Key="SystemAccentColorLight1">#4C8FFF</Color>
+	<Color x:Key="SystemAccentColorLight2">#73A8FF</Color>
+	<Color x:Key="SystemAccentColorLight3">#9DC2FF</Color>
+</ResourceDictionary>

@@ -91,6 +91,8 @@ public sealed record OverlaySettings(
 	string? SkippedAppUpdate = null,
 	// The GUI's scale on top of the system's display scaling, applied at startup (see the GUI's UiScale).
 	double InterfaceScale = 1.0,
+	// The GUI's color theme (its AppThemes): "Dark", "Blue" or "Amoled"; anything else reads as Dark.
+	string AppTheme = "Dark",
 	// Off: the main window always starts maximized. On: it comes back as MainWindowPlacement left it.
 	bool RestoreWindowPlacement = true,
 	WindowPlacement? MainWindowPlacement = null,

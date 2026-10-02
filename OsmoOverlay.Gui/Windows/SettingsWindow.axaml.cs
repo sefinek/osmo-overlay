@@ -57,6 +57,7 @@ public partial class SettingsWindow : Window
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
+		ThemeCombo.ItemsSource = AppThemes.Options;
 		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
 		AutoSaveCombo.ItemsSource = AutoSaveOptions;
 
@@ -110,6 +111,8 @@ public partial class SettingsWindow : Window
 		MetadataThumbnailsCheck.IsChecked = settings.MetadataKeepThumbnails;
 		PreserveCameraMetadataCheck.IsChecked = settings.PreserveCameraMetadata;
 		UpdateMetadataOptionsEnabled();
+		string theme = AppThemes.Normalize(settings.AppTheme);
+		ThemeCombo.SelectedItem = AppThemes.Options.First(o => o.Value == theme);
 		InterfaceScaleCombo.SelectedItem = InterfaceScaleOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.InterfaceScale) < 0.001)
 		                                   ?? InterfaceScaleOptions[1];
 		PreviewTimeFormat timeFormat = PreviewTimeFormats.Parse(settings.PreviewTimeFormat);
@@ -204,6 +207,7 @@ public partial class SettingsWindow : Window
 			MetadataKeepSerialNumber = MetadataSerialCheck.IsChecked == true,
 			MetadataKeepDebugTrack = MetadataDebugCheck.IsChecked == true,
 			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true,
+			AppTheme = (ThemeCombo.SelectedItem as ChoiceOption<string>)?.Value ?? AppThemes.Default,
 			InterfaceScale = (InterfaceScaleCombo.SelectedItem as ChoiceOption<double> ?? InterfaceScaleOptions[1]).Value,
 			PreviewTimeFormat = (TimeFormatCombo.SelectedItem as ChoiceOption<PreviewTimeFormat> ?? PreviewTimeFormats.Options[0]).Value.ToString(),
 			RestoreWindowPlacement = RestoreWindowPlacementCheck.IsChecked == true,
@@ -216,6 +220,12 @@ public partial class SettingsWindow : Window
 			ConfirmCloseWhileRendering = ConfirmCloseWhileRenderingCheck.IsChecked == true,
 			LayerRowsVisible = Math.Clamp((int)(LayerRowsBox.Value ?? LayerTimeline.DefaultVisibleTracks), LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks)
 		};
+	}
+
+	// Live, so the choice can be judged on the window it's made in; saved with the rest when Settings closes.
+	private void OnThemeChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (ThemeCombo.SelectedItem is ChoiceOption<string> option) AppThemes.Apply(option.Value);
 	}
 
 	public bool ShowWatermark => ShowWatermarkCheck.IsChecked == true;
