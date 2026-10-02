@@ -98,6 +98,8 @@ public partial class ConfirmDialog : Window
 	{
 		Control? art = kind switch
 		{
+			DialogKind.Success => SuccessArt,
+			DialogKind.Warning => WarningArt,
 			DialogKind.Danger => DangerArt,
 			_ => null
 		};

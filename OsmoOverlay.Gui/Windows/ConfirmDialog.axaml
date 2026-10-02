@@ -13,6 +13,8 @@
 
 	<Grid ColumnDefinitions="Auto,*" Margin="20">
 		<Panel Name="KindArt" Grid.Column="0" Width="120" VerticalAlignment="Center" Margin="0,0,20,0" IsVisible="False">
+			<Image Name="SuccessArt" Source="/Assets/Dialogs/Success.webp" IsVisible="False" />
+			<Image Name="WarningArt" Source="/Assets/Dialogs/Warning.webp" IsVisible="False" />
 			<Image Name="DangerArt" Source="/Assets/Dialogs/Error.webp" IsVisible="False" />
 		</Panel>
 		<StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Center">
