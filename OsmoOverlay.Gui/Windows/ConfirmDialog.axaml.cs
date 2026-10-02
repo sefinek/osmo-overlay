@@ -47,6 +47,7 @@ public partial class ConfirmDialog : Window
 		ConfirmButton.Classes.Add(ButtonClassFor(kind));
 		KindDot.Background = DotBrushFor(kind);
 		KindIcon.Data = IconFor(kind);
+		ShowArt(kind);
 		_onConfirm = onConfirm;
 		_workingText = workingText;
 		_onSecondary = onSecondary;
@@ -90,6 +91,22 @@ public partial class ConfirmDialog : Window
 		string? extraText = null, Action? onExtra = null)
 	{
 		return new ConfirmDialog(title, message, closeText, kind, true, windowTitle, null, null, secondaryText, onSecondary, extraText, onExtra).ShowDialog(owner);
+	}
+
+	/// <summary>The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one.</summary>
+	private void ShowArt(DialogKind kind)
+	{
+		Control? art = kind switch
+		{
+			DialogKind.Danger => DangerArt,
+			_ => null
+		};
+		if (art is null) return;
+
+		art.IsVisible = true;
+		KindArt.IsVisible = true;
+		KindDot.IsVisible = false;
+		Width = 600;
 	}
 
 	private static string ButtonClassFor(DialogKind kind)

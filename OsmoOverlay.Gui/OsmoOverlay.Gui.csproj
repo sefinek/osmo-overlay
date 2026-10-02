@@ -31,6 +31,7 @@
     <AvaloniaResource Include="Assets\OsmoOverlay.ico" />
     <AvaloniaResource Include="Assets\OsmoOverlay.png" />
     <AvaloniaResource Include="Assets\Welcome\*.webp" />
+    <AvaloniaResource Include="Assets\Dialogs\*.webp" />
   </ItemGroup>
 
 </Project>
