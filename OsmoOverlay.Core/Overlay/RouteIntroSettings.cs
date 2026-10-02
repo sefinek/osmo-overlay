@@ -32,6 +32,26 @@ public sealed record RouteIntroSettings(
 			settings.RouteIntroMapProvider);
 	}
 
+	/// <summary>The reverse of From: these values written into the settings.</summary>
+	public OverlaySettings ApplyTo(OverlaySettings settings)
+	{
+		return settings with
+		{
+			ShowRouteIntro = Enabled,
+			RouteIntroDurationSeconds = DurationSeconds,
+			RouteIntroShowDistance = ShowDistance,
+			RouteIntroShowMaxSpeed = ShowMaxSpeed,
+			RouteIntroShowAvgSpeed = ShowAvgSpeed,
+			RouteIntroShowDate = ShowDate,
+			RouteIntroShowDuration = ShowDuration,
+			RouteIntroShowCameraModel = ShowCameraModel,
+			RouteIntroShowElevationGain = ShowElevationGain,
+			RouteIntroUnits = Units,
+			RouteIntroColorBySpeed = ColorBySpeed,
+			RouteIntroMapProvider = MapProviderId
+		};
+	}
+
 	/// <summary>
 	///     From(settings), but Disabled for a recording with no GPS fix at all - the card is a route summary
 	///     (map, distance, speeds, elevation), so without a fix it would only show "MAP UNAVAILABLE" and

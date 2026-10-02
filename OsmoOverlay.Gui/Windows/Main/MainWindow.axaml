@@ -129,6 +129,9 @@
 			<Setter Property="MinWidth" Value="0" />
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
+		<Style Selector="Button.gearButton /template/ ContentPresenter, Button.addedWidgetRemove /template/ ContentPresenter">
+			<Setter Property="Transitions" Value="{x:Null}" />
+		</Style>
 		<Style Selector="Button.gearButton:pointerover /template/ ContentPresenter">
 			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
 		</Style>

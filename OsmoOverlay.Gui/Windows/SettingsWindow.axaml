@@ -28,6 +28,46 @@
 		<SolidColorBrush x:Key="ExpanderChevronBorderBrush" Color="Transparent" />
 		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPointerOver" Color="Transparent" />
 		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPressed" Color="Transparent" />
+
+		<ControlTheme x:Key="SidebarItem" TargetType="ListBoxItem">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="Padding" Value="12,9" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+			<Setter Property="CornerRadius" Value="8" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Panel Background="{TemplateBinding Background}">
+						<Border Name="PART_Hover" Background="{StaticResource SubtleFillBrush}" CornerRadius="{TemplateBinding CornerRadius}"
+						        Opacity="0" />
+						<Border Name="PART_Selected" Background="{StaticResource AccentSubtleBrush}" CornerRadius="{TemplateBinding CornerRadius}"
+						        Opacity="0" />
+						<ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
+						                  ContentTemplate="{TemplateBinding ContentTemplate}" Padding="{TemplateBinding Padding}"
+						                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+						                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+					</Panel>
+				</ControlTemplate>
+			</Setter>
+
+			<Style Selector="^ /template/ Border">
+				<Setter Property="Transitions">
+					<Transitions>
+						<DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+					</Transitions>
+				</Setter>
+			</Style>
+			<Style Selector="^:pointerover /template/ Border#PART_Hover">
+				<Setter Property="Opacity" Value="1" />
+			</Style>
+			<Style Selector="^:selected /template/ Border#PART_Selected">
+				<Setter Property="Opacity" Value="1" />
+			</Style>
+			<Style Selector="^:pointerover, ^:selected">
+				<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+			</Style>
+		</ControlTheme>
 	</Window.Resources>
 
 	<Window.Styles>
@@ -37,45 +77,8 @@
 			<Setter Property="BorderThickness" Value="0" />
 			<Setter Property="Padding" Value="0" />
 		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem">
-			<Setter Property="Padding" Value="12,9" />
-			<Setter Property="CornerRadius" Value="8" />
-			<Setter Property="Margin" Value="0,0,0,2" />
-			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem /template/ ContentPresenter">
-			<Setter Property="Transitions">
-				<Transitions>
-					<BrushTransition Property="Background" Duration="0:0:0.15" />
-				</Transitions>
-			</Setter>
-		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
-		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem:pointerover">
-			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
-		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem:selected">
-			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem StackPanel">
-			<Setter Property="RenderTransform" Value="translateX(0px)" />
-			<Setter Property="Transitions">
-				<Transitions>
-					<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" />
-				</Transitions>
-			</Setter>
-		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem:pointerover StackPanel">
-			<Setter Property="RenderTransform" Value="translateX(3px)" />
-		</Style>
-
-		<Style Selector="ScrollViewer.page.hidden">
-			<Setter Property="IsVisible" Value="False" />
+			<Setter Property="Background" Value="Transparent" />
 		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
@@ -145,37 +148,37 @@
 				<TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
 				<TextBlock DockPanel.Dock="Bottom" Name="SidebarVersionText" Classes="hint" Margin="10,0,0,0" />
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
-					<ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconDisplay}" Width="16" Height="16" />
 							<TextBlock Text="Rendering" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconStopwatch}" Width="16" Height="16" />
 							<TextBlock Text="Speed" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconFlag}" Width="16" Height="16" />
 							<TextBlock Text="Route intro" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconEye}" Width="16" Height="16" />
 							<TextBlock Text="Interface" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconGear}" Width="16" Height="16" />
 							<TextBlock Text="Behavior" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconInfo}" Width="16" Height="16" />
 							<TextBlock Text="About" />
@@ -187,7 +190,7 @@
 
 		<Grid Grid.Column="1">
 			<!-- Rendering -->
-			<ScrollViewer Name="RenderingPanel" Classes="page" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Rendering" Classes="pageTitle" />
@@ -306,7 +309,7 @@
 			</ScrollViewer>
 
 			<!-- Speed -->
-			<ScrollViewer Name="SpeedPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="SpeedPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Speed calibration" Classes="pageTitle" />
@@ -320,7 +323,7 @@
 			</ScrollViewer>
 
 			<!-- Route intro -->
-			<ScrollViewer Name="RouteIntroPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="RouteIntroPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Route intro" Classes="pageTitle" />
@@ -387,7 +390,7 @@
 			</ScrollViewer>
 
 			<!-- Interface -->
-			<ScrollViewer Name="InterfacePanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="InterfacePanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Interface" Classes="pageTitle" />
@@ -434,7 +437,7 @@
 			</ScrollViewer>
 
 			<!-- Behavior -->
-			<ScrollViewer Name="BehaviorPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="BehaviorPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="Behavior" Classes="pageTitle" />
@@ -539,7 +542,7 @@
 			</ScrollViewer>
 
 			<!-- About -->
-			<ScrollViewer Name="AboutPanel" Classes="page hidden" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="AboutPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<Border Classes="settingsCard" Padding="18,16">
 						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">

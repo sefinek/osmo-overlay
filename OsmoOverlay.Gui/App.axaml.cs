@@ -15,6 +15,7 @@ public class App : Application
 		AvaloniaXamlLoader.Load(this);
 		AppThemes.Apply(OverlaySettingsStore.Load().AppTheme);
 		UiScale.Configure(this);
+		FocusRelease.Configure();
 	}
 
 	public override void OnFrameworkInitializationCompleted()

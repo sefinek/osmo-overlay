@@ -52,9 +52,6 @@ public partial class SettingsWindow : Window
 	/// <summary>The loaded recording's measured cruising speed (no correction), for the speed calibration; null when none is loaded.</summary>
 	public double? RecordingCruisingSpeedKmh { get; init; }
 
-	/// <summary>The speed correction as edited on the Speed tab - the main window saves it.</summary>
-	public double SpeedCorrectionPercent => SpeedEditor.Percent;
-
 	/// <summary>Whether the main window is rendering - an FFmpeg update that restarts the app is held off until it isn't.</summary>
 	public Func<bool> IsRendering { get; init; } = () => false;
 
@@ -67,10 +64,11 @@ public partial class SettingsWindow : Window
 		ThemeCombo.ItemsSource = AppThemes.Options;
 		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
 		AutoSaveCombo.ItemsSource = AutoSaveOptions;
+		_pages = [RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
+		RouteIntroMapSource.SelectionChanged += provider => _routeIntroProvider = provider;
 
 		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
-		AppVersionText.Text = $"OsmoOverlay v{appVersion}";
-		SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
+		AppVersionText.Text = SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
 
 		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
 		CoreVersionText.Text = $"Core v{coreVersion}";
@@ -82,14 +80,32 @@ public partial class SettingsWindow : Window
 			: "Config last updated: never";
 	}
 
-	public SettingsWindow(bool showWatermark, bool smoothGpsMotion, RouteIntroSettings routeIntro) : this()
+	/// <summary>Fills every page from the settings. RecordingCruisingSpeedKmh has to be set before.</summary>
+	public void Load(OverlaySettings settings)
 	{
-		ShowWatermarkCheck.IsChecked = showWatermark;
-		SmoothGpsMotionCheck.IsChecked = smoothGpsMotion;
+		ShowWatermarkCheck.IsChecked = settings.ShowWatermark;
+		SmoothGpsMotionCheck.IsChecked = settings.SmoothGpsMotion;
+		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
+		LoadRouteIntro(settings);
+		LoadExportSettings(settings);
+	}
 
+	/// <summary>The settings with everything edited here written in - the reverse of Load.</summary>
+	public OverlaySettings Apply(OverlaySettings settings)
+	{
+		return RouteIntro.ApplyTo(ApplyExportSettings(settings)) with
+		{
+			ShowWatermark = ShowWatermarkCheck.IsChecked == true,
+			SmoothGpsMotion = SmoothGpsMotionCheck.IsChecked == true,
+			SpeedCorrectionPercent = SpeedEditor.Percent
+		};
+	}
+
+	private void LoadRouteIntro(OverlaySettings settings)
+	{
+		var routeIntro = RouteIntroSettings.From(settings);
 		_routeIntroProvider = routeIntro.MapProviderId;
-		RouteIntroMapSource.Load(routeIntro.MapProviderId, OverlaySettingsStore.Load());
-		RouteIntroMapSource.SelectionChanged += provider => _routeIntroProvider = provider;
+		RouteIntroMapSource.Load(routeIntro.MapProviderId, settings);
 		ShowRouteIntroCheck.IsChecked = routeIntro.Enabled;
 		RouteIntroOptionsPanel.IsEnabled = routeIntro.Enabled;
 		RouteIntroDurationBox.Value = (decimal)routeIntro.DurationSeconds;
@@ -105,10 +121,8 @@ public partial class SettingsWindow : Window
 		RouteIntroColorBySpeedCheck.IsChecked = routeIntro.ColorBySpeed;
 	}
 
-	/// <summary>Fills the export options (Rendering category) - kept separate from the constructor's already long parameter list.</summary>
-	public void LoadExportSettings(OverlaySettings settings)
+	private void LoadExportSettings(OverlaySettings settings)
 	{
-		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
 		NvencPresetCombo.SelectedItem = NvencPresetOptions.FirstOrDefault(o => o.Value == settings.NvencPreset) ?? NvencPresetOptions[0];
 		BitrateCombo.SelectedItem = BitrateOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.OutputBitrateMultiplier) < 0.001)
 		                            ?? BitrateOptions[0];
@@ -128,8 +142,8 @@ public partial class SettingsWindow : Window
 		TimeFormatCombo.SelectedItem = PreviewTimeFormats.Options.First(o => o.Value == timeFormat);
 		RestoreWindowPlacementCheck.IsChecked = settings.RestoreWindowPlacement;
 		LayerRowsBox.Value = Math.Clamp(settings.LayerRowsVisible, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks);
-		LoadPreviewMonitors(settings.PreviewMonitor);
-		LoadSecondScreenMonitors(settings.SecondScreenMonitor);
+		LoadMonitors(PreviewMonitorCombo, "Same screen as the main window (default)", settings.PreviewMonitor);
+		LoadMonitors(SecondScreenMonitorCombo, "First screen other than the main window's (default)", settings.SecondScreenMonitor);
 		SecondScreenCheck.IsChecked = settings.SecondScreenEnabled;
 		SecondScreenMonitorCombo.IsEnabled = settings.SecondScreenEnabled;
 		ReopenLastProjectCheck.IsChecked = settings.ReopenLastProject;
@@ -140,26 +154,18 @@ public partial class SettingsWindow : Window
 		ShowProjectAssociation();
 	}
 
-	/// <summary>The screens connected now - a chosen one that's gone (see MonitorChoice) shows as the main window's.</summary>
-	private void LoadPreviewMonitors(string? chosen)
+	/// <summary>The screens connected now - a chosen one that's gone (see MonitorChoice) shows as the default.</summary>
+	private void LoadMonitors(ComboBox combo, string defaultLabel, string? chosen)
 	{
-		List<ChoiceOption<string?>> options = [new("Same screen as the main window (default)", null)];
+		List<ChoiceOption<string?>> options = [new(defaultLabel, null)];
 		options.AddRange(Screens.All.Select((screen, index) => new ChoiceOption<string?>(MonitorChoice.Describe(screen, index), MonitorChoice.KeyOf(screen))));
-		PreviewMonitorCombo.ItemsSource = options;
-		PreviewMonitorCombo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
+		combo.ItemsSource = options;
+		combo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
 	}
 
 	private void OnSecondScreenChanged(object? sender, RoutedEventArgs e)
 	{
 		SecondScreenMonitorCombo.IsEnabled = SecondScreenCheck.IsChecked == true;
-	}
-
-	private void LoadSecondScreenMonitors(string? chosen)
-	{
-		List<ChoiceOption<string?>> options = [new("First screen other than the main window's (default)", null)];
-		options.AddRange(Screens.All.Select((screen, index) => new ChoiceOption<string?>(MonitorChoice.Describe(screen, index), MonitorChoice.KeyOf(screen))));
-		SecondScreenMonitorCombo.ItemsSource = options;
-		SecondScreenMonitorCombo.SelectedItem = options.FirstOrDefault(o => o.Value == chosen) ?? options[0];
 	}
 
 	private void OnTimeFormatChanged(object? sender, SelectionChangedEventArgs e)
@@ -203,7 +209,7 @@ public partial class SettingsWindow : Window
 		MetadataPartsExpander.IsEnabled = enabled;
 	}
 
-	public OverlaySettings ApplyExportSettings(OverlaySettings settings)
+	private OverlaySettings ApplyExportSettings(OverlaySettings settings)
 	{
 		return settings with
 		{
@@ -237,10 +243,7 @@ public partial class SettingsWindow : Window
 		if (ThemeCombo.SelectedItem is ChoiceOption<string> option) AppThemes.Apply(option.Value);
 	}
 
-	public bool ShowWatermark => ShowWatermarkCheck.IsChecked == true;
-	public bool SmoothGpsMotion => SmoothGpsMotionCheck.IsChecked == true;
-
-	public RouteIntroSettings RouteIntro => new(
+	private RouteIntroSettings RouteIntro => new(
 		ShowRouteIntroCheck.IsChecked == true,
 		(double)(RouteIntroDurationBox.Value ?? 12),
 		RouteIntroDistanceCheck.IsChecked == true,
@@ -262,24 +265,24 @@ public partial class SettingsWindow : Window
 
 	private AppRelease? _latestRelease;
 
+	// The category pages in CategoryList's order - null while InitializeComponent runs (see OnCategoryChanged).
+	private readonly ScrollViewer[]? _pages;
+
 	/// <summary>
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
-	///     - switching category just swaps which one is shown instead of reparenting content.
+	///     - switching category just swaps which one is visible instead of reparenting content.
 	///     CategoryList's SelectedIndex="0" in XAML fires this event during InitializeComponent, before
-	///     the panel fields further down the visual tree have been assigned yet - harmless to skip then,
-	///     since RenderingPanel is already the one shown by default in XAML (every other panel starts
-	///     with the "hidden" class), matching SelectedIndex 0 without this handler's help.
+	///     the pages are known - harmless to skip then,
+	///     since RenderingPanel is already the one visible by default in XAML (every other panel starts
+	///     with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (RenderingPanel is null || SpeedPanel is null || RouteIntroPanel is null || InterfacePanel is null || BehaviorPanel is null ||
-		    AboutPanel is null)
-			return;
+		if (_pages is null) return;
 
-		ScrollViewer[] pages = [RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
-		for (int i = 0; i < pages.Length; i++) pages[i].Classes.Set("hidden", i != CategoryList.SelectedIndex);
+		for (int i = 0; i < _pages.Length; i++) _pages[i].IsVisible = i == CategoryList.SelectedIndex;
 
-		if (CategoryList.SelectedIndex == 5 && !_updatesShown)
+		if (AboutPanel.IsVisible && !_updatesShown)
 		{
 			_updatesShown = true;
 			_ = ShowUpdatesAsync(UpdateChecks.Latest);

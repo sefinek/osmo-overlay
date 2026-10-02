@@ -78,6 +78,8 @@ public partial class MainWindow : Window
 	private bool _showWatermark;
 	private bool _smoothGpsMotion;
 	private FileSummary? _summary;
+	// MeasuredSpeeds' result for this summary and GPS smoothing - the whole recording is processed for it.
+	private (FileSummary Summary, bool SmoothGps, MeasuredSpeeds Speeds)? _measuredSpeeds;
 	// The input set SupportNotice was last shown for (ShowSupportNoticeAsync).
 	private string? _supportNoticeShownFor;
 	private bool _suppressOverlayEvents;
@@ -384,25 +386,25 @@ public partial class MainWindow : Window
 		ActionButton.IsEnabled = _inputPaths.Count > 0;
 	}
 
+	private sealed record MeasuredSpeeds(double? PeakKmh, double? CruisingKmh);
+
 	/// <summary>
-	///     The loaded recording's cruising speed as the GPS measured it (SpeedCalibration.CruisingSpeedKmh) - processed like the
-	///     preview (GPS smoothing included) but without the correction - for the speed calibration.
+	///     The loaded recording's speeds as the GPS measured them - processed like the preview (GPS smoothing included) but
+	///     without the correction: the highest sample (the Telemetry card adds the correction) and the cruising speed
+	///     (SpeedCalibration.CruisingSpeedKmh, for the speed calibration). Null where there is none.
 	/// </summary>
-	private double? RecordingCruisingSpeedKmh()
+	private MeasuredSpeeds RecordingSpeeds()
 	{
-		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return null;
+		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return new MeasuredSpeeds(null, null);
+		if (_measuredSpeeds is { } cached && ReferenceEquals(cached.Summary, _summary) && cached.SmoothGps == _smoothGpsMotion)
+			return cached.Speeds;
 
-		double cruising = SpeedCalibration.CruisingSpeedKmh(TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion));
-		return cruising > 0 ? cruising : null;
-	}
-
-	/// <summary>The loaded recording's top speed as the overlay shows it: the highest sample, with the correction.</summary>
-	private double? RecordingPeakSpeedKmh()
-	{
-		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return null;
-
-		double peak = TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion).Max(f => f.SpeedKmh);
-		return peak > 0 ? peak : null;
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion);
+		double peak = derived.Max(f => f.SpeedKmh);
+		double cruising = SpeedCalibration.CruisingSpeedKmh(derived);
+		var speeds = new MeasuredSpeeds(peak > 0 ? peak : null, cruising > 0 ? cruising : null);
+		_measuredSpeeds = (_summary, _smoothGpsMotion, speeds);
+		return speeds;
 	}
 
 	private void RefreshInputFilesList()
@@ -412,68 +414,40 @@ public partial class MainWindow : Window
 
 	private async void OnSettingsClick(object? sender, RoutedEventArgs e)
 	{
-		OverlaySettings currentSettings = OverlaySettingsStore.Load();
-		var settings = new SettingsWindow(_showWatermark, _smoothGpsMotion, RouteIntroSettings.From(currentSettings))
-			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingCruisingSpeedKmh = RecordingCruisingSpeedKmh() };
-		settings.LoadExportSettings(currentSettings);
+		OverlaySettings before = OverlaySettingsStore.Load();
+		var settings = new SettingsWindow
+			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingCruisingSpeedKmh = RecordingSpeeds().CruisingKmh };
+		settings.Load(before);
 		await settings.ShowDialog(this);
 
-		// Export options only matter at render time (RenderJob reads them from settings.json itself) and the Interface
-		// ones apply at startup or live (the time format), so unlike the settings below they never reopen the preview.
-		OverlaySettings beforeExportChanges = OverlaySettingsStore.Load();
-		OverlaySettings withExportChanges = settings.ApplyExportSettings(beforeExportChanges);
-		if (withExportChanges != beforeExportChanges) OverlaySettingsStore.Save(withExportChanges);
-		bool interfaceScaleChanged = Math.Abs(withExportChanges.InterfaceScale - beforeExportChanges.InterfaceScale) > 0.001;
-		SetTimeFormat(PreviewTimeFormats.Parse(withExportChanges.PreviewTimeFormat), false);
-		ApplyLayerRows(withExportChanges.LayerRowsVisible);
-		ApplySecondScreenSettings(withExportChanges);
-		ApplyAutoSave(withExportChanges.AutoSaveMinutes);
+		// Loaded again, as the window saves some things itself (shared map keys, the .ovproj association, the welcome
+		// window opened from it - whose values its controls show by then). Its own edits go on top, saved at once.
+		OverlaySettings saved = OverlaySettingsStore.Load();
+		OverlaySettings updated = settings.Apply(saved);
+		if (updated != saved) OverlaySettingsStore.Save(updated);
 
-		if (settings.ShowWatermark != _showWatermark)
+		// Export options only matter at render time (RenderJob reads them from settings.json itself) and the Interface
+		// ones apply at startup or live (the time format), so they never reopen the preview.
+		bool interfaceScaleChanged = Math.Abs(updated.InterfaceScale - saved.InterfaceScale) > 0.001;
+		SetTimeFormat(PreviewTimeFormats.Parse(updated.PreviewTimeFormat), false);
+		ApplyLayerRows(updated.LayerRowsVisible);
+		ApplySecondScreenSettings(updated);
+		ApplyAutoSave(updated.AutoSaveMinutes);
+
+		if (updated.ShowWatermark != _showWatermark)
 		{
-			_showWatermark = settings.ShowWatermark;
-			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ShowWatermark = _showWatermark });
+			_showWatermark = updated.ShowWatermark;
 			_previewPlayer.SetShowWatermark(_showWatermark);
 		}
 
-		// Saved unless the welcome window (opened from Settings) already saved its own value - then the Speed tab shows that one too.
-		if (Math.Abs(settings.SpeedCorrectionPercent - OverlaySettingsStore.Load().SpeedCorrectionPercent) > 1e-9)
-			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { SpeedCorrectionPercent = settings.SpeedCorrectionPercent });
-
-		// Unlike ShowWatermark, GPS smoothing and the speed correction are baked in at OpenAsync, so a change reopens the preview.
-		bool needsPreviewReopen = Math.Abs(OverlaySettingsStore.Load().SpeedCorrectionPercent - currentSettings.SpeedCorrectionPercent) > 1e-9;
-		if (settings.SmoothGpsMotion != _smoothGpsMotion)
-		{
-			_smoothGpsMotion = settings.SmoothGpsMotion;
-			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { SmoothGpsMotion = _smoothGpsMotion });
-			needsPreviewReopen = true;
-		}
+		// Unlike ShowWatermark, GPS smoothing, the speed correction and the route-intro card are baked in at OpenAsync,
+		// so a change reopens the preview.
+		bool needsPreviewReopen = updated.SmoothGpsMotion != _smoothGpsMotion ||
+		                          Math.Abs(updated.SpeedCorrectionPercent - before.SpeedCorrectionPercent) > 1e-9 ||
+		                          RouteIntroSettings.From(updated) != RouteIntroSettings.From(saved);
+		_smoothGpsMotion = updated.SmoothGpsMotion;
 
 		if (_summary is not null) ShowMaxSpeedInfo();
-
-		// Also baked in at OpenAsync (the route-intro card). Loaded fresh, since the blocks above may have saved
-		// already; OverlaySettings' structural equality then detects the whole group's change at once.
-		OverlaySettings beforeMapAndRouteIntroChanges = OverlaySettingsStore.Load();
-		OverlaySettings updatedSettings = beforeMapAndRouteIntroChanges with
-		{
-			ShowRouteIntro = settings.RouteIntro.Enabled,
-			RouteIntroDurationSeconds = settings.RouteIntro.DurationSeconds,
-			RouteIntroShowDistance = settings.RouteIntro.ShowDistance,
-			RouteIntroShowMaxSpeed = settings.RouteIntro.ShowMaxSpeed,
-			RouteIntroShowAvgSpeed = settings.RouteIntro.ShowAvgSpeed,
-			RouteIntroShowDate = settings.RouteIntro.ShowDate,
-			RouteIntroShowDuration = settings.RouteIntro.ShowDuration,
-			RouteIntroShowCameraModel = settings.RouteIntro.ShowCameraModel,
-			RouteIntroShowElevationGain = settings.RouteIntro.ShowElevationGain,
-			RouteIntroUnits = settings.RouteIntro.Units,
-			RouteIntroColorBySpeed = settings.RouteIntro.ColorBySpeed,
-			RouteIntroMapProvider = settings.RouteIntro.MapProviderId
-		};
-		if (updatedSettings != beforeMapAndRouteIntroChanges)
-		{
-			OverlaySettingsStore.Save(updatedSettings);
-			needsPreviewReopen = true;
-		}
 
 		if (needsPreviewReopen) await ReopenPreviewAsync();
 		// The picker in Settings writes the shared keys itself - the open preview picks them up here.

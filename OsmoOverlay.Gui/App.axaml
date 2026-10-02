@@ -69,6 +69,14 @@
 			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}" />
 			<Setter Property="CornerRadius" Value="6" />
 		</Style>
+		<Style Selector="Button /template/ ContentPresenter">
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="Background" Duration="0:0:0.12" />
+					<BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+				</Transitions>
+			</Setter>
+		</Style>
 		<Style Selector="Button:pointerover /template/ ContentPresenter">
 			<Setter Property="Background" Value="{StaticResource ControlHoverBrush}" />
 			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
@@ -132,15 +140,64 @@
 			<Setter Property="BorderThickness" Value="1" />
 			<Setter Property="CornerRadius" Value="6" />
 		</Style>
+		<Style Selector="TextBox /template/ Border#PART_BorderElement">
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+				</Transitions>
+			</Setter>
+		</Style>
 		<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="{Binding $parent[TextBox].Background}" />
 			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
 		</Style>
 		<Style Selector="TextBox:focus-within /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="{Binding $parent[TextBox].Background}" />
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+		</Style>
+
+		<Style Selector="NumericUpDown /template/ TextBox#PART_TextBox">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="NumericUpDown /template/ TextBox#PART_TextBox:pointerover /template/ Border#PART_BorderElement, NumericUpDown /template/ TextBox#PART_TextBox:focus-within /template/ Border#PART_BorderElement">
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="BorderBrush" Value="Transparent" />
+		</Style>
+		<Style Selector="ButtonSpinner /template/ RepeatButton#PART_DecreaseButton /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="CornerRadius" Value="0,5,5,0" />
+		</Style>
+		<Style Selector="NumericUpDown /template/ ButtonSpinner#PART_Spinner">
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+				</Transitions>
+			</Setter>
+		</Style>
+		<Style Selector="NumericUpDown:pointerover /template/ ButtonSpinner#PART_Spinner">
+			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
+		</Style>
+		<Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner#PART_Spinner">
 			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
 		</Style>
 		<Style Selector="ComboBox">
 			<Setter Property="Padding" Value="12,8" />
 			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="ComboBox /template/ Border#Background">
+			<Setter Property="Transitions">
+				<Transitions>
+					<BrushTransition Property="Background" Duration="0:0:0.12" />
+					<BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+				</Transitions>
+			</Setter>
+		</Style>
+		<Style Selector="ComboBox:pointerover /template/ Border#Background">
+			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
+		</Style>
+		<Style Selector="ComboBox:pressed /template/ Border#Background">
+			<Setter Property="Background" Value="{StaticResource ControlPressedBrush}" />
 		</Style>
 		<Style Selector="ComboBoxItem:selected /template/ ContentPresenter, ListBoxItem:selected /template/ ContentPresenter">
 			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />

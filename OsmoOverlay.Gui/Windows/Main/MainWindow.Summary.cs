@@ -334,7 +334,7 @@ public partial class MainWindow
 	/// </summary>
 	private void ShowMaxSpeedInfo()
 	{
-		if (!_availability.GpsFix || RecordingPeakSpeedKmh() is not { } measured)
+		if (!_availability.GpsFix || RecordingSpeeds().PeakKmh is not { } measured)
 		{
 			TeleMaxSpeed.Text = "-";
 			ToolTip.SetTip(TeleMaxSpeed, _summary?.Telemetry is null ? null : "No GPS fix in this recording.");
