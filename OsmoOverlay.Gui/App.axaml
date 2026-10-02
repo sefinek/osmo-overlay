@@ -45,7 +45,6 @@
 			<SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
 			<SolidColorBrush x:Key="DangerHoverBrush" Color="{StaticResource DangerHoverColor}" />
 			<SolidColorBrush x:Key="DangerPressedBrush" Color="{StaticResource DangerPressedColor}" />
-			<!-- Accent buttons: the mascot's blue fading into its cyan glow. AppThemes recolors the stops. -->
 			<LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
 				<GradientStop Offset="0" Color="{StaticResource AccentColor}" />
 				<GradientStop Offset="1" Color="{StaticResource AccentGlowColor}" />
@@ -178,6 +177,16 @@
 		<Style Selector="NumericUpDown /template/ TextBox#PART_TextBox:pointerover /template/ Border#PART_BorderElement, NumericUpDown /template/ TextBox#PART_TextBox:focus-within /template/ Border#PART_BorderElement">
 			<Setter Property="BorderThickness" Value="0" />
 			<Setter Property="BorderBrush" Value="Transparent" />
+		</Style>
+		<Style Selector="NumericUpDown /template/ TextBox#PART_TextBox:disabled /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="Transparent" />
+		</Style>
+		<Style Selector="ButtonSpinner /template/ RepeatButton:disabled /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="{Binding $parent[ButtonSpinner].Background}" />
+		</Style>
+		<Style Selector="NumericUpDown:disabled /template/ ButtonSpinner#PART_Spinner">
+			<Setter Property="Background" Value="{DynamicResource TextControlBackgroundDisabled}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushDisabled}" />
 		</Style>
 		<Style Selector="ButtonSpinner /template/ RepeatButton#PART_DecreaseButton /template/ ContentPresenter#PART_ContentPresenter">
 			<Setter Property="CornerRadius" Value="0,5,5,0" />

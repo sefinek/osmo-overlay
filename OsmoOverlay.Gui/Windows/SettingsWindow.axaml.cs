@@ -272,9 +272,8 @@ public partial class SettingsWindow : Window
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
 	///     - switching category just swaps which one is visible instead of reparenting content.
 	///     CategoryList's SelectedIndex="0" in XAML fires this event during InitializeComponent, before
-	///     the pages are known - harmless to skip then,
-	///     since RenderingPanel is already the one visible by default in XAML (every other panel starts
-	///     with IsVisible="False"), matching SelectedIndex 0 without this handler's help.
+	///     the pages are known - harmless to skip then, since RenderingPanel is already the one visible by
+	///     default in XAML (every other panel starts with IsVisible="False"), matching SelectedIndex 0.
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{

@@ -71,7 +71,6 @@
 	</Window.Resources>
 
 	<Window.Styles>
-		<!-- Sidebar -->
 		<Style Selector="ListBox#CategoryList">
 			<Setter Property="Background" Value="Transparent" />
 			<Setter Property="BorderThickness" Value="0" />
@@ -81,7 +80,6 @@
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
 		</Style>
 
-		<!-- Page -->
 		<Style Selector="TextBlock.pageTitle">
 			<Setter Property="FontSize" Value="22" />
 			<Setter Property="FontWeight" Value="Bold" />
@@ -95,7 +93,6 @@
 			<Setter Property="Margin" Value="4,6,0,-4" />
 		</Style>
 
-		<!-- A card of setting rows: title and description on the left, the control on the right -->
 		<Style Selector="Border.settingsCard">
 			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
 			<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
@@ -139,7 +136,6 @@
 	</Window.Styles>
 
 	<Grid ColumnDefinitions="210,*">
-		<!-- Sidebar -->
 		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
 			<DockPanel Margin="12,18,12,14">
 				<TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
@@ -186,7 +182,6 @@
 		</Border>
 
 		<Grid Grid.Column="1">
-			<!-- Rendering -->
 			<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
@@ -305,7 +300,6 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- Speed -->
 			<ScrollViewer Name="SpeedPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
@@ -319,7 +313,6 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- Route intro -->
 			<ScrollViewer Name="RouteIntroPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
@@ -386,7 +379,6 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- Interface -->
 			<ScrollViewer Name="InterfacePanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
@@ -433,7 +425,6 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- Behavior -->
 			<ScrollViewer Name="BehaviorPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
@@ -538,7 +529,6 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- About -->
 			<ScrollViewer Name="AboutPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<Border Classes="settingsCard" Padding="18,16">

@@ -324,8 +324,6 @@
 			<Setter Property="BorderThickness" Value="2" />
 			<Setter Property="CornerRadius" Value="4" />
 		</Style>
-		<!-- A widget under the pointer: dashes marching round its box and its name above it, faded in. The march runs only
-		     while shown, so a hidden outline costs no redraws. Dash lengths are in stroke widths: 4 + 3 = one period of 7. -->
 		<Style Selector="Rectangle.hoverOutline">
 			<Setter Property="Stroke" Value="{StaticResource AccentBrush}" />
 			<Setter Property="StrokeThickness" Value="1.5" />
@@ -2033,7 +2031,6 @@
 		</Grid>
 
 		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
-			<!-- Column 0 is LayerTimeline.HeaderWidth wide (set in WireLayers): the tracks' names (the ruler's slot holds the new-layer button), the layers' own headers under them. -->
 			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
 				<StackPanel Grid.Row="0" Grid.Column="0" Background="{StaticResource ControlBrush}">
 					<Border Height="{x:Static local:PreviewTimeline.RulerHeight}">

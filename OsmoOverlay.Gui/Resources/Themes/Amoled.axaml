@@ -1,9 +1,5 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<!--
-		Pure black backgrounds for OLED screens: unlit pixels, and the most contrast.
-		Every theme defines the same keys (AppThemes applies one over another); the brushes are App.axaml's.
-	-->
 	<Color x:Key="WindowBackgroundColor">#000000</Color>
 	<Color x:Key="SurfaceColor">#0B0B0D</Color>
 	<Color x:Key="SurfaceInsetColor">#070708</Color>

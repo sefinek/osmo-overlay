@@ -1,9 +1,5 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<!--
-		Graphite greys with a hint of cool blue, layered so cards and controls stand off the window - the default.
-		Every theme defines the same keys (AppThemes applies one over another); the brushes are App.axaml's.
-	-->
 	<Color x:Key="WindowBackgroundColor">#101115</Color>
 	<Color x:Key="SurfaceColor">#17181D</Color>
 	<Color x:Key="SurfaceInsetColor">#131418</Color>
