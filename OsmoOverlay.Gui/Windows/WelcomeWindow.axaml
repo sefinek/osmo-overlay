@@ -59,11 +59,11 @@
 			<Grid RowDefinitions="*,Auto" Margin="20,24">
 				<StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="14">
 					<Panel Width="200" Height="200">
-						<Ellipse Width="180" Height="180">
+						<Ellipse Width="180" Height="180" Opacity="0.6">
 							<Ellipse.Fill>
 								<RadialGradientBrush>
 									<GradientStop Offset="0" Color="{StaticResource AccentCalloutBorderColor}" />
-									<GradientStop Offset="1" Color="Transparent" />
+									<GradientStop Offset="1" Color="{StaticResource AccentGlowFadeColor}" />
 								</RadialGradientBrush>
 							</Ellipse.Fill>
 						</Ellipse>

@@ -33,6 +33,7 @@
 			<Color x:Key="AccentPressedColor">#2E7ECC</Color>
 			<Color x:Key="AccentSubtleColor">#172537</Color>
 			<Color x:Key="AccentCalloutBorderColor">#26405C</Color>
+			<Color x:Key="AccentGlowFadeColor">#0026405C</Color>
 			<Color x:Key="SuccessColor">#3EBE6E</Color>
 			<Color x:Key="SuccessHoverColor">#5CD98A</Color>
 			<Color x:Key="SuccessPressedColor">#2E9256</Color>
