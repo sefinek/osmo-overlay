@@ -2,10 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="using:OsmoOverlay.Gui"
-        mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="520"
         x:Class="OsmoOverlay.Gui.ToolsWindow"
-        Width="820" SizeToContent="Height" CanResize="False"
+        Width="780" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
@@ -13,168 +12,88 @@
 
 	<Window.Styles>
 		<Style Selector="Border.toolCard">
-			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-			<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
-			<Setter Property="BorderThickness" Value="1" />
-			<Setter Property="CornerRadius" Value="12" />
-			<Setter Property="Padding" Value="18,16" />
-			<Setter Property="Transitions">
-				<Transitions>
-					<BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
-				</Transitions>
-			</Setter>
-		</Style>
-		<Style Selector="Border.toolCard:pointerover">
-			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
-		</Style>
-		<Style Selector="Border.iconBadge">
-			<Setter Property="Width" Value="36" />
-			<Setter Property="Height" Value="36" />
-			<Setter Property="CornerRadius" Value="10" />
-			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
-			<Setter Property="VerticalAlignment" Value="Top" />
-		</Style>
-		<Style Selector="Border.iconBadge > local|IconView">
-			<Setter Property="Width" Value="18" />
-			<Setter Property="Height" Value="18" />
-			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
-			<Setter Property="HorizontalAlignment" Value="Center" />
-			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Padding" Value="16,14" />
 		</Style>
 		<Style Selector="TextBlock.toolTitle">
-			<Setter Property="FontSize" Value="15" />
+			<Setter Property="FontSize" Value="14" />
 			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Opacity" Value="0.9" />
+			<Setter Property="Margin" Value="0,0,0,6" />
 		</Style>
-		<Style Selector="TextBlock.toolText">
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-			<Setter Property="TextWrapping" Value="Wrap" />
-			<Setter Property="LineHeight" Value="19" />
-		</Style>
-		<Style Selector="Border.tag">
-			<Setter Property="Background" Value="{StaticResource SuccessSubtleBrush}" />
-			<Setter Property="CornerRadius" Value="8" />
-			<Setter Property="Padding" Value="8,2" />
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="HorizontalAlignment" Value="Left" />
-		</Style>
-		<Style Selector="Border.tag > TextBlock">
-			<Setter Property="FontSize" Value="11" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+		<Style Selector="TextBlock.hint">
+			<Setter Property="LineHeight" Value="18" />
 		</Style>
 		<Style Selector="StackPanel.toolActions">
 			<Setter Property="Orientation" Value="Horizontal" />
 			<Setter Property="Spacing" Value="8" />
-			<Setter Property="Margin" Value="0,16,0,0" />
+			<Setter Property="Margin" Value="0,14,0,0" />
 		</Style>
 	</Window.Styles>
 
-	<StackPanel Margin="24,22,24,20" Spacing="14">
-		<StackPanel>
-			<TextBlock Text="Tools" FontSize="22" FontWeight="Bold" />
-			<TextBlock Text="Standalone helpers for your camera files - none of them touches a render."
-			           Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
-		</StackPanel>
-
-		<TextBlock Classes="sectionLabel" Text="VIDEO AND AUDIO" Margin="4,4,0,-4" />
+	<StackPanel Margin="20" Spacing="12">
+		<TextBlock Classes="sectionLabel" Text="VIDEO &amp; AUDIO" />
 
 		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-			<Border Grid.Row="0" Grid.Column="0" Classes="toolCard">
+			<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
 				<DockPanel>
-					<Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,10">
-						<Border Classes="iconBadge">
-							<local:IconView Data="{StaticResource IconEye}" />
-						</Border>
-						<TextBlock Grid.Column="1" Classes="toolTitle" Text="Fix color tags" />
-						<Border Grid.Column="2" Classes="tag">
-							<TextBlock Text="LOSSLESS" />
-						</Border>
-					</Grid>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Fix color tags" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="SelectColorTagFileButton" Content="Select file..." Classes="accent" Click="OnSelectColorTagFileClick" />
+						<Button Name="SelectColorTagFileButton" Content="Select file..." Click="OnSelectColorTagFileClick" />
 					</StackPanel>
-					<TextBlock Classes="toolText"
-					           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged, so some players guess the wrong colors. Rewrites the tag with a stream copy - no re-encode." />
+					<TextBlock Classes="hint"
+					           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. Rewrites the tag with a lossless stream copy - no re-encode." />
 				</DockPanel>
 			</Border>
 
-			<Border Grid.Row="0" Grid.Column="1" Classes="toolCard">
+			<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
 				<DockPanel>
-					<Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,10">
-						<Border Classes="iconBadge">
-							<local:IconView Data="{StaticResource IconFile}" />
-						</Border>
-						<TextBlock Grid.Column="1" Classes="toolTitle" Text="Remove metadata" />
-						<Border Grid.Column="2" Classes="tag">
-							<TextBlock Text="LOSSLESS" />
-						</Border>
-					</Grid>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Remove metadata" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="SelectStripFileButton" Content="Select file..." Classes="accent" Click="OnSelectStripFileClick" />
+						<Button Name="SelectStripFileButton" Content="Select file..." Click="OnSelectStripFileClick" />
 					</StackPanel>
-					<TextBlock Classes="toolText"
-					           Text="A copy safe to share: no GPS track, camera serial number, recording date, timecode or thumbnail. Picture, sound, color and rotation stay as they are." />
+					<TextBlock Classes="hint"
+					           Text="Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy)." />
 				</DockPanel>
 			</Border>
 
-			<Border Grid.Row="1" Grid.Column="0" Classes="toolCard">
+			<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
 				<DockPanel>
-					<Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,10">
-						<Border Classes="iconBadge">
-							<local:IconView Data="{StaticResource IconVolume}" />
-						</Border>
-						<TextBlock Grid.Column="1" Classes="toolTitle" Text="Camera microphone (.AAC)" />
-						<Border Grid.Column="2" Classes="tag">
-							<TextBlock Text="LOSSLESS" />
-						</Border>
-					</Grid>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Camera microphone audio (.AAC)" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="ConvertAudioWavButton" Content="To WAV..." Classes="accent" Click="OnConvertAudioWavClick" />
+						<Button Name="ConvertAudioWavButton" Content="To WAV..." Click="OnConvertAudioWavClick" />
 						<Button Name="ConvertAudioM4aButton" Content="To M4A..." Click="OnConvertAudioM4aClick" />
 					</StackPanel>
-					<TextBlock Classes="toolText"
-					           Text="With an external mic, the camera saves its own microphones as an .AAC file Vegas Pro and Audacity can't open. Converts it next to the original, checked sample by sample. WAV works everywhere; M4A is 10x smaller." />
+					<TextBlock Classes="hint"
+					           Text="With an external mic connected, the camera saves its built-in microphones as a separate .AAC file that Vegas Pro and Audacity can't open. Converts it without any quality loss (verified sample by sample), next to the original. WAV works everywhere; M4A keeps the original AAC data, 10x smaller." />
 				</DockPanel>
 			</Border>
 
-			<Border Grid.Row="1" Grid.Column="1" Classes="toolCard">
+			<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
 				<DockPanel>
-					<Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,10">
-						<Border Classes="iconBadge">
-							<local:IconView Data="{StaticResource IconGrid}" />
-						</Border>
-						<TextBlock Grid.Column="1" Classes="toolTitle" Text="Compare videos" />
-					</Grid>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Compare videos" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Content="Compare..." Classes="accent" Click="OnCompareVideosClick" />
+						<Button Content="Compare..." Click="OnCompareVideosClick" />
 					</StackPanel>
-					<TextBlock Classes="toolText"
-					           Text="Up to 6 files side by side: resolution, codec, color tags, bitrate and telemetry." />
+					<TextBlock Classes="hint"
+					           Text="Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side." />
 				</DockPanel>
 			</Border>
 		</Grid>
 
-		<TextBlock Classes="sectionLabel" Text="APP DATA" Margin="4,4,0,-4" />
+		<TextBlock Classes="sectionLabel" Text="APP DATA" Margin="0,8,0,0" />
 
-		<Border Classes="toolCard">
-			<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-				<Border Classes="iconBadge" VerticalAlignment="Center">
-					<local:IconView Data="{StaticResource IconGear}" />
-				</Border>
-				<StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-					<TextBlock Classes="toolTitle" Text="Data folder" />
-					<TextBlock Classes="toolText" Text="Presets, settings, map tiles, logs and the cached file analysis." />
-				</StackPanel>
-				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-					<Button Content="Open folder" Click="OnOpenDataFolderClick" />
+		<Border Classes="card toolCard">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+				           Text="Presets, settings, map tiles, logs and the cached file analysis." />
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+					<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
 					<Button Content="Clear cache" Click="OnClearCacheClick"
 					        ToolTip.Tip="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
 				</StackPanel>
 			</Grid>
 		</Border>
 
-		<Button HorizontalAlignment="Right" Content="Close" MinWidth="88" HorizontalContentAlignment="Center" Click="OnCloseClick" Margin="0,2,0,0" />
+		<Button HorizontalAlignment="Right" Content="Close" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
 	</StackPanel>
 </Window>
