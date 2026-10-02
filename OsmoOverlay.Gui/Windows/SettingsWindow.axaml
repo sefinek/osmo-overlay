@@ -74,21 +74,23 @@
 			<Setter Property="RenderTransform" Value="translateX(3px)" />
 		</Style>
 
-		<!-- Pages: all laid out on top of each other, switching fades and slides the new one in -->
-		<Style Selector="ScrollViewer.page">
-			<Setter Property="RenderTransform" Value="translateY(0px)" />
-			<Setter Property="Transitions">
-				<Transitions>
-					<DoubleTransition Property="Opacity" Duration="0:0:0.18" />
-					<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
-				</Transitions>
-			</Setter>
-		</Style>
+		<!-- Pages: the one shown fades and slides in; the one left goes at once, so it never flashes half-faded -->
 		<Style Selector="ScrollViewer.page.hidden">
-			<Setter Property="Opacity" Value="0" />
-			<Setter Property="RenderTransform" Value="translateY(10px)" />
-			<Setter Property="IsHitTestVisible" Value="False" />
-			<Setter Property="IsEnabled" Value="False" />
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+		<Style Selector="ScrollViewer.page.entering">
+			<Style.Animations>
+				<Animation Duration="0:0:0.22" Easing="CubicEaseOut" FillMode="Forward">
+					<KeyFrame Cue="0%">
+						<Setter Property="Opacity" Value="0" />
+						<Setter Property="TranslateTransform.Y" Value="10" />
+					</KeyFrame>
+					<KeyFrame Cue="100%">
+						<Setter Property="Opacity" Value="1" />
+						<Setter Property="TranslateTransform.Y" Value="0" />
+					</KeyFrame>
+				</Animation>
+			</Style.Animations>
 		</Style>
 		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />

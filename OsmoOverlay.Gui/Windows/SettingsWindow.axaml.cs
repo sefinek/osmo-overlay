@@ -275,9 +275,14 @@ public partial class SettingsWindow : Window
 		    AboutPanel is null)
 			return;
 
-		// "hidden" fades and slides a page out (SettingsWindow.axaml); every page stays laid out, so nothing jumps.
+		// "entering" runs the page's fade-in (SettingsWindow.axaml) when it starts to match - so it's taken off the others.
 		ScrollViewer[] pages = [RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
-		for (int i = 0; i < pages.Length; i++) pages[i].Classes.Set("hidden", i != CategoryList.SelectedIndex);
+		for (int i = 0; i < pages.Length; i++)
+		{
+			bool shown = i == CategoryList.SelectedIndex;
+			pages[i].Classes.Set("hidden", !shown);
+			pages[i].Classes.Set("entering", shown);
+		}
 
 		if (CategoryList.SelectedIndex == 5 && !_updatesShown)
 		{
