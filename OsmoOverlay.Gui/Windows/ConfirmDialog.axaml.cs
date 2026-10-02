@@ -108,7 +108,7 @@ public partial class ConfirmDialog : Window
 		art.IsVisible = true;
 		KindArt.IsVisible = true;
 		KindDot.IsVisible = false;
-		Width = 600;
+		Width = 620;
 	}
 
 	private static string ButtonClassFor(DialogKind kind)
