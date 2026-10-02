@@ -29,6 +29,7 @@
   <ItemGroup>
     <None Include="NLog.config" CopyToOutputDirectory="PreserveNewest" />
     <AvaloniaResource Include="Assets\OsmoOverlay.ico" />
+    <AvaloniaResource Include="Assets\OsmoOverlay.png" />
   </ItemGroup>
 
 </Project>
