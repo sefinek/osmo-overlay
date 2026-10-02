@@ -3,120 +3,191 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        xmlns:local="using:OsmoOverlay.Gui"
         x:Class="OsmoOverlay.Gui.WelcomeWindow"
-        Width="900" Height="600" CanResize="False"
+        Width="860" Height="560" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
         Title="Welcome to OsmoOverlay">
 
-	<Grid ColumnDefinitions="270,*">
-		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}"
-		        BorderBrush="{StaticResource StrokeBrush}" BorderThickness="0,0,1,0">
-			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
-				<Panel Width="210" Height="210">
-					<Image Name="WelcomeArt" Source="/Assets/Welcome/Welcome.webp" />
-					<Image Name="ToolsArt" Source="/Assets/Welcome/Tools.webp" IsVisible="False" />
-					<Image Name="SpeedArt" Source="/Assets/Welcome/Speed.webp" IsVisible="False" />
-					<Image Name="PreferencesArt" Source="/Assets/Welcome/Preferences.webp" IsVisible="False" />
-					<Image Name="SupportArt" Source="/Assets/Welcome/Support.webp" IsVisible="False" />
-				</Panel>
-				<StackPanel Spacing="2" HorizontalAlignment="Center">
-					<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
-					<TextBlock Name="VersionText" Classes="hint" HorizontalAlignment="Center" />
+	<Window.Styles>
+		<Style Selector="TextBlock.stepTitle">
+			<Setter Property="FontSize" Value="24" />
+			<Setter Property="FontWeight" Value="Bold" />
+		</Style>
+		<Style Selector="TextBlock.stepLabel">
+			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="LetterSpacing" Value="1" />
+			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+		</Style>
+		<Style Selector="TextBlock.lead">
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="21" />
+		</Style>
+		<Style Selector="TextBlock.fieldLabel">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+		</Style>
+		<Style Selector="Button.ghost">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+		</Style>
+		<Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+		</Style>
+		<Style Selector="Button.wizard">
+			<Setter Property="MinWidth" Value="88" />
+			<Setter Property="Padding" Value="16,7" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+
+	<Grid ColumnDefinitions="260,*">
+		<Border Grid.Column="0" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
+			<Border.Background>
+				<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+					<GradientStop Offset="0" Color="{StaticResource AccentSubtleColor}" />
+					<GradientStop Offset="0.65" Color="{StaticResource SurfaceSunkenColor}" />
+				</LinearGradientBrush>
+			</Border.Background>
+			<Grid RowDefinitions="*,Auto" Margin="20,24">
+				<StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="14">
+					<Panel Width="200" Height="200">
+						<Ellipse Width="180" Height="180">
+							<Ellipse.Fill>
+								<RadialGradientBrush>
+									<GradientStop Offset="0" Color="{StaticResource AccentCalloutBorderColor}" />
+									<GradientStop Offset="1" Color="Transparent" />
+								</RadialGradientBrush>
+							</Ellipse.Fill>
+						</Ellipse>
+						<Image Name="WelcomeArt" Source="/Assets/Welcome/Welcome.webp" />
+						<Image Name="ToolsArt" Source="/Assets/Welcome/Tools.webp" IsVisible="False" />
+						<Image Name="SpeedArt" Source="/Assets/Welcome/Speed.webp" IsVisible="False" />
+						<Image Name="PreferencesArt" Source="/Assets/Welcome/Preferences.webp" IsVisible="False" />
+						<Image Name="SupportArt" Source="/Assets/Welcome/Support.webp" IsVisible="False" />
+					</Panel>
+					<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" />
 				</StackPanel>
-			</StackPanel>
+				<Border Grid.Row="1" HorizontalAlignment="Center" Padding="10,3" CornerRadius="10"
+				        Background="{StaticResource SubtleFillBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+					<TextBlock Name="VersionText" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+				</Border>
+			</Grid>
 		</Border>
 
 		<Grid Grid.Column="1" RowDefinitions="*,Auto">
-			<Grid Grid.Row="0" Margin="36,32,36,16">
-				<StackPanel Name="WelcomeStep" Spacing="14">
-					<TextBlock Text="Welcome to OsmoOverlay" FontSize="22" FontWeight="SemiBold" />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+			<StackPanel Grid.Row="0" Margin="32,28,32,12" Spacing="6">
+				<TextBlock Name="StepLabel" Classes="stepLabel" />
+
+				<StackPanel Name="WelcomeStep" Spacing="12">
+					<TextBlock Text="Welcome to OsmoOverlay" Classes="stepTitle" />
+					<TextBlock Classes="lead"
 					           Text="Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera." />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					<TextBlock Classes="lead"
 					           Text="A few quick steps get you ready for the first render: checking the tools, calibrating the speed and picking where videos go." />
-					<TextBlock Classes="hint" TextWrapping="Wrap"
-					           Text="Everything here can be changed later in Settings, and this guide can be opened again from there." />
+					<Border Classes="card" Margin="0,6,0,0" Padding="14,10">
+						<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+							<local:IconView Data="{StaticResource IconInfo}" Width="14" Height="14" VerticalAlignment="Top" Margin="0,2,0,0"
+							                Foreground="{StaticResource AccentHoverBrush}" />
+							<TextBlock Grid.Column="1" Classes="hint" Opacity="0.7" Margin="0"
+							           Text="Everything here can be changed later in Settings, and this guide can be opened again from there." />
+						</Grid>
+					</Border>
 				</StackPanel>
 
 				<StackPanel Name="ToolsStep" Spacing="12" IsVisible="False">
-					<TextBlock Text="Tools" FontSize="22" FontWeight="SemiBold" />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					<TextBlock Text="Tools" Classes="stepTitle" />
+					<TextBlock Classes="lead"
 					           Text="OsmoOverlay renders with FFmpeg. ExifTool is optional and only used for cameras whose telemetry it can't read on its own." />
-					<StackPanel Name="ToolRows" Spacing="6" Margin="0,6,0,0" />
-					<TextBlock Name="ToolsHint" Classes="hint" TextWrapping="Wrap" />
+					<StackPanel Name="ToolRows" Spacing="8" Margin="0,4,0,0" />
+					<TextBlock Name="ToolsHint" Classes="hint" />
 				</StackPanel>
 
-				<StackPanel Name="SpeedStep" Spacing="8" IsVisible="False">
-					<TextBlock Text="Speed calibration" FontSize="22" FontWeight="SemiBold" />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+				<StackPanel Name="SpeedStep" Spacing="10" IsVisible="False">
+					<TextBlock Text="Speed calibration" Classes="stepTitle" />
+					<TextBlock Classes="lead"
 					           Text="Speed from a camera's GPS is never 100% exact. Peaks tend to come out low, and the signal quality moves it either way." />
-					<TextBlock Classes="hint" TextWrapping="Wrap"
+					<TextBlock Classes="hint"
 					           Text="If you know what your vehicle really does, raise every shown speed by a percentage. It's a rough correction, so judge it over several rides rather than one peak." />
-					<TextBlock Text="Correction (%)" Classes="infoLabel" Margin="0,8,0,0" />
-					<NumericUpDown Name="CorrectionBox" Minimum="0" Increment="0.5" FormatString="0.#" HorizontalAlignment="Stretch" />
-					<TextBlock Text="Not sure? Work it out from a known speed" Classes="infoLabel" Margin="0,10,0,0" />
-					<Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
-						<StackPanel Grid.Column="0" Spacing="4">
-							<TextBlock Text="Real top speed" Classes="hint" />
-							<NumericUpDown Name="RealSpeedBox" Minimum="1" Maximum="500" Increment="1" FormatString="0.#" HorizontalAlignment="Stretch" />
+					<StackPanel Spacing="6" Margin="0,4,0,0">
+						<TextBlock Text="Correction (%)" Classes="fieldLabel" />
+						<NumericUpDown Name="CorrectionBox" Minimum="0" Increment="0.5" FormatString="0.#" HorizontalAlignment="Stretch" />
+					</StackPanel>
+					<Border Classes="card" Padding="14" Margin="0,4,0,0">
+						<StackPanel Spacing="8">
+							<TextBlock Text="Not sure? Work it out from a known speed" FontWeight="SemiBold" />
+							<Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
+								<StackPanel Grid.Column="0" Spacing="4">
+									<TextBlock Text="Real top speed" Classes="fieldLabel" />
+									<NumericUpDown Name="RealSpeedBox" Minimum="1" Maximum="500" Increment="1" FormatString="0.#" HorizontalAlignment="Stretch" />
+								</StackPanel>
+								<StackPanel Grid.Column="1" Spacing="4">
+									<TextBlock Text="Shown by the overlay" Classes="fieldLabel" />
+									<NumericUpDown Name="ShownSpeedBox" Minimum="1" Maximum="500" Increment="1" FormatString="0.#" HorizontalAlignment="Stretch" />
+								</StackPanel>
+								<Button Grid.Column="2" Content="Calculate" VerticalAlignment="Bottom" Click="OnCalculateClick" />
+							</Grid>
+							<TextBlock Classes="hint"
+							           Text="Same unit for both, e.g. your scooter's own speedometer and the top speed the overlay showed. The result fills in the field above." />
 						</StackPanel>
-						<StackPanel Grid.Column="1" Spacing="4">
-							<TextBlock Text="Shown by the overlay" Classes="hint" />
-							<NumericUpDown Name="ShownSpeedBox" Minimum="1" Maximum="500" Increment="1" FormatString="0.#" HorizontalAlignment="Stretch" />
-						</StackPanel>
-						<Button Grid.Column="2" Content="Calculate" VerticalAlignment="Bottom" Click="OnCalculateClick" />
-					</Grid>
-					<TextBlock Classes="hint" TextWrapping="Wrap"
-					           Text="Same unit for both, e.g. your scooter's own speedometer and the top speed the overlay showed. The result fills in the field above." />
+					</Border>
 				</StackPanel>
 
-				<StackPanel Name="PreferencesStep" Spacing="10" IsVisible="False">
-					<TextBlock Text="Rendering and files" FontSize="22" FontWeight="SemiBold" />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85" Text="Defaults for the first render. You can change any of them later." />
-					<CheckBox Name="SmoothGpsCheck" Content="Smooth GPS-derived motion" Margin="0,8,0,0" />
-					<CheckBox Name="WatermarkCheck" Content="Show attribution watermark" />
-					<TextBlock Text="Default output folder" Classes="infoLabel" Margin="0,10,0,0" />
-					<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-						<TextBox Grid.Column="0" Name="OutputFolderBox" IsReadOnly="True" PlaceholderText="Next to the source file" />
-						<Button Grid.Column="1" Content="Browse..." Click="OnBrowseOutputClick" />
-						<Button Grid.Column="2" Content="Clear" Click="OnClearOutputClick" />
-					</Grid>
-					<StackPanel Name="ProjectFilesGroup" Spacing="6" Margin="0,10,0,0">
-						<TextBlock Text="Project files" Classes="infoLabel" />
-						<CheckBox Name="ProjectAssociationCheck" Content="Open .ovproj project files with OsmoOverlay" />
+				<StackPanel Name="PreferencesStep" Spacing="12" IsVisible="False">
+					<TextBlock Text="Rendering and files" Classes="stepTitle" />
+					<TextBlock Classes="lead" Text="Defaults for the first render. You can change any of them later." />
+					<Border Classes="card" Padding="14,8" Margin="0,4,0,0">
+						<StackPanel Spacing="2">
+							<CheckBox Name="SmoothGpsCheck" Content="Smooth GPS-derived motion" />
+							<CheckBox Name="WatermarkCheck" Content="Show attribution watermark" />
+							<CheckBox Name="ProjectAssociationCheck" Content="Open .ovproj project files with OsmoOverlay" />
+						</StackPanel>
+					</Border>
+					<StackPanel Spacing="6" Margin="0,4,0,0">
+						<TextBlock Text="Default output folder" Classes="fieldLabel" />
+						<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+							<TextBox Grid.Column="0" Name="OutputFolderBox" IsReadOnly="True" PlaceholderText="Next to the source file" />
+							<Button Grid.Column="1" Content="Browse..." Click="OnBrowseOutputClick" />
+							<Button Grid.Column="2" Content="Clear" Click="OnClearOutputClick" />
+						</Grid>
 					</StackPanel>
 				</StackPanel>
 
 				<StackPanel Name="SupportStep" Spacing="12" IsVisible="False">
-					<TextBlock Text="You're all set" FontSize="22" FontWeight="SemiBold" />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					<TextBlock Text="You're all set" Classes="stepTitle" />
+					<TextBlock Classes="lead"
 					           Text="OsmoOverlay is made and maintained by one person, in spare time, and it's free for non-commercial use." />
-					<TextBlock TextWrapping="Wrap" Opacity="0.85"
+					<TextBlock Classes="lead"
 					           Text="If it saves you time, a star on GitHub helps other people find it, and it's the quickest way to say thanks. Supporting the author helps keep the project going." />
-					<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+					<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
 						<Button Content="Star on GitHub" Classes="accent" Tag="https://github.com/sefinek/osmo-overlay" Click="OnLinkButtonClick" />
 						<Button Content="Support on Ko-fi" Tag="https://ko-fi.com/sefinek" Click="OnLinkButtonClick" />
 					</StackPanel>
-					<StackPanel Orientation="Horizontal" Spacing="6">
-						<TextBlock Text="Other ways:" Classes="hint" />
-						<TextBlock Text="GitHub Sponsors" Classes="link" Tag="https://github.com/sponsors/sefinek" PointerPressed="OnLinkPressed" />
-						<TextBlock Text="Open Collective" Classes="link" Tag="https://opencollective.com/sefinek24" PointerPressed="OnLinkPressed" />
+					<WrapPanel Orientation="Horizontal">
+						<TextBlock Text="Other ways:" Classes="hint" Margin="0,0,8,0" />
+						<TextBlock Text="GitHub Sponsors" Classes="link" Margin="0,0,10,0" Tag="https://github.com/sponsors/sefinek" PointerPressed="OnLinkPressed" />
+						<TextBlock Text="Open Collective" Classes="link" Margin="0,0,10,0" Tag="https://opencollective.com/sefinek24" PointerPressed="OnLinkPressed" />
 						<TextBlock Text="PayPal" Classes="link" Tag="https://www.paypal.me/sefinek24" PointerPressed="OnLinkPressed" />
-					</StackPanel>
-					<TextBlock Classes="hint" TextWrapping="Wrap"
+					</WrapPanel>
+					<TextBlock Classes="hint" Margin="0,4,0,0"
 					           Text="Bugs and ideas are welcome in the repository's issues. Press Finish to save your choices and start." />
 				</StackPanel>
-			</Grid>
+			</StackPanel>
 
-			<Border Grid.Row="1" Padding="36,14" BorderBrush="{StaticResource StrokeBrush}" BorderThickness="0,1,0,0">
-				<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
-					<Button Grid.Column="0" Content="Skip" Click="OnSkipClick" />
-					<StackPanel Grid.Column="1" Name="StepDots" Orientation="Horizontal" Spacing="8"
+			<Border Grid.Row="1" Padding="24,12" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
+				<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+					<Button Grid.Column="0" Content="Skip" Classes="ghost" Click="OnSkipClick" />
+					<StackPanel Grid.Column="1" Name="StepDots" Orientation="Horizontal" Spacing="6"
 					            HorizontalAlignment="Center" VerticalAlignment="Center" />
-					<Button Grid.Column="2" Name="BackButton" Content="Back" Click="OnBackClick" />
-					<Button Grid.Column="3" Name="NextButton" Content="Next" Classes="accent" MinWidth="80" HorizontalContentAlignment="Center" Click="OnNextClick" />
+					<Button Grid.Column="2" Name="BackButton" Content="Back" Classes="wizard" Click="OnBackClick" />
+					<Button Grid.Column="3" Name="NextButton" Content="Next" Classes="accent wizard" Click="OnNextClick" />
 				</Grid>
 			</Border>
 		</Grid>
