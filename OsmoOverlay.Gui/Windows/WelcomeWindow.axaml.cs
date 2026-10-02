@@ -18,6 +18,7 @@ namespace OsmoOverlay.Gui;
 public partial class WelcomeWindow : Window
 {
 	private readonly Control[] _steps;
+	private readonly Control[] _arts;
 	private readonly Border[] _dots;
 	private int _step;
 
@@ -25,6 +26,7 @@ public partial class WelcomeWindow : Window
 	{
 		InitializeComponent();
 		_steps = [WelcomeStep, ToolsStep, SpeedStep, PreferencesStep, SupportStep];
+		_arts = [WelcomeArt, ToolsArt, SpeedArt, PreferencesArt, SupportArt];
 		_dots = [.. _steps.Select(_ => new Border { Width = 8, Height = 8, CornerRadius = new CornerRadius(4) })];
 		foreach (Border dot in _dots) StepDots.Children.Add(dot);
 
@@ -54,6 +56,7 @@ public partial class WelcomeWindow : Window
 		for (int i = 0; i < _steps.Length; i++)
 		{
 			_steps[i].IsVisible = i == step;
+			_arts[i].IsVisible = i == step;
 			_dots[i].Background = i == step ? Palette.Accent : Palette.StrokeStrong;
 		}
 

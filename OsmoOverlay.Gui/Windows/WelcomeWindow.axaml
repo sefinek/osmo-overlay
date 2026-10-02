@@ -13,10 +13,15 @@
 	<Grid ColumnDefinitions="330,*">
 		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}"
 		        BorderBrush="{StaticResource StrokeBrush}" BorderThickness="0,0,1,0">
-			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="14">
-				<Image Source="/Assets/OsmoOverlay.png" Width="96" Height="96" Opacity="0.9" />
+			<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
+				<Panel Width="280" Height="280">
+					<Image Name="WelcomeArt" Source="/Assets/Welcome/Welcome.webp" />
+					<Image Name="ToolsArt" Source="/Assets/Welcome/Tools.webp" IsVisible="False" />
+					<Image Name="SpeedArt" Source="/Assets/Welcome/Speed.webp" IsVisible="False" />
+					<Image Name="PreferencesArt" Source="/Assets/Welcome/Preferences.webp" IsVisible="False" />
+					<Image Name="SupportArt" Source="/Assets/OsmoOverlay.png" Width="96" Height="96" Opacity="0.9" IsVisible="False" />
+				</Panel>
 				<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
-				<TextBlock Text="Illustration goes here" Classes="hint" HorizontalAlignment="Center" />
 			</StackPanel>
 		</Border>
 
