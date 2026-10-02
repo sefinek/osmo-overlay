@@ -608,7 +608,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// </summary>
 	private static SKRect? RoundWidgetBounds(OverlayElement element)
 	{
-		const float ringHalfStroke = 1.5f;
+		const float ringHalfStroke = OverlayElementBounds.RingHalfStroke;
 		float radius = element switch
 		{
 			MapWidgetElement => OverlayElementBounds.MapRadius,

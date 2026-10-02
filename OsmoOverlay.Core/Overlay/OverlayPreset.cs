@@ -20,19 +20,21 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		const float height = OverlayElementBounds.ReferenceHeight;
 		const float m = OverlayElementBounds.Margin;
 
-		// Widgets sit with their visible edge on the margin, not their nominal radius: a gauge's band, a panel's ring and
-		// a text's cap height reach a little past (or stop short of) the anchor-based box.
-		float speedCx = width - m - (OverlayElementBounds.SpeedRadius + 10);
+		// Widgets sit with their visible edge (OverlayRenderer.MeasureElement at 4K) on a guide - the margin or the first
+		// third line - not their nominal radius: a gauge's band, a panel's ring and a text's cap height or side bearing
+		// reach a little past (or stop short of) the anchor-based box. The small offsets below are those differences.
+		float firstThirdY = m + (height - m * 2) / 3;
+
+		float speedCx = width - m - (OverlayElementBounds.SpeedRadius - 2);
 		float speedCy = height - m - (OverlayElementBounds.SpeedRadius - 2);
 		float rollCy = speedCy - (OverlayElementBounds.SpeedRadius + OverlayElementBounds.TiltRadius + 56);
 		// Beside the roll gauge, toward the middle.
 		float pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40);
 
-		float statsX = m;
 		float dateY = m + 34;
-		float elevationY = dateY + 100;
-		float gradientY = elevationY + 220;
-		float distanceY = gradientY + 220;
+		float distanceY = firstThirdY - 99;
+		float gradientY = distanceY - 220;
+		float elevationY = gradientY - 220;
 		// Appended after the always-visible stats column instead of spliced between DateTimeText and
 		// Elevation - it's off by default, so it must not shift anything else's default position just
 		// to make room for it.
@@ -43,12 +45,14 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		float cameraModelY = elapsedY + 110;
 		float tripStatY = cameraModelY + 150;
 
-		float mapCx = m + (OverlayElementBounds.MapRadius + 2);
-		float mapCy = height - m - (OverlayElementBounds.MapRadius + 2);
+		const float ring = OverlayElementBounds.RingHalfStroke;
+		float mapCx = m + (OverlayElementBounds.MapRadius + ring);
+		float mapCy = height - m - (OverlayElementBounds.MapRadius + ring);
 		float compassCx = mapCx + (OverlayElementBounds.MapRadius + 40 + OverlayElementBounds.CompassRadius);
+		float compassCy = height - m - (OverlayElementBounds.CompassRadius + ring);
 		float gMeterCx = width - m - (OverlayElementBounds.GMeterRadius + 3);
 		float gMeterCy = m + (OverlayElementBounds.GMeterRadius + 3);
-		float sunCx = width - m - OverlayElementBounds.SunRadius;
+		float sunCx = width - m - (OverlayElementBounds.SunRadius + 2);
 		float sunCy = m + OverlayElementBounds.GMeterRadius * 2 + OverlayElementBounds.SunRadius + 40;
 		// Centered along the bottom edge, clear of Compass (bottom-left) and SpeedGauge (bottom-right)
 		// at their default positions.
@@ -60,17 +64,18 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 
 		List<OverlayElement> elements =
 		[
-			new DateTimeTextElement { X = statsX, Y = dateY },
-			new ElevationElement { X = statsX, Y = elevationY },
-			new GradientElement { X = statsX, Y = gradientY },
-			new DistanceElement { X = statsX, Y = distanceY },
+			new DateTimeTextElement { X = m, Y = dateY },
+			// A stat's label starts a pixel in ("ELEVATION") or out ("DISTANCE") of its anchor.
+			new ElevationElement { X = m - 1, Y = elevationY },
+			new GradientElement { X = m, Y = gradientY },
+			new DistanceElement { X = m + 1, Y = distanceY },
 			// The ones below are off by default; each sits in its own slot so enabling it moves nothing.
-			new UtcTimeTextElement { X = statsX, Y = utcY, Visible = false },
-			new CameraInfoElement { X = statsX, Y = cameraInfoY, Visible = false },
-			new ElapsedTimeTextElement { X = statsX, Y = elapsedY, Visible = false },
-			new CameraModelTextElement { X = statsX, Y = cameraModelY, Visible = false },
+			new UtcTimeTextElement { X = m, Y = utcY, Visible = false },
+			new CameraInfoElement { X = m, Y = cameraInfoY, Visible = false },
+			new ElapsedTimeTextElement { X = m, Y = elapsedY, Visible = false },
+			new CameraModelTextElement { X = m, Y = cameraModelY, Visible = false },
 			// MapWidget takes the bottom-left spot, so this sits one slot over.
-			new CompassElement { X = compassCx, Y = height - m - OverlayElementBounds.CompassRadius, Visible = false },
+			new CompassElement { X = compassCx, Y = compassCy, Visible = false },
 			// GMeter takes the top-right spot, so this sits one slot down.
 			new SunWidgetElement { X = sunCx, Y = sunCy, Visible = false },
 			new SpeedGaugeElement { X = speedCx, Y = speedCy },
@@ -90,8 +95,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			// The rest are off by default - added after the layout above, so they mustn't move or cover any of it.
 			new PitchGaugeElement { X = pitchCx, Y = rollCy, Visible = false },
 			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },
-			new TripStatElement { X = statsX, Y = tripStatY, Visible = false },
-			new TextElement { X = width / 2f, Y = m + 40, Visible = false },
+			new TripStatElement { X = m - 1, Y = tripStatY, Visible = false },
+			new TextElement { X = width / 2f, Y = dateY, Visible = false },
 			new ImageElement { X = width / 2f, Y = m, Visible = false }
 		];
 

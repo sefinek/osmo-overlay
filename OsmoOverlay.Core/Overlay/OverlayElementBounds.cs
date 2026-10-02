@@ -22,6 +22,8 @@ public static class OverlayElementBounds
 	public const float SpeedRadius = 260f;
 	public const float TiltRadius = 95f;
 	public const float MapRadius = 260f;
+	// Half the ring stroked round Map and Compass, which reaches past their radius.
+	public const float RingHalfStroke = 1.5f;
 	public const float GMeterRadius = 110f;
 	public const float LabelBelowRadiusOffset = 56f;
 	public const float LabelBelowRadiusPadding = LabelBelowRadiusOffset + 14f;
