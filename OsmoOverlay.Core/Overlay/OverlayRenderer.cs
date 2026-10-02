@@ -589,19 +589,22 @@ public sealed partial class OverlayRenderer : IDisposable
 		SKRect bounds = picture.CullRect;
 		if (bounds.IsEmpty) return null;
 
-		int width = (int)Math.Ceiling(bounds.Width), height = (int)Math.Ceiling(bounds.Height);
+		// Pixels on whole reference units: a grid shifted by CullRect's fractional edge (which comes from the platform's font)
+		// put an edge lying exactly on a unit into the next pixel on one OS and not on another.
+		int left = (int)Math.Floor(bounds.Left), top = (int)Math.Floor(bounds.Top);
+		int width = (int)Math.Ceiling(bounds.Right) - left, height = (int)Math.Ceiling(bounds.Bottom) - top;
 		if ((long)width * height > MeasureMaxPixels) return bounds;
 
 		using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Alpha8, SKAlphaType.Premul));
 		using (var raster = new SKCanvas(bitmap))
 		{
-			raster.Translate(-bounds.Left, -bounds.Top);
+			raster.Translate(-left, -top);
 			raster.DrawPicture(picture);
 		}
 
 		if (VisibleBounds(bitmap) is not { } visible) return null;
 
-		visible.Offset(bounds.Left, bounds.Top);
+		visible.Offset(left, top);
 		return visible;
 	}
 
