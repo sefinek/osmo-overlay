@@ -21,7 +21,10 @@
 					<Image Name="PreferencesArt" Source="/Assets/Welcome/Preferences.webp" IsVisible="False" />
 					<Image Name="SupportArt" Source="/Assets/Welcome/Support.webp" IsVisible="False" />
 				</Panel>
-				<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+				<StackPanel Spacing="2" HorizontalAlignment="Center">
+					<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+					<TextBlock Name="VersionText" Classes="hint" HorizontalAlignment="Center" />
+				</StackPanel>
 			</StackPanel>
 		</Border>
 

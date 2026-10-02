@@ -7,6 +7,7 @@ using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Updates;
 using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
@@ -29,6 +30,7 @@ public partial class WelcomeWindow : Window
 		_arts = [WelcomeArt, ToolsArt, SpeedArt, PreferencesArt, SupportArt];
 		_dots = [.. _steps.Select(_ => new Border { Width = 8, Height = 8, CornerRadius = new CornerRadius(4) })];
 		foreach (Border dot in _dots) StepDots.Children.Add(dot);
+		VersionText.Text = $"Version {AppUpdates.CurrentVersion}";
 
 		CorrectionBox.Maximum = (decimal)SpeedCalibration.MaxPercent;
 
