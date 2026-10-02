@@ -46,7 +46,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		UseRecordingButton.IsVisible = _recordingCruisingSpeedKmh is not null;
 		if (_recordingCruisingSpeedKmh is { } measured)
 		{
-			UseRecordingButton.Content = $"Reset to the loaded recording's cruising speed ({measured:0.##} km/h)";
+			UseRecordingButton.Content = string.Format(Strings.Calibration_UseRecording, measured);
 			ShownSpeedBox.Value = (decimal)Math.Round(measured, 2);
 		}
 
@@ -62,7 +62,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		RealSpeedBox.Value = null;
 		ShownSpeedBox.Value = null;
 		ResultText.Foreground = Palette.Success;
-		ResultText.Text = $"Correction set to {percent:0.0}%. It's saved with the other settings.";
+		ResultText.Text = string.Format(Strings.Calibration_Set, percent);
 		return true;
 	}
 
@@ -70,9 +70,8 @@ public partial class SpeedCalibrationEditor : UserControl
 	{
 		double percent = Percent;
 		CorrectionText.Text = percent > 0
-			? $"Every speed is raised by {percent:0.0}%: a measured 20 km/h is shown as {SpeedCalibration.Corrected(20, percent):0.0} km/h. " +
-			  "Distance, route and tilt keep the measured values."
-			: "Off - speeds are shown as the GPS measured them.";
+			? string.Format(Strings.Calibration_Raised, percent, SpeedCalibration.Corrected(20, percent))
+			: Strings.Calibration_Off;
 	}
 
 	private void UpdateCalculation()
@@ -85,16 +84,15 @@ public partial class SpeedCalibrationEditor : UserControl
 		ResultText.Foreground = _calculatedPercent is null ? Palette.TextMuted : Palette.TextPrimary;
 		if (_calculatedPercent is not { } percent)
 		{
-			ResultText.Text = "Example: the speedometer reads 25 at full speed, the GPS measured 22 - enter 25 and 22.";
+			ResultText.Text = Strings.Calibration_Example;
 			return;
 		}
 
 		double measured = (double)ShownSpeedBox.Value!.Value;
 		double corrected = SpeedCalibration.Corrected(measured, percent);
-		ApplyButton.Content = $"Use {percent:0.0}%";
+		ApplyButton.Content = string.Format(Strings.Calibration_Use, percent);
 		ResultText.Text = percent <= 0
-			? "The GPS already measured this speed or more - no correction needed."
-			: $"With {percent:0.0}% the measured {measured:0.##} becomes {corrected:0.##} - the widget shows {Math.Round(corrected, MidpointRounding.AwayFromZero):0}. " +
-			  "Rounded down to 0.1%, so it never comes out above the real speed.";
+			? Strings.Calibration_NoneNeeded
+			: string.Format(Strings.Calibration_Result, percent, measured, corrected, Math.Round(corrected, MidpointRounding.AwayFromZero));
 	}
 }

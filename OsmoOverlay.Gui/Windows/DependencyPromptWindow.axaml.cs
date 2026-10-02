@@ -25,7 +25,7 @@ public partial class DependencyPromptWindow : Window
 		{
 			var check = new CheckBox
 			{
-				Content = tool.IsOptional ? $"{tool.DisplayName} (optional)" : $"{tool.DisplayName} (required)",
+				Content = string.Format(tool.IsOptional ? Strings.DependencyPrompt_ToolOptional : Strings.DependencyPrompt_ToolRequired, tool.DisplayName),
 				IsChecked = true,
 				IsEnabled = tool.IsOptional && canAutoInstall
 			};
@@ -34,12 +34,9 @@ public partial class DependencyPromptWindow : Window
 		}
 
 		string optionalNote = missing.Any(t => t.IsOptional)
-			? " ExifTool is optional - it's only used for cameras whose telemetry OsmoOverlay can't read on its own."
+			? " " + Strings.DependencyPrompt_ExifToolOptional
 			: "";
-		MessageText.Text = canAutoInstall
-			? "OsmoOverlay needs the tools below to work. Install them now?" + optionalNote
-			: "OsmoOverlay needs the tools below, but no supported package manager was found. " +
-			  "Install them manually, then restart the app." + optionalNote;
+		MessageText.Text = (canAutoInstall ? Strings.DependencyPrompt_InstallNow : Strings.DependencyPrompt_InstallManually) + optionalNote;
 		InstallButton.IsVisible = canAutoInstall;
 
 		// Closing mid-install would leave the package manager running with nobody watching its result.
@@ -63,7 +60,7 @@ public partial class DependencyPromptWindow : Window
 		bool allSucceeded = true;
 		foreach ((ExternalTool tool, _) in _tools.Where(t => t.Check.IsChecked == true))
 		{
-			AppendLog($"Installing {tool.DisplayName}...");
+			AppendLog(string.Format(Strings.Welcome_InstallingTool, tool.DisplayName));
 			InstallResult result;
 			try
 			{
@@ -79,11 +76,11 @@ public partial class DependencyPromptWindow : Window
 		}
 
 		_installing = false;
-		AppendLog(allSucceeded ? "Done" : "Some installs failed - see log above");
-		InstallButton.Content = "Retry";
+		AppendLog(allSucceeded ? Strings.DependencyPrompt_Done : Strings.DependencyPrompt_SomeFailed);
+		InstallButton.Content = Strings.Welcome_Retry;
 		InstallButton.IsVisible = !allSucceeded;
 		InstallButton.IsEnabled = true;
-		SkipButton.Content = "Close";
+		SkipButton.Content = Strings.Tools_Close;
 		SkipButton.IsEnabled = true;
 	}
 

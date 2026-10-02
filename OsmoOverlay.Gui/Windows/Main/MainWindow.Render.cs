@@ -17,7 +17,7 @@ public partial class MainWindow
 
 		if (string.IsNullOrWhiteSpace(normalOutputPath))
 		{
-			AppendLog("Enter an output file path");
+			AppendLog(Strings.Render_EnterOutputPath);
 			return;
 		}
 
@@ -47,14 +47,14 @@ public partial class MainWindow
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
 			GreenScreen: greenScreen, CutOuts: cutOuts, Reframe: _reframe);
 
-		AppendLog(greenScreen ? "Mode: green screen (HUD only, solid background, no audio)" : "Mode: normal");
-		AppendLog($"Output: {outputPath}");
-		AppendLog($"Encoder: {_detectedEncoder}, cuts: {(HasCuts ? DescribeCuts() : "none, whole recording")}");
+		AppendLog(greenScreen ? Strings.Render_ModeGreenScreen : Strings.Render_ModeNormal);
+		AppendLog(string.Format(Strings.Render_LogOutput, outputPath));
+		AppendLog(string.Format(Strings.Render_LogEncoder, _detectedEncoder, HasCuts ? DescribeCuts() : Strings.Render_NoCuts));
 		string? presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
-		AppendLog($"Overlay preset: {presetName ?? "default (none loaded)"}");
+		AppendLog(string.Format(Strings.Render_LogPreset, presetName ?? Strings.Render_NoPreset));
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog($"CLI equivalent: {BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null)}");
+			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null)));
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -71,8 +71,8 @@ public partial class MainWindow
 		{
 			Progress.Value = 100;
 			string elapsedText = result.Elapsed.ToString(@"hh\:mm\:ss");
-			string sizeText = File.Exists(outputPath) ? FormatHelper.FormatBytes(new FileInfo(outputPath).Length) : "unknown";
-			AppendLog($"Done: {outputPath} (time: {elapsedText}, {sizeText})");
+			string sizeText = File.Exists(outputPath) ? FormatHelper.FormatBytes(new FileInfo(outputPath).Length) : Strings.Common_Unknown;
+			AppendLog(string.Format(Strings.Render_LogDone, outputPath, elapsedText, sizeText));
 
 			// "Matches the source" doesn't mean anything for a green-screen render - there's no source
 			// video in it to match (synthetic background, no audio) - so the Output card keeps showing
@@ -83,14 +83,14 @@ public partial class MainWindow
 
 			// User-facing surfaces (dialog, balloon) show just the filename - the full path is only
 			// useful for the log line above, where it's there to be pasted/searched, not read at a glance.
-			string summary = $"{Path.GetFileName(outputPath)}\nTime: {elapsedText} · Size: {sizeText}";
-			await NotifyRenderFinishedAsync("Render complete", summary, DialogKind.Success, outputPath);
+			string summary = Path.GetFileName(outputPath) + "\n" + string.Format(Strings.Render_DoneSummary, elapsedText, sizeText);
+			await NotifyRenderFinishedAsync(Strings.Render_CompleteTitle, summary, DialogKind.Success, outputPath);
 		}
 		else if (cts.Token.IsCancellationRequested)
 		{
 			// The user asked for this via the Cancel button - not a failure, so no red taskbar flag
 			// and no "render failed" dialog/balloon telling them something they already know.
-			AppendLog($"Cancelled: {result.ErrorMessage}");
+			AppendLog(string.Format(Strings.Render_LogCancelled, result.ErrorMessage));
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 		}
 		else
@@ -101,7 +101,7 @@ public partial class MainWindow
 			// overlay stays as a persistent "this needs attention" flag until the next Get Summary/
 			// Render click resets it, since there's no other natural moment to clear it.
 			TaskbarProgress.SetState(this, TaskbarProgress.State.Error);
-			await NotifyRenderFinishedAsync("Render failed", result.ErrorMessage ?? "Unknown error", DialogKind.Danger);
+			await NotifyRenderFinishedAsync(Strings.Render_FailedTitle, result.ErrorMessage ?? Strings.Render_UnknownError, DialogKind.Danger);
 		}
 
 		SetPhase(UiPhase.SummaryReady);
@@ -174,23 +174,22 @@ public partial class MainWindow
 		long required = RenderDiskSpace.RequiredBytes(estimate);
 		if (estimate <= 0 || RenderDiskSpace.AvailableBytes(outputPath) is not { } available || available >= required) return true;
 
-		AppendLog($"Low disk space: the render needs about {FormatHelper.FormatBytes(required)}, " +
-		          $"{FormatHelper.FormatBytes(available)} is free on the output's drive", LogLevel.Warn);
+		AppendLog(string.Format(Strings.Render_LogLowDisk, FormatHelper.FormatBytes(required), FormatHelper.FormatBytes(available)), LogLevel.Warn);
 		return await AskLowDiskSpaceAsync(outputPath, estimate, required, available);
 	}
 
 	internal async Task<bool> AskLowDiskSpaceAsync(string outputPath, long estimate, long required, long available)
 	{
-		const string title = "Not enough disk space";
+		string title = Strings.Render_LowDiskTitle;
 		string drive = Path.GetPathRoot(Path.GetFullPath(outputPath)) ?? outputPath;
-		string message = $"The render will be about {FormatHelper.FormatBytes(estimate)}, and finishing it can briefly need the same again - " +
-		                 $"{FormatHelper.FormatBytes(required)} in all. Only {FormatHelper.FormatBytes(available)} is free on {drive}.\n\n" +
-		                 "Free up some space or pick an output folder on another drive. If the drive fills up, the render fails.";
+		string message = string.Format(Strings.Render_LowDiskMessage, FormatHelper.FormatBytes(estimate), FormatHelper.FormatBytes(required),
+			FormatHelper.FormatBytes(available), drive);
 
 		SystemSound.PlayNotification();
-		if (!IsActive) BalloonNotifier.Show(this, title, $"{FormatHelper.FormatBytes(available)} free, about {FormatHelper.FormatBytes(required)} needed");
+		if (!IsActive)
+			BalloonNotifier.Show(this, title, string.Format(Strings.Render_LowDiskBalloon, FormatHelper.FormatBytes(available), FormatHelper.FormatBytes(required)));
 
-		return await ConfirmDialog.AskAsync(this, title, message, "Render anyway", DialogKind.Warning);
+		return await ConfirmDialog.AskAsync(this, title, message, Strings.Render_Anyway, DialogKind.Warning);
 	}
 
 	internal async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind, string? outputPath = null)
@@ -201,7 +200,7 @@ public partial class MainWindow
 			BalloonNotifier.Show(this, title, message);
 
 		await ConfirmDialog.ShowAsync(this, title, message, kind: kind,
-			secondaryText: outputPath is not null ? "Show in folder" : null,
+			secondaryText: outputPath is not null ? Strings.Common_ShowInFolder : null,
 			onSecondary: outputPath is not null ? () => ExplorerHelper.ShowInFolder(outputPath) : null);
 	}
 }

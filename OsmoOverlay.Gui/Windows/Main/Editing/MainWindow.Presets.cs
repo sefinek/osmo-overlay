@@ -28,7 +28,7 @@ public partial class MainWindow
 		if (_summary is null) return;
 
 		string id = Guid.NewGuid().ToString("N");
-		var preset = OverlayPreset.CreateDefault(id, $"Preset {_overlayPresets.Count + 1}");
+		var preset = OverlayPreset.CreateDefault(id, string.Format(Strings.Presets_NewName, _overlayPresets.Count + 1));
 		_overlayPresets.Add(preset);
 		_activePresetId = id;
 
@@ -42,7 +42,7 @@ public partial class MainWindow
 	{
 		OverlayPreset source = _overlayPresets.First(p => p.Id == _activePresetId);
 		string id = Guid.NewGuid().ToString("N");
-		var copy = new OverlayPreset(id, $"{source.Name} copy", [.. source.Elements]) { Layers = source.Layers?.ToList() };
+		var copy = new OverlayPreset(id, string.Format(Strings.Presets_CopyName, source.Name), [.. source.Elements]) { Layers = source.Layers?.ToList() };
 		_overlayPresets.Add(copy);
 		_activePresetId = id;
 
@@ -56,13 +56,13 @@ public partial class MainWindow
 	{
 		if (_overlayPresets.Count <= 1)
 		{
-			AppendLog("Cannot delete the only remaining preset");
+			AppendLog(Strings.Presets_CantDeleteLast);
 			return;
 		}
 
-		string presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name ?? "this preset";
-		bool confirmed = await ConfirmDialog.AskAsync(this, "Delete preset",
-			$"Delete \"{presetName}\"? This can't be undone.", "Delete", DialogKind.Danger);
+		string presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name ?? Strings.Presets_ThisPreset;
+		bool confirmed = await ConfirmDialog.AskAsync(this, Strings.Presets_DeleteTitle,
+			string.Format(Strings.Presets_DeleteMessage, presetName), Strings.Main_Delete, DialogKind.Danger);
 		if (!confirmed) return;
 
 		_overlayPresets.RemoveAll(p => p.Id == _activePresetId);
@@ -82,9 +82,8 @@ public partial class MainWindow
 		if (index < 0) return;
 
 		string presetName = _overlayPresets[index].Name;
-		bool confirmed = await ConfirmDialog.AskAsync(this, "Reset preset",
-			$"Reset \"{presetName}\" to the default layout? Your widget positions and settings for it will be lost.",
-			"Reset", DialogKind.Danger);
+		bool confirmed = await ConfirmDialog.AskAsync(this, Strings.Presets_ResetTitle,
+			string.Format(Strings.Presets_ResetMessage, presetName), Strings.Presets_Reset, DialogKind.Danger);
 		if (!confirmed) return;
 
 		_overlayPresets[index] = OverlayPreset.CreateDefault(_activePresetId, presetName);
@@ -105,15 +104,15 @@ public partial class MainWindow
 
 		IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
-			Title = "Export overlay preset",
+			Title = Strings.Presets_ExportTitle,
 			SuggestedFileName = preset.Name,
 			DefaultExtension = "json",
-			FileTypeChoices = [new FilePickerFileType("Overlay preset") { Patterns = ["*.json"] }]
+			FileTypeChoices = [new FilePickerFileType(Strings.Presets_FileType) { Patterns = ["*.json"] }]
 		});
 		if (file is null) return;
 
 		OverlayPresetStore.ExportToFile(preset, file.Path.LocalPath);
-		AppendLog($"Exported preset \"{preset.Name}\" to {file.Path.LocalPath}");
+		AppendLog(string.Format(Strings.Presets_Exported, preset.Name, file.Path.LocalPath));
 	}
 
 	/// <summary>Same shape as OnDuplicatePresetClick - a new id avoids colliding with a preset already on this machine.</summary>
@@ -125,16 +124,16 @@ public partial class MainWindow
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Import overlay preset",
+			Title = Strings.Presets_ImportTitle,
 			AllowMultiple = false,
-			FileTypeFilter = [new FilePickerFileType("Overlay preset") { Patterns = ["*.json"] }]
+			FileTypeFilter = [new FilePickerFileType(Strings.Presets_FileType) { Patterns = ["*.json"] }]
 		});
 		if (files.Count == 0) return;
 
 		OverlayPreset? imported = OverlayPresetStore.ImportFromFile(files[0].Path.LocalPath);
 		if (imported is null)
 		{
-			AppendLog($"Failed to import preset from {files[0].Path.LocalPath} - see the log for details");
+			AppendLog(string.Format(Strings.Presets_ImportFailed, files[0].Path.LocalPath));
 			return;
 		}
 
@@ -147,7 +146,7 @@ public partial class MainWindow
 		RefreshWidgetList();
 		ShowLayout();
 		SaveOverlayPresets();
-		AppendLog($"Imported preset \"{preset.Name}\"");
+		AppendLog(string.Format(Strings.Presets_Imported, preset.Name));
 	}
 
 	private void OnRenamePresetClick(object? sender, RoutedEventArgs e)
@@ -207,7 +206,7 @@ public partial class MainWindow
 	{
 		if (_overlayPresets.FirstOrDefault(p => p.Id == id) is not { CreatedUtc: { } created, UpdatedUtc: { } updated }) return null;
 
-		return $"Created: {created.ToLocalTime():g}\nLast updated: {updated.ToLocalTime():g}";
+		return string.Format(Strings.Presets_Dates, created.ToLocalTime(), updated.ToLocalTime());
 	}
 
 	private IDataTemplate PresetItemTemplate()

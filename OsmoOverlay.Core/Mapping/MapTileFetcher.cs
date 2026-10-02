@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Updates;
 using SkiaSharp;
@@ -82,7 +83,7 @@ public static class MapTileFetcher
 				catch (Exception ex) when (ex is not OperationCanceledException)
 				{
 					// The tile itself is fine - a failed cache write only means it's fetched again next time.
-					AppLogger.Warn(ex, $"Failed to cache map tile z={zoom} x={x} y={y}");
+					AppLogger.Warn(ex, string.Format(CoreStrings.Map_CacheTileFailed, $"z={zoom} x={x} y={y}"));
 				}
 				catch
 				{
@@ -96,7 +97,7 @@ public static class MapTileFetcher
 			{
 				if (attempt == MaxFetchAttempts)
 				{
-					AppLogger.Warn(ex, $"Failed to fetch map tile z={zoom} x={x} y={y} after {MaxFetchAttempts} attempts");
+					AppLogger.Warn(ex, string.Format(CoreStrings.Map_FetchTileFailed, $"z={zoom} x={x} y={y}", MaxFetchAttempts));
 					return null;
 				}
 

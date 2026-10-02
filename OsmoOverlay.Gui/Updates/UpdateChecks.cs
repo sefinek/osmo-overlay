@@ -31,7 +31,7 @@ internal static class UpdateChecks
 
 	private static async Task<UpdateCheckResult> RunAsync()
 	{
-		AppLogger.Notify("Checking for updates...");
+		AppLogger.Notify(Strings.Updates_Checking);
 		// Off the UI thread: every tool spawns processes (ffmpeg -version, winget/brew/apt-cache), a couple of seconds together.
 		var app = Task.Run(CheckAppAsync);
 		var dependencies = Task.Run(CheckDependenciesAsync);
@@ -47,7 +47,7 @@ internal static class UpdateChecks
 		}
 		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or JsonException)
 		{
-			AppLogger.Warn(ex, "Could not check for a new version of OsmoOverlay");
+			AppLogger.Warn(ex, Strings.Updates_AppCheckFailed);
 			return (null, true);
 		}
 	}
@@ -56,7 +56,7 @@ internal static class UpdateChecks
 	{
 		IReadOnlyList<ToolVersionInfo> statuses = await DependencyVersionChecker.CheckAllAsync(RequiredTools.All, CancellationToken.None);
 		List<string> updates = [.. statuses.Where(s => s.UpdateAvailable).Select(s => $"{s.Tool.DisplayName} {s.LatestVersion}")];
-		if (updates.Count > 0) AppLogger.Notify($"Dependency updates available: {string.Join(", ", updates)} - see Settings > About");
+		if (updates.Count > 0) AppLogger.Notify(string.Format(Strings.Updates_DependenciesAvailable, string.Join(", ", updates)));
 		return statuses;
 	}
 }

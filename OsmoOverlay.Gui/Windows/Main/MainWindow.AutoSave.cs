@@ -47,11 +47,11 @@ public partial class MainWindow
 			if (hash == _lastBackupHash) return;
 
 			_lastBackupHash = hash;
-			AppendLog($"Auto-saved a backup: {path}");
+			AppendLog(string.Format(Strings.AutoSave_Saved, path));
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, $"Could not auto-save a backup: {ex.Message}");
+			AppLogger.Warn(ex, string.Format(Strings.AutoSave_Failed, ex.Message));
 		}
 	}
 }

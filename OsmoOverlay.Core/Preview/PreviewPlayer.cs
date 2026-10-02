@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using OsmoOverlay.Core.Cameras;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
@@ -186,7 +187,7 @@ public sealed class PreviewPlayer : IDisposable
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, "Closing the preview failed");
+			AppLogger.Warn(ex, CoreStrings.Preview_CloseFailed);
 		}
 	}
 
@@ -207,7 +208,7 @@ public sealed class PreviewPlayer : IDisposable
 		}
 		catch (InvalidOperationException ex)
 		{
-			AppLogger.Warn(ex, "Preview audio unavailable - the audio track couldn't be opened");
+			AppLogger.Warn(ex, CoreStrings.Preview_AudioTrackFailed);
 			return (null, null);
 		}
 
@@ -253,7 +254,7 @@ public sealed class PreviewPlayer : IDisposable
 		await session.Finished;
 		if (!ReferenceEquals(_session, session)) return;
 
-		if (session.Error is { } error) Message?.Invoke($"Playback stopped: {error}");
+		if (session.Error is { } error) Message?.Invoke(string.Format(CoreStrings.Preview_PlaybackStopped, error));
 		StopSession(true);
 	}
 
@@ -495,7 +496,7 @@ public sealed class PreviewPlayer : IDisposable
 				}
 				catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
 				{
-					if (generation == _seekGeneration) Message?.Invoke($"Preview seek failed: {ex.Message}");
+					if (generation == _seekGeneration) Message?.Invoke(string.Format(CoreStrings.Preview_SeekFailed, ex.Message));
 					continue;
 				}
 
@@ -529,7 +530,7 @@ public sealed class PreviewPlayer : IDisposable
 		// Cancels a fetch still running for an older key (the zoom box fires per click, with no debounce), so it can't
 		// land after a newer one - ApplyMapMosaic's key check covers whatever is already past cancelling.
 		_ = PrepareMosaicAsync(recording, static (r, progress, ct) => r.BuildMapMosaicAsync(progress, ct),
-			static (r, mosaic, key) => r.ApplyMapMosaic(mosaic, key), "Fetching map tiles", "Map preview failed",
+			static (r, mosaic, key) => r.ApplyMapMosaic(mosaic, key), CoreStrings.Preview_FetchingTiles, CoreStrings.Preview_MapFailed,
 			Restart(ref _mapPrepareCts));
 	}
 
@@ -538,8 +539,8 @@ public sealed class PreviewPlayer : IDisposable
 		if (!recording.ShowsRouteIntro) return;
 
 		_ = PrepareMosaicAsync(recording, static (r, progress, ct) => r.BuildRouteIntroMosaicAsync(progress, ct),
-			static (r, mosaic, key) => r.ApplyRouteIntroMapMosaic(mosaic, key), "Fetching route overview map",
-			"Route overview map failed", Restart(ref _routeIntroPrepareCts));
+			static (r, mosaic, key) => r.ApplyRouteIntroMapMosaic(mosaic, key), CoreStrings.Preview_FetchingOverview,
+			CoreStrings.Preview_OverviewFailed, Restart(ref _routeIntroPrepareCts));
 	}
 
 	private static CancellationToken Restart(ref CancellationTokenSource? cts)

@@ -46,21 +46,21 @@ public partial class CutEditor : UserControl
 
 	private static readonly (CutTransitionKind? Kind, string Label)[] TransitionKinds =
 	[
-		(null, "No transition (hard cut)"),
-		(CutTransitionKind.FadeBlack, "Fade through black"),
-		(CutTransitionKind.FadeWhite, "Fade through white"),
-		(CutTransitionKind.Crossfade, "Crossfade (overlaps)"),
-		(CutTransitionKind.WipeLeft, "Wipe in from the right (overlaps)"),
-		(CutTransitionKind.WipeRight, "Wipe in from the left (overlaps)"),
-		(CutTransitionKind.SlideLeft, "Push left (overlaps)"),
-		(CutTransitionKind.SlideRight, "Push right (overlaps)")
+		(null, Strings.Cut_TransitionNone),
+		(CutTransitionKind.FadeBlack, Strings.Cut_TransitionFadeBlack),
+		(CutTransitionKind.FadeWhite, Strings.Cut_TransitionFadeWhite),
+		(CutTransitionKind.Crossfade, Strings.Cut_TransitionCrossfade),
+		(CutTransitionKind.WipeLeft, Strings.Cut_TransitionWipeLeft),
+		(CutTransitionKind.WipeRight, Strings.Cut_TransitionWipeRight),
+		(CutTransitionKind.SlideLeft, Strings.Cut_TransitionSlideLeft),
+		(CutTransitionKind.SlideRight, Strings.Cut_TransitionSlideRight)
 	];
 
 	private static readonly (RouteJoin Join, string Label)[] RouteJoins =
 	[
-		(RouteJoin.Gap, "Break it - resume after the cut"),
-		(RouteJoin.Dashed, "Dashed line across the cut"),
-		(RouteJoin.Straight, "Straight line, as if nothing was cut")
+		(RouteJoin.Gap, Strings.Cut_RouteGap),
+		(RouteJoin.Dashed, Strings.Cut_RouteDashed),
+		(RouteJoin.Straight, Strings.Cut_RouteStraight)
 	];
 
 	private bool _populatingRouteJoin;
@@ -119,7 +119,7 @@ public partial class CutEditor : UserControl
 	/// <param name="canCut">Whether there is a selection to cut out.</param>
 	public void ShowSelection(string? selection, bool canCut)
 	{
-		SelectionText.Text = selection is null ? "Nothing selected yet." : $"Selected: {selection}";
+		SelectionText.Text = selection is null ? Strings.Cut_NothingSelected : string.Format(Strings.Cut_Selected, selection);
 		SelectionText.Opacity = selection is null ? 0.6 : 1;
 		ClearSelectionButton.IsVisible = selection is not null;
 		CutSelectionButton.IsEnabled = canCut;
@@ -170,16 +170,16 @@ public partial class CutEditor : UserControl
 			HorizontalContentAlignment = HorizontalAlignment.Center,
 			VerticalContentAlignment = VerticalAlignment.Center
 		};
-		ToolTip.SetTip(number, "Go to 3 seconds before this cut");
-		var from = new TextBox { Text = TimeText.Format(cut.Start / _fps), PlaceholderText = "From" };
-		var to = new TextBox { Text = TimeText.Format(cut.End / _fps), PlaceholderText = "To" };
+		ToolTip.SetTip(number, Strings.Cut_GoToBefore);
+		var from = new TextBox { Text = TimeText.Format(cut.Start / _fps), PlaceholderText = Strings.Cut_From };
+		var to = new TextBox { Text = TimeText.Format(cut.End / _fps), PlaceholderText = Strings.Cut_To };
 		var remove = new Button
 		{
 			Content = new IconView { Data = Icons.Close, Width = 11, Height = 11 },
 			VerticalAlignment = VerticalAlignment.Stretch,
 			Padding = new Thickness(9, 0)
 		};
-		ToolTip.SetTip(remove, "Keep this part after all");
+		ToolTip.SetTip(remove, Strings.Cut_KeepAfterAll);
 
 		var times = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,*,Auto"), ColumnSpacing = 6 };
 		Control[] cells = [number, from, new TextBlock { Text = "-", VerticalAlignment = VerticalAlignment.Center, Opacity = 0.55 }, to, remove];
@@ -216,7 +216,7 @@ public partial class CutEditor : UserControl
 		var unit = (TextBlock)transitionCells[2];
 		var overlapNote = new TextBlock
 		{
-			Text = "The preview doesn't show this blend - it plays the end of the earlier part, then goes on after the later part's start. The render has it, and is shorter by the transition's length.",
+			Text = Strings.Cut_OverlapNote,
 			Classes = { "hint" },
 			TextWrapping = TextWrapping.Wrap,
 			IsVisible = false
@@ -310,11 +310,11 @@ public partial class CutEditor : UserControl
 		for (int i = 0; i < _rows.Count; i++)
 		{
 			(TextBox fromBox, TextBox toBox, ComboBox kindBox, NumericUpDown lengthBox) = _rows[i];
-			string name = $"Cut {i + 1}";
-			if (ReadFrame(fromBox.Text, $"{name}: From", out long start) is { } fromError) return fromError;
-			if (ReadFrame(toBox.Text, $"{name}: To", out long end) is { } toError) return toError;
-			if (start >= _totalFrames) return $"{name}: From is past the end of the recording ({TimeText.Format(_totalFrames / _fps)}).";
-			if (end <= start) return $"{name}: To must come after From.";
+			string name = string.Format(Strings.Cut_Name, i + 1);
+			if (ReadFrame(fromBox.Text, $"{name}: {Strings.Cut_From}", out long start) is { } fromError) return fromError;
+			if (ReadFrame(toBox.Text, $"{name}: {Strings.Cut_To}", out long end) is { } toError) return toError;
+			if (start >= _totalFrames) return string.Format(Strings.Cut_FromPastEnd, name, TimeText.Format(_totalFrames / _fps));
+			if (end <= start) return string.Format(Strings.Cut_ToBeforeFrom, name);
 
 			CutTransitionKind? kind = TransitionKinds[Math.Max(0, kindBox.SelectedIndex)].Kind;
 			CutTransition? transition = kind is { } k
@@ -323,7 +323,7 @@ public partial class CutEditor : UserControl
 			parsed.Add(new FrameRange(start, end, transition));
 		}
 
-		if (CutList.RemovesEverything(parsed, _totalFrames)) return "The cuts remove the whole recording - nothing would be left to render.";
+		if (CutList.RemovesEverything(parsed, _totalFrames)) return Strings.Cut_RemovesEverything;
 
 		cuts = parsed;
 		return null;
@@ -335,8 +335,8 @@ public partial class CutEditor : UserControl
 	private string? ReadFrame(string? text, string name, out long frame)
 	{
 		frame = 0;
-		if (string.IsNullOrWhiteSpace(text)) return $"{name} is empty.";
-		if (!TimeText.TryParse(text, out double seconds)) return $"{name}: \"{text.Trim()}\" isn't a time - use e.g. 1:30 or 1:30.250.";
+		if (string.IsNullOrWhiteSpace(text)) return string.Format(Strings.Cut_FieldEmpty, name);
+		if (!TimeText.TryParse(text, out double seconds)) return string.Format(Strings.Cut_NotATime, name, text.Trim());
 
 		frame = Math.Clamp((long)Math.Round(seconds * _fps), 0, _totalFrames);
 		return null;

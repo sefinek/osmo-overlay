@@ -1,5 +1,6 @@
 using System.Text.Json;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -90,6 +91,8 @@ public sealed record OverlaySettings(
 	string? SkippedAppUpdate = null,
 	// The GUI's scale on top of the system's display scaling, applied at startup (see the GUI's UiScale).
 	double InterfaceScale = 1.0,
+	// The GUI's language (UiLanguages code), applied at startup; null = the system's language when supported, else English.
+	string? UiLanguage = null,
 	// The GUI's color theme (its AppThemes): "Dark", "Blue" or "Amoled"; anything else reads as Dark.
 	string AppTheme = "Dark",
 	// Off: the main window always starts maximized. On: it comes back as MainWindowPlacement left it.
@@ -172,7 +175,7 @@ public static class OverlaySettingsStore
 		catch (Exception ex)
 		{
 			// Best-effort: a corrupt or unreadable settings file falls back to the defaults.
-			AppLogger.Warn(ex, "Overlay settings file is corrupt or unreadable, falling back to defaults");
+			AppLogger.Warn(ex, CoreStrings.Settings_Unreadable);
 		}
 
 		return new OverlaySettings();
@@ -188,7 +191,7 @@ public static class OverlaySettingsStore
 		catch (Exception ex)
 		{
 			// Best-effort cache: a failed write should not break the editing flow.
-			AppLogger.Warn(ex, "Failed to write overlay settings file");
+			AppLogger.Warn(ex, CoreStrings.Settings_WriteFailed);
 		}
 	}
 

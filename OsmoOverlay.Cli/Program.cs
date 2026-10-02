@@ -3,9 +3,12 @@ using OsmoOverlay.Cameras.Insta360;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Dependencies;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
+
+UiLanguages.Apply(UiLanguages.English);
 
 AppDomain.CurrentDomain.UnhandledException += (_, e) =>
 {

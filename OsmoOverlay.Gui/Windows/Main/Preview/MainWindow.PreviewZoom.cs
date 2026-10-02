@@ -31,7 +31,7 @@ public partial class MainWindow
 	private void WirePreviewZoom()
 	{
 		_suppressPreviewZoomEvent = true;
-		PreviewZoomCombo.ItemsSource = PreviewZoomLevels.Select(z => z is { } level ? $"{level:P0}" : "Fit").ToList();
+		PreviewZoomCombo.ItemsSource = PreviewZoomLevels.Select(z => z is { } level ? $"{level:P0}" : Strings.Zoom_Fit).ToList();
 		PreviewZoomCombo.SelectedIndex = 0;
 		_suppressPreviewZoomEvent = false;
 

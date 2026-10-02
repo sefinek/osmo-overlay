@@ -115,8 +115,8 @@ public partial class MainWindow
 		_loopEnabled = !_loopEnabled;
 		LoopButton.Classes.Set("active", _loopEnabled);
 		ToolTip.SetTip(LoopButton, _loopEnabled
-			? "Looping (Q to stop) - the In/Out selection, or the whole recording without one"
-			: "Loop playback (Q) - the In/Out selection, or the whole recording without one");
+			? Strings.Transport_Looping
+			: Strings.Main_LoopPlaybackQTheIn);
 		SyncLoop();
 	}
 
@@ -207,7 +207,7 @@ public partial class MainWindow
 	private void ShowPlayingState(bool playing)
 	{
 		PlayPauseIcon.Data = playing ? Icons.Pause : Icons.Play;
-		ToolTip.SetTip(PlayPauseButton, playing ? "Pause (Space)" : "Play (Space)");
+		ToolTip.SetTip(PlayPauseButton, playing ? Strings.Transport_Pause : Strings.Main_PlaySpace);
 	}
 
 	private void GoToStart()

@@ -1,4 +1,5 @@
 using FFmpeg.AutoGen;
+using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Core.Preview;
 
@@ -35,7 +36,7 @@ public sealed unsafe class LibavAudioSource : IDisposable
 	/// <summary>Null when the recording has no audio track.</summary>
 	public static LibavAudioSource? TryOpen(IReadOnlyList<PlaybackSegment> segments)
 	{
-		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException($"The preview can't decode audio: {failure}");
+		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException(string.Format(CoreStrings.Libav_CantDecodeAudio, failure));
 
 		List<(string Path, double StartSeconds)> withOffsets = [];
 		double offset = 0;

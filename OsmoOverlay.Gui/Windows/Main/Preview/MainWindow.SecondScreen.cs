@@ -59,7 +59,7 @@ public partial class MainWindow
 
 		if (SecondScreenTarget(OverlaySettingsStore.Load()) is not { } screen)
 		{
-			AppendLog("Second screen: there's no other monitor connected - choose one in Settings > Behavior.", LogLevel.Warn);
+			AppendLog(Strings.SecondScreen_NoMonitor, LogLevel.Warn);
 			return;
 		}
 
@@ -80,7 +80,7 @@ public partial class MainWindow
 		_secondScreenName = DescribeSecondScreen(screen);
 		window.ShowLog();
 		window.Show(this);
-		AppendLog($"Second screen on {_secondScreenName}.");
+		AppendLog(string.Format(Strings.SecondScreen_On, _secondScreenName));
 		if (_previewPlayer.IsPlaying) MoveViewportToSecondScreen();
 	}
 
@@ -91,7 +91,7 @@ public partial class MainWindow
 		if (_viewportOnSecondScreen) MoveViewportHome(window);
 		_secondScreen = null;
 		window.Close();
-		AppendLog("Second screen closed.");
+		AppendLog(Strings.SecondScreen_Closed);
 	}
 
 	/// <summary>The window went away on its own (Alt+F4, the screen was unplugged) - it stays off until it's turned on again.</summary>
@@ -104,7 +104,7 @@ public partial class MainWindow
 
 		if (_viewportOnSecondScreen) MoveViewportHome(window);
 		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { SecondScreenEnabled = false });
-		AppendLog("Second screen closed.");
+		AppendLog(Strings.SecondScreen_Closed);
 	}
 
 	/// <summary>The screen chosen in Settings, or the first one the main window isn't on; null when there's no other monitor.</summary>
@@ -152,8 +152,8 @@ public partial class MainWindow
 		SetPreviewZoom(null, null);
 		HideHoverIcons();
 		OverlayDragCanvas.IsHitTestVisible = false;
-		PreviewFullscreenNoticeTitle.Text = "The preview is on the second screen";
-		PreviewFullscreenNoticeText.Text = $"It's playing on {_secondScreenName}. It comes back here when you pause.";
+		PreviewFullscreenNoticeTitle.Text = Strings.SecondScreen_NoticeTitle;
+		PreviewFullscreenNoticeText.Text = string.Format(Strings.SecondScreen_NoticeText, _secondScreenName);
 		PreviewFullscreenNotice.IsVisible = true;
 
 		MoveViewport(() =>

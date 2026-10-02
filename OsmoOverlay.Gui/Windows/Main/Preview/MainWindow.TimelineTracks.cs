@@ -110,7 +110,7 @@ public partial class MainWindow
 		}
 		catch (InvalidOperationException ex)
 		{
-			AppLogger.Warn(ex, "Timeline thumbnails and waveform unavailable");
+			AppLogger.Warn(ex, Strings.Timeline_TracksUnavailable);
 		}
 
 		// Another recording was loaded while these opened.
@@ -143,7 +143,7 @@ public partial class MainWindow
 		}
 		catch (InvalidOperationException ex)
 		{
-			AppLogger.Warn(ex, "Timeline thumbnails unavailable");
+			AppLogger.Warn(ex, Strings.Timeline_ThumbnailsUnavailable);
 			return;
 		}
 

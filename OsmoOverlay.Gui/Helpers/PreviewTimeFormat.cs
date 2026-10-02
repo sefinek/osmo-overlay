@@ -17,10 +17,10 @@ internal static class PreviewTimeFormats
 	/// <summary>In the order the readout cycles through on a click; shared by the toolbar flyout and Settings.</summary>
 	public static readonly IReadOnlyList<ChoiceOption<PreviewTimeFormat>> Options =
 	[
-		new("Minutes and seconds", PreviewTimeFormat.Seconds),
-		new("With milliseconds", PreviewTimeFormat.Milliseconds),
-		new("Timecode", PreviewTimeFormat.Timecode),
-		new("Camera timecode", PreviewTimeFormat.CameraTimecode)
+		new(Strings.TimeFormat_Seconds, PreviewTimeFormat.Seconds),
+		new(Strings.TimeFormat_Milliseconds, PreviewTimeFormat.Milliseconds),
+		new(Strings.TimeFormat_Timecode, PreviewTimeFormat.Timecode),
+		new(Strings.TimeFormat_CameraTimecode, PreviewTimeFormat.CameraTimecode)
 	];
 
 	public static PreviewTimeFormat Parse(string? value)

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;
@@ -54,7 +55,7 @@ internal static class WaveformCache
 		}
 		catch (Exception ex) when (ex is IOException or EndOfStreamException or UnauthorizedAccessException)
 		{
-			AppLogger.Warn(ex, $"Waveform cache entry {path} is unreadable, decoding the audio again");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Preview_WaveformCacheUnreadable, path));
 			return null;
 		}
 	}
@@ -92,7 +93,7 @@ internal static class WaveformCache
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{
-			AppLogger.Warn(ex, $"Couldn't write the waveform cache {path}");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Preview_WaveformCacheWriteFailed, path));
 			try
 			{
 				File.Delete(temp);

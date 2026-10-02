@@ -48,7 +48,7 @@ public partial class ElementStyleEditor : UserControl
 		{
 			_hasAccentColor = value;
 			AccentColorPanel.IsVisible = value;
-			TextColorLabel.Text = value ? "Label color" : "Text color";
+			TextColorLabel.Text = value ? Strings.Style_LabelColor : Strings.ElementStyle_TextColor;
 		}
 	}
 
@@ -104,7 +104,7 @@ public partial class ElementStyleEditor : UserControl
 	/// </summary>
 	private static List<FontOption> BuildFontOptions()
 	{
-		List<FontOption> options = [new("System default", null)];
+		List<FontOption> options = [new(Strings.Common_SystemDefault, null)];
 		options.AddRange(FontManager.Current.SystemFonts
 			.Select(f => f.Name)
 			.Distinct(StringComparer.OrdinalIgnoreCase)

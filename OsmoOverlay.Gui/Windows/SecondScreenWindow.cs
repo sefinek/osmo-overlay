@@ -20,7 +20,7 @@ internal sealed class SecondScreenWindow : Window
 
 	public SecondScreenWindow(Screen screen)
 	{
-		Title = "OsmoOverlay second screen";
+		Title = Strings.SecondScreen_WindowTitle;
 		Background = Brushes.Black;
 		WindowDecorations = WindowDecorations.None;
 

@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
@@ -37,13 +38,13 @@ public static class KeyMoments
 	{
 		return kind switch
 		{
-			PeakKind.TopSpeed => "Top speed",
-			PeakKind.HighestPoint => "Highest point",
-			PeakKind.LowestPoint => "Lowest point",
-			PeakKind.StrongestG => "Strongest G-force",
-			PeakKind.SteepestClimb => "Steepest climb",
-			PeakKind.SteepestDescent => "Steepest descent",
-			PeakKind.MaxLean => "Deepest lean",
+			PeakKind.TopSpeed => CoreStrings.Peak_TopSpeed,
+			PeakKind.HighestPoint => CoreStrings.Peak_HighestPoint,
+			PeakKind.LowestPoint => CoreStrings.Peak_LowestPoint,
+			PeakKind.StrongestG => CoreStrings.Peak_StrongestG,
+			PeakKind.SteepestClimb => CoreStrings.Peak_SteepestClimb,
+			PeakKind.SteepestDescent => CoreStrings.Peak_SteepestDescent,
+			PeakKind.MaxLean => CoreStrings.Peak_MaxLean,
 			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
 		};
 	}

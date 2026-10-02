@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using SkiaSharp;
 
@@ -210,7 +211,7 @@ public sealed class RouteMapMosaic : IDisposable
 		if (!fetchedAny)
 		{
 			bitmap.Dispose();
-			AppLogger.Warn("Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map");
+			AppLogger.Warn(CoreStrings.Map_AllTilesFailed);
 			return null;
 		}
 

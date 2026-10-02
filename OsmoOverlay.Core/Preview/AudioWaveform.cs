@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;
@@ -148,7 +149,7 @@ public sealed class AudioWaveform : IDisposable
 		}
 		catch (InvalidOperationException ex)
 		{
-			if (!ct.IsCancellationRequested) AppLogger.Warn(ex, "Timeline waveform stopped");
+			if (!ct.IsCancellationRequested) AppLogger.Warn(ex, CoreStrings.Preview_WaveformStopped);
 		}
 	}
 

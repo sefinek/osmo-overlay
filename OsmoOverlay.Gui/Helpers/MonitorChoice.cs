@@ -21,6 +21,7 @@ internal static class MonitorChoice
 
 	public static string Describe(Screen screen, int index)
 	{
-		return $"Display {index + 1} - {screen.Bounds.Width}x{screen.Bounds.Height}{(screen.IsPrimary ? " (primary)" : "")}";
+		return string.Format(screen.IsPrimary ? Strings.Monitor_DisplayPrimary : Strings.Monitor_Display, index + 1,
+			$"{screen.Bounds.Width}x{screen.Bounds.Height}");
 	}
 }

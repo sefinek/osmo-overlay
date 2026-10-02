@@ -117,9 +117,9 @@ public partial class MainWindow
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Choose an image",
+			Title = Strings.Widget_ChooseImage,
 			AllowMultiple = false,
-			FileTypeFilter = [new FilePickerFileType("Image") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.webp"] }]
+			FileTypeFilter = [new FilePickerFileType(Strings.Widget_ImageFileType) { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.webp"] }]
 		});
 		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
 
@@ -219,7 +219,7 @@ public partial class MainWindow
 	/// <summary>An empty scale box says what Auto comes to for the open recording, in the gauge's units.</summary>
 	private void UpdateSpeedMaxPlaceholder(UnitSystem units)
 	{
-		SpeedMaxBox.PlaceholderText = _previewPlayer.AutoGaugeMaxSpeed(units) is { } auto ? $"Auto ({auto:0})" : "Auto";
+		SpeedMaxBox.PlaceholderText = _previewPlayer.AutoGaugeMaxSpeed(units) is { } auto ? $"{Strings.Main_Auto} ({auto:0})" : Strings.Main_Auto;
 	}
 
 	private void OnSpeedThemeChanged(object? sender, RoutedEventArgs e)
@@ -344,7 +344,7 @@ public partial class MainWindow
 	/// </summary>
 	private static List<LocaleOption> BuildLocaleOptions()
 	{
-		List<LocaleOption> options = [new("System default", null)];
+		List<LocaleOption> options = [new(Strings.Common_SystemDefault, null)];
 		options.AddRange(CultureInfo.GetCultures(CultureTypes.SpecificCultures)
 			.OrderBy(c => c.NativeName, StringComparer.Ordinal)
 			.Select(c => new LocaleOption($"{c.NativeName} ({c.Name})", c.Name)));

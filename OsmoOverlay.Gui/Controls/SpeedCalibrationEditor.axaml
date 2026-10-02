@@ -1,25 +1,26 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
              x:Class="OsmoOverlay.Gui.SpeedCalibrationEditor">
 
 	<StackPanel Spacing="12">
 		<StackPanel Spacing="6">
-			<TextBlock Text="Speed correction (%)" Classes="infoLabel" />
+			<TextBlock Text="{x:Static local:Strings.SpeedCalibration_SpeedCorrection}" Classes="infoLabel" />
 			<NumericUpDown Name="CorrectionBox" Minimum="0" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
 			<TextBlock Name="CorrectionText" Classes="hint" />
 		</StackPanel>
 
 		<Border Classes="card" Padding="14">
 			<StackPanel Spacing="8">
-				<TextBlock Text="Work it out from your cruising speed" FontWeight="SemiBold" />
+				<TextBlock Text="{x:Static local:Strings.SpeedCalibration_WorkItOutFromYour}" FontWeight="SemiBold" />
 				<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
 					<StackPanel Grid.Column="0" Spacing="4">
-						<TextBlock Text="Real speed (speedometer, limiter)" Classes="infoLabel" />
+						<TextBlock Text="{x:Static local:Strings.SpeedCalibration_RealSpeedSpeedometerLimiter}" Classes="infoLabel" />
 						<NumericUpDown Name="RealSpeedBox" PlaceholderText="e.g. 25" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
 						               HorizontalAlignment="Stretch" />
 					</StackPanel>
 					<StackPanel Grid.Column="1" Spacing="4">
-						<TextBlock Text="Measured by the GPS (no correction)" Classes="infoLabel" />
+						<TextBlock Text="{x:Static local:Strings.SpeedCalibration_MeasuredByTheGpsNo}" Classes="infoLabel" />
 						<NumericUpDown Name="ShownSpeedBox" PlaceholderText="e.g. 22" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
 						               HorizontalAlignment="Stretch" />
 					</StackPanel>
@@ -30,7 +31,7 @@
 					<Button Grid.Column="1" Name="ApplyButton" Classes="accent" IsVisible="False" VerticalAlignment="Center" />
 				</Grid>
 				<TextBlock Classes="hint"
-				           Text="Compare the speed you ride at most of the time, not a peak - a peak is where the GPS read highest. A loaded recording fills in its cruising speed: the faster half of the ride's most common speed, averaged over 3 s. Same unit for both." />
+				           Text="{x:Static local:Strings.SpeedCalibration_CompareTheSpeedYouRide}" />
 			</StackPanel>
 		</Border>
 	</StackPanel>

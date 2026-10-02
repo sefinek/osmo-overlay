@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using FFmpeg.AutoGen;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Reframe;
 
 namespace OsmoOverlay.Core.Preview;
@@ -58,7 +59,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	internal LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, FrameBufferPool? buffers,
 		Reframer? reframer)
 	{
-		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException($"The preview can't decode video: {failure}");
+		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException(string.Format(CoreStrings.Libav_CantDecodeVideo, failure));
 
 		_reframer = reframer;
 		Fps = fps;

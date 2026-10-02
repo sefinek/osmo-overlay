@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
@@ -106,7 +107,7 @@ public partial class MainWindow
 		bool anySolo = ActiveLayers.Any(l => l.Solo);
 		LayerTracks.Tracks =
 		[
-			.. ActiveLayers.Select((layer, i) => new LayerTrack(layer.Id, layer.Name ?? $"Layer {i + 1}",
+			.. ActiveLayers.Select((layer, i) => new LayerTrack(layer.Id, layer.Name ?? string.Format(Strings.Layers_DefaultName, i + 1),
 			[
 				.. widgets.Where(w => OverlayLayers.Key(w.Element) == layer.Id).Select(w => new LayerClip(w.Element.Id, ClipLabel(w.Element, w.Name),
 					w.Element.AppearAtSeconds, w.Element.DisappearAtSeconds, w.Element.AnimationType, w.Element.AnimationDurationSeconds,
@@ -125,9 +126,9 @@ public partial class MainWindow
 				? shown
 				: name,
 			ImageElement { ImagePath: { } path } when !string.IsNullOrWhiteSpace(path) => Path.GetFileName(path),
-			ImageElement => $"{name} - no file chosen",
+			ImageElement => string.Format(Strings.Layers_NoFileChosen, name),
 			TripStatElement stat => stat.Label ?? SentenceCase(OverlayRenderer.DefaultTripStatLabel(stat.Stat)),
-			ProfileChartElement chart => chart.Label ?? (chart.Series == ProfileSeries.Speed ? "Speed chart" : "Elevation chart"),
+			ProfileChartElement chart => chart.Label ?? (chart.Series == ProfileSeries.Speed ? Strings.Layers_SpeedChart : Strings.Layers_ElevationChart),
 			ElapsedTimeTextElement { Label: { } label } when !string.IsNullOrWhiteSpace(label) => label,
 			LabeledStatElement { Label: { } label } => label,
 			_ => name
@@ -257,9 +258,9 @@ public partial class MainWindow
 	{
 		if (ActiveLayers.FirstOrDefault(l => l.Id == layerId) is not { } layer) return;
 
-		var rename = new MenuItem { Header = "Rename..." };
+		var rename = new MenuItem { Header = Strings.Layers_Rename };
 		rename.Click += (_, _) => ShowLayerRename(layer);
-		var delete = new MenuItem { Header = "Delete layer" };
+		var delete = new MenuItem { Header = Strings.Layers_Delete };
 		delete.Click += async (_, _) => await DeleteLayerAsync(layer);
 
 		var menu = new ContextMenu { ItemsSource = new[] { rename, delete } };
@@ -269,7 +270,7 @@ public partial class MainWindow
 	/// <summary>An empty name goes back to the automatic "Layer n".</summary>
 	private void ShowLayerRename(OverlayLayer layer)
 	{
-		var box = new TextBox { Text = layer.Name ?? "", Width = 200, PlaceholderText = "Layer name" };
+		var box = new TextBox { Text = layer.Name ?? "", Width = 200, PlaceholderText = Strings.Layers_NamePlaceholder };
 		var flyout = new Flyout { Content = box };
 		bool committed = false;
 
@@ -318,8 +319,8 @@ public partial class MainWindow
 		}
 
 		int count = ActiveElements.Count(OnLayer);
-		if (count > 0 && !await ConfirmDialog.AskAsync(this, "Delete layer",
-			    $"Delete this layer and the {count} widget{(count == 1 ? "" : "s")} on it?", "Delete", DialogKind.Danger))
+		if (count > 0 && !await ConfirmDialog.AskAsync(this, Strings.Layers_Delete,
+			    Plural.Format(Strings.Layers_DeleteMessage, count), Strings.Main_Delete, DialogKind.Danger))
 			return;
 
 		List<OverlayElement> elements = [.. ActiveElements.Where(e => !OnLayer(e))];

@@ -61,8 +61,8 @@ public partial class MainWindow
 
 		Screen? screen = PreviewMonitor();
 		var window = new PreviewFullscreenWindow(DetachViewport(host), screen);
-		PreviewFullscreenNoticeTitle.Text = "The preview is full screen";
-		PreviewFullscreenNoticeText.Text = $"It's showing on {DescribeScreen(screen)}. Press Esc or F11 there, or the button below, to bring it back here.";
+		PreviewFullscreenNoticeTitle.Text = Strings.Main_ThePreviewIsFullScreen;
+		PreviewFullscreenNoticeText.Text = string.Format(Strings.Fullscreen_NoticeText, DescribeScreen(screen));
 		PreviewFullscreenNotice.IsVisible = true;
 		window.AddHandler(KeyDownEvent, OnPreviewSpaceKeyDown, RoutingStrategies.Tunnel);
 		window.AddHandler(KeyUpEvent, OnPreviewSpaceKeyUp, RoutingStrategies.Tunnel);
@@ -137,11 +137,11 @@ public partial class MainWindow
 	/// <summary>The screen as Settings lists it ("Display 2 - 2560x1440"), with how it was picked.</summary>
 	private string DescribeScreen(Screen? screen)
 	{
-		if (screen is null) return "this window's screen";
+		if (screen is null) return Strings.Fullscreen_ThisWindowsScreen;
 
 		int index = Screens.All.ToList().FindIndex(s => MonitorChoice.KeyOf(s) == MonitorChoice.KeyOf(screen));
 		string name = MonitorChoice.Describe(screen, Math.Max(index, 0));
-		return OverlaySettingsStore.Load().PreviewMonitor is null ? $"{name} (the same screen as this window)" : name;
+		return OverlaySettingsStore.Load().PreviewMonitor is null ? string.Format(Strings.Fullscreen_SameScreen, name) : name;
 	}
 
 	/// <summary>The screen Settings chose for the full screen preview, or the main window's own when none is chosen or it's gone.</summary>

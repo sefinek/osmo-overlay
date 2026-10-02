@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Audio_VerificationFailed" xml:space="preserve">
+    <value>Weryfikacja nie powiodła się: skonwertowany dźwięk nie dekoduje się do tych samych próbek co źródło.</value>
+  </data>
+  <data name="Cache_DeleteFailed" xml:space="preserve">
+    <value>Nie udało się usunąć nieaktualnej analizy {0}</value>
+  </data>
+  <data name="Cache_Unreadable" xml:space="preserve">
+    <value>Zapisana analiza dla {0} jest uszkodzona lub nieczytelna - analizuję od nowa</value>
+  </data>
+  <data name="Cache_WriteFailed" xml:space="preserve">
+    <value>Nie udało się zapisać analizy dla {0}</value>
+  </data>
+  <data name="Dji_NativeDecodeFailed" xml:space="preserve">
+    <value>Natywne dekodowanie djmd nie powiodło się dla {0} - używam exiftool</value>
+  </data>
+  <data name="Dji_NotSupported" xml:space="preserve">
+    <value>{0} nie jest oficjalnie obsługiwany. OsmoOverlay jest testowany na DJI Osmo Action 6 i Action 5 Pro. Telemetria najpewniej i tak zostanie odczytana, ale niektóre widżety mogą być niedostępne lub pokazywać błędne wartości (przechył, miernik G), a sprawdzanie ustawień nagrywania nie zadziała.</value>
+  </data>
+  <data name="Dji_SourceExifTool" xml:space="preserve">
+    <value>Źródło telemetrii: exiftool awaryjnie (natywne dekodowanie djmd nie powiodło się lub brak ISO/migawki/temperatury)</value>
+  </data>
+  <data name="Dji_SourceNative" xml:space="preserve">
+    <value>Źródło telemetrii: natywny dekoder djmd (ISO, migawka i temperatura barwowa obecne, exiftool niepotrzebny)</value>
+  </data>
+  <data name="Dji_SourceNativePartial" xml:space="preserve">
+    <value>Źródło telemetrii: natywny dekoder djmd, częściowe ustawienia kamery ({0}/{1})</value>
+  </data>
+  <data name="Dji_ThisCamera" xml:space="preserve">
+    <value>Ta kamera DJI</value>
+  </data>
+  <data name="Dji_TrackDiffers" xml:space="preserve">
+    <value>Ścieżka kamery '{0}' różni się między segmentami (timescale/opis próbek) - nie skopiowano</value>
+  </data>
+  <data name="Insta360_Source" xml:space="preserve">
+    <value>Źródło telemetrii: blok końcowy Insta360 (akcelerometr uśredniony na klatkę, ekspozycja)</value>
+  </data>
+  <data name="Insta360_SupportNotice" xml:space="preserve">
+    <value>OsmoOverlay powstał głównie dla DJI Osmo Action 6. Nagrania z Insta360 nie były dużo testowane, a ich dane GPS w ogóle nie są obsługiwane. Niektóre widżety mogą być niedostępne lub pokazywać błędne wartości.</value>
+  </data>
+  <data name="Install_AlreadyInstalled" xml:space="preserve">
+    <value>{0} jest już zainstalowany</value>
+  </data>
+  <data name="Install_AlreadyUpToDate" xml:space="preserve">
+    <value>{0} jest już aktualny</value>
+  </data>
+  <data name="Install_AuthorizationDenied" xml:space="preserve">
+    <value>Autoryzacja została anulowana lub odrzucona</value>
+  </data>
+  <data name="Install_CouldNotStartUpdate" xml:space="preserve">
+    <value>Nie udało się uruchomić aktualizacji: {0}</value>
+  </data>
+  <data name="Install_ExitCode" xml:space="preserve">
+    <value>{0} zakończył się kodem {1}</value>
+  </data>
+  <data name="Install_Finished" xml:space="preserve">
+    <value>{0} - zakończono</value>
+  </data>
+  <data name="Install_Installed" xml:space="preserve">
+    <value>Zainstalowano {0}</value>
+  </data>
+  <data name="Install_NoHomebrew" xml:space="preserve">
+    <value>Homebrew nie jest zainstalowany. Zainstaluj go ze strony https://brew.sh i spróbuj ponownie</value>
+  </data>
+  <data name="Install_NoPackageManager" xml:space="preserve">
+    <value>Nie znaleziono obsługiwanego menedżera pakietów (apt, dnf, pacman). Zainstaluj {0} ręcznie</value>
+  </data>
+  <data name="Install_NoSupportedVersion" xml:space="preserve">
+    <value>Nie znaleziono {0} {1}.x w winget ({2}) - to jedyna główna wersja, której może używać ta wersja OsmoOverlay</value>
+  </data>
+  <data name="Install_NotFromWinget" xml:space="preserve">
+    <value>{0} nie został zainstalowany przez winget, więc nie można go stąd zaktualizować - zaktualizuj go tak, jak go zainstalowano</value>
+  </data>
+  <data name="Install_NotOnPath" xml:space="preserve">
+    <value>Menedżer pakietów zgłasza {0} jako zainstalowany, ale {1} wciąż nie ma w PATH. Uruchom aplikację ponownie albo dodaj jego folder do PATH ręcznie</value>
+  </data>
+  <data name="Install_PreviewCantUse" xml:space="preserve">
+    <value>{0} jest zainstalowany, ale podgląd nie może go użyć: {1}. Zaktualizuj go (lub zainstaluj nowszą wersję) i spróbuj ponownie</value>
+  </data>
+  <data name="Install_RestartToUse" xml:space="preserve">
+    <value>{0}. Uruchom ponownie OsmoOverlay, aby używać nowej wersji</value>
+  </data>
+  <data name="Install_RunInTerminal" xml:space="preserve">
+    <value>Uruchom to w terminalu: {0}</value>
+  </data>
+  <data name="Install_UnsupportedPlatform" xml:space="preserve">
+    <value>Automatyczna instalacja nie jest obsługiwana na tej platformie</value>
+  </data>
+  <data name="Install_Updated" xml:space="preserve">
+    <value>Zaktualizowano {0}</value>
+  </data>
+  <data name="Install_UpgradingPackage" xml:space="preserve">
+    <value>Aktualizowanie pakietu winget {0}...</value>
+  </data>
+  <data name="Install_UpgradingPackageTo" xml:space="preserve">
+    <value>Aktualizowanie pakietu winget {0} do {1}...</value>
+  </data>
+  <data name="Install_WillUpdateLatest" xml:space="preserve">
+    <value>{0} zostanie zaktualizowany do najnowszej wersji po zamknięciu OsmoOverlay</value>
+  </data>
+  <data name="Install_WillUpdateTo" xml:space="preserve">
+    <value>{0} zostanie zaktualizowany do {1} po zamknięciu OsmoOverlay</value>
+  </data>
+  <data name="Join_DifferentCamera" xml:space="preserve">
+    <value>{0} pochodzi z {1}, a {2} z {3} - wszystkie pliki muszą pochodzić z tej samej kamery.</value>
+  </data>
+  <data name="Join_DifferentFormat" xml:space="preserve">
+    <value>{0} ({1}) nie pasuje do {2} ({3}) - aby połączyć pliki, muszą mieć tę samą rozdzielczość, liczbę klatek i format pikseli.</value>
+  </data>
+  <data name="Join_DifferentLens" xml:space="preserve">
+    <value>{0} i {1} nie zostały nagrane w tym samym układzie obiektywów (360 lub płaski).</value>
+  </data>
+  <data name="Join_UnknownCamera" xml:space="preserve">
+    <value>kamery bez telemetrii odczytywanej przez aplikację</value>
+  </data>
+  <data name="Libav_CantDecodeAudio" xml:space="preserve">
+    <value>Podgląd nie może dekodować dźwięku: {0}</value>
+  </data>
+  <data name="Libav_CantDecodeVideo" xml:space="preserve">
+    <value>Podgląd nie może dekodować wideo: {0}</value>
+  </data>
+  <data name="Libav_LoadFailed" xml:space="preserve">
+    <value>nie udało się wczytać bibliotek FFmpeg: {0}</value>
+  </data>
+  <data name="Libav_NotFound" xml:space="preserve">
+    <value>Nie znaleziono {0} - jest częścią FFmpeg {1} w wersji shared</value>
+  </data>
+  <data name="Libav_WrongVersion" xml:space="preserve">
+    <value>Znaleziono libavcodec {0}, potrzebny jest {1}</value>
+  </data>
+  <data name="Map_AllTilesFailed" xml:space="preserve">
+    <value>Widżet mapy: nie udało się pobrać żadnego kafelka (brak sieci lub serwer kafelków jest nieosiągalny) - pomijam mapę</value>
+  </data>
+  <data name="Map_CacheTileFailed" xml:space="preserve">
+    <value>Nie udało się zapisać kafelka mapy {0}</value>
+  </data>
+  <data name="Map_CartoDarkName" xml:space="preserve">
+    <value>CARTO Dark Matter - wymaga klucza API</value>
+  </data>
+  <data name="Map_CartoPositronName" xml:space="preserve">
+    <value>CARTO Positron (jasna) - wymaga klucza API</value>
+  </data>
+  <data name="Map_EsriName" xml:space="preserve">
+    <value>Esri World Imagery (satelita, domyślna)</value>
+  </data>
+  <data name="Map_FetchTileFailed" xml:space="preserve">
+    <value>Nie udało się pobrać kafelka mapy {0} po {1} próbach</value>
+  </data>
+  <data name="Peak_HighestPoint" xml:space="preserve">
+    <value>Najwyższy punkt</value>
+  </data>
+  <data name="Peak_LowestPoint" xml:space="preserve">
+    <value>Najniższy punkt</value>
+  </data>
+  <data name="Peak_MaxLean" xml:space="preserve">
+    <value>Najgłębszy przechył</value>
+  </data>
+  <data name="Peak_SteepestClimb" xml:space="preserve">
+    <value>Najbardziej stromy podjazd</value>
+  </data>
+  <data name="Peak_SteepestDescent" xml:space="preserve">
+    <value>Najbardziej stromy zjazd</value>
+  </data>
+  <data name="Peak_StrongestG" xml:space="preserve">
+    <value>Największe przeciążenie</value>
+  </data>
+  <data name="Peak_TopSpeed" xml:space="preserve">
+    <value>Prędkość maksymalna</value>
+  </data>
+  <data name="Plan_EmptyRange" xml:space="preserve">
+    <value>Zakres renderu jest pusty ({0} - {1}) - koniec musi być po początku.</value>
+  </data>
+  <data name="Plan_NothingLeft" xml:space="preserve">
+    <value>Cięcia usuwają cały zakres renderu - nie zostaje nic do wyrenderowania.</value>
+  </data>
+  <data name="Presets_DuplicateId" xml:space="preserve">
+    <value>Pomijam plik presetu nakładki z powtórzonym id '{0}': {1}</value>
+  </data>
+  <data name="Presets_ImportFailed" xml:space="preserve">
+    <value>Nie udało się zaimportować presetu nakładki z: {0}</value>
+  </data>
+  <data name="Presets_SkippingUnreadable" xml:space="preserve">
+    <value>Pomijam nieczytelny plik presetu nakładki: {0}</value>
+  </data>
+  <data name="Presets_Unreadable" xml:space="preserve">
+    <value>Presety nakładki są uszkodzone lub nieczytelne - używam domyślnego presetu</value>
+  </data>
+  <data name="Presets_WriteFailed" xml:space="preserve">
+    <value>Nie udało się zapisać presetów nakładki</value>
+  </data>
+  <data name="Preview_AudioNoDevice" xml:space="preserve">
+    <value>Dźwięk podglądu niedostępny - brak urządzenia odtwarzającego: {0}</value>
+  </data>
+  <data name="Preview_AudioSdlFailed" xml:space="preserve">
+    <value>Dźwięk podglądu niedostępny - SDL nie uruchomił dźwięku: {0}</value>
+  </data>
+  <data name="Preview_AudioStopped" xml:space="preserve">
+    <value>Dźwięk podglądu zatrzymany</value>
+  </data>
+  <data name="Preview_AudioTrackFailed" xml:space="preserve">
+    <value>Dźwięk podglądu niedostępny - nie udało się otworzyć ścieżki dźwiękowej</value>
+  </data>
+  <data name="Preview_CloseFailed" xml:space="preserve">
+    <value>Nie udało się zamknąć podglądu</value>
+  </data>
+  <data name="Preview_FetchingOverview" xml:space="preserve">
+    <value>Pobieranie mapy przeglądu trasy</value>
+  </data>
+  <data name="Preview_FetchingTiles" xml:space="preserve">
+    <value>Pobieranie kafelków mapy</value>
+  </data>
+  <data name="Preview_MapFailed" xml:space="preserve">
+    <value>Podgląd mapy nie powiódł się</value>
+  </data>
+  <data name="Preview_OverviewFailed" xml:space="preserve">
+    <value>Mapa przeglądu trasy nie powiodła się</value>
+  </data>
+  <data name="Preview_PlaybackStopped" xml:space="preserve">
+    <value>Odtwarzanie zatrzymane: {0}</value>
+  </data>
+  <data name="Preview_SeekFailed" xml:space="preserve">
+    <value>Przewijanie podglądu nie powiodło się: {0}</value>
+  </data>
+  <data name="Preview_ThumbnailsStopped" xml:space="preserve">
+    <value>Miniatury na osi czasu zatrzymane</value>
+  </data>
+  <data name="Preview_WaveformCacheUnreadable" xml:space="preserve">
+    <value>Zapisany przebieg dźwięku {0} jest nieczytelny - dekoduję dźwięk ponownie</value>
+  </data>
+  <data name="Preview_WaveformCacheWriteFailed" xml:space="preserve">
+    <value>Nie udało się zapisać przebiegu dźwięku {0}</value>
+  </data>
+  <data name="Preview_WaveformStopped" xml:space="preserve">
+    <value>Przebieg dźwięku na osi czasu zatrzymany</value>
+  </data>
+  <data name="Project_Empty" xml:space="preserve">
+    <value>Plik projektu jest pusty.</value>
+  </data>
+  <data name="Project_Incomplete" xml:space="preserve">
+    <value>Plik projektu jest niekompletny.</value>
+  </data>
+  <data name="Project_Newer" xml:space="preserve">
+    <value>Projekt został zapisany w nowszej wersji OsmoOverlay.</value>
+  </data>
+  <data name="Project_NotLocal" xml:space="preserve">
+    <value>Projekt wskazuje na plik, który nie jest na dysku lokalnym (udział sieciowy lub ścieżka względna).</value>
+  </data>
+  <data name="Render_Cancelled" xml:space="preserve">
+    <value>Anulowane przez użytkownika</value>
+  </data>
+  <data name="Render_CheckingNvenc" xml:space="preserve">
+    <value>Sprawdzanie dostępności NVENC...</value>
+  </data>
+  <data name="Render_CopyingMetadata" xml:space="preserve">
+    <value>Kopiowanie metadanych kamery do pliku wyjściowego: {0}...</value>
+  </data>
+  <data name="Render_CopyMetadataFailed" xml:space="preserve">
+    <value>Nie udało się skopiować metadanych kamery do renderu - sam film jest w porządku, po prostu ich nie zawiera</value>
+  </data>
+  <data name="Render_EncoderCpu" xml:space="preserve">
+    <value>Enkoder: {0} (NVENC niedostępny - renderowanie na CPU)</value>
+  </data>
+  <data name="Render_EncoderGpu" xml:space="preserve">
+    <value>Enkoder: {0} (GPU)</value>
+  </data>
+  <data name="Render_Estimating" xml:space="preserve">
+    <value>szacowanie pozostałego czasu...</value>
+  </data>
+  <data name="Render_Extracted" xml:space="preserve">
+    <value>Wyodrębniono próbki telemetrii: {0}</value>
+  </data>
+  <data name="Render_Extracting" xml:space="preserve">
+    <value>Wyodrębnianie telemetrii...</value>
+  </data>
+  <data name="Render_Failed" xml:space="preserve">
+    <value>Render nie powiódł się dla {0}: {1}</value>
+  </data>
+  <data name="Render_FastStart" xml:space="preserve">
+    <value>Przenoszenie indeksu pliku na początek (szybki start)...</value>
+  </data>
+  <data name="Render_FastStartFailed" xml:space="preserve">
+    <value>Nie udało się zastosować szybkiego startu - sam film jest w porządku</value>
+  </data>
+  <data name="Render_FetchingOverview" xml:space="preserve">
+    <value>Pobieranie mapy przeglądu trasy...</value>
+  </data>
+  <data name="Render_FetchingOverviewProgress" xml:space="preserve">
+    <value>Pobieranie mapy przeglądu trasy: {0}/{1}</value>
+  </data>
+  <data name="Render_FetchingTiles" xml:space="preserve">
+    <value>Pobieranie kafelków mapy dla trasy...</value>
+  </data>
+  <data name="Render_FetchingTilesProgress" xml:space="preserve">
+    <value>Pobieranie kafelków mapy: {0}/{1}</value>
+  </data>
+  <data name="Render_FfmpegFailed" xml:space="preserve">
+    <value>ffmpeg zakończył się błędem ({0}): {1}</value>
+  </data>
+  <data name="Render_FileNotFound" xml:space="preserve">
+    <value>Nie znaleziono pliku: {0}</value>
+  </data>
+  <data name="Render_Frame" xml:space="preserve">
+    <value>Klatka {0}/{1}</value>
+  </data>
+  <data name="Render_NoSamples" xml:space="preserve">
+    <value>Nie znaleziono próbek telemetrii w plikach</value>
+  </data>
+  <data name="Render_NoTelemetry" xml:space="preserve">
+    <value>{0} nie ma telemetrii - to nie jest oryginalne nagranie z obsługiwanej kamery (np. plik wyeksportowany z innej aplikacji)</value>
+  </data>
+  <data name="Render_OutputExists" xml:space="preserve">
+    <value>Plik wyjściowy już istnieje: {0}</value>
+  </data>
+  <data name="Render_PartDebugTrack" xml:space="preserve">
+    <value>ścieżka diagnostyczna</value>
+  </data>
+  <data name="Render_PartialNoTracks" xml:space="preserve">
+    <value>Częściowy render - ścieżki telemetrii i diagnostyczna kamery nie są kopiowane (obejmują całe nagranie)</value>
+  </data>
+  <data name="Render_PartTelemetry" xml:space="preserve">
+    <value>telemetria</value>
+  </data>
+  <data name="Render_PartTelemetryNoSerial" xml:space="preserve">
+    <value>telemetria (bez numeru seryjnego)</value>
+  </data>
+  <data name="Render_PartThumbnails" xml:space="preserve">
+    <value>miniatury/informacje</value>
+  </data>
+  <data name="Render_Probing" xml:space="preserve">
+    <value>Badanie plików źródłowych (ffprobe)...</value>
+  </data>
+  <data name="Render_Realtime" xml:space="preserve">
+    <value>({0:0.00}x czasu rzeczywistego)</value>
+  </data>
+  <data name="Render_RemoveIncompleteFailed" xml:space="preserve">
+    <value>Nie udało się usunąć niepełnego pliku wyjściowego {0}</value>
+  </data>
+  <data name="Render_Rendering" xml:space="preserve">
+    <value>Renderowanie klatek ({0}) do {1}...</value>
+  </data>
+  <data name="Render_RenderingPartial" xml:space="preserve">
+    <value>Renderowanie klatek ({0}) do {1} ({2} nagrania)...</value>
+  </data>
+  <data name="Render_Segments" xml:space="preserve">
+    <value>{0} segment|{0} segmenty|{0} segmentów</value>
+  </data>
+  <data name="Render_TimeLeft" xml:space="preserve">
+    <value>zostało {0}</value>
+  </data>
+  <data name="Render_UsingExtractedSamples" xml:space="preserve">
+    <value>Używam wcześniej wyodrębnionych próbek telemetrii: {0}</value>
+  </data>
+  <data name="Settings_Unreadable" xml:space="preserve">
+    <value>Plik ustawień jest uszkodzony lub nieczytelny - używam domyślnych</value>
+  </data>
+  <data name="Settings_WriteFailed" xml:space="preserve">
+    <value>Nie udało się zapisać pliku ustawień</value>
+  </data>
+  <data name="Strip_DjiDebug" xml:space="preserve">
+    <value>ścieżka diagnostyczna DJI</value>
+  </data>
+  <data name="Strip_DjiTelemetry" xml:space="preserve">
+    <value>ścieżka telemetrii DJI (ślad GPS, czujniki, numer seryjny kamery)</value>
+  </data>
+  <data name="Strip_OtherStream" xml:space="preserve">
+    <value>strumień {0} ({1})</value>
+  </data>
+  <data name="Strip_Tags" xml:space="preserve">
+    <value>{0} znacznik metadanych (data nagrania, timecode, enkoder...)|{0} znaczniki metadanych (data nagrania, timecode, enkoder...)|{0} znaczników metadanych (data nagrania, timecode, enkoder...)</value>
+  </data>
+  <data name="Strip_Thumbnail" xml:space="preserve">
+    <value>osadzona miniatura</value>
+  </data>
+  <data name="Strip_Timecode" xml:space="preserve">
+    <value>ścieżka timecode (pora dnia)</value>
+  </data>
+  <data name="Updates_Available" xml:space="preserve">
+    <value>Dostępny jest OsmoOverlay {0} (masz {1})</value>
+  </data>
+  <data name="Updates_HashMismatch" xml:space="preserve">
+    <value>{0} nie zgadza się z opublikowaną sumą SHA-256 - pobrany plik jest uszkodzony lub został zmieniony.</value>
+  </data>
+  <data name="Updates_NoHash" xml:space="preserve">
+    <value>{0} nie ma opublikowanej sumy SHA-256, więc nie można go zweryfikować - zainstaluj go ze strony wydania.</value>
+  </data>
+  <data name="Updates_NoRelease" xml:space="preserve">
+    <value>Nie opublikowano jeszcze żadnego wydania OsmoOverlay</value>
+  </data>
+  <data name="Updates_UpToDate" xml:space="preserve">
+    <value>OsmoOverlay jest aktualny ({0})</value>
+  </data>
+  <data name="Versions_LatestUnknown" xml:space="preserve">
+    <value>{0}: zainstalowana {1} (nie udało się ustalić najnowszej wersji)</value>
+  </data>
+  <data name="Versions_NotInstalled" xml:space="preserve">
+    <value>{0}: niezainstalowany albo nie udało się odczytać wersji</value>
+  </data>
+  <data name="Versions_Unsupported" xml:space="preserve">
+    <value>Wyszedł {0} {1}, ale ta wersja OsmoOverlay obsługuje tylko {2}.x</value>
+  </data>
+  <data name="Versions_UpdateAvailable" xml:space="preserve">
+    <value>{0}: zainstalowana {1}, dostępna aktualizacja ({2})</value>
+  </data>
+  <data name="Versions_UpdateManually" xml:space="preserve">
+    <value>{0}: zainstalowana {1}, dostępna {2} - nie zainstalowano przez menedżer pakietów, zaktualizuj ręcznie</value>
+  </data>
+  <data name="Versions_UpToDate" xml:space="preserve">
+    <value>{0}: zainstalowana {1} - aktualna</value>
+  </data>
+</root>

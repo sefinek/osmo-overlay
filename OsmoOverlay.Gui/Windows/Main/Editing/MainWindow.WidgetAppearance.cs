@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
@@ -29,7 +30,7 @@ public partial class MainWindow
 		if (EditedElement is not { } source) return;
 
 		var shadow = new ElementShadow(source.ShadowEnabled, source.ShadowColor, source.ShadowOpacity, source.ShadowRadius, source.ShadowOffsetX, source.ShadowOffsetY);
-		UpdateAllElements("Shadow", el => WithShadow(el, shadow));
+		UpdateAllElements(Strings.Appearance_Shadow, el => WithShadow(el, shadow));
 	}
 
 	private void ApplyPanelToAll()
@@ -37,7 +38,7 @@ public partial class MainWindow
 		if (EditedElement is not IPanelElement source) return;
 
 		var panel = new ElementPanel(source.PanelColor, source.PanelOpacity);
-		UpdateAllElements("Panel", el => WithPanel(el, panel));
+		UpdateAllElements(Strings.Appearance_Panel, el => WithPanel(el, panel));
 	}
 
 	/// <summary>The font, text color and outline - not the size (it's the widget's own) or the value color (only some widgets have one).</summary>
@@ -45,7 +46,7 @@ public partial class MainWindow
 	{
 		if (EditedElement is not StyledOverlayElement source) return;
 
-		UpdateAllElements("Font and colors", el => el is StyledOverlayElement styled
+		UpdateAllElements(Strings.Appearance_FontAndColors, el => el is StyledOverlayElement styled
 			? styled with
 			{
 				FontFamily = source.FontFamily,
@@ -74,14 +75,14 @@ public partial class MainWindow
 
 		if (changed == 0)
 		{
-			AppendLog($"{what}: every widget already has it.");
+			AppendLog(string.Format(Strings.Appearance_AlreadyEverywhere, what));
 			return;
 		}
 
 		ReplaceActiveElements(elements);
 		ShowLayout();
 		SaveOverlayPresets();
-		AppendLog($"{what} applied to {changed} widgets.");
+		AppendLog(Plural.Format(Strings.Appearance_Applied, changed, what));
 	}
 
 	private static OverlayElement WithShadow(OverlayElement element, ElementShadow shadow)

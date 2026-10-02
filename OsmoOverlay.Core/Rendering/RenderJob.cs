@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading.Channels;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
@@ -106,12 +107,12 @@ public static class RenderJob
 		foreach (string path in options.InputPaths)
 		{
 			if (!File.Exists(path))
-				return new RenderResult(false, $"File not found: {path}", sw.Elapsed);
+				return new RenderResult(false, string.Format(CoreStrings.Render_FileNotFound, path), sw.Elapsed);
 		}
 
 		try
 		{
-			Report(RenderPhase.Probing, "Probing source file(s) (ffprobe)...");
+			Report(RenderPhase.Probing, CoreStrings.Render_Probing);
 			IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(options.InputPaths);
 			if (VideoSegments.FindMismatch(segments) is { } mismatch)
 				return new RenderResult(false, mismatch, sw.Elapsed);
@@ -120,18 +121,15 @@ public static class RenderJob
 			Report(RenderPhase.Probing,
 				$"{first.Source.Video.CodecName} {first.Source.Video.Profile}, {first.Source.Video.Width}x{first.Source.Video.Height}, " +
 				$"{first.Source.Video.FrameRate} fps, {first.Source.Video.PixFmt}, ~{first.Source.Video.BitRate / 1_000_000} Mbps" +
-				(segments.Count > 1 ? $" ({segments.Count} segments)" : ""));
+				(segments.Count > 1 ? " (" + Plural.Format(CoreStrings.Render_Segments, segments.Count) + ")" : ""));
 
 			if (!segments.AllHaveTelemetry())
 			{
-				return new RenderResult(false,
-					$"{first.InputPath} has no telemetry - it isn't an original recording from a supported camera " +
-					"(e.g. a file exported from another app)",
-					sw.Elapsed);
+				return new RenderResult(false, string.Format(CoreStrings.Render_NoTelemetry, first.InputPath), sw.Elapsed);
 			}
 
 			if (!options.Overwrite && File.Exists(options.OutputPath))
-				return new RenderResult(false, $"Output file already exists: {options.OutputPath}", sw.Elapsed);
+				return new RenderResult(false, string.Format(CoreStrings.Render_OutputExists, options.OutputPath), sw.Elapsed);
 
 			IReadOnlyList<TelemetryFrame> rawFrames;
 			string? cameraModel = options.CameraModel;
@@ -139,17 +137,17 @@ public static class RenderJob
 			if (options.TelemetryFrames is { Count: > 0 })
 			{
 				rawFrames = options.TelemetryFrames;
-				Report(RenderPhase.ExtractingTelemetry, $"Using {rawFrames.Count} previously extracted telemetry samples");
+				Report(RenderPhase.ExtractingTelemetry, string.Format(CoreStrings.Render_UsingExtractedSamples, rawFrames.Count));
 			}
 			else
 			{
-				Report(RenderPhase.ExtractingTelemetry, "Extracting telemetry...");
+				Report(RenderPhase.ExtractingTelemetry, CoreStrings.Render_Extracting);
 				TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
 				rawFrames = extraction.Frames;
 				cameraModel ??= extraction.CameraModel;
 				if (rawFrames.Count == 0)
-					return new RenderResult(false, "No telemetry samples found in the file(s)", sw.Elapsed);
-				Report(RenderPhase.ExtractingTelemetry, $"Extracted {rawFrames.Count} telemetry samples");
+					return new RenderResult(false, CoreStrings.Render_NoSamples, sw.Elapsed);
+				Report(RenderPhase.ExtractingTelemetry, string.Format(CoreStrings.Render_Extracted, rawFrames.Count));
 			}
 
 			OverlaySettings settings = OverlaySettingsStore.Load();
@@ -163,15 +161,15 @@ public static class RenderJob
 			double maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
 			if (options.Encoder is null)
-				Report(RenderPhase.SelectingEncoder, "Checking NVENC availability...");
+				Report(RenderPhase.SelectingEncoder, CoreStrings.Render_CheckingNvenc);
 			string encoder = options.Encoder ?? FfmpegPipeline.SelectVideoEncoder(first.Source.Video);
 			Report(RenderPhase.SelectingEncoder,
-				$"Using encoder: {encoder}" +
-				(FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (NVENC unavailable - rendering on CPU)"));
+				string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? CoreStrings.Render_EncoderGpu : CoreStrings.Render_EncoderCpu, encoder));
 
 			int totalFrames = (int)plan.TotalFrames;
-			Report(RenderPhase.Rendering, $"Rendering {totalFrames} frames to {options.OutputPath}" +
-			                              (plan.IsPartial ? $" ({DescribePlan(plan, fps)} of the recording)..." : "..."), 0, totalFrames);
+			Report(RenderPhase.Rendering, plan.IsPartial
+				? string.Format(CoreStrings.Render_RenderingPartial, totalFrames, options.OutputPath, DescribePlan(plan, fps))
+				: string.Format(CoreStrings.Render_Rendering, totalFrames, options.OutputPath), 0, totalFrames);
 
 			IReadOnlyList<OverlayElement> layout =
 				options.Layout ?? LoadActiveLayout();
@@ -192,31 +190,32 @@ public static class RenderJob
 
 			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
 			{
-				Report(RenderPhase.Rendering, "Fetching map tiles for the route...");
+				Report(RenderPhase.Rendering, CoreStrings.Render_FetchingTiles);
 				try
 				{
 					await renderer.PrepareMapAsync(
-						(fetched, total) => Report(RenderPhase.Rendering, $"Fetching map tiles: {fetched}/{total}", fetched, total),
+						(fetched, total) => Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_FetchingTilesProgress, fetched, total), fetched, total),
 						ct);
 				}
 				catch (OperationCanceledException)
 				{
-					return new RenderResult(false, "Cancelled by user", sw.Elapsed);
+					return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);
 				}
 			}
 
 			if (settings.ShowRouteIntro && hasGpsFix)
 			{
-				Report(RenderPhase.Rendering, "Fetching route overview map...");
+				Report(RenderPhase.Rendering, CoreStrings.Render_FetchingOverview);
 				try
 				{
 					await renderer.PrepareRouteIntroMapAsync(
-						(fetched, total) => Report(RenderPhase.Rendering, $"Fetching route overview map: {fetched}/{total}", fetched, total),
+						(fetched, total) => Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_FetchingOverviewProgress, fetched, total), fetched,
+							total),
 						ct);
 				}
 				catch (OperationCanceledException)
 				{
-					return new RenderResult(false, "Cancelled by user", sw.Elapsed);
+					return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);
 				}
 			}
 
@@ -226,7 +225,7 @@ public static class RenderJob
 			bool keepTracks = !plan.IsPartial;
 			if (!keepTracks && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack) && settings.PreserveCameraMetadata &&
 			    !options.GreenScreen)
-				Report(RenderPhase.Rendering, "Partial render - the camera's telemetry/debug tracks aren't copied (they cover the whole recording)");
+				Report(RenderPhase.Rendering, CoreStrings.Render_PartialNoTracks);
 			var metadataSelection = new CameraMetadataSelection(settings.MetadataKeepTelemetry && keepTracks,
 				settings.MetadataKeepDebugTrack && keepTracks, settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
 			bool preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !options.GreenScreen;
@@ -307,7 +306,7 @@ public static class RenderJob
 
 						if (written % 60 == 0)
 						{
-							Report(RenderPhase.Rendering, $"Frame {written}/{totalFrames}{rate.Describe(written, totalFrames)}",
+							Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Frame, written, totalFrames) + rate.Describe(written, totalFrames),
 								written, totalFrames);
 						}
 					}
@@ -363,7 +362,7 @@ public static class RenderJob
 						// user cancellation, not a render failure.
 					}
 
-					return new RenderResult(false, "Cancelled by user", sw.Elapsed);
+					return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);
 				}
 
 				await ffmpeg.WaitForExitAsync(CancellationToken.None);
@@ -371,7 +370,7 @@ public static class RenderJob
 
 				if (ffmpeg.ExitCode != 0)
 				{
-					string message = $"ffmpeg exited with an error ({ffmpeg.ExitCode}): {stderr}";
+					string message = string.Format(CoreStrings.Render_FfmpegFailed, ffmpeg.ExitCode, stderr);
 					AppLogger.Error(message);
 					return new RenderResult(false, message, sw.Elapsed);
 				}
@@ -405,7 +404,7 @@ public static class RenderJob
 			// RenderResult.ErrorMessage for their own user-facing dialog/console line, but don't log it
 			// again themselves, since AppLogger.Error already reaches the file log and (via Notified)
 			// the GUI's on-screen panel.
-			AppLogger.Error(ex, $"Render failed for {string.Join(", ", options.InputPaths)}: {ex.Message}");
+			AppLogger.Error(ex, string.Format(CoreStrings.Render_Failed, string.Join(", ", options.InputPaths), ex.Message));
 			return new RenderResult(false, ex.Message, sw.Elapsed);
 		}
 	}
@@ -488,31 +487,31 @@ public static class RenderJob
 		if (metadata is not null)
 		{
 			List<string> parts = [];
-			if (metadata.Telemetry) parts.Add(metadata.SerialNumber ? "telemetry" : "telemetry (serial number removed)");
-			if (metadata.DebugTrack) parts.Add("debug track");
-			if (metadata.ThumbnailsAndInfo) parts.Add("thumbnails/info");
-			report($"Copying camera metadata into the output: {string.Join(", ", parts)}...");
+			if (metadata.Telemetry) parts.Add(metadata.SerialNumber ? CoreStrings.Render_PartTelemetry : CoreStrings.Render_PartTelemetryNoSerial);
+			if (metadata.DebugTrack) parts.Add(CoreStrings.Render_PartDebugTrack);
+			if (metadata.ThumbnailsAndInfo) parts.Add(CoreStrings.Render_PartThumbnails);
+			report(string.Format(CoreStrings.Render_CopyingMetadata, string.Join(", ", parts)));
 			try
 			{
 				camera.CopyMetadata(outputPath, inputPaths, metadata);
 			}
 			catch (Exception ex)
 			{
-				AppLogger.Warn(ex, "Could not copy the camera metadata into the render - the video itself is fine, it just won't carry it");
+				AppLogger.Warn(ex, CoreStrings.Render_CopyMetadataFailed);
 			}
 		}
 
 		// Without preserveMetadata, ffmpeg already wrote the file fast-start itself (-movflags +faststart).
 		if (fastStart && preserveMetadata)
 		{
-			report("Moving the file index to the front (fast start)...");
+			report(CoreStrings.Render_FastStart);
 			try
 			{
 				Mp4FastStart.Apply(outputPath);
 			}
 			catch (Exception ex)
 			{
-				AppLogger.Warn(ex, "Could not apply fast start to the render - the video itself is fine");
+				AppLogger.Warn(ex, CoreStrings.Render_FastStartFailed);
 			}
 		}
 	}
@@ -536,7 +535,7 @@ public static class RenderJob
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
 		{
-			AppLogger.Warn(ex, $"Could not remove the incomplete output {outputPath}");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Render_RemoveIncompleteFailed, outputPath));
 		}
 	}
 
@@ -597,7 +596,7 @@ internal sealed class RenderRateEstimator(double sourceFps)
 	/// <summary>" - 41.3 fps (0.69x realtime) - 00:12:05 left", or " - estimating time left..." during the first few seconds.</summary>
 	public string Describe(int framesWritten, int totalFrames)
 	{
-		if (_clock.Elapsed.TotalSeconds < WarmupSeconds || _samples.Count < 2) return " - estimating time left...";
+		if (_clock.Elapsed.TotalSeconds < WarmupSeconds || _samples.Count < 2) return " - " + CoreStrings.Render_Estimating;
 
 		(double Seconds, int Frames) oldest = _samples.Peek();
 		double span = _clock.Elapsed.TotalSeconds - oldest.Seconds;
@@ -607,7 +606,7 @@ internal sealed class RenderRateEstimator(double sourceFps)
 		if (fps <= 0) return "";
 
 		var left = TimeSpan.FromSeconds(Math.Max(totalFrames - framesWritten, 0) / fps);
-		string realtime = sourceFps > 0 ? $" ({fps / sourceFps:0.00}x realtime)" : "";
-		return $" - {fps:0.0} fps{realtime} - {left:hh\\:mm\\:ss} left";
+		string realtime = sourceFps > 0 ? " " + string.Format(CoreStrings.Render_Realtime, fps / sourceFps) : "";
+		return $" - {fps:0.0} fps{realtime} - " + string.Format(CoreStrings.Render_TimeLeft, left.ToString(@"hh\:mm\:ss"));
 	}
 }

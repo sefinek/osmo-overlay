@@ -22,22 +22,22 @@ public partial class ElementTimingEditor : UserControl
 	// below, and goes out upward).
 	private static readonly List<AnimationOption> InOptions =
 	[
-		new("None (instant)", OverlayAnimationType.None),
-		new("Fade in", OverlayAnimationType.Fade),
-		new("Slide in from below", OverlayAnimationType.SlideUp),
-		new("Slide in from above", OverlayAnimationType.SlideDown),
-		new("Slide in from the right", OverlayAnimationType.SlideLeft),
-		new("Slide in from the left", OverlayAnimationType.SlideRight)
+		new(Strings.Timing_AnimNone, OverlayAnimationType.None),
+		new(Strings.Timing_FadeIn, OverlayAnimationType.Fade),
+		new(Strings.Timing_SlideInFromBelow, OverlayAnimationType.SlideUp),
+		new(Strings.Timing_SlideInFromAbove, OverlayAnimationType.SlideDown),
+		new(Strings.Timing_SlideInFromRight, OverlayAnimationType.SlideLeft),
+		new(Strings.Timing_SlideInFromLeft, OverlayAnimationType.SlideRight)
 	];
 
 	private static readonly List<AnimationOption> OutOptions =
 	[
-		new("None (instant)", OverlayAnimationType.None),
-		new("Fade out", OverlayAnimationType.Fade),
-		new("Slide out upward", OverlayAnimationType.SlideUp),
-		new("Slide out downward", OverlayAnimationType.SlideDown),
-		new("Slide out to the left", OverlayAnimationType.SlideLeft),
-		new("Slide out to the right", OverlayAnimationType.SlideRight)
+		new(Strings.Timing_AnimNone, OverlayAnimationType.None),
+		new(Strings.Timing_FadeOut, OverlayAnimationType.Fade),
+		new(Strings.Timing_SlideOutUp, OverlayAnimationType.SlideUp),
+		new(Strings.Timing_SlideOutDown, OverlayAnimationType.SlideDown),
+		new(Strings.Timing_SlideOutLeft, OverlayAnimationType.SlideLeft),
+		new(Strings.Timing_SlideOutRight, OverlayAnimationType.SlideRight)
 	];
 
 	private bool _populating;

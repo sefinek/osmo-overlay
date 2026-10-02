@@ -119,8 +119,8 @@ public partial class MainWindow
 	private async Task ConfirmCloseDuringRenderAsync()
 	{
 		_askingToClose = true;
-		bool close = await ConfirmDialog.AskAsync(this, "Render in progress",
-			"Closing OsmoOverlay now ends the render and leaves a partial file.", "Close and cancel", DialogKind.Warning);
+		bool close = await ConfirmDialog.AskAsync(this, Strings.Close_RenderInProgressTitle, Strings.Close_RenderInProgressMessage,
+			Strings.Close_CloseAndCancel, DialogKind.Warning);
 		_askingToClose = false;
 		if (!close) return;
 

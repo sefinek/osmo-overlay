@@ -1,17 +1,18 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
              x:Class="OsmoOverlay.Gui.MarkerStyleEditor">
 
 	<StackPanel Spacing="8">
-		<TextBlock Text="Position marker" Classes="infoLabel" Margin="0" />
+		<TextBlock Text="{x:Static local:Strings.MarkerStyle_PositionMarker}" Classes="infoLabel" Margin="0" />
 		<StackPanel Orientation="Horizontal" Spacing="12">
-			<RadioButton Name="ArrowRadio" Content="Arrow" />
-			<RadioButton Name="DotRadio" Content="Dot" />
+			<RadioButton Name="ArrowRadio" Content="{x:Static local:Strings.MarkerStyle_Arrow}" />
+			<RadioButton Name="DotRadio" Content="{x:Static local:Strings.MarkerStyle_Dot}" />
 		</StackPanel>
-		<TextBlock Text="Size" Classes="infoLabel" Margin="0" />
+		<TextBlock Text="{x:Static local:Strings.MarkerStyle_Size}" Classes="infoLabel" Margin="0" />
 		<NumericUpDown Name="ScaleBox" Minimum="0.3" Maximum="4" Increment="0.1" FormatString="0.0"
 		               HorizontalAlignment="Stretch" />
-		<TextBlock Text="Color" Classes="infoLabel" Margin="0" />
+		<TextBlock Text="{x:Static local:Strings.Common_Color}" Classes="infoLabel" Margin="0" />
 		<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
 			<Border Grid.Column="0" Name="SwatchBorder" Width="20" Height="20" CornerRadius="4"
 			        BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />

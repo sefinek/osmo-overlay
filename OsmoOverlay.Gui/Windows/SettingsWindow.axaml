@@ -9,7 +9,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
-        Title="Settings">
+        Title="{x:Static local:Strings.Common_Settings}">
 
 	<Window.Resources>
 		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceInsetColor}" />
@@ -138,43 +138,43 @@
 	<Grid ColumnDefinitions="210,*">
 		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
 			<DockPanel Margin="12,18,12,14">
-				<TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
+				<TextBlock DockPanel.Dock="Top" Text="{x:Static local:Strings.Common_Settings}" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
 				<TextBlock DockPanel.Dock="Bottom" Name="SidebarVersionText" Classes="hint" Margin="10,0,0,0" />
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconDisplay}" Width="16" Height="16" />
-							<TextBlock Text="Rendering" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" />
 						</StackPanel>
 					</ListBoxItem>
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconStopwatch}" Width="16" Height="16" />
-							<TextBlock Text="Speed" />
+							<TextBlock Text="{x:Static local:Strings.Common_Speed}" />
 						</StackPanel>
 					</ListBoxItem>
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconFlag}" Width="16" Height="16" />
-							<TextBlock Text="Route intro" />
+							<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" />
 						</StackPanel>
 					</ListBoxItem>
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconEye}" Width="16" Height="16" />
-							<TextBlock Text="Interface" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Interface}" />
 						</StackPanel>
 					</ListBoxItem>
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconGear}" Width="16" Height="16" />
-							<TextBlock Text="Behavior" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" />
 						</StackPanel>
 					</ListBoxItem>
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconInfo}" Width="16" Height="16" />
-							<TextBlock Text="About" />
+							<TextBlock Text="{x:Static local:Strings.Settings_About}" />
 						</StackPanel>
 					</ListBoxItem>
 				</ListBox>
@@ -185,83 +185,83 @@
 			<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
-						<TextBlock Text="Rendering" Classes="pageTitle" />
+						<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" Classes="pageTitle" />
 						<TextBlock Classes="pageSubtitle"
-						           Text="By default a render matches the source's own encoding 1:1 - bitrate, keyframe interval, HEVC level and no B-frames. Only a non-default choice here changes that." />
+						           Text="{x:Static local:Strings.Settings_ByDefaultARenderMatches}" />
 					</StackPanel>
 
-					<TextBlock Text="OVERLAY" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Common_Overlay}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Attribution watermark" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_AttributionWatermark}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="'Made with OsmoOverlay' and the project link at the bottom for the first few seconds, fading out." />
+									           Text="{x:Static local:Strings.Settings_MadeWithOsmoOverlayAndThe}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="ShowWatermarkCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Smooth GPS-derived motion" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="The GPS reports a few fixes a second, so the compass trail and map hold, then jump. This interpolates between fixes. Applies the next time a recording opens." />
+									           Text="{x:Static local:Strings.Settings_TheGpsReportsAFew}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="SmoothGpsMotionCheck" />
 							</Grid>
 						</StackPanel>
 					</Border>
 
-					<TextBlock Text="OUTPUT QUALITY" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_OutputQuality}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Encoder preset (NVIDIA GPU)" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_EncoderPresetNvidiaGpu}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="Effort per frame at the same bitrate. P7 looks best (default); lower ones are faster. NVENC only - the CPU encoder has its own." />
+									           Text="{x:Static local:Strings.Settings_EffortPerFrameAtThe}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="NvencPresetCombo" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Output bitrate" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputBitrate}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="Higher makes a bigger file but keeps thin HUD text crisper after YouTube and the like re-compress it." />
+									           Text="{x:Static local:Strings.Settings_HigherMakesABiggerFile}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="BitrateCombo" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Decode the source on the GPU" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_DecodeTheSourceOnThe}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="Several times faster, identical frames. Turn it off only if renders fail after a driver update or on an unusual GPU." />
+									           Text="{x:Static local:Strings.Settings_SeveralTimesFasterIdenticalFrames}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="HardwareDecodingCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Fast start for web playback" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_FastStartForWebPlayback}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="Puts the index first, so a browser or messenger can play it before it's all downloaded. Same picture; an extra pass of a few seconds per GB." />
+									           Text="{x:Static local:Strings.Settings_PutsTheIndexFirstSo}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="FastStartCheck" />
 							</Grid>
 						</StackPanel>
 					</Border>
 
-					<TextBlock Text="PRIVACY" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_Privacy}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Keep the camera's metadata" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_KeepTheCameraSMetadata}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="Copies what the camera recorded alongside the video into the render, so DJI Mimo, exiftool or this app can still read it. Pick below what to keep." />
+									           Text="{x:Static local:Strings.Settings_CopiesWhatTheCameraRecorded}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="PreserveCameraMetadataCheck" IsCheckedChanged="OnMetadataOptionChanged" />
 							</Grid>
@@ -269,28 +269,28 @@
 								<Expander Name="MetadataPartsExpander" HorizontalAlignment="Stretch" CornerRadius="8">
 									<StackPanel Spacing="12">
 										<StackPanel Spacing="2">
-											<CheckBox Name="MetadataTelemetryCheck" Content="Telemetry - GPS route, speed, accelerometer, exposure"
+											<CheckBox Name="MetadataTelemetryCheck" Content="{x:Static local:Strings.Settings_TelemetryGpsRouteSpeedAccelerometer}"
 											          IsCheckedChanged="OnMetadataOptionChanged" />
 											<TextBlock Classes="rowHint" Margin="28,0,0,0"
-											           Text="What DJI Mimo and this app read the ride from. Includes your exact position for every frame." />
+											           Text="{x:Static local:Strings.Settings_WhatDjiMimoAndThis}" />
 										</StackPanel>
 										<StackPanel Spacing="2">
-											<CheckBox Name="MetadataSerialCheck" Content="Camera serial number and device ID"
+											<CheckBox Name="MetadataSerialCheck" Content="{x:Static local:Strings.Settings_CameraSerialNumberAndDevice}"
 											          IsCheckedChanged="OnMetadataOptionChanged" />
 											<TextBlock Classes="rowHint" Margin="28,0,0,0"
-											           Text="Identifies your camera; nothing that reads the telemetry needs it. Off, it's removed from the file entirely." />
+											           Text="{x:Static local:Strings.Settings_IdentifiesYourCameraNothingThat}" />
 										</StackPanel>
 										<StackPanel Spacing="2">
-											<CheckBox Name="MetadataDebugCheck" Content="Camera debug track"
+											<CheckBox Name="MetadataDebugCheck" Content="{x:Static local:Strings.Settings_CameraDebugTrack}"
 											          IsCheckedChanged="OnMetadataOptionChanged" />
 											<TextBlock Classes="rowHint" Margin="28,0,0,0"
-											           Text="DJI's internal sensor diagnostics (~1.7 Mbps). No location in it, and no common tool reads it." />
+											           Text="{x:Static local:Strings.Settings_DjiSInternalSensorDiagnostics}" />
 										</StackPanel>
 										<StackPanel Spacing="2">
-											<CheckBox Name="MetadataThumbnailsCheck" Content="Thumbnails and recording info"
+											<CheckBox Name="MetadataThumbnailsCheck" Content="{x:Static local:Strings.Settings_ThumbnailsAndRecordingInfo}"
 											          IsCheckedChanged="OnMetadataOptionChanged" />
 											<TextBlock Classes="rowHint" Margin="28,0,0,0"
-											           Text="Cover image, camera model, shooting settings and the file's original name on the camera." />
+											           Text="{x:Static local:Strings.Settings_CoverImageCameraModelShooting}" />
 										</StackPanel>
 									</StackPanel>
 								</Expander>
@@ -303,9 +303,9 @@
 			<ScrollViewer Name="SpeedPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
-						<TextBlock Text="Speed calibration" Classes="pageTitle" />
+						<TextBlock Text="{x:Static local:Strings.Common_SpeedCalibration}" Classes="pageTitle" />
 						<TextBlock Classes="pageSubtitle"
-						           Text="A camera's GPS tends to read speed low. The correction raises every shown speed - the speed widgets, top and average speed, the route intro - in the preview and in every render. One setting for all recordings, saved when you close Settings." />
+						           Text="{x:Static local:Strings.Settings_ACameraSGpsTends}" />
 					</StackPanel>
 					<Border Classes="settingsCard" Padding="16">
 						<local:SpeedCalibrationEditor Name="SpeedEditor" />
@@ -316,63 +316,63 @@
 			<ScrollViewer Name="RouteIntroPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
-						<TextBlock Text="Route intro" Classes="pageTitle" />
+						<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" Classes="pageTitle" />
 						<TextBlock Classes="pageSubtitle"
-						           Text="A fullscreen card for the first seconds of the render: the whole route on a map and the trip stats. Needs a GPS fix and network access for the map." />
+						           Text="{x:Static local:Strings.Settings_AFullscreenCardForThe}" />
 					</StackPanel>
 
 					<Border Classes="settingsCard">
 						<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 							<StackPanel>
-								<TextBlock Text="Show the route overview at the start" Classes="rowTitle" />
-								<TextBlock Classes="rowHint" Text="Everything below applies only while this is on." />
+								<TextBlock Text="{x:Static local:Strings.Settings_ShowTheRouteOverviewAt}" Classes="rowTitle" />
+								<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_EverythingBelowAppliesOnlyWhile}" />
 							</StackPanel>
 							<ToggleSwitch Grid.Column="1" Name="ShowRouteIntroCheck" Click="OnShowRouteIntroChanged" />
 						</Grid>
 					</Border>
 
 					<StackPanel Name="RouteIntroOptionsPanel" Spacing="14">
-						<TextBlock Text="CARD" Classes="sectionLabel" />
+						<TextBlock Text="{x:Static local:Strings.Settings_Card}" Classes="sectionLabel" />
 						<Border Classes="settingsCard">
 							<StackPanel>
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
-									<TextBlock Name="RouteIntroDurationLabel" Text="Duration (seconds)" Classes="rowTitle" VerticalAlignment="Center" />
+									<TextBlock Name="RouteIntroDurationLabel" Text="{x:Static local:Strings.Settings_DurationSeconds}" Classes="rowTitle" VerticalAlignment="Center" />
 									<NumericUpDown Grid.Column="1" Name="RouteIntroDurationBox" Minimum="1" Maximum="30" Increment="1" FormatString="0" />
 								</Grid>
 								<Border Classes="divider" />
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 									<StackPanel>
-										<TextBlock Text="Color the route by speed" Classes="rowTitle" />
-										<TextBlock Classes="rowHint" Text="Green when slow, through yellow and orange to red at the top speed." />
+										<TextBlock Text="{x:Static local:Strings.Settings_ColorTheRouteBySpeed}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_GreenWhenSlowThroughYellow}" />
 									</StackPanel>
 									<ToggleSwitch Grid.Column="1" Name="RouteIntroColorBySpeedCheck" />
 								</Grid>
 								<Border Classes="divider" />
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
-									<TextBlock Text="Units" Classes="rowTitle" VerticalAlignment="Center" />
+									<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="rowTitle" VerticalAlignment="Center" />
 									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
-										<RadioButton Name="RouteIntroMetricRadio" Content="Metric" GroupName="RouteIntroUnits" />
-										<RadioButton Name="RouteIntroImperialRadio" Content="Imperial" GroupName="RouteIntroUnits" />
+										<RadioButton Name="RouteIntroMetricRadio" Content="{x:Static local:Strings.Common_Metric}" GroupName="RouteIntroUnits" />
+										<RadioButton Name="RouteIntroImperialRadio" Content="{x:Static local:Strings.Common_Imperial}" GroupName="RouteIntroUnits" />
 									</StackPanel>
 								</Grid>
 							</StackPanel>
 						</Border>
 
-						<TextBlock Text="MAP" Classes="sectionLabel" />
+						<TextBlock Text="{x:Static local:Strings.Settings_Map}" Classes="sectionLabel" />
 						<Border Classes="settingsCard" Padding="16">
 							<local:MapSourcePicker Name="RouteIntroMapSource" />
 						</Border>
 
-						<TextBlock Name="RouteIntroStatsLabel" Text="STATS TO SHOW" Classes="sectionLabel" />
+						<TextBlock Name="RouteIntroStatsLabel" Text="{x:Static local:Strings.Settings_StatsToShow}" Classes="sectionLabel" />
 						<Border Classes="settingsCard" Padding="16,12">
 							<UniformGrid Columns="2" RowSpacing="4" ColumnSpacing="16">
-								<CheckBox Name="RouteIntroDistanceCheck" Content="Total distance" />
-								<CheckBox Name="RouteIntroMaxSpeedCheck" Content="Max speed" />
-								<CheckBox Name="RouteIntroAvgSpeedCheck" Content="Average speed" />
-								<CheckBox Name="RouteIntroDateCheck" Content="Date" />
-								<CheckBox Name="RouteIntroDurationCheck" Content="Recording duration" />
-								<CheckBox Name="RouteIntroElevationGainCheck" Content="Elevation gain" />
-								<CheckBox Name="RouteIntroCameraModelCheck" Content="Camera model" />
+								<CheckBox Name="RouteIntroDistanceCheck" Content="{x:Static local:Strings.Common_TotalDistance}" />
+								<CheckBox Name="RouteIntroMaxSpeedCheck" Content="{x:Static local:Strings.Common_MaxSpeed}" />
+								<CheckBox Name="RouteIntroAvgSpeedCheck" Content="{x:Static local:Strings.Settings_AverageSpeed}" />
+								<CheckBox Name="RouteIntroDateCheck" Content="{x:Static local:Strings.Settings_Date}" />
+								<CheckBox Name="RouteIntroDurationCheck" Content="{x:Static local:Strings.Settings_RecordingDuration}" />
+								<CheckBox Name="RouteIntroElevationGainCheck" Content="{x:Static local:Strings.Settings_ElevationGain}" />
+								<CheckBox Name="RouteIntroCameraModelCheck" Content="{x:Static local:Strings.Common_CameraModel}" />
 							</UniformGrid>
 						</Border>
 					</StackPanel>
@@ -382,32 +382,40 @@
 			<ScrollViewer Name="InterfacePanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
-						<TextBlock Text="Interface" Classes="pageTitle" />
-						<TextBlock Classes="pageSubtitle" Text="How the app looks and reads." />
+						<TextBlock Text="{x:Static local:Strings.Settings_Interface}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle" Text="{x:Static local:Strings.Settings_HowTheAppLooksAnd}" />
 					</StackPanel>
 
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Theme" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="Applies right away; a few glows and gradients follow when their window opens again." />
+									<TextBlock Text="{x:Static local:Strings.Settings_Language}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LanguageHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="LanguageCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_Theme}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_AppliesRightAwayAFew}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="ThemeCombo" SelectionChanged="OnThemeChanged" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Interface scale" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_InterfaceScale}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="On top of the system's display scaling. Needs a restart - with no file loaded the app restarts when you close Settings." />
+									           Text="{x:Static local:Strings.Settings_OnTopOfTheSystem}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="InterfaceScaleCombo" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Time format" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_TimeFormat}" Classes="rowTitle" />
 									<TextBlock Name="TimeFormatHint" Classes="rowHint" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="TimeFormatCombo" SelectionChanged="OnTimeFormatChanged" />
@@ -415,8 +423,8 @@
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Layer rows" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="Layers the timeline under the preview shows before it scrolls." />
+									<TextBlock Text="{x:Static local:Strings.Settings_LayerRows}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LayersTheTimelineUnderThe}" />
 								</StackPanel>
 								<NumericUpDown Grid.Column="1" Name="LayerRowsBox" Minimum="1" Maximum="12" Increment="1" FormatString="0" />
 							</Grid>
@@ -428,48 +436,48 @@
 			<ScrollViewer Name="BehaviorPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
-						<TextBlock Text="Behavior" Classes="pageTitle" />
-						<TextBlock Classes="pageSubtitle" Text="Startup, projects, playback and monitors." />
+						<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle" Text="{x:Static local:Strings.Settings_StartupProjectsPlaybackAndMonitors}" />
 					</StackPanel>
 
-					<TextBlock Text="STARTUP" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_Startup}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Open the window where it was closed" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="Size, position, screen and maximized state. Off, it always starts maximized." />
+									<TextBlock Text="{x:Static local:Strings.Settings_OpenTheWindowWhereIt}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_SizePositionScreenAndMaximized}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="RestoreWindowPlacementCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Reopen the last project" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="The project last saved or opened. One you start the app with (a double-click) wins." />
+									<TextBlock Text="{x:Static local:Strings.Settings_ReopenTheLastProject}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheProjectLastSavedOr}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="ReopenLastProjectCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Welcome guide" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="The first-run guide: tools, speed calibration, output folder and project files." />
+									<TextBlock Text="{x:Static local:Strings.Settings_WelcomeGuide}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheFirstRunGuideTools}" />
 								</StackPanel>
-								<Button Grid.Column="1" Content="Open..." VerticalAlignment="Center" Click="OnWelcomeClick" />
+								<Button Grid.Column="1" Content="{x:Static local:Strings.Settings_Open}" VerticalAlignment="Center" Click="OnWelcomeClick" />
 							</Grid>
 						</StackPanel>
 					</Border>
 
-					<TextBlock Text="PROJECTS" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_Projects}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<StackPanel Name="ProjectFilesGroup" IsVisible="False">
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 									<StackPanel>
-										<TextBlock Text="Project files" Classes="rowTitle" />
+										<TextBlock Text="{x:Static local:Strings.Settings_ProjectFiles}" Classes="rowTitle" />
 										<TextBlock Name="ProjectAssociationText" Classes="rowHint" />
-										<TextBlock Classes="rowHint" Text="Opens .ovproj files with this app on a double-click. Applies right away, for your user only." />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OpensOvprojFilesWithThis}" />
 									</StackPanel>
 									<Button Grid.Column="1" Name="ProjectAssociationButton" VerticalAlignment="Center" Click="OnProjectAssociationClick" />
 								</Grid>
@@ -477,51 +485,51 @@
 							</StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Auto-save backup" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="A backup of the open project in the app's data folder - the project's own file changes only on Save." />
+									<TextBlock Text="{x:Static local:Strings.Settings_AutoSaveBackup}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_ABackupOfTheOpen}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="AutoSaveCombo" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Ask before closing during a render" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="Closing ends a running render and leaves a partial file." />
+									<TextBlock Text="{x:Static local:Strings.Settings_AskBeforeClosingDuringA}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_ClosingEndsARunningRender}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="ConfirmCloseWhileRenderingCheck" />
 							</Grid>
 						</StackPanel>
 					</Border>
 
-					<TextBlock Text="PLAYBACK AND MONITORS" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_PlaybackAndMonitors}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Loop playback from startup" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="Loops the In/Out selection, or the whole recording. The Loop button (Q) toggles it any time." />
+									<TextBlock Text="{x:Static local:Strings.Settings_LoopPlaybackFromStartup}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LoopsTheInOutSelection}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="LoopByDefaultCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Full screen preview" Classes="rowTitle" />
-									<TextBlock Classes="rowHint" Text="The monitor F11 opens the preview on. Esc leaves it." />
+									<TextBlock Text="{x:Static local:Strings.Settings_FullScreenPreview}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheMonitorF11OpensThe}" />
 								</StackPanel>
 								<ComboBox Grid.Column="1" Name="PreviewMonitorCombo" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="Second screen (F9)" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_SecondScreenF9}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
-									           Text="A full screen window there: the log while nothing plays, the preview while it plays. Esc or F9 closes it." />
+									           Text="{x:Static local:Strings.Settings_AFullScreenWindowThere}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="SecondScreenCheck" IsCheckedChanged="OnSecondScreenChanged" />
 							</Grid>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto" Margin="16,0,16,13">
-								<TextBlock Text="Monitor" Classes="rowHint" VerticalAlignment="Center" Margin="0" />
+								<TextBlock Text="{x:Static local:Strings.Settings_Monitor}" Classes="rowHint" VerticalAlignment="Center" Margin="0" />
 								<ComboBox Grid.Column="1" Name="SecondScreenMonitorCombo" />
 							</Grid>
 						</StackPanel>
@@ -538,7 +546,7 @@
 								<TextBlock Name="AppVersionText" Text="OsmoOverlay" FontSize="18" FontWeight="Bold" />
 								<TextBlock Name="CoreVersionText" Text="Core" Classes="rowHint" Margin="0" />
 							</StackPanel>
-							<Button Grid.Column="2" Name="CheckForUpdatesButton" Content="Check for updates" VerticalAlignment="Center"
+							<Button Grid.Column="2" Name="CheckForUpdatesButton" Content="{x:Static local:Strings.Settings_CheckForUpdates}" VerticalAlignment="Center"
 							        Click="OnCheckForUpdatesClick" />
 						</Grid>
 					</Border>
@@ -546,23 +554,23 @@
 					<Border Classes="settingsCard">
 						<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 							<StackPanel>
-								<TextBlock Text="Updates" Classes="rowTitle" />
-								<TextBlock Name="AppUpdateText" Text="Checking for a new version..." Classes="rowHint" />
+								<TextBlock Text="{x:Static local:Strings.Settings_Updates}" Classes="rowTitle" />
+								<TextBlock Name="AppUpdateText" Text="{x:Static local:Strings.Settings_CheckingForANewVersion}" Classes="rowHint" />
 							</StackPanel>
 							<Button Grid.Column="1" Name="AppUpdateButton" Classes="accent" IsVisible="False" VerticalAlignment="Center" Click="OnAppUpdateClick" />
 						</Grid>
 					</Border>
 
-					<TextBlock Text="DEPENDENCIES" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_Dependencies}" Classes="sectionLabel" />
 					<Border Classes="settingsCard" Padding="16,14">
 						<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
 					</Border>
 
-					<TextBlock Text="PROJECT" Classes="sectionLabel" />
+					<TextBlock Text="{x:Static local:Strings.Settings_Project}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
-								<TextBlock Text="Author" Classes="rowTitle" Width="110" />
+								<TextBlock Text="{x:Static local:Strings.Settings_Author}" Classes="rowTitle" Width="110" />
 								<StackPanel Grid.Column="1" Orientation="Horizontal">
 									<TextBlock Text="Sefinek &lt;" />
 									<TextBlock Text="contact@sefinek.net" Classes="link" Tag="mailto:contact@sefinek.net" PointerPressed="OnLinkClick" />
@@ -573,24 +581,24 @@
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
-								<TextBlock Text="Repository" Classes="rowTitle" Width="110" />
+								<TextBlock Text="{x:Static local:Strings.Settings_Repository}" Classes="rowTitle" Width="110" />
 								<TextBlock Grid.Column="1" Text="github.com/sefinek/osmo-overlay" Classes="link"
 								           Tag="https://github.com/sefinek/osmo-overlay" PointerPressed="OnLinkClick" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
-								<TextBlock Text="License" Classes="rowTitle" Width="110" />
+								<TextBlock Text="{x:Static local:Strings.Settings_License}" Classes="rowTitle" Width="110" />
 								<StackPanel Grid.Column="1" Spacing="4">
 									<TextBlock TextWrapping="Wrap"
-									           Text="Free for non-commercial use under the PolyForm Noncommercial License 1.0.0. The videos you make with it are yours - you can monetize them." />
-									<TextBlock Text="Read the license" Classes="link" Tag="https://github.com/sefinek/osmo-overlay/blob/main/LICENSE"
+									           Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" />
+									<TextBlock Text="{x:Static local:Strings.Settings_ReadTheLicense}" Classes="link" Tag="https://github.com/sefinek/osmo-overlay/blob/main/LICENSE"
 									           PointerPressed="OnLinkClick" />
 								</StackPanel>
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
-								<TextBlock Text="Configuration" Classes="rowTitle" Width="110" />
-								<TextBlock Grid.Column="1" Name="ConfigLastUpdatedText" Text="Config last updated: -" />
+								<TextBlock Text="{x:Static local:Strings.Settings_Configuration}" Classes="rowTitle" Width="110" />
+								<TextBlock Grid.Column="1" Name="ConfigLastUpdatedText" Text="{x:Static local:Strings.Settings_ConfigLastUpdated}" />
 							</Grid>
 						</StackPanel>
 					</Border>

@@ -7,46 +7,46 @@
 		<TextBlock Name="SummaryText" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
 
 		<StackPanel Spacing="6">
-			<TextBlock Text="Select a part at the frame on screen" Classes="infoLabel" Margin="0" />
+			<TextBlock Text="{x:Static local:Strings.Cut_SelectAPartAtThe}" Classes="infoLabel" Margin="0" />
 			<Grid ColumnDefinitions="*,*" ColumnSpacing="6">
 				<Button Grid.Column="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnMarkInClick"
-				        ToolTip.Tip="The selection starts with the frame on screen (I)">
-					<TextBlock Text="Mark start (I)" />
+				        ToolTip.Tip="{x:Static local:Strings.Cut_TheSelectionStartsWithThe}">
+					<TextBlock Text="{x:Static local:Strings.Cut_MarkStartI}" />
 				</Button>
 				<Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnMarkOutClick"
-				        ToolTip.Tip="The selection ends with the frame on screen, that frame included (O)">
-					<TextBlock Text="Mark end (O)" />
+				        ToolTip.Tip="{x:Static local:Strings.Cut_TheSelectionEndsWithThe}">
+					<TextBlock Text="{x:Static local:Strings.Cut_MarkEndO}" />
 				</Button>
 			</Grid>
 			<Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
 				<TextBlock Grid.Column="0" Name="SelectionText" Classes="hint" VerticalAlignment="Center" TextWrapping="Wrap" />
 				<Button Grid.Column="1" Name="ClearSelectionButton" Classes="toolbar" Padding="9,6" Click="OnClearSelectionClick"
-				        ToolTip.Tip="Drop the selection without cutting anything">
+				        ToolTip.Tip="{x:Static local:Strings.Cut_DropTheSelectionWithoutCutting}">
 					<local:IconView Data="{StaticResource IconClose}" Width="10" Height="10" />
 				</Button>
 			</Grid>
 			<Button Name="CutSelectionButton" Classes="danger" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-			        Click="OnCutSelectionClick" ToolTip.Tip="Remove the selected part from the render (X or Delete)">
+			        Click="OnCutSelectionClick" ToolTip.Tip="{x:Static local:Strings.Cut_RemoveTheSelectedPartFrom}">
 				<StackPanel Orientation="Horizontal" Spacing="7">
 					<local:IconView Data="{StaticResource IconCut}" Width="13" Height="13" VerticalAlignment="Center" />
-					<TextBlock Text="Cut out selection (X)" VerticalAlignment="Center" />
+					<TextBlock Text="{x:Static local:Strings.Cut_CutOutSelectionX}" VerticalAlignment="Center" />
 				</StackPanel>
 			</Button>
 		</StackPanel>
 
 		<StackPanel Name="CutListPanel" Spacing="6" IsVisible="False">
-			<TextBlock Text="Cut out" Classes="infoLabel" Margin="0" />
+			<TextBlock Text="{x:Static local:Strings.Cut_CutOut}" Classes="infoLabel" Margin="0" />
 			<StackPanel Name="CutRows" Spacing="6" />
 		</StackPanel>
 
 		<StackPanel Spacing="6">
-			<TextBlock Text="Route on the map across a cut" Classes="infoLabel" Margin="0" />
+			<TextBlock Text="{x:Static local:Strings.Cut_RouteOnTheMapAcross}" Classes="infoLabel" Margin="0" />
 			<ComboBox Name="RouteJoinCombo" HorizontalAlignment="Stretch" SelectionChanged="OnRouteJoinChanged"
-			          ToolTip.Tip="The telemetry either side of a cut sits side by side, so a plain line would cut straight across whatever the removed part went around. Applies to the compass trail, the map and the route intro." />
+			          ToolTip.Tip="{x:Static local:Strings.Cut_TheTelemetryEitherSideOf}" />
 		</StackPanel>
 
 		<TextBlock Name="ErrorText" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False" />
 		<TextBlock Classes="hint"
-		           Text="Mark only what gets removed - everything else is rendered. Select a part with I and O, cut it out with X, repeat for every part. Times can also be typed as 1:30 or 1:30.250; click a cut's number to jump to it. A cut between two kept parts can fade through black or white (the render keeps its length) or blend the two parts over each other - then the render is shorter by the length of each such transition, and the preview shows the end of the earlier part there instead of the blend. Only the picture and the sound change, the overlay stays. Cut parts are left out of the video and of the telemetry: the route intro starts with the first kept frame, and distance, elapsed time and the route stats count only what stays in. Playback in the preview skips them." />
+		           Text="{x:Static local:Strings.Cut_MarkOnlyWhatGetsRemoved}" />
 	</StackPanel>
 </UserControl>

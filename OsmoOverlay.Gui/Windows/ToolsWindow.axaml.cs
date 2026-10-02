@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Gui;
@@ -32,14 +33,14 @@ public partial class ToolsWindow : Window
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Notify($"Could not open the data folder: {ex.Message}");
+			AppLogger.Notify(string.Format(Strings.Tools_OpenDataFolderFailed, ex.Message));
 		}
 	}
 
 	private void OnClearCacheClick(object? sender, RoutedEventArgs e)
 	{
 		int deleted = FileSummaryReader.ClearCache();
-		AppLogger.Notify($"Cleared {deleted} cached file(s)");
+		AppLogger.Notify(Plural.Format(Strings.Tools_CacheCleared, deleted));
 	}
 
 	private void OnCloseClick(object? sender, RoutedEventArgs e)
@@ -59,9 +60,9 @@ public partial class ToolsWindow : Window
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Select a rendered MP4 to check",
+			Title = Strings.Tools_PickRenderedMp4,
 			AllowMultiple = false,
-			FileTypeFilter = [new FilePickerFileType("MP4 video") { Patterns = ["*.mp4", "*.MP4"] }]
+			FileTypeFilter = [new FilePickerFileType(Strings.Common_Mp4Video) { Patterns = ["*.mp4", "*.MP4"] }]
 		});
 
 		if (files.Count == 0) return;
@@ -70,19 +71,16 @@ public partial class ToolsWindow : Window
 		string fileName = Path.GetFileName(path);
 
 		SelectColorTagFileButton.IsEnabled = false;
-		SelectColorTagFileButton.Content = "Working...";
+		SelectColorTagFileButton.Content = Strings.Common_Working;
 		try
 		{
 			ColorTagStatus status = await Task.Run(() => ColorTagFixer.Check(path));
 
 			if (!status.IsEligible)
 			{
-				await ConfirmDialog.ShowAsync(this, "Can't fix this file",
-					$"\"{fileName}\" already has an explicit color tag that isn't Rec.709 - it looks like HDR " +
-					"or wide-gamut content, not a plain Rec.709 export. Forcing Rec.709 over that would " +
-					"mislabel the color space instead of fixing it, so this tool won't touch this file.\n\n" +
-					$"Current tags:\n{DescribeTags(status)}",
-					kind: DialogKind.Danger, windowTitle: "Fix color tags");
+				await ConfirmDialog.ShowAsync(this, Strings.Tools_CantFixTitle,
+					string.Format(Strings.Tools_CantFixMessage, fileName, DescribeTags(status)),
+					kind: DialogKind.Danger, windowTitle: Strings.Tools_FixColorTags);
 				return;
 			}
 
@@ -92,23 +90,21 @@ public partial class ToolsWindow : Window
 			}
 			else
 			{
-				await ConfirmDialog.ShowAsync(this, "Nothing to do",
-					$"\"{fileName}\" already has a correct Rec.709 color tag - there's nothing to fix here.\n\n" +
-					$"Current tags:\n{DescribeTags(status)}",
-					kind: DialogKind.Success, windowTitle: "Fix color tags");
+				await ConfirmDialog.ShowAsync(this, Strings.Tools_NothingToDoTitle,
+					string.Format(Strings.Tools_NothingToDoMessage, fileName, DescribeTags(status)),
+					kind: DialogKind.Success, windowTitle: Strings.Tools_FixColorTags);
 			}
 		}
 		catch (Exception ex)
 		{
-			await ConfirmDialog.ShowAsync(this, "Couldn't read file",
-				$"Could not read this file - it may be corrupted, still being written, or not a video file at " +
-				$"all.\n\nDetails: {ex.Message}",
-				kind: DialogKind.Danger, windowTitle: "Fix color tags");
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_CantReadTitle,
+				string.Format(Strings.Tools_CantReadMessage, ex.Message),
+				kind: DialogKind.Danger, windowTitle: Strings.Tools_FixColorTags);
 		}
 		finally
 		{
 			SelectColorTagFileButton.IsEnabled = true;
-			SelectColorTagFileButton.Content = "Select file...";
+			SelectColorTagFileButton.Content = Strings.Tools_SelectFile;
 		}
 	}
 
@@ -123,12 +119,9 @@ public partial class ToolsWindow : Window
 		ColorTagFixResult? fixResult = null;
 		Exception? fixError = null;
 
-		await ConfirmDialog.AskAsync(this, "Fix this file?",
-			$"\"{fileName}\" is missing its Rec.709 color tag - this is the typical Vegas Pro export " +
-			"gap this tool exists for, and it's safe to fix. Rewrite the tag with a lossless stream " +
-			"copy (no re-encode, no quality loss)?\n\n" +
-			$"Current tags:\n{DescribeTags(status)}",
-			"Fix", DialogKind.Warning, "Fix color tags",
+		await ConfirmDialog.AskAsync(this, Strings.Tools_FixAskTitle,
+			string.Format(Strings.Tools_FixAskMessage, fileName, DescribeTags(status)),
+			Strings.Tools_Fix, DialogKind.Warning, Strings.Tools_FixColorTags,
 			async () =>
 			{
 				try
@@ -140,25 +133,22 @@ public partial class ToolsWindow : Window
 					fixError = ex;
 				}
 			},
-			"Fixing...");
+			Strings.Tools_Fixing);
 
 		if (fixResult is { } result)
 		{
-			await ConfirmDialog.ShowAsync(this, "Fixed successfully",
-				$"\"{fileName}\" was fixed successfully - the color tag was rewritten to Rec.709 with a " +
-				"lossless stream copy, so picture quality is untouched.\n\n" +
-				$"Before:\n{DescribeTags(result.Before)}\n\n" +
-				$"After:\n{DescribeTags(result.After)}\n\n" +
-				$"Saved to: {Path.GetFileName(result.OutputPath)}",
-				kind: DialogKind.Success, windowTitle: "Fix color tags",
-				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(result.OutputPath),
-				extraText: "Compare files", onExtra: () => OpenCompareWindow(path, result.OutputPath));
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_FixedTitle,
+				string.Format(Strings.Tools_FixedMessage, fileName, DescribeTags(result.Before), DescribeTags(result.After),
+					Path.GetFileName(result.OutputPath)),
+				kind: DialogKind.Success, windowTitle: Strings.Tools_FixColorTags,
+				secondaryText: Strings.Common_ShowInFolder, onSecondary: () => ExplorerHelper.ShowInFolder(result.OutputPath),
+				extraText: Strings.Tools_CompareFiles, onExtra: () => OpenCompareWindow(path, result.OutputPath));
 		}
 		else if (fixError is not null)
 		{
-			await ConfirmDialog.ShowAsync(this, "Fix failed",
-				$"Fixing \"{fileName}\" failed.\n\nDetails: {fixError.Message}",
-				kind: DialogKind.Danger, windowTitle: "Fix color tags");
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_FixFailedTitle,
+				string.Format(Strings.Tools_FixFailedMessage, fileName, fixError.Message),
+				kind: DialogKind.Danger, windowTitle: Strings.Tools_FixColorTags);
 		}
 	}
 
@@ -169,54 +159,50 @@ public partial class ToolsWindow : Window
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Select a video to remove metadata from",
+			Title = Strings.Tools_PickVideoToStrip,
 			AllowMultiple = false,
-			FileTypeFilter = [new FilePickerFileType("MP4/MOV video") { Patterns = ["*.mp4", "*.MP4", "*.mov", "*.MOV"] }]
+			FileTypeFilter = [new FilePickerFileType(Strings.Tools_Mp4MovVideo) { Patterns = ["*.mp4", "*.MP4", "*.mov", "*.MOV"] }]
 		});
 		if (files.Count == 0) return;
 
 		string inputPath = files[0].Path.LocalPath;
 		IStorageFile? target = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
-			Title = "Save the cleaned copy as",
+			Title = Strings.Tools_SaveCleanedCopyAs,
 			SuggestedFileName = SuggestCleanFileName(inputPath),
 			SuggestedStartLocation = await topLevel.StorageProvider.TryGetFolderFromPathAsync(
 				Path.GetDirectoryName(inputPath) ?? ""),
 			DefaultExtension = "mp4",
-			FileTypeChoices = [new FilePickerFileType("MP4 video") { Patterns = ["*.mp4"] }]
+			FileTypeChoices = [new FilePickerFileType(Strings.Common_Mp4Video) { Patterns = ["*.mp4"] }]
 		});
 		if (target is null) return;
 
 		string outputPath = target.Path.LocalPath;
 		SelectStripFileButton.IsEnabled = false;
-		SelectStripFileButton.Content = "Working...";
+		SelectStripFileButton.Content = Strings.Common_Working;
 		try
 		{
 			MetadataStripResult result = await Task.Run(() => MetadataStripper.Strip(inputPath, outputPath));
 
 			string removed = result.Removed.Count > 0
 				? string.Join("\n", result.Removed.Select(r => $"    - {r}"))
-				: "    (nothing identifying was found)";
-			await ConfirmDialog.ShowAsync(this, "Metadata removed",
-				$"Saved a clean copy as \"{Path.GetFileName(outputPath)}\" and verified it: only picture and sound are " +
-				"left, bit-for-bit identical, with the same color profile and rotation.\n\n" +
-				$"Removed:\n{removed}\n\n" +
-				"The file name itself isn't metadata - camera file names like DJI_20260916100634 contain the recording " +
-				"date and time, so rename it before sharing if that matters.",
-				kind: DialogKind.Success, windowTitle: "Remove metadata",
-				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(outputPath),
-				extraText: "Compare files", onExtra: () => OpenCompareWindow(inputPath, outputPath));
+				: "    " + Strings.Tools_NothingIdentifyingFound;
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_MetadataRemovedTitle,
+				string.Format(Strings.Tools_MetadataRemovedMessage, Path.GetFileName(outputPath), removed),
+				kind: DialogKind.Success, windowTitle: Strings.Tools_RemoveMetadata,
+				secondaryText: Strings.Common_ShowInFolder, onSecondary: () => ExplorerHelper.ShowInFolder(outputPath),
+				extraText: Strings.Tools_CompareFiles, onExtra: () => OpenCompareWindow(inputPath, outputPath));
 		}
 		catch (Exception ex)
 		{
-			await ConfirmDialog.ShowAsync(this, "Couldn't remove metadata",
-				$"No file was saved.\n\nDetails: {ex.Message}",
-				kind: DialogKind.Danger, windowTitle: "Remove metadata");
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_StripFailedTitle,
+				string.Format(Strings.Tools_StripFailedMessage, ex.Message),
+				kind: DialogKind.Danger, windowTitle: Strings.Tools_RemoveMetadata);
 		}
 		finally
 		{
 			SelectStripFileButton.IsEnabled = true;
-			SelectStripFileButton.Content = "Select file...";
+			SelectStripFileButton.Content = Strings.Tools_SelectFile;
 		}
 	}
 
@@ -247,9 +233,9 @@ public partial class ToolsWindow : Window
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Select the camera's .AAC audio file(s)",
+			Title = Strings.Tools_PickCameraAudio,
 			AllowMultiple = true,
-			FileTypeFilter = [new FilePickerFileType("Camera audio") { Patterns = ["*.aac", "*.AAC"] }]
+			FileTypeFilter = [new FilePickerFileType(Strings.Tools_CameraAudio) { Patterns = ["*.aac", "*.AAC"] }]
 		});
 		if (files.Count == 0) return;
 
@@ -257,9 +243,9 @@ public partial class ToolsWindow : Window
 			[.. files.Select(f => f.Path.LocalPath).Select(p => (p, CameraAudioConverter.OutputPathFor(p, format)))];
 
 		List<string> existing = [.. jobs.Where(j => File.Exists(j.Output)).Select(j => Path.GetFileName(j.Output))];
-		if (existing.Count > 0 && !await ConfirmDialog.AskAsync(this, "Replace existing files?",
-			    $"These already exist and will be replaced:\n{string.Join("\n", existing.Select(n => $"    {n}"))}",
-			    "Replace", DialogKind.Warning, "Camera microphone audio"))
+		if (existing.Count > 0 && !await ConfirmDialog.AskAsync(this, Strings.Tools_ReplaceExistingTitle,
+			    string.Format(Strings.Tools_ReplaceExistingMessage, string.Join("\n", existing.Select(n => $"    {n}"))),
+			    Strings.Tools_Replace, DialogKind.Warning, Strings.Tools_CameraMicrophoneAudio))
 			return;
 
 		Button[] buttons = [ConvertAudioWavButton, ConvertAudioM4aButton];
@@ -272,25 +258,26 @@ public partial class ToolsWindow : Window
 		{
 			foreach ((string input, string output) in jobs)
 			{
-				active.Content = jobs.Count > 1 ? $"Converting {done.Count + 1}/{jobs.Count}..." : "Converting...";
+				active.Content = jobs.Count > 1
+					? string.Format(Strings.Tools_ConvertingOf, done.Count + 1, jobs.Count)
+					: Strings.Tools_Converting;
 				await Task.Run(() => CameraAudioConverter.Convert(input, output, format));
 				done.Add(output);
 			}
 
-			await ConfirmDialog.ShowAsync(this, "Converted",
-				"Saved and verified - decodes to exactly the same samples as the original:\n" +
-				string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}")) + "\n\n" +
-				"It has the same length as the video's own audio track and starts with it, so placing it at the " +
-				"start of the matching MP4 on the timeline lines it up.",
-				kind: DialogKind.Success, windowTitle: "Camera microphone audio",
-				secondaryText: "Show in folder", onSecondary: () => ExplorerHelper.ShowInFolder(done[^1]));
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_ConvertedTitle,
+				string.Format(Strings.Tools_ConvertedMessage, string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}"))),
+				kind: DialogKind.Success, windowTitle: Strings.Tools_CameraMicrophoneAudio,
+				secondaryText: Strings.Common_ShowInFolder, onSecondary: () => ExplorerHelper.ShowInFolder(done[^1]));
 		}
 		catch (Exception ex)
 		{
-			string converted = done.Count > 0 ? $"Converted before the error:\n{string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}"))}\n\n" : "";
-			await ConfirmDialog.ShowAsync(this, "Conversion failed",
-				$"{converted}Nothing was saved for the file that failed.\n\nDetails: {ex.Message}",
-				kind: DialogKind.Danger, windowTitle: "Camera microphone audio");
+			string converted = done.Count > 0
+				? string.Format(Strings.Tools_ConvertedBeforeError, string.Join("\n", done.Select(o => $"    {Path.GetFileName(o)}"))) + "\n\n"
+				: "";
+			await ConfirmDialog.ShowAsync(this, Strings.Tools_ConversionFailedTitle,
+				converted + string.Format(Strings.Tools_ConversionFailedMessage, ex.Message),
+				kind: DialogKind.Danger, windowTitle: Strings.Tools_CameraMicrophoneAudio);
 		}
 		finally
 		{
@@ -306,9 +293,9 @@ public partial class ToolsWindow : Window
 
 	private static string DescribeTags(ColorTagStatus status)
 	{
-		return $"    primaries: {status.ColorPrimaries ?? "unknown"}\n" +
-		       $"    transfer: {status.ColorTransfer ?? "unknown"}\n" +
-		       $"    matrix: {status.ColorSpace ?? "unknown"}\n" +
-		       $"    range: {status.ColorRange ?? "unknown"}";
+		return $"    primaries: {status.ColorPrimaries ?? Strings.Common_Unknown}\n" +
+		       $"    transfer: {status.ColorTransfer ?? Strings.Common_Unknown}\n" +
+		       $"    matrix: {status.ColorSpace ?? Strings.Common_Unknown}\n" +
+		       $"    range: {status.ColorRange ?? Strings.Common_Unknown}";
 	}
 }

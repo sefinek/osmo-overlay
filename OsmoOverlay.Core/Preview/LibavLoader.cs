@@ -1,5 +1,6 @@
 using FFmpeg.AutoGen;
 using OsmoOverlay.Core.Dependencies;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;
@@ -61,7 +62,7 @@ public static class LibavLoader
 		string? directory = FindLibraryDirectory();
 		if (directory is null && !OperatingSystem.IsLinux())
 		{
-			return $"{AvcodecFileName()} was not found - it comes with the FFmpeg {SupportedMajorVersion} shared build" +
+			return string.Format(CoreStrings.Libav_NotFound, AvcodecFileName(), SupportedMajorVersion) +
 			       (OperatingSystem.IsWindows() ? $" (winget install {RequiredTools.Ffmpeg.WingetId})" : "");
 		}
 
@@ -71,7 +72,7 @@ public static class LibavLoader
 			DynamicallyLoadedBindings.Initialize();
 			uint version = ffmpeg.avcodec_version() >> 16;
 			if (version != ffmpeg.LIBAVCODEC_VERSION_MAJOR)
-				return $"libavcodec {version} was found, {ffmpeg.LIBAVCODEC_VERSION_MAJOR} is needed";
+				return string.Format(CoreStrings.Libav_WrongVersion, version, ffmpeg.LIBAVCODEC_VERSION_MAJOR);
 
 			ffmpeg.av_log_set_level(ffmpeg.AV_LOG_ERROR);
 			LibraryDirectory = directory;
@@ -80,7 +81,7 @@ public static class LibavLoader
 		}
 		catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException or NotSupportedException or BadImageFormatException)
 		{
-			return $"the FFmpeg libraries couldn't be loaded: {ex.Message}";
+			return string.Format(CoreStrings.Libav_LoadFailed, ex.Message);
 		}
 	}
 

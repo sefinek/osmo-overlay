@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 namespace OsmoOverlay.Core.Ffmpeg;
 
 /// <summary>
@@ -75,20 +76,18 @@ public static class VideoSegments
 			string name = Path.GetFileName(segment.InputPath);
 			if (segment.Source.Camera?.Format.Id != first.Source.Camera?.Format.Id)
 			{
-				return $"{name} is from {Describe(segment.Source)}, but {firstName} is from {Describe(first.Source)} - " +
-				       "all files must come from the same camera.";
+				return string.Format(CoreStrings.Join_DifferentCamera, name, Describe(segment.Source), firstName, Describe(first.Source));
 			}
 
 			if (segment.Source.Fisheye != first.Source.Fisheye)
-				return $"{name} and {firstName} weren't recorded with the same lens setup (360 or flat).";
+				return string.Format(CoreStrings.Join_DifferentLens, name, firstName);
 
 			VideoInfo a = first.Source.Video;
 			VideoInfo b = segment.Source.Video;
 			if (a.Width != b.Width || a.Height != b.Height || a.FrameRate != b.FrameRate || a.PixFmt != b.PixFmt)
 			{
-				return $"{name} ({b.Width}x{b.Height}, {b.FrameRate} fps, {b.PixFmt}) doesn't match " +
-				       $"{firstName} ({a.Width}x{a.Height}, {a.FrameRate} fps, {a.PixFmt}) - files must share " +
-				       "the same resolution, frame rate and pixel format to be joined.";
+				return string.Format(CoreStrings.Join_DifferentFormat, name, $"{b.Width}x{b.Height}, {b.FrameRate} fps, {b.PixFmt}", firstName,
+					$"{a.Width}x{a.Height}, {a.FrameRate} fps, {a.PixFmt}");
 			}
 		}
 
@@ -97,6 +96,6 @@ public static class VideoSegments
 
 	private static string Describe(SourceInfo source)
 	{
-		return source.Camera?.Format.DisplayName ?? "a camera with no telemetry the app reads";
+		return source.Camera?.Format.DisplayName ?? CoreStrings.Join_UnknownCamera;
 	}
 }

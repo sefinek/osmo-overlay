@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
@@ -54,7 +55,7 @@ internal static class FileSummaryCache
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, $"Cache entry for {string.Join(", ", inputPaths)} is corrupt or unreadable, treating as a cache miss");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Cache_Unreadable, string.Join(", ", inputPaths)));
 			return (null, null, 0);
 		}
 	}
@@ -92,7 +93,7 @@ internal static class FileSummaryCache
 		catch (Exception ex)
 		{
 			// Save overwrites it anyway once the recompute finishes.
-			AppLogger.Warn(ex, $"Failed to delete stale cache entry {path}");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Cache_DeleteFailed, path));
 		}
 	}
 
@@ -121,7 +122,7 @@ internal static class FileSummaryCache
 		catch (Exception ex)
 		{
 			// Best-effort cache: a failed write should not break the summary flow.
-			AppLogger.Warn(ex, $"Failed to write cache entry for {string.Join(", ", inputPaths)}");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Cache_WriteFailed, string.Join(", ", inputPaths)));
 			return false;
 		}
 	}

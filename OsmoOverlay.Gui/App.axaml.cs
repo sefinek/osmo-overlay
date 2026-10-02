@@ -25,17 +25,17 @@ public class App : Application
 		// main window mirrors into its LOG panel, and marked handled so the window stays usable.
 		Dispatcher.UIThread.UnhandledException += (_, e) =>
 		{
-			AppLogger.Error(e.Exception, $"Unexpected error: {e.Exception.Message}");
+			AppLogger.Error(e.Exception, string.Format(Strings.App_UnexpectedError, e.Exception.Message));
 			e.Handled = true;
 		};
 		TaskScheduler.UnobservedTaskException += (_, e) =>
 		{
-			AppLogger.Error(e.Exception, $"Unobserved background task error: {e.Exception.GetBaseException().Message}");
+			AppLogger.Error(e.Exception, string.Format(Strings.App_BackgroundError, e.Exception.GetBaseException().Message));
 			e.SetObserved();
 		};
 		AppDomain.CurrentDomain.UnhandledException += (_, e) =>
 		{
-			if (e.ExceptionObject is Exception ex) AppLogger.Error(ex, $"Fatal error: {ex.Message}");
+			if (e.ExceptionObject is Exception ex) AppLogger.Error(ex, string.Format(Strings.App_FatalError, ex.Message));
 		};
 
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

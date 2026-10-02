@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Core.Dependencies;
@@ -35,23 +36,21 @@ public static class DependencyInstaller
 	public static async Task<InstallResult> InstallAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
 	{
 		DependencyChecker.RefreshProcessPath();
-		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, $"{tool.DisplayName} is already installed");
+		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, string.Format(CoreStrings.Install_AlreadyInstalled, tool.DisplayName));
 
 		InstallResult result = await RunPackageManagerAsync(tool, false, onOutput, ct);
 		if (!result.Success) return result;
 
 		DependencyChecker.RefreshProcessPath();
-		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, $"{tool.DisplayName} installed");
+		if (DependencyChecker.IsAvailable(tool)) return new InstallResult(true, string.Format(CoreStrings.Install_Installed, tool.DisplayName));
 		if (!tool.Commands.All(DependencyChecker.IsCommandAvailable))
 		{
 			return new InstallResult(false,
-				$"The package manager reports {tool.DisplayName} as installed, but {string.Join("/", tool.Commands)} " +
-				"still can't be found on PATH. Restart the app, or add its folder to PATH manually");
+				string.Format(CoreStrings.Install_NotOnPath, tool.DisplayName, string.Join("/", tool.Commands)));
 		}
 
 		// The package manager's build is too old (or a static one) for the preview's libraries.
-		return new InstallResult(false, $"{tool.DisplayName} is installed, but the preview can't use it: {LibavLoader.TryLoad()}. " +
-		                                "Update it (or install a newer build) and retry");
+		return new InstallResult(false, string.Format(CoreStrings.Install_PreviewCantUse, tool.DisplayName, LibavLoader.TryLoad()));
 	}
 
 	/// <summary>
@@ -66,7 +65,7 @@ public static class DependencyInstaller
 		// A portable winget upgrade moves the tool to a new versioned folder and rewrites PATH.
 		DependencyChecker.RefreshProcessPath();
 		return tool.NeedsSharedLibraries && LibavLoader.IsLoaded
-			? result with { Message = $"{result.Message}. Restart OsmoOverlay to use the new version" }
+			? result with { Message = string.Format(CoreStrings.Install_RestartToUse, result.Message) }
 			: result;
 	}
 
@@ -104,10 +103,12 @@ public static class DependencyInstaller
 		}
 		catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
 		{
-			return new InstallResult(false, $"Couldn't start the update: {ex.Message}");
+			return new InstallResult(false, string.Format(CoreStrings.Install_CouldNotStartUpdate, ex.Message));
 		}
 
-		return new InstallResult(true, $"{tool.DisplayName} will be updated to {version ?? "the latest version"} once OsmoOverlay closes");
+		return new InstallResult(true, version is null
+			? string.Format(CoreStrings.Install_WillUpdateLatest, tool.DisplayName)
+			: string.Format(CoreStrings.Install_WillUpdateTo, tool.DisplayName, version));
 	}
 
 	private static string BuildUpgradeAfterExitScript(ExternalTool tool, string packageId, string? version)
@@ -152,15 +153,13 @@ public static class DependencyInstaller
 	private static InstallResult NotFromWinget(ExternalTool tool)
 	{
 		return new InstallResult(false,
-			$"{tool.DisplayName} wasn't installed through winget, so it can't be updated from here - " +
-			"update it the same way it was installed");
+			string.Format(CoreStrings.Install_NotFromWinget, tool.DisplayName));
 	}
 
 	private static InstallResult NoSupportedVersion(ExternalTool tool, string packageId)
 	{
 		return new InstallResult(false,
-			$"Couldn't find {tool.DisplayName} {tool.SupportedMajorVersion}.x in winget ({packageId}) - " +
-			"the only major this version of OsmoOverlay can use");
+			string.Format(CoreStrings.Install_NoSupportedVersion, tool.DisplayName, tool.SupportedMajorVersion, packageId));
 	}
 
 	private static async Task<InstallResult> RunPackageManagerAsync(ExternalTool tool, bool upgrade, Action<string> onOutput,
@@ -172,18 +171,18 @@ public static class DependencyInstaller
 		if (OperatingSystem.IsMacOS())
 		{
 			if (!DependencyChecker.IsCommandAvailable("brew"))
-				return new InstallResult(false, "Homebrew is not installed. Install it from https://brew.sh, then retry");
+				return new InstallResult(false, CoreStrings.Install_NoHomebrew);
 
 			int exitCode = await RunAsync(ProcessHelper.CreateHidden("brew", upgrade ? "upgrade" : "install", tool.BrewPackage),
 				onOutput, ct);
 			return exitCode == 0
-				? new InstallResult(true, $"brew {(upgrade ? "upgrade" : "install")} {tool.BrewPackage} finished")
-				: new InstallResult(false, $"brew exited with code {exitCode}");
+				? new InstallResult(true, string.Format(CoreStrings.Install_Finished, $"brew {(upgrade ? "upgrade" : "install")} {tool.BrewPackage}"))
+				: new InstallResult(false, string.Format(CoreStrings.Install_ExitCode, "brew", exitCode));
 		}
 
 		if (OperatingSystem.IsLinux()) return await RunLinuxPackageManagerAsync(tool, upgrade, onOutput, ct);
 
-		return new InstallResult(false, "Automatic installation is not supported on this platform");
+		return new InstallResult(false, CoreStrings.Install_UnsupportedPlatform);
 	}
 
 	private static async Task<InstallResult> InstallWithWingetAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
@@ -196,8 +195,8 @@ public static class DependencyInstaller
 		// "Already installed" / "no upgrade available" still count here - InstallAsync then checks whether
 		// the tool is actually reachable, which is what matters.
 		return exitCode is 0 or Winget.PackageAlreadyInstalled or Winget.NoApplicableUpgrade
-			? new InstallResult(true, $"winget install {tool.WingetId} finished")
-			: new InstallResult(false, $"winget exited with code 0x{exitCode:X8}");
+			? new InstallResult(true, string.Format(CoreStrings.Install_Finished, $"winget install {tool.WingetId}"))
+			: new InstallResult(false, string.Format(CoreStrings.Install_ExitCode, "winget", $"0x{exitCode:X8}"));
 	}
 
 	private static async Task<InstallResult> UpgradeWithWingetAsync(ExternalTool tool, Action<string> onOutput, CancellationToken ct)
@@ -207,14 +206,16 @@ public static class DependencyInstaller
 		(bool found, string? version) = await ResolveWingetVersionAsync(tool, packageId, ct);
 		if (!found) return NoSupportedVersion(tool, packageId);
 
-		onOutput($"Upgrading winget package {packageId}{(version is null ? "" : $" to {version}")}...");
+		onOutput(version is null
+			? string.Format(CoreStrings.Install_UpgradingPackage, packageId)
+			: string.Format(CoreStrings.Install_UpgradingPackageTo, packageId, version));
 		int exitCode = await RunAsync(Winget.CreateStartInfo(false, Winget.UpgradeArgs(packageId, version)), onOutput, ct);
 
 		return exitCode switch
 		{
-			0 => new InstallResult(true, $"{tool.DisplayName} updated"),
-			Winget.NoApplicableUpgrade => new InstallResult(true, $"{tool.DisplayName} is already up to date"),
-			_ => new InstallResult(false, $"winget exited with code 0x{exitCode:X8}")
+			0 => new InstallResult(true, string.Format(CoreStrings.Install_Updated, tool.DisplayName)),
+			Winget.NoApplicableUpgrade => new InstallResult(true, string.Format(CoreStrings.Install_AlreadyUpToDate, tool.DisplayName)),
+			_ => new InstallResult(false, string.Format(CoreStrings.Install_ExitCode, "winget", $"0x{exitCode:X8}"))
 		};
 	}
 
@@ -229,7 +230,7 @@ public static class DependencyInstaller
 		if (FindLinuxPackageManager() is not { } manager)
 		{
 			return new InstallResult(false,
-				$"No supported package manager (apt, dnf, pacman) was found. Install {tool.DisplayName} manually");
+				string.Format(CoreStrings.Install_NoPackageManager, tool.DisplayName));
 		}
 
 		List<string> steps = [];
@@ -239,7 +240,7 @@ public static class DependencyInstaller
 		if (!DependencyChecker.IsCommandAvailable("pkexec"))
 		{
 			return new InstallResult(false,
-				$"Run this in a terminal: {string.Join(" && ", steps.Select(s => "sudo " + s))}");
+				string.Format(CoreStrings.Install_RunInTerminal, string.Join(" && ", steps.Select(s => "sudo " + s))));
 		}
 
 		string script = string.Join(" && ", steps.Select(s => manager.EnvPrefix + s));
@@ -248,9 +249,9 @@ public static class DependencyInstaller
 		// 126/127: pkexec's own "not authorized" / "dismissed", as opposed to the package manager failing.
 		return exitCode switch
 		{
-			0 => new InstallResult(true, $"{manager.Command} finished"),
-			126 or 127 => new InstallResult(false, "Authorization was cancelled or denied"),
-			_ => new InstallResult(false, $"{manager.Command} exited with code {exitCode}")
+			0 => new InstallResult(true, string.Format(CoreStrings.Install_Finished, manager.Command)),
+			126 or 127 => new InstallResult(false, CoreStrings.Install_AuthorizationDenied),
+			_ => new InstallResult(false, string.Format(CoreStrings.Install_ExitCode, manager.Command, exitCode))
 		};
 	}
 

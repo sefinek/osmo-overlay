@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
@@ -256,12 +257,12 @@ public partial class MainWindow : Window
 		{
 			if (File.Exists(last))
 			{
-				AppendLog($"Reopening the last project: {last}");
+				AppendLog(string.Format(Strings.Main_LogReopeningProject, last));
 				await OpenProjectAsync(last);
 			}
 			else
 			{
-				AppendLog($"The last project is gone: {last}", LogLevel.Warn);
+				AppendLog(string.Format(Strings.Main_LogLastProjectGone, last), LogLevel.Warn);
 			}
 		}
 
@@ -281,13 +282,10 @@ public partial class MainWindow : Window
 		if (settings.SkippedAppUpdate == release.Version.ToString()) return;
 
 		bool canInstall = AppUpdates.CanUpdateInPlace(release);
-		bool accepted = await ConfirmDialog.AskAsync(this, "Update available",
-			$"OsmoOverlay {release.Version} is available - you have {AppUpdates.CurrentVersion}.\n\n" +
-			(canInstall
-				? "Update now? OsmoOverlay will download it, close, install it and start again."
-				: "Open the download page?") +
-			"\n\nIf you cancel, you won't be asked about this version again - it stays available in Settings > About.",
-			canInstall ? "Update" : "Open GitHub", DialogKind.Info);
+		bool accepted = await ConfirmDialog.AskAsync(this, Strings.Main_UpdateAvailableTitle,
+			string.Format(canInstall ? Strings.Main_UpdateAvailableInstall : Strings.Main_UpdateAvailableDownload,
+				release.Version, AppUpdates.CurrentVersion),
+			canInstall ? Strings.Main_Update : Strings.Main_OpenGitHub, DialogKind.Info);
 		if (!accepted)
 		{
 			OverlaySettingsStore.Save(settings with { SkippedAppUpdate = release.Version.ToString() });
@@ -312,12 +310,12 @@ public partial class MainWindow : Window
 
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Select recording(s) - pick several segments of one recording to stitch them together",
+			Title = Strings.Main_PickRecordings,
 			AllowMultiple = true,
 			FileTypeFilter =
 			[
-				new FilePickerFileType("Camera recordings") { Patterns = ["*.mp4", "*.MP4", "*.insv", "*.INSV", "*.lrv", "*.LRV"] },
-				new FilePickerFileType("All files") { Patterns = ["*"] }
+				new FilePickerFileType(Strings.Main_CameraRecordings) { Patterns = ["*.mp4", "*.MP4", "*.insv", "*.INSV", "*.lrv", "*.LRV"] },
+				new FilePickerFileType(Strings.Common_AllFiles) { Patterns = ["*"] }
 			]
 		});
 
@@ -428,7 +426,8 @@ public partial class MainWindow : Window
 
 		// Export options only matter at render time (RenderJob reads them from settings.json itself) and the Interface
 		// ones apply at startup or live (the time format), so they never reopen the preview.
-		bool interfaceScaleChanged = Math.Abs(updated.InterfaceScale - saved.InterfaceScale) > 0.001;
+		bool needsRestart = Math.Abs(updated.InterfaceScale - saved.InterfaceScale) > 0.001 ||
+		                    UiLanguages.Resolve(updated.UiLanguage) != UiLanguages.Resolve(saved.UiLanguage);
 		SetTimeFormat(PreviewTimeFormats.Parse(updated.PreviewTimeFormat), false);
 		ApplyLayerRows(updated.LayerRowsVisible);
 		ApplySecondScreenSettings(updated);
@@ -457,11 +456,11 @@ public partial class MainWindow : Window
 		if (_summary is not null && _phase == UiPhase.SummaryReady)
 			PopulateOutputInfo(_summary, _detectedEncoder);
 
-		if (interfaceScaleChanged)
+		if (needsRestart)
 		{
-			// UiScale applies only at startup - with nothing loaded there's nothing to lose by restarting right away.
+			// UiScale and the language apply only at startup - with nothing loaded there's nothing to lose by restarting right away.
 			if (_inputPaths.Count == 0) RestartApp();
-			else AppLogger.Notify("The new interface scale applies after restarting the app");
+			else AppLogger.Notify(Strings.Main_RestartToApply);
 		}
 	}
 
@@ -474,11 +473,11 @@ public partial class MainWindow : Window
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Error(ex, $"Could not restart the app: {ex.Message}");
+			AppLogger.Error(ex, string.Format(Strings.Main_RestartFailed, ex.Message));
 			return;
 		}
 
-		AppLogger.Info("Restarting to apply the new interface scale");
+		AppLogger.Info("Restarting to apply the new interface settings");
 		(Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
 	}
 
@@ -494,12 +493,12 @@ public partial class MainWindow : Window
 
 		IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
-			Title = "Save as",
+			Title = Strings.Main_SaveAsTitle,
 			SuggestedFileName = string.IsNullOrWhiteSpace(OutputPathBox.Text)
 				? "output_overlay.mp4"
 				: Path.GetFileName(OutputPathBox.Text),
 			DefaultExtension = "mp4",
-			FileTypeChoices = [new FilePickerFileType("MP4 video") { Patterns = ["*.mp4"] }]
+			FileTypeChoices = [new FilePickerFileType(Strings.Common_Mp4Video) { Patterns = ["*.mp4"] }]
 		});
 
 		if (file is not null)
@@ -546,7 +545,7 @@ public partial class MainWindow : Window
 		CancelButton.IsVisible = phase == UiPhase.Rendering;
 		Progress.IsVisible = phase == UiPhase.Rendering;
 		ActionButton.IsVisible = phase != UiPhase.Rendering;
-		ActionButton.Content = phase == UiPhase.SummaryReady ? "Render" : "Get Summary";
+		ActionButton.Content = phase == UiPhase.SummaryReady ? Strings.Main_Render : Strings.Main_GetSummary;
 		GreenScreenButton.IsVisible = phase == UiPhase.SummaryReady;
 
 		bool busy = phase is UiPhase.LoadingSummary or UiPhase.Rendering;

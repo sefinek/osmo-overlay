@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 namespace OsmoOverlay.Core;
 
 /// <summary>A stretch of the recording in seconds, e.g. a part to cut out - Transition is what a cut does where it joins the parts around it.</summary>
@@ -46,7 +47,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 		if (end <= start)
 		{
 			throw new InvalidOperationException(
-				$"The render range is empty ({TimeText.Format(start / fps)} - {TimeText.Format(end / fps)}) - the end must come after the start.");
+				string.Format(CoreStrings.Plan_EmptyRange, TimeText.Format(start / fps), TimeText.Format(end / fps)));
 		}
 
 		List<RenderPiece> pieces = [];
@@ -84,7 +85,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 		}
 
 		if (cursor < end) AddPiece(cursor, end - cursor);
-		if (pieces.Count == 0) throw new InvalidOperationException("The cuts remove the whole render range - nothing is left to render.");
+		if (pieces.Count == 0) throw new InvalidOperationException(CoreStrings.Plan_NothingLeft);
 
 		if (frameLimit is > 0 and var limit) pieces = CapFrames(pieces, limit);
 

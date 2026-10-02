@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Core.Mapping;
@@ -23,11 +24,11 @@ public static class MapProviders
 
 	public static readonly IReadOnlyList<MapProvider> BuiltIn =
 	[
-		new(DefaultId, "Esri World Imagery (satellite, default)", MapTileFetcher.SatelliteUrlTemplate, MapTileFetcher.SatelliteAttribution),
+		new(DefaultId, CoreStrings.Map_EsriName, MapTileFetcher.SatelliteUrlTemplate, MapTileFetcher.SatelliteAttribution),
 		new("osm", "OpenStreetMap", MapTileFetcher.OpenStreetMapUrlTemplate, MapTileFetcher.OpenStreetMapAttribution),
 		new("opentopomap", "OpenTopoMap", "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)"),
-		new("carto-positron", "CARTO Positron (light) - requires API key", "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", CartoKeyGroup),
-		new("carto-dark", "CARTO Dark Matter - requires API key", "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", CartoKeyGroup),
+		new("carto-positron", CoreStrings.Map_CartoPositronName, "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", CartoKeyGroup),
+		new("carto-dark", CoreStrings.Map_CartoDarkName, "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", CartoKeyGroup),
 		new("carto-voyager", "CARTO Voyager", "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key={api_key}", "© OpenStreetMap, © CARTO", CartoKeyGroup)
 	];
 

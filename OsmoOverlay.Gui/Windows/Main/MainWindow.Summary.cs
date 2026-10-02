@@ -4,6 +4,7 @@ using Avalonia.Media;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Gui.Native;
@@ -33,7 +34,7 @@ public partial class MainWindow
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);
 		foreach (string path in inputPaths)
-			AppendLog($"Input: {path}");
+			AppendLog(string.Format(Strings.Summary_LogInput, path));
 
 		// Cache events arrive on the worker thread, mid-Read - posted through the same UI context the
 		// await below resumes on, so they land in the log in order and before the results.
@@ -48,7 +49,7 @@ public partial class MainWindow
 				AppendLog(problem!, LogLevel.Error);
 				SetPhase(UiPhase.Idle);
 				ActionButton.IsEnabled = true;
-				await ConfirmDialog.ShowAsync(this, "These files can't be joined", problem!, kind: DialogKind.Warning);
+				await ConfirmDialog.ShowAsync(this, Strings.Summary_CantJoinTitle, problem!, kind: DialogKind.Warning);
 				return;
 			}
 
@@ -56,29 +57,30 @@ public partial class MainWindow
 				$"ffprobe: {summary.Video.CodecName} {summary.Video.Profile}, {summary.Video.Width}x{summary.Video.Height}, " +
 				$"{FormatFps(summary.Video.Fps)} fps, {summary.Video.PixFmt}, ~{summary.Video.BitRate / 1_000_000} Mbps");
 			AppendLog(
-				$"Color: {summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / " +
-				$"{summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})");
+				string.Format(Strings.Summary_LogColor, $"{summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / " +
+				                                        $"{summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})"));
 			if (summary.Fisheye is { } lenses)
 			{
-				AppendLog($"360 recording: two {lenses.LensSize}x{lenses.LensSize} fisheye lenses, framed into a flat " +
-				          $"{summary.Video.Width}x{summary.Video.Height} picture - pick the view with the globe above the preview");
+				AppendLog(string.Format(Strings.Summary_Log360, $"{lenses.LensSize}x{lenses.LensSize}",
+					$"{summary.Video.Width}x{summary.Video.Height}"));
 			}
 
-			AppendLog($"Duration: {TimeSpan.FromSeconds(summary.DurationSeconds):hh\\:mm\\:ss}, size: {FormatHelper.FormatBytes(summary.FileSizeBytes)}");
+			AppendLog(string.Format(Strings.Summary_LogDuration, TimeSpan.FromSeconds(summary.DurationSeconds).ToString(@"hh\:mm\:ss"),
+				FormatHelper.FormatBytes(summary.FileSizeBytes)));
 			AppendLog(summary.Audio is { } audio
-				? $"Audio: {audio.CodecName}, {audio.SampleRate} Hz, {audio.Channels}ch"
-				: "Audio: none");
+				? string.Format(Strings.Summary_LogAudio, $"{audio.CodecName}, {audio.SampleRate} Hz, {audio.Channels}ch")
+				: Strings.Summary_LogAudioNone);
 
-			AppendLog($"Camera model: {summary.CameraModel ?? "unknown"}");
+			AppendLog(string.Format(Strings.Summary_LogCameraModel, summary.CameraModel ?? Strings.Common_Unknown));
 			if (summary.Telemetry is not null)
 			{
-				AppendLog($"Telemetry detected ({summary.CameraFormat?.DisplayName ?? "unknown camera"}) - " +
-				          $"{summary.TelemetryFrames?.Count ?? 0} raw samples, {summary.DerivedFrames?.Count ?? 0} derived frames");
+				AppendLog(string.Format(Strings.Summary_LogTelemetryDetected, summary.CameraFormat?.DisplayName ?? Strings.Summary_UnknownCamera,
+					summary.TelemetryFrames?.Count ?? 0, summary.DerivedFrames?.Count ?? 0));
 			}
 			else
 			{
-				AppendLog("No telemetry found - this file can be played but not rendered. Add the camera's original recording " +
-				          $"({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}), not a file exported from another app", LogLevel.Warn);
+				AppendLog(string.Format(Strings.Summary_LogNoTelemetry, string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))),
+					LogLevel.Warn);
 			}
 
 			if (summary.TelemetryFrames is { Count: > 0 } rawFrames)
@@ -87,9 +89,8 @@ public partial class MainWindow
 
 				int withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
 				AppendLog(withGpsSpeed > 0
-					? $"GPS-measured speed: {withGpsSpeed}/{rawFrames.Count} frames (the GPS receiver's own velocity); " +
-					  $"{rawFrames.Count - withGpsSpeed} fall back to derived speed"
-					: "GPS-measured speed: not available for this file - using derived speed for all frames");
+					? string.Format(Strings.Summary_LogGpsSpeed, withGpsSpeed, rawFrames.Count, rawFrames.Count - withGpsSpeed)
+					: Strings.Summary_LogGpsSpeedNone);
 
 				if (!_availability.GpsFix)
 				{
@@ -97,30 +98,27 @@ public partial class MainWindow
 					// recording's normal state (e.g. filmed indoors) - see OpenPreviewAsync.
 					// Still a real limitation worth flagging in the log (Warn), same amber as the GUI's
 					// own "No GPS fix" pill/tooltip elsewhere.
-					AppendLog("GPS: not present in this recording - position-based widgets (Compass, Map, " +
-					          "Elevation, Gradient, Distance, Speed) are unavailable and greyed out", LogLevel.Warn);
+					AppendLog(Strings.Summary_LogNoGps, LogLevel.Warn);
 				}
 				else
 				{
 					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
 					if (gpsLossRanges.Count > 0)
 					{
-						AppendLog($"GPS signal lost: {gpsLossRanges.Count} range(s), {gpsLossRanges.Sum(r => r.End - r.Start):0.0}s total " +
-						          "(shown as amber marks under the preview timeline)", LogLevel.Warn);
+						AppendLog(Plural.Format(Strings.Summary_LogGpsLost, gpsLossRanges.Count, gpsLossRanges.Sum(r => r.End - r.Start)),
+							LogLevel.Warn);
 					}
 					else
 					{
-						AppendLog("GPS signal: no loss detected");
+						AppendLog(Strings.Summary_LogGpsNoLoss);
 					}
 				}
 
 				if (!_availability.GpsTimestamp)
 				{
 					AppendLog(_availability.ContainerTime
-						? "GPS timestamp: not present in this recording - Date & time / UTC time fall back to the " +
-						  "file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)"
-						: "GPS timestamp: not present in this recording, and no usable recording-start time either - " +
-						  "Date & time / UTC time are unavailable and greyed out", LogLevel.Warn);
+						? Strings.Summary_LogNoGpsTimeFallback
+						: Strings.Summary_LogNoGpsTime, LogLevel.Warn);
 				}
 
 				if (summary.CameraFormat is { } camera)
@@ -128,26 +126,23 @@ public partial class MainWindow
 					AppendLog(camera.DescribeTelemetry(rawFrames));
 					if (!_availability.CameraAxes)
 					{
-						AppendLog("Roll, pitch and G-meter widgets aren't available for this camera - its accelerometer's axes aren't " +
-						          "known against the picture", LogLevel.Warn);
+						AppendLog(Strings.Summary_LogNoCameraAxes, LogLevel.Warn);
 					}
 				}
 			}
 
 			if (summary.Telemetry is { } tele)
 			{
-				AppendLog(
-					$"Telemetry summary: {tele.TotalDistanceMeters / 1000.0:0.00} km, " +
-					$"max speed {tele.MaxSpeedKmh:0.#} km/h (as measured, before smoothing and the speed correction), altitude {tele.MinAltitudeMeters:0}-{tele.MaxAltitudeMeters:0} m, " +
-					$"max G {tele.MaxGForce:0.00}");
+				AppendLog(string.Format(Strings.Summary_LogTelemetrySummary, tele.TotalDistanceMeters / 1000.0, tele.MaxSpeedKmh,
+					tele.MinAltitudeMeters, tele.MaxAltitudeMeters, tele.MaxGForce));
 				AppendLog(tele.RecordedAtUtc is { } recordedUtc
-					? $"Recorded at: {recordedUtc.ToLocalFromUtc():yyyy-MM-dd HH:mm:ss} (local)"
-					: "Recorded at: unknown (no GPS timestamp in telemetry)");
+					? string.Format(Strings.Summary_LogRecordedAt, recordedUtc.ToLocalFromUtc().ToString("yyyy-MM-dd HH:mm:ss"))
+					: Strings.Summary_LogRecordedAtUnknown);
 			}
 
-			AppendLog("Checking NVENC availability...");
+			AppendLog(Strings.Summary_LogCheckingNvenc);
 			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(summary.Video));
-			AppendLog($"Using encoder: {encoder}" + (FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (NVENC unavailable - CPU)"));
+			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
 
 			_summary = summary;
 			_detectedEncoder = encoder;
@@ -167,7 +162,7 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppendLog($"Could not read file info: {ex.Message}", LogLevel.Error);
+			AppendLog(string.Format(Strings.Summary_LogReadFailed, ex.Message), LogLevel.Error);
 			SetPhase(UiPhase.Idle);
 			ActionButton.IsEnabled = true;
 		}
@@ -191,7 +186,8 @@ public partial class MainWindow
 		if (summary.CameraFormat?.SupportNotice(summary.CameraModel) is { } notice)
 		{
 			AppendLog(notice, LogLevel.Warn);
-			await ConfirmDialog.ShowAsync(this, $"Limited {summary.CameraFormat.DisplayName} support", notice, kind: DialogKind.Warning);
+			await ConfirmDialog.ShowAsync(this, string.Format(Strings.Summary_LimitedSupportTitle, summary.CameraFormat.DisplayName), notice,
+				kind: DialogKind.Warning);
 		}
 		else if (!summary.HasTelemetry) await ShowNoTelemetryNoticeAsync();
 		else if (!_availability.GpsFix) await ShowNoGpsNoticeAsync();
@@ -199,24 +195,20 @@ public partial class MainWindow
 
 	internal Task ShowNoTelemetryNoticeAsync()
 	{
-		return ConfirmDialog.ShowAsync(this, "No telemetry in this file",
-			"This file carries no camera telemetry, so it can be previewed but not rendered.\n\n" +
-			$"Use the original recording from the camera's card ({string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))}) - " +
-			"a copy exported from DJI Mimo or another app loses the telemetry.", kind: DialogKind.Warning);
+		return ConfirmDialog.ShowAsync(this, Strings.Summary_NoTelemetryTitle,
+			string.Format(Strings.Summary_NoTelemetryMessage, string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))),
+			kind: DialogKind.Warning);
 	}
 
 	internal Task ShowNoGpsNoticeAsync()
 	{
-		return ConfirmDialog.ShowAsync(this, "No GPS in this recording",
-			"The camera never got a GPS fix while recording, so speed, distance, route, map, elevation and compass widgets are off. " +
-			"Tilt, G-force and camera settings still work.\n\n" +
-			"For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix " +
-			"before you start.", kind: DialogKind.Warning, art: DialogArt.NoGps);
+		return ConfirmDialog.ShowAsync(this, Strings.Summary_NoGpsTitle, Strings.Summary_NoGpsMessage, kind: DialogKind.Warning,
+			art: DialogArt.NoGps);
 	}
 
 	private void PopulateInputInfo(FileSummary summary)
 	{
-		InfoCamera.Text = summary.CameraModel ?? "Unknown";
+		InfoCamera.Text = summary.CameraModel ?? Strings.Common_UnknownCapital;
 
 		var recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
 
@@ -227,7 +219,7 @@ public partial class MainWindow
 
 		InfoResolution.Text = $"{summary.Video.Width}x{summary.Video.Height}";
 		SetCheck(InfoResolutionCheck, Check(r => summary.Video.Width >= r.Width && summary.Video.Height >= r.Height),
-			recommended is { } r1 ? $"{r1.Width}x{r1.Height} or higher" : null);
+			recommended is { } r1 ? string.Format(Strings.Summary_OrHigher, $"{r1.Width}x{r1.Height}") : null);
 
 		InfoFrameRate.Text = $"{FormatFps(summary.Video.Fps)} fps";
 		SetCheck(InfoFrameRateCheck, Check(r => Math.Abs(summary.Video.Fps - r.Fps) < 0.5),
@@ -236,7 +228,7 @@ public partial class MainWindow
 		InfoCodec.Text = string.IsNullOrEmpty(summary.Video.Profile)
 			? summary.Video.CodecName
 			: $"{summary.Video.CodecName} ({summary.Video.Profile})";
-		ToolTip.SetTip(InfoCodec, $"Pixel format: {summary.Video.PixFmt}");
+		ToolTip.SetTip(InfoCodec, string.Format(Strings.Summary_PixelFormatTip, summary.Video.PixFmt));
 		SetCheck(InfoCodecCheck,
 			Check(_ => summary.Video.CodecName.Equals("hevc", StringComparison.OrdinalIgnoreCase) &&
 			           summary.Video.PixFmt.Contains("10le", StringComparison.OrdinalIgnoreCase)),
@@ -251,11 +243,11 @@ public partial class MainWindow
 			: $"{primaries} / {transfer} / {colorSpace} ({range})";
 		SetCheck(InfoColorCheck,
 			Check(_ => primaries == "bt709" && transfer == "bt709" && colorSpace == "bt709" && range == "tv"),
-			"bt709 / bt709 / bt709 (tv range)");
+			Strings.Summary_RecommendedColor);
 
 		InfoBitrate.Text = $"{summary.Video.BitRate / 1_000_000.0:0.#} Mbps";
 		SetCheck(InfoBitrateCheck, Check(r => summary.Video.BitRate >= r.MinVideoBitrate),
-			recommended is { } r3 ? $"at least {r3.MinVideoBitrate / 1_000_000.0:0.#} Mbps" : null);
+			recommended is { } r3 ? string.Format(Strings.Summary_AtLeast, $"{r3.MinVideoBitrate / 1_000_000.0:0.#} Mbps") : null);
 
 		InfoDuration.Text = TimeSpan.FromSeconds(summary.DurationSeconds).ToString(@"hh\:mm\:ss");
 		InfoFileSize.Text = FormatHelper.FormatBytes(summary.FileSizeBytes);
@@ -269,7 +261,7 @@ public partial class MainWindow
 			InfoAudioChannels.Text = $"{a.Channels}ch";
 			InfoAudioBitrate.Text = $"{a.BitRate / 1000.0:0} kbps";
 			SetCheck(InfoAudioBitrateCheck, Check(r => a.BitRate >= r.MinAudioBitrate),
-				recommended is { } r4 ? $"at least {r4.MinAudioBitrate / 1000.0:0} kbps" : null);
+				recommended is { } r4 ? string.Format(Strings.Summary_AtLeast, $"{r4.MinAudioBitrate / 1000.0:0} kbps") : null);
 		}
 
 		// "Detected" alone would read as "full telemetry" even for a recording that never had a GPS
@@ -278,11 +270,13 @@ public partial class MainWindow
 		// mistaken for a recording with real position data.
 		bool hasGpsFix = summary.TelemetryFrames is { Count: > 0 } telemetryFrames && TelemetryProcessor.HasAnyGpsFix(telemetryFrames);
 		IBrush telemetryBrush = !summary.HasTelemetry ? Palette.Danger : hasGpsFix ? Palette.Success : Palette.Warning;
-		InfoTelemetry.Text = !summary.HasTelemetry ? "Not found" : hasGpsFix ? "Detected" : "No GPS fix";
+		InfoTelemetry.Text = !summary.HasTelemetry ? Strings.Summary_TelemetryNotFound
+			: hasGpsFix ? Strings.Summary_TelemetryDetected
+			: Strings.Summary_TelemetryNoGpsFix;
 		InfoTelemetry.Foreground = telemetryBrush;
 		TelemetryPill.Background = Palette.Tint(telemetryBrush, 0.24);
 		ToolTip.SetTip(TelemetryPill, summary.HasTelemetry && !hasGpsFix
-			? "This recording never acquired a GPS fix - only accelerometer/camera-settings data was decoded. Speed, distance, elevation, map and compass are unavailable."
+			? Strings.Summary_TelemetryNoGpsFixTip
 			: null);
 	}
 
@@ -303,8 +297,8 @@ public partial class MainWindow
 		};
 		ToolTip.SetTip(StatusRow(icon), ok switch
 		{
-			true => $"Nice - this is the recommended setting for your camera ({recommendedDescription}).",
-			false => $"Not the recommended setting for your camera - recommended: {recommendedDescription}.",
+			true => string.Format(Strings.Summary_RecommendedOk, recommendedDescription),
+			false => string.Format(Strings.Summary_RecommendedNot, recommendedDescription),
 			null => null
 		});
 	}
@@ -316,13 +310,13 @@ public partial class MainWindow
 		TeleSamples.Text = $"{t.SampleCount}";
 		TeleDuration.Text = TimeSpan.FromSeconds(t.DurationSeconds).ToString(@"hh\:mm\:ss");
 		TeleMaxG.Text = $"{t.MaxGForce:0.00} G";
-		TeleRecordedAt.Text = t.RecordedAtUtc is { } utc ? utc.ToLocalFromUtc().ToString("yyyy-MM-dd HH:mm:ss") : "Unknown";
+		TeleRecordedAt.Text = t.RecordedAtUtc is { } utc ? utc.ToLocalFromUtc().ToString("yyyy-MM-dd HH:mm:ss") : Strings.Common_UnknownCapital;
 
 		// Without a GPS fix there's nothing to measure: a dash, not a "0.00 km" that reads like a recording that never moved.
 		bool hasGps = _availability.GpsFix;
 		TeleDistance.Text = hasGps ? $"{t.TotalDistanceMeters / 1000.0:0.00} km" : "-";
 		TeleAltitude.Text = hasGps ? $"{t.MinAltitudeMeters:0} - {t.MaxAltitudeMeters:0} m" : "-";
-		string? noGpsFixTip = hasGps ? null : "No GPS fix in this recording.";
+		string? noGpsFixTip = hasGps ? null : Strings.Summary_NoGpsFixTip;
 		ToolTip.SetTip(TeleDistance, noGpsFixTip);
 		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
 		ShowMaxSpeedInfo();
@@ -337,15 +331,15 @@ public partial class MainWindow
 		if (!_availability.GpsFix || RecordingSpeeds().PeakKmh is not { } measured)
 		{
 			TeleMaxSpeed.Text = "-";
-			ToolTip.SetTip(TeleMaxSpeed, _summary?.Telemetry is null ? null : "No GPS fix in this recording.");
+			ToolTip.SetTip(TeleMaxSpeed, _summary?.Telemetry is null ? null : Strings.Summary_NoGpsFixTip);
 			return;
 		}
 
 		double percent = OverlaySettingsStore.Load().SpeedCorrectionPercent;
 		TeleMaxSpeed.Text = $"{SpeedCalibration.Corrected(measured, percent):0.#} km/h";
 		ToolTip.SetTip(TeleMaxSpeed, percent > 0
-			? $"As the overlay shows it: {measured:0.##} km/h measured by the GPS, +{percent:0.0}% speed correction (Settings > Speed)."
-			: "As the overlay shows it: measured by the GPS, no speed correction (Settings > Speed).");
+			? string.Format(Strings.Summary_MaxSpeedCorrectedTip, measured, percent)
+			: Strings.Summary_MaxSpeedTip);
 	}
 
 	private void LogCacheEvent(FileSummaryCacheEvent e)
@@ -353,25 +347,25 @@ public partial class MainWindow
 		switch (e.Kind)
 		{
 			case FileSummaryCacheEventKind.Hit:
-				AppendLog($"Cache hit (format v{e.CurrentFormatVersion}): using the cached analysis, file unchanged since last run");
+				AppendLog(string.Format(Strings.Summary_LogCacheHit, e.CurrentFormatVersion));
 				return;
 			case FileSummaryCacheEventKind.Stale:
-				AppendLog($"Cache outdated: found format v{e.PreviousFormatVersion}, current is v{e.CurrentFormatVersion} " +
-				          $"(telemetry logic changed since). Old cache entry ({FormatHelper.FormatBytes(e.PreviousSizeBytes)}) deleted - generating a new one...", LogLevel.Warn);
+				AppendLog(string.Format(Strings.Summary_LogCacheStale, e.PreviousFormatVersion, e.CurrentFormatVersion,
+					FormatHelper.FormatBytes(e.PreviousSizeBytes)), LogLevel.Warn);
 				break;
 			case FileSummaryCacheEventKind.Miss:
-				AppendLog("No cache for this file yet (or the file changed since) - analyzing...");
+				AppendLog(Strings.Summary_LogCacheMiss);
 				break;
 			case FileSummaryCacheEventKind.Saved:
-				AppendLog($"New cache saved (format v{e.CurrentFormatVersion})");
+				AppendLog(string.Format(Strings.Summary_LogCacheSaved, e.CurrentFormatVersion));
 				return;
 			case FileSummaryCacheEventKind.SaveFailed:
-				AppendLog("Could not save the cache - see the log; the next run will analyze this file again", LogLevel.Warn);
+				AppendLog(Strings.Summary_LogCacheSaveFailed, LogLevel.Warn);
 				return;
 		}
 
-		AppendLog("Probing source file(s) (ffprobe)...");
-		AppendLog("Extracting telemetry...");
+		AppendLog(Strings.Summary_LogProbing);
+		AppendLog(Strings.Summary_LogExtracting);
 	}
 
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
@@ -381,9 +375,9 @@ public partial class MainWindow
 
 		OutEncoder.Text = encoder + (FfmpegPipeline.IsGpuEncoder(encoder) ? " (GPU)" : " (CPU)");
 		// Same condition FfmpegPipeline uses: pieces joined by the concat filter can't have their audio stream-copied.
-		OutAudio.Text = summary.Audio is null ? "None"
-			: _outputTimeline?.Plan.Pieces.Count > 1 ? "AAC at the source bitrate (re-encoded to join the cuts)"
-			: "Copied unchanged";
+		OutAudio.Text = summary.Audio is null ? Strings.Main_None
+			: _outputTimeline?.Plan.Pieces.Count > 1 ? Strings.Summary_AudioReencoded
+			: Strings.Summary_AudioCopied;
 		OutFrameCount.Text = totalFrames.ToString("N0", CultureInfo.CurrentCulture) + (HasCuts ? $" ({DescribeCuts()})" : "");
 
 		// Speed measured by the last full render of this same shape (RenderSpeedHistory) - there's no
@@ -395,14 +389,12 @@ public partial class MainWindow
 		{
 			OutEstimatedTime.Text = $"~{TimeSpan.FromSeconds(totalFrames / renderFps):hh\\:mm\\:ss}";
 			ToolTip.SetTip(OutEstimatedTime,
-				$"Based on your last render at this resolution/frame rate with {encoder}: {renderFps:0.#} fps " +
-				$"({renderFps / fps:0.00}x realtime). Map tiles, settings or the footage itself can shift it a bit.");
+				string.Format(Strings.Summary_EstimateTip, encoder, renderFps, renderFps / fps));
 		}
 		else
 		{
-			OutEstimatedTime.Text = "known after the first render";
-			ToolTip.SetTip(OutEstimatedTime,
-				"Render speed depends on this machine, the GPU and the footage - it's measured during the first full render and used for the estimate from then on.");
+			OutEstimatedTime.Text = Strings.Summary_EstimateUnknown;
+			ToolTip.SetTip(OutEstimatedTime, Strings.Summary_EstimateUnknownTip);
 		}
 
 		// A changed setting (cuts, input files) invalidates whatever was measured from a
@@ -425,7 +417,7 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppendLog($"Could not verify the exported file: {ex.Message}");
+			AppendLog(string.Format(Strings.Summary_LogVerifyFailed, ex.Message));
 			return;
 		}
 
@@ -477,7 +469,7 @@ public partial class MainWindow
 	{
 		icon.Data = matches ? Icons.Check : Icons.Close;
 		icon.Foreground = matches ? Palette.Success : Palette.Danger;
-		ToolTip.SetTip(StatusRow(icon), matches ? "Matches the source file." : "Differs from the source file.");
+		ToolTip.SetTip(StatusRow(icon), matches ? Strings.Summary_MatchesSource : Strings.Summary_DiffersFromSource);
 	}
 
 	/// <summary>
@@ -506,21 +498,21 @@ public partial class MainWindow
 	{
 		List<string> deviations = [];
 		if (Math.Abs(settings.OutputBitrateMultiplier - 1.0) > 0.001)
-			deviations.Add($"bitrate {settings.OutputBitrateMultiplier:0.##}x the source");
+			deviations.Add(string.Format(Strings.Summary_PlanBitrate, settings.OutputBitrateMultiplier));
 		if (FfmpegPipeline.IsGpuEncoder(encoder) && settings.NvencPreset != "p7")
-			deviations.Add($"faster encoder preset ({settings.NvencPreset.ToUpperInvariant()})");
+			deviations.Add(string.Format(Strings.Summary_PlanFasterPreset, settings.NvencPreset.ToUpperInvariant()));
 		if (!FfmpegPipeline.IsGpuEncoder(encoder))
-			deviations.Add($"CPU encoder ({encoder}) instead of the GPU");
+			deviations.Add(string.Format(Strings.Summary_PlanCpuEncoder, encoder));
 
 		var extras = new List<string>();
 		if (settings.PreserveCameraMetadata && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack || settings.MetadataKeepThumbnails))
-			extras.Add(settings.MetadataKeepSerialNumber ? "camera metadata kept, incl. serial number" : "camera metadata kept");
-		if (settings.FastStart) extras.Add("fast start");
+			extras.Add(settings.MetadataKeepSerialNumber ? Strings.Summary_PlanMetadataKeptSerial : Strings.Summary_PlanMetadataKept);
+		if (settings.FastStart) extras.Add(Strings.Summary_PlanFastStart);
 		string suffix = extras.Count > 0 ? $" ({string.Join(", ", extras)})" : "";
 
 		return deviations.Count == 0
-			? $"Encoding matches the source 1:1 - resolution, frame rate, codec/profile/level, bitrate, keyframes and color tags{suffix}."
-			: $"Matches the source except: {string.Join(", ", deviations)}{suffix}.";
+			? string.Format(Strings.Summary_PlanMatches, suffix)
+			: string.Format(Strings.Summary_PlanMatchesExcept, string.Join(", ", deviations), suffix);
 	}
 
 	private static string FormatFps(double fps)

@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Cameras.Dji;
@@ -79,7 +80,7 @@ internal static class Mp4CameraMetadata
 
 			if (segments.Any(s => s.Timescale != segments[0].Timescale || !s.Stsd.Payload!.AsSpan().SequenceEqual(segments[0].Stsd.Payload)))
 			{
-				AppLogger.Warn($"Camera '{format}' track differs between segments (timescale/sample description) - not copied");
+				AppLogger.Warn(string.Format(CoreStrings.Dji_TrackDiffers, format));
 				continue;
 			}
 

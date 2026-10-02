@@ -9,7 +9,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
-        Title="Welcome to OsmoOverlay">
+        Title="{x:Static local:Strings.Welcome_WelcomeToOsmoOverlay}">
 
 	<Window.Styles>
 		<Style Selector="StackPanel.step, Image.art">
@@ -116,25 +116,25 @@
 
 				<Grid>
 					<StackPanel Name="WelcomeStep" Classes="step" Spacing="12">
-						<TextBlock Text="Welcome to OsmoOverlay" Classes="stepTitle" />
+						<TextBlock Text="{x:Static local:Strings.Welcome_WelcomeToOsmoOverlay}" Classes="stepTitle" />
 						<TextBlock Classes="lead"
-						           Text="Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera." />
+						           Text="{x:Static local:Strings.Welcome_BurnSpeedHeadingTiltAnd}" />
 						<TextBlock Classes="lead"
-						           Text="A few quick steps get you ready for the first render: your camera, the tools, speed calibration and where videos go." />
+						           Text="{x:Static local:Strings.Welcome_AFewQuickStepsGet}" />
 						<Border Classes="card" Margin="0,6,0,0" Padding="14,10">
 							<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
 								<local:IconView Data="{StaticResource IconInfo}" Width="14" Height="14" VerticalAlignment="Top" Margin="0,2,0,0"
 								                Foreground="{StaticResource AccentHoverBrush}" />
 								<TextBlock Grid.Column="1" Classes="rowText" FontSize="13"
-								           Text="Everything here can be changed later in Settings, and this guide can be opened again from there. Enter goes to the next step, Esc closes the guide." />
+								           Text="{x:Static local:Strings.Welcome_EverythingHereCanBeChanged}" />
 							</Grid>
 						</Border>
 					</StackPanel>
 
 					<StackPanel Name="CameraStep" Classes="step" Opacity="0" Spacing="12">
-						<TextBlock Text="Your camera" Classes="stepTitle" />
+						<TextBlock Text="{x:Static local:Strings.Welcome_YourCamera}" Classes="stepTitle" />
 						<TextBlock Classes="lead"
-						           Text="OsmoOverlay reads the telemetry your camera saves inside every recording - no extra files needed." />
+						           Text="{x:Static local:Strings.Welcome_OsmoOverlayReadsTheTelemetryYour}" />
 						<Border Classes="card" Padding="14,12" Margin="0,4,0,0">
 							<StackPanel Spacing="12">
 								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
@@ -145,7 +145,7 @@
 									<StackPanel Grid.Column="1" Spacing="2">
 										<TextBlock Text="DJI Osmo Action" Classes="rowTitle" />
 										<TextBlock Classes="rowText"
-										           Text="Tested on the Action 6 and Action 5 Pro; other models (e.g. Action 4) should work too. Pick the .MP4 files." />
+										           Text="{x:Static local:Strings.Welcome_TestedOnTheAction6}" />
 									</StackPanel>
 								</Grid>
 								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
@@ -156,7 +156,7 @@
 									<StackPanel Grid.Column="1" Spacing="2">
 										<TextBlock Text="Insta360" Classes="rowTitle" />
 										<TextBlock Classes="rowText"
-										           Text="360° .insv recordings (tested on the X4) become a flat view you can aim. GPS isn't read from them yet." />
+										           Text="{x:Static local:Strings.Welcome_360InsvRecordingsTestedOn}" />
 									</StackPanel>
 								</Grid>
 							</StackPanel>
@@ -166,60 +166,60 @@
 								<local:IconView Data="{StaticResource IconInfo}" Width="14" Height="14" VerticalAlignment="Top" Margin="0,2,0,0"
 								                Foreground="{StaticResource AccentHoverBrush}" />
 								<TextBlock Grid.Column="1" Classes="rowText" FontSize="13"
-								           Text="Use the original files from the card - a copy exported from DJI Mimo loses the telemetry. For speed, route and map, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix first." />
+								           Text="{x:Static local:Strings.Welcome_UseTheOriginalFilesFrom}" />
 							</Grid>
 						</Border>
 					</StackPanel>
 
 					<StackPanel Name="ToolsStep" Classes="step" Opacity="0" Spacing="12">
-						<TextBlock Text="Tools" Classes="stepTitle" />
+						<TextBlock Text="{x:Static local:Strings.Common_Tools}" Classes="stepTitle" />
 						<TextBlock Classes="lead"
-						           Text="OsmoOverlay renders with FFmpeg. ExifTool is optional and only used for cameras whose telemetry it can't read on its own." />
+						           Text="{x:Static local:Strings.Welcome_OsmoOverlayRendersWithFFmpegExifTool}" />
 						<StackPanel Name="ToolRows" Spacing="8" Margin="0,4,0,0" />
 						<TextBlock Name="ToolsHint" Classes="hint" />
 					</StackPanel>
 
 					<StackPanel Name="SpeedStep" Classes="step" Opacity="0" Spacing="10">
-						<TextBlock Text="Speed calibration" Classes="stepTitle" />
+						<TextBlock Text="{x:Static local:Strings.Common_SpeedCalibration}" Classes="stepTitle" />
 						<TextBlock Classes="lead"
-						           Text="Speed from a camera's GPS is never 100% exact. Peaks tend to come out low, and the signal quality moves it either way." />
+						           Text="{x:Static local:Strings.Welcome_SpeedFromACameraS}" />
 						<local:SpeedCalibrationEditor Name="SpeedEditor" Margin="0,4,0,0" />
 					</StackPanel>
 
 					<StackPanel Name="PreferencesStep" Classes="step" Opacity="0" Spacing="12">
-						<TextBlock Text="Rendering and files" Classes="stepTitle" />
-						<TextBlock Classes="lead" Text="Defaults for the first render. You can change any of them later." />
+						<TextBlock Text="{x:Static local:Strings.Welcome_RenderingAndFiles}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_DefaultsForTheFirstRender}" />
 						<Border Classes="card" Padding="14,8" Margin="0,4,0,0">
 							<StackPanel Spacing="2">
-								<CheckBox Name="SmoothGpsCheck" Content="Smooth GPS-derived motion" />
-								<CheckBox Name="WatermarkCheck" Content="Show attribution watermark" />
-								<CheckBox Name="ProjectAssociationCheck" Content="Open .ovproj project files with OsmoOverlay" />
+								<CheckBox Name="SmoothGpsCheck" Content="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" />
+								<CheckBox Name="WatermarkCheck" Content="{x:Static local:Strings.Welcome_ShowAttributionWatermark}" />
+								<CheckBox Name="ProjectAssociationCheck" Content="{x:Static local:Strings.Welcome_OpenOvprojProjectFilesWith}" />
 							</StackPanel>
 						</Border>
 						<StackPanel Spacing="6" Margin="0,4,0,0">
-							<TextBlock Text="Default output folder" Classes="fieldLabel" />
+							<TextBlock Text="{x:Static local:Strings.Welcome_DefaultOutputFolder}" Classes="fieldLabel" />
 							<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-								<TextBox Grid.Column="0" Name="OutputFolderBox" IsReadOnly="True" PlaceholderText="Next to the source file" />
-								<Button Grid.Column="1" Content="Browse..." Click="OnBrowseOutputClick" />
-								<Button Grid.Column="2" Content="Clear" Click="OnClearOutputClick" />
+								<TextBox Grid.Column="0" Name="OutputFolderBox" IsReadOnly="True" PlaceholderText="{x:Static local:Strings.Welcome_NextToTheSourceFile}" />
+								<Button Grid.Column="1" Content="{x:Static local:Strings.Common_Browse}" Click="OnBrowseOutputClick" />
+								<Button Grid.Column="2" Content="{x:Static local:Strings.Welcome_Clear}" Click="OnClearOutputClick" />
 							</Grid>
 						</StackPanel>
 					</StackPanel>
 
 					<StackPanel Name="FinishStep" Classes="step" Opacity="0" Spacing="12">
-						<TextBlock Text="You're all set" Classes="stepTitle" />
-						<TextBlock Classes="lead" Text="This is what will be saved:" />
+						<TextBlock Text="{x:Static local:Strings.Welcome_YouReAllSet}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_ThisIsWhatWillBe}" />
 						<Border Classes="card" Padding="14,10">
 							<Grid Name="SummaryGrid" ColumnDefinitions="Auto,*" ColumnSpacing="16" RowSpacing="6" />
 						</Border>
 						<TextBlock Classes="lead" Margin="0,4,0,0"
-						           Text="OsmoOverlay is made by one person in spare time and is free for non-commercial use. A star on GitHub helps others find it, and support keeps the project going." />
+						           Text="{x:Static local:Strings.Welcome_OsmoOverlayIsMadeByOne}" />
 						<StackPanel Orientation="Horizontal" Spacing="8">
-							<Button Content="Star on GitHub" Tag="https://github.com/sefinek/osmo-overlay" Click="OnLinkButtonClick" />
-							<Button Content="Support on Ko-fi" Tag="https://ko-fi.com/sefinek" Click="OnLinkButtonClick" />
+							<Button Content="{x:Static local:Strings.Welcome_StarOnGitHub}" Tag="https://github.com/sefinek/osmo-overlay" Click="OnLinkButtonClick" />
+							<Button Content="{x:Static local:Strings.Welcome_SupportOnKoFi}" Tag="https://ko-fi.com/sefinek" Click="OnLinkButtonClick" />
 						</StackPanel>
 						<WrapPanel Orientation="Horizontal">
-							<TextBlock Text="Other ways:" Classes="hint" Margin="0,0,8,0" />
+							<TextBlock Text="{x:Static local:Strings.Welcome_OtherWays}" Classes="hint" Margin="0,0,8,0" />
 							<TextBlock Text="GitHub Sponsors" Classes="link" Margin="0,0,10,0" Tag="https://github.com/sponsors/sefinek" PointerPressed="OnLinkPressed" />
 							<TextBlock Text="Open Collective" Classes="link" Margin="0,0,10,0" Tag="https://opencollective.com/sefinek24" PointerPressed="OnLinkPressed" />
 							<TextBlock Text="PayPal" Classes="link" Tag="https://www.paypal.me/sefinek24" PointerPressed="OnLinkPressed" />
@@ -230,10 +230,10 @@
 
 			<Border Grid.Row="1" Padding="24,12" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
 				<Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
-					<Button Grid.Column="0" Name="SkipButton" Content="Skip" Classes="ghost" Click="OnSkipClick" />
-					<Button Grid.Column="2" Name="BackButton" Content="Back" Classes="wizard" Click="OnBackClick" />
-					<Button Grid.Column="3" Name="NextButton" Content="Next" Classes="wizard" Click="OnNextClick" />
-					<Button Grid.Column="4" Name="OpenRecordingButton" Content="Open a recording" Classes="accent wizard" IsVisible="False"
+					<Button Grid.Column="0" Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Classes="ghost" Click="OnSkipClick" />
+					<Button Grid.Column="2" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
+					<Button Grid.Column="3" Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
+					<Button Grid.Column="4" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
 					        Click="OnOpenRecordingClick" />
 				</Grid>
 			</Border>

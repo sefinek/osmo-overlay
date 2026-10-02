@@ -53,7 +53,7 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppendLog($"Preview unavailable: {ex.Message}");
+			AppendLog(string.Format(Strings.Preview_Unavailable, ex.Message));
 			ClosePreview();
 		}
 	}
@@ -135,12 +135,12 @@ public partial class MainWindow
 	// height would depend on the recording's aspect ratio.
 	private static readonly List<PreviewQualityOption> PreviewQualityOptions =
 	[
-		new("Auto", AutoPreviewWidth),
-		new("Low · 640 px", 640),
-		new("Medium · 960 px", 960),
-		new("High · 1280 px", 1280),
-		new("Very high · 1920 px", 1920),
-		new("Full resolution", int.MaxValue)
+		new(Strings.Main_Auto, AutoPreviewWidth),
+		new($"{Strings.Preview_QualityLow} · 640 px", 640),
+		new($"{Strings.Preview_QualityMedium} · 960 px", 960),
+		new($"{Strings.Preview_QualityHigh} · 1280 px", 1280),
+		new($"{Strings.Preview_QualityVeryHigh} · 1920 px", 1920),
+		new(Strings.Preview_QualityFull, int.MaxValue)
 	];
 
 	// OverlaySettings.PreviewMaxWidth of "Auto": the preview is sized to how big it is on screen (ResolvePreviewMaxWidth).
@@ -167,8 +167,8 @@ public partial class MainWindow
 		List<PreviewQualityOption> options = [.. PreviewQualityOptions];
 		if (_previewMaxWidth == AutoPreviewWidth && _openedPreviewMaxWidth > 0)
 		{
-			string picked = _openedPreviewMaxWidth == int.MaxValue ? "Full resolution" : $"{_openedPreviewMaxWidth} px";
-			options[0] = new PreviewQualityOption($"Auto · {picked}", AutoPreviewWidth);
+			string picked = _openedPreviewMaxWidth == int.MaxValue ? Strings.Preview_QualityFull : $"{_openedPreviewMaxWidth} px";
+			options[0] = new PreviewQualityOption($"{Strings.Main_Auto} · {picked}", AutoPreviewWidth);
 		}
 
 		_suppressPreviewQualityEvent = true;

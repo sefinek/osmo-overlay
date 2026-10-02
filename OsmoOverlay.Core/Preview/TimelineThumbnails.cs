@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Reframe;
 
@@ -97,7 +98,7 @@ public sealed class TimelineThumbnails : IDisposable
 		}
 		catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
 		{
-			if (!ct.IsCancellationRequested) AppLogger.Warn(ex, "Timeline thumbnails stopped");
+			if (!ct.IsCancellationRequested) AppLogger.Warn(ex, CoreStrings.Preview_ThumbnailsStopped);
 		}
 	}
 

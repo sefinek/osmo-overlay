@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="520"
@@ -8,7 +9,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
-        Title="Tools">
+        Title="{x:Static local:Strings.Common_Tools}">
 
 	<Window.Styles>
 		<Style Selector="Border.toolCard">
@@ -31,69 +32,69 @@
 	</Window.Styles>
 
 	<StackPanel Margin="20" Spacing="12">
-		<TextBlock Classes="sectionLabel" Text="VIDEO &amp; AUDIO" />
+		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_VideoAudio}" />
 
 		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
 			<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
 				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Fix color tags" />
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_FixColorTags}" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="SelectColorTagFileButton" Content="Select file..." Click="OnSelectColorTagFileClick" />
+						<Button Name="SelectColorTagFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectColorTagFileClick" />
 					</StackPanel>
 					<TextBlock Classes="hint"
-					           Text="Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. Rewrites the tag with a lossless stream copy - no re-encode." />
+					           Text="{x:Static local:Strings.Tools_VegasProSMp4Export}" />
 				</DockPanel>
 			</Border>
 
 			<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
 				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Remove metadata" />
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_RemoveMetadata}" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="SelectStripFileButton" Content="Select file..." Click="OnSelectStripFileClick" />
+						<Button Name="SelectStripFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectStripFileClick" />
 					</StackPanel>
 					<TextBlock Classes="hint"
-					           Text="Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy)." />
+					           Text="{x:Static local:Strings.Tools_SavesACopySafeTo}" />
 				</DockPanel>
 			</Border>
 
 			<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
 				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Camera microphone audio (.AAC)" />
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_CameraMicrophoneAudioAac}" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="ConvertAudioWavButton" Content="To WAV..." Click="OnConvertAudioWavClick" />
-						<Button Name="ConvertAudioM4aButton" Content="To M4A..." Click="OnConvertAudioM4aClick" />
+						<Button Name="ConvertAudioWavButton" Content="{x:Static local:Strings.Tools_ToWav}" Click="OnConvertAudioWavClick" />
+						<Button Name="ConvertAudioM4aButton" Content="{x:Static local:Strings.Tools_ToM4a}" Click="OnConvertAudioM4aClick" />
 					</StackPanel>
 					<TextBlock Classes="hint"
-					           Text="With an external mic connected, the camera saves its built-in microphones as a separate .AAC file that Vegas Pro and Audacity can't open. Converts it without any quality loss (verified sample by sample), next to the original. WAV works everywhere; M4A keeps the original AAC data, 10x smaller." />
+					           Text="{x:Static local:Strings.Tools_WithAnExternalMicConnected}" />
 				</DockPanel>
 			</Border>
 
 			<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
 				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="Compare videos" />
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Common_CompareVideos}" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Content="Compare..." Click="OnCompareVideosClick" />
+						<Button Content="{x:Static local:Strings.Tools_Compare}" Click="OnCompareVideosClick" />
 					</StackPanel>
 					<TextBlock Classes="hint"
-					           Text="Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side." />
+					           Text="{x:Static local:Strings.Tools_PickUpTo6Files}" />
 				</DockPanel>
 			</Border>
 		</Grid>
 
-		<TextBlock Classes="sectionLabel" Text="APP DATA" Margin="0,8,0,0" />
+		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_AppData}" Margin="0,8,0,0" />
 
 		<Border Classes="card toolCard">
 			<Grid ColumnDefinitions="*,Auto">
 				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
-				           Text="Presets, settings, map tiles, logs and the cached file analysis." />
+				           Text="{x:Static local:Strings.Tools_PresetsSettingsMapTilesLogs}" />
 				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-					<Button Content="Open data folder" Click="OnOpenDataFolderClick" />
-					<Button Content="Clear cache" Click="OnClearCacheClick"
-					        ToolTip.Tip="Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result." />
+					<Button Content="{x:Static local:Strings.Tools_OpenDataFolder}" Click="OnOpenDataFolderClick" />
+					<Button Content="{x:Static local:Strings.Tools_ClearCache}" Click="OnClearCacheClick"
+					        ToolTip.Tip="{x:Static local:Strings.Tools_DeletesTheCachedFileAnalysis}" />
 				</StackPanel>
 			</Grid>
 		</Border>
 
-		<Button HorizontalAlignment="Right" Content="Close" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
+		<Button HorizontalAlignment="Right" Content="{x:Static local:Strings.Tools_Close}" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
 	</StackPanel>
 </Window>

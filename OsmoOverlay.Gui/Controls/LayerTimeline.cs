@@ -298,7 +298,7 @@ public sealed class LayerTimeline : Control
 
 		if (_tracks.Count == 0)
 		{
-			DrawText(context, "Nothing on the overlay yet", new Point(HeaderWidth + 8, (RowHeight - 14) / 2), MutedTextBrush, width);
+			DrawText(context, Strings.Timeline_NothingOnOverlay, new Point(HeaderWidth + 8, (RowHeight - 14) / 2), MutedTextBrush, width);
 			return;
 		}
 
@@ -819,11 +819,14 @@ public sealed class LayerTimeline : Control
 	{
 		return _drag switch
 		{
-			Zone.FadeIn => $"In animation {timing.AnimationDurationSeconds.ToString("0.0#", CultureInfo.InvariantCulture)} s",
-			Zone.FadeOut => $"Out animation {(timing.OutAnimationDurationSeconds ?? timing.AnimationDurationSeconds).ToString("0.0#", CultureInfo.InvariantCulture)} s",
-			Zone.End => $"Out {(timing.DisappearAtSeconds is { } end ? TimeText.Format(end) : "end")}",
-			_ => $"In {TimeText.Format(timing.AppearAtSeconds ?? 0)}" +
-			     (_drag == Zone.Body ? $" · Out {(timing.DisappearAtSeconds is { } end ? TimeText.Format(end) : "end")}" : "")
+			Zone.FadeIn => string.Format(Strings.Timeline_InAnimation, timing.AnimationDurationSeconds.ToString("0.0#", CultureInfo.InvariantCulture)),
+			Zone.FadeOut => string.Format(Strings.Timeline_OutAnimation,
+				(timing.OutAnimationDurationSeconds ?? timing.AnimationDurationSeconds).ToString("0.0#", CultureInfo.InvariantCulture)),
+			Zone.End => string.Format(Strings.Timeline_Out, timing.DisappearAtSeconds is { } end ? TimeText.Format(end) : Strings.Timeline_End),
+			_ => string.Format(Strings.Timeline_In, TimeText.Format(timing.AppearAtSeconds ?? 0)) +
+			     (_drag == Zone.Body
+				     ? " · " + string.Format(Strings.Timeline_Out, timing.DisappearAtSeconds is { } end ? TimeText.Format(end) : Strings.Timeline_End)
+				     : "")
 		};
 	}
 

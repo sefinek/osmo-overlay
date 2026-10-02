@@ -120,7 +120,7 @@ public partial class KeyMomentsEditor : UserControl
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			HorizontalContentAlignment = HorizontalAlignment.Stretch
 		};
-		ToolTip.SetTip(jump, $"Go to this {label.ToLowerInvariant()}");
+		ToolTip.SetTip(jump, string.Format(Strings.KeyMoments_GoToPeak, label));
 		jump.Click += (_, _) => SeekRequested?.Invoke(peak.Frame);
 
 		var save = new Button
@@ -129,7 +129,7 @@ public partial class KeyMomentsEditor : UserControl
 			Padding = new Thickness(9, 0),
 			VerticalAlignment = VerticalAlignment.Stretch
 		};
-		ToolTip.SetTip(save, "Save it as a key moment");
+		ToolTip.SetTip(save, Strings.KeyMoments_SaveAsMoment);
 		string name = rank == 0 ? label : $"{label} ({rank + 1})";
 		save.Click += (_, _) => MomentAdded?.Invoke(new KeyMoment(peak.Frame, name));
 
@@ -153,10 +153,10 @@ public partial class KeyMomentsEditor : UserControl
 			HorizontalContentAlignment = HorizontalAlignment.Center,
 			VerticalContentAlignment = VerticalAlignment.Center
 		};
-		ToolTip.SetTip(time, "Go to this moment");
+		ToolTip.SetTip(time, Strings.KeyMoments_GoToMoment);
 		time.Click += (_, _) => SeekRequested?.Invoke(moment.Frame);
 
-		var name = new TextBox { Text = moment.Name, PlaceholderText = "Name" };
+		var name = new TextBox { Text = moment.Name, PlaceholderText = Strings.KeyMoments_Name };
 
 		void CommitName()
 		{
@@ -182,7 +182,7 @@ public partial class KeyMomentsEditor : UserControl
 			VerticalAlignment = VerticalAlignment.Stretch,
 			Padding = new Thickness(9, 0)
 		};
-		ToolTip.SetTip(remove, "Remove this key moment");
+		ToolTip.SetTip(remove, Strings.KeyMoments_Remove);
 		remove.Click += (_, _) =>
 		{
 			_moments.RemoveAt(index);

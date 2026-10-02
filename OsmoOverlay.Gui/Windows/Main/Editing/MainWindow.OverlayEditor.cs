@@ -20,7 +20,7 @@ public partial class MainWindow
 {
 	private static readonly List<DateFormatOption> DateFormatOptions =
 	[
-		new("Default (dd/MM/yyyy HH:mm:ss)", null),
+		new(Strings.Editor_DateFormatDefault, null),
 		new("yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd  HH:mm:ss"),
 		new("MM/dd/yyyy hh:mm:ss tt", "MM/dd/yyyy  hh:mm:ss tt"),
 		new("yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd  HH:mm:ss"),
@@ -32,11 +32,11 @@ public partial class MainWindow
 
 	private static readonly List<TripStatOption> TripStatOptions =
 	[
-		new("Max speed", TripStatKind.MaxSpeed),
-		new("Average speed (moving)", TripStatKind.AverageSpeed),
-		new("Elevation gain", TripStatKind.ElevationGain),
-		new("Elevation loss", TripStatKind.ElevationLoss),
-		new("Moving time", TripStatKind.MovingTime)
+		new(Strings.Common_MaxSpeed, TripStatKind.MaxSpeed),
+		new(Strings.Editor_StatAverageSpeed, TripStatKind.AverageSpeed),
+		new(Strings.Settings_ElevationGain, TripStatKind.ElevationGain),
+		new(Strings.Editor_StatElevationLoss, TripStatKind.ElevationLoss),
+		new(Strings.Editor_StatMovingTime, TripStatKind.MovingTime)
 	];
 
 	// Shown in the Label box in place of a null Label - matches the fallback caption OverlayRenderer.
@@ -168,7 +168,7 @@ public partial class MainWindow
 	// (see OverlayRenderer.DrawTimeText) - not real GPS-recorded time, so a driving log synced
 	// against this against other GPS-timestamped data could be off by however stale the camera's
 	// own clock is.
-	private const string TimeFallbackTip = "This file has no GPS time, so the recording start time from the camera's own clock is used instead. It is not GPS-synced.";
+	private static string TimeFallbackTip => Strings.Editor_TimeFallbackTip;
 
 	private bool IsTypeSupported(OverlayElementType type)
 	{
@@ -185,12 +185,12 @@ public partial class MainWindow
 		return type switch
 		{
 			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText =>
-				"Unavailable: this file has no GPS time and no recording start time.",
-			OverlayElementType.SunWidget => "Unavailable: the sun's position needs a GPS fix and GPS time, and this file is missing one of them.",
+				Strings.Editor_UnavailableNoTime,
+			OverlayElementType.SunWidget => Strings.Editor_UnavailableSun,
 			OverlayElementType.RollGauge or OverlayElementType.PitchGauge or OverlayElementType.GMeter =>
-				"Unavailable: the axes of this camera's accelerometer are unknown, so tilt can't be calculated.",
-			OverlayElementType.CameraInfo => "Unavailable: this file has no ISO or color temperature data.",
-			_ => "Unavailable: this widget needs GPS, and this file has no GPS fix."
+				Strings.Editor_UnavailableAxes,
+			OverlayElementType.CameraInfo => Strings.Editor_UnavailableCameraInfo,
+			_ => Strings.Editor_UnavailableGps
 		};
 	}
 
@@ -311,13 +311,13 @@ public partial class MainWindow
 			if (supported)
 			{
 				var settingsButton = new Button { Content = new IconView { Data = Icons.Gear, Width = 12, Height = 12 }, Classes = { "addedWidgetAction" } };
-				ToolTip.SetTip(settingsButton, "Widget settings");
+				ToolTip.SetTip(settingsButton, Strings.Main_WidgetSettings2);
 				settingsButton.Click += (_, _) => OpenSettings();
 				buttons.Children.Add(settingsButton);
 			}
 
 			var removeButton = new Button { Content = new IconView { Data = Icons.Close, Width = 10, Height = 10 }, Classes = { "addedWidgetAction", "remove" } };
-			ToolTip.SetTip(removeButton, "Remove from overlay");
+			ToolTip.SetTip(removeButton, Strings.Main_RemoveFromOverlay);
 			removeButton.Click += (_, _) => RemoveElementInstance(id);
 			buttons.Children.Add(removeButton);
 

@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using Microsoft.Win32;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Updates;
@@ -54,9 +55,9 @@ public static class AppUpdates
 
 		AppLogger.Notify(release switch
 		{
-			null => "No OsmoOverlay release has been published yet",
-			_ when IsNewer(release) => $"OsmoOverlay {release.Version} is available (you have {CurrentVersion})",
-			_ => $"OsmoOverlay is up to date ({CurrentVersion})"
+			null => CoreStrings.Updates_NoRelease,
+			_ when IsNewer(release) => string.Format(CoreStrings.Updates_Available, release.Version, CurrentVersion),
+			_ => string.Format(CoreStrings.Updates_UpToDate, CurrentVersion)
 		});
 		return release;
 	}
@@ -143,7 +144,7 @@ public static class AppUpdates
 		string partialPath = path + ".partial";
 
 		if (installer.Sha256 is null)
-			throw new InvalidDataException($"{installer.Name} has no published SHA-256, so it can't be verified - install it from the release page.");
+			throw new InvalidDataException(string.Format(CoreStrings.Updates_NoHash, installer.Name));
 
 		try
 		{
@@ -169,7 +170,7 @@ public static class AppUpdates
 			{
 				string actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(downloaded, ct));
 				if (actual != installer.Sha256)
-					throw new InvalidDataException($"{installer.Name} doesn't match its published SHA-256 - the download is corrupt or was tampered with.");
+					throw new InvalidDataException(string.Format(CoreStrings.Updates_HashMismatch, installer.Name));
 			}
 
 			File.Move(partialPath, path, true);

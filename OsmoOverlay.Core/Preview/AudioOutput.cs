@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using SDL;
 
@@ -49,7 +50,7 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 		{
 			if (!_sdlAudioReady && !(_sdlAudioReady = SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO)))
 			{
-				AppLogger.Warn($"Preview audio unavailable - SDL couldn't start audio: {SDL3.SDL_GetError()}");
+				AppLogger.Warn(string.Format(CoreStrings.Preview_AudioSdlFailed, SDL3.SDL_GetError()));
 				return null;
 			}
 		}
@@ -58,7 +59,7 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 		SDL_AudioStream* stream = SDL3.SDL_OpenAudioDeviceStream(SDL3.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, null, IntPtr.Zero);
 		if (stream is null)
 		{
-			AppLogger.Warn($"Preview audio unavailable - no playback device: {SDL3.SDL_GetError()}");
+			AppLogger.Warn(string.Format(CoreStrings.Preview_AudioNoDevice, SDL3.SDL_GetError()));
 			return null;
 		}
 

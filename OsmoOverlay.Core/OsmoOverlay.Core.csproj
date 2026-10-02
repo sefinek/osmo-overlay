@@ -17,6 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Localization\CoreStrings.resx"
+                      StronglyTypedLanguage="C#"
+                      StronglyTypedNamespace="OsmoOverlay.Core.Localization"
+                      StronglyTypedClassName="CoreStrings"
+                      StronglyTypedFileName="$(IntermediateOutputPath)CoreStrings.g.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FFmpeg.AutoGen" />
     <PackageReference Include="NLog" />
     <PackageReference Include="ppy.SDL3-CS" />

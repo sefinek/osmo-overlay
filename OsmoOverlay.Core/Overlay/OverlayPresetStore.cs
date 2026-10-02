@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -48,7 +49,7 @@ public static class OverlayPresetStore
 		catch (Exception ex)
 		{
 			// Best-effort: corrupt or unreadable presets fall back to the built-in default.
-			AppLogger.Warn(ex, "Overlay presets are corrupt or unreadable, falling back to the default preset");
+			AppLogger.Warn(ex, CoreStrings.Presets_Unreadable);
 			// The fallback below isn't what's on disk - don't let the next Save treat it as authoritative.
 			KnownPresetFiles.Clear();
 			KnownPresetContent.Clear();
@@ -88,7 +89,7 @@ public static class OverlayPresetStore
 		catch (Exception ex)
 		{
 			// Best-effort cache: a failed write should not break the editing flow.
-			AppLogger.Warn(ex, "Failed to write overlay presets");
+			AppLogger.Warn(ex, CoreStrings.Presets_WriteFailed);
 		}
 	}
 
@@ -141,7 +142,7 @@ public static class OverlayPresetStore
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, $"Failed to import overlay preset from: {filePath}");
+			AppLogger.Warn(ex, string.Format(CoreStrings.Presets_ImportFailed, filePath));
 			return null;
 		}
 	}
@@ -214,7 +215,7 @@ public static class OverlayPresetStore
 				OverlayPreset preset = Validate(JsonSerializer.Deserialize<OverlayPreset>(json));
 				if (presets.Any(p => p.Id == preset.Id))
 				{
-					AppLogger.Warn($"Skipping overlay preset file with a duplicate id '{preset.Id}': {file}");
+					AppLogger.Warn(string.Format(CoreStrings.Presets_DuplicateId, preset.Id, file));
 					continue;
 				}
 
@@ -229,7 +230,7 @@ public static class OverlayPresetStore
 			catch (Exception ex)
 			{
 				// One corrupt preset file shouldn't take the rest of the presets down with it.
-				AppLogger.Warn(ex, $"Skipping unreadable overlay preset file: {file}");
+				AppLogger.Warn(ex, string.Format(CoreStrings.Presets_SkippingUnreadable, file));
 			}
 		}
 

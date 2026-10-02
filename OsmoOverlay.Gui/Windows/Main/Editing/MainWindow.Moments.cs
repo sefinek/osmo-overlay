@@ -74,7 +74,7 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		AddMoment(new KeyMoment(CurrentFrame(), $"Moment {_moments.Count + 1}"));
+		AddMoment(new KeyMoment(CurrentFrame(), string.Format(Strings.Moments_DefaultName, _moments.Count + 1)));
 	}
 
 	private void AddMoment(KeyMoment moment)

@@ -17,7 +17,7 @@ public sealed class TimeTextConverter : IValueConverter
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
 		if (value is not string text || string.IsNullOrWhiteSpace(text)) return null;
-		if (!TimeText.TryParse(text, out double seconds)) throw new FormatException($"'{text}' isn't a time");
+		if (!TimeText.TryParse(text, out double seconds)) throw new FormatException(string.Format(Strings.TimeText_NotATime, text));
 
 		return (decimal)Math.Round(seconds, 3);
 	}

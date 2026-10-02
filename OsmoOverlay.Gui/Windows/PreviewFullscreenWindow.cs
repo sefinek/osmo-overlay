@@ -14,7 +14,7 @@ internal sealed class PreviewFullscreenWindow : Window
 {
 	public PreviewFullscreenWindow(Control viewport, Screen? screen)
 	{
-		Title = "OsmoOverlay preview";
+		Title = Strings.Fullscreen_WindowTitle;
 		Background = Brushes.Black;
 		WindowDecorations = WindowDecorations.None;
 		Content = viewport;

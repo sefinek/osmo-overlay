@@ -17,7 +17,7 @@ public sealed partial class MapSourcePicker : UserControl
 	private static readonly List<ProviderOption> Options =
 	[
 		.. MapProviders.BuiltIn.Select(p => new ProviderOption(p.Id, p.Name)),
-		new(MapProviders.CustomId, "Custom...")
+		new(MapProviders.CustomId, Strings.MapSource_Custom)
 	];
 
 	private bool _loading;
@@ -70,7 +70,7 @@ public sealed partial class MapSourcePicker : UserControl
 		bool show = ShowAttributionCheck.IsChecked == true;
 		CustomAttributionBox.IsVisible = custom && show;
 		AttributionText.IsVisible = !custom && show;
-		AttributionText.Text = $"Credit shown: {sources.Attribution(SelectedId)}";
+		AttributionText.Text = string.Format(Strings.MapSource_CreditShown, sources.Attribution(SelectedId));
 	}
 
 	// CARTO's own basemap keys follow a fixed "<id>_<id>_<n>_<24 hex chars>" shape.

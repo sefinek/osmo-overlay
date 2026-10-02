@@ -67,7 +67,7 @@ public partial class MainWindow
 		bool silent = _audioMuted || _audioVolume <= 0;
 		MuteIcon.Data = silent ? Icons.VolumeMuted : Icons.Volume;
 		MuteSlash.IsVisible = silent;
-		ToolTip.SetTip(MuteButton, _audioMuted ? "Unmute (M)" : "Mute (M)");
+		ToolTip.SetTip(MuteButton, _audioMuted ? Strings.Main_UnmuteM : Strings.Audio_Mute);
 	}
 
 	/// <summary>After the preview opens or closes - greyed out without an audio track or a playback device.</summary>
@@ -76,7 +76,7 @@ public partial class MainWindow
 		AudioPanel.IsEnabled = _previewPlayer.HasAudio;
 		ToolTip.SetTip(AudioPanel, _previewPlayer.HasAudio || _previewFrameSize is null
 			? null
-			: "No sound: this recording has no audio track, or there's no playback device");
+			: Strings.Audio_NoSound);
 	}
 
 	private void SaveAudioSettings()

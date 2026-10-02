@@ -1,5 +1,6 @@
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
@@ -16,7 +17,7 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class MainWindow
 {
-	private const string CutsEverythingMessage = "That would cut out the whole recording - nothing would be left to render.";
+	private static string CutsEverythingMessage => Strings.Cuts_Everything;
 
 	// Normalized (CutList), except right after a typed edit, which keeps the rows' order (see CutEditor.Validate).
 	private List<FrameRange> _cuts = [];
@@ -295,17 +296,17 @@ public partial class MainWindow
 
 		int count = CutList.Normalize(_cuts, SourceFrames).Count;
 		string removed = TimeText.Format(CutList.RemovedFrames(_cuts, SourceFrames) / _summary.Video.Fps);
-		return $"{count} {(count == 1 ? "cut" : "cuts")}, {removed} removed";
+		return Plural.Format(Strings.Cuts_Describe, count, removed);
 	}
 
 	/// <summary>The cut editor's summary line.</summary>
 	private string DescribeRender()
 	{
 		if (_summary is null) return "";
-		if (!HasCuts) return "Nothing is cut - the whole recording gets rendered.";
+		if (!HasCuts) return Strings.Cuts_NothingCut;
 
 		double fps = _summary.Video.Fps;
-		return $"Rendered: {TimeText.Format(PlannedFrameCount() / fps)} of {TimeText.Format(SourceFrames / fps)} ({DescribeCuts()})";
+		return string.Format(Strings.Cuts_Rendered, TimeText.Format(PlannedFrameCount() / fps), TimeText.Format(SourceFrames / fps), DescribeCuts());
 	}
 
 	/// <summary>"04:41.181 - 08:33.363 (03:52.182)" - From/To the way the cut rows show them, then the length.</summary>

@@ -27,27 +27,26 @@ internal static class AppUpdateFlow
 
 		if (isRendering())
 		{
-			await ConfirmDialog.ShowAsync(owner, "Update OsmoOverlay",
-				"OsmoOverlay has to close to install the update. Let the render finish (or cancel it) first.", kind: DialogKind.Warning);
+			await ConfirmDialog.ShowAsync(owner, Strings.AppUpdate_Title, Strings.AppUpdate_WhileRendering, kind: DialogKind.Warning);
 			return false;
 		}
 
-		if (confirm && !await ConfirmDialog.AskAsync(owner, "Update OsmoOverlay",
-			    $"OsmoOverlay will download v{release.Version}, close, install it and start again.", "Update", DialogKind.Info))
+		if (confirm && !await ConfirmDialog.AskAsync(owner, Strings.AppUpdate_Title,
+			    string.Format(Strings.AppUpdate_Confirm, release.Version), Strings.Main_Update, DialogKind.Info))
 			return false;
 
 		try
 		{
-			onStatus($"Downloading OsmoOverlay {release.Version}...");
+			onStatus(string.Format(Strings.AppUpdate_Downloading, release.Version));
 			string installer = await AppUpdates.DownloadInstallerAsync(release.Installer!, new Progress<double>(onDownload), CancellationToken.None);
-			onStatus("Starting the installer...");
+			onStatus(Strings.AppUpdate_StartingInstaller);
 			AppUpdates.StartInstaller(installer);
 		}
 		catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or TaskCanceledException or Win32Exception)
 		{
-			AppLogger.Error(ex, "Update failed");
-			onStatus("Update failed");
-			await ConfirmDialog.ShowAsync(owner, "Update failed", ex.Message, kind: DialogKind.Danger);
+			AppLogger.Error(ex, Strings.AppUpdate_Failed);
+			onStatus(Strings.AppUpdate_Failed);
+			await ConfirmDialog.ShowAsync(owner, Strings.AppUpdate_Failed, ex.Message, kind: DialogKind.Danger);
 			return false;
 		}
 
@@ -63,7 +62,7 @@ internal static class AppUpdateFlow
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, $"Could not open {url} in a browser");
+			AppLogger.Warn(ex, string.Format(Strings.AppUpdate_BrowserFailed, url));
 		}
 	}
 }

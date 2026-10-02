@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Dependencies;
@@ -50,7 +51,7 @@ public static partial class DependencyVersionChecker
 
 		Report(DescribeResult(tool.DisplayName, installed, latest, newerExists, canUpgrade), onProgress);
 		if (unsupported is not null)
-			Report($"{tool.DisplayName} {unsupported} is out, but this version of OsmoOverlay supports only {tool.SupportedMajorVersion}.x", onProgress);
+			Report(string.Format(CoreStrings.Versions_Unsupported, tool.DisplayName, unsupported, tool.SupportedMajorVersion), onProgress);
 		return new ToolVersionInfo(tool, installed, latest, updateAvailable, unsupported);
 	}
 
@@ -85,12 +86,12 @@ public static partial class DependencyVersionChecker
 
 	private static string DescribeResult(string displayName, string? installed, string? latest, bool newerExists, bool canUpgrade)
 	{
-		if (installed is null) return $"{displayName}: not installed, or its version could not be read";
-		if (latest is null) return $"{displayName}: installed {installed} (couldn't determine the latest version)";
-		if (!newerExists) return $"{displayName}: installed {installed} - up to date";
+		if (installed is null) return string.Format(CoreStrings.Versions_NotInstalled, displayName);
+		if (latest is null) return string.Format(CoreStrings.Versions_LatestUnknown, displayName, installed);
+		if (!newerExists) return string.Format(CoreStrings.Versions_UpToDate, displayName, installed);
 		return canUpgrade
-			? $"{displayName}: installed {installed}, update available ({latest})"
-			: $"{displayName}: installed {installed}, {latest} is available - not installed through the package manager, update it manually";
+			? string.Format(CoreStrings.Versions_UpdateAvailable, displayName, installed, latest)
+			: string.Format(CoreStrings.Versions_UpdateManually, displayName, installed, latest);
 	}
 
 	/// <summary>The installed version alone (null when unknown), without asking the package manager what is out - fast enough to show right away.</summary>

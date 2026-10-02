@@ -64,12 +64,12 @@ public partial class ConfirmDialog : Window
 		// so Cancel is hidden - unless the caller gave it a secondary action (e.g. "Show in folder"),
 		// in which case it's repurposed into that action button instead of a Cancel.
 		if (onSecondary is not null)
-			CancelButton.Content = secondaryText ?? "Cancel";
+			CancelButton.Content = secondaryText ?? Strings.Common_Cancel;
 		else if (alert) CancelButton.IsVisible = false;
 
 		if (onExtra is not null)
 		{
-			ExtraButton.Content = extraText ?? "Extra";
+			ExtraButton.Content = extraText ?? Strings.ConfirmDialog_Extra;
 			ExtraButton.IsVisible = true;
 		}
 	}
@@ -81,10 +81,11 @@ public partial class ConfirmDialog : Window
 	///     slow operation from Confirm (e.g. an ffmpeg pass) can show its own progress on this dialog
 	///     instead of the dialog vanishing immediately and the caller having to signal progress elsewhere.
 	/// </summary>
-	public static Task<bool> AskAsync(Window owner, string title, string message, string confirmText = "Confirm",
+	public static Task<bool> AskAsync(Window owner, string title, string message, string? confirmText = null,
 		DialogKind kind = DialogKind.Neutral, string? windowTitle = null, Func<Task>? onConfirm = null, string? workingText = null)
 	{
-		return new ConfirmDialog(title, message, confirmText, kind, false, windowTitle, onConfirm, workingText, null, null, null, null).ShowDialog<bool>(owner);
+		return new ConfirmDialog(title, message, confirmText ?? Strings.ConfirmDialog_Confirm, kind, false, windowTitle, onConfirm, workingText,
+			null, null, null, null).ShowDialog<bool>(owner);
 	}
 
 	/// <summary>
@@ -93,12 +94,12 @@ public partial class ConfirmDialog : Window
 	///     (e.g. "Show in folder", "Compare files") - clicking either runs its action without closing the
 	///     dialog, so the caller can still read the rest of the message or click another action afterwards.
 	/// </summary>
-	public static Task ShowAsync(Window owner, string title, string message, string closeText = "OK",
+	public static Task ShowAsync(Window owner, string title, string message, string? closeText = null,
 		DialogKind kind = DialogKind.Info, string? windowTitle = null, string? secondaryText = null, Action? onSecondary = null,
 		string? extraText = null, Action? onExtra = null, DialogArt art = DialogArt.ForKind)
 	{
-		return new ConfirmDialog(title, message, closeText, kind, true, windowTitle, null, null, secondaryText, onSecondary, extraText, onExtra, art)
-			.ShowDialog(owner);
+		return new ConfirmDialog(title, message, closeText ?? Strings.ConfirmDialog_Ok, kind, true, windowTitle, null, null, secondaryText,
+			onSecondary, extraText, onExtra, art).ShowDialog(owner);
 	}
 
 	/// <summary>The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one.</summary>
@@ -177,7 +178,7 @@ public partial class ConfirmDialog : Window
 		{
 			CancelButton.IsEnabled = false;
 			ConfirmButton.IsEnabled = false;
-			ConfirmButton.Content = _workingText ?? "Working...";
+			ConfirmButton.Content = _workingText ?? Strings.Common_Working;
 			await _onConfirm();
 		}
 

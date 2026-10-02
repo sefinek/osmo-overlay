@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
@@ -24,9 +25,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 	{
 		return DjiModels.IsSupported(cameraModel)
 			? null
-			: $"{cameraModel ?? "This DJI camera"} isn't officially supported. OsmoOverlay is tested on the DJI Osmo Action 6 and Action 5 Pro. " +
-			  "The telemetry will most likely still be read, but some widgets may be unavailable or read wrong " +
-			  "(tilt, G-meter) and the recording settings check won't apply.";
+			: string.Format(CoreStrings.Dji_NotSupported, cameraModel ?? CoreStrings.Dji_ThisCamera);
 	}
 
 	public CameraRecording? Detect(string path, JsonArray streams)
@@ -52,7 +51,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 			catch (Exception ex)
 			{
 				// Native djmd decode is verified against DJI Osmo Action 6 and Action 5 Pro firmware; exiftool may still read another layout.
-				AppLogger.Warn(ex, $"Native djmd decode failed for {path}, falling back to exiftool");
+				AppLogger.Warn(ex, string.Format(CoreStrings.Dji_NativeDecodeFailed, path));
 			}
 		}
 
@@ -76,10 +75,10 @@ public sealed class DjiOsmoFormat : ICameraFormat
 	{
 		int withCameraSettings = frames.Count(f => f.Iso is not null);
 		return withCameraSettings == frames.Count
-			? "Telemetry source: native djmd decoder (ISO/shutter/color temp all present, exiftool not needed)"
+			? CoreStrings.Dji_SourceNative
 			: withCameraSettings > 0
-				? $"Telemetry source: native djmd decoder, partial camera settings ({withCameraSettings}/{frames.Count})"
-				: "Telemetry source: exiftool fallback (native djmd decode failed or ISO/shutter/CT unavailable)";
+				? string.Format(CoreStrings.Dji_SourceNativePartial, withCameraSettings, frames.Count)
+				: CoreStrings.Dji_SourceExifTool;
 	}
 
 	public void CopyMetadata(string outputPath, IReadOnlyList<string> sourcePaths, CameraMetadataSelection selection)

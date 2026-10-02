@@ -60,8 +60,8 @@ public partial class MainWindow
 		ToggleLevelButton.Classes.Set("active", _reframe.Level);
 		StatusReframePanel.IsVisible = available;
 		if (!available) SetReframeMode(false);
-		StatusReframeText.Text = string.Create(CultureInfo.InvariantCulture,
-			$"{_reframe.Yaw:0}° {_reframe.Pitch:+0;-0;0}° roll {_reframe.Roll:0}°, {_reframe.FovDegrees:0}° wide{(_reframe.Level ? ", level" : "")}");
+		StatusReframeText.Text = string.Format(CultureInfo.InvariantCulture, _reframe.Level ? Strings.Reframe_StatusLevel : Strings.Reframe_Status,
+			_reframe.Yaw, _reframe.Pitch, _reframe.Roll, _reframe.FovDegrees);
 	}
 
 	private void OnToggleReframeClick(object? sender, RoutedEventArgs e)

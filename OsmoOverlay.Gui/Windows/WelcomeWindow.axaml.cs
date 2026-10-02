@@ -21,7 +21,11 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class WelcomeWindow : Window
 {
-	private static readonly string[] StepNames = ["Welcome", "Your camera", "Tools", "Speed calibration", "Rendering and files", "All set"];
+	private static readonly string[] StepNames =
+	[
+		Strings.Welcome_StepWelcome, Strings.Welcome_YourCamera, Strings.Common_Tools, Strings.Common_SpeedCalibration,
+		Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
+	];
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
 	private readonly Control[] _steps;
@@ -43,7 +47,7 @@ public partial class WelcomeWindow : Window
 		_steps = [WelcomeStep, CameraStep, ToolsStep, SpeedStep, PreferencesStep, FinishStep];
 		_arts = [WelcomeArt, CameraArt, ToolsArt, SpeedArt, PreferencesArt, FinishArt];
 		_dots = [.. _steps.Select((_, i) => StepDot(i))];
-		VersionText.Text = $"Version {AppUpdates.CurrentVersion}";
+		VersionText.Text = string.Format(Strings.Welcome_Version, AppUpdates.CurrentVersion);
 
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		SpeedEditor.Load(settings.SpeedCorrectionPercent, recordingCruisingSpeedKmh);
@@ -101,12 +105,12 @@ public partial class WelcomeWindow : Window
 			_dots[i].Background = current ? Palette.Accent : Palette.StrokeStrong;
 		}
 
-		StepLabel.Text = $"STEP {step + 1} OF {_steps.Length}";
+		StepLabel.Text = string.Format(Strings.Welcome_StepOf, step + 1, _steps.Length);
 		if (IsLastStep) ShowSummary();
 
 		SkipButton.IsVisible = !IsLastStep;
 		BackButton.IsVisible = step > 0;
-		NextButton.Content = IsLastStep ? "Finish" : "Next";
+		NextButton.Content = IsLastStep ? Strings.Welcome_Finish : Strings.Welcome_Next;
 		NextButton.Classes.Set("accent", !(IsLastStep && _offerOpenRecording));
 		OpenRecordingButton.IsVisible = IsLastStep && _offerOpenRecording;
 	}
@@ -207,8 +211,8 @@ public partial class WelcomeWindow : Window
 		}
 
 		ToolsHint.Text = requiredMissing
-			? "FFmpeg is needed for the preview and every render. Install it here, or later from Settings > About."
-			: "Optional tools can also be installed later from Settings > About.";
+			? Strings.Welcome_FfmpegNeeded
+			: Strings.Welcome_OptionalToolsLater;
 
 		foreach ((ExternalTool tool, TextBlock status) in found)
 		{
@@ -255,7 +259,10 @@ public partial class WelcomeWindow : Window
 
 		StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
 		name.Children.Add(new TextBlock { Text = tool.DisplayName, FontWeight = FontWeight.SemiBold });
-		name.Children.Add(new TextBlock { Text = tool.IsOptional ? "Optional" : "Required", FontSize = 12, Foreground = Palette.TextMuted });
+		name.Children.Add(new TextBlock
+		{
+			Text = tool.IsOptional ? Strings.Welcome_Optional : Strings.Welcome_Required, FontSize = 12, Foreground = Palette.TextMuted
+		});
 		Grid.SetColumn(name, 1);
 		row.Children.Add(name);
 
@@ -263,7 +270,7 @@ public partial class WelcomeWindow : Window
 		status = null;
 		if (!found && canInstall)
 		{
-			Button install = new() { Content = "Install", VerticalAlignment = VerticalAlignment.Center };
+			Button install = new() { Content = Strings.DependencyPrompt_Install, VerticalAlignment = VerticalAlignment.Center };
 			if (!tool.IsOptional) install.Classes.Add("accent");
 			install.Classes.Add("wizard");
 			install.Click += async (_, _) => await InstallAsync(tool, install);
@@ -271,7 +278,11 @@ public partial class WelcomeWindow : Window
 		}
 		else
 		{
-			TextBlock text = new() { Text = found ? "Found" : "Not found", FontSize = 12, FontWeight = FontWeight.SemiBold, Foreground = color };
+			TextBlock text = new()
+			{
+				Text = found ? Strings.Welcome_Found : Strings.Summary_TelemetryNotFound, FontSize = 12, FontWeight = FontWeight.SemiBold,
+				Foreground = color
+			};
 			if (found) status = text;
 			side = new Border
 			{
@@ -295,9 +306,9 @@ public partial class WelcomeWindow : Window
 	private async Task InstallAsync(ExternalTool tool, Button button)
 	{
 		button.IsEnabled = false;
-		button.Content = "Installing...";
-		ToolsHint.Text = $"Installing {tool.DisplayName}. This can take a minute - the main window's log shows the progress.";
-		AppLogger.Notify($"Installing {tool.DisplayName}...");
+		button.Content = Strings.Welcome_Installing;
+		ToolsHint.Text = string.Format(Strings.Welcome_InstallingHint, tool.DisplayName);
+		AppLogger.Notify(string.Format(Strings.Welcome_InstallingTool, tool.DisplayName));
 
 		InstallResult result;
 		try
@@ -316,7 +327,7 @@ public partial class WelcomeWindow : Window
 			return;
 		}
 
-		button.Content = "Retry";
+		button.Content = Strings.Welcome_Retry;
 		button.IsEnabled = true;
 		ToolsHint.Text = result.Message;
 	}
@@ -326,13 +337,17 @@ public partial class WelcomeWindow : Window
 		double correction = SpeedEditor.Percent;
 		List<(string Label, string Value)> rows =
 		[
-			("Speed correction", correction > 0 ? $"+{correction:0.0}%" : "None"),
-			("GPS smoothing", SmoothGpsCheck.IsChecked == true ? "On" : "Off"),
-			("Watermark", WatermarkCheck.IsChecked == true ? "On" : "Off"),
-			("Output folder", string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? "Next to the source file" : OutputFolderBox.Text)
+			(Strings.Welcome_SummarySpeedCorrection, correction > 0 ? $"+{correction:0.0}%" : Strings.Main_None),
+			(Strings.Welcome_SummaryGpsSmoothing, SmoothGpsCheck.IsChecked == true ? Strings.Common_On : Strings.Main_Off),
+			(Strings.Welcome_SummaryWatermark, WatermarkCheck.IsChecked == true ? Strings.Common_On : Strings.Main_Off),
+			(Strings.Welcome_SummaryOutputFolder,
+				string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? Strings.Welcome_NextToTheSourceFile : OutputFolderBox.Text)
 		];
 		if (ProjectFileAssociation.IsSupported)
-			rows.Add((".ovproj files", ProjectAssociationCheck.IsChecked == true ? "Open with OsmoOverlay" : "Not associated"));
+		{
+			rows.Add((Strings.Welcome_SummaryOvprojFiles,
+				ProjectAssociationCheck.IsChecked == true ? Strings.Welcome_SummaryOpenWithApp : Strings.Welcome_SummaryNotAssociated));
+		}
 
 		SummaryGrid.RowDefinitions.Clear();
 		SummaryGrid.Children.Clear();
@@ -356,7 +371,7 @@ public partial class WelcomeWindow : Window
 	{
 		IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
 		{
-			Title = "Default output folder",
+			Title = Strings.Welcome_DefaultOutputFolder,
 			AllowMultiple = false
 		});
 
@@ -397,7 +412,7 @@ public partial class WelcomeWindow : Window
 		}
 		catch (Exception ex) when (ex is UnauthorizedAccessException or SecurityException or IOException)
 		{
-			AppLogger.Error(ex, $"Could not change the .ovproj association: {ex.Message}");
+			AppLogger.Error(ex, string.Format(Strings.Settings_AssociationFailed, ex.Message));
 		}
 	}
 }

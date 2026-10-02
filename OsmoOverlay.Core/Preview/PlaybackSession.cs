@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading.Channels;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;
@@ -449,7 +450,7 @@ internal sealed class PlaybackSession
 		}
 		catch (InvalidOperationException ex)
 		{
-			AppLogger.Warn(ex, "Preview audio stopped");
+			AppLogger.Warn(ex, CoreStrings.Preview_AudioStopped);
 		}
 		finally
 		{

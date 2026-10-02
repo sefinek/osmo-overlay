@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
+using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Core.Ffmpeg;
 
@@ -121,17 +122,17 @@ public static class MetadataStripper
 		{
 			removed.Add(Str(stream, "codec_tag_string") switch
 			{
-				"djmd" => "DJI telemetry track (GPS track, sensors, camera serial number)",
-				"dbgi" => "DJI debug track",
-				"tmcd" => "timecode track (time of day)",
-				_ when IsAttachedPicture(stream) => "embedded thumbnail",
-				_ => $"{Str(stream, "codec_type")} stream ({Str(stream, "codec_tag_string") ?? Str(stream, "codec_name")})"
+				"djmd" => CoreStrings.Strip_DjiTelemetry,
+				"dbgi" => CoreStrings.Strip_DjiDebug,
+				"tmcd" => CoreStrings.Strip_Timecode,
+				_ when IsAttachedPicture(stream) => CoreStrings.Strip_Thumbnail,
+				_ => string.Format(CoreStrings.Strip_OtherStream, Str(stream, "codec_type"), Str(stream, "codec_tag_string") ?? Str(stream, "codec_name"))
 			});
 		}
 
 		int tagCount = Tags(source["format"]).Keys.Count(k => !AllowedFormatTags.Contains(k)) +
 		               Streams(source).Sum(s => Tags(s).Keys.Count(k => !AllowedStreamTags.Contains(k)));
-		if (tagCount > 0) removed.Add($"{tagCount} metadata tag(s) (recording date, timecode, encoder...)");
+		if (tagCount > 0) removed.Add(Plural.Format(CoreStrings.Strip_Tags, tagCount));
 		return removed;
 	}
 

@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Updates;
@@ -16,24 +17,24 @@ public partial class SettingsWindow : Window
 {
 	private static readonly List<ChoiceOption<string>> NvencPresetOptions =
 	[
-		new("P7 - best quality (default)", "p7"),
+		new(Strings.Settings_NvencP7, "p7"),
 		new("P6", "p6"),
-		new("P5 - faster", "p5"),
-		new("P4 - fastest reasonable", "p4")
+		new(Strings.Settings_NvencP5, "p5"),
+		new(Strings.Settings_NvencP4, "p4")
 	];
 
 	private static readonly List<ChoiceOption<double>> BitrateOptions =
 	[
-		new("Same as source (default)", 1.0),
-		new("1.25x source", 1.25),
-		new("1.5x source", 1.5),
-		new("2x source", 2.0)
+		new(Strings.Settings_BitrateSame, 1.0),
+		new(string.Format(Strings.Settings_BitrateTimes, 1.25), 1.25),
+		new(string.Format(Strings.Settings_BitrateTimes, 1.5), 1.5),
+		new(string.Format(Strings.Settings_BitrateTimes, 2), 2.0)
 	];
 
 	private static readonly List<ChoiceOption<double>> InterfaceScaleOptions =
 	[
 		new("75%", 0.75),
-		new("100% (default)", 1.0),
+		new(Strings.Settings_Scale100, 1.0),
 		new("125%", 1.25),
 		new("150%", 1.5),
 		new("175%", 1.75),
@@ -42,11 +43,17 @@ public partial class SettingsWindow : Window
 
 	private static readonly List<ChoiceOption<int>> AutoSaveOptions =
 	[
-		new("Off (default)", 0),
-		new("Every minute", 1),
-		new("Every 2 minutes", 2),
-		new("Every 5 minutes", 5),
-		new("Every 10 minutes", 10)
+		new(Strings.Settings_AutoSaveOff, 0),
+		new(Plural.Format(Strings.Settings_AutoSaveEvery, 1), 1),
+		new(Plural.Format(Strings.Settings_AutoSaveEvery, 2), 2),
+		new(Plural.Format(Strings.Settings_AutoSaveEvery, 5), 5),
+		new(Plural.Format(Strings.Settings_AutoSaveEvery, 10), 10)
+	];
+
+	private static readonly List<ChoiceOption<string?>> LanguageOptions =
+	[
+		new(string.Format(Strings.Settings_LanguageSystem, UiLanguages.NativeName(UiLanguages.Resolve(null))), null),
+		.. UiLanguages.Supported.Select(code => new ChoiceOption<string?>(UiLanguages.NativeName(code), code))
 	];
 
 	/// <summary>The loaded recording's measured cruising speed (no correction), for the speed calibration; null when none is loaded.</summary>
@@ -61,6 +68,7 @@ public partial class SettingsWindow : Window
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
+		LanguageCombo.ItemsSource = LanguageOptions;
 		ThemeCombo.ItemsSource = AppThemes.Options;
 		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
 		AutoSaveCombo.ItemsSource = AutoSaveOptions;
@@ -71,13 +79,13 @@ public partial class SettingsWindow : Window
 		AppVersionText.Text = SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
 
 		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
-		CoreVersionText.Text = $"Core v{coreVersion}";
+		CoreVersionText.Text = string.Format(Strings.Settings_CoreVersion, coreVersion);
 		DependencyStatusRows.ShowChecking(DependencyStatusGrid, RequiredTools.All);
 
 		DateTime? configLastUpdatedUtc = OverlaySettingsStore.GetLastUpdatedUtc();
 		ConfigLastUpdatedText.Text = configLastUpdatedUtc is { } utc
-			? $"Config last updated: {utc.ToLocalTime():yyyy-MM-dd HH:mm}"
-			: "Config last updated: never";
+			? string.Format(Strings.Settings_ConfigLastUpdatedAt, utc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))
+			: Strings.Settings_ConfigNeverUpdated;
 	}
 
 	/// <summary>Fills every page from the settings. RecordingCruisingSpeedKmh has to be set before.</summary>
@@ -138,12 +146,13 @@ public partial class SettingsWindow : Window
 		ThemeCombo.SelectedItem = AppThemes.Options.First(o => o.Value == theme);
 		InterfaceScaleCombo.SelectedItem = InterfaceScaleOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.InterfaceScale) < 0.001)
 		                                   ?? InterfaceScaleOptions[1];
+		LanguageCombo.SelectedItem = LanguageOptions.FirstOrDefault(o => o.Value == settings.UiLanguage) ?? LanguageOptions[0];
 		PreviewTimeFormat timeFormat = PreviewTimeFormats.Parse(settings.PreviewTimeFormat);
 		TimeFormatCombo.SelectedItem = PreviewTimeFormats.Options.First(o => o.Value == timeFormat);
 		RestoreWindowPlacementCheck.IsChecked = settings.RestoreWindowPlacement;
 		LayerRowsBox.Value = Math.Clamp(settings.LayerRowsVisible, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks);
-		LoadMonitors(PreviewMonitorCombo, "Same screen as the main window (default)", settings.PreviewMonitor);
-		LoadMonitors(SecondScreenMonitorCombo, "First screen other than the main window's (default)", settings.SecondScreenMonitor);
+		LoadMonitors(PreviewMonitorCombo, Strings.Settings_MonitorSameAsMain, settings.PreviewMonitor);
+		LoadMonitors(SecondScreenMonitorCombo, Strings.Settings_MonitorFirstOther, settings.SecondScreenMonitor);
 		SecondScreenCheck.IsChecked = settings.SecondScreenEnabled;
 		SecondScreenMonitorCombo.IsEnabled = settings.SecondScreenEnabled;
 		ReopenLastProjectCheck.IsChecked = settings.ReopenLastProject;
@@ -174,12 +183,10 @@ public partial class SettingsWindow : Window
 
 		TimeFormatHint.Text = option.Value switch
 		{
-			PreviewTimeFormat.Milliseconds => "The time readout next to the timeline, e.g. 01:23.456 - the format the cut editor uses.",
-			PreviewTimeFormat.Timecode =>
-				"The time readout next to the timeline as hours:minutes:seconds:frames from 00:00:00:00, e.g. 00:01:23:12 - drop-frame (;) at 29.97 and 59.94 fps, as an NLE numbers its timeline.",
-			PreviewTimeFormat.CameraTimecode =>
-				"The time readout next to the timeline as the timecode the camera wrote, the one an NLE shows as the clip's own - e.g. 09:59:56;00. A recording without one counts from 00:00:00:00.",
-			_ => "The time readout next to the timeline, e.g. 01:23. Clicking the readout switches between the formats."
+			PreviewTimeFormat.Milliseconds => Strings.Settings_TimeFormatMillisecondsHint,
+			PreviewTimeFormat.Timecode => Strings.Settings_TimeFormatTimecodeHint,
+			PreviewTimeFormat.CameraTimecode => Strings.Settings_TimeFormatCameraTimecodeHint,
+			_ => Strings.Settings_TimeFormatSecondsHint
 		};
 	}
 
@@ -200,12 +207,12 @@ public partial class SettingsWindow : Window
 		                                (MetadataTelemetryCheck.IsChecked == true || MetadataThumbnailsCheck.IsChecked == true);
 
 		List<string> kept = [];
-		if (MetadataTelemetryCheck.IsChecked == true) kept.Add("telemetry");
-		if (MetadataSerialCheck is { IsChecked: true, IsEnabled: true }) kept.Add("serial number");
-		if (MetadataDebugCheck.IsChecked == true) kept.Add("debug track");
-		if (MetadataThumbnailsCheck.IsChecked == true) kept.Add("thumbnails");
-		string summary = kept.Count > 0 ? string.Join(", ", kept) : "nothing selected";
-		MetadataPartsExpander.Header = $"What to keep: {summary}";
+		if (MetadataTelemetryCheck.IsChecked == true) kept.Add(Strings.Settings_KeepTelemetry);
+		if (MetadataSerialCheck is { IsChecked: true, IsEnabled: true }) kept.Add(Strings.Settings_KeepSerial);
+		if (MetadataDebugCheck.IsChecked == true) kept.Add(Strings.Settings_KeepDebugTrack);
+		if (MetadataThumbnailsCheck.IsChecked == true) kept.Add(Strings.Settings_KeepThumbnails);
+		string summary = kept.Count > 0 ? string.Join(", ", kept) : Strings.Settings_KeepNothing;
+		MetadataPartsExpander.Header = string.Format(Strings.Settings_WhatToKeep, summary);
 		MetadataPartsExpander.IsEnabled = enabled;
 	}
 
@@ -224,6 +231,7 @@ public partial class SettingsWindow : Window
 			MetadataKeepThumbnails = MetadataThumbnailsCheck.IsChecked == true,
 			AppTheme = (ThemeCombo.SelectedItem as ChoiceOption<string>)?.Value ?? AppThemes.Default,
 			InterfaceScale = (InterfaceScaleCombo.SelectedItem as ChoiceOption<double> ?? InterfaceScaleOptions[1]).Value,
+			UiLanguage = (LanguageCombo.SelectedItem as ChoiceOption<string?>)?.Value,
 			PreviewTimeFormat = (TimeFormatCombo.SelectedItem as ChoiceOption<PreviewTimeFormat> ?? PreviewTimeFormats.Options[0]).Value.ToString(),
 			RestoreWindowPlacement = RestoreWindowPlacementCheck.IsChecked == true,
 			PreviewMonitor = (PreviewMonitorCombo.SelectedItem as ChoiceOption<string?>)?.Value,
@@ -302,7 +310,7 @@ public partial class SettingsWindow : Window
 	{
 		CheckForUpdatesButton.IsEnabled = false;
 		AppUpdateButton.IsVisible = false;
-		AppUpdateText.Text = "Checking for a new version...";
+		AppUpdateText.Text = Strings.Settings_CheckingForANewVersion;
 
 		try
 		{
@@ -321,20 +329,23 @@ public partial class SettingsWindow : Window
 		_latestRelease = result.App;
 		if (result.AppCheckFailed)
 		{
-			AppUpdateText.Text = "Could not check for a new version.";
+			AppUpdateText.Text = Strings.Settings_UpdateCheckFailed;
 			return;
 		}
 
 		if (!result.AppUpdateAvailable)
 		{
-			AppUpdateText.Text = "You're using the latest version.";
+			AppUpdateText.Text = Strings.Settings_UpToDate;
 			return;
 		}
 
 		AppRelease release = result.App!;
-		AppUpdateText.Text = $"Version {release.Version} is available" +
-		                     (release.PublishedAt is { } published ? $" (released {published.ToLocalTime():yyyy-MM-dd})." : ".");
-		AppUpdateButton.Content = AppUpdates.CanUpdateInPlace(release) ? $"Update to {release.Version}" : "Download from GitHub";
+		AppUpdateText.Text = release.PublishedAt is { } published
+			? string.Format(Strings.Settings_VersionAvailableReleased, release.Version, published.ToLocalTime().ToString("yyyy-MM-dd"))
+			: string.Format(Strings.Settings_VersionAvailable, release.Version);
+		AppUpdateButton.Content = AppUpdates.CanUpdateInPlace(release)
+			? string.Format(Strings.Settings_UpdateTo, release.Version)
+			: Strings.Settings_DownloadFromGitHub;
 		AppUpdateButton.IsVisible = true;
 	}
 
@@ -344,7 +355,7 @@ public partial class SettingsWindow : Window
 
 		AppUpdateButton.IsEnabled = false;
 		bool updating = await AppUpdateFlow.UpdateAsync(this, _latestRelease, IsRendering, status => AppUpdateText.Text = status,
-			share => AppUpdateText.Text = $"Downloading OsmoOverlay {_latestRelease.Version}... {share * 100:0}%");
+			share => AppUpdateText.Text = string.Format(Strings.Settings_Downloading, _latestRelease.Version, share * 100));
 		if (!updating) AppUpdateButton.IsEnabled = true;
 	}
 
@@ -363,8 +374,8 @@ public partial class SettingsWindow : Window
 	private void ShowProjectAssociation()
 	{
 		bool registered = ProjectFileAssociation.IsRegistered();
-		ProjectAssociationButton.Content = registered ? "Remove association" : "Associate .ovproj files";
-		ProjectAssociationText.Text = registered ? "Registered for this app" : "Not registered";
+		ProjectAssociationButton.Content = registered ? Strings.Settings_RemoveAssociation : Strings.Settings_Associate;
+		ProjectAssociationText.Text = registered ? Strings.Settings_AssociationRegistered : Strings.Settings_AssociationNotRegistered;
 	}
 
 	private void OnProjectAssociationClick(object? sender, RoutedEventArgs e)
@@ -376,7 +387,7 @@ public partial class SettingsWindow : Window
 		}
 		catch (Exception ex) when (ex is UnauthorizedAccessException or SecurityException or IOException)
 		{
-			AppLogger.Error(ex, $"Could not change the .ovproj association: {ex.Message}");
+			AppLogger.Error(ex, string.Format(Strings.Settings_AssociationFailed, ex.Message));
 		}
 
 		ShowProjectAssociation();

@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
@@ -21,8 +22,7 @@ public sealed class Insta360Format : ICameraFormat
 
 	public string? SupportNotice(string? cameraModel)
 	{
-		return "OsmoOverlay is made mainly for the DJI Osmo Action 6. Insta360 recordings haven't been tested much, and their GPS " +
-		       "data isn't supported at all. Some widgets may be unavailable or read wrong.";
+		return CoreStrings.Insta360_SupportNotice;
 	}
 
 	public CameraRecording? Detect(string path, JsonArray streams)
@@ -75,6 +75,6 @@ public sealed class Insta360Format : ICameraFormat
 
 	public string DescribeTelemetry(IReadOnlyList<TelemetryFrame> frames)
 	{
-		return "Telemetry source: Insta360 trailer (accelerometer averaged per frame, exposure)";
+		return CoreStrings.Insta360_Source;
 	}
 }

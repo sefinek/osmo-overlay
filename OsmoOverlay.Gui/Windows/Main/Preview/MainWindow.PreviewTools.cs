@@ -33,11 +33,11 @@ public partial class MainWindow
 
 		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
-			Title = "Save frame as PNG",
+			Title = Strings.Frame_SaveTitle,
 			SuggestedFileName = suggestedName,
 			SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Path.GetDirectoryName(source) ?? "."),
 			DefaultExtension = "png",
-			FileTypeChoices = [new FilePickerFileType("PNG image") { Patterns = ["*.png"] }]
+			FileTypeChoices = [new FilePickerFileType(Strings.Frame_PngImage) { Patterns = ["*.png"] }]
 		});
 		if (file is null) return;
 
@@ -47,11 +47,11 @@ public partial class MainWindow
 			byte[] png = await _previewPlayer.RenderSnapshotPngAsync(position);
 			await using Stream stream = await file.OpenWriteAsync();
 			await stream.WriteAsync(png);
-			AppendLog($"Frame saved: {file.Path.LocalPath} ({_summary.Video.Width}x{_summary.Video.Height})");
+			AppendLog(string.Format(Strings.Frame_Saved, file.Path.LocalPath, $"{_summary.Video.Width}x{_summary.Video.Height}"));
 		}
 		catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
 		{
-			AppendLog($"Couldn't save the frame: {ex.Message}", LogLevel.Error);
+			AppendLog(string.Format(Strings.Frame_SaveFailed, ex.Message), LogLevel.Error);
 		}
 		finally
 		{

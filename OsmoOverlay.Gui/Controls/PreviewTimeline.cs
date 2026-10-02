@@ -937,7 +937,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			return;
 		}
 
-		string name = string.IsNullOrWhiteSpace(moment.Name) ? "Key moment" : moment.Name;
+		string name = string.IsNullOrWhiteSpace(moment.Name) ? Strings.Timeline_KeyMoment : moment.Name;
 		ToolTip.SetTip(this, $"{name}  -  {TimeText.Format(moment.Seconds)}");
 		ToolTip.SetIsOpen(this, true);
 	}

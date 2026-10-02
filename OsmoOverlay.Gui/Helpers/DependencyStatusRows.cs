@@ -20,8 +20,8 @@ internal static class DependencyStatusRows
 		{
 			grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 			AddCell(grid, new TextBlock { Text = tools[i].DisplayName }, i, 0);
-			AddCell(grid, new TextBlock { Text = "installed ...", Opacity = 0.6 }, i, 1);
-			AddCell(grid, new TextBlock { Text = "latest ...", Opacity = 0.6 }, i, 2);
+			AddCell(grid, new TextBlock { Text = Strings.Deps_InstalledChecking, Opacity = 0.6 }, i, 1);
+			AddCell(grid, new TextBlock { Text = Strings.Deps_LatestChecking, Opacity = 0.6 }, i, 2);
 		}
 	}
 
@@ -39,19 +39,20 @@ internal static class DependencyStatusRows
 			AddCell(grid, new TextBlock { Text = status.Tool.DisplayName }, i, 0);
 			AddCell(grid, new TextBlock
 			{
-				Text = status.InstalledVersion is null ? "not found" : $"installed {status.InstalledVersion}", Opacity = 0.6
+				Text = status.InstalledVersion is null ? Strings.Deps_NotFound : string.Format(Strings.Deps_Installed, status.InstalledVersion),
+				Opacity = 0.6
 			}, i, 1);
 			AddCell(grid, new TextBlock { Text = LatestText(status), Opacity = 0.6 }, i, 2);
 
 			if (status.InstalledVersion is null && DependencyInstaller.CanAttemptAutoInstall())
 			{
-				var installButton = new Button { Content = "Install" };
+				var installButton = new Button { Content = Strings.DependencyPrompt_Install };
 				installButton.Click += async (_, _) => await OnInstallClickAsync(status.Tool, installButton);
 				AddCell(grid, installButton, i, 3);
 			}
 			else if (status.UpdateAvailable)
 			{
-				var updateButton = new Button { Content = "Update" };
+				var updateButton = new Button { Content = Strings.Main_Update };
 				updateButton.Click += async (_, _) => await OnUpdateClickAsync(owner, status, updateButton, isRendering);
 				AddCell(grid, updateButton, i, 3);
 			}
@@ -62,7 +63,7 @@ internal static class DependencyStatusRows
 	private static async Task OnInstallClickAsync(ExternalTool tool, Button button)
 	{
 		button.IsEnabled = false;
-		AppLogger.Notify($"Installing {tool.DisplayName}...");
+		AppLogger.Notify(string.Format(Strings.Welcome_InstallingTool, tool.DisplayName));
 
 		InstallResult result;
 		try
@@ -75,7 +76,7 @@ internal static class DependencyStatusRows
 		}
 
 		AppLogger.Notify(result.Message);
-		button.Content = result.Success ? "Installed" : "Retry";
+		button.Content = result.Success ? Strings.Deps_InstalledDone : Strings.Welcome_Retry;
 		button.IsEnabled = !result.Success;
 	}
 
@@ -83,10 +84,10 @@ internal static class DependencyStatusRows
 	{
 		return (status.LatestVersion, status.UnsupportedVersion) switch
 		{
-			(null, null) => "latest unknown",
-			({ } latest, null) => $"latest {latest}",
-			(null, { } unsupported) => $"latest {unsupported} (not supported yet)",
-			({ } latest, { } unsupported) => $"latest {latest} ({unsupported} not supported yet)"
+			(null, null) => Strings.Deps_LatestUnknown,
+			({ } latest, null) => string.Format(Strings.Deps_Latest, latest),
+			(null, { } unsupported) => string.Format(Strings.Deps_LatestUnsupported, unsupported),
+			({ } latest, { } unsupported) => string.Format(Strings.Deps_LatestWithUnsupported, latest, unsupported)
 		};
 	}
 
@@ -100,7 +101,7 @@ internal static class DependencyStatusRows
 		}
 
 		button.IsEnabled = false;
-		AppLogger.Notify($"Updating {status.Tool.DisplayName}...");
+		AppLogger.Notify(string.Format(Strings.Deps_Updating, status.Tool.DisplayName));
 
 		InstallResult result;
 		try
@@ -114,7 +115,7 @@ internal static class DependencyStatusRows
 
 		AppLogger.Notify(result.Message);
 
-		button.Content = result.Success ? "Updated" : "Retry";
+		button.Content = result.Success ? Strings.Deps_UpdatedDone : Strings.Welcome_Retry;
 		button.IsEnabled = !result.Success;
 	}
 
@@ -124,14 +125,13 @@ internal static class DependencyStatusRows
 		string name = status.Tool.DisplayName;
 		if (isRendering())
 		{
-			await ConfirmDialog.ShowAsync(owner, $"Update {name}",
-				$"OsmoOverlay has to close to update {name}. Let the render finish (or cancel it) first.", kind: DialogKind.Warning);
+			await ConfirmDialog.ShowAsync(owner, string.Format(Strings.Deps_UpdateTitle, name),
+				string.Format(Strings.Deps_UpdateWhileRendering, name), kind: DialogKind.Warning);
 			return;
 		}
 
-		bool confirmed = await ConfirmDialog.AskAsync(owner, $"Update {name}",
-			$"The preview keeps {name}'s libraries in use, so OsmoOverlay will close, update {name} to {status.LatestVersion} " +
-			"in a separate window and then start again.", "Close and update", DialogKind.Warning);
+		bool confirmed = await ConfirmDialog.AskAsync(owner, string.Format(Strings.Deps_UpdateTitle, name),
+			string.Format(Strings.Deps_UpdateAfterRestart, name, status.LatestVersion), Strings.Deps_CloseAndUpdate, DialogKind.Warning);
 		if (!confirmed) return;
 
 		button.IsEnabled = false;
@@ -148,7 +148,7 @@ internal static class DependencyStatusRows
 		AppLogger.Notify(result.Message);
 		if (!result.Success)
 		{
-			button.Content = "Retry";
+			button.Content = Strings.Welcome_Retry;
 			button.IsEnabled = true;
 			return;
 		}

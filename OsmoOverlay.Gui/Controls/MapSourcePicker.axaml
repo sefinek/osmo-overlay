@@ -1,28 +1,29 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
              x:Class="OsmoOverlay.Gui.MapSourcePicker">
 
 	<StackPanel Spacing="8">
-		<TextBlock Text="Tile provider" Classes="infoLabel" Margin="0" />
+		<TextBlock Text="{x:Static local:Strings.MapSource_TileProvider}" Classes="infoLabel" Margin="0" />
 		<ComboBox Name="ProviderCombo" HorizontalAlignment="Stretch" SelectionChanged="OnProviderChanged" />
 
-		<TextBlock Name="CustomUrlLabel" Text="Custom tile URL template" Classes="infoLabel" Margin="0" IsVisible="False" />
+		<TextBlock Name="CustomUrlLabel" Text="{x:Static local:Strings.MapSource_CustomTileUrlTemplate}" Classes="infoLabel" Margin="0" IsVisible="False" />
 		<TextBox Name="CustomUrlBox" IsVisible="False" PlaceholderText="https://tile.example.com/{z}/{x}/{y}.png"
 		         TextWrapping="Wrap" LostFocus="OnCustomUrlLostFocus" />
 
-		<TextBlock Name="ApiKeyLabel" Text="API key" Classes="infoLabel" Margin="0" IsVisible="False" />
-		<TextBox Name="ApiKeyBox" IsVisible="False" PlaceholderText="Paste your API key" PasswordChar="•"
+		<TextBlock Name="ApiKeyLabel" Text="{x:Static local:Strings.MapSource_ApiKey}" Classes="infoLabel" Margin="0" IsVisible="False" />
+		<TextBox Name="ApiKeyBox" IsVisible="False" PlaceholderText="{x:Static local:Strings.MapSource_PasteYourApiKey}" PasswordChar="•"
 		         LostFocus="OnApiKeyLostFocus" />
 		<TextBlock Name="ApiKeyHint" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False"
-		           Text="Doesn't look like a CARTO key - expected format: xxx_xxxx_n_&lt;24 hex chars&gt;." />
+		           Text="{x:Static local:Strings.MapSource_DoesnTLookLikeA}" />
 		<TextBlock Name="SharedHint" Classes="hint" IsVisible="False" TextWrapping="Wrap"
-		           Text="The key (and the custom URL) is shared by every map in the app - the Map widgets and the route overview card." />
+		           Text="{x:Static local:Strings.MapSource_TheKeyAndTheCustom}" />
 
-		<CheckBox Name="ShowAttributionCheck" Content="Show attribution on the video" Click="OnShowAttributionClick" />
+		<CheckBox Name="ShowAttributionCheck" Content="{x:Static local:Strings.MapSource_ShowAttributionOnTheVideo}" Click="OnShowAttributionClick" />
 		<TextBlock Name="AttributionText" Classes="hint" TextWrapping="Wrap" />
 		<TextBox Name="CustomAttributionBox" IsVisible="False" PlaceholderText="© OpenStreetMap contributors"
 		         LostFocus="OnCustomAttributionLostFocus" />
 		<TextBlock Name="AttributionHint" Classes="hint" TextWrapping="Wrap"
-		           Text="Most tile providers require visible credit. Turning this off means you must credit the map source yourself elsewhere (e.g. in the video description)." />
+		           Text="{x:Static local:Strings.MapSource_MostTileProvidersRequireVisible}" />
 	</StackPanel>
 </UserControl>

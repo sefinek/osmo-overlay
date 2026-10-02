@@ -18,7 +18,7 @@ public partial class MainWindow
 
 	private string? _projectPath;
 
-	private static readonly FilePickerFileType ProjectFileType = new("OsmoOverlay project") { Patterns = [$"*{OverlayProject.Extension}"] };
+	private static readonly FilePickerFileType ProjectFileType = new(Strings.Project_FileType) { Patterns = [$"*{OverlayProject.Extension}"] };
 
 	private async void OnOpenProjectClick(object? sender, RoutedEventArgs e)
 	{
@@ -26,7 +26,7 @@ public partial class MainWindow
 
 		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Open project",
+			Title = Strings.Main_OpenProject,
 			AllowMultiple = false,
 			FileTypeFilter = [ProjectFileType]
 		});
@@ -46,7 +46,7 @@ public partial class MainWindow
 	{
 		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering)
 		{
-			AppendLog("Can't save the project while a recording is loading or rendering.", LogLevel.Warn);
+			AppendLog(Strings.Project_CantSaveBusy, LogLevel.Warn);
 			return;
 		}
 
@@ -69,7 +69,7 @@ public partial class MainWindow
 
 		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
-			Title = "Save project",
+			Title = Strings.Project_SaveTitle,
 			SuggestedFileName = suggested,
 			DefaultExtension = OverlayProject.Extension.TrimStart('.'),
 			FileTypeChoices = [ProjectFileType]
@@ -89,13 +89,13 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Error(ex, $"Could not save the project: {ex.Message}");
-			await ConfirmDialog.ShowAsync(this, "Can't save the project", ex.Message, kind: DialogKind.Warning);
+			AppLogger.Error(ex, string.Format(Strings.Project_SaveFailed, ex.Message));
+			await ConfirmDialog.ShowAsync(this, Strings.Project_SaveFailedTitle, ex.Message, kind: DialogKind.Warning);
 			return;
 		}
 
 		SetProjectPath(path);
-		AppendLog($"Project saved: {path}");
+		AppendLog(string.Format(Strings.Project_Saved, path));
 	}
 
 	private OverlayProject BuildProject()
@@ -124,8 +124,8 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Error(ex, $"Could not open the project: {ex.Message}");
-			await ConfirmDialog.ShowAsync(this, "Can't open the project", ex.Message, kind: DialogKind.Warning);
+			AppLogger.Error(ex, string.Format(Strings.Project_OpenFailed, ex.Message));
+			await ConfirmDialog.ShowAsync(this, Strings.Project_OpenFailedTitle, ex.Message, kind: DialogKind.Warning);
 			return;
 		}
 
@@ -142,17 +142,16 @@ public partial class MainWindow
 		if (_inputPaths.Count == 0 || missing.Count > 0)
 		{
 			string message = _inputPaths.Count == 0
-				? "The project has no recordings."
-				: "These recordings are missing:\n\n" + string.Join('\n', missing) +
-				  "\n\nThe project's cuts, view and overlay are applied only after the recordings are found.";
-			await ConfirmDialog.ShowAsync(this, "Recordings not found", message, kind: DialogKind.Warning);
+				? Strings.Project_NoRecordings
+				: string.Format(Strings.Project_RecordingsMissing, string.Join('\n', missing));
+			await ConfirmDialog.ShowAsync(this, Strings.Project_RecordingsNotFoundTitle, message, kind: DialogKind.Warning);
 			return;
 		}
 
 		await RunGetSummaryAsync();
 		if (_phase != UiPhase.SummaryReady || _summary is null) return;
 
-		AppendLog($"Project opened: {path}");
+		AppendLog(string.Format(Strings.Project_Opened, path));
 		await ApplyProjectPresetAsync(project);
 		ApplyProjectEdits(project);
 		ResetHistory();
@@ -164,7 +163,7 @@ public partial class MainWindow
 		if (cuts.Count > 0)
 		{
 			if (CutList.RemovesEverything(cuts, SourceFrames))
-				AppLogger.Warn("The project's cuts remove the whole recording - they were not applied");
+				AppLogger.Warn(Strings.Project_CutsRemoveEverything);
 			else
 			{
 				_cuts = cuts;
@@ -199,7 +198,7 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, "The project's overlay is unreadable - the current preset stays");
+			AppLogger.Warn(ex, Strings.Project_OverlayUnreadable);
 			return;
 		}
 
@@ -211,18 +210,21 @@ public partial class MainWindow
 		}
 
 		string reason = original is null
-			? $"The preset \"{embedded.Name}\" this project was made with no longer exists."
-			: $"The preset \"{original.Name}\" has changed since this project was saved.";
-		bool useProjects = await ConfirmDialog.AskAsync(this, "Overlay of the project",
-			reason + "\n\nUse the overlay saved in the project? It's added as a preset" +
-			(original is null ? "" : " of its own, so the changed one stays as it is") + ".",
-			"Use the project's", DialogKind.Info);
+			? string.Format(Strings.Project_PresetGone, embedded.Name)
+			: string.Format(Strings.Project_PresetChanged, original.Name);
+		bool useProjects = await ConfirmDialog.AskAsync(this, Strings.Project_OverlayTitle,
+			reason + "\n\n" + (original is null ? Strings.Project_UseOverlayGone : Strings.Project_UseOverlayChanged),
+			Strings.Project_UseProjects, DialogKind.Info);
 		if (!useProjects) return;
 
 		bool idTaken = _overlayPresets.Any(p => p.Id == embedded.Id);
 		OverlayPreset added = original is null && !idTaken
 			? embedded
-			: embedded with { Id = Guid.NewGuid().ToString("N"), Name = original is null ? embedded.Name : $"{embedded.Name} (project)" };
+			: embedded with
+			{
+				Id = Guid.NewGuid().ToString("N"),
+				Name = original is null ? embedded.Name : string.Format(Strings.Project_PresetCopyName, embedded.Name)
+			};
 		_overlayPresets.Add(added);
 		SwitchToPreset(added.Id);
 	}

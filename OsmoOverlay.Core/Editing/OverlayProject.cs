@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 
@@ -39,13 +40,13 @@ public sealed record OverlayProject(
 	public static OverlayProject Load(string path)
 	{
 		OverlayProject project = JsonSerializer.Deserialize<OverlayProject>(File.ReadAllText(path))
-		                         ?? throw new InvalidDataException("The project file is empty.");
+		                         ?? throw new InvalidDataException(CoreStrings.Project_Empty);
 		if (project.Format > CurrentFormat)
-			throw new InvalidDataException("The project was saved by a newer version of OsmoOverlay.");
+			throw new InvalidDataException(CoreStrings.Project_Newer);
 		if (project.InputPaths is null || project.Cuts is null)
-			throw new InvalidDataException("The project file is incomplete.");
+			throw new InvalidDataException(CoreStrings.Project_Incomplete);
 		if (project.InputPaths.Append(project.OutputPath).Any(p => !string.IsNullOrWhiteSpace(p) && !OverlayPresetStore.IsLocalFilePath(p)))
-			throw new InvalidDataException("The project points at a file that isn't on a local drive (a network share or a relative path).");
+			throw new InvalidDataException(CoreStrings.Project_NotLocal);
 
 		return project;
 	}

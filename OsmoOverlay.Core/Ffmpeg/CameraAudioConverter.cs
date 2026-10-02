@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Core.Ffmpeg;
 
@@ -45,7 +46,7 @@ public static class CameraAudioConverter
 			]);
 
 			if (DecodedHash(inputPath) != DecodedHash(partialPath))
-				throw new InvalidOperationException("Verification failed: the converted audio doesn't decode to the same samples as the source.");
+				throw new InvalidOperationException(CoreStrings.Audio_VerificationFailed);
 
 			File.Move(partialPath, outputPath, true);
 		}

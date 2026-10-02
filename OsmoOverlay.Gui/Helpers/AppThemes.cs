@@ -16,9 +16,9 @@ internal static class AppThemes
 
 	public static IReadOnlyList<ChoiceOption<string>> Options { get; } =
 	[
-		new("Dark (default)", "Dark"),
-		new("Blue", "Blue"),
-		new("AMOLED black", "Amoled")
+		new(Strings.Theme_Dark, "Dark"),
+		new(Strings.Theme_Blue, "Blue"),
+		new(Strings.Theme_Amoled, "Amoled")
 	];
 
 	public static string Normalize(string? theme)
