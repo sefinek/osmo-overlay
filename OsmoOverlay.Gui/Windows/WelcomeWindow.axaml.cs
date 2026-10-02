@@ -60,6 +60,7 @@ public partial class WelcomeWindow : Window
 		ShowTools();
 		ShowStep(0);
 		AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Bubble, true);
+		AddHandler(KeyDownEvent, OnWindowArrowKeyDown, RoutingStrategies.Tunnel);
 		Closed += (_, _) =>
 		{
 			OverlaySettings now = OverlaySettingsStore.Load();
@@ -137,15 +138,21 @@ public partial class WelcomeWindow : Window
 			case Key.Enter when !typing && !e.Handled:
 				GoForward();
 				break;
-			case Key.Left when !typing && !e.Handled && _step > 0:
-				ShowStep(_step - 1);
-				break;
-			case Key.Right when !typing && !e.Handled && !IsLastStep:
-				ShowStep(_step + 1);
-				break;
 			default:
 				return;
 		}
+
+		e.Handled = true;
+	}
+
+	// Tunneling: arrow keys otherwise move the focus between buttons (directional navigation) before a bubbling handler sees them.
+	private void OnWindowArrowKeyDown(object? sender, KeyEventArgs e)
+	{
+		if (e.KeyModifiers != KeyModifiers.None || FocusManager?.GetFocusedElement() is TextBox) return;
+
+		if (e.Key == Key.Left && _step > 0) ShowStep(_step - 1);
+		else if (e.Key == Key.Right && !IsLastStep) ShowStep(_step + 1);
+		else return;
 
 		e.Handled = true;
 	}
