@@ -190,10 +190,25 @@
 						<TextBlock Text="{x:Static local:Strings.Welcome_RenderingAndFiles}" Classes="stepTitle" />
 						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_DefaultsForTheFirstRender}" />
 						<Border Classes="card" Padding="14,8" Margin="0,4,0,0">
-							<StackPanel Spacing="2">
-								<CheckBox Name="SmoothGpsCheck" Content="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" />
-								<CheckBox Name="WatermarkCheck" Content="{x:Static local:Strings.Welcome_ShowAttributionWatermark}" />
-								<CheckBox Name="ProjectAssociationCheck" Content="{x:Static local:Strings.Welcome_OpenOvprojProjectFilesWith}" />
+							<StackPanel Spacing="8">
+								<CheckBox Name="SmoothGpsCheck">
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" />
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_SmoothGpsHint}" />
+									</StackPanel>
+								</CheckBox>
+								<CheckBox Name="WatermarkCheck">
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Welcome_ShowAttributionWatermark}" />
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_WatermarkHint}" />
+									</StackPanel>
+								</CheckBox>
+								<CheckBox Name="ProjectAssociationCheck">
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Welcome_OpenOvprojProjectFilesWith}" />
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_ProjectAssociationHint}" />
+									</StackPanel>
+								</CheckBox>
 							</StackPanel>
 						</Border>
 						<StackPanel Spacing="6" Margin="0,4,0,0">
@@ -203,6 +218,7 @@
 								<Button Grid.Column="1" Content="{x:Static local:Strings.Common_Browse}" Click="OnBrowseOutputClick" />
 								<Button Grid.Column="2" Content="{x:Static local:Strings.Welcome_Clear}" Click="OnClearOutputClick" />
 							</Grid>
+							<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_OutputFolderHint}" />
 						</StackPanel>
 					</StackPanel>
 

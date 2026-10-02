@@ -79,7 +79,7 @@
     <value>No supported package manager (apt, dnf, pacman) was found. Install {0} manually</value>
   </data>
   <data name="Install_NoSupportedVersion" xml:space="preserve">
-    <value>Couldn't find {0} {1}.x in winget ({2}) - the only major this version of OsmoOverlay can use</value>
+    <value>Couldn't find {0} {1}.x in winget ({2}) - the only major version this release of OsmoOverlay can use</value>
   </data>
   <data name="Install_NotFromWinget" xml:space="preserve">
     <value>{0} wasn't installed through winget, so it can't be updated from here - update it the same way it was installed</value>
@@ -124,7 +124,7 @@
     <value>{0} and {1} weren't recorded with the same lens setup (360 or flat).</value>
   </data>
   <data name="Join_UnknownCamera" xml:space="preserve">
-    <value>a camera with no telemetry the app reads</value>
+    <value>a camera whose telemetry the app can't read</value>
   </data>
   <data name="Libav_CantDecodeAudio" xml:space="preserve">
     <value>The preview can't decode audio: {0}</value>

@@ -70,19 +70,19 @@
     <value>Zapisano kopię zapasową: {0}</value>
   </data>
   <data name="Calibration_Example" xml:space="preserve">
-    <value>Przykład: licznik pokazuje 25 przy pełnej prędkości, a GPS zmierzył 22 - wpisz 25 i 22.</value>
+    <value>Przykład: twoja hulajnoga ma ograniczenie do 25 km/h, a GPS przy pełnej prędkości pokazuje zwykle około 22 km/h - wpisz 25 i 22.</value>
   </data>
   <data name="Calibration_NoneNeeded" xml:space="preserve">
-    <value>GPS zmierzył już taką lub większą prędkość - korekta nie jest potrzebna.</value>
+    <value>GPS pokazuje już tyle lub więcej - korekta nie jest potrzebna.</value>
   </data>
   <data name="Calibration_Off" xml:space="preserve">
-    <value>Wyłączona - prędkości są pokazywane tak, jak zmierzył je GPS.</value>
+    <value>Wyłączona - prędkości są pokazywane dokładnie tak, jak zmierzył je GPS.</value>
   </data>
   <data name="Calibration_Raised" xml:space="preserve">
-    <value>Każda prędkość rośnie o {0:0.0}%: zmierzone 20 km/h będzie pokazane jako {1:0.0} km/h. Dystans, trasa i przechył pozostają bez korekty.</value>
+    <value>Każda prędkość jest zwiększana o {0:0.0}% - zmierzone 20 km/h pokaże się jako {1:0.0} km/h. Dystans, trasa i przechył się nie zmieniają.</value>
   </data>
   <data name="Calibration_Result" xml:space="preserve">
-    <value>Przy {0:0.0}% zmierzone {1:0.##} zmienia się w {2:0.##}, a widżet pokaże {3:0}. Wynik jest zaokrąglony w dół do 0,1%, więc nigdy nie przekroczy rzeczywistej prędkości.</value>
+    <value>Przy korekcie {0:0.0}% zmierzone {1:0.##} zmienia się w {2:0.##}, więc widżet pokaże {3:0}. Wynik jest zaokrąglany w dół do 0,1%, żeby nigdy nie przekroczyć prawdziwej prędkości.</value>
   </data>
   <data name="Calibration_Set" xml:space="preserve">
     <value>Ustawiono korektę {0:0.0}%. Zapisze się razem z pozostałymi ustawieniami.</value>
@@ -91,7 +91,7 @@
     <value>Użyj {0:0.0}%</value>
   </data>
   <data name="Calibration_UseRecording" xml:space="preserve">
-    <value>Przywróć prędkość przelotową z wczytanego nagrania ({0:0.##} km/h)</value>
+    <value>Użyj prędkości z wczytanego nagrania ({0:0.##} km/h)</value>
   </data>
   <data name="Close_CloseAndCancel" xml:space="preserve">
     <value>Zamknij i przerwij</value>
@@ -1944,19 +1944,25 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Co zachować: {0}</value>
   </data>
   <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
-    <value>Porównuj prędkość, z jaką jedziesz przez większość czasu, a nie szczytową - szczyt to moment, w którym GPS pokazał najwięcej. Wczytane nagranie podpowiada swoją prędkość przelotową: szybszą połowę najczęstszej prędkości przejazdu, uśrednioną z 3 s. Obie wartości podaj w tej samej jednostce.</value>
+    <value>Wpisz prędkość, z jaką zwykle jedziesz, a nie chwilowy szczyt - szczyt to moment, w którym GPS akurat zawyżył odczyt. Po wczytaniu nagrania aplikacja sama podpowie jego prędkość przelotową (typową prędkość jazdy, uśrednioną z 3 sekund). Obie wartości podaj w tej samej jednostce.</value>
+  </data>
+  <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
+    <value>np. 22</value>
   </data>
   <data name="SpeedCalibration_MeasuredByTheGpsNo" xml:space="preserve">
-    <value>Zmierzona przez GPS (bez korekty)</value>
+    <value>Prędkość z GPS</value>
+  </data>
+  <data name="SpeedCalibration_RealPlaceholder" xml:space="preserve">
+    <value>np. 25</value>
   </data>
   <data name="SpeedCalibration_RealSpeedSpeedometerLimiter" xml:space="preserve">
-    <value>Rzeczywista prędkość (licznik, ogranicznik)</value>
+    <value>Prawdziwa prędkość</value>
   </data>
   <data name="SpeedCalibration_SpeedCorrection" xml:space="preserve">
     <value>Korekta prędkości (%)</value>
   </data>
   <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
-    <value>Oblicz na podstawie prędkości przelotowej</value>
+    <value>Oblicz korektę z prawdziwej prędkości</value>
   </data>
   <data name="Style_LabelColor" xml:space="preserve">
     <value>Kolor etykiety</value>
@@ -2539,6 +2545,12 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
   <data name="Welcome_OtherWays" xml:space="preserve">
     <value>Inne sposoby:</value>
   </data>
+  <data name="Welcome_OutputFolderHint" xml:space="preserve">
+    <value>Miejsce zapisu gotowych filmów. Puste pole oznacza zapis obok nagrania źródłowego.</value>
+  </data>
+  <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
+    <value>Zapisany projekt (cięcia, nakładka, widok 360) otworzy się w tej aplikacji po dwukliku.</value>
+  </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Renderowanie i pliki</value>
   </data>
@@ -2550,6 +2562,9 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
   </data>
   <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
     <value>Pokazuj znak wodny OsmoOverlay</value>
+  </data>
+  <data name="Welcome_SmoothGpsHint" xml:space="preserve">
+    <value>GPS podaje tylko kilka pozycji na sekundę, więc bez wygładzania ślad kompasu i mapa przesuwają się skokami. Ta opcja uzupełnia ruch między pozycjami.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
     <value>Prędkość z GPS kamery nigdy nie jest w 100% dokładna. Szczyty zwykle wychodzą zaniżone, a jakość sygnału może ją przesunąć w obie strony.</value>
@@ -2604,6 +2619,9 @@ Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634,
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Wersja {0}</value>
+  </data>
+  <data name="Welcome_WatermarkHint" xml:space="preserve">
+    <value>Mały napis „Made with OsmoOverlay” z linkiem do projektu na dole filmu przez jego pierwsze kilka sekund.</value>
   </data>
   <data name="Welcome_WelcomeToOsmoOverlay" xml:space="preserve">
     <value>Witaj w OsmoOverlay</value>

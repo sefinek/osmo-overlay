@@ -70,19 +70,19 @@
     <value>Auto-saved a backup: {0}</value>
   </data>
   <data name="Calibration_Example" xml:space="preserve">
-    <value>Example: the speedometer reads 25 at full speed, the GPS measured 22 - enter 25 and 22.</value>
+    <value>Example: your scooter is limited to 25 km/h, but at full speed the GPS usually shows about 22 km/h - enter 25 and 22.</value>
   </data>
   <data name="Calibration_NoneNeeded" xml:space="preserve">
-    <value>The GPS already measured this speed or more - no correction needed.</value>
+    <value>The GPS already shows this speed or more - no correction needed.</value>
   </data>
   <data name="Calibration_Off" xml:space="preserve">
-    <value>Off - speeds are shown as the GPS measured them.</value>
+    <value>Off - speeds are shown exactly as the GPS measured them.</value>
   </data>
   <data name="Calibration_Raised" xml:space="preserve">
-    <value>Every speed is raised by {0:0.0}%: a measured 20 km/h is shown as {1:0.0} km/h. Distance, route and tilt keep the measured values.</value>
+    <value>Every speed is raised by {0:0.0}% - a measured 20 km/h shows as {1:0.0} km/h. Distance, route and tilt stay as measured.</value>
   </data>
   <data name="Calibration_Result" xml:space="preserve">
-    <value>With {0:0.0}% the measured {1:0.##} becomes {2:0.##} - the widget shows {3:0}. Rounded down to 0.1%, so it never comes out above the real speed.</value>
+    <value>With a {0:0.0}% correction, the measured {1:0.##} becomes {2:0.##}, so the widget shows {3:0}. It's rounded down to 0.1%, so it never goes above the real speed.</value>
   </data>
   <data name="Calibration_Set" xml:space="preserve">
     <value>Correction set to {0:0.0}%. It's saved with the other settings.</value>
@@ -91,7 +91,7 @@
     <value>Use {0:0.0}%</value>
   </data>
   <data name="Calibration_UseRecording" xml:space="preserve">
-    <value>Reset to the loaded recording's cruising speed ({0:0.##} km/h)</value>
+    <value>Use the loaded recording's speed ({0:0.##} km/h)</value>
   </data>
   <data name="Close_CloseAndCancel" xml:space="preserve">
     <value>Close and cancel</value>
@@ -1942,19 +1942,25 @@
     <value>What to keep: {0}</value>
   </data>
   <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
-    <value>Compare the speed you ride at most of the time, not a peak - a peak is where the GPS read highest. A loaded recording fills in its cruising speed: the faster half of the ride's most common speed, averaged over 3 s. Use the same unit for both.</value>
+    <value>Enter the speed you usually ride at, not a momentary peak - a peak is where the GPS happened to read high. With a recording loaded, the app suggests its cruising speed (the typical riding speed, averaged over 3 seconds). Use the same unit for both.</value>
+  </data>
+  <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
+    <value>e.g. 22</value>
   </data>
   <data name="SpeedCalibration_MeasuredByTheGpsNo" xml:space="preserve">
-    <value>Measured by the GPS (no correction)</value>
+    <value>GPS speed</value>
+  </data>
+  <data name="SpeedCalibration_RealPlaceholder" xml:space="preserve">
+    <value>e.g. 25</value>
   </data>
   <data name="SpeedCalibration_RealSpeedSpeedometerLimiter" xml:space="preserve">
-    <value>Real speed (speedometer, limiter)</value>
+    <value>Real speed</value>
   </data>
   <data name="SpeedCalibration_SpeedCorrection" xml:space="preserve">
     <value>Speed correction (%)</value>
   </data>
   <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
-    <value>Work it out from your cruising speed</value>
+    <value>Work it out from a known speed</value>
   </data>
   <data name="Style_LabelColor" xml:space="preserve">
     <value>Label color</value>
@@ -2517,6 +2523,12 @@ Current tags:
   <data name="Welcome_OtherWays" xml:space="preserve">
     <value>Other ways:</value>
   </data>
+  <data name="Welcome_OutputFolderHint" xml:space="preserve">
+    <value>Where finished videos are saved. Empty means next to the source recording.</value>
+  </data>
+  <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
+    <value>A saved project (cuts, overlay, 360 view) opens in this app with a double-click.</value>
+  </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Rendering and files</value>
   </data>
@@ -2528,6 +2540,9 @@ Current tags:
   </data>
   <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
     <value>Show the OsmoOverlay watermark</value>
+  </data>
+  <data name="Welcome_SmoothGpsHint" xml:space="preserve">
+    <value>GPS gives only a few positions per second, so without smoothing the compass trail and the map move in jumps. This fills in the motion between them.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
     <value>Speed from a camera's GPS is never 100% exact. Peaks tend to come out low, and signal quality can push it either way.</value>
@@ -2582,6 +2597,9 @@ Current tags:
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Version {0}</value>
+  </data>
+  <data name="Welcome_WatermarkHint" xml:space="preserve">
+    <value>A small "Made with OsmoOverlay" note with the project link at the bottom of the video for its first few seconds.</value>
   </data>
   <data name="Welcome_WelcomeToOsmoOverlay" xml:space="preserve">
     <value>Welcome to OsmoOverlay</value>

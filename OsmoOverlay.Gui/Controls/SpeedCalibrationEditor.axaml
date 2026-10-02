@@ -16,12 +16,12 @@
 				<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
 					<StackPanel Grid.Column="0" Spacing="4">
 						<TextBlock Text="{x:Static local:Strings.SpeedCalibration_RealSpeedSpeedometerLimiter}" Classes="infoLabel" />
-						<NumericUpDown Name="RealSpeedBox" PlaceholderText="e.g. 25" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
+						<NumericUpDown Name="RealSpeedBox" PlaceholderText="{x:Static local:Strings.SpeedCalibration_RealPlaceholder}" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
 						               HorizontalAlignment="Stretch" />
 					</StackPanel>
 					<StackPanel Grid.Column="1" Spacing="4">
 						<TextBlock Text="{x:Static local:Strings.SpeedCalibration_MeasuredByTheGpsNo}" Classes="infoLabel" />
-						<NumericUpDown Name="ShownSpeedBox" PlaceholderText="e.g. 22" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
+						<NumericUpDown Name="ShownSpeedBox" PlaceholderText="{x:Static local:Strings.SpeedCalibration_GpsPlaceholder}" Minimum="1" Maximum="500" Increment="0.1" FormatString="0.##"
 						               HorizontalAlignment="Stretch" />
 					</StackPanel>
 				</Grid>
