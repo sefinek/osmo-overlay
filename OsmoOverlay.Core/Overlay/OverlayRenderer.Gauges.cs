@@ -240,9 +240,11 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>The step between the scale's labels: the smallest of a few round ones that keeps it to six intervals or fewer.</summary>
+	private static readonly double[] ScaleSteps = [5, 10, 20, 25, 50, 100, 200];
+
 	private static double ScaleStep(double max)
 	{
-		foreach (double step in new[] { 5.0, 10, 20, 25, 50, 100, 200 })
+		foreach (double step in ScaleSteps)
 		{
 			if (max / step <= 6) return step;
 		}

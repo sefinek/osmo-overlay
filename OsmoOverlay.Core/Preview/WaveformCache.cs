@@ -66,7 +66,8 @@ internal static class WaveformCache
 		if (Stamps(segments) is not { } stamps) return;
 
 		string path = PathFor(segments, directory);
-		string temp = path + ".tmp";
+		// Unique like AtomicFile's: a worker that outlived its Dispose's Join may still be saving the same recording.
+		string temp = $"{path}.{Guid.NewGuid():N}.tmp";
 		try
 		{
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);

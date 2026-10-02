@@ -181,7 +181,8 @@ internal sealed class PlaybackSession
 
 			if (next.PlayTime > dueBy) break;
 
-			reader.TryRead(out next);
+			// StopAsync drains the channel on the UI thread while this runs on the render thread - the peeked frame may be gone.
+			if (!reader.TryRead(out next)) break;
 			if (shown is { } skipped)
 			{
 				_pool.Return(skipped.Composed.Bgra);

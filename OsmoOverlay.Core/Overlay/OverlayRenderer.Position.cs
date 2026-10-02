@@ -22,7 +22,8 @@ public sealed partial class OverlayRenderer
 	public const double MapDynamicZoomMaxFactorMax = 15.0;
 	private const double MapTrailFitFraction = 0.7;
 	private const double MapZoomSmoothingSeconds = 2.5;
-	private readonly ResettableEma _mapZoomEma = new();
+	// Per Map widget: two of them share one mosaic but each has its own trail fit and smoothing.
+	private readonly Dictionary<string, ResettableEma> _mapZoomEmas = [];
 	private RouteMapMosaic? _mapMosaic;
 	private MapMosaicKey? _preparedMapKey;
 
@@ -144,24 +145,23 @@ public sealed partial class OverlayRenderer
 	/// <summary>
 	///     The trail shows the whole route driven so far. Scrubbing/seeking calls RenderInto() out of
 	///     chronological order, so naively appending "the current point" every call would scramble the
-	///     path once the preview jumps around - sequential progress extends the cached trail in O(1);
-	///     a jump rebuilds it once from the start instead.
+	///     path once the preview jumps around - progress forwards (by one frame or several, when the preview
+	///     skips frames or the telemetry runs faster than the video) extends the cached trail by just the new
+	///     frames; a jump backwards rebuilds it once from the start instead.
 	/// </summary>
 	private void UpdateTrail(DerivedFrame frame)
 	{
 		if (_allFrames.Count == 0) return;
 
 		int index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
-		if (index == _trailCacheIndex + 1)
-		{
-			AppendTrailPoint(_allFrames[index]);
-		}
-		else if (index != _trailCacheIndex)
+		if (index < _trailCacheIndex)
 		{
 			_trail.Clear();
-			for (int i = 0; i <= index; i++)
-				AppendTrailPoint(_allFrames[i]);
+			_trailCacheIndex = -1;
 		}
+
+		for (int i = _trailCacheIndex + 1; i <= index; i++)
+			AppendTrailPoint(_allFrames[i]);
 
 		_trailCacheIndex = index;
 	}
@@ -216,7 +216,8 @@ public sealed partial class OverlayRenderer
 
 		if (element.ShowHeadingText)
 		{
-			string headingText = $"{F(AngleMath.NormalizeDegrees(frame.HeadingDegrees), "0")}°{CardinalDirection(frame.HeadingDegrees)}";
+			// Rounded before wrapping, or 359.6 reads "360°N".
+			string headingText = $"{F(Math.Round(AngleMath.NormalizeDegrees(frame.HeadingDegrees)) % 360, "0")}°{CardinalDirection(frame.HeadingDegrees)}";
 			DrawOutlined(canvas, headingText, radius * 0.55f, radius * 0.7f, _labelFont, White, SKTextAlign.Right);
 		}
 	}
@@ -347,7 +348,7 @@ public sealed partial class OverlayRenderer
 	///     MapZoomSmoothingSeconds so it doesn't visibly "breathe" - except right after a seek/scrub,
 	///     where it snaps straight to the target instead of smoothing from a stale value.
 	/// </summary>
-	private double GetMapZoomFactor(DerivedFrame frame, SKPoint center, List<SKPoint> trailPixels, double maxFactor)
+	private double GetMapZoomFactor(DerivedFrame frame, MapWidgetElement element, SKPoint center, List<SKPoint> trailPixels)
 	{
 		const float radius = OverlayElementBounds.MapRadius;
 
@@ -361,9 +362,10 @@ public sealed partial class OverlayRenderer
 		// The farthest trail point should land at MapTrailFitFraction of the crop radius, not right at
 		// its edge, so it stays comfortably inside the circle instead of grazing the rim.
 		double requiredRadius = Math.Sqrt(maxDistSq) / MapTrailFitFraction;
-		double target = Math.Clamp(requiredRadius / radius, 1.0, ClampZoomOutFactor(maxFactor));
+		double target = Math.Clamp(requiredRadius / radius, 1.0, ClampZoomOutFactor(element.MapDynamicZoomMaxFactor));
 
-		return _mapZoomEma.Update(frame.Raw.SampleTimeSeconds, target, MapZoomSmoothingSeconds);
+		if (!_mapZoomEmas.TryGetValue(element.Id, out ResettableEma? ema)) _mapZoomEmas[element.Id] = ema = new ResettableEma();
+		return ema.Update(frame.Raw.SampleTimeSeconds, target, MapZoomSmoothingSeconds);
 	}
 
 	/// <summary>
@@ -392,7 +394,7 @@ public sealed partial class OverlayRenderer
 			List<SKPoint> trailPixels = GetTrailPixels();
 
 			double zoomFactor = element.MapDynamicZoom
-				? GetMapZoomFactor(frame, center, trailPixels, element.MapDynamicZoomMaxFactor)
+				? GetMapZoomFactor(frame, element, center, trailPixels)
 				: 1.0;
 			float cropRadius = radius * (float)zoomFactor;
 
@@ -457,11 +459,12 @@ public sealed partial class OverlayRenderer
 	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, a static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>
 	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, TrailOverlayElement element)
 	{
-		// Only a marker with its own color needs a paint of its own - the default one is built once.
-		using SKPaint? custom = element.MarkerColor is null
-			? null
-			: new SKPaint { Color = ResolveColor(element.MarkerColor, Accent), IsAntialias = true, Style = SKPaintStyle.Fill };
-		SKPaint fill = custom ?? _dotFillAccent;
+		SKPaint fill = _dotFillAccent;
+		if (element.MarkerColor is not null)
+		{
+			_markerFillPaint.Color = ResolveColor(element.MarkerColor, Accent);
+			fill = _markerFillPaint;
+		}
 
 		canvas.Save();
 		canvas.Translate(cx, cy);

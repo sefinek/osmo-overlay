@@ -102,6 +102,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPath _speedDefaultNeedle = CreateDefaultNeedle();
 	private readonly SKPath _speedRingNeedle = CreateRingNeedle();
 	private readonly SKPaint _whiteFill = new() { Color = SKColors.White, IsAntialias = true, Style = SKPaintStyle.Fill };
+	// Recolored per widget with its MarkerColor, like the panel fill.
+	private readonly SKPaint _markerFillPaint = new() { IsAntialias = true, Style = SKPaintStyle.Fill };
 
 	// Mutable paints reused by DrawOutlined (see below) - unlike the fixed-style paints
 	// above, color/stroke width/blur radius vary per call (font size, requested color, fade opacity), so
@@ -272,6 +274,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedDefaultNeedle.Dispose();
 		_speedRingNeedle.Dispose();
 		_whiteFill.Dispose();
+		_markerFillPaint.Dispose();
 		_outlineShadowPaint.Dispose();
 		_outlineStrokePaint.Dispose();
 		_outlineFillPaint.Dispose();
@@ -734,16 +737,19 @@ public sealed partial class OverlayRenderer : IDisposable
 		return filter;
 	}
 
-	private static string F(double value, string format)
+	/// <summary>Invariant, and never "-0" - .NET keeps the sign of a value that rounds to zero, so a level gauge or flat gradient would flicker "-0"/"0".</summary>
+	internal static string F(double value, string format)
 	{
-		return value.ToString(format, CultureInfo.InvariantCulture);
+		string text = value.ToString(format, CultureInfo.InvariantCulture);
+		return text.StartsWith('-') && text.AsSpan(1).IndexOfAnyExcept('0', '.') < 0 ? text[1..] : text;
 	}
 
 	/// <summary>
 	///     A single EMA-smoothed value driven by SampleTimeSeconds instead of wall-clock time, used by
 	///     GetMapZoomFactor (map crop), which needs this shape: smooth toward a per-frame target normally, but snap straight to it when time
 	///     goes backwards or jumps forward by more than resetGapSeconds, since that means a scrub/seek
-	///     landed on a new position, not a continuous run of frames to smooth across.
+	///     landed on a new position, not a continuous run of frames to smooth across. The same time again (a paused
+	///     frame drawn anew) keeps the value, so it doesn't jump to the target.
 	/// </summary>
 	private sealed class ResettableEma
 	{
@@ -753,7 +759,9 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		public double Update(double seconds, double target, double timeConstantSeconds, double resetGapSeconds = 2.0)
 		{
-			if (_lastSeconds is not { } last || seconds <= last || seconds - last > resetGapSeconds)
+			if (_lastSeconds is { } same && seconds == same) return Value;
+
+		if (_lastSeconds is not { } last || seconds < last || seconds - last > resetGapSeconds)
 			{
 				Value = target;
 			}
