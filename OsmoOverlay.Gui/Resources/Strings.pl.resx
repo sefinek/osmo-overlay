@@ -129,8 +129,8 @@
   <data name="Benchmark_DecodeGpu" xml:space="preserve">
     <value>Dekodowanie na GPU</value>
   </data>
-  <data name="Benchmark_Done" xml:space="preserve">
-    <value>Gotowe w {0} s.</value>
+  <data name="Benchmark_TitleDone" xml:space="preserve">
+    <value>Test wydajności (ukończono w {0} s)</value>
   </data>
   <data name="Benchmark_EncoderNote" xml:space="preserve">
     <value>Preset enkodera wpływa też na jakość pliku, więc to tylko informacja - zmienisz go w Ustawieniach.</value>
@@ -299,6 +299,21 @@
   </data>
   <data name="Benchmark_Unknown" xml:space="preserve">
     <value>nieznany</value>
+  </data>
+  <data name="Benchmark_LiveCpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Benchmark_LiveGpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Benchmark_LiveDecoder" xml:space="preserve">
+    <value>Dekoder</value>
+  </data>
+  <data name="Benchmark_LiveEncoder" xml:space="preserve">
+    <value>Enkoder</value>
+  </data>
+  <data name="Benchmark_Elapsed" xml:space="preserve">
+    <value>Czas: {0}</value>
   </data>
   <data name="Benchmark_Unstable" xml:space="preserve">
     <value>niestabilne</value>

@@ -22,8 +22,11 @@ public enum BenchmarkStage
 	Render
 }
 
-/// <summary>The step running and how many of the run's steps came before it - Total 0 while it's still being worked out.</summary>
-public sealed record BenchmarkProgress(BenchmarkStage Stage, int Done, int Total);
+/// <summary>
+///     The step running and how many of the run's steps came before it - Total 0 while it's still being worked out. Encoder: the
+///     one the test measures with, once picked (its card is the one the test keeps busy).
+/// </summary>
+public sealed record BenchmarkProgress(BenchmarkStage Stage, int Done, int Total, string? Encoder = null);
 
 /// <summary>
 ///     What the benchmark runs on: the loaded recording (a few seconds of it are copied out as the sample; null = a generated
@@ -170,10 +173,11 @@ public static class RenderBenchmark
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		List<string> tempFiles = [];
 		int done = 0, total = 0;
+		string? measuredWith = null;
 
 		void Step(BenchmarkStage stage)
 		{
-			onProgress?.Invoke(new BenchmarkProgress(stage, done, total));
+			onProgress?.Invoke(new BenchmarkProgress(stage, done, total, measuredWith));
 			done++;
 		}
 
@@ -188,6 +192,7 @@ public static class RenderBenchmark
 			VideoInfo output = OutputVideo.For(video, settings);
 			(int num, int den) = FfmpegPipeline.ParseFrameRate(video.FrameRate);
 			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output), ct);
+			measuredWith = encoder;
 			// Before any measurement - after only the sample's copy and the encoder's probe, both done by now: what else keeps
 			// the computer busy, on the card the encoder runs on (a laptop's other one drawing the desktop isn't the test's).
 			BenchmarkLoad load = await SampleLoadAsync(encoder, ct);

@@ -53,7 +53,27 @@ public sealed class WindowsGpuLoadTests
 			Reading(6, NvidiaLuid, 3, "VideoDecode", 40)
 		];
 
-		Assert.AreEqual(0.55, WindowsGpuLoad.Aggregate(readings, OwnPid, Vendors, Nvidia, null)!.Gpu!.Value, 1e-9);
+		BenchmarkLoad load = WindowsGpuLoad.Aggregate(readings, OwnPid, Vendors, Nvidia, null)!;
+		Assert.AreEqual(0.55, load.Gpu!.Value, 1e-9);
+		Assert.AreEqual(0.4, load.Decoder!.Value, 1e-9);
+	}
+
+	[TestMethod]
+	public void TheGpu_IsItsGraphicsAndCompute_TheVideoEnginesCountedApart()
+	{
+		(string, double)[] readings =
+		[
+			Reading(4, NvidiaLuid, 0, "3D", 10),
+			Reading(4, NvidiaLuid, 10, "Cuda", 20),
+			Reading(5, NvidiaLuid, 7, "VideoEncode", 90),
+			Reading(5, NvidiaLuid, 13, "Copy", 70),
+			Reading(5, NvidiaLuid, 3, "VideoDecode", 0)
+		];
+
+		BenchmarkLoad load = WindowsGpuLoad.Aggregate(readings, OwnPid, Vendors, Nvidia, null)!;
+		Assert.AreEqual(0.2, load.Gpu!.Value, 1e-9, "an encoding render isn't a game - nor is copying its frames");
+		Assert.AreEqual(0.9, load.Encoder!.Value, 1e-9);
+		Assert.AreEqual(0, load.Decoder!.Value, "NVIDIA's decoder sat idle");
 	}
 
 	[TestMethod]

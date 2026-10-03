@@ -139,7 +139,7 @@
 		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
 			<DockPanel Margin="12,18,12,14">
 				<TextBlock DockPanel.Dock="Top" Text="{x:Static local:Strings.Common_Settings}" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
-				<TextBlock DockPanel.Dock="Bottom" Name="SidebarVersionText" Classes="hint" Margin="10,0,0,0" />
+				<TextBlock DockPanel.Dock="Bottom" Name="SidebarVersionText" Classes="hint" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center" />
 				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
 					<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">

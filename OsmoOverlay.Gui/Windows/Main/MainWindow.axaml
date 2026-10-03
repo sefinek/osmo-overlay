@@ -401,7 +401,7 @@
 								<StackPanel Name="InputPanel" Spacing="4">
 									<TextBlock Text="{x:Static local:Strings.Main_InputFileS}" Classes="infoLabel" Margin="0" />
 									<TextBlock Text="{x:Static local:Strings.Main_AddSeveralSegmentsOfThe}"
-									           Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+									           Classes="infoLabel" Margin="0,0,0,4" FontSize="12" Opacity="0.4"
 									           TextWrapping="Wrap" />
 									<ListBox Name="InputFilesList" MinHeight="40" MaxHeight="136" SelectionMode="Single">
 										<ListBox.ItemTemplate>
@@ -483,10 +483,10 @@
 									      ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="*" />
 											<ColumnDefinition Width="24" />
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-											<ColumnDefinition Width="2*" />
+											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Camera}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
@@ -507,10 +507,10 @@
 									      ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="*" />
 											<ColumnDefinition Width="24" />
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-											<ColumnDefinition Width="2*" />
+											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Resolution}" />
 										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
@@ -551,10 +551,10 @@
 									      RowSpacing="2" ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="*" />
 											<ColumnDefinition Width="24" />
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-											<ColumnDefinition Width="2*" />
+											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Codec}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoAudioCodec" />
@@ -582,10 +582,10 @@
 									<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2" ColumnSpacing="8">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="*" />
 											<ColumnDefinition Width="24" />
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-											<ColumnDefinition Width="2*" />
+											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Samples}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="TeleSamples" />
@@ -616,10 +616,10 @@
 									<Grid RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-											<ColumnDefinition Width="3*" />
+											<ColumnDefinition Width="*" />
 											<ColumnDefinition Width="24" />
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-											<ColumnDefinition Width="2*" />
+											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Encoder}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
@@ -639,10 +639,10 @@
 										<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="2" ColumnSpacing="8">
 											<Grid.ColumnDefinitions>
 												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-												<ColumnDefinition Width="3*" />
+												<ColumnDefinition Width="*" />
 												<ColumnDefinition Width="24" />
 												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-												<ColumnDefinition Width="2*" />
+												<ColumnDefinition Width="*" />
 											</Grid.ColumnDefinitions>
 											<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Resolution}" />
 											<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10"
@@ -687,10 +687,10 @@
 										<Grid ColumnSpacing="8">
 											<Grid.ColumnDefinitions>
 												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-												<ColumnDefinition Width="3*" />
+												<ColumnDefinition Width="*" />
 												<ColumnDefinition Width="24" />
 												<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-												<ColumnDefinition Width="2*" />
+												<ColumnDefinition Width="*" />
 											</Grid.ColumnDefinitions>
 											<TextBlock Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Duration}" />
 											<TextBlock Grid.Column="1" Classes="infoValue" Name="OutMeasuredDuration" />

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -5,6 +6,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
@@ -27,6 +29,9 @@ public partial class BenchmarkWindow : Window
 	private readonly Func<bool> _isRendering = () => false;
 	private CancellationTokenSource? _cts;
 	private BenchmarkResult? _result;
+	// The encoder the running test measures with, once it's picked - its card is the GPU shown live.
+	private string? _measuredWith;
+	private bool _opened;
 
 	public BenchmarkWindow()
 	{
@@ -58,6 +63,38 @@ public partial class BenchmarkWindow : Window
 		ShowResult(result, totalFrames, false);
 	}
 
+	protected override void OnOpened(EventArgs e)
+	{
+		base.OnOpened(e);
+		_opened = true;
+		// The results make the window several times taller - never past the screen: the content scrolls instead.
+		if (CurrentScreen() is { } screen && FrameSize is { } frame)
+			MaxHeight = screen.WorkingArea.Height / DesktopScaling - (frame.Height - ClientSize.Height);
+	}
+
+	/// <summary>
+	///     The window sizes itself to its content, which only grows down from its top edge - the results would run off the screen.
+	///     It grows both ways instead, its middle where it was, kept on the screen.
+	/// </summary>
+	protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+	{
+		base.OnPropertyChanged(change);
+		if (change.Property != ClientSizeProperty || !_opened || change.OldValue is not Size before || change.NewValue is not Size after ||
+		    CurrentScreen() is not { } screen)
+			return;
+
+		PixelRect area = screen.WorkingArea;
+		int grown = (int)Math.Round((after.Height - before.Height) * DesktopScaling);
+		int height = (int)Math.Round((FrameSize?.Height ?? after.Height) * DesktopScaling);
+		int y = Math.Clamp(Position.Y - grown / 2, area.Y, Math.Max(area.Y, area.Bottom - height));
+		if (y != Position.Y) Position = new PixelPoint(Position.X, y);
+	}
+
+	private Screen? CurrentScreen()
+	{
+		return Screens.ScreenFromWindow(this) ?? Screens.Primary;
+	}
+
 	protected override void OnClosing(WindowClosingEventArgs e)
 	{
 		_cts?.Cancel();
@@ -86,11 +123,16 @@ public partial class BenchmarkWindow : Window
 		Progress.IsIndeterminate = true;
 		ResultsPanel.IsVisible = false;
 		CopyReportButton.IsEnabled = false;
+		TitleText.Text = Strings.Benchmark_Title;
+		_measuredWith = null;
+		Task live = ShowLiveLoadAsync(cts.Token);
+		Task elapsed = ShowElapsedAsync(cts.Token);
 		try
 		{
 			BenchmarkResult result = await Task.Run(() =>
 				RenderBenchmark.RunAsync(_input, progress => Dispatcher.UIThread.Post(() => ShowProgress(progress)), cts.Token));
-			StatusText.Text = string.Format(Strings.Benchmark_Done, result.Duration.TotalSeconds.ToString("0"));
+			TitleText.Text = string.Format(Strings.Benchmark_TitleDone, result.Duration.TotalSeconds.ToString("0"));
+			StatusText.Text = "";
 			ShowResult(result, _totalFrames, true);
 		}
 		catch (OperationCanceledException)
@@ -105,16 +147,81 @@ public partial class BenchmarkWindow : Window
 		finally
 		{
 			_cts = null;
+			cts.Cancel();
+			await live;
+			await elapsed;
 			cts.Dispose();
 			StartButton.Content = Strings.Benchmark_Start;
 			Progress.IsVisible = false;
 		}
 	}
 
+	/// <summary>
+	///     The CPU, the GPU and its video decoder and encoder while the test runs, once a second (LoadMonitor) - this app's own work counted,
+	///     as it's part of the test. Ends with `ct`, the readings hidden.
+	/// </summary>
+	private async Task ShowLiveLoadAsync(CancellationToken ct)
+	{
+		using LoadMonitor monitor = LoadMonitor.Start();
+		try
+		{
+			while (true)
+			{
+				await Task.Delay(TimeSpan.FromSeconds(1), ct);
+				uint? vendor = _measuredWith is { } encoder ? FfmpegPipeline.GpuVendor(encoder) : null;
+				BenchmarkLoad load = await Task.Run(() => monitor.ReadAsync(vendor, true, ct), ct);
+				ShowMeter(LiveCpuBar, LiveCpuText, load.Cpu);
+				ShowMeter(LiveGpuBar, LiveGpuText, load.Gpu);
+				ShowMeter(LiveDecoderBar, LiveDecoderText, load.Decoder);
+				ShowMeter(LiveEncoderBar, LiveEncoderText, load.Encoder);
+				LivePanel.IsVisible = true;
+			}
+		}
+		catch (OperationCanceledException)
+		{
+			// The test ended.
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Warn(ex, "Reading the load during the performance test failed");
+		}
+
+		LivePanel.IsVisible = false;
+	}
+
+	/// <summary>How long the test has run, ticking each whole second - ends with `ct`, hidden.</summary>
+	private async Task ShowElapsedAsync(CancellationToken ct)
+	{
+		var clock = Stopwatch.StartNew();
+		ElapsedText.IsVisible = true;
+		try
+		{
+			while (true)
+			{
+				ElapsedText.Text = string.Format(Strings.Benchmark_Elapsed, clock.Elapsed.ToString(@"m\:ss"));
+				await Task.Delay(TimeSpan.FromMilliseconds(1000 - clock.ElapsedMilliseconds % 1000), ct);
+			}
+		}
+		catch (OperationCanceledException)
+		{
+			// The test ended.
+		}
+
+		ElapsedText.IsVisible = false;
+	}
+
+	private static void ShowMeter(ProgressBar bar, TextBlock text, double? share)
+	{
+		bar.Value = (share ?? 0) * 100;
+		bar.Opacity = share is null ? 0.4 : 1;
+		text.Text = share is { } value ? $"{value * 100:0}%" : Strings.Benchmark_Unknown;
+	}
+
 	private void ShowProgress(BenchmarkProgress progress)
 	{
 		if (_cts is null) return;
 
+		_measuredWith = progress.Encoder ?? _measuredWith;
 		Progress.IsIndeterminate = progress.Total == 0;
 		Progress.Maximum = Math.Max(progress.Total, 1);
 		Progress.Value = progress.Done;

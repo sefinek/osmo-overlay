@@ -23,7 +23,7 @@ internal static unsafe partial class WindowsGpuLoad
 	// A process counts as encoding when it keeps the encoder busy this much of the time.
 	private const double EncodingProcessShare = 0.01;
 
-	/// <summary>A started sample: the counters' first reading, read again by <see cref="Finish" /> a while later.</summary>
+	/// <summary>The counters, read first when started and then by each <see cref="Read" /> - each reading the load since the one before.</summary>
 	internal sealed class Sample : IDisposable
 	{
 		private readonly IntPtr _query;
@@ -56,9 +56,10 @@ internal static unsafe partial class WindowsGpuLoad
 
 		/// <summary>
 		///     The load of the adapter an encoder of `vendor` (PCI vendor id) runs on (GpuAdapters.Pick), or of the busiest one when
-		///     null - null when the counters couldn't be read, or there's no such adapter.
+		///     null - this app's own use left out unless `countThisApp`. Null when the counters couldn't be read, or there's no such
+		///     adapter.
 		/// </summary>
-		public BenchmarkLoad? Finish(double? cpu, uint? vendor)
+		public BenchmarkLoad? Read(double? cpu, uint? vendor, bool countThisApp)
 		{
 			if (PdhCollectQueryData(_query) != 0) return null;
 
@@ -80,7 +81,7 @@ internal static unsafe partial class WindowsGpuLoad
 				}
 			}
 
-			return Aggregate(readings, Environment.ProcessId, GpuAdapters.All, vendor, cpu);
+			return Aggregate(readings, countThisApp ? -1 : Environment.ProcessId, GpuAdapters.All, vendor, cpu);
 		}
 
 		public void Dispose()
@@ -90,15 +91,16 @@ internal static unsafe partial class WindowsGpuLoad
 	}
 
 	/// <summary>
-	///     Per adapter: each engine's use summed over the processes (but `ownPid`), the GPU's load the busiest engine's (as Task
-	///     Manager has it), the encoder's its busiest video encoding engine's - NVIDIA's and Intel's "VideoEncode", AMD's
-	///     "Video Codec" (one engine encoding and decoding) - and the processes using that. The adapter an encoder of `vendor`
-	///     runs on (GpuAdapters.Pick; idle when nothing uses it), or the busiest real one (not Microsoft's software adapter) when null.
+	///     Per adapter: each engine's use summed over the processes (but `ownPid`); the GPU's load its busiest graphics or compute
+	///     engine's (as nvidia-smi has it - the video engines have their own numbers, and the copy engines only carry frames), the
+	///     encoder's its busiest encoding engine's - NVIDIA's and Intel's "VideoEncode", AMD's "Video Codec" (encoding and
+	///     decoding) - the decoder's its busiest "VideoDecode", and the processes encoding. The adapter an encoder of `vendor` runs
+	///     on (GpuAdapters.Pick; idle when nothing uses it), or the busiest real one (not Microsoft's software adapter) when null.
 	/// </summary>
 	internal static BenchmarkLoad? Aggregate(IEnumerable<(string Name, double Percent)> readings, int ownPid,
 		IReadOnlyList<GpuAdapter> gpus, uint? vendor, double? cpu)
 	{
-		Dictionary<long, Dictionary<int, (double Percent, bool Encoder)>> adapters = [];
+		Dictionary<long, Dictionary<int, (double Percent, Engine Kind)>> adapters = [];
 		Dictionary<long, HashSet<int>> encoding = [];
 		foreach ((string name, double percent) in readings)
 		{
@@ -107,16 +109,16 @@ internal static unsafe partial class WindowsGpuLoad
 			int pid = int.Parse(m.Groups["pid"].Value, CultureInfo.InvariantCulture);
 			long luid = Luid(m.Groups["high"].Value, m.Groups["low"].Value);
 			int engine = int.Parse(m.Groups["eng"].Value, CultureInfo.InvariantCulture);
-			bool encoder = IsEncoderEngine(m.Groups["type"].Value);
-			if (!adapters.TryGetValue(luid, out Dictionary<int, (double Percent, bool Encoder)>? engines)) adapters[luid] = engines = [];
+			Engine kind = KindOf(m.Groups["type"].Value);
+			if (!adapters.TryGetValue(luid, out Dictionary<int, (double Percent, Engine Kind)>? engines)) adapters[luid] = engines = [];
 			if (pid == ownPid || !double.IsFinite(percent) || percent <= 0)
 			{
-				engines.TryAdd(engine, (0, encoder));
+				engines.TryAdd(engine, (0, kind));
 				continue;
 			}
 
-			engines[engine] = (engines.GetValueOrDefault(engine).Percent + percent, encoder);
-			if (encoder && percent / 100 >= EncodingProcessShare)
+			engines[engine] = (engines.GetValueOrDefault(engine).Percent + percent, kind);
+			if (kind == Engine.Encoder && percent / 100 >= EncodingProcessShare)
 			{
 				if (!encoding.TryGetValue(luid, out HashSet<int>? pids)) encoding[luid] = pids = [];
 				pids.Add(pid);
@@ -128,18 +130,35 @@ internal static unsafe partial class WindowsGpuLoad
 			: adapters.Keys.Where(l => gpus.FirstOrDefault(g => g.Luid == l)?.VendorId != MicrosoftVendor)
 				.Select(l => (long?)l).MaxBy(l => adapters[l!.Value].Values.Max(e => e.Percent));
 		if (picked is not { } adapter) return null;
-		if (!adapters.TryGetValue(adapter, out Dictionary<int, (double Percent, bool Encoder)>? load)) return new BenchmarkLoad(cpu, 0, 0, 0);
+		if (!adapters.TryGetValue(adapter, out Dictionary<int, (double Percent, Engine Kind)>? load)) return new BenchmarkLoad(cpu, 0, 0, 0, 0);
 
-		double gpu = load.Values.Max(e => e.Percent);
-		double? encoderLoad = load.Values.Any(e => e.Encoder) ? load.Values.Where(e => e.Encoder).Max(e => e.Percent) : null;
-		return new BenchmarkLoad(cpu, Math.Clamp(gpu / 100, 0, 1), encoderLoad is { } e ? Math.Clamp(e / 100, 0, 1) : null,
-			encoding.GetValueOrDefault(adapter)?.Count ?? 0);
+		double? Busiest(Engine kind)
+		{
+			List<double> percents = [.. load.Values.Where(e => e.Kind == kind).Select(e => e.Percent)];
+			return percents.Count == 0 ? null : Math.Clamp(percents.Max() / 100, 0, 1);
+		}
+
+		return new BenchmarkLoad(cpu, Busiest(Engine.Graphics) ?? 0, Busiest(Engine.Encoder), encoding.GetValueOrDefault(adapter)?.Count ?? 0,
+			Busiest(Engine.Decoder));
 	}
 
-	private static bool IsEncoderEngine(string type)
+	private enum Engine
+	{
+		Graphics,
+		Encoder,
+		Decoder,
+		Other
+	}
+
+	private static Engine KindOf(string type)
 	{
 		string compact = type.Replace(" ", "", StringComparison.Ordinal);
-		return compact.StartsWith("VideoEncode", StringComparison.OrdinalIgnoreCase) || compact.StartsWith("VideoCodec", StringComparison.OrdinalIgnoreCase);
+		if (compact.StartsWith("VideoEncode", StringComparison.OrdinalIgnoreCase) || compact.StartsWith("VideoCodec", StringComparison.OrdinalIgnoreCase))
+			return Engine.Encoder;
+		if (compact.StartsWith("VideoDecode", StringComparison.OrdinalIgnoreCase)) return Engine.Decoder;
+		return compact.StartsWith("Video", StringComparison.OrdinalIgnoreCase) || compact.StartsWith("Copy", StringComparison.OrdinalIgnoreCase)
+			? Engine.Other
+			: Engine.Graphics;
 	}
 
 	private static long Luid(string high, string low)

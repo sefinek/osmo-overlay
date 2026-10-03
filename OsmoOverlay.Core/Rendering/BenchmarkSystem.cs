@@ -13,11 +13,12 @@ namespace OsmoOverlay.Core;
 public sealed record BenchmarkSystem(string Os, string? Cpu, int Threads, long MemoryBytes, IReadOnlyList<string> Gpus, string? Ffmpeg, string App);
 
 /// <summary>
-///     How busy the computer is, 0-1 (null where it can't be read: the CPU on macOS, the GPU outside Windows without nvidia-smi),
-///     and how many other programs encode video on the GPU (OBS, GeForce's or Radeon's recording, Discord, another render). A
-///     game or another render running takes from every number the benchmark gives, and slows a render down.
+///     How busy the computer is, 0-1 (null where it can't be read: the CPU on macOS, the GPU outside Windows without nvidia-smi):
+///     the CPU, the GPU's graphics and compute, its video encoder and decoder - and how many other programs encode video on the
+///     GPU (OBS, GeForce's or Radeon's recording, Discord, another render). A game or another render running takes from every
+///     number the benchmark gives, and slows a render down.
 /// </summary>
-public sealed record BenchmarkLoad(double? Cpu, double? Gpu, double? Encoder = null, int? EncoderSessions = null)
+public sealed record BenchmarkLoad(double? Cpu, double? Gpu, double? Encoder = null, int? EncoderSessions = null, double? Decoder = null)
 {
 	internal const double BusyThreshold = 0.2;
 	// Before a render only a load that clearly slows it counts - a browser or GeForce's background recording mustn't ask every time.
@@ -28,8 +29,8 @@ public sealed record BenchmarkLoad(double? Cpu, double? Gpu, double? Encoder = n
 	// less than it slows x264/x265.
 	internal const double RenderCpuWithGpuEncoderThreshold = 0.6;
 
-	/// <summary>Busy enough to skew the benchmark's numbers.</summary>
-	public bool IsBusy => Cpu > BusyThreshold || Gpu > BusyThreshold || Encoder > BusyThreshold;
+	/// <summary>Busy enough to skew the benchmark's numbers - it measures the decoder too, unlike a render's check (a video playing in a browser doesn't hold a render back).</summary>
+	public bool IsBusy => Cpu > BusyThreshold || Gpu > BusyThreshold || Encoder > BusyThreshold || Decoder > BusyThreshold;
 
 	/// <summary>The graphics card busy enough to slow a render encoding on it.</summary>
 	public bool GpuSlowsRender => Encoder > RenderEncoderThreshold || Gpu > RenderGpuThreshold;
@@ -44,6 +45,50 @@ public sealed record BenchmarkLoad(double? Cpu, double? Gpu, double? Encoder = n
 	public bool SlowsRender(bool gpuEncoder)
 	{
 		return gpuEncoder && GpuSlowsRender || CpuSlowsRender(gpuEncoder);
+	}
+}
+
+/// <summary>
+///     The computer's load read again and again, each reading over the time since the one before (the first since Start): the CPU,
+///     and the graphics card's - on Windows from its performance counters, any vendor's (WindowsGpuLoad); elsewhere, or without
+///     them, from nvidia-smi (an NVIDIA card only, as it reads it at that moment).
+/// </summary>
+public sealed class LoadMonitor : IDisposable
+{
+	private const uint NvidiaVendor = 0x10DE;
+
+	private readonly WindowsGpuLoad.Sample? _counters;
+	private (long Idle, long Total)? _cpuTimes;
+
+	private LoadMonitor()
+	{
+		_cpuTimes = BenchmarkSystemInfo.CpuTimes();
+		_counters = OperatingSystem.IsWindows() ? WindowsGpuLoad.Sample.Start() : null;
+	}
+
+	public static LoadMonitor Start()
+	{
+		return new LoadMonitor();
+	}
+
+	/// <param name="gpuVendor">The card an encoder of this vendor runs on (FfmpegPipeline.GpuVendor) - the busiest one when null.</param>
+	/// <param name="countThisApp">Whether this app's own use of the GPU counts - not before a render (its window isn't what slows it), yes while the test runs.</param>
+	public async Task<BenchmarkLoad> ReadAsync(uint? gpuVendor, bool countThisApp, CancellationToken ct)
+	{
+		(long Idle, long Total)? now = BenchmarkSystemInfo.CpuTimes();
+		double? cpu = _cpuTimes is { } b && now is { } a && a.Total > b.Total ? Math.Clamp(1 - (double)(a.Idle - b.Idle) / (a.Total - b.Total), 0, 1) : null;
+		_cpuTimes = now;
+
+		if (_counters?.Read(cpu, gpuVendor, countThisApp) is { } load) return load;
+		if (_counters is null && gpuVendor is null or NvidiaVendor && await BenchmarkSystemInfo.NvidiaUtilizationAsync(ct) is { } nvidia)
+			return new BenchmarkLoad(cpu, nvidia.Gpu, nvidia.Encoder, nvidia.Sessions, nvidia.Decoder);
+
+		return new BenchmarkLoad(cpu, null);
+	}
+
+	public void Dispose()
+	{
+		_counters?.Dispose();
 	}
 }
 
@@ -65,36 +110,17 @@ internal static partial class BenchmarkSystemInfo
 	/// </summary>
 	public static async Task<BenchmarkLoad> SampleLoadAsync(uint? gpuVendor, CancellationToken ct)
 	{
-		(long Idle, long Total)? before = CpuTimes();
-		using WindowsGpuLoad.Sample? counters = OperatingSystem.IsWindows() ? WindowsGpuLoad.Sample.Start() : null;
-		bool nvidia = counters is null && gpuVendor is null or NvidiaVendor;
-		var clock = Stopwatch.StartNew();
-		List<NvidiaSample> samples = [];
-		for (int i = 0; nvidia && i < 3; i++)
-		{
-			if (await NvidiaUtilizationAsync(ct) is { } sample) samples.Add(sample);
-			await Task.Delay(TimeSpan.FromMilliseconds(300), ct);
-		}
-
-		if (clock.Elapsed < TimeSpan.FromSeconds(1)) await Task.Delay(TimeSpan.FromSeconds(1) - clock.Elapsed, ct);
-		(long Idle, long Total)? after = CpuTimes();
-
-		double? cpu = before is { } b && after is { } a && a.Total > b.Total ? Math.Clamp(1 - (double)(a.Idle - b.Idle) / (a.Total - b.Total), 0, 1) : null;
-		if (counters?.Finish(cpu, gpuVendor) is { } load) return load;
-
-		return samples.Count == 0
-			? new BenchmarkLoad(cpu, null)
-			: new BenchmarkLoad(cpu, samples.Average(s => s.Gpu), samples.Average(s => s.Encoder), samples.Max(s => s.Sessions));
+		using LoadMonitor monitor = LoadMonitor.Start();
+		await Task.Delay(TimeSpan.FromSeconds(1), ct);
+		return await monitor.ReadAsync(gpuVendor, false, ct);
 	}
 
-	private const uint NvidiaVendor = 0x10DE;
+	internal readonly record struct NvidiaSample(double Gpu, double Encoder, int Sessions, double Decoder);
 
-	private readonly record struct NvidiaSample(double Gpu, double Encoder, int Sessions);
-
-	/// <summary>The busiest GPU's utilization and encoder use, from nvidia-smi - null without an NVIDIA card (or its driver's tool).</summary>
-	private static async Task<NvidiaSample?> NvidiaUtilizationAsync(CancellationToken ct)
+	/// <summary>The busiest GPU's utilization (its graphics and compute) and its encoder's and decoder's, from nvidia-smi - null without an NVIDIA card (or its driver's tool).</summary>
+	internal static async Task<NvidiaSample?> NvidiaUtilizationAsync(CancellationToken ct)
 	{
-		ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("nvidia-smi", "--query-gpu=utilization.gpu,utilization.encoder,encoder.stats.sessionCount",
+		ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("nvidia-smi", "--query-gpu=utilization.gpu,utilization.encoder,encoder.stats.sessionCount,utilization.decoder",
 			"--format=csv,noheader,nounits");
 		(int exitCode, string stdout, _) = await ProcessHelper.TryRunCapturedAsync(psi, ct);
 		if (exitCode != 0) return null;
@@ -107,7 +133,8 @@ internal static partial class BenchmarkSystemInfo
 
 			double encoder = double.TryParse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double e) ? e : 0;
 			int sessions = int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int s) ? s : 0;
-			var sample = new NvidiaSample(gpu / 100, encoder / 100, sessions);
+			double decoder = fields.Length > 3 && double.TryParse(fields[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : 0;
+			var sample = new NvidiaSample(gpu / 100, encoder / 100, sessions, decoder / 100);
 			if (busiest is not { } current || sample.Gpu + sample.Encoder > current.Gpu + current.Encoder) busiest = sample;
 		}
 
@@ -115,7 +142,7 @@ internal static partial class BenchmarkSystemInfo
 	}
 
 	/// <summary>Idle and total CPU time since boot, in the platform's own units - only their differences mean anything.</summary>
-	private static (long Idle, long Total)? CpuTimes()
+	internal static (long Idle, long Total)? CpuTimes()
 	{
 		if (OperatingSystem.IsWindows()) return GetSystemTimes(out long idle, out long kernel, out long user) ? (idle, kernel + user) : null;
 		if (!OperatingSystem.IsLinux()) return null;

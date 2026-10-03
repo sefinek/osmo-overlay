@@ -3,35 +3,56 @@
         xmlns:local="using:OsmoOverlay.Gui"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="760"
+        mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="760"
         x:Class="OsmoOverlay.Gui.BenchmarkWindow"
-        Width="820" SizeToContent="Height" CanResize="False"
+        Width="940" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
-        Title="{x:Static local:Strings.Benchmark_Title}">
+        Title="Benchmark">
 
 	<Window.Styles>
+		<Style Selector="TextBlock.sectionLabel">
+			<Setter Property="FontSize" Value="15" />
+			<Setter Property="LetterSpacing" Value="0" />
+			<Setter Property="Opacity" Value="0.85" />
+			<Setter Property="Margin" Value="0,6,0,-4" />
+		</Style>
 		<Style Selector="TextBlock.resultLabel">
-			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontSize" Value="14" />
 			<Setter Property="Opacity" Value="0.7" />
 			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="Margin" Value="0,4" />
 		</Style>
 		<Style Selector="TextBlock.resultValue">
-			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontSize" Value="14" />
 			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="TextWrapping" Value="Wrap" />
 			<Setter Property="Margin" Value="0,4" />
 		</Style>
 		<Style Selector="TextBlock.columnHeader">
-			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontSize" Value="13" />
 			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="Opacity" Value="0.6" />
 			<Setter Property="Margin" Value="0,0,0,4" />
 		</Style>
 		<Style Selector="TextBlock.hint">
+			<Setter Property="FontSize" Value="14" />
 			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="ProgressBar.meter">
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="Height" Value="4" />
+			<Setter Property="MinHeight" Value="4" />
+			<Setter Property="Minimum" Value="0" />
+			<Setter Property="Maximum" Value="100" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="TextBlock.meterValue">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="MinWidth" Value="34" />
+			<Setter Property="TextAlignment" Value="Right" />
+			<Setter Property="FontFeatures" Value="+tnum" />
 		</Style>
 		<Style Selector="TextBlock.warningText">
 			<Setter Property="TextWrapping" Value="Wrap" />
@@ -39,60 +60,88 @@
 		</Style>
 	</Window.Styles>
 
-	<ScrollViewer MaxHeight="820" VerticalScrollBarVisibility="Auto">
-		<StackPanel Margin="20" Spacing="12">
-			<StackPanel Spacing="6">
-				<TextBlock Text="{x:Static local:Strings.Benchmark_Title}" FontSize="18" FontWeight="SemiBold" />
-				<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_Intro}" />
-				<TextBlock Name="SourceText" Classes="hint" />
-			</StackPanel>
-
-			<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+	<DockPanel>
+		<Border DockPanel.Dock="Bottom" Padding="20,12" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
+			<Grid ColumnDefinitions="Auto,*,Auto">
 				<Button Name="StartButton" Classes="accent" Content="{x:Static local:Strings.Benchmark_Start}" Click="OnStartClick" />
-				<StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-					<ProgressBar Name="Progress" IsVisible="False" Minimum="0" />
-					<TextBlock Name="StatusText" Classes="hint" />
+				<TextBlock Name="ElapsedText" Grid.Column="1" Classes="hint" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center"
+				           FontFeatures="+tnum" />
+				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+					<Button Name="CopyReportButton" Content="{x:Static local:Strings.Benchmark_CopyReport}" IsEnabled="False" Click="OnCopyReportClick" />
+					<Button Content="{x:Static local:Strings.Tools_Close}" Click="OnCloseClick" />
 				</StackPanel>
 			</Grid>
+		</Border>
+		<ScrollViewer VerticalScrollBarVisibility="Auto">
+			<StackPanel Margin="20" Spacing="12">
+				<StackPanel Spacing="6">
+					<TextBlock Name="TitleText" Text="{x:Static local:Strings.Benchmark_Title}" FontSize="18" FontWeight="SemiBold" />
+					<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_Intro}" />
+					<TextBlock Name="SourceText" Classes="hint" />
+				</StackPanel>
 
-			<StackPanel Name="ResultsPanel" IsVisible="False" Spacing="12">
-				<Border Name="WarningCard" Classes="card" Padding="16,10" IsVisible="False">
-					<StackPanel Spacing="6">
-						<TextBlock Name="LoadWarningText" Classes="warningText" IsVisible="False" />
-						<TextBlock Name="UnstableWarningText" Classes="warningText" IsVisible="False"
-						           Text="{x:Static local:Strings.Benchmark_UnstableWarning}" />
-					</StackPanel>
-				</Border>
+				<StackPanel Spacing="4">
+					<ProgressBar Name="Progress" IsVisible="False" Minimum="0" />
+					<TextBlock Name="StatusText" Classes="hint" />
+					<UniformGrid Name="LivePanel" Columns="4" IsVisible="False" Margin="0,4,0,0">
+						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,0,16,0">
+							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveCpu}" />
+							<ProgressBar Name="LiveCpuBar" Grid.Column="1" Classes="meter" />
+							<TextBlock Name="LiveCpuText" Grid.Column="2" Classes="meterValue" />
+						</Grid>
+						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,0,16,0">
+							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveGpu}" />
+							<ProgressBar Name="LiveGpuBar" Grid.Column="1" Classes="meter" />
+							<TextBlock Name="LiveGpuText" Grid.Column="2" Classes="meterValue" />
+						</Grid>
+						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,0,16,0">
+							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveDecoder}" />
+							<ProgressBar Name="LiveDecoderBar" Grid.Column="1" Classes="meter" />
+							<TextBlock Name="LiveDecoderText" Grid.Column="2" Classes="meterValue" />
+						</Grid>
+						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveEncoder}" />
+							<ProgressBar Name="LiveEncoderBar" Grid.Column="1" Classes="meter" />
+							<TextBlock Name="LiveEncoderText" Grid.Column="2" Classes="meterValue" />
+						</Grid>
+					</UniformGrid>
+				</StackPanel>
 
-				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Computer}" />
-				<Border Classes="card" Padding="16,10">
-					<Grid Name="SystemGrid" ColumnDefinitions="Auto,*" ColumnSpacing="24" />
-				</Border>
+				<StackPanel Name="ResultsPanel" IsVisible="False" Spacing="12">
+					<Border Name="WarningCard" Classes="card" Padding="16,10" IsVisible="False">
+						<StackPanel Spacing="6">
+							<TextBlock Name="LoadWarningText" Classes="warningText" IsVisible="False" />
+							<TextBlock Name="UnstableWarningText" Classes="warningText" IsVisible="False"
+							           Text="{x:Static local:Strings.Benchmark_UnstableWarning}" />
+						</StackPanel>
+					</Border>
 
-				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Results}" />
-				<Border Classes="card" Padding="16,10">
-					<StackPanel Spacing="8">
-						<Grid Name="ResultsGrid" ColumnDefinitions="*,Auto,Auto,*" ColumnSpacing="16" />
-						<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_EncoderNote}" />
-					</StackPanel>
-				</Border>
+					<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Computer}" />
+					<Border Classes="card" Padding="16,10">
+						<Grid Name="SystemGrid" ColumnDefinitions="Auto,*" ColumnSpacing="24" />
+					</Border>
 
-				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_SlowestStage}" />
-				<Border Classes="card" Padding="16,10">
-					<StackPanel Spacing="6">
-						<TextBlock Name="BottleneckText" TextWrapping="Wrap" />
-						<TextBlock Name="EstimateText" Classes="hint" IsVisible="False" />
-					</StackPanel>
-				</Border>
+					<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Results}" />
+					<Border Classes="card" Padding="16,10">
+						<StackPanel Spacing="8">
+							<Grid Name="ResultsGrid" ColumnDefinitions="*,Auto,Auto,*" ColumnSpacing="16" />
+							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_EncoderNote}" />
+						</StackPanel>
+					</Border>
 
-				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Suggestions}" />
-				<StackPanel Name="AdvicePanel" Spacing="8" />
+					<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_SlowestStage}" />
+					<Border Classes="card" Padding="16,10">
+						<StackPanel Spacing="6">
+							<TextBlock Name="BottleneckText" TextWrapping="Wrap" />
+							<TextBlock Name="EstimateText" Classes="hint" IsVisible="False" />
+						</StackPanel>
+					</Border>
+
+					<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Suggestions}" />
+					<StackPanel Name="AdvicePanel" Spacing="8" />
+				</StackPanel>
+
 			</StackPanel>
-
-			<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-				<Button Name="CopyReportButton" Content="{x:Static local:Strings.Benchmark_CopyReport}" IsEnabled="False" Click="OnCopyReportClick" />
-				<Button Content="{x:Static local:Strings.Tools_Close}" Click="OnCloseClick" />
-			</StackPanel>
-		</StackPanel>
-	</ScrollViewer>
+		</ScrollViewer>
+	</DockPanel>
 </Window>
