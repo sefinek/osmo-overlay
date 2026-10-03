@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
@@ -10,8 +9,6 @@ namespace OsmoOverlay.Core.Overlay;
 /// <summary>Compass and MapWidget - the two position/heading-driven widgets, and the route trail they both share.</summary>
 public sealed partial class OverlayRenderer
 {
-	private const double TrailMinStepMeters = 3.0;
-
 	// User-configurable per widget (OverlayElement.MapDynamicZoomMaxFactor) - unlike the Compass's
 	// freely-rescalable vector trail, map tiles can't zoom out losslessly forever, and how far a given
 	// route needs to zoom out varies too much (a short walk vs. a long highway drive) for one fixed
@@ -29,21 +26,15 @@ public sealed partial class OverlayRenderer
 
 	private static readonly string[] CardinalNames = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
-	private readonly List<TrailPoint> _trail = [];
-	// The trail's bounding box in local meters, grown with every point AppendTrailPoint keeps.
-	private double _trailMinEast, _trailMaxEast, _trailMinNorth, _trailMaxNorth;
+	private readonly RouteTrail _trail = new();
 	// GetTrailPixels' projection of _trail into _trailPixelsMosaic's pixel space.
 	private readonly List<SKPoint> _trailPixels = [];
 	private RouteMapMosaic? _trailPixelsMosaic;
-	private int _trailCacheIndex = -1;
 
 	// The trail's drawn routes, extended as the trail grows (SyncRoute) - the compass's in local meters, the map's in
 	// its mosaic's pixels. Indexed [colorBySpeed ? 1 : 0]: every Compass/MapWidget instance picks that on its own.
 	private readonly RouteGeometry?[] _compassRoutes = new RouteGeometry?[2];
 	private readonly RouteGeometry?[] _mapRoutes = new RouteGeometry?[2];
-
-	/// <summary>AfterCut: the first point after a part cut out of the render - the route joins it per RouteAcrossCuts.</summary>
-	private readonly record struct TrailPoint(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut);
 
 	/// <summary>
 	///     Fetches every map tile the route needs and stitches them into one in-memory mosaic, so
@@ -142,54 +133,10 @@ public sealed partial class OverlayRenderer
 		return Math.Clamp(maxFactor, MapDynamicZoomMaxFactorMin, MapDynamicZoomMaxFactorMax);
 	}
 
-	/// <summary>
-	///     The trail shows the whole route driven so far. Scrubbing/seeking calls RenderInto() out of
-	///     chronological order, so naively appending "the current point" every call would scramble the
-	///     path once the preview jumps around - progress forwards (by one frame or several, when the preview
-	///     skips frames or the telemetry runs faster than the video) extends the cached trail by just the new
-	///     frames; a jump backwards rebuilds it once from the start instead.
-	/// </summary>
+	/// <summary>The trail up to `frame` (RouteTrail) - where it is in the recording found by its time.</summary>
 	private void UpdateTrail(DerivedFrame frame)
 	{
-		if (_allFrames.Count == 0) return;
-
-		int index = TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds);
-		if (index < _trailCacheIndex)
-		{
-			_trail.Clear();
-			_trailCacheIndex = -1;
-		}
-
-		for (int i = _trailCacheIndex + 1; i <= index; i++)
-			AppendTrailPoint(_allFrames[i]);
-
-		_trailCacheIndex = index;
-	}
-
-	private void AppendTrailPoint(DerivedFrame frame)
-	{
-		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
-		// The first point after a cut is always kept, however close - it's where the route resumes.
-		if (!frame.StartsAfterCut && _trail.Count > 0)
-		{
-			TrailPoint last = _trail[^1];
-			double dx = east - last.East, dy = north - last.North;
-			if (dx * dx + dy * dy < TrailMinStepMeters * TrailMinStepMeters) return;
-		}
-
-		if (_trail.Count == 0)
-		{
-			(_trailMinEast, _trailMaxEast, _trailMinNorth, _trailMaxNorth) = (east, east, north, north);
-		}
-		else
-		{
-			_trailMinEast = Math.Min(_trailMinEast, east);
-			_trailMaxEast = Math.Max(_trailMaxEast, east);
-			_trailMinNorth = Math.Min(_trailMinNorth, north);
-			_trailMaxNorth = Math.Max(_trailMaxNorth, north);
-		}
-
-		_trail.Add(new TrailPoint(east, north, frame.Raw.Latitude, frame.Raw.Longitude, frame.SpeedKmh, frame.StartsAfterCut));
+		if (_allFrames.Count > 0) _trail.MoveTo(_allFrames, TelemetryProcessor.FindIndex(_allFrames, frame.Raw.SampleTimeSeconds));
 	}
 
 	private void DrawCompass(SKCanvas canvas, DerivedFrame frame, CompassElement element)
@@ -235,11 +182,11 @@ public sealed partial class OverlayRenderer
 
 		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
 		bool centered = element is CompassElement { CenterOnPosition: true };
-		double centerEast = centered ? east : (Math.Min(_trailMinEast, east) + Math.Max(_trailMaxEast, east)) / 2;
-		double centerNorth = centered ? north : (Math.Min(_trailMinNorth, north) + Math.Max(_trailMaxNorth, north)) / 2;
+		double centerEast = centered ? east : (Math.Min(_trail.MinEast, east) + Math.Max(_trail.MaxEast, east)) / 2;
+		double centerNorth = centered ? north : (Math.Min(_trail.MinNorth, north) + Math.Max(_trail.MaxNorth, north)) / 2;
 
 		double maxDistSq = Math.Max(5.0 * 5.0, DistanceSq(east, north, centerEast, centerNorth));
-		foreach (TrailPoint p in CollectionsMarshal.AsSpan(_trail))
+		foreach (TrailPoint p in _trail.Points)
 			maxDistSq = Math.Max(maxDistSq, DistanceSq(p.East, p.North, centerEast, centerNorth));
 
 		double scale = (OverlayElementBounds.CompassRadius - 50) / Math.Sqrt(maxDistSq);
@@ -267,7 +214,7 @@ public sealed partial class OverlayRenderer
 
 	/// <summary>
 	///     Extends the cached route by the trail points added since it was last drawn. The trail is always the same
-	///     deterministic function of the frames up to the current one (see UpdateTrail), so a longer trail only
+	///     deterministic function of the frames up to the current one (see RouteTrail), so a longer trail only
 	///     ever extends a shorter one - only a shorter trail (a seek backwards), another RouteAcrossCuts or another
 	///     level of detail starts it over. A new map mosaic drops the map's routes in GetTrailPixels.
 	///     `wantedStep` (half a device pixel, in the route's units) becomes a power of two the route keeps while
@@ -431,7 +378,7 @@ public sealed partial class OverlayRenderer
 	private List<SKPoint> GetTrailPixels()
 	{
 		// Incremental: _trail is always (re)built from frame 0 by the same deterministic steps (see
-		// UpdateTrail), so a longer trail only ever extends a shorter one - already projected points stay
+		// RouteTrail), so a longer trail only ever extends a shorter one - already projected points stay
 		// valid, and only a trail that got shorter (a seek backwards) or a different mosaic invalidates them.
 		if (!ReferenceEquals(_trailPixelsMosaic, _mapMosaic))
 		{

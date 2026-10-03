@@ -55,6 +55,8 @@
 					<Button Content="Not enough disk space" Tag="disk-space" Click="OnActionClick" />
 					<Button Content="No telemetry" Tag="no-telemetry" Click="OnActionClick" />
 					<Button Content="No GPS" Tag="no-gps" Click="OnActionClick" />
+					<Button Content="Busy GPU before a render" Tag="busy:gpu" Click="OnActionClick" />
+					<Button Content="Busy CPU before a render" Tag="busy:cpu" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>
@@ -87,6 +89,7 @@
 				<WrapPanel>
 					<Button Content="Welcome (first run)" Tag="welcome" Click="OnActionClick" />
 					<Button Content="Missing dependencies" Tag="dependencies" Click="OnActionClick" />
+					<Button Content="Performance test result" Tag="benchmark" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>

@@ -39,13 +39,8 @@ public static class MapTileFetcher
 		return client;
 	}
 
-	// A mosaic fetches dozens to low hundreds of tiles at once (bounded by RouteMapMosaic.MaxTiles),
-	// MaxConcurrentFetches of them in flight together - a public tile server occasionally rate-limits
-	// or times out a request under that burst even though the tile itself is perfectly fine, and
-	// without a retry that tile just stays a permanent hole in the mosaic (very visible once something
-	// draws the whole mosaic at once, e.g. the route-intro overview, not just MapWidget's small
-	// per-frame crop). Short, since a real outage/offline shouldn't make every single tile wait this
-	// out three times over.
+	// A public tile server sometimes rate-limits or times out one of a burst of requests - without a retry that tile
+	// stays a hole in the mosaic (plain to see on the route overview). Few, so being offline doesn't take long.
 	private const int MaxFetchAttempts = 3;
 
 	/// <summary>Null after MaxFetchAttempts failures (offline, 404, timeout, corrupt image) - callers draw a placeholder instead of failing the render.</summary>
@@ -54,10 +49,7 @@ public static class MapTileFetcher
 		string cachePath = CachePath(urlTemplate, zoom, x, y);
 		if (File.Exists(cachePath))
 		{
-			// Not a `using` declaration: ownership of the decoded bitmap transfers to the caller
-			// (every call site disposes it), so disposing it here before returning would hand back
-			// an already-disposed SKBitmap on every cache hit - i.e. every render after the first
-			// one for a given route.
+			// Not `using`: the caller owns and disposes the bitmap.
 			var cached = SKBitmap.Decode(cachePath);
 			if (cached is not null) return cached;
 		}

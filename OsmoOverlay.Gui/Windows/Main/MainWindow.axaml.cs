@@ -414,7 +414,7 @@ public partial class MainWindow : Window
 	{
 		OverlaySettings before = OverlaySettingsStore.Load();
 		var settings = new SettingsWindow
-			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingCruisingSpeedKmh = RecordingSpeeds().CruisingKmh };
+			{ IsRendering = () => _phase == UiPhase.Rendering, RecordingCruisingSpeedKmh = RecordingSpeeds().CruisingKmh, OpenBenchmark = ShowBenchmarkAsync };
 		settings.Load(before);
 		await settings.ShowDialog(this);
 
@@ -439,6 +439,8 @@ public partial class MainWindow : Window
 			_previewPlayer.SetShowWatermark(_showWatermark);
 		}
 
+		if (updated.PreviewShadows != saved.PreviewShadows) _previewPlayer.SetDrawShadows(updated.PreviewShadows);
+
 		// Unlike ShowWatermark, GPS smoothing, the speed correction and the route-intro card are baked in at OpenAsync,
 		// so a change reopens the preview.
 		bool needsPreviewReopen = updated.SmoothGpsMotion != _smoothGpsMotion ||
@@ -453,8 +455,15 @@ public partial class MainWindow : Window
 		else OnMapSourcesShared();
 		RefreshMapSourceEditor();
 
-		if (_summary is not null && _phase == UiPhase.SummaryReady)
-			PopulateOutputInfo(_summary, _detectedEncoder);
+		if (_summary is { } summary && _phase == UiPhase.SummaryReady)
+		{
+			// Another output codec or depth needs its encoder picked again (H.264 isn't HEVC's, 10-bit NVENC isn't on every GPU).
+			VideoInfo output = OutputVideo.For(summary.Video, updated);
+			VideoInfo previous = OutputVideo.For(summary.Video, saved);
+			if (output.CodecName != previous.CodecName || output.PixFmt != previous.PixFmt)
+				_detectedEncoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
+			PopulateOutputInfo(summary, _detectedEncoder);
+		}
 
 		if (needsRestart)
 		{
@@ -483,7 +492,26 @@ public partial class MainWindow : Window
 
 	private async void OnToolsClick(object? sender, RoutedEventArgs e)
 	{
-		await new ToolsWindow().ShowDialog(this);
+		await new ToolsWindow { OpenBenchmark = ShowBenchmarkAsync }.ShowDialog(this);
+	}
+
+	/// <summary>
+	///     The performance test over `owner`, on the loaded recording (or its test clip) with the layout a render would draw.
+	///     Playback stops first - it would take the GPU from the test. A preview shadow setting it applied reaches the preview.
+	/// </summary>
+	private async Task ShowBenchmarkAsync(Window owner)
+	{
+		_previewPlayer.Pause();
+		bool shadows = OverlaySettingsStore.Load().PreviewShadows;
+		IReadOnlyList<OverlayElement> layout = _overlayPresets.Count > 0
+			? OverlayLayers.Drawn(ActiveElements, ActiveLayers)
+			: OverlayPreset.CreateDefault(OverlayPresetStore.DefaultPresetId, Strings.Benchmark_Title).Elements;
+		var input = new BenchmarkInput(_summary?.InputPaths, _summary?.TelemetryFrames, _summary?.DerivedFrames, layout,
+			_openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
+		await new BenchmarkWindow(input, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering).ShowDialog(owner);
+
+		bool after = OverlaySettingsStore.Load().PreviewShadows;
+		if (after != shadows) _previewPlayer.SetDrawShadows(after);
 	}
 
 	private async void OnPickOutputClick(object? sender, RoutedEventArgs e)

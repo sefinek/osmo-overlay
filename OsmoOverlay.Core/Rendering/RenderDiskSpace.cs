@@ -10,11 +10,12 @@ public static class RenderDiskSpace
 	/// <summary>Room on top of the estimate: bitrate peaks, the file's index, and the drive not being filled to the last byte.</summary>
 	public const double Headroom = 1.05;
 
-	public static long EstimateOutputBytes(long sourceBytes, long sourceFrames, long outputFrames)
+	/// <param name="bitrateScale">The output's bitrate over the source's - Settings' bitrate and a smaller or other output (OutputVideo).</param>
+	public static long EstimateOutputBytes(long sourceBytes, long sourceFrames, long outputFrames, double bitrateScale = 1)
 	{
 		if (sourceBytes <= 0 || sourceFrames <= 0 || outputFrames <= 0) return 0;
 
-		return (long)(sourceBytes * Math.Min(1.0, (double)outputFrames / sourceFrames) * Headroom);
+		return (long)(sourceBytes * Math.Min(1.0, (double)outputFrames / sourceFrames) * Math.Max(bitrateScale, 0) * Headroom);
 	}
 
 	/// <summary>The render itself plus the copy finishing it may make.</summary>

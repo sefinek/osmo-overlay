@@ -84,6 +84,11 @@ public sealed record OverlaySettings(
 	string NvencPreset = "p7",
 	bool HardwareDecoding = true,
 	double OutputBitrateMultiplier = 1.0,
+	// What the render writes, when not the source's own (OutputVideo): the short side in pixels (never larger than the source's),
+	// "h264" or "hevc", and 8-bit for a 10-bit source. Null/false = as the source - the default.
+	int? OutputResolution = null,
+	string? OutputCodec = null,
+	bool OutputEightBit = false,
 	bool FastStart = false,
 	// Measured render speed (frames/s) per RenderSpeedHistory.Key - feeds the GUI's pre-render estimate.
 	Dictionary<string, double>? RenderFpsHistory = null,
@@ -113,6 +118,9 @@ public sealed record OverlaySettings(
 	int AutoSaveMinutes = 0,
 	// Playback loops from the start of a session (the toolbar's Loop button still toggles it).
 	bool LoopByDefault = false,
+	// Off: the preview leaves the widgets' shadows out - most of the overlay's drawing time - on a slow computer. A render
+	// always draws them.
+	bool PreviewShadows = true,
 	// Closing the window mid-render asks first.
 	bool ConfirmCloseWhileRendering = true);
 

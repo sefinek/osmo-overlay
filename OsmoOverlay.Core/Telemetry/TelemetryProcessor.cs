@@ -20,6 +20,12 @@ public static class TelemetryProcessor
 	// stays consistent regardless of the camera's telemetry sampling rate.
 	internal const double SpeedWindowSeconds = 1.0;
 	private const double GForceTimeConstantSeconds = 0.3;
+	// A slope is measured over this much distance travelled, centered on the frame: GPS altitude wanders a few meters on its
+	// own, so over a second or two of walking it read as a 10% climb on a flat bridge. Centered, it doesn't lag behind the road.
+	internal const double GradientWindowMeters = 100;
+	// Below this the receiver's own speed says the camera stands still - a step's position change is then the fix wandering,
+	// not travel. Well under walking pace, so a slow climb still counts.
+	internal const double StandstillKmh = 1.0;
 
 	/// <param name="camera">
 	///     Reads the accelerometer's axes (ICameraFormat.Gravity) for roll, pitch and the G-meter - all 0 without it or
@@ -40,7 +46,7 @@ public static class TelemetryProcessor
 
 		double[] speeds = new double[frames.Count];
 		double[] headings = new double[frames.Count];
-		double[] gradients = new double[frames.Count];
+		double[] gradients = Gradients(frames, cumulativeDistances);
 
 		for (int i = 0; i < frames.Count; i++)
 		{
@@ -54,7 +60,6 @@ public static class TelemetryProcessor
 			double dt = current.SampleTimeSeconds - reference.SampleTimeSeconds;
 			double horizontalMeters = TelemetryMath.HaversineMeters(
 				reference.Latitude, reference.Longitude, current.Latitude, current.Longitude);
-			double verticalMeters = current.AltitudeMeters - reference.AltitudeMeters;
 
 			// Prefer the GPS receiver's own measured velocity (when the camera records it) over
 			// differentiating position samples - it's not affected by GPS position quantization/lag.
@@ -70,7 +75,6 @@ public static class TelemetryProcessor
 				: i > 0
 					? headings[i - 1]
 					: 0;
-			gradients[i] = horizontalMeters > 0.5 ? verticalMeters / horizontalMeters * 100.0 : 0;
 		}
 
 		Direction[]? gravity = GravityOf(frames, camera);
@@ -130,7 +134,8 @@ public static class TelemetryProcessor
 	///     Running distance per frame, advanced in steps of at least SpeedWindowSeconds - summing every
 	///     sample-to-sample hop at 60 Hz would add up GPS jitter into distance never travelled. The last frame
 	///     also gets the final partial step (up to a second of travel), so the total is complete. Nothing is added
-	///     across a gap between files (StartsAfterGap): what was travelled while the camera was off isn't in the video.
+	///     across a gap between files (StartsAfterGap): what was travelled while the camera was off isn't in the video,
+	///     nor for a step the receiver measured as standing still at both ends (StandstillKmh).
 	/// </summary>
 	internal static double[] SteppedDistances(IReadOnlyList<TelemetryFrame> frames)
 	{
@@ -153,8 +158,12 @@ public static class TelemetryProcessor
 			bool isLast = i == frames.Count - 1;
 			if (frames[i].SampleTimeSeconds - frames[lastStep].SampleTimeSeconds >= SpeedWindowSeconds || isLast)
 			{
-				total += TelemetryMath.HaversineMeters(frames[lastStep].Latitude, frames[lastStep].Longitude,
-					frames[i].Latitude, frames[i].Longitude);
+				if (!IsStandingStill(frames[lastStep]) || !IsStandingStill(frames[i]))
+				{
+					total += TelemetryMath.HaversineMeters(frames[lastStep].Latitude, frames[lastStep].Longitude,
+						frames[i].Latitude, frames[i].Longitude);
+				}
+
 				lastStep = i;
 			}
 
@@ -162,6 +171,42 @@ public static class TelemetryProcessor
 		}
 
 		return distances;
+	}
+
+	private static bool IsStandingStill(TelemetryFrame frame)
+	{
+		return frame.GpsSpeedMs * 3.6 < StandstillKmh;
+	}
+
+	/// <summary>
+	///     Percent climb over GradientWindowMeters centered on each frame (half behind, half ahead) - 0 where less than half of
+	///     that was travelled around it (a short clip, a long stop). Never across a gap between files.
+	/// </summary>
+	internal static double[] Gradients(IReadOnlyList<TelemetryFrame> frames, double[] distances)
+	{
+		const double half = GradientWindowMeters / 2;
+		double[] gradients = new double[frames.Count];
+		// Distance grows in steps (SteppedDistances): the altitude goes with the frame its step was taken at, not one up to
+		// a second of travel (or a whole stop) past it.
+		int[] stepFrame = new int[frames.Count];
+		for (int i = 0; i < frames.Count; i++)
+			stepFrame[i] = i > 0 && !frames[i].StartsAfterGap && distances[i - 1] == distances[i] ? stepFrame[i - 1] : i;
+
+		int back = 0, ahead = 0;
+		for (int i = 0; i < frames.Count; i++)
+		{
+			if (frames[i].StartsAfterGap) back = i;
+			ahead = Math.Max(ahead, i);
+
+			while (back < i && distances[i] - distances[back + 1] >= half) back++;
+			while (ahead + 1 < frames.Count && !frames[ahead + 1].StartsAfterGap && distances[ahead] - distances[i] < half) ahead++;
+
+			int from = stepFrame[back];
+			double span = distances[ahead] - distances[from];
+			if (span >= half) gradients[i] = (frames[ahead].AltitudeMeters - frames[from].AltitudeMeters) / span * 100;
+		}
+
+		return gradients;
 	}
 
 	private static double Ema(double dt, double timeConstantSeconds)

@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
+using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
@@ -29,6 +30,19 @@ public partial class SettingsWindow : Window
 		new(string.Format(Strings.Settings_BitrateTimes, 1.25), 1.25),
 		new(string.Format(Strings.Settings_BitrateTimes, 1.5), 1.5),
 		new(string.Format(Strings.Settings_BitrateTimes, 2), 2.0)
+	];
+
+	private static readonly List<ChoiceOption<int?>> OutputResolutionOptions =
+	[
+		new(Strings.Settings_SameAsSource, null),
+		.. OutputVideo.Resolutions.Select(r => new ChoiceOption<int?>(r == 2160 ? "2160p (4K)" : $"{r}p", r))
+	];
+
+	private static readonly List<ChoiceOption<string?>> OutputCodecOptions =
+	[
+		new(Strings.Settings_CodecSameAsSource, null),
+		new("H.264", "h264"),
+		new("HEVC (H.265)", "hevc")
 	];
 
 	private static readonly List<ChoiceOption<double>> InterfaceScaleOptions =
@@ -62,11 +76,16 @@ public partial class SettingsWindow : Window
 	/// <summary>Whether the main window is rendering - an FFmpeg update that restarts the app is held off until it isn't.</summary>
 	public Func<bool> IsRendering { get; init; } = () => false;
 
+	/// <summary>Opens the performance test over the given window - MainWindow's, which knows the loaded recording.</summary>
+	public Func<Window, Task>? OpenBenchmark { get; init; }
+
 	public SettingsWindow()
 	{
 		InitializeComponent();
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
+		OutputResolutionCombo.ItemsSource = OutputResolutionOptions;
+		OutputCodecCombo.ItemsSource = OutputCodecOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
 		LanguageCombo.ItemsSource = LanguageOptions;
 		ThemeCombo.ItemsSource = AppThemes.Options;
@@ -134,6 +153,9 @@ public partial class SettingsWindow : Window
 		NvencPresetCombo.SelectedItem = NvencPresetOptions.FirstOrDefault(o => o.Value == settings.NvencPreset) ?? NvencPresetOptions[0];
 		BitrateCombo.SelectedItem = BitrateOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.OutputBitrateMultiplier) < 0.001)
 		                            ?? BitrateOptions[0];
+		OutputResolutionCombo.SelectedItem = OutputResolutionOptions.FirstOrDefault(o => o.Value == settings.OutputResolution) ?? OutputResolutionOptions[0];
+		OutputCodecCombo.SelectedItem = OutputCodecOptions.FirstOrDefault(o => o.Value == settings.OutputCodec) ?? OutputCodecOptions[0];
+		OutputEightBitCheck.IsChecked = settings.OutputEightBit;
 		HardwareDecodingCheck.IsChecked = settings.HardwareDecoding;
 		FastStartCheck.IsChecked = settings.FastStart;
 		MetadataTelemetryCheck.IsChecked = settings.MetadataKeepTelemetry;
@@ -158,6 +180,7 @@ public partial class SettingsWindow : Window
 		ReopenLastProjectCheck.IsChecked = settings.ReopenLastProject;
 		AutoSaveCombo.SelectedItem = AutoSaveOptions.FirstOrDefault(o => o.Value == settings.AutoSaveMinutes) ?? AutoSaveOptions[0];
 		LoopByDefaultCheck.IsChecked = settings.LoopByDefault;
+		PreviewShadowsCheck.IsChecked = settings.PreviewShadows;
 		ConfirmCloseWhileRenderingCheck.IsChecked = settings.ConfirmCloseWhileRendering;
 		ProjectFilesGroup.IsVisible = ProjectFileAssociation.IsSupported;
 		ShowProjectAssociation();
@@ -222,6 +245,9 @@ public partial class SettingsWindow : Window
 		{
 			NvencPreset = (NvencPresetCombo.SelectedItem as ChoiceOption<string> ?? NvencPresetOptions[0]).Value,
 			OutputBitrateMultiplier = (BitrateCombo.SelectedItem as ChoiceOption<double> ?? BitrateOptions[0]).Value,
+			OutputResolution = (OutputResolutionCombo.SelectedItem as ChoiceOption<int?>)?.Value,
+			OutputCodec = (OutputCodecCombo.SelectedItem as ChoiceOption<string?>)?.Value,
+			OutputEightBit = OutputEightBitCheck.IsChecked == true,
 			HardwareDecoding = HardwareDecodingCheck.IsChecked == true,
 			FastStart = FastStartCheck.IsChecked == true,
 			PreserveCameraMetadata = PreserveCameraMetadataCheck.IsChecked == true,
@@ -240,6 +266,7 @@ public partial class SettingsWindow : Window
 			ReopenLastProject = ReopenLastProjectCheck.IsChecked == true,
 			AutoSaveMinutes = (AutoSaveCombo.SelectedItem as ChoiceOption<int> ?? AutoSaveOptions[0]).Value,
 			LoopByDefault = LoopByDefaultCheck.IsChecked == true,
+			PreviewShadows = PreviewShadowsCheck.IsChecked == true,
 			ConfirmCloseWhileRendering = ConfirmCloseWhileRenderingCheck.IsChecked == true,
 			LayerRowsVisible = Math.Clamp((int)(LayerRowsBox.Value ?? LayerTimeline.DefaultVisibleTracks), LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks)
 		};
@@ -357,6 +384,18 @@ public partial class SettingsWindow : Window
 		bool updating = await AppUpdateFlow.UpdateAsync(this, _latestRelease, IsRendering, status => AppUpdateText.Text = status,
 			share => AppUpdateText.Text = string.Format(Strings.Settings_Downloading, _latestRelease.Version, share * 100));
 		if (!updating) AppUpdateButton.IsEnabled = true;
+	}
+
+	private async void OnBenchmarkClick(object? sender, PointerPressedEventArgs e)
+	{
+		if (OpenBenchmark is null) return;
+
+		await OpenBenchmark(this);
+
+		// The test saved what it applied itself; the switches would otherwise write the old state back on close.
+		OverlaySettings saved = OverlaySettingsStore.Load();
+		HardwareDecodingCheck.IsChecked = saved.HardwareDecoding;
+		PreviewShadowsCheck.IsChecked = saved.PreviewShadows;
 	}
 
 	private async void OnWelcomeClick(object? sender, RoutedEventArgs e)

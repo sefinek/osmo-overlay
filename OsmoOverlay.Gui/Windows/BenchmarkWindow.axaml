@@ -1,0 +1,98 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="760"
+        x:Class="OsmoOverlay.Gui.BenchmarkWindow"
+        Width="820" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="{x:Static local:Strings.Benchmark_Title}">
+
+	<Window.Styles>
+		<Style Selector="TextBlock.resultLabel">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Opacity" Value="0.7" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Margin" Value="0,4" />
+		</Style>
+		<Style Selector="TextBlock.resultValue">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="Margin" Value="0,4" />
+		</Style>
+		<Style Selector="TextBlock.columnHeader">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.6" />
+			<Setter Property="Margin" Value="0,0,0,4" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="TextBlock.warningText">
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+		</Style>
+	</Window.Styles>
+
+	<ScrollViewer MaxHeight="820" VerticalScrollBarVisibility="Auto">
+		<StackPanel Margin="20" Spacing="12">
+			<StackPanel Spacing="6">
+				<TextBlock Text="{x:Static local:Strings.Benchmark_Title}" FontSize="18" FontWeight="SemiBold" />
+				<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_Intro}" />
+				<TextBlock Name="SourceText" Classes="hint" />
+			</StackPanel>
+
+			<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+				<Button Name="StartButton" Classes="accent" Content="{x:Static local:Strings.Benchmark_Start}" Click="OnStartClick" />
+				<StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+					<ProgressBar Name="Progress" IsVisible="False" Minimum="0" />
+					<TextBlock Name="StatusText" Classes="hint" />
+				</StackPanel>
+			</Grid>
+
+			<StackPanel Name="ResultsPanel" IsVisible="False" Spacing="12">
+				<Border Name="WarningCard" Classes="card" Padding="16,10" IsVisible="False">
+					<StackPanel Spacing="6">
+						<TextBlock Name="LoadWarningText" Classes="warningText" IsVisible="False" />
+						<TextBlock Name="UnstableWarningText" Classes="warningText" IsVisible="False"
+						           Text="{x:Static local:Strings.Benchmark_UnstableWarning}" />
+					</StackPanel>
+				</Border>
+
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Computer}" />
+				<Border Classes="card" Padding="16,10">
+					<Grid Name="SystemGrid" ColumnDefinitions="Auto,*" ColumnSpacing="24" />
+				</Border>
+
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Results}" />
+				<Border Classes="card" Padding="16,10">
+					<StackPanel Spacing="8">
+						<Grid Name="ResultsGrid" ColumnDefinitions="*,Auto,Auto,*" ColumnSpacing="16" />
+						<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_EncoderNote}" />
+					</StackPanel>
+				</Border>
+
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_SlowestStage}" />
+				<Border Classes="card" Padding="16,10">
+					<StackPanel Spacing="6">
+						<TextBlock Name="BottleneckText" TextWrapping="Wrap" />
+						<TextBlock Name="EstimateText" Classes="hint" IsVisible="False" />
+					</StackPanel>
+				</Border>
+
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_Suggestions}" />
+				<StackPanel Name="AdvicePanel" Spacing="8" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+				<Button Name="CopyReportButton" Content="{x:Static local:Strings.Benchmark_CopyReport}" IsEnabled="False" Click="OnCopyReportClick" />
+				<Button Content="{x:Static local:Strings.Tools_Close}" Click="OnCloseClick" />
+			</StackPanel>
+		</StackPanel>
+	</ScrollViewer>
+</Window>

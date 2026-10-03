@@ -79,7 +79,8 @@ public static class FfmpegPipeline
 		return tenBit ? "yuv420p10le" : "yuv420p";
 	}
 
-	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, bool overwrite,
+	/// <param name="output">The stream written (OutputVideo.For) - the source's own unless Settings picked another size, codec or depth.</param>
+	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, VideoInfo output, bool overwrite,
 		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false)
 	{
 		SourceInfo info = segments[0].Source;
@@ -100,7 +101,7 @@ public static class FfmpegPipeline
 			// unlike the real source video, which ends the filtergraph/output naturally at its own
 			// duration.
 			args.AddRange([
-				"-f", "lavfi", "-i", $"color=c={GreenScreenColor}:s={info.Video.Width}x{info.Video.Height}:r={num}/{den}"
+				"-f", "lavfi", "-i", $"color=c={GreenScreenColor}:s={output.Width}x{output.Height}:r={num}/{den}"
 			]);
 			source = new SourceInputs(1, "[0:v]", null, info);
 		}
@@ -122,7 +123,7 @@ public static class FfmpegPipeline
 		args.AddRange([
 			"-f", "rawvideo",
 			"-pix_fmt", "bgra",
-			"-s", $"{info.Video.Width}x{info.Video.Height}",
+			"-s", $"{output.Width}x{output.Height}",
 			"-r", $"{num}/{den}",
 			"-i", "pipe:0"
 		]);
@@ -132,7 +133,7 @@ public static class FfmpegPipeline
 		string colorspace = info.Video.ColorSpace ?? "bt709";
 		string range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
 		bool h264 = encoder is "h264_nvenc" or "libx264";
-		bool tenBit = IsTenBit(info.Video);
+		bool tenBit = IsTenBit(output);
 
 		// The overlay's RGB -> YUV conversion must use the same matrix the output is tagged with, or the HUD's
 		// colors come out shifted. Explicit on the scaler because older ffmpeg's swscale defaults to BT.601;
@@ -150,15 +151,17 @@ public static class FfmpegPipeline
 		};
 
 		string tags = $"setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}";
+		// threads=0 on the scale: swscale runs on one thread by default, and turning a whole 4K BGRA frame into YUV was the
+		// render's slowest stage - measured 31 -> 67 fps for the overlay graph alone.
 		args.AddRange([
 			"-filter_complex",
 			composedPicture
 				// The pipe already carries the finished picture (a 360 recording's view with the overlay on it) - it's
 				// only turned into YUV with the output's own matrix; the inputs before it are there for the sound.
-				? $"{source.MainVideo}[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}," +
+				? $"{source.MainVideo}[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}:threads=0," +
 				  $"format={(tenBit ? "yuv420p10le" : "yuv420p")},{tags}[v]"
-				: $"{source.MainVideo}{tags}[main];" +
-				  $"[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range},format={(tenBit ? "yuva420p10le" : "yuva420p")}[ovl];" +
+				: $"{source.MainVideo}{(greenScreen ? "" : ResizeFilter(info.Video, output))}{tags}[main];" +
+				  $"[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}:threads=0,format={(tenBit ? "yuva420p10le" : "yuva420p")}[ovl];" +
 				  // shortest=1: the overlay pipe is sized from the container duration, which runs a few ms past the
 				  // last video frame (audio ends later) - without it overlay's default eof_action=repeat padded the
 				  // output with copies of the source's last frame (1 extra frame on a 20 s clip, 3 on a 25 min one).
@@ -195,63 +198,7 @@ public static class FfmpegPipeline
 		if (plan.IsPartial)
 			args.AddRange(["-t", (plan.TotalFrames * den / (double)num).ToString("R", CultureInfo.InvariantCulture)]);
 
-		// Reproduce the camera's own encode as closely as the encoder allows, not just its codec/profile:
-		// measured on Osmo Action 6 files, the camera writes near-constant bitrate (within ~5-10% of its
-		// target every second), no B-frames, a fixed 1 s GOP and HEVC level 5.2. Constant bitrate at the
-		// source's own rate (1 s buffer) instead of VBR: VBR spent ~3 Mbps on the static route-intro card
-		// and then ran over the source's rate for the rest, so neither the average nor the per-second
-		// rate matched the original.
-		string bitRate = ((long)Math.Round(info.Video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
-		int gop = info.Video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
-		if (IsGpuEncoder(encoder))
-		{
-			args.AddRange([
-				"-c:v", encoder,
-				"-preset", encode.NvencPreset,
-				"-rc", "cbr",
-				"-b:v", bitRate,
-				"-bufsize", bitRate,
-				"-bf", "0",
-				"-g", gop.ToString(CultureInfo.InvariantCulture),
-				"-profile:v", Profile(h264, tenBit),
-				"-pix_fmt", PixelFormat(tenBit)
-			]);
-			// ffprobe's level is NVENC's own number for both codecs (HEVC 5.2 = 156, H.264 5.1 = 51).
-			if (info.Video.Level > 0) args.AddRange(["-level", info.Video.Level.ToString(CultureInfo.InvariantCulture)]);
-			if (!h264 && info.Video.HighTier is { } highTier) args.AddRange(["-tier", highTier ? "high" : "main"]);
-		}
-		else if (h264)
-		{
-			List<string> x264Params = ["bframes=0", $"keyint={gop}", $"min-keyint={gop}", "scenecut=0"];
-			args.AddRange([
-				"-c:v", "libx264",
-				"-preset", "slow",
-				"-b:v", bitRate,
-				"-maxrate", bitRate,
-				"-bufsize", bitRate,
-				"-x264-params", string.Join(':', x264Params),
-				"-profile:v", Profile(true, tenBit),
-				"-pix_fmt", PixelFormat(tenBit)
-			]);
-			if (info.Video.Level > 0) args.AddRange(["-level", (info.Video.Level / 10.0).ToString("0.#", CultureInfo.InvariantCulture)]);
-		}
-		else
-		{
-			List<string> x265Params = ["bframes=0", $"keyint={gop}", $"min-keyint={gop}", "scenecut=0"];
-			if (info.Video.Level > 0)
-				x265Params.Add($"level-idc={(info.Video.Level / 30.0).ToString("0.#", CultureInfo.InvariantCulture)}");
-			if (info.Video.HighTier is { } highTier) x265Params.Add(highTier ? "high-tier=1" : "high-tier=0");
-
-			args.AddRange([
-				"-c:v", "libx265",
-				"-preset", "slow",
-				"-b:v", bitRate,
-				"-maxrate", bitRate,
-				"-bufsize", bitRate,
-				"-x265-params", string.Join(':', x265Params),
-				"-pix_fmt", PixelFormat(tenBit)
-			]);
-		}
+		AddVideoEncoderArgs(args, output, encoder, encode, num, den);
 
 		// Container-level metadata the camera wrote: recording date (file managers, photo libraries and
 		// NLEs sort by it - without it the render looks like it was shot at render time) and the start
@@ -304,6 +251,87 @@ public static class FfmpegPipeline
 		}
 
 		return process;
+	}
+
+	/// <summary>
+	///     The source's picture brought to the output's size and bit depth, ending in a comma to go on before what follows -
+	///     empty when they're the same, so a default render's graph stays as it was.
+	/// </summary>
+	internal static string ResizeFilter(VideoInfo source, VideoInfo output)
+	{
+		if (output.Width == source.Width && output.Height == source.Height && output.PixFmt == source.PixFmt) return "";
+
+		return $"scale={output.Width}:{output.Height}:flags=lanczos:threads=0,format={PixelFormat(IsTenBit(output))},";
+	}
+
+	/// <summary>Whether `encoder` writes `video`'s codec - a choice made for the source can be stale once Settings changed the output's.</summary>
+	public static bool Encodes(string encoder, VideoInfo video)
+	{
+		return (encoder is "h264_nvenc" or "libx264") == IsH264(video);
+	}
+
+	/// <summary>The video encoder's options for a render of `video` - shared with RenderBenchmark, so it measures the encode a render runs.</summary>
+	internal static void AddVideoEncoderArgs(List<string> args, VideoInfo video, string encoder, RenderEncodeSettings encode, int num, int den)
+	{
+		bool h264 = encoder is "h264_nvenc" or "libx264";
+		bool tenBit = IsTenBit(video);
+		// Reproduce the camera's own encode as closely as the encoder allows, not just its codec/profile:
+		// measured on Osmo Action 6 files, the camera writes near-constant bitrate (within ~5-10% of its
+		// target every second), no B-frames, a fixed 1 s GOP and HEVC level 5.2. Constant bitrate at the
+		// source's own rate (1 s buffer) instead of VBR: VBR spent ~3 Mbps on the static route-intro card
+		// and then ran over the source's rate for the rest, so neither the average nor the per-second
+		// rate matched the original.
+		string bitRate = ((long)Math.Round(video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
+		int gop = video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
+		if (IsGpuEncoder(encoder))
+		{
+			args.AddRange([
+				"-c:v", encoder,
+				"-preset", encode.NvencPreset,
+				"-rc", "cbr",
+				"-b:v", bitRate,
+				"-bufsize", bitRate,
+				"-bf", "0",
+				"-g", gop.ToString(CultureInfo.InvariantCulture),
+				"-profile:v", Profile(h264, tenBit),
+				"-pix_fmt", PixelFormat(tenBit)
+			]);
+			// ffprobe's level is NVENC's own number for both codecs (HEVC 5.2 = 156, H.264 5.1 = 51).
+			if (video.Level > 0) args.AddRange(["-level", video.Level.ToString(CultureInfo.InvariantCulture)]);
+			if (!h264 && video.HighTier is { } highTier) args.AddRange(["-tier", highTier ? "high" : "main"]);
+		}
+		else if (h264)
+		{
+			List<string> x264Params = ["bframes=0", $"keyint={gop}", $"min-keyint={gop}", "scenecut=0"];
+			args.AddRange([
+				"-c:v", "libx264",
+				"-preset", "slow",
+				"-b:v", bitRate,
+				"-maxrate", bitRate,
+				"-bufsize", bitRate,
+				"-x264-params", string.Join(':', x264Params),
+				"-profile:v", Profile(true, tenBit),
+				"-pix_fmt", PixelFormat(tenBit)
+			]);
+			if (video.Level > 0) args.AddRange(["-level", (video.Level / 10.0).ToString("0.#", CultureInfo.InvariantCulture)]);
+		}
+		else
+		{
+			List<string> x265Params = ["bframes=0", $"keyint={gop}", $"min-keyint={gop}", "scenecut=0"];
+			if (video.Level > 0)
+				x265Params.Add($"level-idc={(video.Level / 30.0).ToString("0.#", CultureInfo.InvariantCulture)}");
+			if (video.HighTier is { } highTier) x265Params.Add(highTier ? "high-tier=1" : "high-tier=0");
+
+			args.AddRange([
+				"-c:v", "libx265",
+				"-preset", "slow",
+				"-b:v", bitRate,
+				"-maxrate", bitRate,
+				"-bufsize", bitRate,
+				"-x265-params", string.Join(':', x265Params),
+				"-pix_fmt", PixelFormat(tenBit)
+			]);
+		}
 	}
 
 	/// <summary>
@@ -566,7 +594,7 @@ public static class FfmpegPipeline
 			settings.FastStart && !postProcessing);
 	}
 
-	private static (int num, int den) ParseFrameRate(string rFrameRate)
+	internal static (int num, int den) ParseFrameRate(string rFrameRate)
 	{
 		string[] parts = rFrameRate.Split('/');
 		return (int.Parse(parts[0], CultureInfo.InvariantCulture), parts.Length > 1 ? int.Parse(parts[1], CultureInfo.InvariantCulture) : 1);

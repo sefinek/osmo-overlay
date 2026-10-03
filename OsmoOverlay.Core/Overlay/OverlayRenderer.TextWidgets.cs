@@ -137,18 +137,22 @@ public sealed partial class OverlayRenderer
 		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);
 	}
 
+	/// <summary>
+	///     Whole metres/feet below a kilometre/mile - a GPS position isn't good to the centimetre. The unit switches on the
+	///     rounded value, so 999.6 m reads 1.00 KM rather than 1000 M.
+	/// </summary>
 	private static (string Value, string Unit) FormatDistance(double meters, UnitSystem units)
 	{
 		if (units == UnitSystem.Imperial)
 		{
-			return meters >= MilesInMeters
+			return Math.Round(meters * MetersToFeet) >= 5280
 				? (F(meters / MilesInMeters, "0.00"), "MI")
-				: (F(meters * MetersToFeet, "0.00"), "FT");
+				: (F(meters * MetersToFeet, "0"), "FT");
 		}
 
-		return meters >= 1000
+		return Math.Round(meters) >= 1000
 			? (F(meters / 1000.0, "0.00"), "KM")
-			: (F(meters, "0.00"), "M");
+			: (F(meters, "0"), "M");
 	}
 
 	/// <summary>Same KmhToMph conversion SpeedGauge/GaugeMaxSpeed already use, exposed here for callers (RouteIntro) that report a speed as plain text rather than on the gauge itself.</summary>

@@ -141,7 +141,8 @@ public partial class MainWindow
 			}
 
 			AppendLog(Strings.Summary_LogCheckingNvenc);
-			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(summary.Video));
+			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
+			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
 			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
 
 			_summary = summary;
@@ -383,8 +384,9 @@ public partial class MainWindow
 		// Speed measured by the last full render of this same shape (RenderSpeedHistory) - there's no
 		// meaningful way to predict it before the first one, so say so instead of guessing.
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		OutPlanText.Text = DescribeEncodePlan(settings, encoder);
-		string key = RenderSpeedHistory.Key(summary.Video.Width, summary.Video.Height, fps, encoder, settings.NvencPreset);
+		VideoInfo output = OutputVideo.For(summary.Video, settings);
+		OutPlanText.Text = DescribeEncodePlan(settings, encoder, summary.Video, output);
+		string key = RenderSpeedHistory.Key(output.Width, output.Height, fps, encoder, settings.NvencPreset);
 		if (RenderSpeedHistory.TryGet(key) is { } renderFps)
 		{
 			OutEstimatedTime.Text = $"~{TimeSpan.FromSeconds(totalFrames / renderFps):hh\\:mm\\:ss}";
@@ -494,9 +496,15 @@ public partial class MainWindow
 	///     FfmpegPipeline.StartRender) - "1:1" only while every option is at its source-matching default,
 	///     otherwise it names exactly what deviates, so the card never claims more than is true.
 	/// </summary>
-	private static string DescribeEncodePlan(OverlaySettings settings, string encoder)
+	private static string DescribeEncodePlan(OverlaySettings settings, string encoder, VideoInfo source, VideoInfo output)
 	{
 		List<string> deviations = [];
+		if (output.Width != source.Width || output.Height != source.Height)
+			deviations.Add(string.Format(Strings.Summary_PlanResolution, output.Width, output.Height));
+		if (output.CodecName != source.CodecName)
+			deviations.Add(string.Format(Strings.Summary_PlanCodec, output.CodecName == "h264" ? "H.264" : "HEVC"));
+		if (output.PixFmt != source.PixFmt)
+			deviations.Add(Strings.Summary_PlanEightBit);
 		if (Math.Abs(settings.OutputBitrateMultiplier - 1.0) > 0.001)
 			deviations.Add(string.Format(Strings.Summary_PlanBitrate, settings.OutputBitrateMultiplier));
 		if (FfmpegPipeline.IsGpuEncoder(encoder) && settings.NvencPreset != "p7")

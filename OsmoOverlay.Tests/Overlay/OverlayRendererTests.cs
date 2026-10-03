@@ -92,6 +92,36 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
+	public void ParallelWidgets_DrawLikeWidgetsDrawnStraightOn()
+	{
+		List<DerivedFrame> frames = Route(300, 0);
+		// Every widget, the first one fading in at the frames compared - its layer is bounded by what it draws.
+		List<OverlayElement> layout =
+		[
+			.. OverlayPreset.CreateDefault("p", "P").Elements
+				.Where(e => e is not ImageElement)
+				.Select((e, i) => e with
+				{
+					Visible = true, AppearAtSeconds = i == 0 ? 4.8 : null, AnimationType = i == 0 ? OverlayAnimationType.SlideUp : OverlayAnimationType.None
+				})
+		];
+
+		byte[] RenderWith(bool parallel)
+		{
+			using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, layout, frames,
+				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, true) { ParallelWidgets = parallel };
+			return Render(renderer, frames);
+		}
+
+		byte[] straight = RenderWith(false);
+		byte[] parallel = RenderWith(true);
+
+		int maxDifference = straight.Zip(parallel, (a, b) => Math.Abs(a - b)).Max();
+		Assert.IsTrue(maxDifference <= 2, $"differs by up to {maxDifference}");
+		Assert.IsTrue(straight.Any(b => b != 0));
+	}
+
+	[TestMethod]
 	public void Trail_DrawsTheSameWhicheverFramesCameBefore()
 	{
 		List<DerivedFrame> frames = Route(300, 0);

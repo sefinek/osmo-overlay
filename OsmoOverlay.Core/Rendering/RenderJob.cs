@@ -33,7 +33,9 @@ public sealed record RenderOptions(
 	double? RangeEndSeconds = null,
 	IReadOnlyList<TimeRange>? CutOuts = null,
 	// Where the flat picture of a 360 recording looks - the default (leveled, straight ahead) when null; ignored for a flat video.
-	ReframeView? Reframe = null)
+	ReframeView? Reframe = null,
+	// The settings to render with - settings.json when null (RenderBenchmark tries others without saving them).
+	OverlaySettings? Settings = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -150,7 +152,7 @@ public static class RenderJob
 				Report(RenderPhase.ExtractingTelemetry, string.Format(CoreStrings.Render_Extracted, rawFrames.Count));
 			}
 
-			OverlaySettings settings = OverlaySettingsStore.Load();
+			OverlaySettings settings = options.Settings ?? OverlaySettingsStore.Load();
 			bool smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
 			double fps = first.Source.Video.Fps;
 			var plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
@@ -160,9 +162,14 @@ public static class RenderJob
 			double startAltitude = derived[0].Raw.AltitudeMeters;
 			double maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
-			if (options.Encoder is null)
+			VideoInfo output = OutputVideo.For(first.Source.Video, settings);
+			if (output != first.Source.Video)
+				AppLogger.Info($"Output: {output.CodecName} {output.Width}x{output.Height} {output.PixFmt}, ~{output.BitRate / 1_000_000} Mbps");
+			// An encoder picked before Settings changed the output's codec doesn't write it any more.
+			string? requested = options.Encoder is { } picked && FfmpegPipeline.Encodes(picked, output) ? picked : null;
+			if (requested is null)
 				Report(RenderPhase.SelectingEncoder, CoreStrings.Render_CheckingNvenc);
-			string encoder = options.Encoder ?? FfmpegPipeline.SelectVideoEncoder(first.Source.Video);
+			string encoder = requested ?? FfmpegPipeline.SelectVideoEncoder(output);
 			Report(RenderPhase.SelectingEncoder,
 				string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? CoreStrings.Render_EncoderGpu : CoreStrings.Render_EncoderCpu, encoder));
 
@@ -180,7 +187,7 @@ public static class RenderJob
 			bool hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
 			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
-			using var renderer = new OverlayRenderer(first.Source.Video.Width, first.Source.Video.Height,
+			using var renderer = new OverlayRenderer(output.Width, output.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), RouteIntroSettings.ForRecording(settings, hasGpsFix))
 			{
@@ -242,8 +249,8 @@ public static class RenderJob
 			using LibavVideoSource? pictures = reframer is null
 				? null
 				: new LibavVideoSource([.. segments.Select(s => new PlaybackSegment(s.InputPath, s.Source.DurationSeconds))], fps,
-					first.Source.Video.Width, first.Source.Video.Height, reframer);
-			using Process ffmpeg = FfmpegPipeline.StartRender(segments, options.OutputPath, encoder, options.Overwrite, encode,
+					output.Width, output.Height, reframer);
+			using Process ffmpeg = FfmpegPipeline.StartRender(segments, options.OutputPath, encoder, output, options.Overwrite, encode,
 				plan, options.GreenScreen, pictures is not null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
@@ -299,7 +306,7 @@ public static class RenderJob
 					await foreach (byte[] pixels in channel.Reader.ReadAllAsync(ct))
 					{
 						stdin.Write(pixels, 0, pixels.Length);
-						if (pictures is not null) pictures.Recycle(new VideoFrame(pixels, first.Source.Video.Width, first.Source.Video.Height));
+						if (pictures is not null) pictures.Recycle(new VideoFrame(pixels, output.Width, output.Height));
 						else freeBuffers.Enqueue(pixels);
 						written++;
 						rate.Add(written);
@@ -341,15 +348,9 @@ public static class RenderJob
 				bool cancelled = ct.IsCancellationRequested;
 				if (cancelled)
 				{
-					// Closing stdin alone doesn't make ffmpeg exit promptly - the overlay filter's default
-					// eof_action (repeat) just freezes the last overlay frame it got and keeps encoding
-					// against whatever's left on the main input regardless of the now-closed pipe: the real
-					// source video's remaining length for a normal render, or - far worse - the render's
-					// full original frame count for a green-screen render, whose main input is otherwise-
-					// infinite (see FfmpegPipeline.StartRender). killOnCancel above already killed the
-					// whole process tree the moment ct was cancelled, so this just waits for that to land.
-					// CancellationToken.None, not ct - it's already cancelled, and this wait must run to
-					// completion regardless so the exit code/stderr below are actually available.
+					// killOnCancel already killed ffmpeg - closing stdin alone wouldn't stop it: the overlay's eof_action
+					// repeats the last frame against the rest of the main input (endless for a green screen). Not ct here,
+					// it's cancelled and this wait must finish.
 					await ffmpeg.WaitForExitAsync(CancellationToken.None);
 					try
 					{
@@ -357,9 +358,7 @@ public static class RenderJob
 					}
 					catch (Exception)
 					{
-						// Reading a killed process's stderr can fault in various ways (broken pipe, the
-						// cancelled token itself) - none of it matters once this is already reporting a
-						// user cancellation, not a render failure.
+						// A killed process's stderr can fault (broken pipe, the token) - it's a cancellation either way.
 					}
 
 					return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);
@@ -379,7 +378,7 @@ public static class RenderJob
 				// a full one - only a render long enough to reach steady state updates the estimate.
 				if (written >= MinFramesForSpeedHistory && rate.AverageFps(written) is { } averageFps)
 				{
-					RenderSpeedHistory.Record(RenderSpeedHistory.Key(first.Source.Video.Width, first.Source.Video.Height, fps,
+					RenderSpeedHistory.Record(RenderSpeedHistory.Key(output.Width, output.Height, fps,
 						encoder, encode.NvencPreset), averageFps);
 				}
 

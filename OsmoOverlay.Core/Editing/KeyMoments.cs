@@ -28,9 +28,8 @@ public static class KeyMoments
 	private const double MinSpeedKmh = 1;
 	private const double MinGradientPercent = 1;
 	private const double MinLeanDegrees = 1;
-	// A slope is measured over at least this much distance travelled: the GPS altitude wanders a few meters on its own, so over a
-	// second or two of walking it reads as a 10% climb on a flat bridge (the gradient widget's per-second value).
-	private const double SlopeWindowMeters = 100;
+	// The same stretch the gradient widget measures a slope over (TelemetryProcessor.GradientWindowMeters).
+	private const double SlopeWindowMeters = TelemetryProcessor.GradientWindowMeters;
 	// The peaks of one category listed together are at least this far apart in time.
 	private const double MinPeakSeparationSeconds = 10;
 

@@ -236,6 +236,30 @@
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputResolution}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputResolutionHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="OutputResolutionCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputCodec}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputCodecHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="OutputCodecCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputEightBit}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputEightBitHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="OutputEightBitCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
 									<TextBlock Text="{x:Static local:Strings.Settings_DecodeTheSourceOnThe}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
 									           Text="{x:Static local:Strings.Settings_SeveralTimesFasterIdenticalFrames}" />
@@ -253,6 +277,8 @@
 							</Grid>
 						</StackPanel>
 					</Border>
+					<TextBlock Classes="link" HorizontalAlignment="Left" Text="{x:Static local:Strings.Settings_FindWhatIsFaster}"
+					           PointerPressed="OnBenchmarkClick" />
 
 					<TextBlock Text="{x:Static local:Strings.Settings_Privacy}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
@@ -510,6 +536,14 @@
 									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LoopsTheInOutSelection}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="LoopByDefaultCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_PreviewShadows}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_PreviewShadowsHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="PreviewShadowsCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">

@@ -69,6 +69,228 @@
   <data name="AutoSave_Saved" xml:space="preserve">
     <value>Zapisano kopię zapasową: {0}</value>
   </data>
+  <data name="Benchmark_AdviceHardwareDecode" xml:space="preserve">
+    <value>Na tym komputerze dekodowanie na GPU wypada o {0}% szybciej. Włączyć je?</value>
+  </data>
+  <data name="Benchmark_AdvicePreviewShadowsOff" xml:space="preserve">
+    <value>Cienie zajmują podglądowi za dużo czasu na każdą klatkę - bez nich nakładka rysuje się {0}x szybciej. Wyłączyć cienie w podglądzie? Render nadal będzie je miał.</value>
+  </data>
+  <data name="Benchmark_AdvicePreviewShadowsOn" xml:space="preserve">
+    <value>Ten komputer bez trudu rysuje cienie w podglądzie. Włączyć je z powrotem?</value>
+  </data>
+  <data name="Benchmark_AdviceSkippedBusy" xml:space="preserve">
+    <value>Podpowiedzi o dekodowaniu pominięto, bo komputer był zajęty - przy zajętym GPU dekodowanie na CPU wypadłoby lepiej tylko z tego powodu.</value>
+  </data>
+  <data name="Benchmark_AdviceSoftwareDecode" xml:space="preserve">
+    <value>Na tym komputerze dekodowanie na CPU wypada o {0}% szybciej. Wyłączyć dekodowanie na GPU?</value>
+  </data>
+  <data name="Benchmark_Applied" xml:space="preserve">
+    <value>Zastosowano</value>
+  </data>
+  <data name="Benchmark_Apply" xml:space="preserve">
+    <value>Zastosuj</value>
+  </data>
+  <data name="Benchmark_BottleneckOnly" xml:space="preserve">
+    <value>{0}: {1} kl./s. Render nie będzie szybszy niż ten etap.</value>
+  </data>
+  <data name="Benchmark_BottleneckWithRender" xml:space="preserve">
+    <value>{0}: {1} kl./s. Krótki render osiągnął {2} kl./s, czyli {3}% tej prędkości - resztę zabiera współdzielenie CPU i GPU przez etapy.</value>
+  </data>
+  <data name="Benchmark_ColumnNotes" xml:space="preserve">
+    <value>Uwagi</value>
+  </data>
+  <data name="Benchmark_ColumnRange" xml:space="preserve">
+    <value>Zakres powtórzeń</value>
+  </data>
+  <data name="Benchmark_ColumnResult" xml:space="preserve">
+    <value>Wynik (mediana)</value>
+  </data>
+  <data name="Benchmark_ColumnStage" xml:space="preserve">
+    <value>Etap</value>
+  </data>
+  <data name="Benchmark_Computer" xml:space="preserve">
+    <value>Komputer</value>
+  </data>
+  <data name="Benchmark_Copied" xml:space="preserve">
+    <value>Skopiowano</value>
+  </data>
+  <data name="Benchmark_CopyReport" xml:space="preserve">
+    <value>Kopiuj raport</value>
+  </data>
+  <data name="Benchmark_Cpu" xml:space="preserve">
+    <value>Procesor</value>
+  </data>
+  <data name="Benchmark_DecodeCpu" xml:space="preserve">
+    <value>Dekodowanie na CPU</value>
+  </data>
+  <data name="Benchmark_DecodeGpu" xml:space="preserve">
+    <value>Dekodowanie na GPU</value>
+  </data>
+  <data name="Benchmark_Done" xml:space="preserve">
+    <value>Gotowe w {0} s.</value>
+  </data>
+  <data name="Benchmark_EncoderNote" xml:space="preserve">
+    <value>Preset enkodera wpływa też na jakość pliku, więc to tylko informacja - zmienisz go w Ustawieniach.</value>
+  </data>
+  <data name="Benchmark_Encoding" xml:space="preserve">
+    <value>Kodowanie {0}</value>
+  </data>
+  <data name="Benchmark_Estimate" xml:space="preserve">
+    <value>Szacowany czas renderu tego nagrania: {0}</value>
+  </data>
+  <data name="Benchmark_Failed" xml:space="preserve">
+    <value>Test się nie udał: {0}</value>
+  </data>
+  <data name="Benchmark_Fps" xml:space="preserve">
+    <value>{0} kl./s</value>
+  </data>
+  <data name="Benchmark_FpsRange" xml:space="preserve">
+    <value>{0}-{1} kl./s (±{2}%)</value>
+  </data>
+  <data name="Benchmark_Gpu" xml:space="preserve">
+    <value>Karta graficzna</value>
+  </data>
+  <data name="Benchmark_InUse" xml:space="preserve">
+    <value>używane teraz</value>
+  </data>
+  <data name="Benchmark_Intro" xml:space="preserve">
+    <value>Sprawdza każdy etap renderu na tym komputerze: dekodowanie na GPU i na CPU, rysowanie nakładki z cieniami i bez, przesył klatek do ffmpeg, kodowanie, a przy wczytanym nagraniu z telemetrią także krótki prawdziwy render. Każdy pomiar jest powtarzany na zmianę z porównywanym, a wynikiem jest mediana razem z zakresem powtórzeń. Na koniec test wskazuje najwolniejszy etap i podpowiada, które ustawienia będą tu szybsze. Trwa 2-3 minuty - na ten czas zamknij gry i inne programy mocno używające CPU lub GPU.</value>
+  </data>
+  <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
+    <value>co najmniej tyle - czekało na dekodowanie</value>
+  </data>
+  <data name="Benchmark_Load" xml:space="preserve">
+    <value>Obciążenie przed testem</value>
+  </data>
+  <data name="Benchmark_LoadValue" xml:space="preserve">
+    <value>CPU {0}, GPU {1}</value>
+  </data>
+  <data name="Benchmark_LoadWarning" xml:space="preserve">
+    <value>Przed testem komputer był zajęty (CPU {0}, GPU {1}), więc wyniki są zaniżone. Zamknij gry i inne programy i uruchom test jeszcze raz.</value>
+  </data>
+  <data name="Benchmark_Memory" xml:space="preserve">
+    <value>Pamięć RAM</value>
+  </data>
+  <data name="Benchmark_NameDecode" xml:space="preserve">
+    <value>Dekodowanie</value>
+  </data>
+  <data name="Benchmark_NameEncode" xml:space="preserve">
+    <value>Kodowanie</value>
+  </data>
+  <data name="Benchmark_NameOverlay" xml:space="preserve">
+    <value>Rysowanie nakładki</value>
+  </data>
+  <data name="Benchmark_NamePipe" xml:space="preserve">
+    <value>Przesył klatek do ffmpeg</value>
+  </data>
+  <data name="Benchmark_NoAdvice" xml:space="preserve">
+    <value>Twoje ustawienia są już najszybsze na tym komputerze.</value>
+  </data>
+  <data name="Benchmark_OnRecording" xml:space="preserve">
+    <value>Test na wczytanym nagraniu: {0}</value>
+  </data>
+  <data name="Benchmark_OnSynthetic" xml:space="preserve">
+    <value>Nie wczytano nagrania, więc test użyje klipu testowego 4K. Obraz testowy dekoduje się szybciej niż prawdziwe nagranie, a krótkiego renderu nie będzie.</value>
+  </data>
+  <data name="Benchmark_Os" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Benchmark_Output" xml:space="preserve">
+    <value>Wyjście</value>
+  </data>
+  <data name="Benchmark_OverlayPreview" xml:space="preserve">
+    <value>Nakładka w podglądzie ({0}x{1})</value>
+  </data>
+  <data name="Benchmark_OverlayRender" xml:space="preserve">
+    <value>Nakładka w renderze ({0}x{1})</value>
+  </data>
+  <data name="Benchmark_OverlayValue" xml:space="preserve">
+    <value>{0} ms ({1} kl./s)</value>
+  </data>
+  <data name="Benchmark_P95" xml:space="preserve">
+    <value>p95 {0} ms</value>
+  </data>
+  <data name="Benchmark_Pipe" xml:space="preserve">
+    <value>Przesył klatek do ffmpeg ({0}x{1})</value>
+  </data>
+  <data name="Benchmark_Realtime" xml:space="preserve">
+    <value>{0}x czasu rzeczywistego</value>
+  </data>
+  <data name="Benchmark_Recording" xml:space="preserve">
+    <value>Nagranie</value>
+  </data>
+  <data name="Benchmark_RenderCpu" xml:space="preserve">
+    <value>Render z dekodowaniem na CPU</value>
+  </data>
+  <data name="Benchmark_RenderGpu" xml:space="preserve">
+    <value>Render z dekodowaniem na GPU</value>
+  </data>
+  <data name="Benchmark_Results" xml:space="preserve">
+    <value>Wyniki</value>
+  </data>
+  <data name="Benchmark_SlowestStage" xml:space="preserve">
+    <value>Najwolniejszy etap</value>
+  </data>
+  <data name="Benchmark_StageDecode" xml:space="preserve">
+    <value>Dekodowanie...</value>
+  </data>
+  <data name="Benchmark_StageEncode" xml:space="preserve">
+    <value>Kodowanie...</value>
+  </data>
+  <data name="Benchmark_StageOverlay" xml:space="preserve">
+    <value>Rysowanie nakładki...</value>
+  </data>
+  <data name="Benchmark_StagePipe" xml:space="preserve">
+    <value>Przesył klatek do ffmpeg...</value>
+  </data>
+  <data name="Benchmark_StagePreparing" xml:space="preserve">
+    <value>Przygotowanie...</value>
+  </data>
+  <data name="Benchmark_StageProgress" xml:space="preserve">
+    <value>{0} ({1} z {2})</value>
+  </data>
+  <data name="Benchmark_StageRender" xml:space="preserve">
+    <value>Krótki render...</value>
+  </data>
+  <data name="Benchmark_Start" xml:space="preserve">
+    <value>Uruchom test</value>
+  </data>
+  <data name="Benchmark_StepFailed" xml:space="preserve">
+    <value>nie udało się</value>
+  </data>
+  <data name="Benchmark_Stop" xml:space="preserve">
+    <value>Przerwij</value>
+  </data>
+  <data name="Benchmark_Stopped" xml:space="preserve">
+    <value>Test przerwany.</value>
+  </data>
+  <data name="Benchmark_Suggestions" xml:space="preserve">
+    <value>Podpowiedzi</value>
+  </data>
+  <data name="Benchmark_Threads" xml:space="preserve">
+    <value>{0} wątek|{0} wątki|{0} wątków</value>
+  </data>
+  <data name="Benchmark_Title" xml:space="preserve">
+    <value>Test wydajności</value>
+  </data>
+  <data name="Benchmark_Unknown" xml:space="preserve">
+    <value>nieznany</value>
+  </data>
+  <data name="Benchmark_Unstable" xml:space="preserve">
+    <value>niestabilne</value>
+  </data>
+  <data name="Benchmark_UnstableWarning" xml:space="preserve">
+    <value>Powtórzenia części pomiarów różniły się o ponad 10% - coś w tle zabierało zasoby. Wyniki oznaczone jako niestabilne traktuj ostrożnie.</value>
+  </data>
+  <data name="Benchmark_VideoValue" xml:space="preserve">
+    <value>{0} {1}x{2}, {3} kl./s, {4}-bit, {5} Mb/s</value>
+  </data>
+  <data name="Benchmark_WhileRendering" xml:space="preserve">
+    <value>Testu nie da się uruchomić w trakcie renderu.</value>
+  </data>
+  <data name="Benchmark_WithoutShadows" xml:space="preserve">
+    <value>bez cieni {0} ms</value>
+  </data>
   <data name="Calibration_Example" xml:space="preserve">
     <value>Przykład: twoja hulajnoga ma ograniczenie do 25 km/h, a GPS przy pełnej prędkości pokazuje zwykle około 22 km/h - wpisz 25 i 22.</value>
   </data>
@@ -1504,8 +1726,19 @@ Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu
   <data name="Render_Anyway" xml:space="preserve">
     <value>Renderuj mimo to</value>
   </data>
+  <data name="Render_BusyTitle" xml:space="preserve">
+    <value>Komputer jest zajęty</value>
+  </data>
+  <data name="Render_CheckingLoad" xml:space="preserve">
+    <value>Sprawdzam, czy komputer nie jest zajęty...</value>
+  </data>
   <data name="Render_CompleteTitle" xml:space="preserve">
     <value>Render zakończony</value>
+  </data>
+  <data name="Render_CpuBusyMessage" xml:space="preserve">
+    <value>Procesor jest już zajęty w {0}. Ten render koduje na CPU, więc będzie wyraźnie wolniejszy.
+
+Renderować mimo to?</value>
   </data>
   <data name="Render_DoneSummary" xml:space="preserve">
     <value>Czas: {0} · Rozmiar: {1}</value>
@@ -1515,6 +1748,11 @@ Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu
   </data>
   <data name="Render_FailedTitle" xml:space="preserve">
     <value>Render nie powiódł się</value>
+  </data>
+  <data name="Render_GpuBusyMessage" xml:space="preserve">
+    <value>Karta graficzna jest już obciążona: GPU {0}, enkoder wideo {1}, inne sesje kodowania: {2}. Coś innego gra, nagrywa albo koduje (gra, OBS, nagrywanie w tle GeForce, drugi render), więc ten render będzie wolniejszy, a gdy karta wyczerpie limit sesji kodowania, może się w ogóle nie uruchomić.
+
+Renderować mimo to?</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Anulowano: {0}</value>
@@ -1527,6 +1765,9 @@ Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu
   </data>
   <data name="Render_LogEncoder" xml:space="preserve">
     <value>Enkoder: {0}, cięcia: {1}</value>
+  </data>
+  <data name="Render_LogLoad" xml:space="preserve">
+    <value>Obciążenie przed renderem: CPU {0}, GPU {1}, enkoder wideo {2}</value>
   </data>
   <data name="Render_LogLowDisk" xml:space="preserve">
     <value>Mało miejsca na dysku: render potrzebuje około {0}, a na dysku wyjściowym wolne jest {1}</value>
@@ -1662,6 +1903,9 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   <data name="Settings_ClosingEndsARunningRender" xml:space="preserve">
     <value>Zamknięcie przerywa trwający render i zostawia niepełny plik.</value>
   </data>
+  <data name="Settings_CodecSameAsSource" xml:space="preserve">
+    <value>Jak w źródle (domyślny)</value>
+  </data>
   <data name="Settings_ColorTheRouteBySpeed" xml:space="preserve">
     <value>Koloruj trasę według prędkości</value>
   </data>
@@ -1718,6 +1962,9 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   </data>
   <data name="Settings_FastStartForWebPlayback" xml:space="preserve">
     <value>Szybki start przy odtwarzaniu w sieci</value>
+  </data>
+  <data name="Settings_FindWhatIsFaster" xml:space="preserve">
+    <value>Sprawdź, co jest szybsze na tym komputerze</value>
   </data>
   <data name="Settings_FreeForNonCommercialUse" xml:space="preserve">
     <value>Darmowy do użytku niekomercyjnego na licencji PolyForm Noncommercial License 1.0.0. Filmy, które w nim tworzysz, należą do ciebie - możesz na nich zarabiać.</value>
@@ -1821,11 +2068,35 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   <data name="Settings_OutputBitrate" xml:space="preserve">
     <value>Bitrate wyjściowy</value>
   </data>
+  <data name="Settings_OutputCodec" xml:space="preserve">
+    <value>Kodek</value>
+  </data>
+  <data name="Settings_OutputCodecHint" xml:space="preserve">
+    <value>H.264 odtworzy się wszędzie, także na starszych telefonach i w edytorach, ale przy tej samej jakości potrzebuje większego bitrate'u, więc dostaje o połowę więcej. H.264 jest zawsze 8-bitowy.</value>
+  </data>
+  <data name="Settings_OutputEightBit" xml:space="preserve">
+    <value>Zapisuj w 8 bitach</value>
+  </data>
+  <data name="Settings_OutputEightBitHint" xml:space="preserve">
+    <value>Wideo 10-bitowe nie wszędzie się odtwarza. 8 bitów działa niemal wszędzie, kosztem możliwego pasmowania na gładkich przejściach, np. na niebie. Nie dotyczy nagrań 8-bitowych.</value>
+  </data>
   <data name="Settings_OutputQuality" xml:space="preserve">
     <value>JAKOŚĆ WYJŚCIOWA</value>
   </data>
+  <data name="Settings_OutputResolution" xml:space="preserve">
+    <value>Rozdzielczość</value>
+  </data>
+  <data name="Settings_OutputResolutionHint" xml:space="preserve">
+    <value>Mniejsza przyda się do udostępniania: render idzie wtedy szybciej, a bitrate maleje razem z liczbą pikseli. Nagranie nigdy nie jest powiększane.</value>
+  </data>
   <data name="Settings_PlaybackAndMonitors" xml:space="preserve">
     <value>ODTWARZANIE I MONITORY</value>
+  </data>
+  <data name="Settings_PreviewShadows" xml:space="preserve">
+    <value>Cienie w podglądzie</value>
+  </data>
+  <data name="Settings_PreviewShadowsHint" xml:space="preserve">
+    <value>Wyłącz na słabszym komputerze: cienie widżetów to większość czasu rysowania nakładki, a bez nich podgląd odtwarza się płynniej. Render i zrzut klatki zawsze mają cienie.</value>
   </data>
   <data name="Settings_Privacy" xml:space="preserve">
     <value>PRYWATNOŚĆ</value>
@@ -1862,6 +2133,9 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   </data>
   <data name="Settings_RouteIntro" xml:space="preserve">
     <value>Wstęp z trasą</value>
+  </data>
+  <data name="Settings_SameAsSource" xml:space="preserve">
+    <value>Jak w źródle (domyślna)</value>
   </data>
   <data name="Settings_Scale100" xml:space="preserve">
     <value>100% (domyślna)</value>
@@ -2134,8 +2408,14 @@ Użyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mi
   <data name="Summary_PlanBitrate" xml:space="preserve">
     <value>bitrate {0:0.##}x źródła</value>
   </data>
+  <data name="Summary_PlanCodec" xml:space="preserve">
+    <value>kodek {0}</value>
+  </data>
   <data name="Summary_PlanCpuEncoder" xml:space="preserve">
     <value>enkoder CPU ({0}) zamiast GPU</value>
+  </data>
+  <data name="Summary_PlanEightBit" xml:space="preserve">
+    <value>8 bitów</value>
   </data>
   <data name="Summary_PlanFasterPreset" xml:space="preserve">
     <value>szybszy preset enkodera ({0})</value>
@@ -2154,6 +2434,9 @@ Użyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mi
   </data>
   <data name="Summary_PlanMetadataKeptSerial" xml:space="preserve">
     <value>zachowane metadane kamery, z numerem seryjnym</value>
+  </data>
+  <data name="Summary_PlanResolution" xml:space="preserve">
+    <value>rozdzielczość {0}x{1}</value>
   </data>
   <data name="Summary_RecommendedColor" xml:space="preserve">
     <value>bt709 / bt709 / bt709 (zakres tv)</value>
@@ -2409,6 +2692,12 @@ Obecne znaczniki:
   <data name="Tools_OpenDataFolderFailed" xml:space="preserve">
     <value>Nie udało się otworzyć folderu danych: {0}</value>
   </data>
+  <data name="Tools_Performance" xml:space="preserve">
+    <value>Wydajność</value>
+  </data>
+  <data name="Tools_PerformanceHint" xml:space="preserve">
+    <value>Sprawdź, które ustawienia renderu i podglądu są najszybsze na tym komputerze.</value>
+  </data>
   <data name="Tools_PickCameraAudio" xml:space="preserve">
     <value>Wybierz pliki dźwiękowe .AAC z kamery</value>
   </data>
@@ -2436,6 +2725,9 @@ Obecne znaczniki:
   </data>
   <data name="Tools_ReplaceExistingTitle" xml:space="preserve">
     <value>Zastąpić istniejące pliki?</value>
+  </data>
+  <data name="Tools_RunBenchmark" xml:space="preserve">
+    <value>Test wydajności</value>
   </data>
   <data name="Tools_SaveCleanedCopyAs" xml:space="preserve">
     <value>Zapisz oczyszczoną kopię jako</value>

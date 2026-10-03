@@ -27,10 +27,11 @@ public sealed partial class OverlayRenderer
 	///     anchor (element.X/Y, so every widget draws around (0, 0)), scaled by the resolution's scale times the
 	///     widget's own element.Scale (pivoted on the anchor, so resizing never shifts it), slid and faded by
 	///     `state` (ElementAnimation.At). The fade's SaveLayer only exists while a widget is fading in or out - a
-	///     widget with no timing set, or between its two ramps, draws straight onto the frame. `content` is what a shadowed
-	///     widget draws (null for one without a shadow, see IsShadowed): its fade and its shadow (OverlayRenderer.Shadow.cs) then use a layer just that big.
+	///     widget with no timing set, or between its two ramps, draws straight onto the frame. `content` is what the widget
+	///     draws: its fade and, when `shadowed` (IsShadowed), its shadow (OverlayRenderer.Shadow.cs) use a layer just that big.
+	///     `drawn` is everything the widget will put on the frame, its shadow included, in the canvas's coordinates as set up.
 	/// </summary>
-	private int BeginElement(SKCanvas canvas, OverlayElement element, ElementState state, SKRect? content = null)
+	private int BeginElement(SKCanvas canvas, OverlayElement element, ElementState state, SKRect content, bool shadowed, out SKRect drawn)
 	{
 		int saveCount = canvas.Save();
 		(float offsetX, float offsetY) = SlideOffset(state);
@@ -39,16 +40,17 @@ public sealed partial class OverlayRenderer
 		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
 
-		if (content is { } drawn)
+		drawn = content;
+		if (shadowed)
 		{
 			ShadowStyle shadow = ShadowStyleOf(element);
-			SKRect area = ShadowArea(shadow, drawn);
-			if (state.Progress < 1f) canvas.SaveLayer(area, AlphaPaint(state.Progress));
-			BeginShadow(canvas, shadow, area);
+			drawn = ShadowArea(shadow, content);
+			if (state.Progress < 1f) canvas.SaveLayer(drawn, AlphaPaint(state.Progress));
+			BeginShadow(canvas, shadow, drawn);
 		}
 		else if (state.Progress < 1f)
 		{
-			canvas.SaveLayer(AlphaPaint(state.Progress));
+			canvas.SaveLayer(content, AlphaPaint(state.Progress));
 		}
 
 		return saveCount;

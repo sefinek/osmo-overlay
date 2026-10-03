@@ -74,10 +74,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKFont _routeIntroLabelFont;
 	private readonly SKFont _routeIntroValueFont;
 
-	// Fixed-style paints (color/width never change frame to frame) reused across widgets, cached once
-	// here the same way fonts already are above - RenderInto() runs once per output frame, so allocating
-	// these fresh per widget per frame would be pure per-frame GC churn for a value
-	// that's always identical.
+	// Paints whose style never changes, built once like the fonts - RenderInto runs every frame.
 	private readonly SKPaint _panelFillPaint;
 	private readonly SKPaint _ringStroke3White160;
 	private readonly SKPaint _ringStroke3White140;
@@ -105,13 +102,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	// Recolored per widget with its MarkerColor, like the panel fill.
 	private readonly SKPaint _markerFillPaint = new() { IsAntialias = true, Style = SKPaintStyle.Fill };
 
-	// Mutable paints reused by DrawOutlined (see below) - unlike the fixed-style paints
-	// above, color/stroke width/blur radius vary per call (font size, requested color, fade opacity), so
-	// these can't be assigned once at construction - instead their properties are overwritten right
-	// before each draw and the same instances are reused, avoiding a fresh SKPaint (and, for the blur
-	// variants, a fresh native blur kernel) on every single piece of HUD text drawn every frame. Safe
-	// because RenderInto() is only ever called sequentially for a given instance - see RenderJob's single
-	// render loop - never concurrently.
+	// DrawOutlined's paints, set up again before each draw instead of a new SKPaint (and blur) per text - the renderer
+	// is never called concurrently.
 	private readonly SKPaint _outlineShadowPaint;
 	private readonly SKPaint _outlineStrokePaint;
 	private readonly SKPaint _outlineFillPaint;
@@ -122,17 +114,10 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKPath _headingArrow = CreateHeadingArrow();
 	private readonly Dictionary<float, SKPathEffect> _dashEffects = [];
 
-	// Blur mask filters keyed by sigma (font.Size * 0.04 for text shadows, radius * 0.12 for panel
-	// shadows) - both draw from a small, closed set of font sizes/widget radii fixed at construction
-	// time, so this fills in lazily and then never grows past a handful of entries for the rest of the
-	// renderer's lifetime.
+	// Blur filters per sigma, built on first use - a layout has only a handful of text sizes.
 	private readonly Dictionary<float, SKMaskFilter> _blurMaskFilters = [];
 
-	// Per-element FontFamily overrides on the text widgets (see OverlayRenderer.TextWidgets.cs) - unlike
-	// the fixed fonts above, these come from arbitrary user input, so they fill in lazily instead of being
-	// built upfront. Keyed separately from _blurMaskFilters' single-float key since a font also varies by
-	// family; typefaces are cached (and disposed) independently of the fonts built from them since several
-	// sizes can share one typeface (see ResolveTypeface/GetFont).
+	// The widgets' own FontFamily, built on first use. Typefaces are kept apart from fonts: several sizes share one.
 	private readonly Dictionary<string, SKTypeface> _customTypefacesByFamily = [];
 	private readonly Dictionary<(string Family, float Size), SKFont> _fontCache = [];
 
@@ -314,7 +299,6 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		_trail.Clear();
 		_trailPixels.Clear();
-		_trailCacheIndex = -1;
 		DisposeRoutes(_compassRoutes);
 		DisposeRoutes(_mapRoutes);
 		_routeIntroCard?.Dispose();
@@ -475,35 +459,117 @@ public sealed partial class OverlayRenderer : IDisposable
 		}
 	}
 
-	/// <summary>The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget needs one - see DrawFrame's mapAttribution.</summary>
+	/// <summary>Off: the widgets are drawn one after another straight onto the frame - the reference ParallelWidgets is checked against.</summary>
+	internal bool ParallelWidgets { get; set; } = true;
+
+	/// <summary>
+	///     The normal (non-route-intro) per-frame widget pass. Returns the map attribution text to show, if any visible MapWidget
+	///     needs one - see DrawFrame's mapAttribution. Each widget is recorded in order (drawing them reads and updates the
+	///     renderer's own state, one at a time), then rasterized on its own in parallel - their shadows' blur is most of a
+	///     frame's time - and the results go onto the frame in layout order. Source-over is associative, so that's the same
+	///     picture as drawing them straight on, to a rounding. Without a shadow to blur, drawing them straight on is faster.
+	/// </summary>
 	private string? DrawWidgets(SKCanvas canvas, DerivedFrame frame)
 	{
 		string? mapAttribution = null;
 		double sampleTime = frame.Raw.SampleTimeSeconds;
-
-		foreach (OverlayElement element in Layout)
+		bool parallel = ParallelWidgets && Layout.Any(e => e.Visible && IsShadowed(e));
+		List<(SKPicture Picture, SKRect Bounds)> widgets = [];
+		try
 		{
-			if (!element.Visible) continue;
+			foreach (OverlayElement element in Layout)
+			{
+				if (!element.Visible) continue;
 
-			ElementState state = ElementAnimation.At(element, sampleTime, OutputDurationSeconds);
-			if (state.Progress <= 0f) continue;
+				ElementState state = ElementAnimation.At(element, sampleTime, OutputDurationSeconds);
+				if (state.Progress <= 0f) continue;
 
-			// A shadowed widget is recorded once and played back, so its fade and shadow layers cover just what it drew, not the
-			// whole frame. The round ones draw directly: their size is known and they read the canvas matrix (DrawTrailRoute).
-			bool shadowed = IsShadowed(element);
-			SKRect? round = shadowed ? RoundWidgetBounds(element) : null;
-			using SKPicture? recorded = shadowed && round is null ? RecordElement(element, frame) : null;
-			SKRect? content = round ?? (recorded is { CullRect.IsEmpty: false } ? recorded.CullRect : null);
-			if (shadowed && content is null) continue;
+				if (!parallel)
+				{
+					DrawWidget(canvas, element, state, frame);
+				}
+				else
+				{
+					using var recorder = new SKPictureRecorder();
+					SKCanvas widget = recorder.BeginRecording(canvas.LocalClipBounds);
+					widget.SetMatrix(canvas.TotalMatrix);
+					SKRect? bounds = DrawWidget(widget, element, state, frame);
+					SKPicture picture = recorder.EndRecording();
+					if (bounds is { } device) widgets.Add((picture, device));
+					else picture.Dispose();
+				}
 
-			int saveCount = BeginElement(canvas, element, state, content);
-			if (recorded is null) DrawElement(canvas, element, frame);
-			else canvas.DrawPicture(recorded);
-			if (element is MapWidgetElement map) mapAttribution = MapSources.Attribution(map.MapProviderId) ?? mapAttribution;
-			canvas.RestoreToCount(saveCount);
+				if (element is MapWidgetElement map) mapAttribution = MapSources.Attribution(map.MapProviderId) ?? mapAttribution;
+			}
+
+			Composite(canvas, widgets);
+		}
+		finally
+		{
+			foreach ((SKPicture picture, _) in widgets) picture.Dispose();
 		}
 
 		return mapAttribution;
+	}
+
+	/// <summary>
+	///     One widget through BeginElement. It's recorded first, so its fade and shadow layers cover just what it drew, not the
+	///     whole frame. The round ones draw directly: their size is known and they read the canvas matrix (DrawTrailRoute).
+	///     Returns where on the canvas's device it drew, shadow included - null for nothing.
+	/// </summary>
+	private SKRect? DrawWidget(SKCanvas canvas, OverlayElement element, ElementState state, DerivedFrame frame)
+	{
+		SKRect? round = RoundWidgetBounds(element);
+		using SKPicture? recorded = round is null ? RecordElement(element, frame) : null;
+		SKRect? content = round ?? (recorded is { CullRect.IsEmpty: false } ? recorded.CullRect : null);
+		if (content is not { } widget) return null;
+
+		int saveCount = BeginElement(canvas, element, state, widget, IsShadowed(element), out SKRect drawn);
+		SKRect device = canvas.TotalMatrix.MapRect(drawn);
+		if (recorded is null) DrawElement(canvas, element, frame);
+		else canvas.DrawPicture(recorded);
+		canvas.RestoreToCount(saveCount);
+		return device;
+	}
+
+	/// <summary>The recorded widgets, each rasterized on its own thread into a bitmap just its size, onto the frame in order.</summary>
+	private static void Composite(SKCanvas canvas, List<(SKPicture Picture, SKRect Bounds)> widgets)
+	{
+		if (widgets.Count == 0) return;
+
+		SKRectI frame = canvas.DeviceClipBounds;
+		var rasters = new (SKBitmap? Bitmap, SKPointI At)[widgets.Count];
+		try
+		{
+			Parallel.For(0, widgets.Count, i =>
+			{
+				SKRectI box = SKRectI.Intersect(SKRectI.Ceiling(widgets[i].Bounds, true), frame);
+				if (box.IsEmpty) return;
+
+				var bitmap = new SKBitmap(new SKImageInfo(box.Width, box.Height, SKColorType.Bgra8888, SKAlphaType.Premul));
+				using (var raster = new SKCanvas(bitmap))
+				{
+					raster.Clear(SKColors.Transparent);
+					raster.Translate(-box.Left, -box.Top);
+					raster.DrawPicture(widgets[i].Picture);
+				}
+
+				rasters[i] = (bitmap, new SKPointI(box.Left, box.Top));
+			});
+
+			canvas.Save();
+			canvas.ResetMatrix();
+			foreach ((SKBitmap? bitmap, SKPointI at) in rasters)
+			{
+				if (bitmap is not null) canvas.DrawBitmap(bitmap, at.X, at.Y, SKSamplingOptions.Default);
+			}
+
+			canvas.Restore();
+		}
+		finally
+		{
+			foreach ((SKBitmap? bitmap, _) in rasters) bitmap?.Dispose();
+		}
 	}
 
 	/// <summary>One widget around its anchor at (0, 0), in reference pixels - the canvas already set up by BeginElement.</summary>

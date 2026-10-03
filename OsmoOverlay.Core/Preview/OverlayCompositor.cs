@@ -151,13 +151,26 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 
-	/// <summary>The overlay onto a frame of any size (the full-resolution snapshot) - none where cut out or while hidden.</summary>
+	/// <summary>
+	///     The overlay onto a frame of any size (the full-resolution snapshot) - none where cut out or while hidden. With the
+	///     shadows even when the preview leaves them out: a snapshot shows the frame as the render draws it.
+	/// </summary>
 	public void DrawOverlayOnto(byte[] bgra, int width, int height, TimeSpan position)
 	{
 		lock (_lock)
 		{
-			if (!_disposed)
+			if (_disposed) return;
+
+			bool shadows = Renderer.DrawShadows;
+			Renderer.DrawShadows = true;
+			try
+			{
 				DrawOverlayLocked(bgra, width, height, position);
+			}
+			finally
+			{
+				Renderer.DrawShadows = shadows;
+			}
 		}
 	}
 

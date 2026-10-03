@@ -32,10 +32,13 @@ public sealed partial class OverlayRenderer
 	// every frame. Editing a shadow's values makes a new look at each step, so the cache starts over when it grows.
 	private readonly Dictionary<ShadowStyle, SKImageFilter> _shadowFilters = [];
 
+	/// <summary>Off: no widget gets its shadow - the preview's light mode (OverlaySettings.PreviewShadows), never a render.</summary>
+	public bool DrawShadows { get; set; } = true;
+
 	/// <summary>A shadow at 0% opacity is invisible, so it costs nothing: no layer, no filter.</summary>
-	private static bool IsShadowed(OverlayElement element)
+	private bool IsShadowed(OverlayElement element)
 	{
-		return element.ShadowEnabled && element.ShadowOpacity > 0f;
+		return DrawShadows && element.ShadowEnabled && element.ShadowOpacity > 0f;
 	}
 
 	private static ShadowStyle ShadowStyleOf(OverlayElement element)

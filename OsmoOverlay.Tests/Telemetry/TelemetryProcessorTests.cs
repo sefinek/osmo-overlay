@@ -124,6 +124,44 @@ public sealed class TelemetryProcessorTests
 	}
 
 	[TestMethod]
+	public void Gradient_ReadsAnEvenSlope()
+	{
+		List<TelemetryFrame> frames = [.. Track(5, 0, 10, 60).Select(f => f with { AltitudeMeters = 200 + f.SampleTimeSeconds * 5 * 0.06 })];
+
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, null);
+
+		Assert.AreEqual(6, derived[300].GradientPercent, 0.1);
+	}
+
+	[TestMethod]
+	public void Gradient_IgnoresAltitudeWanderingOnTheFlat()
+	{
+		// A metre up and down every couple of seconds - what a GPS altitude does on its own.
+		List<TelemetryFrame> frames = [.. Track(1.5, 0, 10, 120).Select(f => f with { AltitudeMeters = 200 + Math.Sin(f.SampleTimeSeconds * 3) })];
+
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, null);
+
+		Assert.IsTrue(derived.Skip(400).Take(400).All(d => Math.Abs(d.GradientPercent) < 2.5),
+			$"max {derived.Max(d => Math.Abs(d.GradientPercent)):0.0}%");
+	}
+
+	[TestMethod]
+	public void Distance_SkipsTheFixWanderingWhileTheReceiverSaysStill()
+	{
+		var rng = new Random(1);
+		List<TelemetryFrame> standing =
+		[
+			.. Enumerable.Range(0, 600).Select(i => new TelemetryFrame(i, i / 10.0, StartLat + (rng.NextDouble() - 0.5) * 2e-5,
+				StartLon + (rng.NextDouble() - 0.5) * 2e-5, 200, null, 0, 0, 1, GpsSpeedMs: 0.05))
+		];
+
+		Assert.AreEqual(0, TelemetryProcessor.Process(standing, null)[^1].CumulativeDistanceMeters);
+		Assert.IsTrue(TelemetryProcessor.Process([.. standing.Select(f => f with { GpsSpeedMs = null })], null)[^1].CumulativeDistanceMeters > 50,
+			"without the receiver's speed, the wandering still counts");
+		Assert.AreEqual(50, TelemetryProcessor.Process(Track(5, 0, 10, 10, 5), null)[^1].CumulativeDistanceMeters, 0.1, "moving counts");
+	}
+
+	[TestMethod]
 	public void GpsLossRanges_AreContiguousRunsWithoutFix()
 	{
 		List<TelemetryFrame> frames =

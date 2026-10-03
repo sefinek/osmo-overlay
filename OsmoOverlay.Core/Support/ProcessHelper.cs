@@ -28,6 +28,12 @@ internal static class ProcessHelper
 		return Create(command, args, true, false, true);
 	}
 
+	/// <summary>CreateHiddenWithStdin for a background run nobody watches - file log only, like CreateHiddenQuiet.</summary>
+	public static ProcessStartInfo CreateHiddenQuietWithStdin(string command, IEnumerable<string> args)
+	{
+		return Create(command, args, false, false, true);
+	}
+
 	private static ProcessStartInfo Create(string command, IEnumerable<string> args, bool notify, bool redirectStandardOutput, bool redirectStandardInput)
 	{
 		IReadOnlyCollection<string> argList = args as IReadOnlyCollection<string> ?? args.ToList();

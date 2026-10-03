@@ -135,7 +135,10 @@ public sealed class PreviewPlayer : IDisposable
 		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix);
 		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
 				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
-				summary.ContainerRecordingStartUtc, MapSources.From(settings), routeIntro) { RouteAcrossCuts = settings.RouteAcrossCuts },
+				summary.ContainerRecordingStartUtc, MapSources.From(settings), routeIntro)
+			{
+				RouteAcrossCuts = settings.RouteAcrossCuts, DrawShadows = settings.PreviewShadows
+			},
 			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool);
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
 			routeIntro.Enabled, reframer);
@@ -407,6 +410,12 @@ public sealed class PreviewPlayer : IDisposable
 	public void SetShowWatermark(bool show)
 	{
 		if (_recording is { } recording) PublishStill(recording, recording.Compositor.Change(r => r.ShowWatermark = show));
+	}
+
+	/// <summary>The widgets' shadows on or off in the preview (OverlaySettings.PreviewShadows) - on the frame on screen right away.</summary>
+	public void SetDrawShadows(bool draw)
+	{
+		if (_recording is { } recording) PublishStill(recording, recording.Compositor.Change(r => r.DrawShadows = draw));
 	}
 
 	/// <summary>How the drawn routes cross a cut - applies to the frame on screen right away.</summary>

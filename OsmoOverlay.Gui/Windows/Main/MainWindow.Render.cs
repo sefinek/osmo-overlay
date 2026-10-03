@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Gui.Native;
@@ -26,6 +27,7 @@ public partial class MainWindow
 		// compositing asset, not an alternative final output, so it shouldn't need its own UI.
 		string outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
 		if (!await ConfirmDiskSpaceAsync(outputPath)) return;
+		if (!await ConfirmComputerNotBusyAsync()) return;
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
@@ -170,12 +172,51 @@ public partial class MainWindow
 	{
 		if (_summary is null) return true;
 
-		long estimate = RenderDiskSpace.EstimateOutputBytes(_summary.FileSizeBytes, SourceFrames, PlannedFrameCount());
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		VideoInfo source = _summary.Video;
+		double bitrateScale = source.BitRate > 0
+			? (double)OutputVideo.For(source, settings).BitRate / source.BitRate * settings.OutputBitrateMultiplier
+			: 1;
+		long estimate = RenderDiskSpace.EstimateOutputBytes(_summary.FileSizeBytes, SourceFrames, PlannedFrameCount(), bitrateScale);
 		long required = RenderDiskSpace.RequiredBytes(estimate);
 		if (estimate <= 0 || RenderDiskSpace.AvailableBytes(outputPath) is not { } available || available >= required) return true;
 
 		AppendLog(string.Format(Strings.Render_LogLowDisk, FormatHelper.FormatBytes(required), FormatHelper.FormatBytes(available)), LogLevel.Warn);
 		return await AskLowDiskSpaceAsync(outputPath, estimate, required, available);
+	}
+
+	/// <summary>
+	///     Before a render: whether something else already keeps its encoder busy - the GPU and its video encoder for NVENC (a
+	///     game, OBS, GeForce's recording, another render), the CPU for x264/x265 (RenderBenchmark.SampleLoadAsync, ~1 s). A busy
+	///     one asks first. The preview stops first, so its own playback isn't what's measured. True to go on.
+	/// </summary>
+	private async Task<bool> ConfirmComputerNotBusyAsync()
+	{
+		_previewPlayer.Pause();
+		AppendLog(Strings.Render_CheckingLoad);
+		BenchmarkLoad load = await RenderBenchmark.SampleLoadAsync(CancellationToken.None);
+		bool gpuEncoder = FfmpegPipeline.IsGpuEncoder(_detectedEncoder);
+		bool busy = load.SlowsRender(gpuEncoder);
+		AppendLog(string.Format(Strings.Render_LogLoad, LoadPercent(load.Cpu), LoadPercent(load.Gpu), LoadPercent(load.Encoder)),
+			busy ? LogLevel.Warn : LogLevel.Info);
+		return !busy || await AskComputerBusyAsync(load, gpuEncoder);
+	}
+
+	internal async Task<bool> AskComputerBusyAsync(BenchmarkLoad load, bool gpuEncoder)
+	{
+		string message = gpuEncoder
+			? string.Format(Strings.Render_GpuBusyMessage, LoadPercent(load.Gpu), LoadPercent(load.Encoder), load.EncoderSessions ?? 0)
+			: string.Format(Strings.Render_CpuBusyMessage, LoadPercent(load.Cpu));
+
+		SystemSound.PlayNotification();
+		if (!IsActive) BalloonNotifier.Show(this, Strings.Render_BusyTitle, message);
+
+		return await ConfirmDialog.AskAsync(this, Strings.Render_BusyTitle, message, Strings.Render_Anyway, DialogKind.Warning);
+	}
+
+	private static string LoadPercent(double? share)
+	{
+		return share is { } value ? $"{value * 100:0}%" : Strings.Benchmark_Unknown;
 	}
 
 	internal async Task<bool> AskLowDiskSpaceAsync(string outputPath, long estimate, long required, long available)
