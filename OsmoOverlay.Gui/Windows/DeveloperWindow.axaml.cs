@@ -72,7 +72,8 @@ public partial class DeveloperWindow : Window
 				await _main.ShowNoTelemetryNoticeAsync();
 				break;
 			case "busy" when _main is not null:
-				result = await _main.AskComputerBusyAsync(new BenchmarkLoad(0.63, 0.97, 0.42, 2), argument == "gpu");
+				result = await _main.AskComputerBusyAsync(argument == "gpu-cpu" ? new BenchmarkLoad(0.82, 0.12, 0, 0) : new BenchmarkLoad(0.63, 0.97, 0.42, 2),
+					argument is "gpu" or "gpu-cpu");
 				break;
 			case "no-gps" when _main is not null:
 				await _main.ShowNoGpsNoticeAsync();
@@ -111,10 +112,10 @@ public partial class DeveloperWindow : Window
 				benchmark.ShowSample(new BenchmarkResult(
 					new BenchmarkSystem("Microsoft Windows 10.0.26200", "Intel(R) Core(TM) i9-14900HX", 32, 32L << 30,
 						["NVIDIA GeForce RTX 4070 Laptop GPU (32.0.15.7714)"], "9.0.2", "1.0.0"),
-					new BenchmarkLoad(0.31, 0.64), source, source, false,
+					new BenchmarkLoad(0.31, 0.64), source, source, true,
 					new BenchmarkStat(131, 124, 138, 3), new BenchmarkStat(41, 40, 43, 3),
 					new FrameTimes(16.4, 19.8), new FrameTimes(4.4, 5.1), 1920, 1080, new FrameTimes(4.4, 5.6), new FrameTimes(2.0, 2.4),
-					new BenchmarkStat(59, 57, 60, 2),
+					new BenchmarkStat(59, 57, 60, 2), new BenchmarkStat(36, 35, 37, 2),
 					[
 						new EncoderSpeed("hevc_nvenc", "p1", new BenchmarkStat(121, 118, 124, 2), false),
 						new EncoderSpeed("hevc_nvenc", "p4", new BenchmarkStat(114, 99, 120, 2), false),

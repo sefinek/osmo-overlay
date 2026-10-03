@@ -16,11 +16,11 @@ public sealed class RenderBenchmarkTests
 
 	private static BenchmarkResult Result(BenchmarkStat? hardwareDecode = null, BenchmarkStat? softwareDecode = null, double previewMs = 4,
 		double previewPlainMs = 2, BenchmarkStat? hardwareRender = null, BenchmarkStat? softwareRender = null, double overlayMs = 16,
-		BenchmarkStat? pipe = null, IReadOnlyList<EncoderSpeed>? encoders = null)
+		BenchmarkStat? pipe = null, IReadOnlyList<EncoderSpeed>? encoders = null, BenchmarkStat? graph = null)
 	{
-		return new BenchmarkResult(new BenchmarkSystem("test", null, 8, 1, [], null, "1.0.0"), new BenchmarkLoad(0, 0), Source, Source, false,
+		return new BenchmarkResult(new BenchmarkSystem("test", null, 8, 1, [], null, "1.0.0"), new BenchmarkLoad(0, 0), Source, Source, true,
 			hardwareDecode ?? Runs(150), softwareDecode ?? Runs(150), new FrameTimes(overlayMs, overlayMs * 1.2), new FrameTimes(4, 5), 1920, 1080,
-			new FrameTimes(previewMs, previewMs * 1.2), new FrameTimes(previewPlainMs, previewPlainMs), pipe, encoders ?? [], hardwareRender,
+			new FrameTimes(previewMs, previewMs * 1.2), new FrameTimes(previewPlainMs, previewPlainMs), pipe, graph, encoders ?? [], hardwareRender,
 			softwareRender, TimeSpan.FromMinutes(2));
 	}
 
@@ -142,6 +142,8 @@ public sealed class RenderBenchmarkTests
 		Assert.AreEqual(0.5, bottleneck.Efficiency!.Value, 1e-9);
 		Assert.AreEqual(BenchmarkStage.Decode,
 			RenderBenchmark.Bottleneck(result, new OverlaySettings { HardwareDecoding = false })!.Stage, "decoding on the CPU is then the slowest");
+		Assert.AreEqual(BenchmarkStage.Graph, RenderBenchmark.Bottleneck(result with { Graph = Runs(36) }, new OverlaySettings())!.Stage,
+			"ffmpeg as a whole is slower than its encoder alone");
 	}
 
 	[TestMethod]
@@ -158,6 +160,13 @@ public sealed class RenderBenchmarkTests
 		Assert.IsFalse(browsing.SlowsRender(true), "a browser and GeForce's background recording don't ask every time");
 		Assert.IsTrue(browsing.IsBusy, "but they still skew a benchmark");
 		Assert.IsFalse(new BenchmarkLoad(null, null).IsBusy);
+
+		var compiling = new BenchmarkLoad(0.8, 0.05, 0, 0);
+		Assert.IsTrue(compiling.SlowsRender(true), "the overlay is drawn on the CPU even when the GPU encodes");
+		Assert.IsFalse(compiling.GpuSlowsRender);
+		Assert.IsFalse(new BenchmarkLoad(0.5, 0.05, 0, 0).SlowsRender(true), "a GPU render leaves the CPU more room than x265");
+		Assert.IsTrue(new BenchmarkLoad(0.5, 0.05, 0, 0).SlowsRender(false));
+		Assert.IsFalse(new BenchmarkLoad(null, null).SlowsRender(true), "nothing read, nothing to ask about");
 	}
 
 	[TestMethod]
@@ -166,6 +175,15 @@ public sealed class RenderBenchmarkTests
 		BenchmarkResult result = Result(Runs(30, 31, 29), Runs(190, 191, 189)) with { Load = new BenchmarkLoad(0.2, 0.97) };
 
 		Assert.IsFalse(RenderBenchmark.Advise(result, new OverlaySettings()).Any(a => a.Kind == BenchmarkAdviceKind.SoftwareDecode));
+	}
+
+	[TestMethod]
+	public void Advise_SaysNothingAboutDecoding_OnAGeneratedSample()
+	{
+		BenchmarkResult result = Result(Runs(100, 101, 99), Runs(250, 251, 249)) with { FromRecording = false };
+
+		Assert.IsFalse(RenderBenchmark.Advise(result, new OverlaySettings()).Any(a => a.Kind == BenchmarkAdviceKind.SoftwareDecode),
+			"a generated sample decodes on the CPU far more easily than a camera's recording");
 	}
 
 	[TestMethod]

@@ -60,6 +60,18 @@ public sealed class OutputVideoTests
 	}
 
 	[TestMethod]
+	public void FilterGraph_IsTheRendersOwn()
+	{
+		// As logged by a real render of an Osmo Action 6 recording.
+		Assert.AreEqual("[0:v]format=yuv420p10le,setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv[main];" +
+		                "[1:v]scale=out_color_matrix=bt709:out_range=tv:threads=0,format=yuva420p10le[ovl];" +
+		                "[main][ovl]overlay=format=yuv420p10:shortest=1[v]",
+			FfmpegPipeline.FilterGraph("[0:v]", 1, Osmo, Osmo, false, false));
+		StringAssert.StartsWith(FfmpegPipeline.FilterGraph("[0:v]", 1, Osmo, OutputVideo.For(Osmo, new OverlaySettings { OutputResolution = 1080 }), false, false),
+			"[0:v]scale=1920:1080:flags=lanczos:threads=0,format=yuv420p10le,setparams=");
+	}
+
+	[TestMethod]
 	public void EightBit_OnlyChangesATenBitSource()
 	{
 		VideoInfo output = OutputVideo.For(Osmo, new OverlaySettings { OutputEightBit = true });

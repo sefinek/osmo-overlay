@@ -261,8 +261,8 @@
   <data name="Render_Cancelled" xml:space="preserve">
     <value>Cancelled by user</value>
   </data>
-  <data name="Render_CheckingNvenc" xml:space="preserve">
-    <value>Checking NVENC availability...</value>
+  <data name="Render_CheckingGpuEncoder" xml:space="preserve">
+    <value>Checking the graphics card's encoder...</value>
   </data>
   <data name="Render_CopyingMetadata" xml:space="preserve">
     <value>Copying camera metadata into the output: {0}...</value>
@@ -271,7 +271,7 @@
     <value>Could not copy the camera metadata into the render - the video itself is fine, it just won't carry it</value>
   </data>
   <data name="Render_EncoderCpu" xml:space="preserve">
-    <value>Using encoder: {0} (NVENC unavailable - rendering on CPU)</value>
+    <value>Using encoder: {0} (no graphics card encoder - rendering on CPU)</value>
   </data>
   <data name="Render_EncoderGpu" xml:space="preserve">
     <value>Using encoder: {0} (GPU)</value>

@@ -39,8 +39,14 @@ public partial class BenchmarkWindow : Window
 		_input = input;
 		_totalFrames = totalFrames;
 		_isRendering = isRendering;
-		SourceText.Text = input.InputPaths is { Count: > 0 } paths
-			? string.Format(Strings.Benchmark_OnRecording, Path.GetFileName(paths[0]))
+		SourceText.Text = DescribeSource(input);
+	}
+
+	/// <summary>What the test will run on: a sample it cuts out of the loaded recording, or one it generates.</summary>
+	private static string DescribeSource(BenchmarkInput input)
+	{
+		return input.RecordingPath is { } path
+			? string.Format(Strings.Benchmark_OnRecording, RenderBenchmark.SampleSeconds, Path.GetFileName(path))
 			: Strings.Benchmark_OnSynthetic;
 	}
 
@@ -124,6 +130,7 @@ public partial class BenchmarkWindow : Window
 			BenchmarkStage.Overlay => Strings.Benchmark_StageOverlay,
 			BenchmarkStage.Pipe => Strings.Benchmark_StagePipe,
 			BenchmarkStage.Encode => Strings.Benchmark_StageEncode,
+			BenchmarkStage.Graph => Strings.Benchmark_StageGraph,
 			BenchmarkStage.Render => Strings.Benchmark_StageRender,
 			_ => Strings.Benchmark_StagePreparing
 		};
@@ -169,7 +176,7 @@ public partial class BenchmarkWindow : Window
 		EstimateText.IsVisible = estimate is not null;
 		EstimateText.Text = estimate;
 
-		ShowAdvice(RenderBenchmark.Advise(result, settings), result.Load.IsBusy, canApply);
+		ShowAdvice(RenderBenchmark.Advise(result, settings), SkippedAdvice(result), canApply);
 		ResultsPanel.IsVisible = true;
 		CopyReportButton.IsEnabled = true;
 		CopyReportButton.Content = Strings.Benchmark_CopyReport;
@@ -189,7 +196,9 @@ public partial class BenchmarkWindow : Window
 			("FFmpeg", system.Ffmpeg ?? Strings.Benchmark_Unknown),
 			("OsmoOverlay", system.App),
 			(Strings.Benchmark_Load, string.Format(Strings.Benchmark_LoadValue, Percent(result.Load.Cpu), Percent(result.Load.Gpu))),
-			(Strings.Benchmark_Recording, Describe(result.Source) + (result.Synthetic ? $" ({Strings.Benchmark_OnSynthetic})" : ""))
+			(Strings.Benchmark_Recording, Describe(result.Source) + " (" + (result.FromRecording
+				? string.Format(Strings.Benchmark_RecordingSample, RenderBenchmark.SampleSeconds)
+				: Strings.Benchmark_GeneratedSample) + ")")
 		];
 		if (result.Output != result.Source) rows.Add((Strings.Benchmark_Output, Describe(result.Output)));
 		return rows;
@@ -200,7 +209,8 @@ public partial class BenchmarkWindow : Window
 		List<ResultRow> rows =
 		[
 			Speed(Strings.Benchmark_DecodeGpu, result.HardwareDecode, result.Fps, settings.HardwareDecoding),
-			Speed(Strings.Benchmark_DecodeCpu, result.SoftwareDecode, result.Fps, !settings.HardwareDecoding),
+			Speed(Strings.Benchmark_DecodeCpu, result.SoftwareDecode, result.Fps, !settings.HardwareDecoding,
+				result.FromRecording ? null : Strings.Benchmark_SampleComesOutHigh),
 			Overlay(string.Format(Strings.Benchmark_OverlayRender, result.Output.Width, result.Output.Height), result.Overlay, result.OverlayPlain),
 			Overlay(string.Format(Strings.Benchmark_OverlayPreview, result.PreviewWidth, result.PreviewHeight), result.PreviewOverlay,
 				result.PreviewOverlayPlain),
@@ -210,14 +220,16 @@ public partial class BenchmarkWindow : Window
 		EncoderSpeed? inUse = RenderBenchmark.EncoderInUse(result, settings);
 		foreach (EncoderSpeed encoder in result.Encoders)
 		{
-			rows.Add(Speed(string.Format(Strings.Benchmark_Encoding, $"{encoder.Encoder} {encoder.Preset}".Trim()), encoder.Speed, result.Fps,
+			rows.Add(Speed(string.Format(Strings.Benchmark_Encoding, $"{encoder.Encoder} {(encoder.Preset is { } preset ? FfmpegPipeline.PresetName(encoder.Encoder, preset) : null)}".Trim()), encoder.Speed, result.Fps,
 				encoder == inUse, encoder.LimitedByDecoding ? Strings.Benchmark_LimitedByDecoding : null));
 		}
 
+		rows.Add(Speed(Strings.Benchmark_Graph, result.Graph, result.Fps, true));
+
 		if (result.HardwareRender is not null || result.SoftwareRender is not null)
 		{
-			rows.Add(Speed(Strings.Benchmark_RenderGpu, result.HardwareRender, result.Fps, settings.HardwareDecoding));
-			rows.Add(Speed(Strings.Benchmark_RenderCpu, result.SoftwareRender, result.Fps, !settings.HardwareDecoding));
+			rows.Add(Speed(Strings.Benchmark_RenderGpu, result.HardwareRender, result.Fps, settings.HardwareDecoding, Strings.Benchmark_SampleRoute));
+			rows.Add(Speed(Strings.Benchmark_RenderCpu, result.SoftwareRender, result.Fps, !settings.HardwareDecoding, Strings.Benchmark_SampleRoute));
 		}
 
 		return rows;
@@ -253,6 +265,7 @@ public partial class BenchmarkWindow : Window
 			BenchmarkStage.Decode => Strings.Benchmark_NameDecode,
 			BenchmarkStage.Overlay => Strings.Benchmark_NameOverlay,
 			BenchmarkStage.Pipe => Strings.Benchmark_NamePipe,
+			BenchmarkStage.Graph => Strings.Benchmark_NameGraph,
 			_ => Strings.Benchmark_NameEncode
 		};
 		return bottleneck is { RenderFps: { } render, Efficiency: { } efficiency }
@@ -299,13 +312,20 @@ public partial class BenchmarkWindow : Window
 		grid.Children.Add(cell);
 	}
 
-	private void ShowAdvice(List<BenchmarkAdvice> advice, bool busy, bool canApply)
+	/// <summary>Why decoding wasn't compared (RenderBenchmark.Advise) - null when it was.</summary>
+	private static string? SkippedAdvice(BenchmarkResult result)
+	{
+		if (result.Load.IsBusy) return Strings.Benchmark_AdviceSkippedBusy;
+		return result.FromRecording ? null : Strings.Benchmark_AdviceSkippedSample;
+	}
+
+	private void ShowAdvice(List<BenchmarkAdvice> advice, string? skipped, bool canApply)
 	{
 		AdvicePanel.Children.Clear();
-		if (busy) AdvicePanel.Children.Add(new TextBlock { Text = Strings.Benchmark_AdviceSkippedBusy, Classes = { "warningText" } });
+		if (skipped is not null) AdvicePanel.Children.Add(new TextBlock { Text = skipped, Classes = { "warningText" } });
 		if (advice.Count == 0)
 		{
-			if (!busy) AdvicePanel.Children.Add(new TextBlock { Text = Strings.Benchmark_NoAdvice, Classes = { "hint" } });
+			if (skipped is null) AdvicePanel.Children.Add(new TextBlock { Text = Strings.Benchmark_NoAdvice, Classes = { "hint" } });
 			return;
 		}
 
@@ -382,7 +402,7 @@ public partial class BenchmarkWindow : Window
 		text.AppendLine($"## {Strings.Benchmark_Suggestions}");
 		text.AppendLine();
 		List<BenchmarkAdvice> advice = RenderBenchmark.Advise(result, settings);
-		if (result.Load.IsBusy) text.AppendLine(Strings.Benchmark_AdviceSkippedBusy).AppendLine();
+		if (SkippedAdvice(result) is { } skipped) text.AppendLine(skipped).AppendLine();
 		else if (advice.Count == 0) text.AppendLine(Strings.Benchmark_NoAdvice);
 		foreach (BenchmarkAdvice item in advice) text.AppendLine($"- {AdviceText(item)}");
 		return text.ToString();

@@ -140,7 +140,7 @@ public partial class MainWindow
 					: Strings.Summary_LogRecordedAtUnknown);
 			}
 
-			AppendLog(Strings.Summary_LogCheckingNvenc);
+			AppendLog(Strings.Summary_LogCheckingGpuEncoder);
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
 			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
 			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
@@ -507,8 +507,10 @@ public partial class MainWindow
 			deviations.Add(Strings.Summary_PlanEightBit);
 		if (Math.Abs(settings.OutputBitrateMultiplier - 1.0) > 0.001)
 			deviations.Add(string.Format(Strings.Summary_PlanBitrate, settings.OutputBitrateMultiplier));
-		if (FfmpegPipeline.IsGpuEncoder(encoder) && settings.NvencPreset != "p7")
-			deviations.Add(string.Format(Strings.Summary_PlanFasterPreset, settings.NvencPreset.ToUpperInvariant()));
+		// Settings' own name (P5), and what this encoder calls it where that's another (AMF's "balanced", Quick Sync's "slow").
+		if (FfmpegPipeline.PresetName(encoder, settings.NvencPreset) is { } preset && preset != FfmpegPipeline.PresetName(encoder, "p7"))
+			deviations.Add(string.Format(Strings.Summary_PlanFasterPreset,
+				preset == settings.NvencPreset ? preset.ToUpperInvariant() : $"{settings.NvencPreset.ToUpperInvariant()}, {preset}"));
 		if (!FfmpegPipeline.IsGpuEncoder(encoder))
 			deviations.Add(string.Format(Strings.Summary_PlanCpuEncoder, encoder));
 

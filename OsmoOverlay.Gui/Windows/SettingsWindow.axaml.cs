@@ -400,13 +400,16 @@ public partial class SettingsWindow : Window
 
 	private async void OnWelcomeClick(object? sender, RoutedEventArgs e)
 	{
-		await new WelcomeWindow(false, RecordingCruisingSpeedKmh).ShowDialog(this);
+		await new WelcomeWindow(false, RecordingCruisingSpeedKmh) { OpenBenchmark = OpenBenchmark }.ShowDialog(this);
 
 		// The welcome window saved these itself; the checkboxes would otherwise write the old state back on close.
 		OverlaySettings saved = OverlaySettingsStore.Load();
 		ShowWatermarkCheck.IsChecked = saved.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = saved.SmoothGpsMotion;
 		SpeedEditor.Load(saved.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
+		// The performance test it can open applies its suggestions straight to settings.json too.
+		HardwareDecodingCheck.IsChecked = saved.HardwareDecoding;
+		PreviewShadowsCheck.IsChecked = saved.PreviewShadows;
 		ShowProjectAssociation();
 	}
 

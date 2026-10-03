@@ -186,15 +186,16 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     Before a render: whether something else already keeps its encoder busy - the GPU and its video encoder for NVENC (a
-	///     game, OBS, GeForce's recording, another render), the CPU for x264/x265 (RenderBenchmark.SampleLoadAsync, ~1 s). A busy
-	///     one asks first. The preview stops first, so its own playback isn't what's measured. True to go on.
+	///     Before a render: whether something else already keeps it busy - for a GPU encoder its card and video encoder (a game,
+	///     OBS, GeForce's or Radeon's recording, another render) and the CPU the overlay is drawn on, for x264/x265 the CPU
+	///     (RenderBenchmark.SampleLoadAsync, ~1 s, on the card the encoder runs on). A busy one asks first. The preview stops
+	///     first, so its own playback isn't what's measured. True to go on.
 	/// </summary>
 	private async Task<bool> ConfirmComputerNotBusyAsync()
 	{
 		_previewPlayer.Pause();
 		AppendLog(Strings.Render_CheckingLoad);
-		BenchmarkLoad load = await RenderBenchmark.SampleLoadAsync(CancellationToken.None);
+		BenchmarkLoad load = await RenderBenchmark.SampleLoadAsync(_detectedEncoder, CancellationToken.None);
 		bool gpuEncoder = FfmpegPipeline.IsGpuEncoder(_detectedEncoder);
 		bool busy = load.SlowsRender(gpuEncoder);
 		AppendLog(string.Format(Strings.Render_LogLoad, LoadPercent(load.Cpu), LoadPercent(load.Gpu), LoadPercent(load.Encoder)),
@@ -204,9 +205,12 @@ public partial class MainWindow
 
 	internal async Task<bool> AskComputerBusyAsync(BenchmarkLoad load, bool gpuEncoder)
 	{
-		string message = gpuEncoder
-			? string.Format(Strings.Render_GpuBusyMessage, LoadPercent(load.Gpu), LoadPercent(load.Encoder), load.EncoderSessions ?? 0)
-			: string.Format(Strings.Render_CpuBusyMessage, LoadPercent(load.Cpu));
+		List<string> reasons = [];
+		if (gpuEncoder && load.GpuSlowsRender)
+			reasons.Add(string.Format(Strings.Render_GpuBusyMessage, LoadPercent(load.Gpu), LoadPercent(load.Encoder), load.EncoderSessions ?? 0));
+		if (load.CpuSlowsRender(gpuEncoder) || reasons.Count == 0)
+			reasons.Add(string.Format(gpuEncoder ? Strings.Render_CpuBusyGpuEncoderMessage : Strings.Render_CpuBusyMessage, LoadPercent(load.Cpu)));
+		string message = string.Join("\n\n", reasons);
 
 		SystemSound.PlayNotification();
 		if (!IsActive) BalloonNotifier.Show(this, Strings.Render_BusyTitle, message);

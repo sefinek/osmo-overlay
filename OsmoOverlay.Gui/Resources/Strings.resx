@@ -81,6 +81,9 @@
   <data name="Benchmark_AdviceSkippedBusy" xml:space="preserve">
     <value>Suggestions about decoding were left out because the computer was busy - with the GPU busy, decoding on the CPU would come out ahead only because of that.</value>
   </data>
+  <data name="Benchmark_AdviceSkippedSample" xml:space="preserve">
+    <value>Decoding on the GPU and the CPU wasn't compared: the generated sample decodes on the processor far more easily than a camera's recording. Load a recording and run the test again.</value>
+  </data>
   <data name="Benchmark_AdviceSoftwareDecode" xml:space="preserve">
     <value>Decoding on the CPU comes out {0}% faster on this computer. Turn off decoding on the GPU?</value>
   </data>
@@ -147,14 +150,20 @@
   <data name="Benchmark_FpsRange" xml:space="preserve">
     <value>{0}-{1} fps (±{2}%)</value>
   </data>
+  <data name="Benchmark_GeneratedSample" xml:space="preserve">
+    <value>generated sample</value>
+  </data>
   <data name="Benchmark_Gpu" xml:space="preserve">
     <value>Graphics card</value>
+  </data>
+  <data name="Benchmark_Graph" xml:space="preserve">
+    <value>ffmpeg as a whole (decoding, overlaying, encoding)</value>
   </data>
   <data name="Benchmark_InUse" xml:space="preserve">
     <value>in use now</value>
   </data>
   <data name="Benchmark_Intro" xml:space="preserve">
-    <value>Measures each stage of a render on this computer: decoding on the GPU and on the CPU, drawing the overlay with and without shadows, handing frames to ffmpeg, encoding and, with a recording with telemetry loaded, a short real render too. Every measurement is repeated, taking turns with the one it's compared to, and the result is the median along with the range of the runs. Then it points out the slowest stage and suggests which settings will be faster here. It takes 2-3 minutes - close games and other programs that use the CPU or GPU heavily meanwhile.</value>
+    <value>Measures each stage of a render on this computer: decoding on the GPU and on the CPU, drawing the overlay with and without shadows, handing frames to ffmpeg, encoding, ffmpeg as a whole and a short real render. Every measurement is repeated, taking turns with the one it's compared to, and the result is the median along with the range of the runs. Then it points out the slowest stage and suggests which settings will be faster here. It takes 2-3 minutes - close games and other programs that use the CPU or GPU heavily meanwhile.</value>
   </data>
   <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
     <value>at least this - it waited for decoding</value>
@@ -177,6 +186,9 @@
   <data name="Benchmark_NameEncode" xml:space="preserve">
     <value>Encoding</value>
   </data>
+  <data name="Benchmark_NameGraph" xml:space="preserve">
+    <value>ffmpeg as a whole (decoding, overlaying and encoding at once)</value>
+  </data>
   <data name="Benchmark_NameOverlay" xml:space="preserve">
     <value>Drawing the overlay</value>
   </data>
@@ -187,10 +199,10 @@
     <value>Your settings are already the fastest on this computer.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
-    <value>Testing on the loaded recording: {0}</value>
+    <value>The test cuts a {0} s sample out of the loaded recording ({1}) and measures everything on it. The short render draws your preset along a sample route.</value>
   </data>
   <data name="Benchmark_OnSynthetic" xml:space="preserve">
-    <value>No recording is loaded, so the test uses a 4K test clip. A test pattern decodes faster than real footage, and there's no short render.</value>
+    <value>No recording is loaded, so the test generates a 4K sample like an Osmo Action's. It decodes on the processor far more easily than real footage, so decoding on the GPU and the CPU won't be compared - for a full result, load a recording before the test.</value>
   </data>
   <data name="Benchmark_Os" xml:space="preserve">
     <value>System</value>
@@ -219,6 +231,9 @@
   <data name="Benchmark_Recording" xml:space="preserve">
     <value>Recording</value>
   </data>
+  <data name="Benchmark_RecordingSample" xml:space="preserve">
+    <value>a {0} s sample of the loaded recording</value>
+  </data>
   <data name="Benchmark_RenderCpu" xml:space="preserve">
     <value>Render decoding on the CPU</value>
   </data>
@@ -228,6 +243,12 @@
   <data name="Benchmark_Results" xml:space="preserve">
     <value>Results</value>
   </data>
+  <data name="Benchmark_SampleComesOutHigh" xml:space="preserve">
+    <value>comes out high - the sample decodes more easily than a recording</value>
+  </data>
+  <data name="Benchmark_SampleRoute" xml:space="preserve">
+    <value>sample route</value>
+  </data>
   <data name="Benchmark_SlowestStage" xml:space="preserve">
     <value>Slowest stage</value>
   </data>
@@ -236,6 +257,9 @@
   </data>
   <data name="Benchmark_StageEncode" xml:space="preserve">
     <value>Encoding...</value>
+  </data>
+  <data name="Benchmark_StageGraph" xml:space="preserve">
+    <value>ffmpeg as a whole...</value>
   </data>
   <data name="Benchmark_StageOverlay" xml:space="preserve">
     <value>Drawing the overlay...</value>
@@ -1740,6 +1764,9 @@ The project's cuts, view and overlay are applied only after the recordings are f
 
 Render anyway?</value>
   </data>
+  <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
+    <value>The processor is already {0} busy. The graphics card encodes, but the overlay is drawn on the processor, so this render will be slower.</value>
+  </data>
   <data name="Render_DoneSummary" xml:space="preserve">
     <value>Time: {0} · Size: {1}</value>
   </data>
@@ -1750,9 +1777,7 @@ Render anyway?</value>
     <value>Render failed</value>
   </data>
   <data name="Render_GpuBusyMessage" xml:space="preserve">
-    <value>The graphics card is already busy: GPU {0}, video encoder {1}, other encoding sessions: {2}. Something else is playing, recording or encoding (a game, OBS, GeForce's background recording, another render), so this render will be slower, and if the card runs out of encoding sessions it may not start at all.
-
-Render anyway?</value>
+    <value>The graphics card is already busy: GPU {0}, video encoder {1}, other programs encoding video: {2}. Something else is playing, recording or encoding (a game, OBS, GeForce's or Radeon's background recording, another render), so this render will be slower, and if the card runs out of encoding sessions it may not start at all.</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Cancelled: {0}</value>
@@ -1949,13 +1974,13 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>Duration (seconds)</value>
   </data>
   <data name="Settings_EffortPerFrameAtThe" xml:space="preserve">
-    <value>How much effort the encoder puts into each frame at the same bitrate. P7 looks best (default); lower presets are faster. NVENC only - the CPU encoder has its own settings.</value>
+    <value>How much effort the encoder puts into each frame at the same bitrate. P7 looks best (default); lower presets are faster. On AMD cards P6-P7 is the quality mode and P3-P5 balanced. Graphics card encoders only - the CPU encoder has its own settings.</value>
   </data>
   <data name="Settings_ElevationGain" xml:space="preserve">
     <value>Elevation gain</value>
   </data>
-  <data name="Settings_EncoderPresetNvidiaGpu" xml:space="preserve">
-    <value>Encoder preset (NVIDIA GPU)</value>
+  <data name="Settings_EncoderPresetGpu" xml:space="preserve">
+    <value>Encoder preset (GPU)</value>
   </data>
   <data name="Settings_EverythingBelowAppliesOnlyWhile" xml:space="preserve">
     <value>Everything below applies only while this is on.</value>
@@ -2302,8 +2327,8 @@ Free up some space or pick an output folder on another drive. If the drive fills
   <data name="Summary_LogCameraModel" xml:space="preserve">
     <value>Camera model: {0}</value>
   </data>
-  <data name="Summary_LogCheckingNvenc" xml:space="preserve">
-    <value>Checking NVENC availability...</value>
+  <data name="Summary_LogCheckingGpuEncoder" xml:space="preserve">
+    <value>Checking the graphics card's encoder...</value>
   </data>
   <data name="Summary_LogColor" xml:space="preserve">
     <value>Color: {0}</value>
@@ -2312,7 +2337,7 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>Duration: {0}, size: {1}</value>
   </data>
   <data name="Summary_LogEncoderCpu" xml:space="preserve">
-    <value>Using encoder: {0} (NVENC unavailable - CPU)</value>
+    <value>Using encoder: {0} (no graphics card encoder - CPU)</value>
   </data>
   <data name="Summary_LogEncoderGpu" xml:space="preserve">
     <value>Using encoder: {0} (GPU)</value>
@@ -2800,6 +2825,78 @@ Details: {0}</value>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
     <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera.</value>
   </data>
+  <data name="Welcome_CheckDecoder" xml:space="preserve">
+    <value>Hardware decoding</value>
+  </data>
+  <data name="Welcome_CheckDecoderOk" xml:space="preserve">
+    <value>{0} - 10-bit HEVC recordings decoded on the graphics card.</value>
+  </data>
+  <data name="Welcome_CheckDecoderWarning" xml:space="preserve">
+    <value>The card doesn't decode 10-bit HEVC - recordings will be decoded on the processor, more slowly.</value>
+  </data>
+  <data name="Welcome_CheckDisk" xml:space="preserve">
+    <value>Disk space</value>
+  </data>
+  <data name="Welcome_CheckDiskProblem" xml:space="preserve">
+    <value>Less than 20 GB - a longer 4K render won't fit.</value>
+  </data>
+  <data name="Welcome_CheckDiskValue" xml:space="preserve">
+    <value>{0} free in {1}</value>
+  </data>
+  <data name="Welcome_CheckDiskWarning" xml:space="preserve">
+    <value>An hour of 4K recording is about {0}, and a render needs as much again while it's written.</value>
+  </data>
+  <data name="Welcome_CheckEncoder" xml:space="preserve">
+    <value>Hardware encoding</value>
+  </data>
+  <data name="Welcome_CheckEncoderOk" xml:space="preserve">
+    <value>{0} - 4K 10-bit video encoded on the graphics card.</value>
+  </data>
+  <data name="Welcome_CheckEncoderWarning" xml:space="preserve">
+    <value>No graphics card encoder (NVENC, AMF, Quick Sync) - a render will be encoded on the processor ({0}), several times slower.</value>
+  </data>
+  <data name="Welcome_CheckMemory" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="Welcome_CheckMemoryProblem" xml:space="preserve">
+    <value>8 GB is the minimum - a 4K render may not fit in memory.</value>
+  </data>
+  <data name="Welcome_CheckMemoryWarning" xml:space="preserve">
+    <value>16 GB is recommended for 4K renders.</value>
+  </data>
+  <data name="Welcome_CheckNeedsFfmpeg" xml:space="preserve">
+    <value>Needs FFmpeg - install it in the previous step.</value>
+  </data>
+  <data name="Welcome_CheckOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Welcome_CheckProblem" xml:space="preserve">
+    <value>Problem</value>
+  </data>
+  <data name="Welcome_CheckProcessor" xml:space="preserve">
+    <value>Processor</value>
+  </data>
+  <data name="Welcome_CheckProcessorProblem" xml:space="preserve">
+    <value>Fewer than 4 threads - a 4K render will be very slow.</value>
+  </data>
+  <data name="Welcome_CheckProcessorWarning" xml:space="preserve">
+    <value>Fewer than 8 threads - drawing the overlay and decoding on the processor will be slower.</value>
+  </data>
+  <data name="Welcome_CheckSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Welcome_CheckSystemProblem" xml:space="preserve">
+    <value>OsmoOverlay needs a 64-bit system.</value>
+  </data>
+  <data name="Welcome_CheckUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Welcome_CheckWarning" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="Welcome_Checking" xml:space="preserve">
+    <value>Checking...</value>
+  </data>
   <data name="Welcome_Clear" xml:space="preserve">
     <value>Clear</value>
   </data>
@@ -2820,6 +2917,21 @@ Details: {0}</value>
   </data>
   <data name="Welcome_Found" xml:space="preserve">
     <value>Found</value>
+  </data>
+  <data name="Welcome_HardwareLead" xml:space="preserve">
+    <value>A quick check of whether this computer can handle 4K renders from an Osmo Action: the system, processor, memory, encoding and decoding on the graphics card, and disk space.</value>
+  </data>
+  <data name="Welcome_HardwareOk" xml:space="preserve">
+    <value>This computer can handle 4K renders.</value>
+  </data>
+  <data name="Welcome_HardwareProblem" xml:space="preserve">
+    <value>This computer may not handle 4K renders - see above.</value>
+  </data>
+  <data name="Welcome_HardwareUnknown" xml:space="preserve">
+    <value>Some checks need FFmpeg - install it in the previous step.</value>
+  </data>
+  <data name="Welcome_HardwareWarning" xml:space="preserve">
+    <value>Rendering works, but a few things will slow it down - see above.</value>
   </data>
   <data name="Welcome_Installing" xml:space="preserve">
     <value>Installing...</value>
@@ -2871,6 +2983,9 @@ Details: {0}</value>
   </data>
   <data name="Welcome_Retry" xml:space="preserve">
     <value>Retry</value>
+  </data>
+  <data name="Welcome_RunBenchmark" xml:space="preserve">
+    <value>Performance test</value>
   </data>
   <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
     <value>Show the OsmoOverlay watermark</value>
@@ -2940,6 +3055,9 @@ Details: {0}</value>
   </data>
   <data name="Welcome_YouReAllSet" xml:space="preserve">
     <value>You're all set</value>
+  </data>
+  <data name="Welcome_YourComputer" xml:space="preserve">
+    <value>Your computer</value>
   </data>
   <data name="Widget_ChooseImage" xml:space="preserve">
     <value>Choose an image</value>

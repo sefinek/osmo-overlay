@@ -218,7 +218,7 @@
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="{x:Static local:Strings.Settings_EncoderPresetNvidiaGpu}" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Settings_EncoderPresetGpu}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
 									           Text="{x:Static local:Strings.Settings_EffortPerFrameAtThe}" />
 								</StackPanel>

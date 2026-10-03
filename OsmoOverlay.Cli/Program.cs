@@ -19,14 +19,16 @@ foreach (string line in AppBanner.BuildLines("CLI"))
 
 CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
 
-string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view"];
+string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder"];
 string[] flags = ["--no-level"];
-const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level]\n" +
+const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--encoder <name>]\n" +
                      "  inputs are the camera's own recordings (DJI Osmo Action .MP4)\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
                      "  --cut removes that part from the video and the telemetry; repeat it for several cuts. Add @fade or @white (optionally =seconds, e.g. 1:00-1:10@fade=1) to fade through black or white where the cut joins the kept parts, or @cross, @wipeleft, @wiperight, @slideleft, @slideright to blend them (the output gets shorter by that length)\n" +
                      "  --view <yaw>,<pitch>,<roll>[,<fov>] frames a 360 recording's flat picture, in degrees (default 0,0,0,100),\n" +
                      "         leveled by the camera's accelerometer unless --no-level\n" +
+                     "  --encoder picks ffmpeg's video encoder (hevc_nvenc, hevc_amf, hevc_qsv, libx265, or h264_* / libx264 for H.264 output)\n" +
+                     "         instead of the first one that works here; one that doesn't write the output's codec is ignored\n" +
                      "       OsmoOverlay.Cli --install-dependencies [ffmpeg] [exiftool]\n" +
                      "  installs the listed tools (default: ffmpeg) through the system's package manager, if they're missing";
 
@@ -47,6 +49,7 @@ double? rangeEnd = null;
 List<TimeRange> cutOuts = [];
 ReframeView? view = null;
 bool level = true;
+string? encoder = null;
 
 int i = 0;
 while (i < args.Length && !options.Contains(args[i]) && !flags.Contains(args[i]))
@@ -109,6 +112,9 @@ for (; i < args.Length; i++)
 		case "--view" when ReframeView.TryParse(value, out ReframeView parsedView):
 			view = parsedView;
 			break;
+		case "--encoder":
+			encoder = value;
+			break;
 		default:
 			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'");
 			return 1;
@@ -143,7 +149,7 @@ Console.CancelKeyPress += (_, e) =>
 };
 
 RenderResult result = await RenderJob.RunAsync(
-	new RenderOptions(inputPaths, outputPath, frameLimit, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level }), progress,
+	new RenderOptions(inputPaths, outputPath, frameLimit, encoder, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level }), progress,
 	cts.Token);
 Console.WriteLine();
 

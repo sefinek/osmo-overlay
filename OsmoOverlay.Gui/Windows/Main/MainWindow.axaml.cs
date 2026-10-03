@@ -238,7 +238,7 @@ public partial class MainWindow : Window
 		bool openRecording = false;
 		if (!OverlaySettingsStore.Load().WelcomeShown)
 		{
-			var welcome = new WelcomeWindow(StartupProject is null);
+			var welcome = new WelcomeWindow(StartupProject is null) { OpenBenchmark = ShowBenchmarkAsync };
 			await welcome.ShowDialog(this);
 			openRecording = welcome.OpenRecordingRequested;
 			OverlaySettings welcomed = OverlaySettingsStore.Load();
@@ -506,8 +506,7 @@ public partial class MainWindow : Window
 		IReadOnlyList<OverlayElement> layout = _overlayPresets.Count > 0
 			? OverlayLayers.Drawn(ActiveElements, ActiveLayers)
 			: OverlayPreset.CreateDefault(OverlayPresetStore.DefaultPresetId, Strings.Benchmark_Title).Elements;
-		var input = new BenchmarkInput(_summary?.InputPaths, _summary?.TelemetryFrames, _summary?.DerivedFrames, layout,
-			_openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
+		var input = new BenchmarkInput(_summary?.InputPaths[0], layout, _openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
 		await new BenchmarkWindow(input, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering).ShowDialog(owner);
 
 		bool after = OverlaySettingsStore.Load().PreviewShadows;

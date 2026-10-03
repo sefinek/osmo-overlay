@@ -57,6 +57,7 @@
 					<Button Content="No GPS" Tag="no-gps" Click="OnActionClick" />
 					<Button Content="Busy GPU before a render" Tag="busy:gpu" Click="OnActionClick" />
 					<Button Content="Busy CPU before a render" Tag="busy:cpu" Click="OnActionClick" />
+					<Button Content="Busy CPU before a GPU render" Tag="busy:gpu-cpu" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>

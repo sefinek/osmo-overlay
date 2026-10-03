@@ -33,9 +33,7 @@ public sealed record RenderOptions(
 	double? RangeEndSeconds = null,
 	IReadOnlyList<TimeRange>? CutOuts = null,
 	// Where the flat picture of a 360 recording looks - the default (leveled, straight ahead) when null; ignored for a flat video.
-	ReframeView? Reframe = null,
-	// The settings to render with - settings.json when null (RenderBenchmark tries others without saving them).
-	OverlaySettings? Settings = null)
+	ReframeView? Reframe = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -152,7 +150,7 @@ public static class RenderJob
 				Report(RenderPhase.ExtractingTelemetry, string.Format(CoreStrings.Render_Extracted, rawFrames.Count));
 			}
 
-			OverlaySettings settings = options.Settings ?? OverlaySettingsStore.Load();
+			OverlaySettings settings = OverlaySettingsStore.Load();
 			bool smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
 			double fps = first.Source.Video.Fps;
 			var plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
@@ -168,7 +166,7 @@ public static class RenderJob
 			// An encoder picked before Settings changed the output's codec doesn't write it any more.
 			string? requested = options.Encoder is { } picked && FfmpegPipeline.Encodes(picked, output) ? picked : null;
 			if (requested is null)
-				Report(RenderPhase.SelectingEncoder, CoreStrings.Render_CheckingNvenc);
+				Report(RenderPhase.SelectingEncoder, CoreStrings.Render_CheckingGpuEncoder);
 			string encoder = requested ?? FfmpegPipeline.SelectVideoEncoder(output);
 			Report(RenderPhase.SelectingEncoder,
 				string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? CoreStrings.Render_EncoderGpu : CoreStrings.Render_EncoderCpu, encoder));

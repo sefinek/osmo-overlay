@@ -2,10 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="860" d:DesignHeight="560"
+        mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="560"
         xmlns:local="using:OsmoOverlay.Gui"
         x:Class="OsmoOverlay.Gui.WelcomeWindow"
-        Width="860" Height="560" CanResize="False"
+        Width="940" Height="560" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="/Assets/OsmoOverlay.ico"
@@ -74,7 +74,7 @@
 		</Style>
 	</Window.Styles>
 
-	<Grid ColumnDefinitions="260,*">
+	<Grid ColumnDefinitions="300,*">
 		<Border Grid.Column="0" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
 			<Border.Background>
 				<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
@@ -84,8 +84,8 @@
 			</Border.Background>
 			<Grid RowDefinitions="*,Auto" Margin="20,24">
 				<StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="14">
-					<Panel Width="200" Height="200">
-						<Ellipse Width="180" Height="180" Opacity="0.6">
+					<Panel Width="250" Height="250">
+						<Ellipse Width="220" Height="220" Opacity="0.6">
 							<Ellipse.Fill>
 								<RadialGradientBrush>
 									<GradientStop Offset="0" Color="{StaticResource AccentCalloutBorderColor}" />
@@ -96,6 +96,7 @@
 						<Image Name="WelcomeArt" Classes="art" Source="/Assets/Welcome/Welcome.webp" />
 						<Image Name="CameraArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Camera.webp" />
 						<Image Name="ToolsArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Tools.webp" />
+						<Image Name="HardwareArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Hardware.webp" />
 						<Image Name="SpeedArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Speed.webp" />
 						<Image Name="PreferencesArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Preferences.webp" />
 						<Image Name="FinishArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Support.webp" />
@@ -177,6 +178,19 @@
 						           Text="{x:Static local:Strings.Welcome_OsmoOverlayRendersWithFFmpegExifTool}" />
 						<StackPanel Name="ToolRows" Spacing="8" Margin="0,4,0,0" />
 						<TextBlock Name="ToolsHint" Classes="hint" />
+					</StackPanel>
+
+					<StackPanel Name="HardwareStep" Classes="step" Opacity="0" Spacing="10">
+						<TextBlock Text="{x:Static local:Strings.Welcome_YourComputer}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_HardwareLead}" />
+						<ScrollViewer MaxHeight="292" Margin="0,2,0,0">
+							<StackPanel Name="HardwareRows" Spacing="6" />
+						</ScrollViewer>
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Name="HardwareHint" Classes="rowText" VerticalAlignment="Center" />
+							<Button Grid.Column="1" Name="BenchmarkButton" Content="{x:Static local:Strings.Welcome_RunBenchmark}" Classes="wizard" IsVisible="False"
+							        Click="OnBenchmarkClick" />
+						</Grid>
 					</StackPanel>
 
 					<StackPanel Name="SpeedStep" Classes="step" Opacity="0" Spacing="10">

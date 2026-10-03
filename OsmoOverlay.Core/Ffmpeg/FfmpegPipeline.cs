@@ -16,47 +16,140 @@ public static class FfmpegPipeline
 	// ~150 fps, taking a full render from ~27 to ~39 fps. "auto" rather than a specific API, so a machine
 	// without a usable decoder just falls back to software instead of failing the render - same choice
 	// the live preview makes (LibavStreamDecoder).
-	private static readonly string[] HwDecodeArgs = ["-hwaccel", "auto"];
+	private static readonly string[] AutoHwDecodeArgs = ["-hwaccel", "auto"];
 
-	private static readonly HashSet<(string Encoder, bool TenBit)> NvencConfirmed = [];
+	// The device AMF and Quick Sync encode on, their vendor's card (AMD, Intel). They take over the decoder's device when there
+	// is one, and fail on another vendor's: on a laptop with an NVIDIA card and an AMD integrated one, -hwaccel auto decoded on
+	// the NVIDIA and AMF refused it ("AMF failed to initialise on the given D3D11 device"). Decoding on the encoder's own
+	// adapter, named here, works.
+	private const string EncoderDevice = "enc";
+
+	private static readonly HashSet<string> ConfirmedEncoders = [];
 
 	/// <summary>
-	///     The encoder for the source's own codec - H.264 stays H.264 (an Insta360 Studio export), everything else is
-	///     encoded as HEVC like the Osmo's own files: NVENC when this GPU can, else x264/x265. Probed with the render's
-	///     profile and bit depth - some GPUs (e.g. Maxwell GM204) have HEVC NVENC but no 10-bit support, and an 8-bit
-	///     probe would pass there only for the real render to fail. Only a success is remembered: a failure can be
-	///     transient (consumer cards cap concurrent NVENC sessions, so another app encoding at the same time makes the
-	///     probe fail), worth re-probing next time.
+	///     The encoder for the output's codec - H.264 stays H.264 (an Insta360 Studio export), everything else is encoded as
+	///     HEVC like the Osmo's own files: the graphics card's (GpuEncoders, in order) when one works, else x264/x265. Each is
+	///     probed with the render's own options (AddVideoEncoderArgs) at the output's size, so a probe passes only where the
+	///     render will - some GPUs (e.g. Maxwell GM204) have HEVC NVENC but no 10-bit support. Only a success is remembered: a
+	///     failure can be transient (consumer cards cap concurrent NVENC sessions, so another app encoding at the same time
+	///     makes the probe fail), worth re-probing next time.
 	/// </summary>
-	public static string SelectVideoEncoder(VideoInfo source)
+	public static string SelectVideoEncoder(VideoInfo output)
 	{
-		bool h264 = IsH264(source);
-		bool tenBit = IsTenBit(source);
-		string nvenc = h264 ? "h264_nvenc" : "hevc_nvenc";
-		lock (NvencConfirmed)
+		bool h264 = IsH264(output);
+		return GpuEncoders(h264).FirstOrDefault(e => Works(e, output)) ?? (h264 ? "libx264" : "libx265");
+	}
+
+	/// <summary>NVENC first, then AMD's AMF and Intel's Quick Sync - the last two only on Windows, where their device is D3D11.</summary>
+	private static IEnumerable<string> GpuEncoders(bool h264)
+	{
+		string codec = h264 ? "h264" : "hevc";
+		yield return codec + "_nvenc";
+		if (!OperatingSystem.IsWindows()) yield break;
+
+		yield return codec + "_amf";
+		yield return codec + "_qsv";
+	}
+
+	private static bool Works(string encoder, VideoInfo output)
+	{
+		(int num, int den) = ParseFrameRate(output.FrameRate);
+		List<string> args =
+		[
+			"-hide_banner", "-loglevel", "error", .. EncoderDeviceArgs(encoder),
+			"-f", "lavfi", "-i", $"color=c=black:s={output.Width}x{output.Height}:r={num}/{den}", "-frames:v", "3"
+		];
+		AddVideoEncoderArgs(args, output, encoder, new RenderEncodeSettings("p7", false, 1, false), num, den);
+		args.AddRange(["-f", "null", "-"]);
+
+		string key = string.Join(' ', args);
+		lock (ConfirmedEncoders)
 		{
-			if (NvencConfirmed.Contains((nvenc, tenBit)))
-				return nvenc;
+			if (ConfirmedEncoders.Contains(key)) return true;
 		}
 
-		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffmpeg",
-			"-hide_banner", "-loglevel", "error",
-			"-f", "lavfi", "-i", "color=c=black:s=256x256:d=0.1",
-			"-c:v", nvenc,
-			"-profile:v", Profile(h264, tenBit),
-			"-pix_fmt", PixelFormat(tenBit),
-			"-f", "null", "-");
+		if (ProcessHelper.RunCaptured(ProcessHelper.CreateHidden("ffmpeg", [.. args])).ExitCode != 0) return false;
 
-		if (ProcessHelper.RunCaptured(psi).ExitCode != 0) return h264 ? "libx264" : "libx265";
-
-		lock (NvencConfirmed) NvencConfirmed.Add((nvenc, tenBit));
-
-		return nvenc;
+		lock (ConfirmedEncoders) ConfirmedEncoders.Add(key);
+		return true;
 	}
 
 	public static bool IsGpuEncoder(string encoder)
 	{
-		return encoder.EndsWith("_nvenc", StringComparison.Ordinal);
+		return Family(encoder) is EncoderFamily.Nvenc or EncoderFamily.Amf or EncoderFamily.Qsv;
+	}
+
+	private static bool IsH264Encoder(string encoder)
+	{
+		return encoder is "libx264" || encoder.StartsWith("h264_", StringComparison.Ordinal);
+	}
+
+	private enum EncoderFamily
+	{
+		Nvenc,
+		Amf,
+		Qsv,
+		Cpu
+	}
+
+	private static EncoderFamily Family(string encoder)
+	{
+		if (encoder.EndsWith("_nvenc", StringComparison.Ordinal)) return EncoderFamily.Nvenc;
+		if (encoder.EndsWith("_amf", StringComparison.Ordinal)) return EncoderFamily.Amf;
+		return encoder.EndsWith("_qsv", StringComparison.Ordinal) ? EncoderFamily.Qsv : EncoderFamily.Cpu;
+	}
+
+	/// <summary>The PCI vendor id of the graphics card `encoder` runs on - null for the CPU encoders.</summary>
+	public static uint? GpuVendor(string encoder)
+	{
+		return Family(encoder) switch
+		{
+			EncoderFamily.Nvenc => 0x10DE,
+			EncoderFamily.Amf => 0x1002,
+			EncoderFamily.Qsv => 0x8086,
+			_ => null
+		};
+	}
+
+	/// <summary>Global options naming the device `encoder` runs on (EncoderDevice) - none for NVENC and the CPU encoders.</summary>
+	internal static string[] EncoderDeviceArgs(string encoder)
+	{
+		return EncoderDeviceArgs(encoder, GpuAdapters.All);
+	}
+
+	/// <summary>
+	///     The vendor's card by its place in DXGI's list (GpuAdapters.Pick: the dedicated one, where a laptop has an integrated one
+	///     of the same vendor too - ffmpeg's vendor_id takes the first, usually the integrated), or by vendor id without the list.
+	/// </summary>
+	internal static string[] EncoderDeviceArgs(string encoder, IReadOnlyList<GpuAdapter> adapters)
+	{
+		if (Family(encoder) is not (EncoderFamily.Amf or EncoderFamily.Qsv) || GpuVendor(encoder) is not { } vendor) return [];
+
+		return GpuAdapters.Pick(adapters, vendor) is { } adapter
+			? ["-init_hw_device", $"d3d11va={EncoderDevice}:{adapter.Index.ToString(CultureInfo.InvariantCulture)}"]
+			: ["-init_hw_device", $"d3d11va={EncoderDevice}:,vendor_id=0x{vendor:X4}"];
+	}
+
+	/// <summary>An input's hardware decoding for a render with `encoder`: on the encoder's own device where it has one (EncoderDeviceArgs).</summary>
+	internal static string[] HwDecodeArgs(string encoder)
+	{
+		return EncoderDeviceArgs(encoder).Length > 0 ? ["-hwaccel", "d3d11va", "-hwaccel_device", EncoderDevice] : AutoHwDecodeArgs;
+	}
+
+	/// <summary>
+	///     Settings' preset (p1-p7, NVENC's own scale) as `encoder` names it - AMF has three steps, Quick Sync x264's seven
+	///     names. Null for the CPU encoders, whose preset is fixed.
+	/// </summary>
+	public static string? PresetName(string encoder, string preset)
+	{
+		int step = preset is ['p', >= '1' and <= '7'] ? preset[1] - '0' : 7;
+		return Family(encoder) switch
+		{
+			EncoderFamily.Nvenc => $"p{step}",
+			EncoderFamily.Amf => step <= 2 ? "speed" : step <= 5 ? "balanced" : "quality",
+			EncoderFamily.Qsv => new[] { "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow" }[step - 1],
+			_ => null
+		};
 	}
 
 	private static bool IsH264(VideoInfo video)
@@ -79,6 +172,11 @@ public static class FfmpegPipeline
 		return tenBit ? "yuv420p10le" : "yuv420p";
 	}
 
+	private static string HardwarePixelFormat(bool tenBit)
+	{
+		return tenBit ? "p010le" : "nv12";
+	}
+
 	/// <param name="output">The stream written (OutputVideo.For) - the source's own unless Settings picked another size, codec or depth.</param>
 	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, VideoInfo output, bool overwrite,
 		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false)
@@ -88,6 +186,8 @@ public static class FfmpegPipeline
 
 		var args = new List<string> { "-hide_banner", "-y" };
 		if (!overwrite) args[^1] = "-n";
+		args.AddRange(EncoderDeviceArgs(encoder));
+		string[] hwDecode = encode.HardwareDecoding ? HwDecodeArgs(encoder) : [];
 
 		List<string> tempFiles = [];
 		SourceInputs source;
@@ -110,8 +210,8 @@ public static class FfmpegPipeline
 			try
 			{
 				source = plan.Pieces.Count == 1
-					? AddSourceInputs(args, segments, plan.Pieces[0], encode, num, den, tempFiles, !composedPicture)
-					: AddCutInputs(args, segments, plan, encode, num, den, tempFiles, !composedPicture);
+					? AddSourceInputs(args, segments, plan.Pieces[0], hwDecode, num, den, tempFiles, !composedPicture)
+					: AddCutInputs(args, segments, plan, hwDecode, num, den, tempFiles, !composedPicture);
 			}
 			catch
 			{
@@ -132,41 +232,9 @@ public static class FfmpegPipeline
 		string transfer = info.Video.ColorTransfer ?? "bt709";
 		string colorspace = info.Video.ColorSpace ?? "bt709";
 		string range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
-		bool h264 = encoder is "h264_nvenc" or "libx264";
-		bool tenBit = IsTenBit(output);
+		bool h264 = IsH264Encoder(encoder);
 
-		// The overlay's RGB -> YUV conversion must use the same matrix the output is tagged with, or the HUD's
-		// colors come out shifted. Explicit on the scaler because older ffmpeg's swscale defaults to BT.601;
-		// and the main input is tagged *before* the overlay (not only the output after it) because newer
-		// ffmpeg negotiates the overlay input's colorspace to match the main input's - an untagged source
-		// (e.g. an NLE export missing its color tags, see ColorTagFixer) would otherwise drag the HUD back
-		// to BT.601 while the output still gets tagged as BT.709.
-		string overlayMatrix = colorspace switch
-		{
-			"bt2020nc" or "bt2020c" => "bt2020",
-			"smpte170m" or "bt470bg" => "bt601",
-			"smpte240m" => "smpte240m",
-			"fcc" => "fcc",
-			_ => "bt709"
-		};
-
-		string tags = $"setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}";
-		// threads=0 on the scale: swscale runs on one thread by default, and turning a whole 4K BGRA frame into YUV was the
-		// render's slowest stage - measured 31 -> 67 fps for the overlay graph alone.
-		args.AddRange([
-			"-filter_complex",
-			composedPicture
-				// The pipe already carries the finished picture (a 360 recording's view with the overlay on it) - it's
-				// only turned into YUV with the output's own matrix; the inputs before it are there for the sound.
-				? $"{source.MainVideo}[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}:threads=0," +
-				  $"format={(tenBit ? "yuv420p10le" : "yuv420p")},{tags}[v]"
-				: $"{source.MainVideo}{(greenScreen ? "" : ResizeFilter(info.Video, output))}{tags}[main];" +
-				  $"[{source.InputCount}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}:threads=0,format={(tenBit ? "yuva420p10le" : "yuva420p")}[ovl];" +
-				  // shortest=1: the overlay pipe is sized from the container duration, which runs a few ms past the
-				  // last video frame (audio ends later) - without it overlay's default eof_action=repeat padded the
-				  // output with copies of the source's last frame (1 extra frame on a 20 s clip, 3 on a 25 min one).
-				  $"[main][ovl]overlay=format={(tenBit ? "yuv420p10" : "yuv420")}:shortest=1[v]"
-		]);
+		args.AddRange(["-filter_complex", FilterGraph(source.MainVideo, source.InputCount, info.Video, output, greenScreen, composedPicture)]);
 
 		args.AddRange(["-map", "[v]"]);
 		// No corresponding "0:a" input to map when greenScreen replaced input 0 with a silent color
@@ -254,6 +322,56 @@ public static class FfmpegPipeline
 	}
 
 	/// <summary>
+	///     The render's filter graph, ending in [v]: the source (`mainVideo`, an input label or a chain ending in a comma) tagged
+	///     with its colors and brought to the output's size and depth, and the overlay from input `overlayInput` (raw BGRA) turned
+	///     into YUV and laid on it - or, for a picture already composed in C# (`composedPicture`, a 360 recording's), only turned
+	///     into YUV. Shared with RenderBenchmark, so it times the graph a render runs.
+	/// </summary>
+	internal static string FilterGraph(string mainVideo, int overlayInput, VideoInfo source, VideoInfo output, bool greenScreen, bool composedPicture)
+	{
+		string primaries = source.ColorPrimaries ?? "bt709";
+		string transfer = source.ColorTransfer ?? "bt709";
+		string colorspace = source.ColorSpace ?? "bt709";
+		string range = (source.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
+		bool tenBit = IsTenBit(output);
+
+		// The overlay's RGB -> YUV conversion must use the same matrix the output is tagged with, or the HUD's
+		// colors come out shifted. Explicit on the scaler because older ffmpeg's swscale defaults to BT.601;
+		// and the main input is tagged *before* the overlay (not only the output after it) because newer
+		// ffmpeg negotiates the overlay input's colorspace to match the main input's - an untagged source
+		// (e.g. an NLE export missing its color tags, see ColorTagFixer) would otherwise drag the HUD back
+		// to BT.601 while the output still gets tagged as BT.709.
+		string overlayMatrix = colorspace switch
+		{
+			"bt2020nc" or "bt2020c" => "bt2020",
+			"smpte170m" or "bt470bg" => "bt601",
+			"smpte240m" => "smpte240m",
+			"fcc" => "fcc",
+			_ => "bt709"
+		};
+
+		string tags = $"setparams=color_primaries={primaries}:color_trc={transfer}:colorspace={colorspace}:range={range}";
+		// The main picture's format is set, not negotiated: hardware decoding hands over p010, which overlay can't take, and
+		// left to itself ffmpeg turned it into yuva420p10 - an alpha plane added and blended on every frame. Measured at 4K
+		// 10-bit: 40 -> 47 fps for the graph, the same output to the bit.
+		string resize = greenScreen ? "" : ResizeFilter(source, output);
+		string main = resize.Length > 0 ? resize : $"format={PixelFormat(tenBit)},";
+		// threads=0 on the scale: swscale runs on one thread by default, and turning a whole 4K BGRA frame into YUV was the
+		// render's slowest stage - measured 31 -> 67 fps for the overlay graph alone.
+		return composedPicture
+			// The pipe already carries the finished picture (a 360 recording's view with the overlay on it) - it's
+			// only turned into YUV with the output's own matrix; the inputs before it are there for the sound.
+			? $"{mainVideo}[{overlayInput}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}:threads=0," +
+			  $"format={(tenBit ? "yuv420p10le" : "yuv420p")},{tags}[v]"
+			: $"{mainVideo}{main}{tags}[main];" +
+			  $"[{overlayInput}:v]scale=out_color_matrix={overlayMatrix}:out_range={range}:threads=0,format={(tenBit ? "yuva420p10le" : "yuva420p")}[ovl];" +
+			  // shortest=1: the overlay pipe is sized from the container duration, which runs a few ms past the
+			  // last video frame (audio ends later) - without it overlay's default eof_action=repeat padded the
+			  // output with copies of the source's last frame (1 extra frame on a 20 s clip, 3 on a 25 min one).
+			  $"[main][ovl]overlay=format={(tenBit ? "yuv420p10" : "yuv420")}:shortest=1[v]";
+	}
+
+	/// <summary>
 	///     The source's picture brought to the output's size and bit depth, ending in a comma to go on before what follows -
 	///     empty when they're the same, so a default render's graph stays as it was.
 	/// </summary>
@@ -267,13 +385,13 @@ public static class FfmpegPipeline
 	/// <summary>Whether `encoder` writes `video`'s codec - a choice made for the source can be stale once Settings changed the output's.</summary>
 	public static bool Encodes(string encoder, VideoInfo video)
 	{
-		return (encoder is "h264_nvenc" or "libx264") == IsH264(video);
+		return IsH264Encoder(encoder) == IsH264(video);
 	}
 
 	/// <summary>The video encoder's options for a render of `video` - shared with RenderBenchmark, so it measures the encode a render runs.</summary>
 	internal static void AddVideoEncoderArgs(List<string> args, VideoInfo video, string encoder, RenderEncodeSettings encode, int num, int den)
 	{
-		bool h264 = encoder is "h264_nvenc" or "libx264";
+		bool h264 = IsH264Encoder(encoder);
 		bool tenBit = IsTenBit(video);
 		// Reproduce the camera's own encode as closely as the encoder allows, not just its codec/profile:
 		// measured on Osmo Action 6 files, the camera writes near-constant bitrate (within ~5-10% of its
@@ -283,16 +401,53 @@ public static class FfmpegPipeline
 		// rate matched the original.
 		string bitRate = ((long)Math.Round(video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
 		int gop = video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
-		if (IsGpuEncoder(encoder))
+		string gopText = gop.ToString(CultureInfo.InvariantCulture);
+		EncoderFamily family = Family(encoder);
+		if (family == EncoderFamily.Amf)
 		{
 			args.AddRange([
 				"-c:v", encoder,
-				"-preset", encode.NvencPreset,
+				"-quality", PresetName(encoder, encode.NvencPreset)!,
 				"-rc", "cbr",
 				"-b:v", bitRate,
 				"-bufsize", bitRate,
 				"-bf", "0",
-				"-g", gop.ToString(CultureInfo.InvariantCulture),
+				"-g", gopText,
+				"-profile:v", Profile(h264, tenBit),
+				// The formats AMF and Quick Sync take: no planar 10-bit, and Quick Sync no planar 8-bit either.
+				"-pix_fmt", HardwarePixelFormat(tenBit)
+			]);
+			// AMF's levels are named as written ("5.2", "5.1"); ffprobe's number is 30x that for HEVC, 10x for H.264.
+			if (video.Level > 0)
+				args.AddRange(["-level", (video.Level / (h264 ? 10.0 : 30.0)).ToString("0.0", CultureInfo.InvariantCulture)]);
+			if (!h264 && video.HighTier is { } highTier) args.AddRange(["-tier", highTier ? "high" : "main"]);
+		}
+		else if (family == EncoderFamily.Qsv)
+		{
+			// Constant bitrate is Quick Sync's when the average and the maximum are the same. Level and tier are left to the
+			// encoder: untested on Intel hardware, and the probe (SelectVideoEncoder) runs these same options.
+			args.AddRange([
+				"-c:v", encoder,
+				"-preset", PresetName(encoder, encode.NvencPreset)!,
+				"-b:v", bitRate,
+				"-maxrate", bitRate,
+				"-bufsize", bitRate,
+				"-bf", "0",
+				"-g", gopText,
+				"-profile:v", Profile(h264, tenBit),
+				"-pix_fmt", HardwarePixelFormat(tenBit)
+			]);
+		}
+		else if (family == EncoderFamily.Nvenc)
+		{
+			args.AddRange([
+				"-c:v", encoder,
+				"-preset", PresetName(encoder, encode.NvencPreset)!,
+				"-rc", "cbr",
+				"-b:v", bitRate,
+				"-bufsize", bitRate,
+				"-bf", "0",
+				"-g", gopText,
 				"-profile:v", Profile(h264, tenBit),
 				"-pix_fmt", PixelFormat(tenBit)
 			]);
@@ -345,11 +500,11 @@ public static class FfmpegPipeline
 	///     nor repeats a frame, and the audio is in sync (0 ms against a single-file cut of the same span).
 	/// </summary>
 	private static SourceInputs AddSourceInputs(List<string> args, IReadOnlyList<VideoSegment> segments,
-		RenderPiece piece, RenderEncodeSettings encode, int num, int den, List<string> tempFiles, bool withVideo)
+		RenderPiece piece, string[] hwDecode, int num, int den, List<string> tempFiles, bool withVideo)
 	{
 		void AddHwDecode()
 		{
-			if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+			if (withVideo) args.AddRange(hwDecode);
 		}
 
 		string? AudioMapFor(int input, SourceInfo s)
@@ -416,7 +571,7 @@ public static class FfmpegPipeline
 	///     sound is joined, and the graph ends there.
 	/// </summary>
 	private static SourceInputs AddCutInputs(List<string> args, IReadOnlyList<VideoSegment> segments, RenderPlan plan,
-		RenderEncodeSettings encode, int num, int den, List<string> tempFiles, bool withVideo)
+		string[] hwDecode, int num, int den, List<string> tempFiles, bool withVideo)
 	{
 		bool hasAudio = segments[0].Source.Audio is not null;
 		var graph = new StringBuilder();
@@ -436,7 +591,7 @@ public static class FfmpegPipeline
 				startLocalFrame = localStartFrame;
 			}
 
-			if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+			if (withVideo) args.AddRange(hwDecode);
 			args.AddRange(["-ss", (localStartFrame * den / (double)num).ToString("R", CultureInfo.InvariantCulture), "-i", segments[first].InputPath]);
 			int head = input++;
 			string video = $"[{head}:v]";
@@ -446,7 +601,7 @@ public static class FfmpegPipeline
 			{
 				string tailList = ConcatListWriter.Write(segments.Skip(first + 1).Take(last - first).Select(s => s.InputPath));
 				tempFiles.Add(tailList);
-				if (withVideo && encode.HardwareDecoding) args.AddRange(HwDecodeArgs);
+				if (withVideo) args.AddRange(hwDecode);
 				args.AddRange(["-f", "concat", "-safe", "0", "-i", tailList]);
 				int tail = input++;
 				video = $"[{head}:v][{tail}:v]concat=n=2:v=1:a=0,";

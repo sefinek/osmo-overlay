@@ -81,6 +81,9 @@
   <data name="Benchmark_AdviceSkippedBusy" xml:space="preserve">
     <value>Podpowiedzi o dekodowaniu pominięto, bo komputer był zajęty - przy zajętym GPU dekodowanie na CPU wypadłoby lepiej tylko z tego powodu.</value>
   </data>
+  <data name="Benchmark_AdviceSkippedSample" xml:space="preserve">
+    <value>Dekodowania na GPU i CPU nie porównano: wygenerowana próbka dekoduje się na procesorze dużo łatwiej niż nagranie z kamery. Wczytaj nagranie i uruchom test ponownie.</value>
+  </data>
   <data name="Benchmark_AdviceSoftwareDecode" xml:space="preserve">
     <value>Na tym komputerze dekodowanie na CPU wypada o {0}% szybciej. Wyłączyć dekodowanie na GPU?</value>
   </data>
@@ -147,14 +150,20 @@
   <data name="Benchmark_FpsRange" xml:space="preserve">
     <value>{0}-{1} kl./s (±{2}%)</value>
   </data>
+  <data name="Benchmark_GeneratedSample" xml:space="preserve">
+    <value>wygenerowana próbka</value>
+  </data>
   <data name="Benchmark_Gpu" xml:space="preserve">
     <value>Karta graficzna</value>
+  </data>
+  <data name="Benchmark_Graph" xml:space="preserve">
+    <value>ffmpeg w całości (dekodowanie, nakładanie, kodowanie)</value>
   </data>
   <data name="Benchmark_InUse" xml:space="preserve">
     <value>używane teraz</value>
   </data>
   <data name="Benchmark_Intro" xml:space="preserve">
-    <value>Sprawdza każdy etap renderu na tym komputerze: dekodowanie na GPU i na CPU, rysowanie nakładki z cieniami i bez, przesył klatek do ffmpeg, kodowanie, a przy wczytanym nagraniu z telemetrią także krótki prawdziwy render. Każdy pomiar jest powtarzany na zmianę z porównywanym, a wynikiem jest mediana razem z zakresem powtórzeń. Na koniec test wskazuje najwolniejszy etap i podpowiada, które ustawienia będą tu szybsze. Trwa 2-3 minuty - na ten czas zamknij gry i inne programy mocno używające CPU lub GPU.</value>
+    <value>Sprawdza każdy etap renderu na tym komputerze: dekodowanie na GPU i na CPU, rysowanie nakładki z cieniami i bez, przesył klatek do ffmpeg, kodowanie, ffmpeg w całości oraz krótki prawdziwy render. Każdy pomiar jest powtarzany na zmianę z porównywanym, a wynikiem jest mediana razem z zakresem powtórzeń. Na koniec test wskazuje najwolniejszy etap i podpowiada, które ustawienia będą tu szybsze. Trwa 2-3 minuty - na ten czas zamknij gry i inne programy mocno używające CPU lub GPU.</value>
   </data>
   <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
     <value>co najmniej tyle - czekało na dekodowanie</value>
@@ -177,6 +186,9 @@
   <data name="Benchmark_NameEncode" xml:space="preserve">
     <value>Kodowanie</value>
   </data>
+  <data name="Benchmark_NameGraph" xml:space="preserve">
+    <value>ffmpeg w całości (dekodowanie, nakładanie i kodowanie naraz)</value>
+  </data>
   <data name="Benchmark_NameOverlay" xml:space="preserve">
     <value>Rysowanie nakładki</value>
   </data>
@@ -187,10 +199,10 @@
     <value>Twoje ustawienia są już najszybsze na tym komputerze.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
-    <value>Test na wczytanym nagraniu: {0}</value>
+    <value>Test wytnie {0}-sekundową próbkę z wczytanego nagrania ({1}) i zrobi na niej wszystkie pomiary. Krótki render narysuje twój preset na przykładowej trasie.</value>
   </data>
   <data name="Benchmark_OnSynthetic" xml:space="preserve">
-    <value>Nie wczytano nagrania, więc test użyje klipu testowego 4K. Obraz testowy dekoduje się szybciej niż prawdziwe nagranie, a krótkiego renderu nie będzie.</value>
+    <value>Nie wczytano nagrania, więc test wygeneruje próbkę 4K jak z Osmo Action. Na procesorze dekoduje się ona dużo łatwiej niż prawdziwe nagranie, więc dekodowanie GPU i CPU nie zostanie porównane - dla pełnego wyniku wczytaj nagranie przed testem.</value>
   </data>
   <data name="Benchmark_Os" xml:space="preserve">
     <value>System</value>
@@ -219,6 +231,9 @@
   <data name="Benchmark_Recording" xml:space="preserve">
     <value>Nagranie</value>
   </data>
+  <data name="Benchmark_RecordingSample" xml:space="preserve">
+    <value>{0}-sekundowa próbka wczytanego nagrania</value>
+  </data>
   <data name="Benchmark_RenderCpu" xml:space="preserve">
     <value>Render z dekodowaniem na CPU</value>
   </data>
@@ -228,6 +243,12 @@
   <data name="Benchmark_Results" xml:space="preserve">
     <value>Wyniki</value>
   </data>
+  <data name="Benchmark_SampleComesOutHigh" xml:space="preserve">
+    <value>zawyżone - próbka dekoduje się łatwiej niż nagranie</value>
+  </data>
+  <data name="Benchmark_SampleRoute" xml:space="preserve">
+    <value>przykładowa trasa</value>
+  </data>
   <data name="Benchmark_SlowestStage" xml:space="preserve">
     <value>Najwolniejszy etap</value>
   </data>
@@ -236,6 +257,9 @@
   </data>
   <data name="Benchmark_StageEncode" xml:space="preserve">
     <value>Kodowanie...</value>
+  </data>
+  <data name="Benchmark_StageGraph" xml:space="preserve">
+    <value>ffmpeg w całości...</value>
   </data>
   <data name="Benchmark_StageOverlay" xml:space="preserve">
     <value>Rysowanie nakładki...</value>
@@ -1740,6 +1764,9 @@ Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu
 
 Renderować mimo to?</value>
   </data>
+  <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
+    <value>Procesor jest już zajęty w {0}. Koduje karta graficzna, ale overlay rysuje się na procesorze, więc ten render będzie wolniejszy.</value>
+  </data>
   <data name="Render_DoneSummary" xml:space="preserve">
     <value>Czas: {0} · Rozmiar: {1}</value>
   </data>
@@ -1750,9 +1777,7 @@ Renderować mimo to?</value>
     <value>Render nie powiódł się</value>
   </data>
   <data name="Render_GpuBusyMessage" xml:space="preserve">
-    <value>Karta graficzna jest już obciążona: GPU {0}, enkoder wideo {1}, inne sesje kodowania: {2}. Coś innego gra, nagrywa albo koduje (gra, OBS, nagrywanie w tle GeForce, drugi render), więc ten render będzie wolniejszy, a gdy karta wyczerpie limit sesji kodowania, może się w ogóle nie uruchomić.
-
-Renderować mimo to?</value>
+    <value>Karta graficzna jest już obciążona: GPU {0}, enkoder wideo {1}, inne programy kodujące wideo: {2}. Coś innego gra, nagrywa albo koduje (gra, OBS, nagrywanie w tle GeForce lub Radeon, drugi render), więc ten render będzie wolniejszy, a gdy karta wyczerpie limit sesji kodowania, może się w ogóle nie uruchomić.</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Anulowano: {0}</value>
@@ -1949,13 +1974,13 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Czas trwania (sekundy)</value>
   </data>
   <data name="Settings_EffortPerFrameAtThe" xml:space="preserve">
-    <value>Ile pracy enkoder wkłada w każdą klatkę przy tym samym bitrate. P7 daje najlepszy obraz (domyślny), niższe są szybsze. Tylko NVENC - enkoder CPU ma własne ustawienia.</value>
+    <value>Ile pracy enkoder wkłada w każdą klatkę przy tym samym bitrate. P7 daje najlepszy obraz (domyślny), niższe są szybsze. Na kartach AMD P6-P7 to tryb quality, a P3-P5 balanced. Tylko enkodery karty graficznej - enkoder CPU ma własne ustawienia.</value>
   </data>
   <data name="Settings_ElevationGain" xml:space="preserve">
     <value>Suma przewyższeń</value>
   </data>
-  <data name="Settings_EncoderPresetNvidiaGpu" xml:space="preserve">
-    <value>Preset enkodera (GPU NVIDIA)</value>
+  <data name="Settings_EncoderPresetGpu" xml:space="preserve">
+    <value>Preset enkodera (GPU)</value>
   </data>
   <data name="Settings_EverythingBelowAppliesOnlyWhile" xml:space="preserve">
     <value>Wszystko poniżej działa tylko przy włączonej tej opcji.</value>
@@ -2302,8 +2327,8 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
   <data name="Summary_LogCameraModel" xml:space="preserve">
     <value>Model kamery: {0}</value>
   </data>
-  <data name="Summary_LogCheckingNvenc" xml:space="preserve">
-    <value>Sprawdzanie dostępności NVENC...</value>
+  <data name="Summary_LogCheckingGpuEncoder" xml:space="preserve">
+    <value>Sprawdzanie enkodera karty graficznej...</value>
   </data>
   <data name="Summary_LogColor" xml:space="preserve">
     <value>Kolor: {0}</value>
@@ -2312,7 +2337,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Czas trwania: {0}, rozmiar: {1}</value>
   </data>
   <data name="Summary_LogEncoderCpu" xml:space="preserve">
-    <value>Enkoder: {0} (NVENC niedostępny - CPU)</value>
+    <value>Enkoder: {0} (brak enkodera na karcie graficznej - CPU)</value>
   </data>
   <data name="Summary_LogEncoderGpu" xml:space="preserve">
     <value>Enkoder: {0} (GPU)</value>
@@ -2800,6 +2825,78 @@ Szczegóły: {0}</value>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
     <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamery DJI Osmo Action lub Insta360.</value>
   </data>
+  <data name="Welcome_CheckDecoder" xml:space="preserve">
+    <value>Sprzętowe dekodowanie</value>
+  </data>
+  <data name="Welcome_CheckDecoderOk" xml:space="preserve">
+    <value>{0} - nagrania HEVC 10-bit dekodowane na karcie graficznej.</value>
+  </data>
+  <data name="Welcome_CheckDecoderWarning" xml:space="preserve">
+    <value>Karta nie dekoduje HEVC 10-bit - nagrania będą dekodowane na procesorze, wolniej.</value>
+  </data>
+  <data name="Welcome_CheckDisk" xml:space="preserve">
+    <value>Miejsce na dysku</value>
+  </data>
+  <data name="Welcome_CheckDiskProblem" xml:space="preserve">
+    <value>Mniej niż 20 GB - dłuższy render 4K się nie zmieści.</value>
+  </data>
+  <data name="Welcome_CheckDiskValue" xml:space="preserve">
+    <value>{0} wolne w {1}</value>
+  </data>
+  <data name="Welcome_CheckDiskWarning" xml:space="preserve">
+    <value>Godzina nagrania 4K to ok. {0}, a render potrzebuje drugie tyle na czas zapisu.</value>
+  </data>
+  <data name="Welcome_CheckEncoder" xml:space="preserve">
+    <value>Sprzętowe kodowanie</value>
+  </data>
+  <data name="Welcome_CheckEncoderOk" xml:space="preserve">
+    <value>{0} - wideo 4K 10-bit kodowane na karcie graficznej.</value>
+  </data>
+  <data name="Welcome_CheckEncoderWarning" xml:space="preserve">
+    <value>Brak enkodera na karcie graficznej (NVENC, AMF, Quick Sync) - render będzie kodowany na procesorze ({0}), kilka razy wolniej.</value>
+  </data>
+  <data name="Welcome_CheckMemory" xml:space="preserve">
+    <value>Pamięć RAM</value>
+  </data>
+  <data name="Welcome_CheckMemoryProblem" xml:space="preserve">
+    <value>Minimum to 8 GB - render 4K może się nie zmieścić w pamięci.</value>
+  </data>
+  <data name="Welcome_CheckMemoryWarning" xml:space="preserve">
+    <value>Do renderów 4K zalecane jest 16 GB.</value>
+  </data>
+  <data name="Welcome_CheckNeedsFfmpeg" xml:space="preserve">
+    <value>Wymaga FFmpeg - zainstaluj go w poprzednim kroku.</value>
+  </data>
+  <data name="Welcome_CheckOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Welcome_CheckProblem" xml:space="preserve">
+    <value>Problem</value>
+  </data>
+  <data name="Welcome_CheckProcessor" xml:space="preserve">
+    <value>Procesor</value>
+  </data>
+  <data name="Welcome_CheckProcessorProblem" xml:space="preserve">
+    <value>Mniej niż 4 wątki - render 4K będzie bardzo powolny.</value>
+  </data>
+  <data name="Welcome_CheckProcessorWarning" xml:space="preserve">
+    <value>Mniej niż 8 wątków - rysowanie nakładki i dekodowanie na procesorze będą wolniejsze.</value>
+  </data>
+  <data name="Welcome_CheckSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Welcome_CheckSystemProblem" xml:space="preserve">
+    <value>OsmoOverlay wymaga systemu 64-bitowego.</value>
+  </data>
+  <data name="Welcome_CheckUnknown" xml:space="preserve">
+    <value>Nieznane</value>
+  </data>
+  <data name="Welcome_CheckWarning" xml:space="preserve">
+    <value>Uwaga</value>
+  </data>
+  <data name="Welcome_Checking" xml:space="preserve">
+    <value>Sprawdzam...</value>
+  </data>
   <data name="Welcome_Clear" xml:space="preserve">
     <value>Wyczyść</value>
   </data>
@@ -2820,6 +2917,21 @@ Szczegóły: {0}</value>
   </data>
   <data name="Welcome_Found" xml:space="preserve">
     <value>Znaleziono</value>
+  </data>
+  <data name="Welcome_HardwareLead" xml:space="preserve">
+    <value>Krótkie sprawdzenie, czy ten komputer poradzi sobie z renderami 4K z Osmo Action: system, procesor, pamięć, kodowanie i dekodowanie na karcie graficznej oraz miejsce na dysku.</value>
+  </data>
+  <data name="Welcome_HardwareOk" xml:space="preserve">
+    <value>Ten komputer poradzi sobie z renderami 4K.</value>
+  </data>
+  <data name="Welcome_HardwareProblem" xml:space="preserve">
+    <value>Ten komputer może nie poradzić sobie z renderami 4K - szczegóły wyżej.</value>
+  </data>
+  <data name="Welcome_HardwareUnknown" xml:space="preserve">
+    <value>Część sprawdzeń wymaga FFmpeg - zainstaluj go w poprzednim kroku.</value>
+  </data>
+  <data name="Welcome_HardwareWarning" xml:space="preserve">
+    <value>Render zadziała, ale część rzeczy go spowolni - szczegóły wyżej.</value>
   </data>
   <data name="Welcome_Installing" xml:space="preserve">
     <value>Instalowanie...</value>
@@ -2871,6 +2983,9 @@ Szczegóły: {0}</value>
   </data>
   <data name="Welcome_Retry" xml:space="preserve">
     <value>Ponów</value>
+  </data>
+  <data name="Welcome_RunBenchmark" xml:space="preserve">
+    <value>Test wydajności</value>
   </data>
   <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
     <value>Pokazuj znak wodny OsmoOverlay</value>
@@ -2940,6 +3055,9 @@ Szczegóły: {0}</value>
   </data>
   <data name="Welcome_YouReAllSet" xml:space="preserve">
     <value>Wszystko gotowe</value>
+  </data>
+  <data name="Welcome_YourComputer" xml:space="preserve">
+    <value>Twój komputer</value>
   </data>
   <data name="Widget_ChooseImage" xml:space="preserve">
     <value>Wybierz obraz</value>

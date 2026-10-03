@@ -13,9 +13,9 @@ namespace OsmoOverlay.Core;
 public sealed record BenchmarkSystem(string Os, string? Cpu, int Threads, long MemoryBytes, IReadOnlyList<string> Gpus, string? Ffmpeg, string App);
 
 /// <summary>
-///     How busy the computer is, 0-1 (null where it can't be read: the CPU on macOS, the GPU and its video encoder without
-///     nvidia-smi), and how many encoding sessions other programs hold on the GPU (OBS, GeForce's recording, Discord, another
-///     render). A game or another render running takes from every number the benchmark gives, and slows a render down.
+///     How busy the computer is, 0-1 (null where it can't be read: the CPU on macOS, the GPU outside Windows without nvidia-smi),
+///     and how many other programs encode video on the GPU (OBS, GeForce's or Radeon's recording, Discord, another render). A
+///     game or another render running takes from every number the benchmark gives, and slows a render down.
 /// </summary>
 public sealed record BenchmarkLoad(double? Cpu, double? Gpu, double? Encoder = null, int? EncoderSessions = null)
 {
@@ -24,14 +24,26 @@ public sealed record BenchmarkLoad(double? Cpu, double? Gpu, double? Encoder = n
 	internal const double RenderCpuThreshold = 0.4;
 	internal const double RenderGpuThreshold = 0.4;
 	internal const double RenderEncoderThreshold = 0.15;
+	// Encoding on the GPU, a render still draws the overlay (and ffmpeg lays it on) on the CPU - a busy one slows it too, if
+	// less than it slows x264/x265.
+	internal const double RenderCpuWithGpuEncoderThreshold = 0.6;
 
 	/// <summary>Busy enough to skew the benchmark's numbers.</summary>
 	public bool IsBusy => Cpu > BusyThreshold || Gpu > BusyThreshold || Encoder > BusyThreshold;
 
-	/// <summary>Busy enough to slow a render with this kind of encoder down noticeably: the GPU and its encoder for NVENC, the CPU for x264/x265.</summary>
+	/// <summary>The graphics card busy enough to slow a render encoding on it.</summary>
+	public bool GpuSlowsRender => Encoder > RenderEncoderThreshold || Gpu > RenderGpuThreshold;
+
+	/// <summary>The processor busy enough to slow a render with this kind of encoder.</summary>
+	public bool CpuSlowsRender(bool gpuEncoder)
+	{
+		return Cpu > (gpuEncoder ? RenderCpuWithGpuEncoderThreshold : RenderCpuThreshold);
+	}
+
+	/// <summary>Busy enough to slow a render with this kind of encoder down noticeably: for a GPU encoder its card and the CPU, for x264/x265 the CPU.</summary>
 	public bool SlowsRender(bool gpuEncoder)
 	{
-		return gpuEncoder ? Encoder > RenderEncoderThreshold || Gpu > RenderGpuThreshold : Cpu > RenderCpuThreshold;
+		return gpuEncoder && GpuSlowsRender || CpuSlowsRender(gpuEncoder);
 	}
 }
 
@@ -42,17 +54,23 @@ internal static partial class BenchmarkSystemInfo
 	public static async Task<BenchmarkSystem> CollectAsync(CancellationToken ct)
 	{
 		string? ffmpeg = await DependencyVersionChecker.GetInstalledVersionAsync(RequiredTools.Ffmpeg, ct);
-		return new BenchmarkSystem(RuntimeInformation.OSDescription, CpuName(), Environment.ProcessorCount, GC.GetGCMemoryInfo().TotalAvailableMemoryBytes,
+		return new BenchmarkSystem(RuntimeInformation.OSDescription, CpuName(), Environment.ProcessorCount, MemoryBytes(),
 			GpuNames(), ffmpeg, AppUpdates.CurrentVersion.ToString());
 	}
 
-	/// <summary>The CPU over one second, and the NVIDIA GPU's utilization (its 3D engines and its video encoder) sampled within it.</summary>
-	public static async Task<BenchmarkLoad> SampleLoadAsync(CancellationToken ct)
+	/// <summary>
+	///     The CPU over one second, and within it the graphics card's load: of the card `gpuVendor` makes (PCI vendor id, the
+	///     encoder's - FfmpegPipeline.GpuVendor), or the busiest one when null. On Windows from its performance counters, any
+	///     vendor's (WindowsGpuLoad); elsewhere, or without them, from nvidia-smi - an NVIDIA card only.
+	/// </summary>
+	public static async Task<BenchmarkLoad> SampleLoadAsync(uint? gpuVendor, CancellationToken ct)
 	{
 		(long Idle, long Total)? before = CpuTimes();
+		using WindowsGpuLoad.Sample? counters = OperatingSystem.IsWindows() ? WindowsGpuLoad.Sample.Start() : null;
+		bool nvidia = counters is null && gpuVendor is null or NvidiaVendor;
 		var clock = Stopwatch.StartNew();
 		List<NvidiaSample> samples = [];
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; nvidia && i < 3; i++)
 		{
 			if (await NvidiaUtilizationAsync(ct) is { } sample) samples.Add(sample);
 			await Task.Delay(TimeSpan.FromMilliseconds(300), ct);
@@ -61,12 +79,15 @@ internal static partial class BenchmarkSystemInfo
 		if (clock.Elapsed < TimeSpan.FromSeconds(1)) await Task.Delay(TimeSpan.FromSeconds(1) - clock.Elapsed, ct);
 		(long Idle, long Total)? after = CpuTimes();
 
-		double? cpu = before is { } b && after is { } a && a.Total > b.Total ? 1 - (double)(a.Idle - b.Idle) / (a.Total - b.Total) : null;
+		double? cpu = before is { } b && after is { } a && a.Total > b.Total ? Math.Clamp(1 - (double)(a.Idle - b.Idle) / (a.Total - b.Total), 0, 1) : null;
+		if (counters?.Finish(cpu, gpuVendor) is { } load) return load;
+
 		return samples.Count == 0
-			? new BenchmarkLoad(cpu is { } c ? Math.Clamp(c, 0, 1) : null, null)
-			: new BenchmarkLoad(cpu is { } busy ? Math.Clamp(busy, 0, 1) : null, samples.Average(s => s.Gpu), samples.Average(s => s.Encoder),
-				samples.Max(s => s.Sessions));
+			? new BenchmarkLoad(cpu, null)
+			: new BenchmarkLoad(cpu, samples.Average(s => s.Gpu), samples.Average(s => s.Encoder), samples.Max(s => s.Sessions));
 	}
+
+	private const uint NvidiaVendor = 0x10DE;
 
 	private readonly record struct NvidiaSample(double Gpu, double Encoder, int Sessions);
 
@@ -115,6 +136,17 @@ internal static partial class BenchmarkSystemInfo
 		}
 	}
 
+	/// <summary>
+	///     The memory installed - on Windows the modules' own size; elsewhere what the system can use, a few percent less (the
+	///     part the hardware and the kernel reserve), as is the fallback: 32 GB read that way as 31.2.
+	/// </summary>
+	private static long MemoryBytes()
+	{
+		if (OperatingSystem.IsWindows() && GetPhysicallyInstalledSystemMemory(out long kilobytes) && kilobytes > 0) return kilobytes * 1024;
+
+		return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+	}
+
 	private static string? CpuName()
 	{
 		try
@@ -143,7 +175,7 @@ internal static partial class BenchmarkSystemInfo
 		return null;
 	}
 
-	/// <summary>The display adapters Windows lists, with their driver version - none on other systems.</summary>
+	/// <summary>The display adapters Windows lists, with their driver version - not its own basic or remote ones, nor a virtual monitor (VR headsets, streaming) - none on other systems.</summary>
 	private static List<string> GpuNames()
 	{
 		return OperatingSystem.IsWindows() ? WindowsGpuNames() : [];
@@ -162,7 +194,8 @@ internal static partial class BenchmarkSystemInfo
 				{
 					using RegistryKey? adapter = adapters!.OpenSubKey(sub);
 					if (adapter?.GetValue("DriverDesc") is not string name || name.Contains("Basic Display", StringComparison.OrdinalIgnoreCase) ||
-					    name.Contains("Remote Display", StringComparison.OrdinalIgnoreCase))
+					    name.Contains("Remote Display", StringComparison.OrdinalIgnoreCase) ||
+					    name.Contains("Virtual", StringComparison.OrdinalIgnoreCase))
 						continue;
 
 					string entry = adapter.GetValue("DriverVersion") is string version ? $"{name} ({version})" : name;
@@ -181,6 +214,10 @@ internal static partial class BenchmarkSystemInfo
 
 		return names;
 	}
+
+	[LibraryImport("kernel32.dll", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static partial bool GetPhysicallyInstalledSystemMemory(out long totalMemoryInKilobytes);
 
 	[LibraryImport("kernel32.dll", SetLastError = true)]
 	[return: MarshalAs(UnmanagedType.Bool)]
