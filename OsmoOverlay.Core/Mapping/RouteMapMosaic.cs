@@ -71,7 +71,7 @@ public sealed class RouteMapMosaic : IDisposable
 	/// <summary>Null when there are no points to map, or every single tile fetch failed (e.g. fully offline).</summary>
 	public static async Task<RouteMapMosaic?> BuildAsync(IReadOnlyList<(double Lat, double Lon)> points,
 		string urlTemplate, int requestedZoom, int paddingTiles, CancellationToken ct,
-		Action<int, int>? onProgress = null, double? targetAspectRatio = null, TimeSpan? cacheMaxAge = null)
+		Action<int, int>? onProgress = null, double? targetAspectRatio = null, TimeSpan? cacheMaxAge = null, string? labelsUrlTemplate = null)
 	{
 		if (points.Count == 0) return null;
 
@@ -171,6 +171,9 @@ public sealed class RouteMapMosaic : IDisposable
 					SKBitmap? tile = await MapTileFetcher.FetchAsync(urlTemplate, zoom, tileX, tileY, cacheMaxAge, ct);
 					try
 					{
+						using SKBitmap? labels = tile is not null && labelsUrlTemplate is not null
+							? await MapTileFetcher.FetchAsync(labelsUrlTemplate, zoom, tileX, tileY, cacheMaxAge, ct)
+							: null;
 						lock (drawLock)
 						{
 							if (tile is not null)
@@ -179,6 +182,7 @@ public sealed class RouteMapMosaic : IDisposable
 								var dest = SKRect.Create((tileX - minTileX) * WebMercator.TileSize,
 									(tileY - minTileY) * WebMercator.TileSize, WebMercator.TileSize, WebMercator.TileSize);
 								canvas.DrawBitmap(tile, dest, SKSamplingOptions.Default);
+								if (labels is not null) canvas.DrawBitmap(labels, dest, SKSamplingOptions.Default);
 							}
 
 							fetchedCount++;

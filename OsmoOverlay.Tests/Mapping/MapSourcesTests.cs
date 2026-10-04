@@ -1,6 +1,8 @@
+using System.Text.Json;
 using OsmoOverlay.Core.Mapping;
+using OsmoOverlay.Core.Overlay;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Mapping;
 
 [TestClass]
 public sealed class MapSourcesTests
@@ -134,6 +136,66 @@ public sealed class MapSourcesTests
 		Assert.IsNull(sources.CacheMaxAge("opentopomap"));
 		Assert.AreEqual(TimeSpan.Zero, sources.CacheMaxAge("esri-imagery"), "never stored");
 		Assert.IsNull(sources.CacheMaxAge(MapProviders.CustomId));
+	}
+
+	[TestMethod]
+	public void EsriLabels_FollowTheSatelliteSelectionAndItsOwnKey()
+	{
+		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = " e &1 " });
+		string? labels = sources.LabelsUrlTemplate(MapProviders.AutoSatelliteId);
+
+		StringAssert.Contains(labels, "/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=e%20%261");
+		Assert.AreEqual(labels, sources.LabelsUrlTemplate(MapProviders.EsriImageryId));
+		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.StreetsAutoId));
+		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.MapTilerSatelliteId));
+		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.CustomId));
+		Assert.IsNull((sources with { ShowEsriLabels = false }).LabelsUrlTemplate(null));
+		Assert.IsNull(new MapSources().LabelsUrlTemplate(MapProviders.EsriImageryId), "a keyed provider never requests labels without its key");
+		StringAssert.Contains(new MapSources().LabelsUrlTemplate(null), "/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}");
+	}
+
+	[TestMethod]
+	public void EsriLabels_IncludeOnlyTheVisibleLayersInTheCredit()
+	{
+		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = "e" });
+		string? hybrid = sources.Attribution(null);
+		string? imagery = (sources with { ShowEsriLabels = false }).Attribution(null);
+
+		StringAssert.Contains(hybrid, "Earthstar Geographics");
+		StringAssert.Contains(hybrid, "TomTom");
+		StringAssert.Contains(hybrid, "© OpenStreetMap contributors");
+		StringAssert.Contains(imagery, "Earthstar Geographics");
+		Assert.IsFalse(imagery!.Contains("TomTom"));
+	}
+
+	[TestMethod]
+	public void EsriLabels_AreOnForExistingSettingsAndRememberAnOptOut()
+	{
+		OverlaySettings settings = JsonSerializer.Deserialize<OverlaySettings>("{}")!;
+		Assert.IsTrue(settings.ShowEsriMapLabels);
+		Assert.IsTrue(MapSources.From(settings).ShowEsriLabels);
+
+		OverlaySettings restored = JsonSerializer.Deserialize<OverlaySettings>(JsonSerializer.Serialize(settings with { ShowEsriMapLabels = false }))!;
+		Assert.IsFalse(restored.ShowEsriMapLabels);
+		Assert.IsFalse(MapSources.From(restored).ShowEsriLabels);
+	}
+
+	[TestMethod]
+	public async Task EsriLabels_ChangingTheSwitchInvalidatesBothPreparedMaps()
+	{
+		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = "e" });
+		OverlayElement[] layout = [new MapWidgetElement { X = 0, Y = 0, Visible = true }];
+		using var renderer = new OverlayRenderer(1280, 720, 0, layout, [], mapSources: sources,
+			routeIntro: RouteIntroSettings.From(new OverlaySettings()));
+
+		await renderer.BuildMapMosaicAsync();
+		await renderer.BuildRouteIntroMosaicAsync();
+		Assert.IsFalse(renderer.NeedsMapPrepare(layout));
+		Assert.IsFalse(renderer.NeedsRouteIntroPrepare());
+
+		renderer.MapSources = sources with { ShowEsriLabels = false };
+		Assert.IsTrue(renderer.NeedsMapPrepare(layout));
+		Assert.IsTrue(renderer.NeedsRouteIntroPrepare());
 	}
 
 	[TestMethod]

@@ -224,14 +224,15 @@ public sealed record MapSources(
 	string? CustomAttribution = null,
 	bool CustomCreditBriefly = false,
 	MapBounds? RouteBounds = null,
-	string? DefaultProviderId = null)
+	string? DefaultProviderId = null,
+	bool ShowEsriLabels = true)
 {
 	public const string CustomKeyGroup = "custom";
 
 	public static MapSources From(OverlaySettings settings)
 	{
 		return new MapSources(settings.MapApiKeys, settings.CustomMapUrlTemplate, settings.CustomMapAttribution, settings.CustomMapCreditBriefly,
-			DefaultProviderId: settings.DefaultMapProvider);
+			DefaultProviderId: settings.DefaultMapProvider, ShowEsriLabels: settings.ShowEsriMapLabels);
 	}
 
 	/// <summary>
@@ -292,10 +293,29 @@ public sealed record MapSources(
 		return template.Replace("{api_key}", Uri.EscapeDataString(ApiKey(KeyGroupOf(id)) ?? ""));
 	}
 
+	public bool SupportsLabels(string? providerId)
+	{
+		return Resolve(providerId) is MapProviders.EsriImageryId or MapProviders.EsriPublicId;
+	}
+
+	public string? LabelsUrlTemplate(string? providerId)
+	{
+		if (!ShowEsriLabels || !SupportsLabels(providerId)) return null;
+		if (Resolve(providerId) == MapProviders.EsriPublicId)
+			return "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
+
+		if (ApiKey(MapProviders.EsriKeyGroup) is not { } key) return null;
+		return "https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=" + Uri.EscapeDataString(key);
+	}
+
 	/// <summary>The credit line the provider requires - null for a custom server given none.</summary>
 	public string? Attribution(string? providerId)
 	{
 		string id = Resolve(providerId);
+		if (LabelsUrlTemplate(providerId) is not null)
+			return id == MapProviders.EsriPublicId
+				? "Esri, Maxar, Earthstar Geographics, HERE, Garmin, and the GIS User Community"
+				: "Powered by Esri | Esri, Maxar, Earthstar Geographics, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community";
 		string? text = id == MapProviders.CustomId ? CustomAttribution : MapProviders.Get(id).Attribution;
 		return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 	}

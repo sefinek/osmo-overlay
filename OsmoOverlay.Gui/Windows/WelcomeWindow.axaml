@@ -218,6 +218,7 @@
 									</Panel>
 								</Border>
 								<TextBlock Classes="rowText" FontSize="13" Text="{x:Static local:Strings.Welcome_MapSatelliteHint}" />
+								<TextBlock Name="SatellitePreviewCredit" Classes="rowText" FontSize="10" TextWrapping="Wrap" IsVisible="False" />
 							</StackPanel>
 							<StackPanel Grid.Column="1" Spacing="4">
 								<RadioButton Name="StreetsChoice" GroupName="mapStyle">
@@ -232,6 +233,7 @@
 									</Panel>
 								</Border>
 								<TextBlock Classes="rowText" FontSize="13" Text="{x:Static local:Strings.Welcome_MapStreetsHint}" />
+								<TextBlock Name="StreetsPreviewCredit" Classes="rowText" FontSize="10" TextWrapping="Wrap" IsVisible="False" />
 							</StackPanel>
 						</Grid>
 						<TextBlock Name="MapOwnProviderHint" Classes="rowText" FontSize="13" TextWrapping="Wrap" IsVisible="False" Margin="0,-4,0,0" />

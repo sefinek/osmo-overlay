@@ -49,6 +49,7 @@ public sealed record OverlaySettings(
 	// first-run window's Map step chose.
 	string? DefaultMapProvider = null,
 	bool CustomMapCreditBriefly = false,
+	bool ShowEsriMapLabels = true,
 	bool ShowRouteIntro = true,
 	double RouteIntroDurationSeconds = 12.0,
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,

@@ -56,7 +56,8 @@ public sealed partial class MapSourcePicker : UserControl
 
 	private MapSources CurrentSources(OverlaySettings settings)
 	{
-		return new MapSources(settings.MapApiKeys, CustomUrlBox.Text, CustomAttributionBox.Text, CustomCreditBrieflyCheck.IsChecked == true);
+		return new MapSources(settings.MapApiKeys, CustomUrlBox.Text, CustomAttributionBox.Text, CustomCreditBrieflyCheck.IsChecked == true,
+			ShowEsriLabels: settings.ShowEsriMapLabels);
 	}
 
 	private bool IsBestAvailable => SelectedId is MapProviders.AutoSatelliteId or MapProviders.StreetsAutoId;
@@ -71,6 +72,11 @@ public sealed partial class MapSourcePicker : UserControl
 		bool custom = SelectedId == MapProviders.CustomId;
 		MapSources sources = CurrentSources(settings);
 		string? group = KeyGroupShown(sources);
+		EsriLabelsSwitch.IsVisible = sources.SupportsLabels(SelectedId);
+		bool loading = _loading;
+		_loading = true;
+		EsriLabelsSwitch.IsChecked = settings.ShowEsriMapLabels;
+		_loading = loading;
 
 		AutoHint.IsVisible = best;
 		AutoHint.Text = SelectedId == MapProviders.StreetsAutoId ? Strings.MapSource_AutoStreetsDescription : Strings.MapSource_AutoDescription;
@@ -277,6 +283,12 @@ public sealed partial class MapSourcePicker : UserControl
 	{
 		string? text = string.IsNullOrWhiteSpace(CustomAttributionBox.Text) ? null : CustomAttributionBox.Text.Trim();
 		SaveShared(OverlaySettingsStore.Load() with { CustomMapAttribution = text });
+	}
+
+	private void OnEsriLabelsChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_loading) return;
+		SaveShared(OverlaySettingsStore.Load() with { ShowEsriMapLabels = EsriLabelsSwitch.IsChecked == true });
 	}
 
 	private void OnCustomCreditBrieflyClick(object? sender, RoutedEventArgs e)

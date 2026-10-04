@@ -7,6 +7,8 @@
 		<TextBlock Text="{x:Static local:Strings.MapSource_TileProvider}" Classes="infoLabel" Margin="0" />
 		<ComboBox Name="ProviderCombo" HorizontalAlignment="Stretch" SelectionChanged="OnProviderChanged" />
 		<TextBlock Name="AutoHint" Classes="hint" TextWrapping="Wrap" IsVisible="False" />
+		<ToggleSwitch Name="EsriLabelsSwitch" IsVisible="False" IsCheckedChanged="OnEsriLabelsChanged"
+		              Content="{x:Static local:Strings.MapSource_ShowEsriLabels}" />
 
 		<StackPanel Name="StatusPanel" />
 

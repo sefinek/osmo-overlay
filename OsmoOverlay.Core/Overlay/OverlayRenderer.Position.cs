@@ -3,7 +3,7 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
-using MapMosaicKey = (string Url, int Zoom, double MaxZoomOutFactor);
+using MapMosaicKey = (string Url, int Zoom, double MaxZoomOutFactor, string? LabelsUrl);
 
 namespace OsmoOverlay.Core.Overlay;
 
@@ -69,7 +69,8 @@ public sealed partial class OverlayRenderer
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
 		string urlTemplate = MapSources.UrlTemplate(mapElement.MapProviderId);
 		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor);
+		string? labelsUrlTemplate = MapSources.LabelsUrlTemplate(mapElement.MapProviderId);
+		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor, labelsUrlTemplate);
 		_preparedMapKey = key;
 
 		if (MapSources.MissesApiKey(mapElement.MapProviderId))
@@ -90,7 +91,7 @@ public sealed partial class OverlayRenderer
 			// NeedsMapPrepare reads it right after this returns its Task. onTileProgress therefore fires
 			// on a thread-pool thread.
 			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, mapElement.MapZoom, paddingTiles, ct, onTileProgress,
-				cacheMaxAge: MapSources.CacheMaxAge(mapElement.MapProviderId)), ct), key);
+				cacheMaxAge: MapSources.CacheMaxAge(mapElement.MapProviderId), labelsUrlTemplate: labelsUrlTemplate), ct), key);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -127,7 +128,7 @@ public sealed partial class OverlayRenderer
 		if (layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
 			return false;
 		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		MapMosaicKey key = (MapSources.UrlTemplate(mapElement.MapProviderId), mapElement.MapZoom, maxFactor);
+		MapMosaicKey key = (MapSources.UrlTemplate(mapElement.MapProviderId), mapElement.MapZoom, maxFactor, MapSources.LabelsUrlTemplate(mapElement.MapProviderId));
 		return _preparedMapKey != key;
 	}
 

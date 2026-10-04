@@ -47,12 +47,12 @@ public sealed partial class OverlayRenderer
 	private RouteIntroMosaicKey? _preparedRouteIntroKey;
 
 	/// <summary>What the route overview's mosaic is fetched for: its tile server and the route's extent.</summary>
-	public readonly record struct RouteIntroMosaicKey(string UrlTemplate, GeoBounds Route);
+	public readonly record struct RouteIntroMosaicKey(string UrlTemplate, GeoBounds Route, string? LabelsUrlTemplate = null);
 
 	private RouteIntroMosaicKey CurrentRouteIntroKey()
 	{
 		return new RouteIntroMosaicKey(MapSources.UrlTemplate(RouteIntro.MapProviderId),
-			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))));
+			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId));
 	}
 
 	/// <summary>
@@ -115,7 +115,7 @@ public sealed partial class OverlayRenderer
 		{
 			// Task.Run for the same reason as BuildMapMosaicAsync.
 			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, RouteIntroMapZoomDefault, 0, ct,
-				onTileProgress, targetAspect, MapSources.CacheMaxAge(RouteIntro.MapProviderId)), ct), key);
+				onTileProgress, targetAspect, MapSources.CacheMaxAge(RouteIntro.MapProviderId), key.LabelsUrlTemplate), ct), key);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{

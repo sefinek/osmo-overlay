@@ -1653,7 +1653,7 @@ Jeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustaw
     <value>Wklej swój klucz API</value>
   </data>
   <data name="MapSource_TheKeyAndTheCustom" xml:space="preserve">
-    <value>Klucze i własny serwer są wspólne dla wszystkich map w programie.</value>
+    <value>Klucze, opisy na zdjęciach satelitarnych i własny serwer są wspólne dla wszystkich map w programie.</value>
   </data>
   <data name="MapSource_TileProvider" xml:space="preserve">
     <value>Dostawca kafelków</value>
@@ -3321,5 +3321,8 @@ Szczegóły: {0}</value>
   </data>
   <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
     <value>Na postoju, przy hamowaniu i ruszaniu przeciążenie i przechył to zwykle kamera poruszana ręką albo odstawiany rower, a nie jazda. Liczą się więc tylko chwile, gdy przez 3 s przed i po prędkość była co najmniej 3 km/h. Prędkości, wysokości i nachylenia to nie dotyczy.</value>
+  </data>
+  <data name="MapSource_ShowEsriLabels" xml:space="preserve">
+    <value>Pokaż nazwy ulic i miejsc</value>
   </data>
 </root>

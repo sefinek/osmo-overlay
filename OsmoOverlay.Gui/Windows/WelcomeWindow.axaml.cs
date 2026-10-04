@@ -555,39 +555,44 @@ public partial class WelcomeWindow : Window
 	private async void ShowMapPreviews()
 	{
 		string key = EsriKeyBox.Text?.Trim() ?? "";
-		if (key == _mapPreviewKey) return;
-		_mapPreviewKey = key;
+		bool showLabels = OverlaySettingsStore.Load().ShowEsriMapLabels;
+		string previewKey = key + "|" + showLabels;
+		if (previewKey == _mapPreviewKey) return;
+		_mapPreviewKey = previewKey;
 
 		Dictionary<string, string> keys = _mapApiKeys is { } existing ? new Dictionary<string, string>(existing) : [];
 		if (key.Length == 0) keys.Remove(MapProviders.EsriKeyGroup);
 		else keys[MapProviders.EsriKeyGroup] = key;
-		var sources = new MapSources(keys);
+		var sources = new MapSources(keys, ShowEsriLabels: showLabels);
 
 		bool[] shown = await Task.WhenAll(
-			ShowMapPreviewAsync(SatellitePreview, SatellitePreviewStatus, sources, MapProviders.AutoSatelliteId, SatellitePreviewZoom, key),
-			ShowMapPreviewAsync(StreetsPreview, StreetsPreviewStatus, sources, MapProviders.StreetsAutoId, StreetsPreviewZoom, key));
+			ShowMapPreviewAsync(SatellitePreview, SatellitePreviewStatus, SatellitePreviewCredit, sources, MapProviders.AutoSatelliteId, SatellitePreviewZoom, previewKey),
+			ShowMapPreviewAsync(StreetsPreview, StreetsPreviewStatus, StreetsPreviewCredit, sources, MapProviders.StreetsAutoId, StreetsPreviewZoom, previewKey));
 		// Coming back to the step tries a failed one again.
-		if (key == _mapPreviewKey && !shown.All(ok => ok)) _mapPreviewKey = null;
+		if (previewKey == _mapPreviewKey && !shown.All(ok => ok)) _mapPreviewKey = null;
 	}
 
-	private async Task<bool> ShowMapPreviewAsync(Image image, TextBlock status, MapSources sources, string providerId, int zoom, string key)
+	private async Task<bool> ShowMapPreviewAsync(Image image, TextBlock status, TextBlock credit, MapSources sources, string providerId, int zoom, string key)
 	{
 		image.Source = null;
+		credit.IsVisible = false;
 		status.Text = Strings.Welcome_MapPreviewLoading;
-		Bitmap? preview = await MapPreviewAsync(sources.UrlTemplate(providerId), zoom, sources.CacheMaxAge(providerId));
+		Bitmap? preview = await MapPreviewAsync(sources.UrlTemplate(providerId), zoom, sources.CacheMaxAge(providerId), sources.LabelsUrlTemplate(providerId));
 		if (key != _mapPreviewKey) return true;
 
 		image.Source = preview;
+		credit.Text = sources.Attribution(providerId);
+		credit.IsVisible = preview is not null;
 		status.Text = preview is null ? Strings.Welcome_MapPreviewFailed : "";
 		return preview is not null;
 	}
 
-	private static async Task<Bitmap?> MapPreviewAsync(string urlTemplate, int zoom, TimeSpan? cacheMaxAge)
+	private static async Task<Bitmap?> MapPreviewAsync(string urlTemplate, int zoom, TimeSpan? cacheMaxAge, string? labelsUrlTemplate)
 	{
 		try
 		{
 			using RouteMapMosaic? mosaic = await Task.Run(() => RouteMapMosaic.BuildAsync(MapPreviewArea, urlTemplate, zoom, 0, CancellationToken.None,
-				targetAspectRatio: 2.0, cacheMaxAge: cacheMaxAge));
+				targetAspectRatio: 2.0, cacheMaxAge: cacheMaxAge, labelsUrlTemplate: labelsUrlTemplate));
 			if (mosaic is null) return null;
 
 			using SKData png = mosaic.Image.Encode(SKEncodedImageFormat.Png, 100);

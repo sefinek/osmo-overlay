@@ -1653,7 +1653,7 @@ If you cancel, you won't be asked about this version again - it stays available 
     <value>Paste your API key</value>
   </data>
   <data name="MapSource_TheKeyAndTheCustom" xml:space="preserve">
-    <value>Keys and the custom server are shared by every map in the app.</value>
+    <value>Keys, satellite labels and the custom server are shared by every map in the app.</value>
   </data>
   <data name="MapSource_TileProvider" xml:space="preserve">
     <value>Tile provider</value>
@@ -3321,5 +3321,8 @@ Details: {0}</value>
   </data>
   <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
     <value>Standing, stopping or starting, G-force and lean are usually the camera being handled or the bike put down, not the ride. So only moments with at least 3 km/h for 3 s before and after count. Speed, altitude and slopes aren't affected.</value>
+  </data>
+  <data name="MapSource_ShowEsriLabels" xml:space="preserve">
+    <value>Show street and place names</value>
   </data>
 </root>
