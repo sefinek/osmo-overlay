@@ -3320,6 +3320,9 @@ Szczegóły: {0}</value>
     <value>Przeciążenie i przechył tylko podczas jazdy</value>
   </data>
   <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
-    <value>Na postoju, przy hamowaniu i ruszaniu przeciążenie i przechył to zwykle kamera poruszana ręką albo odstawiany rower, a nie jazda. Liczą się więc tylko chwile, gdy przez 3 s przed i po prędkość była co najmniej 3 km/h. Prędkości, wysokości i nachylenia to nie dotyczy.</value>
+    <value>Na postoju, przy hamowaniu i ruszaniu przeciążenie i przechył to zwykle kamera poruszana ręką albo odstawiany rower, a nie jazda. Liczą się więc tylko chwile, gdy przez 3 s przed i po prędkość była co najmniej podana. Prędkości, wysokości i nachylenia to nie dotyczy.</value>
+  </data>
+  <data name="KeyMoments_RidingFrom" xml:space="preserve">
+    <value>Od prędkości (km/h)</value>
   </data>
 </root>

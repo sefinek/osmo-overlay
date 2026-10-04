@@ -3320,6 +3320,9 @@ Details: {0}</value>
     <value>G-force and lean only while riding</value>
   </data>
   <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
-    <value>Standing, stopping or starting, G-force and lean are usually the camera being handled or the bike put down, not the ride. So only moments with at least 3 km/h for 3 s before and after count. Speed, altitude and slopes aren't affected.</value>
+    <value>Standing, stopping or starting, G-force and lean are usually the camera being handled or the bike put down, not the ride. So only moments with at least the given speed for 3 s before and after count. Speed, altitude and slopes aren't affected.</value>
+  </data>
+  <data name="KeyMoments_RidingFrom" xml:space="preserve">
+    <value>From a speed of (km/h)</value>
   </data>
 </root>

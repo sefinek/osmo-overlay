@@ -49,26 +49,26 @@ public static class KeyMoments
 	}
 
 	/// <summary>The single highest peak of `kind`, or null when the data has none (no GPS fix, a standstill, unknown axes).</summary>
-	public static Peak? Find(IReadOnlyList<DerivedFrame> frames, PeakKind kind, double fps, long totalFrames, bool movingOnly = false)
+	public static Peak? Find(IReadOnlyList<DerivedFrame> frames, PeakKind kind, double fps, long totalFrames, double? ridingFromKmh = null)
 	{
-		List<Peak> top = FindTop(frames, kind, fps, totalFrames, 1, movingOnly);
+		List<Peak> top = FindTop(frames, kind, fps, totalFrames, 1, ridingFromKmh);
 		return top.Count > 0 ? top[0] : null;
 	}
 
 	/// <summary>
 	///     The `count` highest peaks of `kind`, best first, at least MinPeakSeparationSeconds apart - the neighbouring frames of
 	///     one peak are all nearly as high and would otherwise fill the list. Fewer (or none) when the data has no more such peaks.
-	///     `movingOnly` leaves out the G-force and lean of frames the ride wasn't under way (TripStats.Riding): stopping,
+	///     `ridingFromKmh` leaves out the G-force and lean of frames the ride wasn't under way at that speed (TripStats.Riding): stopping,
 	///     starting or standing they're the camera being handled, not the ride (the other kinds hold either way - an altitude
 	///     or a slope stood on is still one).
 	/// </summary>
 	public static List<Peak> FindTop(IReadOnlyList<DerivedFrame> frames, PeakKind kind, double fps, long totalFrames, int count,
-		bool movingOnly = false)
+		double? ridingFromKmh = null)
 	{
 		if (frames.Count == 0 || fps <= 0 || totalFrames <= 0 || count <= 0) return [];
 
 		bool gpsKind = kind is not (PeakKind.StrongestG or PeakKind.MaxLean);
-		bool[]? riding = movingOnly && !gpsKind ? TripStats.Riding(frames) : null;
+		bool[]? riding = ridingFromKmh is { } kmh && !gpsKind ? TripStats.Riding(frames, kmh) : null;
 		// The G-meter's own reading (dynamic acceleration against its baseline), so the peak is the number the widget shows there.
 		(double Lateral, double Longitudinal)[]? deltas = kind == PeakKind.StrongestG ? GMeterDeltas.Compute(frames) : null;
 		double[]? slopes = kind is PeakKind.SteepestClimb or PeakKind.SteepestDescent
