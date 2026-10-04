@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Runtime.InteropServices;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Logging;

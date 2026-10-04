@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Diagnostics;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;

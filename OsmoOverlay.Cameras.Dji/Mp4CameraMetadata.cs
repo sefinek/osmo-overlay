@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Buffers.Binary;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;

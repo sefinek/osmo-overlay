@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using FFmpeg.AutoGen;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;

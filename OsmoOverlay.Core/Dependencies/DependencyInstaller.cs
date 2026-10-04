@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;

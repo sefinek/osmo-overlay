@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Text.Json;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;

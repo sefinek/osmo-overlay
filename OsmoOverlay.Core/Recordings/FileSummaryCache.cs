@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;

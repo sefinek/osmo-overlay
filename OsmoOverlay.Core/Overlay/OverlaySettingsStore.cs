@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using OsmoOverlay.Core.Ffmpeg;

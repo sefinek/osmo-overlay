@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Runtime.InteropServices;
 using FFmpeg.AutoGen;
 using OsmoOverlay.Core.Reframe;

@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Text.Json.Nodes;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
