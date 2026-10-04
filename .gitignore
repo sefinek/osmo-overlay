@@ -1,0 +1,16 @@
+.vs/
+.idea/
+bin/
+obj/
+*.user
+TestResults/
+artifacts/
+
+# Camera recordings - they carry GPS tracks and camera serial numbers
+*.[mM][pP]4
+*.[mM][oO][vV]
+*.[iI][nN][sS][vV]
+*.[iI][nN][sS][pP]
+*.[lL][rR][vV]
+*.[lL][rR][fF]
+*.[aA][aA][cC]

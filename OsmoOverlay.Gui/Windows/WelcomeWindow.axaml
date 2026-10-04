@@ -1,0 +1,339 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="560"
+        xmlns:local="using:OsmoOverlay.Gui"
+        x:Class="OsmoOverlay.Gui.WelcomeWindow"
+        Width="940" Height="560" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="{x:Static local:Strings.Welcome_WelcomeToOsmoOverlay}">
+
+	<Window.Styles>
+		<Style Selector="StackPanel.step, Image.art">
+			<Setter Property="Transitions">
+				<Transitions>
+					<DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+				</Transitions>
+			</Setter>
+		</Style>
+		<Style Selector="TextBlock.stepTitle">
+			<Setter Property="FontSize" Value="24" />
+			<Setter Property="FontWeight" Value="Bold" />
+		</Style>
+		<Style Selector="TextBlock.stepLabel">
+			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="LetterSpacing" Value="1" />
+			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+		</Style>
+		<Style Selector="TextBlock.lead">
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="21" />
+		</Style>
+		<Style Selector="TextBlock.fieldLabel">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+		</Style>
+		<Style Selector="TextBlock.rowTitle">
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+		<Style Selector="TextBlock.rowText">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="Border.iconBadge">
+			<Setter Property="Width" Value="28" />
+			<Setter Property="Height" Value="28" />
+			<Setter Property="CornerRadius" Value="14" />
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+			<Setter Property="VerticalAlignment" Value="Top" />
+		</Style>
+		<Style Selector="Button.ghost">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+		</Style>
+		<Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+		</Style>
+		<Style Selector="Button.wizard, Button.ghost">
+			<Setter Property="Height" Value="34" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.wizard">
+			<Setter Property="MinWidth" Value="88" />
+			<Setter Property="Padding" Value="16,7" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+
+	<Grid ColumnDefinitions="300,*">
+		<Border Grid.Column="0" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
+			<Border.Background>
+				<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+					<GradientStop Offset="0" Color="{StaticResource AccentSubtleColor}" />
+					<GradientStop Offset="0.65" Color="{StaticResource SurfaceSunkenColor}" />
+				</LinearGradientBrush>
+			</Border.Background>
+			<Grid RowDefinitions="*,Auto" Margin="20,24">
+				<StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="14">
+					<Panel Width="250" Height="250">
+						<Ellipse Width="220" Height="220" Opacity="0.6">
+							<Ellipse.Fill>
+								<RadialGradientBrush>
+									<GradientStop Offset="0" Color="{StaticResource AccentCalloutBorderColor}" />
+									<GradientStop Offset="1" Color="{StaticResource AccentGlowFadeColor}" />
+								</RadialGradientBrush>
+							</Ellipse.Fill>
+						</Ellipse>
+						<Image Name="WelcomeArt" Classes="art" Source="/Assets/Welcome/Welcome.webp" />
+						<Image Name="CameraArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Camera.webp" />
+						<Image Name="ToolsArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Tools.webp" />
+						<Image Name="HardwareArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Hardware.webp" />
+						<Image Name="SpeedArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Speed.webp" />
+						<Image Name="MapArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Map.webp" />
+						<Image Name="PreferencesArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Preferences.webp" />
+						<Image Name="FinishArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Support.webp" />
+					</Panel>
+					<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" />
+					<StackPanel Name="StepDots" Orientation="Horizontal" HorizontalAlignment="Center" />
+				</StackPanel>
+				<Border Grid.Row="1" HorizontalAlignment="Center" Padding="10,3" CornerRadius="10"
+				        Background="{StaticResource SubtleFillBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+					<TextBlock Name="VersionText" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+				</Border>
+			</Grid>
+		</Border>
+
+		<Grid Grid.Column="1" RowDefinitions="*,Auto">
+			<StackPanel Grid.Row="0" Margin="24,20,24,12" Spacing="6">
+				<TextBlock Name="StepLabel" Classes="stepLabel" />
+
+				<Grid>
+					<StackPanel Name="WelcomeStep" Classes="step" Spacing="12">
+						<TextBlock Text="{x:Static local:Strings.Welcome_WelcomeToOsmoOverlay}" Classes="stepTitle" />
+						<TextBlock Classes="lead"
+						           Text="{x:Static local:Strings.Welcome_BurnSpeedHeadingTiltAnd}" />
+						<TextBlock Classes="lead"
+						           Text="{x:Static local:Strings.Welcome_AFewQuickStepsGet}" />
+						<Border Classes="card" Margin="0,6,0,0" Padding="14,10">
+							<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+								<local:IconView Data="{StaticResource IconInfo}" Width="14" Height="14" VerticalAlignment="Top" Margin="0,2,0,0"
+								                Foreground="{StaticResource AccentHoverBrush}" />
+								<TextBlock Grid.Column="1" Classes="rowText" FontSize="13"
+								           Text="{x:Static local:Strings.Welcome_EverythingHereCanBeChanged}" />
+							</Grid>
+						</Border>
+					</StackPanel>
+
+					<StackPanel Name="CameraStep" Classes="step" Opacity="0" Spacing="12">
+						<TextBlock Text="{x:Static local:Strings.Welcome_SupportedCameras}" Classes="stepTitle" />
+						<TextBlock Classes="lead"
+						           Text="{x:Static local:Strings.Welcome_OsmoOverlayReadsTheTelemetryYour}" />
+						<Border Classes="card" Padding="14,12" Margin="0,4,0,0">
+							<StackPanel Spacing="12">
+								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+									<Border Classes="iconBadge">
+										<local:IconView Data="{StaticResource IconCamera}" Width="14" Height="14" Foreground="{StaticResource AccentHoverBrush}"
+										                HorizontalAlignment="Center" VerticalAlignment="Center" />
+									</Border>
+									<StackPanel Grid.Column="1" Spacing="2">
+										<TextBlock Text="DJI Osmo Action" Classes="rowTitle" />
+										<TextBlock Classes="rowText"
+										           Text="{x:Static local:Strings.Welcome_TestedOnTheAction6}" />
+									</StackPanel>
+								</Grid>
+								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+									<Border Classes="iconBadge">
+										<local:IconView Data="{StaticResource IconSphere}" Width="14" Height="14" Foreground="{StaticResource AccentHoverBrush}"
+										                HorizontalAlignment="Center" VerticalAlignment="Center" />
+									</Border>
+									<StackPanel Grid.Column="1" Spacing="2">
+										<TextBlock Text="Insta360" Classes="rowTitle" />
+										<TextBlock Classes="rowText"
+										           Text="{x:Static local:Strings.Welcome_360InsvRecordingsTestedOn}" />
+									</StackPanel>
+								</Grid>
+							</StackPanel>
+						</Border>
+						<Border Classes="card" Padding="14,10">
+							<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+								<local:IconView Data="{StaticResource IconInfo}" Width="14" Height="14" VerticalAlignment="Top" Margin="0,2,0,0"
+								                Foreground="{StaticResource AccentHoverBrush}" />
+								<TextBlock Grid.Column="1" Classes="rowText" FontSize="13"
+								           Text="{x:Static local:Strings.Welcome_UseTheOriginalFilesFrom}" />
+							</Grid>
+						</Border>
+					</StackPanel>
+
+					<StackPanel Name="ToolsStep" Classes="step" Opacity="0" Spacing="12">
+						<TextBlock Text="{x:Static local:Strings.Common_Tools}" Classes="stepTitle" />
+						<TextBlock Classes="lead"
+						           Text="{x:Static local:Strings.Welcome_OsmoOverlayRendersWithFFmpegExifTool}" />
+						<StackPanel Name="ToolRows" Spacing="8" Margin="0,4,0,0" />
+						<TextBlock Name="ToolsHint" Classes="hint" />
+					</StackPanel>
+
+					<StackPanel Name="HardwareStep" Classes="step" Opacity="0" Spacing="10">
+						<TextBlock Text="{x:Static local:Strings.Welcome_YourComputer}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_HardwareLead}" />
+						<ScrollViewer MaxHeight="292" Margin="0,2,0,0">
+							<StackPanel Name="HardwareRows" Spacing="6" />
+						</ScrollViewer>
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+							<TextBlock Name="HardwareHint" Classes="rowText" VerticalAlignment="Center" />
+							<Button Grid.Column="1" Name="BenchmarkButton" Content="{x:Static local:Strings.Welcome_RunBenchmark}" Classes="wizard" IsVisible="False"
+							        Click="OnBenchmarkClick" />
+						</Grid>
+					</StackPanel>
+
+					<StackPanel Name="SpeedStep" Classes="step" Opacity="0" Spacing="10">
+						<TextBlock Text="{x:Static local:Strings.Common_SpeedCalibration}" Classes="stepTitle" />
+						<TextBlock Classes="lead"
+						           Text="{x:Static local:Strings.Welcome_SpeedFromACameraS}" />
+						<local:SpeedCalibrationEditor Name="SpeedEditor" Margin="0,4,0,0" />
+					</StackPanel>
+
+					<StackPanel Name="MapStep" Classes="step" Opacity="0" Spacing="10">
+						<TextBlock Text="{x:Static local:Strings.Welcome_MapTitle}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_MapLead}" />
+						<Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,2,0,8">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<RadioButton Name="SatelliteChoice" GroupName="mapStyle">
+									<TextBlock Text="{x:Static local:Strings.Welcome_MapSatellite}" Classes="rowTitle" />
+								</RadioButton>
+								<Border CornerRadius="6" ClipToBounds="True" Height="96" Background="{StaticResource SurfaceSunkenBrush}" Cursor="Hand"
+								        Tag="Satellite" PointerPressed="OnMapPreviewPressed">
+									<Panel>
+										<TextBlock Name="SatellitePreviewStatus" Classes="rowText" FontSize="13" TextAlignment="Center" Margin="8"
+										           HorizontalAlignment="Center" VerticalAlignment="Center" />
+										<Image Name="SatellitePreview" Stretch="UniformToFill" />
+									</Panel>
+								</Border>
+								<TextBlock Classes="rowText" FontSize="13" Text="{x:Static local:Strings.Welcome_MapSatelliteHint}" />
+							</StackPanel>
+							<StackPanel Grid.Column="1" Spacing="4">
+								<RadioButton Name="StreetsChoice" GroupName="mapStyle">
+									<TextBlock Text="{x:Static local:Strings.Welcome_MapStreets}" Classes="rowTitle" />
+								</RadioButton>
+								<Border CornerRadius="6" ClipToBounds="True" Height="96" Background="{StaticResource SurfaceSunkenBrush}" Cursor="Hand"
+								        Tag="Streets" PointerPressed="OnMapPreviewPressed">
+									<Panel>
+										<TextBlock Name="StreetsPreviewStatus" Classes="rowText" FontSize="13" TextAlignment="Center" Margin="8"
+										           HorizontalAlignment="Center" VerticalAlignment="Center" />
+										<Image Name="StreetsPreview" Stretch="UniformToFill" />
+									</Panel>
+								</Border>
+								<TextBlock Classes="rowText" FontSize="13" Text="{x:Static local:Strings.Welcome_MapStreetsHint}" />
+							</StackPanel>
+						</Grid>
+						<TextBlock Name="MapOwnProviderHint" Classes="rowText" FontSize="13" TextWrapping="Wrap" IsVisible="False" Margin="0,-4,0,0" />
+						<Border Classes="card" Padding="12,8">
+							<StackPanel Spacing="4">
+								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+									<local:IconView Data="{StaticResource IconCheck}" Width="20" Height="20" VerticalAlignment="Top" Margin="0,0,0,0"
+									                Foreground="{StaticResource SuccessBrush}" />
+									<TextBlock Grid.Column="1" Classes="rowText" FontSize="14" Text="{x:Static local:Strings.Welcome_MapRuleWithKey}" />
+								</Grid>
+								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+									<local:IconView Data="{StaticResource IconWarning}" Width="20" Height="20" VerticalAlignment="Top" Margin="0,0,0,0"
+									                Foreground="{StaticResource DangerBrush}" />
+									<TextBlock Grid.Column="1" Classes="rowText" FontSize="14" Text="{x:Static local:Strings.Welcome_MapRuleWithoutKey}" />
+								</Grid>
+							</StackPanel>
+						</Border>
+						<StackPanel Spacing="4">
+							<Grid ColumnDefinitions="*,Auto">
+								<TextBlock Text="{x:Static local:Strings.Welcome_MapKeyLabel}" Classes="fieldLabel" FontSize="15" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="1" Name="ArcGisLink" Classes="link" FontSize="15"
+								           Text="{x:Static local:Strings.Welcome_MapGetKey}" PointerPressed="OnGetKeyPressed">
+									<FlyoutBase.AttachedFlyout>
+										<Flyout Placement="TopEdgeAlignedRight" FlyoutPresenterClasses="guide">
+											<local:EsriKeyGuide />
+										</Flyout>
+									</FlyoutBase.AttachedFlyout>
+								</TextBlock>
+							</Grid>
+							<TextBox Name="EsriKeyBox" PasswordChar="•" PlaceholderText="{x:Static local:Strings.MapSource_PasteYourApiKey}"
+							         LostFocus="OnEsriKeyLostFocus" />
+							<TextBlock Classes="rowText" FontSize="13" Text="{x:Static local:Strings.Welcome_MapKeyHint}" />
+						</StackPanel>
+					</StackPanel>
+
+					<StackPanel Name="PreferencesStep" Classes="step" Opacity="0" Spacing="12">
+						<TextBlock Text="{x:Static local:Strings.Welcome_RenderingAndFiles}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_DefaultsForTheFirstRender}" />
+						<Border Classes="card" Padding="14,8" Margin="0,4,0,0">
+							<StackPanel Spacing="8">
+								<CheckBox Name="SmoothGpsCheck">
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" />
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_SmoothGpsHint}" />
+									</StackPanel>
+								</CheckBox>
+								<CheckBox Name="WatermarkCheck">
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Welcome_ShowAttributionWatermark}" />
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_WatermarkHint}" />
+									</StackPanel>
+								</CheckBox>
+								<CheckBox Name="ProjectAssociationCheck">
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Welcome_OpenOvprojProjectFilesWith}" />
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_ProjectAssociationHint}" />
+									</StackPanel>
+								</CheckBox>
+							</StackPanel>
+						</Border>
+						<StackPanel Spacing="6" Margin="0,4,0,0">
+							<TextBlock Text="{x:Static local:Strings.Welcome_DefaultOutputFolder}" Classes="fieldLabel" />
+							<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+								<TextBox Grid.Column="0" Name="OutputFolderBox" IsReadOnly="True" PlaceholderText="{x:Static local:Strings.Welcome_NextToTheSourceFile}" />
+								<Button Grid.Column="1" Content="{x:Static local:Strings.Common_Browse}" Click="OnBrowseOutputClick" />
+								<Button Grid.Column="2" Content="{x:Static local:Strings.Welcome_Clear}" Click="OnClearOutputClick" />
+							</Grid>
+							<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_OutputFolderHint}" />
+						</StackPanel>
+					</StackPanel>
+
+					<StackPanel Name="FinishStep" Classes="step" Opacity="0" Spacing="12">
+						<TextBlock Text="{x:Static local:Strings.Welcome_YouReAllSet}" Classes="stepTitle" />
+						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_ThisIsWhatWillBe}" />
+						<Border Classes="card" Padding="14,10">
+							<Grid Name="SummaryGrid" ColumnDefinitions="Auto,*" ColumnSpacing="16" RowSpacing="6" />
+						</Border>
+						<TextBlock Classes="lead" Margin="0,4,0,0"
+						           Text="{x:Static local:Strings.Welcome_OsmoOverlayIsMadeByOne}" />
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<Button Content="{x:Static local:Strings.Welcome_StarOnGitHub}" Tag="https://github.com/sefinek/osmo-overlay" Click="OnLinkButtonClick" />
+							<Button Content="{x:Static local:Strings.Welcome_SupportOnKoFi}" Tag="https://ko-fi.com/sefinek" Click="OnLinkButtonClick" />
+						</StackPanel>
+						<WrapPanel Orientation="Horizontal">
+							<TextBlock Text="{x:Static local:Strings.Welcome_OtherWays}" Classes="hint" Margin="0,0,8,0" />
+							<TextBlock Text="GitHub Sponsors" Classes="link" Margin="0,0,10,0" Tag="https://github.com/sponsors/sefinek" PointerPressed="OnLinkPressed" />
+							<TextBlock Text="Open Collective" Classes="link" Margin="0,0,10,0" Tag="https://opencollective.com/sefinek24" PointerPressed="OnLinkPressed" />
+							<TextBlock Text="PayPal" Classes="link" Tag="https://www.paypal.me/sefinek24" PointerPressed="OnLinkPressed" />
+						</WrapPanel>
+					</StackPanel>
+				</Grid>
+			</StackPanel>
+
+			<Border Grid.Row="1" Padding="24,12" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
+				<Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+					<Button Grid.Column="0" Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Classes="ghost" Click="OnSkipClick" />
+					<Button Grid.Column="2" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
+					<Button Grid.Column="3" Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
+					<Button Grid.Column="4" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
+					        Click="OnOpenRecordingClick" />
+				</Grid>
+			</Border>
+		</Grid>
+	</Grid>
+</Window>

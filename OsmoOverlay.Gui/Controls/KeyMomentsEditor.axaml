@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+             x:Class="OsmoOverlay.Gui.KeyMomentsEditor">
+
+	<UserControl.Resources>
+		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{StaticResource ControlColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{StaticResource ControlPressedColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBackground" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderChevronBackground" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPressed" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrush" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPressed" Color="Transparent" />
+	</UserControl.Resources>
+
+	<StackPanel Spacing="14">
+		<StackPanel Spacing="6">
+			<TextBlock Text="{x:Static local:Strings.KeyMoments_MarkTheFrameOnScreen}" Classes="infoLabel" Margin="0" />
+			<Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnAddClick"
+			        ToolTip.Tip="{x:Static local:Strings.KeyMoments_AddsAKeyMomentAt}">
+				<StackPanel Orientation="Horizontal" Spacing="7">
+					<local:IconView Data="{StaticResource IconFlag}" Width="13" Height="13" VerticalAlignment="Center" />
+					<TextBlock Text="{x:Static local:Strings.KeyMoments_AddKeyMomentB}" VerticalAlignment="Center" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
+
+		<StackPanel Spacing="6">
+			<TextBlock Text="{x:Static local:Strings.KeyMoments_JumpTo}" Classes="infoLabel" Margin="0" />
+			<StackPanel Name="PeakRows" Spacing="6" />
+			<TextBlock Name="NoPeaksText" Classes="hint" IsVisible="False" Text="{x:Static local:Strings.KeyMoments_ThisRecordingHasNoTelemetry}" />
+			<CheckBox Name="MovingOnlyCheck" Margin="0,2,0,0" Content="{x:Static local:Strings.KeyMoments_MovingOnly}"
+			          ToolTip.Tip="{x:Static local:Strings.KeyMoments_MovingOnlyHint}" Click="OnMovingOnlyClick" />
+		</StackPanel>
+
+		<StackPanel Name="MomentListPanel" Spacing="6" IsVisible="False">
+			<TextBlock Text="{x:Static local:Strings.KeyMoments_KeyMoments}" Classes="infoLabel" Margin="0" />
+			<StackPanel Name="MomentRows" Spacing="6" />
+		</StackPanel>
+
+		<TextBlock Classes="hint"
+		           Text="{x:Static local:Strings.KeyMoments_AKeyMomentIsA}" />
+	</StackPanel>
+</UserControl>

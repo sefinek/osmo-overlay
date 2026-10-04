@@ -1,0 +1,163 @@
+using OsmoOverlay.Core.Localization;
+using OsmoOverlay.Core.Logging;
+
+namespace OsmoOverlay.Core.Preview;
+
+/// <summary>
+///     The audio track's peak levels for the timeline, per channel, BucketsPerSecond buckets a second - decoded once in
+///     the background by an audio decoder of its own (a 25 min recording takes ~15 s; the timeline fills in as it goes),
+///     then kept in WaveformCache, so the same recording opened again has them straight away. Updated is raised from the
+///     background thread every few hundred milliseconds of progress.
+/// </summary>
+public sealed class AudioWaveform : IDisposable
+{
+	public const int BucketsPerSecond = 100;
+
+	// Drawn in decibels, this far down from the recording's own loudest peak (which reaches the full height): camera
+	// audio often peaks around -30 dBFS, which a linear or full-scale view draws as a thin line.
+	private const double DisplayRangeDb = 48;
+
+	// Silence (or nothing decoded yet) keeps a -60 dBFS reference, and nothing below -72 dBFS is drawn at all - otherwise
+	// a near-silent recording's noise floor would fill the track.
+	private const float QuietestReference = 0.001f;
+	private const double DisplayFloorDb = -72;
+
+	private readonly LibavAudioSource? _source;
+	private readonly IReadOnlyList<PlaybackSegment> _segments;
+	private readonly float[][] _peaks;
+	private readonly CancellationTokenSource _cts = new();
+	private readonly Thread? _worker;
+	private volatile int _available;
+	private volatile float _loudest;
+
+	private AudioWaveform(LibavAudioSource source, IReadOnlyList<PlaybackSegment> segments, double durationSeconds)
+	{
+		_source = source;
+		_segments = segments;
+		int buckets = (int)Math.Ceiling(durationSeconds * BucketsPerSecond) + 1;
+		_peaks = [.. Enumerable.Range(0, source.Channels).Select(_ => new float[buckets])];
+		// A thread of its own below normal priority: ~15 s of decoding mustn't take CPU from playback and the UI.
+		_worker = new Thread(Run) { IsBackground = true, Priority = ThreadPriority.BelowNormal, Name = "Timeline waveform" };
+		_worker.Start();
+	}
+
+	/// <summary>From WaveformCache - complete, nothing to decode.</summary>
+	private AudioWaveform(IReadOnlyList<PlaybackSegment> segments, float[][] peaks, float loudest)
+	{
+		_segments = segments;
+		_peaks = peaks;
+		_loudest = loudest;
+		_available = peaks[0].Length;
+	}
+
+	public int Channels => _peaks.Length;
+
+	/// <summary>The highest peak of any channel decoded so far, 0-1.</summary>
+	public float LoudestPeak => _loudest;
+
+	public event Action? Updated;
+
+	/// <summary>Null when the recording has no audio track. Blocking - reads the cache, or opens the first file.</summary>
+	public static AudioWaveform? Start(IReadOnlyList<PlaybackSegment> segments)
+	{
+		if (WaveformCache.TryLoad(segments) is { } cached)
+		{
+			AppLogger.Info($"Timeline waveform: {cached.Peaks[0].Length / (double)BucketsPerSecond:F0} s of audio from the cache");
+			return new AudioWaveform(segments, cached.Peaks, cached.Loudest);
+		}
+
+		var source = LibavAudioSource.TryOpen(segments);
+		return source is null ? null : new AudioWaveform(source, segments, segments.Sum(s => s.DurationSeconds));
+	}
+
+	/// <summary>How tall to draw a peak, 0-1: decibels from DisplayRangeDb below the loudest peak (never below DisplayFloorDb) up to it.</summary>
+	public static double DisplayLevel(float peak, float loudestPeak)
+	{
+		if (peak <= 0) return 0;
+
+		double loudestDb = 20 * Math.Log10(Math.Max(loudestPeak, QuietestReference));
+		double floorDb = Math.Max(loudestDb - DisplayRangeDb, DisplayFloorDb);
+		return Math.Clamp((20 * Math.Log10(peak) - floorDb) / (loudestDb - floorDb), 0, 1);
+	}
+
+	/// <summary>0-1 peak of a channel over buckets [from, to).</summary>
+	public float Peak(int channel, int from, int to)
+	{
+		float[] peaks = _peaks[channel];
+		to = Math.Min(to, Math.Min(_available, peaks.Length));
+		float peak = 0f;
+		for (int i = Math.Max(0, from); i < to; i++)
+		{
+			if (peaks[i] > peak)
+				peak = peaks[i];
+		}
+
+		return peak;
+	}
+
+	private void Run()
+	{
+		if (_source is null) return;
+
+		CancellationToken ct = _cts.Token;
+		try
+		{
+			int channels = _source.Channels;
+			double samplesPerBucket = (double)_source.SampleRate / BucketsPerSecond;
+			long sampleFrame = 0;
+			long lastUpdate = Environment.TickCount64;
+			long started = lastUpdate;
+			// Kept locally and published once per read - not a volatile read per sample.
+			float loudest = _loudest;
+
+			_source.Seek(0);
+			while (!ct.IsCancellationRequested)
+			{
+				ReadOnlySpan<float> samples = _source.Read(double.MaxValue);
+				if (samples.IsEmpty) break;
+
+				for (int i = 0; i < samples.Length; i += channels, sampleFrame++)
+				{
+					int bucket = (int)(sampleFrame / samplesPerBucket);
+					if (bucket >= _peaks[0].Length) break;
+
+					for (int c = 0; c < channels; c++)
+					{
+						float level = Math.Abs(samples[i + c]);
+						if (level > _peaks[c][bucket]) _peaks[c][bucket] = level;
+						if (level > loudest) loudest = level;
+					}
+				}
+
+				_loudest = loudest;
+				_available = (int)(sampleFrame / samplesPerBucket);
+				if (Environment.TickCount64 - lastUpdate < 250) continue;
+
+				lastUpdate = Environment.TickCount64;
+				Updated?.Invoke();
+			}
+
+			_available = _peaks[0].Length;
+			if (!ct.IsCancellationRequested)
+			{
+				AppLogger.Info($"Timeline waveform: {_peaks[0].Length / (double)BucketsPerSecond:F0} s of audio in " +
+				               $"{(Environment.TickCount64 - started) / 1000.0:F1} s");
+				WaveformCache.Save(_segments, _peaks, _loudest);
+			}
+
+			Updated?.Invoke();
+		}
+		catch (InvalidOperationException ex)
+		{
+			if (!ct.IsCancellationRequested) AppLogger.Warn(ex, CoreStrings.Preview_WaveformStopped);
+		}
+	}
+
+	public void Dispose()
+	{
+		_cts.Cancel();
+		_worker?.Join(TimeSpan.FromSeconds(2));
+		_source?.Dispose();
+		_cts.Dispose();
+	}
+}

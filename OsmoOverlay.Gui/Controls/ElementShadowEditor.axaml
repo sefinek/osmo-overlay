@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+             x:Class="OsmoOverlay.Gui.ElementShadowEditor">
+
+	<StackPanel Spacing="8">
+		<TextBlock Name="LockedHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
+		           Text="{x:Static local:Strings.ElementShadow_DisabledInSettings}" />
+		<CheckBox Name="EnabledCheck" Content="{x:Static local:Strings.ElementShadow_DropShadow}" />
+		<StackPanel Name="OptionsPanel" Spacing="8">
+			<TextBlock Text="{x:Static local:Strings.Common_Color}" Classes="infoLabel" Margin="0" />
+			<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+				<Border Grid.Column="0" Name="ColorPreview" Width="20" Height="20"
+				        CornerRadius="4" BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
+				<TextBox Grid.Column="1" Name="ColorBox" PlaceholderText="#000000" />
+			</Grid>
+			<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+				<StackPanel Grid.Column="0" Spacing="8">
+					<TextBlock Text="{x:Static local:Strings.Common_Opacity}" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="OpacityBox" Minimum="0" Maximum="100" Increment="5" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+				<StackPanel Grid.Column="1" Spacing="8">
+					<TextBlock Text="{x:Static local:Strings.ElementShadow_Radius}" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="RadiusBox" Minimum="0" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+			</Grid>
+			<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+				<StackPanel Grid.Column="0" Spacing="8">
+					<TextBlock Text="{x:Static local:Strings.ElementShadow_OffsetX}" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="OffsetXBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+				<StackPanel Grid.Column="1" Spacing="8">
+					<TextBlock Text="{x:Static local:Strings.ElementShadow_OffsetY}" Classes="infoLabel" Margin="0" />
+					<NumericUpDown Name="OffsetYBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch" />
+				</StackPanel>
+			</Grid>
+			<Button Name="ApplyToAllButton" Content="{x:Static local:Strings.ElementShadow_ApplyToAllWidgets}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+			        ToolTip.Tip="{x:Static local:Strings.ElementShadow_GivesEveryWidgetThisShadow}" />
+		</StackPanel>
+	</StackPanel>
+</UserControl>

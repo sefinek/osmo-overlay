@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+             x:Class="OsmoOverlay.Gui.MapSourcePicker">
+
+	<StackPanel Spacing="8">
+		<TextBlock Text="{x:Static local:Strings.MapSource_TileProvider}" Classes="infoLabel" Margin="0" />
+		<ComboBox Name="ProviderCombo" HorizontalAlignment="Stretch" SelectionChanged="OnProviderChanged" />
+		<TextBlock Name="AutoHint" Classes="hint" TextWrapping="Wrap" IsVisible="False" />
+
+		<StackPanel Name="StatusPanel" />
+
+		<TextBlock Name="CustomUrlLabel" Text="{x:Static local:Strings.MapSource_CustomTileUrlTemplate}" Classes="infoLabel" Margin="0,4,0,0" IsVisible="False" />
+		<TextBox Name="CustomUrlBox" IsVisible="False" PlaceholderText="https://tile.example.com/{z}/{x}/{y}.png"
+		         TextWrapping="Wrap" LostFocus="OnCustomUrlLostFocus" />
+
+		<Grid Name="ApiKeyHeader" ColumnDefinitions="*,Auto" Margin="0,4,0,0" IsVisible="False">
+			<TextBlock Name="ApiKeyLabel" Classes="infoLabel" Margin="0" VerticalAlignment="Center" />
+			<TextBlock Grid.Column="1" Name="ApiKeyPageLink" Classes="link" VerticalAlignment="Center" PointerPressed="OnApiKeyPageClick">
+				<FlyoutBase.AttachedFlyout>
+					<Flyout Placement="BottomEdgeAlignedRight" FlyoutPresenterClasses="guide">
+						<local:EsriKeyGuide />
+					</Flyout>
+				</FlyoutBase.AttachedFlyout>
+			</TextBlock>
+		</Grid>
+		<TextBox Name="ApiKeyBox" IsVisible="False" PlaceholderText="{x:Static local:Strings.MapSource_PasteYourApiKey}" PasswordChar="•"
+		         LostFocus="OnApiKeyLostFocus" />
+		<TextBlock Name="ApiKeyMissingHint" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False"
+		           TextWrapping="Wrap" Text="{x:Static local:Strings.MapSource_ApiKeyRequired}" />
+		<TextBlock Name="ApiKeyHint" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False"
+		           TextWrapping="Wrap" Text="{x:Static local:Strings.MapSource_DoesnTLookLikeA}" />
+		<TextBlock Name="SharedHint" Classes="hint" IsVisible="False" TextWrapping="Wrap"
+		           Text="{x:Static local:Strings.MapSource_TheKeyAndTheCustom}" />
+
+		<TextBlock Name="CustomAttributionLabel" Text="{x:Static local:Strings.MapSource_CustomCredit}" Classes="infoLabel" Margin="0,4,0,0" IsVisible="False" />
+		<TextBox Name="CustomAttributionBox" IsVisible="False" PlaceholderText="© OpenStreetMap contributors"
+		         LostFocus="OnCustomAttributionLostFocus" />
+		<CheckBox Name="CustomCreditBrieflyCheck" IsVisible="False" Click="OnCustomCreditBrieflyClick">
+			<TextBlock Text="{x:Static local:Strings.MapSource_CustomCreditBriefly}" TextWrapping="Wrap" />
+		</CheckBox>
+
+		<TextBlock Classes="hint" TextWrapping="Wrap" Margin="0,4,0,0" Text="{x:Static local:Strings.MapTerms_Disclaimer}" />
+	</StackPanel>
+</UserControl>

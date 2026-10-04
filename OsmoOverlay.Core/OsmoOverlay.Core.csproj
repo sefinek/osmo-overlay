@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyName>OsmoOverlay.Core</AssemblyName>
+    <RootNamespace>OsmoOverlay.Core</RootNamespace>
+
+    <AssemblyTitle>OsmoOverlay Core</AssemblyTitle>
+    <Description>Telemetry processing, HUD rendering, 360 reframing and the ffmpeg pipeline - the camera formats plug in (OsmoOverlay.Cameras.*).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+    <InternalsVisibleTo Include="OsmoOverlay.Cameras.Dji" />
+    <InternalsVisibleTo Include="OsmoOverlay.Cameras.Insta360" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Localization\CoreStrings.resx"
+                      StronglyTypedLanguage="C#"
+                      StronglyTypedNamespace="OsmoOverlay.Core.Localization"
+                      StronglyTypedClassName="CoreStrings"
+                      StronglyTypedFileName="$(IntermediateOutputPath)CoreStrings.g.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFmpeg.AutoGen" />
+    <PackageReference Include="NLog" />
+    <PackageReference Include="ppy.SDL3-CS" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+  </ItemGroup>
+
+</Project>

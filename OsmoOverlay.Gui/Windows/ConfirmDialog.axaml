@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="160"
+        x:Class="OsmoOverlay.Gui.ConfirmDialog"
+        Width="560" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="{x:Static local:Strings.ConfirmDialog_Confirm}">
+
+	<Grid ColumnDefinitions="Auto,*" Margin="20">
+		<Panel Name="KindArt" Grid.Column="0" Width="145" VerticalAlignment="Center" Margin="0,0,20,0" IsVisible="False">
+			<Image Name="SuccessArt" Source="/Assets/Dialogs/Success.webp" IsVisible="False" />
+			<Image Name="WarningArt" Source="/Assets/Dialogs/Warning.webp" IsVisible="False" />
+			<Image Name="InfoArt" Source="/Assets/Dialogs/Info.webp" IsVisible="False" />
+			<Image Name="DangerArt" Source="/Assets/Dialogs/Error.webp" IsVisible="False" />
+			<Image Name="NoGpsArt" Source="/Assets/Dialogs/NoGps.webp" IsVisible="False" />
+		</Panel>
+		<StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Center">
+			<StackPanel Spacing="6">
+				<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+					<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" VerticalAlignment="Center">
+						<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
+						                HorizontalAlignment="Center" VerticalAlignment="Center" />
+					</Border>
+					<TextBlock Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+				</StackPanel>
+				<ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+					<SelectableTextBlock Name="MessageText" TextWrapping="Wrap" Opacity="0.8" />
+				</ScrollViewer>
+			</StackPanel>
+			<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+				<TextBlock Grid.Column="0" />
+				<Button Grid.Column="1" Name="CancelButton" Content="{x:Static local:Strings.Common_Cancel}" Click="OnCancelClick" />
+				<Button Grid.Column="2" Name="ExtraButton" Content="{x:Static local:Strings.ConfirmDialog_Extra}" Click="OnExtraClick" IsVisible="False" />
+				<Button Grid.Column="3" Name="ConfirmButton" Content="{x:Static local:Strings.ConfirmDialog_Confirm}" Click="OnConfirmClick" />
+			</Grid>
+		</StackPanel>
+	</Grid>
+</Window>

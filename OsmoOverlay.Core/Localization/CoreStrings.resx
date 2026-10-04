@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Audio_VerificationFailed" xml:space="preserve">
+    <value>Verification failed: the converted audio doesn't decode to the same samples as the source.</value>
+  </data>
+  <data name="Cache_DeleteFailed" xml:space="preserve">
+    <value>Failed to delete stale cache entry {0}</value>
+  </data>
+  <data name="Cache_Unreadable" xml:space="preserve">
+    <value>Cache entry for {0} is corrupt or unreadable, treating as a cache miss</value>
+  </data>
+  <data name="Cache_WriteFailed" xml:space="preserve">
+    <value>Failed to write cache entry for {0}</value>
+  </data>
+  <data name="Dji_NativeDecodeFailed" xml:space="preserve">
+    <value>Native djmd decode failed for {0}, falling back to exiftool</value>
+  </data>
+  <data name="Dji_NotSupported" xml:space="preserve">
+    <value>{0} isn't officially supported. OsmoOverlay is tested on the DJI Osmo Action 6 and Action 5 Pro. The telemetry will most likely still be read, but some widgets may be unavailable or read wrong (tilt, G-meter) and the recording settings check won't apply.</value>
+  </data>
+  <data name="Dji_SourceExifTool" xml:space="preserve">
+    <value>Telemetry source: exiftool fallback (native djmd decode failed or ISO/shutter/CT unavailable)</value>
+  </data>
+  <data name="Dji_SourceNative" xml:space="preserve">
+    <value>Telemetry source: native djmd decoder (ISO/shutter/color temp all present, exiftool not needed)</value>
+  </data>
+  <data name="Dji_SourceNativePartial" xml:space="preserve">
+    <value>Telemetry source: native djmd decoder, partial camera settings ({0}/{1})</value>
+  </data>
+  <data name="Dji_ThisCamera" xml:space="preserve">
+    <value>This DJI camera</value>
+  </data>
+  <data name="Dji_TrackDiffers" xml:space="preserve">
+    <value>Camera '{0}' track differs between segments (timescale/sample description) - not copied</value>
+  </data>
+  <data name="Insta360_Source" xml:space="preserve">
+    <value>Telemetry source: Insta360 trailer (accelerometer averaged per frame, exposure)</value>
+  </data>
+  <data name="Insta360_SupportNotice" xml:space="preserve">
+    <value>OsmoOverlay is made mainly for the DJI Osmo Action 6. Insta360 recordings haven't been tested much, and their GPS data isn't supported at all. Some widgets may be unavailable or read wrong.</value>
+  </data>
+  <data name="Install_AlreadyInstalled" xml:space="preserve">
+    <value>{0} is already installed</value>
+  </data>
+  <data name="Install_AlreadyUpToDate" xml:space="preserve">
+    <value>{0} is already up to date</value>
+  </data>
+  <data name="Install_AuthorizationDenied" xml:space="preserve">
+    <value>Authorization was cancelled or denied</value>
+  </data>
+  <data name="Install_CouldNotStartUpdate" xml:space="preserve">
+    <value>Couldn't start the update: {0}</value>
+  </data>
+  <data name="Install_ExitCode" xml:space="preserve">
+    <value>{0} exited with code {1}</value>
+  </data>
+  <data name="Install_Finished" xml:space="preserve">
+    <value>{0} finished</value>
+  </data>
+  <data name="Install_Installed" xml:space="preserve">
+    <value>{0} installed</value>
+  </data>
+  <data name="Install_NoHomebrew" xml:space="preserve">
+    <value>Homebrew is not installed. Install it from https://brew.sh, then retry</value>
+  </data>
+  <data name="Install_NoPackageManager" xml:space="preserve">
+    <value>No supported package manager (apt, dnf, pacman) was found. Install {0} manually</value>
+  </data>
+  <data name="Install_NoSupportedVersion" xml:space="preserve">
+    <value>Couldn't find {0} {1}.x in winget ({2}) - the only major version this release of OsmoOverlay can use</value>
+  </data>
+  <data name="Install_NotFromWinget" xml:space="preserve">
+    <value>{0} wasn't installed through winget, so it can't be updated from here - update it the same way it was installed</value>
+  </data>
+  <data name="Install_NotOnPath" xml:space="preserve">
+    <value>The package manager reports {0} as installed, but {1} still can't be found on PATH. Restart the app, or add its folder to PATH manually</value>
+  </data>
+  <data name="Install_PreviewCantUse" xml:space="preserve">
+    <value>{0} is installed, but the preview can't use it: {1}. Update it (or install a newer build) and retry</value>
+  </data>
+  <data name="Install_RestartToUse" xml:space="preserve">
+    <value>{0}. Restart OsmoOverlay to use the new version</value>
+  </data>
+  <data name="Install_RunInTerminal" xml:space="preserve">
+    <value>Run this in a terminal: {0}</value>
+  </data>
+  <data name="Install_UnsupportedPlatform" xml:space="preserve">
+    <value>Automatic installation is not supported on this platform</value>
+  </data>
+  <data name="Install_Updated" xml:space="preserve">
+    <value>{0} updated</value>
+  </data>
+  <data name="Install_UpgradingPackage" xml:space="preserve">
+    <value>Upgrading winget package {0}...</value>
+  </data>
+  <data name="Install_UpgradingPackageTo" xml:space="preserve">
+    <value>Upgrading winget package {0} to {1}...</value>
+  </data>
+  <data name="Install_WillUpdateLatest" xml:space="preserve">
+    <value>{0} will be updated to the latest version once OsmoOverlay closes</value>
+  </data>
+  <data name="Install_WillUpdateTo" xml:space="preserve">
+    <value>{0} will be updated to {1} once OsmoOverlay closes</value>
+  </data>
+  <data name="Join_DifferentCamera" xml:space="preserve">
+    <value>{0} is from {1}, but {2} is from {3} - all files must come from the same camera.</value>
+  </data>
+  <data name="Join_DifferentFormat" xml:space="preserve">
+    <value>{0} ({1}) doesn't match {2} ({3}) - files must share the same resolution, frame rate and pixel format to be joined.</value>
+  </data>
+  <data name="Join_DifferentLens" xml:space="preserve">
+    <value>{0} and {1} weren't recorded with the same lens setup (360 or flat).</value>
+  </data>
+  <data name="Join_UnknownCamera" xml:space="preserve">
+    <value>a camera whose telemetry the app can't read</value>
+  </data>
+  <data name="Libav_CantDecodeAudio" xml:space="preserve">
+    <value>The preview can't decode audio: {0}</value>
+  </data>
+  <data name="Libav_CantDecodeVideo" xml:space="preserve">
+    <value>The preview can't decode video: {0}</value>
+  </data>
+  <data name="Libav_LoadFailed" xml:space="preserve">
+    <value>the FFmpeg libraries couldn't be loaded: {0}</value>
+  </data>
+  <data name="Libav_NotFound" xml:space="preserve">
+    <value>{0} was not found - it comes with the FFmpeg {1} shared build</value>
+  </data>
+  <data name="Libav_WrongVersion" xml:space="preserve">
+    <value>libavcodec {0} was found, {1} is needed</value>
+  </data>
+  <data name="Map_AllTilesFailed" xml:space="preserve">
+    <value>Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map</value>
+  </data>
+  <data name="Map_ApiKeyMissing" xml:space="preserve">
+    <value>The {0} map needs an API key and none is entered, so no tiles will be fetched. Enter the key where you pick the map</value>
+  </data>
+  <data name="Map_CacheTileFailed" xml:space="preserve">
+    <value>Failed to cache map tile {0}</value>
+  </data>
+  <data name="Map_CartoDarkName" xml:space="preserve">
+    <value>CARTO Dark Matter</value>
+  </data>
+  <data name="Map_CartoPositronName" xml:space="preserve">
+    <value>CARTO Positron (light)</value>
+  </data>
+  <data name="Map_EoxName" xml:space="preserve">
+    <value>Sentinel-2 cloudless 2016 (EOX, low detail)</value>
+  </data>
+  <data name="Map_GugikName" xml:space="preserve">
+    <value>GUGiK orthophoto (Poland only)</value>
+  </data>
+  <data name="Map_NoteLowDetail" xml:space="preserve">
+    <value>Satellite imagery at 10 m a pixel: a close-up map shows only blurry patches; fine for the route overview card.</value>
+  </data>
+  <data name="Map_NoteMapTilerVideo" xml:space="preserve">
+    <value>Video allowed on internet platforms (YouTube, Vimeo) for channels of up to 100,000 subscribers. The free plan is for non-commercial use only.</value>
+  </data>
+  <data name="Map_NoteSharedServer" xml:space="preserve">
+    <value>A free community server: it mustn't be overloaded, and tiles may load more slowly.</value>
+  </data>
+  <data name="Map_NoteEsri" xml:space="preserve">
+    <value>A key from a free ArcGIS Location Platform account: 2 million tiles a month, commercial use included. Esri lets you show its maps in a film if you credit Esri and the imagery's sources. Its terms don't allow storing tiles, so the app doesn't save them to disk.</value>
+  </data>
+  <data name="Map_NoteCarto" xml:space="preserve">
+    <value>You get a free key without making an account: up to 5 million requests a month for non-commercial use, up to 1 million for commercial use.</value>
+  </data>
+  <data name="Map_EsriPublicName" xml:space="preserve">
+    <value>Esri World Imagery without a key (against its terms)</value>
+  </data>
+  <data name="Map_NoteEsriPublic" xml:space="preserve">
+    <value>Want this map in a film? Pick Esri World Imagery from the list and paste a free ArcGIS key. The imagery is the same, and with a key you may use it in a film, commercially too (2 million tiles a month free). Without a key the tiles come from Esri's public server, meant for Esri's products and ArcGIS accounts, and using them in a film breaks its terms.</value>
+  </data>
+  <data name="Map_NoteEsriStreetsPublic" xml:space="preserve">
+    <value>Want a street map in a film? Pick Esri Navigation from the list and paste a free ArcGIS key. With a key you may use it in a film, commercially too. Without a key the tiles come from Esri's public server, meant for Esri's products and ArcGIS accounts, and using them in a film breaks its terms.</value>
+  </data>
+  <data name="Map_EsriStreetsPublicName" xml:space="preserve">
+    <value>Esri Street Map without a key (against its terms)</value>
+  </data>
+  <data name="Map_EsriStreetsName" xml:space="preserve">
+    <value>Esri Navigation (streets like Google)</value>
+  </data>
+  <data name="Map_RegionPoland" xml:space="preserve">
+    <value>Poland</value>
+  </data>
+  <data name="Map_FetchTileFailed" xml:space="preserve">
+    <value>Failed to fetch map tile {0} after {1} attempts</value>
+  </data>
+  <data name="Peak_HighestPoint" xml:space="preserve">
+    <value>Highest point</value>
+  </data>
+  <data name="Peak_LowestPoint" xml:space="preserve">
+    <value>Lowest point</value>
+  </data>
+  <data name="Peak_MaxLean" xml:space="preserve">
+    <value>Deepest lean</value>
+  </data>
+  <data name="Peak_SteepestClimb" xml:space="preserve">
+    <value>Steepest climb</value>
+  </data>
+  <data name="Peak_SteepestDescent" xml:space="preserve">
+    <value>Steepest descent</value>
+  </data>
+  <data name="Peak_StrongestG" xml:space="preserve">
+    <value>Strongest G-force</value>
+  </data>
+  <data name="Peak_TopSpeed" xml:space="preserve">
+    <value>Top speed</value>
+  </data>
+  <data name="Plan_EmptyRange" xml:space="preserve">
+    <value>The render range is empty ({0} - {1}) - the end must come after the start.</value>
+  </data>
+  <data name="Plan_NothingLeft" xml:space="preserve">
+    <value>The cuts remove the whole render range - nothing is left to render.</value>
+  </data>
+  <data name="Presets_DuplicateId" xml:space="preserve">
+    <value>Skipping overlay preset file with a duplicate id '{0}': {1}</value>
+  </data>
+  <data name="Presets_ImportFailed" xml:space="preserve">
+    <value>Failed to import overlay preset from: {0}</value>
+  </data>
+  <data name="Presets_SkippingUnreadable" xml:space="preserve">
+    <value>Skipping unreadable overlay preset file: {0}</value>
+  </data>
+  <data name="Presets_Unreadable" xml:space="preserve">
+    <value>Overlay presets are corrupt or unreadable, falling back to the default preset</value>
+  </data>
+  <data name="Presets_WriteFailed" xml:space="preserve">
+    <value>Failed to write overlay presets</value>
+  </data>
+  <data name="Preview_AudioNoDevice" xml:space="preserve">
+    <value>Preview audio unavailable - no playback device: {0}</value>
+  </data>
+  <data name="Preview_AudioSdlFailed" xml:space="preserve">
+    <value>Preview audio unavailable - SDL couldn't start audio: {0}</value>
+  </data>
+  <data name="Preview_AudioStopped" xml:space="preserve">
+    <value>Preview audio stopped</value>
+  </data>
+  <data name="Preview_AudioTrackFailed" xml:space="preserve">
+    <value>Preview audio unavailable - the audio track couldn't be opened</value>
+  </data>
+  <data name="Preview_CloseFailed" xml:space="preserve">
+    <value>Closing the preview failed</value>
+  </data>
+  <data name="Preview_FetchingOverview" xml:space="preserve">
+    <value>Fetching route overview map</value>
+  </data>
+  <data name="Preview_FetchingTiles" xml:space="preserve">
+    <value>Fetching map tiles</value>
+  </data>
+  <data name="Preview_MapFailed" xml:space="preserve">
+    <value>Map preview failed</value>
+  </data>
+  <data name="Preview_OverviewFailed" xml:space="preserve">
+    <value>Route overview map failed</value>
+  </data>
+  <data name="Preview_PlaybackStopped" xml:space="preserve">
+    <value>Playback stopped: {0}</value>
+  </data>
+  <data name="Preview_SeekFailed" xml:space="preserve">
+    <value>Preview seek failed: {0}</value>
+  </data>
+  <data name="Preview_ThumbnailsStopped" xml:space="preserve">
+    <value>Timeline thumbnails stopped</value>
+  </data>
+  <data name="Preview_WaveformCacheUnreadable" xml:space="preserve">
+    <value>Waveform cache entry {0} is unreadable, decoding the audio again</value>
+  </data>
+  <data name="Preview_WaveformCacheWriteFailed" xml:space="preserve">
+    <value>Couldn't write the waveform cache {0}</value>
+  </data>
+  <data name="Preview_WaveformStopped" xml:space="preserve">
+    <value>Timeline waveform stopped</value>
+  </data>
+  <data name="Project_Empty" xml:space="preserve">
+    <value>The project file is empty.</value>
+  </data>
+  <data name="Project_Incomplete" xml:space="preserve">
+    <value>The project file is incomplete.</value>
+  </data>
+  <data name="Project_Newer" xml:space="preserve">
+    <value>The project was saved by a newer version of OsmoOverlay.</value>
+  </data>
+  <data name="Project_NotLocal" xml:space="preserve">
+    <value>The project points at a file that isn't on a local drive (a network share or a relative path).</value>
+  </data>
+  <data name="Render_Cancelled" xml:space="preserve">
+    <value>Cancelled by user</value>
+  </data>
+  <data name="Render_CheckingGpuEncoder" xml:space="preserve">
+    <value>Checking the graphics card's encoder...</value>
+  </data>
+  <data name="Render_CopyingMetadata" xml:space="preserve">
+    <value>Copying camera metadata into the output: {0}...</value>
+  </data>
+  <data name="Render_CopyMetadataFailed" xml:space="preserve">
+    <value>Could not copy the camera metadata into the render - the video itself is fine, it just won't carry it</value>
+  </data>
+  <data name="Render_EncoderCpu" xml:space="preserve">
+    <value>Using encoder: {0} (no graphics card encoder - rendering on CPU)</value>
+  </data>
+  <data name="Render_EncoderGpu" xml:space="preserve">
+    <value>Using encoder: {0} (GPU)</value>
+  </data>
+  <data name="Render_Estimating" xml:space="preserve">
+    <value>estimating time left...</value>
+  </data>
+  <data name="Render_Extracted" xml:space="preserve">
+    <value>Extracted {0} telemetry samples</value>
+  </data>
+  <data name="Render_Extracting" xml:space="preserve">
+    <value>Extracting telemetry...</value>
+  </data>
+  <data name="Render_Failed" xml:space="preserve">
+    <value>Render failed for {0}: {1}</value>
+  </data>
+  <data name="Render_FastStart" xml:space="preserve">
+    <value>Moving the file index to the front (fast start)...</value>
+  </data>
+  <data name="Render_FastStartFailed" xml:space="preserve">
+    <value>Could not apply fast start to the render - the video itself is fine</value>
+  </data>
+  <data name="Render_FetchingOverview" xml:space="preserve">
+    <value>Fetching route overview map...</value>
+  </data>
+  <data name="Render_FetchingOverviewProgress" xml:space="preserve">
+    <value>Fetching route overview map: {0}/{1}</value>
+  </data>
+  <data name="Render_FetchingTiles" xml:space="preserve">
+    <value>Fetching map tiles for the route...</value>
+  </data>
+  <data name="Render_FetchingTilesProgress" xml:space="preserve">
+    <value>Fetching map tiles: {0}/{1}</value>
+  </data>
+  <data name="Render_FfmpegFailed" xml:space="preserve">
+    <value>ffmpeg exited with an error ({0}): {1}</value>
+  </data>
+  <data name="Render_FfmpegFailedSummary" xml:space="preserve">
+    <value>ffmpeg exited with an error ({0}). Its full output is in the log; the important part:
+
+{1}</value>
+  </data>
+  <data name="Render_FileNotFound" xml:space="preserve">
+    <value>File not found: {0}</value>
+  </data>
+  <data name="Render_Frame" xml:space="preserve">
+    <value>Frame {0}/{1}</value>
+  </data>
+  <data name="Render_NoSamples" xml:space="preserve">
+    <value>No telemetry samples found in the file(s)</value>
+  </data>
+  <data name="Render_NoTelemetry" xml:space="preserve">
+    <value>{0} has no telemetry - it isn't an original recording from a supported camera (e.g. a file exported from another app)</value>
+  </data>
+  <data name="Render_OutputExists" xml:space="preserve">
+    <value>Output file already exists: {0}</value>
+  </data>
+  <data name="Render_PartDebugTrack" xml:space="preserve">
+    <value>debug track</value>
+  </data>
+  <data name="Render_PartialNoTracks" xml:space="preserve">
+    <value>Partial render - the camera's telemetry/debug tracks aren't copied (they cover the whole recording)</value>
+  </data>
+  <data name="Render_PartTelemetry" xml:space="preserve">
+    <value>telemetry</value>
+  </data>
+  <data name="Render_PartTelemetryNoSerial" xml:space="preserve">
+    <value>telemetry (serial number removed)</value>
+  </data>
+  <data name="Render_PartThumbnails" xml:space="preserve">
+    <value>thumbnails/info</value>
+  </data>
+  <data name="Render_Probing" xml:space="preserve">
+    <value>Probing source file(s) (ffprobe)...</value>
+  </data>
+  <data name="Render_Realtime" xml:space="preserve">
+    <value>({0:0.00}x realtime)</value>
+  </data>
+  <data name="Render_RemoveIncompleteFailed" xml:space="preserve">
+    <value>Could not remove the incomplete output {0}</value>
+  </data>
+  <data name="Render_Rendering" xml:space="preserve">
+    <value>Rendering {0} frames to {1}...</value>
+  </data>
+  <data name="Render_RenderingPartial" xml:space="preserve">
+    <value>Rendering {0} frames to {1} ({2} of the recording)...</value>
+  </data>
+  <data name="Render_Segments" xml:space="preserve">
+    <value>{0} segment|{0} segments</value>
+  </data>
+  <data name="Render_TimeLeft" xml:space="preserve">
+    <value>{0} left</value>
+  </data>
+  <data name="Render_UsingExtractedSamples" xml:space="preserve">
+    <value>Using {0} previously extracted telemetry samples</value>
+  </data>
+  <data name="Settings_Unreadable" xml:space="preserve">
+    <value>Overlay settings file is corrupt or unreadable, falling back to defaults</value>
+  </data>
+  <data name="Settings_WriteFailed" xml:space="preserve">
+    <value>Failed to write overlay settings file</value>
+  </data>
+  <data name="Strip_DjiDebug" xml:space="preserve">
+    <value>DJI debug track</value>
+  </data>
+  <data name="Strip_DjiTelemetry" xml:space="preserve">
+    <value>DJI telemetry track (GPS track, sensors, camera serial number)</value>
+  </data>
+  <data name="Strip_OtherStream" xml:space="preserve">
+    <value>{0} stream ({1})</value>
+  </data>
+  <data name="Strip_Tags" xml:space="preserve">
+    <value>{0} metadata tag (recording date, timecode, encoder...)|{0} metadata tags (recording date, timecode, encoder...)</value>
+  </data>
+  <data name="Strip_Thumbnail" xml:space="preserve">
+    <value>embedded thumbnail</value>
+  </data>
+  <data name="Strip_Timecode" xml:space="preserve">
+    <value>timecode track (time of day)</value>
+  </data>
+  <data name="Updates_Available" xml:space="preserve">
+    <value>OsmoOverlay {0} is available (you have {1})</value>
+  </data>
+  <data name="Updates_HashMismatch" xml:space="preserve">
+    <value>{0} doesn't match its published SHA-256 - the download is corrupt or was tampered with.</value>
+  </data>
+  <data name="Updates_NoHash" xml:space="preserve">
+    <value>{0} has no published SHA-256, so it can't be verified - install it from the release page.</value>
+  </data>
+  <data name="Updates_NoRelease" xml:space="preserve">
+    <value>No OsmoOverlay release has been published yet</value>
+  </data>
+  <data name="Updates_UpToDate" xml:space="preserve">
+    <value>OsmoOverlay is up to date ({0})</value>
+  </data>
+  <data name="Versions_LatestUnknown" xml:space="preserve">
+    <value>{0}: installed {1} (couldn't determine the latest version)</value>
+  </data>
+  <data name="Versions_NotInstalled" xml:space="preserve">
+    <value>{0}: not installed, or its version could not be read</value>
+  </data>
+  <data name="Versions_Unsupported" xml:space="preserve">
+    <value>{0} {1} is out, but this version of OsmoOverlay supports only {2}.x</value>
+  </data>
+  <data name="Versions_UpdateAvailable" xml:space="preserve">
+    <value>{0}: installed {1}, update available ({2})</value>
+  </data>
+  <data name="Versions_UpdateManually" xml:space="preserve">
+    <value>{0}: installed {1}, {2} is available - not installed through the package manager, update it manually</value>
+  </data>
+  <data name="Versions_UpToDate" xml:space="preserve">
+    <value>{0}: installed {1} - up to date</value>
+  </data>
+</root>

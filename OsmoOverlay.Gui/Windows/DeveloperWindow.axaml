@@ -1,0 +1,100 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="560"
+        x:Class="OsmoOverlay.Gui.DeveloperWindow"
+        Width="620" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="Developer tools">
+
+	<Window.Styles>
+		<Style Selector="WrapPanel > Button">
+			<Setter Property="Margin" Value="0,0,8,8" />
+		</Style>
+	</Window.Styles>
+
+	<StackPanel Margin="20" Spacing="12">
+		<StackPanel Spacing="2">
+			<TextBlock Text="Developer tools" FontSize="18" FontWeight="SemiBold" />
+			<TextBlock Classes="hint" Text="Shows every dialog and notification with sample text, without doing anything. Ctrl+Shift+D opens this window." />
+		</StackPanel>
+
+		<Border Classes="card" Padding="14,12,6,4">
+			<StackPanel Spacing="8">
+				<TextBlock Text="DIALOGS - QUESTION (Cancel / Confirm)" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Neutral" Tag="ask:Neutral" Click="OnActionClick" />
+					<Button Content="Info" Tag="ask:Info" Click="OnActionClick" />
+					<Button Content="Success" Tag="ask:Success" Click="OnActionClick" />
+					<Button Content="Warning" Tag="ask:Warning" Click="OnActionClick" />
+					<Button Content="Danger" Tag="ask:Danger" Click="OnActionClick" />
+					<Button Content="With progress" Tag="ask-working" Click="OnActionClick" />
+				</WrapPanel>
+				<TextBlock Text="DIALOGS - NOTICE (OK)" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Neutral" Tag="show:Neutral" Click="OnActionClick" />
+					<Button Content="Info" Tag="show:Info" Click="OnActionClick" />
+					<Button Content="Success" Tag="show:Success" Click="OnActionClick" />
+					<Button Content="Warning" Tag="show:Warning" Click="OnActionClick" />
+					<Button Content="Danger" Tag="show:Danger" Click="OnActionClick" />
+					<Button Content="With extra buttons" Tag="show-actions" Click="OnActionClick" />
+					<Button Content="Long message" Tag="show-long" Click="OnActionClick" />
+				</WrapPanel>
+			</StackPanel>
+		</Border>
+
+		<Border Classes="card" Padding="14,12,6,4">
+			<StackPanel Spacing="8">
+				<TextBlock Text="RECORDING AND RENDER" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Render complete" Tag="render-done" Click="OnActionClick" />
+					<Button Content="Render failed" Tag="render-failed" Click="OnActionClick" />
+					<Button Content="Not enough disk space" Tag="disk-space" Click="OnActionClick" />
+					<Button Content="No telemetry" Tag="no-telemetry" Click="OnActionClick" />
+					<Button Content="No GPS" Tag="no-gps" Click="OnActionClick" />
+					<Button Content="Busy GPU before a render" Tag="busy:gpu" Click="OnActionClick" />
+					<Button Content="Busy CPU before a render" Tag="busy:cpu" Click="OnActionClick" />
+					<Button Content="Busy CPU before a GPU render" Tag="busy:gpu-cpu" Click="OnActionClick" />
+				</WrapPanel>
+			</StackPanel>
+		</Border>
+
+		<Border Classes="card" Padding="14,12,6,4">
+			<StackPanel Spacing="8">
+				<TextBlock Text="NOTIFICATIONS" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Balloon" Tag="balloon" Click="OnActionClick" />
+					<Button Content="Balloon in 3 s" Tag="balloon-later" Click="OnActionClick" />
+					<Button Content="Sound" Tag="sound" Click="OnActionClick" />
+					<Button Content="Log: info" Tag="log:info" Click="OnActionClick" />
+					<Button Content="Log: warning" Tag="log:warn" Click="OnActionClick" />
+					<Button Content="Log: error" Tag="log:error" Click="OnActionClick" />
+				</WrapPanel>
+				<TextBlock Text="TASKBAR PROGRESS (WINDOWS)" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Normal 40%" Tag="taskbar:Normal" Click="OnActionClick" />
+					<Button Content="Indeterminate" Tag="taskbar:Indeterminate" Click="OnActionClick" />
+					<Button Content="Paused" Tag="taskbar:Paused" Click="OnActionClick" />
+					<Button Content="Error" Tag="taskbar:Error" Click="OnActionClick" />
+					<Button Content="None" Tag="taskbar:NoProgress" Click="OnActionClick" />
+				</WrapPanel>
+			</StackPanel>
+		</Border>
+
+		<Border Classes="card" Padding="14,12,6,4">
+			<StackPanel Spacing="8">
+				<TextBlock Text="WINDOWS" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Welcome (first run)" Tag="welcome" Click="OnActionClick" />
+					<Button Content="Missing dependencies" Tag="dependencies" Click="OnActionClick" />
+					<Button Content="Performance test result" Tag="benchmark" Click="OnActionClick" />
+				</WrapPanel>
+			</StackPanel>
+		</Border>
+
+		<TextBlock Name="StatusText" Classes="hint" />
+	</StackPanel>
+</Window>

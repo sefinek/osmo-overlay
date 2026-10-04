@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>OsmoOverlay.Cameras.Insta360</AssemblyName>
+    <RootNamespace>OsmoOverlay.Cameras.Insta360</RootNamespace>
+
+    <AssemblyTitle>OsmoOverlay Insta360</AssemblyTitle>
+    <Description>Insta360 support for OsmoOverlay: telemetry from the file's trailer, 360 lens layouts and the accelerometer's axes for leveling.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+  </ItemGroup>
+
+</Project>

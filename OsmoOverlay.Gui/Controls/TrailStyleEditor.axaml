@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+             x:Class="OsmoOverlay.Gui.TrailStyleEditor">
+
+	<StackPanel Spacing="8">
+		<CheckBox Name="VisibleCheck" Content="{x:Static local:Strings.TrailStyle_ShowTheRoute}" />
+		<StackPanel Name="OptionsPanel" Spacing="8">
+			<TextBlock Text="{x:Static local:Strings.TrailStyle_TrailColor}" Classes="infoLabel" Margin="0" />
+			<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+				<Border Grid.Column="0" Name="SwatchBorder" Width="20" Height="20" CornerRadius="4"
+				        BorderBrush="{StaticResource StrokeStrongBrush}" BorderThickness="1" />
+				<TextBox Grid.Column="1" Name="ColorBox" />
+			</Grid>
+			<CheckBox Name="BySpeedCheck" Content="{x:Static local:Strings.TrailStyle_ColorBySpeed}" />
+			<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+			           Text="{x:Static local:Strings.TrailStyle_TrailColorWhenSlowThrough}" />
+			<TextBlock Text="{x:Static local:Strings.TrailStyle_LineThickness}" Classes="infoLabel" Margin="0" />
+			<NumericUpDown Name="WidthBox" Minimum="1" Maximum="12" Increment="0.5" FormatString="0.0"
+			               HorizontalAlignment="Stretch" />
+		</StackPanel>
+	</StackPanel>
+</UserControl>

@@ -1,0 +1,110 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="520"
+        x:Class="OsmoOverlay.Gui.ToolsWindow"
+        Width="780" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="{x:Static local:Strings.Common_Tools}">
+
+	<Window.Styles>
+		<Style Selector="Border.toolCard">
+			<Setter Property="Padding" Value="16,14" />
+		</Style>
+		<Style Selector="TextBlock.toolTitle">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Opacity" Value="0.9" />
+			<Setter Property="Margin" Value="0,0,0,6" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="LineHeight" Value="18" />
+		</Style>
+		<Style Selector="StackPanel.toolActions">
+			<Setter Property="Orientation" Value="Horizontal" />
+			<Setter Property="Spacing" Value="8" />
+			<Setter Property="Margin" Value="0,14,0,0" />
+		</Style>
+	</Window.Styles>
+
+	<StackPanel Margin="20" Spacing="12">
+		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_VideoAudio}" />
+
+		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+			<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_FixColorTags}" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="SelectColorTagFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectColorTagFileClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="{x:Static local:Strings.Tools_VegasProSMp4Export}" />
+				</DockPanel>
+			</Border>
+
+			<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_RemoveMetadata}" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="SelectStripFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectStripFileClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="{x:Static local:Strings.Tools_SavesACopySafeTo}" />
+				</DockPanel>
+			</Border>
+
+			<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_CameraMicrophoneAudioAac}" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Name="ConvertAudioWavButton" Content="{x:Static local:Strings.Tools_ToWav}" Click="OnConvertAudioWavClick" />
+						<Button Name="ConvertAudioM4aButton" Content="{x:Static local:Strings.Tools_ToM4a}" Click="OnConvertAudioM4aClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="{x:Static local:Strings.Tools_WithAnExternalMicConnected}" />
+				</DockPanel>
+			</Border>
+
+			<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Common_CompareVideos}" />
+					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+						<Button Content="{x:Static local:Strings.Tools_Compare}" Click="OnCompareVideosClick" />
+					</StackPanel>
+					<TextBlock Classes="hint"
+					           Text="{x:Static local:Strings.Tools_PickUpTo6Files}" />
+				</DockPanel>
+			</Border>
+		</Grid>
+
+		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_Performance}" Margin="0,8,0,0" />
+
+		<Border Classes="card toolCard">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+				           Text="{x:Static local:Strings.Tools_PerformanceHint}" />
+				<Button Grid.Column="1" Content="{x:Static local:Strings.Tools_RunBenchmark}" Click="OnBenchmarkClick" />
+			</Grid>
+		</Border>
+
+		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_AppData}" Margin="0,8,0,0" />
+
+		<Border Classes="card toolCard">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+				           Text="{x:Static local:Strings.Tools_PresetsSettingsMapTilesLogs}" />
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+					<Button Content="{x:Static local:Strings.Tools_OpenDataFolder}" Click="OnOpenDataFolderClick" />
+					<Button Content="{x:Static local:Strings.Tools_ClearCache}" Click="OnClearCacheClick"
+					        ToolTip.Tip="{x:Static local:Strings.Tools_DeletesTheCachedFileAnalysis}" />
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<Button HorizontalAlignment="Right" Content="{x:Static local:Strings.Tools_Close}" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
+	</StackPanel>
+</Window>

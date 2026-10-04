@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>OsmoOverlay.Cameras.Dji</AssemblyName>
+    <RootNamespace>OsmoOverlay.Cameras.Dji</RootNamespace>
+
+    <AssemblyTitle>OsmoOverlay DJI</AssemblyTitle>
+    <Description>DJI Osmo Action support for OsmoOverlay: djmd telemetry (native, exiftool as the fallback), the camera's tilt axes and copying its own metadata into a render.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,151 @@
+using OsmoOverlay.Core.Mapping;
+
+namespace OsmoOverlay.Tests;
+
+[TestClass]
+public sealed class MapSourcesTests
+{
+	private static readonly MapBounds InPoland = new(53.2, 16.4, 53.3, 16.5);
+	private static readonly MapBounds InGermany = new(52.4, 13.3, 52.6, 13.5);
+	private static readonly MapBounds AcrossTheBorder = new(52.3, 13.9, 52.4, 14.6);
+
+	[TestMethod]
+	public void UrlTemplate_UsesTheSameKeyForEveryStyleOfAProvider()
+	{
+		var sources = new MapSources(new Dictionary<string, string>
+		{
+			[MapProviders.CartoKeyGroup] = " abc_def_1_0123456789abcdef01234567 ",
+			[MapProviders.MapTilerKeyGroup] = "mt"
+		});
+
+		StringAssert.Contains(sources.UrlTemplate("carto-dark"), "key=abc_def_1_0123456789abcdef01234567");
+		StringAssert.Contains(sources.UrlTemplate("carto-voyager"), "key=abc_def_1_0123456789abcdef01234567");
+		StringAssert.Contains(sources.UrlTemplate("maptiler-satellite"), "key=mt");
+		StringAssert.Contains(sources.UrlTemplate("maptiler-outdoor"), "key=mt");
+	}
+
+	[TestMethod]
+	public void MissesApiKey_OnlyForAProviderTakingAKeyWithoutOne()
+	{
+		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.CartoKeyGroup] = "abc" },
+			"https://tiles.example.com/{z}/{x}/{y}.png?k={api_key}");
+
+		Assert.IsTrue(sources.MissesApiKey("thunderforest-outdoors"));
+		Assert.IsTrue(sources.MissesApiKey(MapProviders.CustomId), "a custom URL with {api_key}");
+		Assert.IsFalse(sources.MissesApiKey("carto-dark"));
+		Assert.IsFalse(sources.MissesApiKey(MapProviders.AutoSatelliteId));
+		Assert.IsFalse(sources.MissesApiKey("opentopomap"));
+		Assert.IsTrue(new MapSources(new Dictionary<string, string> { [MapProviders.ThunderforestKeyGroup] = "  " })
+			.MissesApiKey("thunderforest-cycle"), "a blank key");
+	}
+
+	[TestMethod]
+	public void TheDefault_WithoutKeys_IsEsrisPublicServiceWhereverTheRouteIs()
+	{
+		Assert.AreEqual(MapProviders.EsriPublicId, new MapSources(RouteBounds: InPoland).Resolve(MapProviders.AutoSatelliteId));
+		Assert.AreEqual(MapProviders.EsriPublicId, new MapSources(RouteBounds: InGermany).Resolve(MapProviders.AutoSatelliteId));
+		Assert.AreEqual(MapProviders.EsriPublicId, new MapSources(RouteBounds: AcrossTheBorder).Resolve(MapProviders.AutoSatelliteId));
+		Assert.AreEqual(MapProviders.EsriPublicId, new MapSources().Resolve(null), "no route known yet");
+	}
+
+	[TestMethod]
+	public void TheDefault_IsEsri_KeyedWithItsKey()
+	{
+		var mapTiler = new MapSources(new Dictionary<string, string> { [MapProviders.MapTilerKeyGroup] = "mt" }, RouteBounds: InPoland);
+		var both = mapTiler with { ApiKeys = new Dictionary<string, string> { [MapProviders.MapTilerKeyGroup] = "mt", [MapProviders.EsriKeyGroup] = "e" } };
+
+		Assert.AreEqual(MapProviders.EsriPublicId, mapTiler.Resolve(MapProviders.AutoSatelliteId), "Esri only, one source");
+		Assert.AreEqual(MapProviders.EsriImageryId, both.Resolve(MapProviders.AutoSatelliteId));
+		StringAssert.Contains(both.UrlTemplate(MapProviders.AutoSatelliteId), "token=e");
+		Assert.AreEqual("carto-dark", both.Resolve("carto-dark"), "a picked provider stays");
+	}
+
+	[TestMethod]
+	public void Streets_TakeTheSameKeysInTheSameOrder()
+	{
+		var esri = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = "e", [MapProviders.MapTilerKeyGroup] = "mt" });
+		var mapTiler = new MapSources(new Dictionary<string, string> { [MapProviders.MapTilerKeyGroup] = "mt" });
+
+		Assert.AreEqual(MapProviders.EsriStreetsId, esri.Resolve(MapProviders.StreetsAutoId));
+		Assert.AreEqual(MapProviders.EsriStreetsPublicId, mapTiler.Resolve(MapProviders.StreetsAutoId), "Esri only, one source");
+		Assert.AreEqual(MapProviders.EsriStreetsPublicId, new MapSources().Resolve(MapProviders.StreetsAutoId));
+		StringAssert.Contains(esri.UrlTemplate(MapProviders.StreetsAutoId), "token=e");
+	}
+
+	[TestMethod]
+	public void NoChoice_IsTheDefaultStyle()
+	{
+		Assert.AreEqual(MapProviders.EsriPublicId, new MapSources().Resolve(null));
+		Assert.AreEqual(MapProviders.EsriStreetsPublicId, new MapSources(DefaultProviderId: MapProviders.StreetsAutoId).Resolve(null));
+		Assert.AreEqual(MapProviders.EsriPublicId, new MapSources(DefaultProviderId: MapProviders.StreetsAutoId).Resolve(MapProviders.AutoSatelliteId),
+			"a picked style stays");
+	}
+
+	[TestMethod]
+	public void ARemovedOrUnknownProvider_FallsBackToTheDefault()
+	{
+		var sources = new MapSources(RouteBounds: InPoland);
+
+		Assert.AreEqual(MapProviders.EsriPublicId, sources.Resolve("esri"));
+		Assert.AreEqual(MapProviders.EsriPublicId, sources.Resolve("osm"));
+		Assert.AreEqual(MapProviders.Get(MapProviders.EsriPublicId).UrlTemplate, sources.UrlTemplate("gone"));
+		Assert.AreEqual("opentopomap", sources.Resolve("opentopomap"));
+	}
+
+	[TestMethod]
+	public void Custom_TakesAKeyOnlyWhenItsUrlHasThePlaceholder_AndFallsBackWhenEmpty()
+	{
+		var plain = new MapSources(CustomUrlTemplate: "https://t.example/{z}/{x}/{y}.png");
+		var keyed = new MapSources(new Dictionary<string, string> { [MapSources.CustomKeyGroup] = "k 1" }, "https://t.example/{z}/{x}/{y}.png?k={api_key}");
+
+		Assert.IsNull(plain.KeyGroupOf(MapProviders.CustomId));
+		Assert.AreEqual(MapSources.CustomKeyGroup, keyed.KeyGroupOf(MapProviders.CustomId));
+		Assert.AreEqual("https://t.example/{z}/{x}/{y}.png?k=k%201", keyed.UrlTemplate(MapProviders.CustomId));
+		Assert.AreEqual(MapProviders.Get(MapProviders.EsriPublicId).UrlTemplate, new MapSources().UrlTemplate(MapProviders.CustomId));
+	}
+
+	[TestMethod]
+	public void Attribution_IsTheProvidersOwn_OrTheCustomServersGiven()
+	{
+		Assert.IsNull(new MapSources().Attribution(MapProviders.CustomId));
+		Assert.AreEqual("my credit", new MapSources(CustomAttribution: " my credit ").Attribution(MapProviders.CustomId));
+		StringAssert.Contains(new MapSources().Attribution("carto-positron"), "© OpenStreetMap contributors, © CARTO");
+		StringAssert.Contains(new MapSources(RouteBounds: InPoland).Attribution(null), "Earthstar Geographics");
+	}
+
+	[TestMethod]
+	public void CreditRule_IsTheProvidersTerms_OrTheUsersWordForACustomServer()
+	{
+		var sources = new MapSources(RouteBounds: InPoland);
+
+		Assert.AreEqual(MapCreditRule.Briefly, sources.CreditRule(MapProviders.GugikId));
+		Assert.AreEqual(MapCreditRule.WhileMapVisible, sources.CreditRule(MapProviders.EoxId));
+		Assert.AreEqual(MapCreditRule.WhileMapVisible, sources.CreditRule("carto-dark"));
+		Assert.AreEqual(MapCreditRule.WhileMapVisible, sources.CreditRule(MapProviders.CustomId), "unless the user says otherwise");
+		Assert.AreEqual(MapCreditRule.Briefly, (sources with { CustomCreditBriefly = true }).CreditRule(MapProviders.CustomId));
+	}
+
+	[TestMethod]
+	public void CacheMaxAge_FollowsTheTerms()
+	{
+		var sources = new MapSources();
+
+		Assert.AreEqual(TimeSpan.FromDays(30), sources.CacheMaxAge("carto-positron"));
+		Assert.IsNull(sources.CacheMaxAge("opentopomap"));
+		Assert.AreEqual(TimeSpan.Zero, sources.CacheMaxAge("esri-imagery"), "never stored");
+		Assert.IsNull(sources.CacheMaxAge(MapProviders.CustomId));
+	}
+
+	[TestMethod]
+	public void EveryBuiltInProvider_HasItsTermsAndACredit()
+	{
+		foreach (MapProvider provider in MapProviders.BuiltIn)
+		{
+			Assert.IsFalse(string.IsNullOrWhiteSpace(provider.Attribution), provider.Id);
+			StringAssert.StartsWith(provider.Terms.TermsUrl, "https://", provider.Id);
+			Assert.IsTrue(new[] { "{z}", "{x}", "{y}" }.All(provider.UrlTemplate.Contains) || new[] { "{hz}", "{hx}", "{hy}" }.All(provider.UrlTemplate.Contains),
+				provider.Id);
+			Assert.AreEqual(provider.NeedsApiKey, provider.UrlTemplate.Contains("{api_key}"), provider.Id);
+		}
+	}
+}

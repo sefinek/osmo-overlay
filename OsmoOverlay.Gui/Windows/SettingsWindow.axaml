@@ -1,0 +1,672 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="using:OsmoOverlay.Gui"
+        mc:Ignorable="d" d:DesignWidth="920" d:DesignHeight="640"
+        x:Class="OsmoOverlay.Gui.SettingsWindow"
+        Width="920" Height="640" MinWidth="760" MinHeight="460"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico"
+        Title="{x:Static local:Strings.Common_Settings}">
+
+	<Window.Resources>
+		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{StaticResource ControlColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{StaticResource ControlPressedColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundDisabled" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushDisabled" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBackground" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderChevronBackground" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPressed" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrush" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPressed" Color="Transparent" />
+
+		<ControlTheme x:Key="SidebarItem" TargetType="ListBoxItem">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="Padding" Value="12,9" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+			<Setter Property="CornerRadius" Value="8" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Panel Background="{TemplateBinding Background}">
+						<Border Name="PART_Hover" Background="{StaticResource SubtleFillBrush}" CornerRadius="{TemplateBinding CornerRadius}"
+						        Opacity="0" />
+						<Border Name="PART_Selected" Background="{StaticResource AccentSubtleBrush}" CornerRadius="{TemplateBinding CornerRadius}"
+						        Opacity="0" />
+						<ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
+						                  ContentTemplate="{TemplateBinding ContentTemplate}" Padding="{TemplateBinding Padding}"
+						                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+						                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+					</Panel>
+				</ControlTemplate>
+			</Setter>
+
+			<Style Selector="^ /template/ Border">
+				<Setter Property="Transitions">
+					<Transitions>
+						<DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+					</Transitions>
+				</Setter>
+			</Style>
+			<Style Selector="^:pointerover /template/ Border#PART_Hover">
+				<Setter Property="Opacity" Value="1" />
+			</Style>
+			<Style Selector="^:selected /template/ Border#PART_Selected">
+				<Setter Property="Opacity" Value="1" />
+			</Style>
+			<Style Selector="^:pointerover, ^:selected">
+				<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+			</Style>
+		</ControlTheme>
+	</Window.Resources>
+
+	<Window.Styles>
+		<Style Selector="ListBox#CategoryList">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="0" />
+		</Style>
+		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
+			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+		</Style>
+
+		<Style Selector="TextBlock.pageTitle">
+			<Setter Property="FontSize" Value="22" />
+			<Setter Property="FontWeight" Value="Bold" />
+		</Style>
+		<Style Selector="TextBlock.pageSubtitle">
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="Margin" Value="0,2,0,0" />
+		</Style>
+		<Style Selector="TextBlock.sectionLabel">
+			<Setter Property="Margin" Value="4,6,0,-4" />
+		</Style>
+
+		<Style Selector="Border.settingsCard">
+			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="12" />
+		</Style>
+		<Style Selector="Border.divider">
+			<Setter Property="Height" Value="1" />
+			<Setter Property="Background" Value="{StaticResource CardBorderBrush}" />
+		</Style>
+		<Style Selector="Grid.settingRow">
+			<Setter Property="Margin" Value="16,13" />
+			<Setter Property="ColumnSpacing" Value="24" />
+		</Style>
+		<Style Selector="Panel.settingBlock, StackPanel.settingBlock">
+			<Setter Property="Margin" Value="16,13" />
+		</Style>
+		<Style Selector="TextBlock.rowTitle">
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+		<Style Selector="TextBlock.rowHint">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="18" />
+			<Setter Property="Margin" Value="0,3,0,0" />
+		</Style>
+		<Style Selector="Grid.settingRow > ComboBox, Grid.settingRow > NumericUpDown">
+			<Setter Property="Width" Value="230" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="ToggleSwitch">
+			<Setter Property="OnContent" Value="" />
+			<Setter Property="OffContent" Value="" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="CheckBox, RadioButton">
+			<Setter Property="Padding" Value="8,0,0,0" />
+		</Style>
+	</Window.Styles>
+
+	<Grid ColumnDefinitions="210,*">
+		<Border Grid.Column="0" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
+			<DockPanel Margin="12,18,12,14">
+				<TextBlock DockPanel.Dock="Top" Text="{x:Static local:Strings.Common_Settings}" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
+				<TextBlock DockPanel.Dock="Bottom" Name="SidebarVersionText" Classes="hint" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center" />
+				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconDisplay}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" />
+						</StackPanel>
+					</ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconStopwatch}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Common_Speed}" />
+						</StackPanel>
+					</ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconFlag}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" />
+						</StackPanel>
+					</ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconEye}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Interface}" />
+						</StackPanel>
+					</ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconGear}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" />
+						</StackPanel>
+					</ListBoxItem>
+					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconInfo}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Settings_About}" />
+						</StackPanel>
+					</ListBoxItem>
+				</ListBox>
+			</DockPanel>
+		</Border>
+
+		<Grid Grid.Column="1">
+			<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<StackPanel>
+						<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle"
+						           Text="{x:Static local:Strings.Settings_ByDefaultARenderMatches}" />
+					</StackPanel>
+
+					<TextBlock Text="{x:Static local:Strings.Common_Overlay}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_AttributionWatermark}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_MadeWithOsmoOverlayAndThe}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="ShowWatermarkCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_TheGpsReportsAFew}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="SmoothGpsMotionCheck" />
+							</Grid>
+						</StackPanel>
+					</Border>
+
+					<TextBlock Text="{x:Static local:Strings.Settings_OutputQuality}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_EncoderPresetGpu}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_EffortPerFrameAtThe}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="NvencPresetCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputBitrate}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_HigherMakesABiggerFile}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="BitrateCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputResolution}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputResolutionHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="OutputResolutionCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputCodec}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputCodecHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="OutputCodecCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputEightBit}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputEightBitHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="OutputEightBitCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_DecodeTheSourceOnThe}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_SeveralTimesFasterIdenticalFrames}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="HardwareDecodingCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_FastStartForWebPlayback}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_PutsTheIndexFirstSo}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="FastStartCheck" />
+							</Grid>
+						</StackPanel>
+					</Border>
+					<TextBlock Classes="link" HorizontalAlignment="Left" Text="{x:Static local:Strings.Settings_FindWhatIsFaster}"
+					           PointerPressed="OnBenchmarkClick" />
+
+					<TextBlock Text="{x:Static local:Strings.Settings_Privacy}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_KeepTheCameraSMetadata}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_CopiesWhatTheCameraRecorded}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="PreserveCameraMetadataCheck" IsCheckedChanged="OnMetadataOptionChanged" />
+							</Grid>
+							<StackPanel Classes="settingBlock" Margin="16,0,16,14">
+								<Expander Name="MetadataPartsExpander" HorizontalAlignment="Stretch" CornerRadius="8">
+									<StackPanel Spacing="12">
+										<StackPanel Spacing="2">
+											<CheckBox Name="MetadataTelemetryCheck" Content="{x:Static local:Strings.Settings_TelemetryGpsRouteSpeedAccelerometer}"
+											          IsCheckedChanged="OnMetadataOptionChanged" />
+											<TextBlock Classes="rowHint" Margin="28,0,0,0"
+											           Text="{x:Static local:Strings.Settings_WhatDjiMimoAndThis}" />
+										</StackPanel>
+										<StackPanel Spacing="2">
+											<CheckBox Name="MetadataSerialCheck" Content="{x:Static local:Strings.Settings_CameraSerialNumberAndDevice}"
+											          IsCheckedChanged="OnMetadataOptionChanged" />
+											<TextBlock Classes="rowHint" Margin="28,0,0,0"
+											           Text="{x:Static local:Strings.Settings_IdentifiesYourCameraNothingThat}" />
+										</StackPanel>
+										<StackPanel Spacing="2">
+											<CheckBox Name="MetadataDebugCheck" Content="{x:Static local:Strings.Settings_CameraDebugTrack}"
+											          IsCheckedChanged="OnMetadataOptionChanged" />
+											<TextBlock Classes="rowHint" Margin="28,0,0,0"
+											           Text="{x:Static local:Strings.Settings_DjiSInternalSensorDiagnostics}" />
+										</StackPanel>
+										<StackPanel Spacing="2">
+											<CheckBox Name="MetadataThumbnailsCheck" Content="{x:Static local:Strings.Settings_ThumbnailsAndRecordingInfo}"
+											          IsCheckedChanged="OnMetadataOptionChanged" />
+											<TextBlock Classes="rowHint" Margin="28,0,0,0"
+											           Text="{x:Static local:Strings.Settings_CoverImageCameraModelShooting}" />
+										</StackPanel>
+									</StackPanel>
+								</Expander>
+							</StackPanel>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+			</ScrollViewer>
+
+			<ScrollViewer Name="SpeedPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<StackPanel>
+						<TextBlock Text="{x:Static local:Strings.Common_SpeedCalibration}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle"
+						           Text="{x:Static local:Strings.Settings_ACameraSGpsTends}" />
+					</StackPanel>
+					<Border Classes="settingsCard" Padding="16">
+						<local:SpeedCalibrationEditor Name="SpeedEditor" />
+					</Border>
+				</StackPanel>
+			</ScrollViewer>
+
+			<ScrollViewer Name="RouteIntroPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<StackPanel>
+						<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle"
+						           Text="{x:Static local:Strings.Settings_AFullscreenCardForThe}" />
+					</StackPanel>
+
+					<Border Classes="settingsCard">
+						<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+							<StackPanel>
+								<TextBlock Text="{x:Static local:Strings.Settings_ShowTheRouteOverviewAt}" Classes="rowTitle" />
+								<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_EverythingBelowAppliesOnlyWhile}" />
+							</StackPanel>
+							<ToggleSwitch Grid.Column="1" Name="ShowRouteIntroCheck" Click="OnShowRouteIntroChanged" />
+						</Grid>
+					</Border>
+
+					<StackPanel Name="RouteIntroOptionsPanel" Spacing="14">
+						<TextBlock Text="{x:Static local:Strings.Settings_Card}" Classes="sectionLabel" />
+						<Border Classes="settingsCard">
+							<StackPanel>
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<TextBlock Name="RouteIntroDurationLabel" Text="{x:Static local:Strings.Settings_DurationSeconds}" Classes="rowTitle" VerticalAlignment="Center" />
+									<NumericUpDown Grid.Column="1" Name="RouteIntroDurationBox" Minimum="1" Maximum="30" Increment="1" FormatString="0" />
+								</Grid>
+								<Border Classes="divider" />
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<StackPanel>
+										<TextBlock Text="{x:Static local:Strings.Settings_ColorTheRouteBySpeed}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_GreenWhenSlowThroughYellow}" />
+									</StackPanel>
+									<ToggleSwitch Grid.Column="1" Name="RouteIntroColorBySpeedCheck" />
+								</Grid>
+								<Border Classes="divider" />
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<StackPanel>
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroStartFinish}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroStartFinishHint}" />
+									</StackPanel>
+									<ToggleSwitch Grid.Column="1" Name="RouteIntroStartFinishCheck" Click="OnRouteIntroStartFinishChanged" />
+								</Grid>
+								<Grid Name="RouteIntroEndLabels" ColumnDefinitions="*,*" ColumnSpacing="12" Margin="16,0,16,14">
+									<StackPanel Spacing="4">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroStartLabel}" Classes="rowHint" Margin="0" />
+										<TextBox Name="RouteIntroStartLabelBox" MaxLength="40" />
+									</StackPanel>
+									<StackPanel Grid.Column="1" Spacing="4">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroFinishLabel}" Classes="rowHint" Margin="0" />
+										<TextBox Name="RouteIntroFinishLabelBox" MaxLength="40" />
+									</StackPanel>
+								</Grid>
+								<Border Classes="divider" />
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="rowTitle" VerticalAlignment="Center" />
+									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+										<RadioButton Name="RouteIntroMetricRadio" Content="{x:Static local:Strings.Common_Metric}" GroupName="RouteIntroUnits" />
+										<RadioButton Name="RouteIntroImperialRadio" Content="{x:Static local:Strings.Common_Imperial}" GroupName="RouteIntroUnits" />
+									</StackPanel>
+								</Grid>
+							</StackPanel>
+						</Border>
+
+						<TextBlock Text="{x:Static local:Strings.Settings_Map}" Classes="sectionLabel" />
+						<Border Classes="settingsCard" Padding="16">
+							<local:MapSourcePicker Name="RouteIntroMapSource" />
+						</Border>
+
+						<TextBlock Name="RouteIntroStatsLabel" Text="{x:Static local:Strings.Settings_StatsToShow}" Classes="sectionLabel" />
+						<Border Classes="settingsCard" Padding="16,12">
+							<StackPanel Spacing="10">
+								<TextBlock Classes="rowHint" Margin="0" Text="{x:Static local:Strings.Settings_RouteIntroStatsHint}" />
+								<Grid Name="RouteIntroStatsGrid" ColumnDefinitions="Auto,*" ColumnSpacing="16" RowSpacing="6" />
+							</StackPanel>
+						</Border>
+					</StackPanel>
+				</StackPanel>
+			</ScrollViewer>
+
+			<ScrollViewer Name="InterfacePanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<StackPanel>
+						<TextBlock Text="{x:Static local:Strings.Settings_Interface}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle" Text="{x:Static local:Strings.Settings_HowTheAppLooksAnd}" />
+					</StackPanel>
+
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Common_Language}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LanguageHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="LanguageCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_Theme}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_AppliesRightAwayAFew}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="ThemeCombo" SelectionChanged="OnThemeChanged" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_InterfaceScale}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_OnTopOfTheSystem}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="InterfaceScaleCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_TimeFormat}" Classes="rowTitle" />
+									<TextBlock Name="TimeFormatHint" Classes="rowHint" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="TimeFormatCombo" SelectionChanged="OnTimeFormatChanged" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_LayerRows}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LayersTheTimelineUnderThe}" />
+								</StackPanel>
+								<NumericUpDown Grid.Column="1" Name="LayerRowsBox" Minimum="1" Maximum="12" Increment="1" FormatString="0" />
+							</Grid>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+			</ScrollViewer>
+
+			<ScrollViewer Name="BehaviorPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<StackPanel>
+						<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle" Text="{x:Static local:Strings.Settings_StartupProjectsPlaybackAndMonitors}" />
+					</StackPanel>
+
+					<TextBlock Text="{x:Static local:Strings.Settings_Startup}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OpenTheWindowWhereIt}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_SizePositionScreenAndMaximized}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="RestoreWindowPlacementCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_ReopenTheLastProject}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheProjectLastSavedOr}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="ReopenLastProjectCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_WelcomeGuide}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheFirstRunGuideTools}" />
+								</StackPanel>
+								<Button Grid.Column="1" Content="{x:Static local:Strings.Settings_Open}" VerticalAlignment="Center" Click="OnWelcomeClick" />
+							</Grid>
+						</StackPanel>
+					</Border>
+
+					<TextBlock Text="{x:Static local:Strings.Settings_Projects}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<StackPanel Name="ProjectFilesGroup" IsVisible="False">
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<StackPanel>
+										<TextBlock Text="{x:Static local:Strings.Settings_ProjectFiles}" Classes="rowTitle" />
+										<TextBlock Name="ProjectAssociationText" Classes="rowHint" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OpensOvprojFilesWithThis}" />
+									</StackPanel>
+									<Button Grid.Column="1" Name="ProjectAssociationButton" VerticalAlignment="Center" Click="OnProjectAssociationClick" />
+								</Grid>
+								<Border Classes="divider" />
+							</StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_AutoSaveBackup}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_ABackupOfTheOpen}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="AutoSaveCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_CacheCleanup}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_CacheCleanupHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="CacheCleanupCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_AskBeforeClosingDuringA}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_ClosingEndsARunningRender}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="ConfirmCloseWhileRenderingCheck" />
+							</Grid>
+						</StackPanel>
+					</Border>
+
+					<TextBlock Text="{x:Static local:Strings.Settings_PlaybackAndMonitors}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_LoopPlaybackFromStartup}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_LoopsTheInOutSelection}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="LoopByDefaultCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_DisableShadows}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_DisableShadowsHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="DisableShadowsCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_PreviewShadows}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_PreviewShadowsHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="PreviewShadowsCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_FullScreenPreview}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheMonitorF11OpensThe}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="PreviewMonitorCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_SecondScreenF9}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_AFullScreenWindowThere}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="SecondScreenCheck" IsCheckedChanged="OnSecondScreenChanged" />
+							</Grid>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto" Margin="16,0,16,13">
+								<TextBlock Text="{x:Static local:Strings.Settings_Monitor}" Classes="rowHint" VerticalAlignment="Center" Margin="0" />
+								<ComboBox Grid.Column="1" Name="SecondScreenMonitorCombo" />
+							</Grid>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+			</ScrollViewer>
+
+			<ScrollViewer Name="AboutPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<Border Classes="settingsCard" Padding="18,16">
+						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+							<Image Source="/Assets/OsmoOverlay.png" Width="48" Height="48" VerticalAlignment="Center" />
+							<StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+								<TextBlock Name="AppVersionText" Text="OsmoOverlay" FontSize="18" FontWeight="Bold" />
+								<TextBlock Name="CoreVersionText" Text="Core" Classes="rowHint" Margin="0" />
+							</StackPanel>
+							<Button Grid.Column="2" Name="CheckForUpdatesButton" Content="{x:Static local:Strings.Settings_CheckForUpdates}" VerticalAlignment="Center"
+							        Click="OnCheckForUpdatesClick" />
+						</Grid>
+					</Border>
+
+					<Border Classes="settingsCard">
+						<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+							<StackPanel>
+								<TextBlock Text="{x:Static local:Strings.Settings_Updates}" Classes="rowTitle" />
+								<TextBlock Name="AppUpdateText" Text="{x:Static local:Strings.Settings_CheckingForANewVersion}" Classes="rowHint" />
+							</StackPanel>
+							<Button Grid.Column="1" Name="AppUpdateButton" Classes="accent" IsVisible="False" VerticalAlignment="Center" Click="OnAppUpdateClick" />
+						</Grid>
+					</Border>
+
+					<TextBlock Text="{x:Static local:Strings.Settings_Dependencies}" Classes="sectionLabel" />
+					<Border Classes="settingsCard" Padding="16,14">
+						<Grid Name="DependencyStatusGrid" ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="12" RowSpacing="8" />
+					</Border>
+
+					<TextBlock Text="{x:Static local:Strings.Settings_Project}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
+								<TextBlock Text="{x:Static local:Strings.Settings_Author}" Classes="rowTitle" Width="110" />
+								<StackPanel Grid.Column="1" Orientation="Horizontal">
+									<TextBlock Text="Sefinek &lt;" />
+									<TextBlock Text="contact@sefinek.net" Classes="link" Tag="mailto:contact@sefinek.net" PointerPressed="OnLinkClick" />
+									<TextBlock Text="&gt; (" />
+									<TextBlock Text="https://sefinek.net" Classes="link" Tag="https://sefinek.net" PointerPressed="OnLinkClick" />
+									<TextBlock Text=")" />
+								</StackPanel>
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
+								<TextBlock Text="{x:Static local:Strings.Settings_Repository}" Classes="rowTitle" Width="110" />
+								<TextBlock Grid.Column="1" Text="github.com/sefinek/osmo-overlay" Classes="link"
+								           Tag="https://github.com/sefinek/osmo-overlay" PointerPressed="OnLinkClick" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
+								<TextBlock Text="{x:Static local:Strings.Settings_License}" Classes="rowTitle" Width="110" />
+								<StackPanel Grid.Column="1" Spacing="4">
+									<TextBlock TextWrapping="Wrap"
+									           Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" />
+									<TextBlock Text="{x:Static local:Strings.Settings_ReadTheLicense}" Classes="link" Tag="https://github.com/sefinek/osmo-overlay/blob/main/LICENSE"
+									           PointerPressed="OnLinkClick" />
+								</StackPanel>
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
+								<TextBlock Text="{x:Static local:Strings.Settings_Configuration}" Classes="rowTitle" Width="110" />
+								<TextBlock Grid.Column="1" Name="ConfigLastUpdatedText" />
+							</Grid>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+			</ScrollViewer>
+		</Grid>
+	</Grid>
+</Window>

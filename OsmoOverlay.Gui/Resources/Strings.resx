@@ -1,0 +1,3325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_BackgroundError" xml:space="preserve">
+    <value>Unobserved background task error: {0}</value>
+  </data>
+  <data name="App_FatalError" xml:space="preserve">
+    <value>Fatal error: {0}</value>
+  </data>
+  <data name="App_UnexpectedError" xml:space="preserve">
+    <value>Unexpected error: {0}</value>
+  </data>
+  <data name="Appearance_AlreadyEverywhere" xml:space="preserve">
+    <value>{0}: every widget already has it.</value>
+  </data>
+  <data name="Appearance_Applied" xml:space="preserve">
+    <value>{1} applied to {0} widget.|{1} applied to {0} widgets.</value>
+  </data>
+  <data name="Appearance_FontAndColors" xml:space="preserve">
+    <value>Font and colors</value>
+  </data>
+  <data name="Appearance_Panel" xml:space="preserve">
+    <value>Panel</value>
+  </data>
+  <data name="Appearance_Shadow" xml:space="preserve">
+    <value>Shadow</value>
+  </data>
+  <data name="AppUpdate_BrowserFailed" xml:space="preserve">
+    <value>Could not open {0} in a browser</value>
+  </data>
+  <data name="AppUpdate_Confirm" xml:space="preserve">
+    <value>OsmoOverlay will download v{0}, close, install it and start again.</value>
+  </data>
+  <data name="AppUpdate_Downloading" xml:space="preserve">
+    <value>Downloading OsmoOverlay {0}...</value>
+  </data>
+  <data name="AppUpdate_Failed" xml:space="preserve">
+    <value>Update failed</value>
+  </data>
+  <data name="AppUpdate_StartingInstaller" xml:space="preserve">
+    <value>Starting the installer...</value>
+  </data>
+  <data name="AppUpdate_Title" xml:space="preserve">
+    <value>Update OsmoOverlay</value>
+  </data>
+  <data name="AppUpdate_WhileRendering" xml:space="preserve">
+    <value>OsmoOverlay has to close to install the update. Wait for the render to finish, or cancel it.</value>
+  </data>
+  <data name="Audio_Mute" xml:space="preserve">
+    <value>Mute (M)</value>
+  </data>
+  <data name="Audio_NoSound" xml:space="preserve">
+    <value>No sound: this recording has no audio track, or there's no playback device</value>
+  </data>
+  <data name="AutoSave_Failed" xml:space="preserve">
+    <value>Could not auto-save a backup: {0}</value>
+  </data>
+  <data name="AutoSave_Saved" xml:space="preserve">
+    <value>Auto-saved a backup: {0}</value>
+  </data>
+  <data name="Benchmark_AdviceHardwareDecode" xml:space="preserve">
+    <value>Decoding on the GPU comes out {0}% faster on this computer. Turn it on?</value>
+  </data>
+  <data name="Benchmark_AdvicePreviewShadowsOff" xml:space="preserve">
+    <value>Shadows take up too much of each preview frame - without them the overlay draws {0}x faster. Turn off shadows in the preview? A render still has them.</value>
+  </data>
+  <data name="Benchmark_AdvicePreviewShadowsOn" xml:space="preserve">
+    <value>This computer draws the preview's shadows with ease. Turn them back on?</value>
+  </data>
+  <data name="Benchmark_AdviceSkippedBusy" xml:space="preserve">
+    <value>Suggestions about decoding were left out because the computer was busy - with the GPU busy, decoding on the CPU would come out ahead only because of that.</value>
+  </data>
+  <data name="Benchmark_AdviceSkippedSample" xml:space="preserve">
+    <value>Decoding on the GPU and the CPU wasn't compared: the generated sample decodes on the processor far more easily than a camera's recording. Load a recording and run the test again.</value>
+  </data>
+  <data name="Benchmark_AdviceSoftwareDecode" xml:space="preserve">
+    <value>Decoding on the CPU comes out {0}% faster on this computer. Turn off decoding on the GPU?</value>
+  </data>
+  <data name="Benchmark_Applied" xml:space="preserve">
+    <value>Applied</value>
+  </data>
+  <data name="Benchmark_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Benchmark_BottleneckOnly" xml:space="preserve">
+    <value>{0}: {1} fps. A render won't be faster than this stage.</value>
+  </data>
+  <data name="Benchmark_BottleneckWithRender" xml:space="preserve">
+    <value>{0}: {1} fps. The short render reached {2} fps, {3}% of that - the stages sharing the CPU and GPU take the rest.</value>
+  </data>
+  <data name="Benchmark_ColumnNotes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Benchmark_ColumnRange" xml:space="preserve">
+    <value>Range of runs</value>
+  </data>
+  <data name="Benchmark_ColumnResult" xml:space="preserve">
+    <value>Result (median)</value>
+  </data>
+  <data name="Benchmark_ColumnStage" xml:space="preserve">
+    <value>Stage</value>
+  </data>
+  <data name="Benchmark_Computer" xml:space="preserve">
+    <value>Computer</value>
+  </data>
+  <data name="Benchmark_Copied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="Benchmark_CopyReport" xml:space="preserve">
+    <value>Copy report</value>
+  </data>
+  <data name="Benchmark_Cpu" xml:space="preserve">
+    <value>Processor</value>
+  </data>
+  <data name="Benchmark_DecodeCpu" xml:space="preserve">
+    <value>Decoding on the CPU</value>
+  </data>
+  <data name="Benchmark_DecodeGpu" xml:space="preserve">
+    <value>Decoding on the GPU</value>
+  </data>
+  <data name="Benchmark_TitleDone" xml:space="preserve">
+    <value>Performance test (finished in {0} s)</value>
+  </data>
+  <data name="Benchmark_EncoderNote" xml:space="preserve">
+    <value>The encoder preset also affects the file's quality, so this is for information only - change it in Settings.</value>
+  </data>
+  <data name="Benchmark_Encoding" xml:space="preserve">
+    <value>Encoding {0}</value>
+  </data>
+  <data name="Benchmark_Estimate" xml:space="preserve">
+    <value>Estimated render time for this recording: {0}</value>
+  </data>
+  <data name="Benchmark_Failed" xml:space="preserve">
+    <value>The test failed: {0}</value>
+  </data>
+  <data name="Benchmark_Fps" xml:space="preserve">
+    <value>{0} fps</value>
+  </data>
+  <data name="Benchmark_FpsRange" xml:space="preserve">
+    <value>{0}-{1} fps (±{2}%)</value>
+  </data>
+  <data name="Benchmark_GeneratedSample" xml:space="preserve">
+    <value>generated sample</value>
+  </data>
+  <data name="Benchmark_Gpu" xml:space="preserve">
+    <value>Graphics card</value>
+  </data>
+  <data name="Benchmark_Graph" xml:space="preserve">
+    <value>ffmpeg as a whole (decoding, overlaying, encoding)</value>
+  </data>
+  <data name="Benchmark_InUse" xml:space="preserve">
+    <value>in use now</value>
+  </data>
+  <data name="Benchmark_Intro" xml:space="preserve">
+    <value>Measures each stage of a render on this computer: decoding on the GPU and on the CPU, drawing the overlay with and without shadows, handing frames to ffmpeg, encoding, ffmpeg as a whole and a short real render. Every measurement is repeated, taking turns with the one it's compared to, and the result is the median along with the range of the runs. Then it points out the slowest stage and suggests which settings will be faster here. It takes 2-3 minutes - close games and other programs that use the CPU or GPU heavily meanwhile.</value>
+  </data>
+  <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
+    <value>at least this - it waited for decoding</value>
+  </data>
+  <data name="Benchmark_Load" xml:space="preserve">
+    <value>Load before the test</value>
+  </data>
+  <data name="Benchmark_LoadValue" xml:space="preserve">
+    <value>CPU {0}, GPU {1}</value>
+  </data>
+  <data name="Benchmark_LoadWarning" xml:space="preserve">
+    <value>The computer was busy before the test (CPU {0}, GPU {1}), so the results come out low. Close games and other programs and run the test again.</value>
+  </data>
+  <data name="Benchmark_Memory" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="Benchmark_NameDecode" xml:space="preserve">
+    <value>Decoding</value>
+  </data>
+  <data name="Benchmark_NameEncode" xml:space="preserve">
+    <value>Encoding</value>
+  </data>
+  <data name="Benchmark_NameGraph" xml:space="preserve">
+    <value>ffmpeg as a whole (decoding, overlaying and encoding at once)</value>
+  </data>
+  <data name="Benchmark_NameOverlay" xml:space="preserve">
+    <value>Drawing the overlay</value>
+  </data>
+  <data name="Benchmark_NamePipe" xml:space="preserve">
+    <value>Handing frames to ffmpeg</value>
+  </data>
+  <data name="Benchmark_NoAdvice" xml:space="preserve">
+    <value>Your settings are already the fastest on this computer.</value>
+  </data>
+  <data name="Benchmark_OnRecording" xml:space="preserve">
+    <value>The test cuts a {0} s sample out of the loaded recording ({1}) and measures everything on it. The short render draws your preset along a sample route.</value>
+  </data>
+  <data name="Benchmark_OnSynthetic" xml:space="preserve">
+    <value>No recording is loaded, so the test generates a 4K sample like an Osmo Action's. It decodes on the processor far more easily than real footage, so decoding on the GPU and the CPU won't be compared - for a full result, load a recording before the test.</value>
+  </data>
+  <data name="Benchmark_Os" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Benchmark_Output" xml:space="preserve">
+    <value>Output</value>
+  </data>
+  <data name="Benchmark_OverlayPreview" xml:space="preserve">
+    <value>Overlay in the preview ({0}x{1})</value>
+  </data>
+  <data name="Benchmark_OverlayRender" xml:space="preserve">
+    <value>Overlay in a render ({0}x{1})</value>
+  </data>
+  <data name="Benchmark_OverlayValue" xml:space="preserve">
+    <value>{0} ms ({1} fps)</value>
+  </data>
+  <data name="Benchmark_P95" xml:space="preserve">
+    <value>p95 {0} ms</value>
+  </data>
+  <data name="Benchmark_Pipe" xml:space="preserve">
+    <value>Handing frames to ffmpeg ({0}x{1})</value>
+  </data>
+  <data name="Benchmark_Realtime" xml:space="preserve">
+    <value>{0}x real time</value>
+  </data>
+  <data name="Benchmark_Recording" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="Benchmark_RecordingSample" xml:space="preserve">
+    <value>a {0} s sample of the loaded recording</value>
+  </data>
+  <data name="Benchmark_RenderCpu" xml:space="preserve">
+    <value>Render decoding on the CPU</value>
+  </data>
+  <data name="Benchmark_RenderGpu" xml:space="preserve">
+    <value>Render decoding on the GPU</value>
+  </data>
+  <data name="Benchmark_Results" xml:space="preserve">
+    <value>Results</value>
+  </data>
+  <data name="Benchmark_SampleComesOutHigh" xml:space="preserve">
+    <value>comes out high - the sample decodes more easily than a recording</value>
+  </data>
+  <data name="Benchmark_SampleRoute" xml:space="preserve">
+    <value>sample route</value>
+  </data>
+  <data name="Benchmark_SlowestStage" xml:space="preserve">
+    <value>Slowest stage</value>
+  </data>
+  <data name="Benchmark_StageDecode" xml:space="preserve">
+    <value>Decoding...</value>
+  </data>
+  <data name="Benchmark_StageEncode" xml:space="preserve">
+    <value>Encoding...</value>
+  </data>
+  <data name="Benchmark_StageGraph" xml:space="preserve">
+    <value>ffmpeg as a whole...</value>
+  </data>
+  <data name="Benchmark_StageOverlay" xml:space="preserve">
+    <value>Drawing the overlay...</value>
+  </data>
+  <data name="Benchmark_StagePipe" xml:space="preserve">
+    <value>Handing frames to ffmpeg...</value>
+  </data>
+  <data name="Benchmark_StagePreparing" xml:space="preserve">
+    <value>Preparing...</value>
+  </data>
+  <data name="Benchmark_StageProgress" xml:space="preserve">
+    <value>{0} ({1} of {2})</value>
+  </data>
+  <data name="Benchmark_StageRender" xml:space="preserve">
+    <value>Short render...</value>
+  </data>
+  <data name="Benchmark_Start" xml:space="preserve">
+    <value>Run test</value>
+  </data>
+  <data name="Benchmark_StepFailed" xml:space="preserve">
+    <value>failed</value>
+  </data>
+  <data name="Benchmark_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Benchmark_Stopped" xml:space="preserve">
+    <value>Test stopped.</value>
+  </data>
+  <data name="Benchmark_Suggestions" xml:space="preserve">
+    <value>Suggestions</value>
+  </data>
+  <data name="Benchmark_Threads" xml:space="preserve">
+    <value>{0} thread|{0} threads</value>
+  </data>
+  <data name="Benchmark_Title" xml:space="preserve">
+    <value>Performance test</value>
+  </data>
+  <data name="Benchmark_Unknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="Benchmark_LiveCpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Benchmark_LiveGpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Benchmark_LiveDecoder" xml:space="preserve">
+    <value>Decoder</value>
+  </data>
+  <data name="Benchmark_LiveEncoder" xml:space="preserve">
+    <value>Encoder</value>
+  </data>
+  <data name="Benchmark_Elapsed" xml:space="preserve">
+    <value>Elapsed: {0}</value>
+  </data>
+  <data name="Benchmark_Unstable" xml:space="preserve">
+    <value>unstable</value>
+  </data>
+  <data name="Benchmark_UnstableWarning" xml:space="preserve">
+    <value>Some measurements' repeats differed by more than 10% - something in the background was taking resources. Treat the ones marked unstable with caution.</value>
+  </data>
+  <data name="Benchmark_VideoValue" xml:space="preserve">
+    <value>{0} {1}x{2}, {3} fps, {4}-bit, {5} Mbps</value>
+  </data>
+  <data name="Benchmark_WhileRendering" xml:space="preserve">
+    <value>The test can't run while a render is in progress.</value>
+  </data>
+  <data name="Benchmark_WithoutShadows" xml:space="preserve">
+    <value>{0} ms without shadows</value>
+  </data>
+  <data name="Calibration_Example" xml:space="preserve">
+    <value>Example: your scooter is limited to 25 km/h, but at full speed the GPS usually shows about 22 km/h - enter 25 and 22.</value>
+  </data>
+  <data name="Calibration_NoneNeeded" xml:space="preserve">
+    <value>The GPS already shows this speed or more - no correction needed.</value>
+  </data>
+  <data name="Calibration_Off" xml:space="preserve">
+    <value>Off - speeds are shown exactly as the GPS measured them.</value>
+  </data>
+  <data name="Calibration_Raised" xml:space="preserve">
+    <value>Every speed is raised by {0:0.0}% - a measured 20 km/h shows as {1:0.0} km/h. Distance, route and tilt stay as measured.</value>
+  </data>
+  <data name="Calibration_Result" xml:space="preserve">
+    <value>With a {0:0.0}% correction, the measured {1:0.##} becomes {2:0.##}, so the widget shows {3:0}. It's rounded down to 0.1%, so it never goes above the real speed.</value>
+  </data>
+  <data name="Calibration_Set" xml:space="preserve">
+    <value>Correction set to {0:0.0}%. It's saved with the other settings.</value>
+  </data>
+  <data name="Calibration_Use" xml:space="preserve">
+    <value>Use {0:0.0}%</value>
+  </data>
+  <data name="Calibration_UseRecording" xml:space="preserve">
+    <value>Reset to the loaded recording's speed ({0:0.##} km/h)</value>
+  </data>
+  <data name="Close_CloseAndCancel" xml:space="preserve">
+    <value>Close and cancel</value>
+  </data>
+  <data name="Close_RenderInProgressMessage" xml:space="preserve">
+    <value>If you close OsmoOverlay now, the render stops and leaves an incomplete file.</value>
+  </data>
+  <data name="Close_RenderInProgressTitle" xml:space="preserve">
+    <value>Render in progress</value>
+  </data>
+  <data name="Common_AllFiles" xml:space="preserve">
+    <value>All files</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="Common_CameraModel" xml:space="preserve">
+    <value>Camera model</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_ClearAll" xml:space="preserve">
+    <value>Clear all</value>
+  </data>
+  <data name="Common_Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Common_CompareVideos" xml:space="preserve">
+    <value>Compare videos</value>
+  </data>
+  <data name="Common_Imperial" xml:space="preserve">
+    <value>Imperial</value>
+  </data>
+  <data name="Common_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Common_MaxSpeed" xml:space="preserve">
+    <value>Max speed</value>
+  </data>
+  <data name="Common_Metric" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="Common_Mp4Video" xml:space="preserve">
+    <value>MP4 video</value>
+  </data>
+  <data name="Common_On" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="Common_Opacity" xml:space="preserve">
+    <value>Opacity (%)</value>
+  </data>
+  <data name="Common_OpenARecording" xml:space="preserve">
+    <value>Open a recording</value>
+  </data>
+  <data name="Common_Overlay" xml:space="preserve">
+    <value>OVERLAY</value>
+  </data>
+  <data name="Common_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Common_ShowInFolder" xml:space="preserve">
+    <value>Show in folder</value>
+  </data>
+  <data name="Common_Skip" xml:space="preserve">
+    <value>Skip</value>
+  </data>
+  <data name="Common_SmoothGpsDerivedMotion" xml:space="preserve">
+    <value>Smooth GPS-derived motion</value>
+  </data>
+  <data name="Common_Speed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="Common_SpeedCalibration" xml:space="preserve">
+    <value>Speed calibration</value>
+  </data>
+  <data name="Common_SystemDefault" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="Common_Tools" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="Common_TotalDistance" xml:space="preserve">
+    <value>Total distance</value>
+  </data>
+  <data name="Common_Units" xml:space="preserve">
+    <value>Units</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="Common_UnknownCapital" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Common_Working" xml:space="preserve">
+    <value>Working...</value>
+  </data>
+  <data name="Compare_AltitudeRange" xml:space="preserve">
+    <value>Altitude range</value>
+  </data>
+  <data name="Compare_AudioBitrate" xml:space="preserve">
+    <value>Audio bitrate</value>
+  </data>
+  <data name="Compare_AudioChannels" xml:space="preserve">
+    <value>Audio channels</value>
+  </data>
+  <data name="Compare_AudioCodec" xml:space="preserve">
+    <value>Audio codec</value>
+  </data>
+  <data name="Compare_AudioSampleRate" xml:space="preserve">
+    <value>Audio sample rate</value>
+  </data>
+  <data name="Compare_ColorMatrix" xml:space="preserve">
+    <value>Color matrix</value>
+  </data>
+  <data name="Compare_ColorPrimaries" xml:space="preserve">
+    <value>Color primaries</value>
+  </data>
+  <data name="Compare_ColorRange" xml:space="preserve">
+    <value>Color range</value>
+  </data>
+  <data name="Compare_ColorTransfer" xml:space="preserve">
+    <value>Color transfer</value>
+  </data>
+  <data name="Compare_Copied" xml:space="preserve">
+    <value>Copied comparison of {0} file to clipboard as Markdown|Copied comparison of {0} files to clipboard as Markdown</value>
+  </data>
+  <data name="Compare_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Compare_Exported" xml:space="preserve">
+    <value>Exported: {0}</value>
+  </data>
+  <data name="Compare_Extension" xml:space="preserve">
+    <value>Extension</value>
+  </data>
+  <data name="Compare_LimitAddedMessage" xml:space="preserve">
+    <value>Only added the first {0} files - this tool compares up to {0} at a time.</value>
+  </data>
+  <data name="Compare_LimitMessage" xml:space="preserve">
+    <value>You can compare up to {0} files at a time - remove one first.</value>
+  </data>
+  <data name="Compare_LimitTitle" xml:space="preserve">
+    <value>Limit reached</value>
+  </data>
+  <data name="Compare_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Compare_PickVideos" xml:space="preserve">
+    <value>Select videos to compare</value>
+  </data>
+  <data name="Compare_RecordedAt" xml:space="preserve">
+    <value>Recorded at</value>
+  </data>
+  <data name="Compare_Saved" xml:space="preserve">
+    <value>Saved video comparison to {0}</value>
+  </data>
+  <data name="Compare_SaveTitle" xml:space="preserve">
+    <value>Save video comparison</value>
+  </data>
+  <data name="Compare_TextFile" xml:space="preserve">
+    <value>Text file</value>
+  </data>
+  <data name="Compare_VideoBitrate" xml:space="preserve">
+    <value>Video bitrate</value>
+  </data>
+  <data name="CompareVideos_AddVideoS" xml:space="preserve">
+    <value>Add video(s)...</value>
+  </data>
+  <data name="CompareVideos_CopyAsMarkdown" xml:space="preserve">
+    <value>Copy as Markdown</value>
+  </data>
+  <data name="CompareVideos_NoDifferencesBetweenTheAdded" xml:space="preserve">
+    <value>No differences between the added files.</value>
+  </data>
+  <data name="CompareVideos_NoFilesAddedYetClick" xml:space="preserve">
+    <value>No files added yet - click "Add video(s)..." to get started.</value>
+  </data>
+  <data name="CompareVideos_PickUpTo6Files" xml:space="preserve">
+    <value>Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side. Values that differ between files are highlighted.</value>
+  </data>
+  <data name="CompareVideos_SaveToFile" xml:space="preserve">
+    <value>Save to file...</value>
+  </data>
+  <data name="CompareVideos_ShowOnlyDifferences" xml:space="preserve">
+    <value>Show only differences</value>
+  </data>
+  <data name="ConfirmDialog_Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="ConfirmDialog_Extra" xml:space="preserve">
+    <value>Extra</value>
+  </data>
+  <data name="ConfirmDialog_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Cut_CutOut" xml:space="preserve">
+    <value>Cut out</value>
+  </data>
+  <data name="Cut_CutOutSelectionX" xml:space="preserve">
+    <value>Cut out selection (X)</value>
+  </data>
+  <data name="Cut_DropTheSelectionWithoutCutting" xml:space="preserve">
+    <value>Drop the selection without cutting anything</value>
+  </data>
+  <data name="Cut_FieldEmpty" xml:space="preserve">
+    <value>{0} is empty.</value>
+  </data>
+  <data name="Cut_From" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="Cut_FromPastEnd" xml:space="preserve">
+    <value>{0}: From is beyond the end of the recording ({1}).</value>
+  </data>
+  <data name="Cut_GoToBefore" xml:space="preserve">
+    <value>Go to 3 seconds before this cut</value>
+  </data>
+  <data name="Cut_KeepAfterAll" xml:space="preserve">
+    <value>Keep this part after all</value>
+  </data>
+  <data name="Cut_MarkEndO" xml:space="preserve">
+    <value>Mark end (O)</value>
+  </data>
+  <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
+    <value>Mark only what gets removed - everything else is rendered. Select a part with I and O, cut it out with X, repeat for every part. Times can also be typed as 1:30 or 1:30.250; click a cut's number to jump to it. A cut between two kept parts can fade through black or white (the render keeps its length) or blend the two parts over each other - then the render is shorter by the length of each such transition, and the preview shows the end of the earlier part there instead of the blend. Only the picture and the sound change, the overlay stays. Cut parts are left out of the video and of the telemetry: the route intro starts with the first kept frame, and distance, elapsed time and the route stats count only what stays in. Playback in the preview skips them.</value>
+  </data>
+  <data name="Cut_MarkStartI" xml:space="preserve">
+    <value>Mark start (I)</value>
+  </data>
+  <data name="Cut_Name" xml:space="preserve">
+    <value>Cut {0}</value>
+  </data>
+  <data name="Cut_NotATime" xml:space="preserve">
+    <value>{0}: "{1}" isn't a time - use e.g. 1:30 or 1:30.250.</value>
+  </data>
+  <data name="Cut_NothingSelected" xml:space="preserve">
+    <value>Nothing selected yet.</value>
+  </data>
+  <data name="Cut_OverlapNote" xml:space="preserve">
+    <value>The preview doesn't show this blend - it plays the end of the earlier part, then skips past the start of the later one. The render includes the blend and is shorter by the transition's length.</value>
+  </data>
+  <data name="Cut_RemovesEverything" xml:space="preserve">
+    <value>The cuts remove the whole recording - nothing would be left to render.</value>
+  </data>
+  <data name="Cut_RemoveTheSelectedPartFrom" xml:space="preserve">
+    <value>Remove the selected part from the render (X or Delete)</value>
+  </data>
+  <data name="Cut_RouteDashed" xml:space="preserve">
+    <value>Dashed line across the cut</value>
+  </data>
+  <data name="Cut_RouteGap" xml:space="preserve">
+    <value>Gap - the route resumes after the cut</value>
+  </data>
+  <data name="Cut_RouteOnTheMapAcross" xml:space="preserve">
+    <value>Route on the map at a cut</value>
+  </data>
+  <data name="Cut_RouteStraight" xml:space="preserve">
+    <value>Straight line, as if nothing was cut</value>
+  </data>
+  <data name="Cut_SelectAPartAtThe" xml:space="preserve">
+    <value>Start a selection at the frame on screen</value>
+  </data>
+  <data name="Cut_Selected" xml:space="preserve">
+    <value>Selected: {0}</value>
+  </data>
+  <data name="Cut_TheSelectionEndsWithThe" xml:space="preserve">
+    <value>The selection ends with the frame on screen, that frame included (O)</value>
+  </data>
+  <data name="Cut_TheSelectionStartsWithThe" xml:space="preserve">
+    <value>The selection starts with the frame on screen (I)</value>
+  </data>
+  <data name="Cut_TheTelemetryEitherSideOf" xml:space="preserve">
+    <value>The telemetry on either side of a cut ends up joined, so a plain line would cut straight across whatever the removed part went around. Applies to the compass trail, the map and the route intro.</value>
+  </data>
+  <data name="Cut_To" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="Cut_ToBeforeFrom" xml:space="preserve">
+    <value>{0}: To must come after From.</value>
+  </data>
+  <data name="Cut_TransitionCrossfade" xml:space="preserve">
+    <value>Crossfade (overlaps)</value>
+  </data>
+  <data name="Cut_TransitionFadeBlack" xml:space="preserve">
+    <value>Fade through black</value>
+  </data>
+  <data name="Cut_TransitionFadeWhite" xml:space="preserve">
+    <value>Fade through white</value>
+  </data>
+  <data name="Cut_TransitionNone" xml:space="preserve">
+    <value>No transition (hard cut)</value>
+  </data>
+  <data name="Cut_TransitionSlideLeft" xml:space="preserve">
+    <value>Push left (overlaps)</value>
+  </data>
+  <data name="Cut_TransitionSlideRight" xml:space="preserve">
+    <value>Push right (overlaps)</value>
+  </data>
+  <data name="Cut_TransitionWipeLeft" xml:space="preserve">
+    <value>Wipe in from the right (overlaps)</value>
+  </data>
+  <data name="Cut_TransitionWipeRight" xml:space="preserve">
+    <value>Wipe in from the left (overlaps)</value>
+  </data>
+  <data name="Cuts_Describe" xml:space="preserve">
+    <value>{0} cut, {1} removed|{0} cuts, {1} removed</value>
+  </data>
+  <data name="Cuts_Everything" xml:space="preserve">
+    <value>That would cut out the whole recording - nothing would be left to render.</value>
+  </data>
+  <data name="Cuts_NothingCut" xml:space="preserve">
+    <value>Nothing is cut - the whole recording gets rendered.</value>
+  </data>
+  <data name="Cuts_Rendered" xml:space="preserve">
+    <value>To render: {0} of {1} ({2})</value>
+  </data>
+  <data name="DependencyPrompt_Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="DependencyPrompt_ExifToolOptional" xml:space="preserve">
+    <value>ExifTool is optional - it's only used for cameras whose telemetry OsmoOverlay can't read on its own.</value>
+  </data>
+  <data name="DependencyPrompt_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="DependencyPrompt_InstallManually" xml:space="preserve">
+    <value>OsmoOverlay needs the tools below, but no supported package manager was found. Install them manually, then restart the app.</value>
+  </data>
+  <data name="DependencyPrompt_InstallNow" xml:space="preserve">
+    <value>OsmoOverlay needs the tools below to work. Install them now?</value>
+  </data>
+  <data name="DependencyPrompt_MissingDependencies" xml:space="preserve">
+    <value>Missing dependencies</value>
+  </data>
+  <data name="DependencyPrompt_SomeFailed" xml:space="preserve">
+    <value>Some installs failed - see log above</value>
+  </data>
+  <data name="DependencyPrompt_ToolOptional" xml:space="preserve">
+    <value>{0} (optional)</value>
+  </data>
+  <data name="DependencyPrompt_ToolRequired" xml:space="preserve">
+    <value>{0} (required)</value>
+  </data>
+  <data name="Deps_CloseAndUpdate" xml:space="preserve">
+    <value>Close and update</value>
+  </data>
+  <data name="Deps_Installed" xml:space="preserve">
+    <value>installed {0}</value>
+  </data>
+  <data name="Deps_InstalledChecking" xml:space="preserve">
+    <value>installed ...</value>
+  </data>
+  <data name="Deps_InstalledDone" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="Deps_Latest" xml:space="preserve">
+    <value>latest {0}</value>
+  </data>
+  <data name="Deps_LatestChecking" xml:space="preserve">
+    <value>latest ...</value>
+  </data>
+  <data name="Deps_LatestUnknown" xml:space="preserve">
+    <value>latest unknown</value>
+  </data>
+  <data name="Deps_LatestUnsupported" xml:space="preserve">
+    <value>latest {0} (not supported yet)</value>
+  </data>
+  <data name="Deps_LatestWithUnsupported" xml:space="preserve">
+    <value>latest {0} ({1} not supported yet)</value>
+  </data>
+  <data name="Deps_NotFound" xml:space="preserve">
+    <value>not found</value>
+  </data>
+  <data name="Deps_UpdateAfterRestart" xml:space="preserve">
+    <value>The preview keeps {0}'s libraries in use, so OsmoOverlay will close, update {0} to {1} in a separate window and then start again.</value>
+  </data>
+  <data name="Deps_UpdatedDone" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="Deps_UpdateTitle" xml:space="preserve">
+    <value>Update {0}</value>
+  </data>
+  <data name="Deps_UpdateWhileRendering" xml:space="preserve">
+    <value>OsmoOverlay has to close to update {0}. Wait for the render to finish, or cancel it.</value>
+  </data>
+  <data name="Deps_Updating" xml:space="preserve">
+    <value>Updating {0}...</value>
+  </data>
+  <data name="Editor_DateFormatDefault" xml:space="preserve">
+    <value>Default (dd/MM/yyyy HH:mm:ss)</value>
+  </data>
+  <data name="Editor_StatAverageSpeed" xml:space="preserve">
+    <value>Average speed (moving)</value>
+  </data>
+  <data name="Editor_StatElevationLoss" xml:space="preserve">
+    <value>Elevation loss</value>
+  </data>
+  <data name="Editor_StatMovingTime" xml:space="preserve">
+    <value>Moving time</value>
+  </data>
+  <data name="Editor_TimeFallbackTip" xml:space="preserve">
+    <value>This file has no GPS time, so the recording start time from the camera's own clock is used instead. It is not GPS-synced.</value>
+  </data>
+  <data name="Editor_UnavailableAxes" xml:space="preserve">
+    <value>Unavailable: the axes of this camera's accelerometer are unknown, so tilt can't be calculated.</value>
+  </data>
+  <data name="Editor_UnavailableCameraInfo" xml:space="preserve">
+    <value>Unavailable: this file has no ISO or color temperature data.</value>
+  </data>
+  <data name="Editor_UnavailableGps" xml:space="preserve">
+    <value>Unavailable: this widget needs GPS, and this file has no GPS fix.</value>
+  </data>
+  <data name="Editor_UnavailableNoTime" xml:space="preserve">
+    <value>Unavailable: this file has no GPS time and no recording start time.</value>
+  </data>
+  <data name="Editor_UnavailableSun" xml:space="preserve">
+    <value>Unavailable: the sun's position needs a GPS fix and GPS time, and this file is missing one of them.</value>
+  </data>
+  <data name="ElementPanel_0LeavesJustTheRing" xml:space="preserve">
+    <value>At 0, only the ring and its contents remain.</value>
+  </data>
+  <data name="ElementPanel_ApplyToAllPanels" xml:space="preserve">
+    <value>Apply to all panels</value>
+  </data>
+  <data name="ElementPanel_GivesEveryWidgetWithA" xml:space="preserve">
+    <value>Gives every widget with a panel this color and opacity</value>
+  </data>
+  <data name="ElementShadow_ApplyToAllWidgets" xml:space="preserve">
+    <value>Apply to all widgets</value>
+  </data>
+  <data name="ElementShadow_DropShadow" xml:space="preserve">
+    <value>Drop shadow</value>
+  </data>
+  <data name="ElementShadow_DisabledInSettings" xml:space="preserve">
+    <value>Shadows are turned off in Settings (Behavior tab).</value>
+  </data>
+  <data name="ElementShadow_GivesEveryWidgetThisShadow" xml:space="preserve">
+    <value>Gives every widget this shadow</value>
+  </data>
+  <data name="ElementShadow_OffsetX" xml:space="preserve">
+    <value>Offset X</value>
+  </data>
+  <data name="ElementShadow_OffsetY" xml:space="preserve">
+    <value>Offset Y</value>
+  </data>
+  <data name="ElementShadow_Radius" xml:space="preserve">
+    <value>Radius</value>
+  </data>
+  <data name="ElementStyle_ApplyFontAndColorsTo" xml:space="preserve">
+    <value>Apply font and colors to all widgets</value>
+  </data>
+  <data name="ElementStyle_Font" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="ElementStyle_GivesEveryTextWidgetThis" xml:space="preserve">
+    <value>Gives every text widget this font, text color and outline (the text size and value color stay as they are)</value>
+  </data>
+  <data name="ElementStyle_OutlineColor" xml:space="preserve">
+    <value>Outline color</value>
+  </data>
+  <data name="ElementStyle_OutlineWidth" xml:space="preserve">
+    <value>Outline width</value>
+  </data>
+  <data name="ElementStyle_TextColor" xml:space="preserve">
+    <value>Text color</value>
+  </data>
+  <data name="ElementStyle_TextSize" xml:space="preserve">
+    <value>Text size</value>
+  </data>
+  <data name="ElementStyle_ValueColor" xml:space="preserve">
+    <value>Value color</value>
+  </data>
+  <data name="ElementTiming_AppearAt" xml:space="preserve">
+    <value>Appear at</value>
+  </data>
+  <data name="ElementTiming_DisappearAt" xml:space="preserve">
+    <value>Disappear at</value>
+  </data>
+  <data name="ElementTiming_InAnimation" xml:space="preserve">
+    <value>In animation</value>
+  </data>
+  <data name="ElementTiming_LengthS" xml:space="preserve">
+    <value>Length (s)</value>
+  </data>
+  <data name="ElementTiming_Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="ElementTiming_OutAnimation" xml:space="preserve">
+    <value>Out animation</value>
+  </data>
+  <data name="ElementTiming_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="ElementTiming_TimesAreInTheRendered" xml:space="preserve">
+    <value>Times refer to the rendered video, after cuts. On the expanded timeline each widget is a clip on a layer - you can drag it there with frame accuracy.</value>
+  </data>
+  <data name="Frame_PngImage" xml:space="preserve">
+    <value>PNG image</value>
+  </data>
+  <data name="Frame_Saved" xml:space="preserve">
+    <value>Frame saved: {0} ({1})</value>
+  </data>
+  <data name="Frame_SaveFailed" xml:space="preserve">
+    <value>Couldn't save the frame: {0}</value>
+  </data>
+  <data name="Frame_SaveTitle" xml:space="preserve">
+    <value>Save frame as PNG</value>
+  </data>
+  <data name="Fullscreen_NoticeText" xml:space="preserve">
+    <value>It's showing on {0}. Press Esc or F11 there, or use the button below, to bring it back here.</value>
+  </data>
+  <data name="Fullscreen_SameScreen" xml:space="preserve">
+    <value>{0} (the same screen as this window)</value>
+  </data>
+  <data name="Fullscreen_ThisWindowsScreen" xml:space="preserve">
+    <value>this window's screen</value>
+  </data>
+  <data name="Fullscreen_WindowTitle" xml:space="preserve">
+    <value>OsmoOverlay preview</value>
+  </data>
+  <data name="KeyMoments_AddKeyMomentB" xml:space="preserve">
+    <value>Add key moment (B)</value>
+  </data>
+  <data name="KeyMoments_AddsAKeyMomentAt" xml:space="preserve">
+    <value>Adds a key moment at the frame on screen (B)</value>
+  </data>
+  <data name="KeyMoments_AKeyMomentIsA" xml:space="preserve">
+    <value>A key moment is a named point in the recording, shown as a flag on the timeline. The Up and Down arrow keys jump between the timeline's markers, moments included. Moments don't change the render. Each category lists its three highest peaks - jump to one, or save it as a key moment with the flag button next to it. Moments are saved with the project.</value>
+  </data>
+  <data name="KeyMoments_GoToMoment" xml:space="preserve">
+    <value>Go to this moment</value>
+  </data>
+  <data name="KeyMoments_GoToPeak" xml:space="preserve">
+    <value>Go to: {0}</value>
+  </data>
+  <data name="KeyMoments_JumpTo" xml:space="preserve">
+    <value>Jump to</value>
+  </data>
+  <data name="KeyMoments_KeyMoments" xml:space="preserve">
+    <value>Key moments</value>
+  </data>
+  <data name="KeyMoments_MarkTheFrameOnScreen" xml:space="preserve">
+    <value>Mark the frame on screen</value>
+  </data>
+  <data name="KeyMoments_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="KeyMoments_Remove" xml:space="preserve">
+    <value>Remove this key moment</value>
+  </data>
+  <data name="KeyMoments_SaveAsMoment" xml:space="preserve">
+    <value>Save it as a key moment</value>
+  </data>
+  <data name="KeyMoments_ThisRecordingHasNoTelemetry" xml:space="preserve">
+    <value>This recording has no telemetry to find a peak in.</value>
+  </data>
+  <data name="Layers_DefaultName" xml:space="preserve">
+    <value>Layer {0}</value>
+  </data>
+  <data name="Layers_Delete" xml:space="preserve">
+    <value>Delete layer</value>
+  </data>
+  <data name="Layers_DeleteMessage" xml:space="preserve">
+    <value>Delete this layer and the {0} widget on it?|Delete this layer and the {0} widgets on it?</value>
+  </data>
+  <data name="Layers_ElevationChart" xml:space="preserve">
+    <value>Elevation chart</value>
+  </data>
+  <data name="Layers_NamePlaceholder" xml:space="preserve">
+    <value>Layer name</value>
+  </data>
+  <data name="Layers_NoFileChosen" xml:space="preserve">
+    <value>{0} - no file chosen</value>
+  </data>
+  <data name="Layers_Rename" xml:space="preserve">
+    <value>Rename...</value>
+  </data>
+  <data name="Layers_SpeedChart" xml:space="preserve">
+    <value>Speed chart</value>
+  </data>
+  <data name="Main_360ViewWhereTheFlat" xml:space="preserve">
+    <value>360 view - the direction the flat picture faces: turn, tilt, roll and field of view (change it with the globe above the preview)</value>
+  </data>
+  <data name="Main_AboveSeaLevel" xml:space="preserve">
+    <value>Above sea level</value>
+  </data>
+  <data name="Main_ACaptionAboveTheTime" xml:space="preserve">
+    <value>A caption above the time, e.g. Elapsed time.</value>
+  </data>
+  <data name="Main_Action" xml:space="preserve">
+    <value>ACTION</value>
+  </data>
+  <data name="Main_Add" xml:space="preserve">
+    <value>Add...</value>
+  </data>
+  <data name="Main_AddSeveralSegmentsOfThe" xml:space="preserve">
+    <value>Add several segments of the same auto-split recording to stitch them into one render</value>
+  </data>
+  <data name="Main_Along" xml:space="preserve">
+    <value>X axis</value>
+  </data>
+  <data name="Main_Altitude" xml:space="preserve">
+    <value>Altitude</value>
+  </data>
+  <data name="Main_ArrivalMarginM" xml:space="preserve">
+    <value>Arrival margin (m)</value>
+  </data>
+  <data name="Main_ArrivedLabel" xml:space="preserve">
+    <value>Label on arrival</value>
+  </data>
+  <data name="Main_Audio" xml:space="preserve">
+    <value>Audio</value>
+  </data>
+  <data name="Main_AudioHeader" xml:space="preserve">
+    <value>AUDIO</value>
+  </data>
+  <data name="Main_Auto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="Main_AutoZoomToFitRoute" xml:space="preserve">
+    <value>Auto zoom to fit route</value>
+  </data>
+  <data name="Main_Bitrate" xml:space="preserve">
+    <value>Bitrate</value>
+  </data>
+  <data name="Main_BringItBack" xml:space="preserve">
+    <value>Bring it back</value>
+  </data>
+  <data name="Main_Camera" xml:space="preserve">
+    <value>Camera</value>
+  </data>
+  <data name="Main_CameraInfo" xml:space="preserve">
+    <value>Camera info</value>
+  </data>
+  <data name="Main_CameraRecordings" xml:space="preserve">
+    <value>Camera recordings</value>
+  </data>
+  <data name="Main_CanTReadThisFile" xml:space="preserve">
+    <value>Can't read this file - it must be a PNG, JPEG or WebP no larger than 8192 px per side, and still at this path.</value>
+  </data>
+  <data name="Main_ChangeFromStart" xml:space="preserve">
+    <value>Change from start</value>
+  </data>
+  <data name="Main_Channels" xml:space="preserve">
+    <value>Channels</value>
+  </data>
+  <data name="Main_Chart" xml:space="preserve">
+    <value>CHART</value>
+  </data>
+  <data name="Main_Choose" xml:space="preserve">
+    <value>Choose...</value>
+  </data>
+  <data name="Main_ClickToSwitchTheTime" xml:space="preserve">
+    <value>Click to switch the time format</value>
+  </data>
+  <data name="Main_Codec" xml:space="preserve">
+    <value>Codec</value>
+  </data>
+  <data name="Main_Compass" xml:space="preserve">
+    <value>Compass</value>
+  </data>
+  <data name="Main_CompassHeadingUpHint" xml:space="preserve">
+    <value>Your direction of travel is always at the top, and north moves around the rim.</value>
+  </data>
+  <data name="Main_Content" xml:space="preserve">
+    <value>CONTENT</value>
+  </data>
+  <data name="Main_CountedUpToTheMoment" xml:space="preserve">
+    <value>Counted up to the moment on screen. Moving time and the average leave out stops (under 3 km/h); climbs under 3 m are GPS altitude noise and don't count.</value>
+  </data>
+  <data name="Main_CurrentFrameTheNumberOf" xml:space="preserve">
+    <value>Current frame - the number of the frame at the cursor</value>
+  </data>
+  <data name="Main_CutOutNotInThe" xml:space="preserve">
+    <value>Cut out - not in the render</value>
+  </data>
+  <data name="Main_CutPartsOutOfThe" xml:space="preserve">
+    <value>Cut parts out of the render</value>
+  </data>
+  <data name="Main_Cuts" xml:space="preserve">
+    <value>CUTS</value>
+  </data>
+  <data name="Main_DateTime" xml:space="preserve">
+    <value>Date &amp; time</value>
+  </data>
+  <data name="Main_Default" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="Main_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Main_Dial" xml:space="preserve">
+    <value>DIAL</value>
+  </data>
+  <data name="Main_Display" xml:space="preserve">
+    <value>DISPLAY</value>
+  </data>
+  <data name="Main_DisplayThePreviewSSize" xml:space="preserve">
+    <value>Display - the preview's size on screen and, while playing, how many frames per second reach it (yellow, then orange and red the further it falls below what the playback speed needs)</value>
+  </data>
+  <data name="Main_Distance" xml:space="preserve">
+    <value>Distance</value>
+  </data>
+  <data name="Main_DragAWidgetFromThe" xml:space="preserve">
+    <value>Drag a widget from the palette below onto the preview to add it. Drag it to move it; hover over it and use the gear for its settings or the cross to remove it.</value>
+  </data>
+  <data name="Main_DragToResize" xml:space="preserve">
+    <value>Drag to resize</value>
+  </data>
+  <data name="Main_DrawnAtItsOwnPixel" xml:space="preserve">
+    <value>Drawn at its native pixel size on a 4K frame (smaller at lower resolutions) - resize it with the handle. The file is linked, not copied, so keep it where it is.</value>
+  </data>
+  <data name="Main_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="Main_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Main_ElapsedTime" xml:space="preserve">
+    <value>Elapsed time</value>
+  </data>
+  <data name="Main_Elevation" xml:space="preserve">
+    <value>Elevation</value>
+  </data>
+  <data name="Main_ElevationSpeedChart" xml:space="preserve">
+    <value>Elevation / speed chart</value>
+  </data>
+  <data name="Main_Encoder" xml:space="preserve">
+    <value>Encoder</value>
+  </data>
+  <data name="Main_EstRenderTime" xml:space="preserve">
+    <value>Est. render time</value>
+  </data>
+  <data name="Main_EvenlyWithTheVideoStops" xml:space="preserve">
+    <value>In step with the video, stops included</value>
+  </data>
+  <data name="Main_Export" xml:space="preserve">
+    <value>Export...</value>
+  </data>
+  <data name="Main_FetchesTilesOverTheNetwork" xml:space="preserve">
+    <value>Downloads tiles the first time a route is opened or rendered, then caches them on disk.</value>
+  </data>
+  <data name="Main_File" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="Main_FileSize" xml:space="preserve">
+    <value>File size</value>
+  </data>
+  <data name="Main_Finish" xml:space="preserve">
+    <value>FINISH</value>
+  </data>
+  <data name="Main_Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Main_FormatHeader" xml:space="preserve">
+    <value>FORMAT</value>
+  </data>
+  <data name="Main_FrameRate" xml:space="preserve">
+    <value>Frame rate</value>
+  </data>
+  <data name="Main_Frames" xml:space="preserve">
+    <value>Frames</value>
+  </data>
+  <data name="Main_FrameThe360ViewDrag" xml:space="preserve">
+    <value>Frame the 360 view - drag the video to turn and tilt it, Shift+drag to roll it, use the mouse wheel to widen or narrow it, and double-click to reset. The render uses this view.</value>
+  </data>
+  <data name="Main_FullScaleRangeG" xml:space="preserve">
+    <value>Full-scale range (G)</value>
+  </data>
+  <data name="Main_FullScreenPreviewF11On" xml:space="preserve">
+    <value>Full screen preview (F11) - on the monitor chosen in Settings &gt; Behavior. Esc exits it.</value>
+  </data>
+  <data name="Main_GetSummary" xml:space="preserve">
+    <value>Get Summary</value>
+  </data>
+  <data name="Main_GMeter" xml:space="preserve">
+    <value>G-meter</value>
+  </data>
+  <data name="Main_GoToEndEnd" xml:space="preserve">
+    <value>Go to end (End)</value>
+  </data>
+  <data name="Main_GoToStartHome" xml:space="preserve">
+    <value>Go to start (Home)</value>
+  </data>
+  <data name="Main_Gradient" xml:space="preserve">
+    <value>Gradient</value>
+  </data>
+  <data name="Main_GreenScreen" xml:space="preserve">
+    <value>Green Screen</value>
+  </data>
+  <data name="Main_GridGuides" xml:space="preserve">
+    <value>Grid guides</value>
+  </data>
+  <data name="Main_HowCloseToTheTotal" xml:space="preserve">
+    <value>How close to the total distance counts as 'arrived' - without it, GPS jitter would never quite bring the remaining distance down to zero.</value>
+  </data>
+  <data name="Main_HowFarOutTheMap" xml:space="preserve">
+    <value>How far the map may zoom out to keep the trail in view (higher = more area, further from the zoom level set above).</value>
+  </data>
+  <data name="Main_HowManyGSPut" xml:space="preserve">
+    <value>How many G it takes to put the dot at the edge of the ring - lower for a gentle ride, higher for motorsport.</value>
+  </data>
+  <data name="Main_HowMuchHigherOrLower" xml:space="preserve">
+    <value>How much higher or lower than where the video starts</value>
+  </data>
+  <data name="Main_Image" xml:space="preserve">
+    <value>IMAGE</value>
+  </data>
+  <data name="Main_ImageLogo" xml:space="preserve">
+    <value>Image / logo</value>
+  </data>
+  <data name="Main_Import" xml:space="preserve">
+    <value>Import...</value>
+  </data>
+  <data name="Main_Input" xml:space="preserve">
+    <value>INPUT</value>
+  </data>
+  <data name="Main_InputFileS" xml:space="preserve">
+    <value>Input file(s)</value>
+  </data>
+  <data name="Main_InTheGaugeSUnits" xml:space="preserve">
+    <value>In the gauge's units. Leave it empty to use the recording's top speed, rounded up to 10.</value>
+  </data>
+  <data name="Main_KeepThe360ViewLevel" xml:space="preserve">
+    <value>Keep the 360 view level - the camera's accelerometer holds the horizon straight however the camera was tilted. When off, the view turns with the camera.</value>
+  </data>
+  <data name="Main_KeepTheMarkerInThe" xml:space="preserve">
+    <value>Keep the marker in the center</value>
+  </data>
+  <data name="Main_KeyMoments" xml:space="preserve">
+    <value>KEY MOMENTS</value>
+  </data>
+  <data name="Main_KeyMomentsFlagsOnThe" xml:space="preserve">
+    <value>Key moments - flags on the timeline, plus quick jumps to the top speed, the highest point and more</value>
+  </data>
+  <data name="Main_Label" xml:space="preserve">
+    <value>Label</value>
+  </data>
+  <data name="Main_LabelHeader" xml:space="preserve">
+    <value>LABEL</value>
+  </data>
+  <data name="Main_Layers" xml:space="preserve">
+    <value>LAYERS</value>
+  </data>
+  <data name="Main_Legacy" xml:space="preserve">
+    <value>Classic</value>
+  </data>
+  <data name="Main_LogLastProjectGone" xml:space="preserve">
+    <value>The last project is gone: {0}</value>
+  </data>
+  <data name="Main_LogReopeningProject" xml:space="preserve">
+    <value>Reopening the last project: {0}</value>
+  </data>
+  <data name="Main_LoopPlaybackQTheIn" xml:space="preserve">
+    <value>Loop playback (Q) - the In/Out selection, or the whole recording if there is none</value>
+  </data>
+  <data name="Main_Map" xml:space="preserve">
+    <value>Map</value>
+  </data>
+  <data name="Main_MapCredit" xml:space="preserve">
+    <value>Map credit</value>
+  </data>
+  <data name="Main_MapHeadingUpHint" xml:space="preserve">
+    <value>Your direction of travel is always at the top, instead of north.</value>
+  </data>
+  <data name="Main_MapSource" xml:space="preserve">
+    <value>MAP SOURCE</value>
+  </data>
+  <data name="Main_Marker" xml:space="preserve">
+    <value>MARKER</value>
+  </data>
+  <data name="Main_MaxGForce" xml:space="preserve">
+    <value>Max G-force</value>
+  </data>
+  <data name="Main_MaxZoomOutX" xml:space="preserve">
+    <value>Max zoom-out (x)</value>
+  </data>
+  <data name="Main_MeasuredExportedFile" xml:space="preserve">
+    <value>MEASURED (EXPORTED FILE)</value>
+  </data>
+  <data name="Main_MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="Main_MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="Main_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Main_NewLayerAnEmptyOne" xml:space="preserve">
+    <value>New layer - an empty one on top; drag widget clips onto it</value>
+  </data>
+  <data name="Main_NextFrameRight" xml:space="preserve">
+    <value>Next frame (Right)</value>
+  </data>
+  <data name="Main_NoFileLoaded" xml:space="preserve">
+    <value>No file loaded</value>
+  </data>
+  <data name="Main_NoImageChosen" xml:space="preserve">
+    <value>No image chosen</value>
+  </data>
+  <data name="Main_None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Main_NoneJustTheTime" xml:space="preserve">
+    <value>None - just the time</value>
+  </data>
+  <data name="Main_NothingOnTheOverlayYet" xml:space="preserve">
+    <value>Nothing on the overlay yet - drag a widget from the palette below onto the preview.</value>
+  </data>
+  <data name="Main_NoVideoLoaded" xml:space="preserve">
+    <value>No video loaded</value>
+  </data>
+  <data name="Main_Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Main_OnOverlay" xml:space="preserve">
+    <value>ON OVERLAY</value>
+  </data>
+  <data name="Main_OpenGitHub" xml:space="preserve">
+    <value>Open GitHub</value>
+  </data>
+  <data name="Main_OpenProject" xml:space="preserve">
+    <value>Open project</value>
+  </data>
+  <data name="Main_Output" xml:space="preserve">
+    <value>OUTPUT</value>
+  </data>
+  <data name="Main_OutputFile" xml:space="preserve">
+    <value>Output file</value>
+  </data>
+  <data name="Main_PaletteDragOntoPreview" xml:space="preserve">
+    <value>PALETTE - DRAG ONTO PREVIEW</value>
+  </data>
+  <data name="Main_Panel" xml:space="preserve">
+    <value>PANEL</value>
+  </data>
+  <data name="Main_PickADjiOsmoAction" xml:space="preserve">
+    <value>Pick a DJI Osmo Action or Insta360 recording, then get its summary to preview the overlay</value>
+  </data>
+  <data name="Main_PickAFileAndGet" xml:space="preserve">
+    <value>Pick a file and get its summary to edit widgets</value>
+  </data>
+  <data name="Main_PickRecordings" xml:space="preserve">
+    <value>Select recording(s) - pick several segments of one recording to stitch them together</value>
+  </data>
+  <data name="Main_PitchGauge" xml:space="preserve">
+    <value>Pitch gauge</value>
+  </data>
+  <data name="Main_PixelFormat" xml:space="preserve">
+    <value>Pixel format</value>
+  </data>
+  <data name="Main_PlaybackSpeedJSlowerK" xml:space="preserve">
+    <value>Playback speed - J slows down, K pauses, L plays and speeds up. The sound keeps its pitch.</value>
+  </data>
+  <data name="Main_PlaySpace" xml:space="preserve">
+    <value>Play (Space)</value>
+  </data>
+  <data name="Main_Preset" xml:space="preserve">
+    <value>Preset</value>
+  </data>
+  <data name="Main_PreviewQualityHowSharpThe" xml:space="preserve">
+    <value>Preview quality - how sharp the live preview is. Lower decodes faster; the exported video always renders at the source's full resolution.</value>
+  </data>
+  <data name="Main_PreviewTheResolutionThePreview" xml:space="preserve">
+    <value>Preview - the resolution the preview is decoded at (set with the quality picker on the left of the toolbar; Auto fits it to the preview's size on screen)</value>
+  </data>
+  <data name="Main_PreviewVolume" xml:space="preserve">
+    <value>Preview volume</value>
+  </data>
+  <data name="Main_PreviewZoom100IsOne" xml:space="preserve">
+    <value>Preview zoom - 100% is one source pixel per screen pixel. Ctrl+wheel zooms at the pointer, the middle mouse button pans. For pixel-peeping, set the preview quality to Full resolution.</value>
+  </data>
+  <data name="Main_PreviousFrameLeft" xml:space="preserve">
+    <value>Previous frame (Left)</value>
+  </data>
+  <data name="Main_Range" xml:space="preserve">
+    <value>RANGE</value>
+  </data>
+  <data name="Main_Recorded" xml:space="preserve">
+    <value>Recorded:</value>
+  </data>
+  <data name="Main_RecordingTheSourceVideoS" xml:space="preserve">
+    <value>Recording - the source video's resolution and frame rate</value>
+  </data>
+  <data name="Main_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Main_RemoveEveryCutRenderThe" xml:space="preserve">
+    <value>Remove every cut - render the whole recording</value>
+  </data>
+  <data name="Main_RemoveEveryKeyMoment" xml:space="preserve">
+    <value>Remove every key moment</value>
+  </data>
+  <data name="Main_RemoveFromOverlay" xml:space="preserve">
+    <value>Remove from overlay</value>
+  </data>
+  <data name="Main_Rename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="Main_Render" xml:space="preserve">
+    <value>Render</value>
+  </data>
+  <data name="Main_RenderJustTheHudOverlay" xml:space="preserve">
+    <value>Render just the HUD overlay on a solid green-screen background (no source video, no audio) for compositing in another editor.</value>
+  </data>
+  <data name="Main_ResetToDefault" xml:space="preserve">
+    <value>Reset to default</value>
+  </data>
+  <data name="Main_Resolution" xml:space="preserve">
+    <value>Resolution</value>
+  </data>
+  <data name="Main_RestartFailed" xml:space="preserve">
+    <value>Could not restart the app: {0}</value>
+  </data>
+  <data name="Main_RestartToApply" xml:space="preserve">
+    <value>The new interface settings take effect after the app restarts</value>
+  </data>
+  <data name="Main_Ring" xml:space="preserve">
+    <value>Ring</value>
+  </data>
+  <data name="Main_RollGauge" xml:space="preserve">
+    <value>Roll gauge</value>
+  </data>
+  <data name="Main_RotateWithTheDirectionOf" xml:space="preserve">
+    <value>Rotate with the direction of travel</value>
+  </data>
+  <data name="Main_RuleOfThirds" xml:space="preserve">
+    <value>Rule of thirds</value>
+  </data>
+  <data name="Main_SafeMargin" xml:space="preserve">
+    <value>Safe margin</value>
+  </data>
+  <data name="Main_SampleRate" xml:space="preserve">
+    <value>Sample rate</value>
+  </data>
+  <data name="Main_Samples" xml:space="preserve">
+    <value>Samples</value>
+  </data>
+  <data name="Main_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Main_SaveAs" xml:space="preserve">
+    <value>Save as...</value>
+  </data>
+  <data name="Main_SaveAsANewFile" xml:space="preserve">
+    <value>Save as a new file (Ctrl+Shift+S)</value>
+  </data>
+  <data name="Main_SaveAsTitle" xml:space="preserve">
+    <value>Save as</value>
+  </data>
+  <data name="Main_SaveTheFrameOnScreen" xml:space="preserve">
+    <value>Save the frame on screen as a PNG, at full resolution</value>
+  </data>
+  <data name="Main_SaveTheProjectCtrlS" xml:space="preserve">
+    <value>Save the project (Ctrl+S)</value>
+  </data>
+  <data name="Main_Scale" xml:space="preserve">
+    <value>SCALE</value>
+  </data>
+  <data name="Main_Settings" xml:space="preserve">
+    <value>SETTINGS</value>
+  </data>
+  <data name="Main_Shadow" xml:space="preserve">
+    <value>SHADOW</value>
+  </data>
+  <data name="Main_Shows" xml:space="preserve">
+    <value>Shows</value>
+  </data>
+  <data name="Main_ShowTheHeadingEG" xml:space="preserve">
+    <value>Show the heading (e.g. 35°NE)</value>
+  </data>
+  <data name="Main_ShowTheNLabel" xml:space="preserve">
+    <value>Show the N label</value>
+  </data>
+  <data name="Main_ShowTheOverlayHOff" xml:space="preserve">
+    <value>Show the overlay (H) - when off, only the footage is shown</value>
+  </data>
+  <data name="Main_SnapWidgetsToGrid" xml:space="preserve">
+    <value>Snap widgets to grid</value>
+  </data>
+  <data name="Main_Source" xml:space="preserve">
+    <value>SOURCE</value>
+  </data>
+  <data name="Main_SpeedGauge" xml:space="preserve">
+    <value>Speed gauge</value>
+  </data>
+  <data name="Main_Statistic" xml:space="preserve">
+    <value>Statistic</value>
+  </data>
+  <data name="Main_StatisticHeader" xml:space="preserve">
+    <value>STATISTIC</value>
+  </data>
+  <data name="Main_StopsTakeNoRoomThe" xml:space="preserve">
+    <value>Stops take no room - the classic elevation profile</value>
+  </data>
+  <data name="Main_Style" xml:space="preserve">
+    <value>STYLE</value>
+  </data>
+  <data name="Main_SunGForce" xml:space="preserve">
+    <value>Sun / G-force</value>
+  </data>
+  <data name="Main_Telemetry" xml:space="preserve">
+    <value>Telemetry</value>
+  </data>
+  <data name="Main_TelemetryHeader" xml:space="preserve">
+    <value>TELEMETRY</value>
+  </data>
+  <data name="Main_Text" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Main_TheAltitudeTheCameraS" xml:space="preserve">
+    <value>The altitude the camera's GPS reports</value>
+  </data>
+  <data name="Main_TheCameraSLeftRight" xml:space="preserve">
+    <value>The camera's left/right lean. With GPS, cornering forces are subtracted - a bike leaning into a turn shows its lean, while a car in a turn stays level.</value>
+  </data>
+  <data name="Main_TheCameraSNoseUp" xml:space="preserve">
+    <value>The camera's up/down tilt. With GPS, acceleration and braking are subtracted, so they don't show up as tilt.</value>
+  </data>
+  <data name="Main_TheEarlierDefaultLookFour" xml:space="preserve">
+    <value>The earlier default look - four colored bands and a thin needle. Kept for presets that use it.</value>
+  </data>
+  <data name="Main_TheMarkerStaysInThe" xml:space="preserve">
+    <value>The marker stays in the middle and the trail moves around it, instead of the marker moving along the whole route.</value>
+  </data>
+  <data name="Main_Theme" xml:space="preserve">
+    <value>THEME</value>
+  </data>
+  <data name="Main_ThePreviewIsFullScreen" xml:space="preserve">
+    <value>The preview is full screen</value>
+  </data>
+  <data name="Main_TheWholeRecordingSProfile" xml:space="preserve">
+    <value>The whole recording's profile - the part already covered is highlighted and the marker follows the video.</value>
+  </data>
+  <data name="Main_ThirdsMargin" xml:space="preserve">
+    <value>Thirds + margin</value>
+  </data>
+  <data name="Main_ThisIsTheBuiltIn" xml:space="preserve">
+    <value>This is the built-in read-only preset - use Duplicate to customize it.</value>
+  </data>
+  <data name="Main_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Main_TimeFormatMinutesAndSeconds" xml:space="preserve">
+    <value>Time format - minutes and seconds, with milliseconds, or timecode. Clicking the time readout also switches it.</value>
+  </data>
+  <data name="Main_TimelineWithThumbnailsAndAudio" xml:space="preserve">
+    <value>Timeline with thumbnails and audio waveform, instead of the log</value>
+  </data>
+  <data name="Main_Timing" xml:space="preserve">
+    <value>TIMING</value>
+  </data>
+  <data name="Main_TopOfTheScale" xml:space="preserve">
+    <value>Scale maximum</value>
+  </data>
+  <data name="Main_TrailStyle" xml:space="preserve">
+    <value>TRAIL STYLE</value>
+  </data>
+  <data name="Main_TripProgressBar" xml:space="preserve">
+    <value>Trip progress bar</value>
+  </data>
+  <data name="Main_TripStatistic" xml:space="preserve">
+    <value>Trip statistic</value>
+  </data>
+  <data name="Main_Units" xml:space="preserve">
+    <value>UNITS</value>
+  </data>
+  <data name="Main_UnmuteM" xml:space="preserve">
+    <value>Unmute (M)</value>
+  </data>
+  <data name="Main_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Main_UpdateAvailableDownload" xml:space="preserve">
+    <value>OsmoOverlay {0} is available - you have {1}.
+
+Open the download page?
+
+If you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
+  </data>
+  <data name="Main_UpdateAvailableInstall" xml:space="preserve">
+    <value>OsmoOverlay {0} is available - you have {1}.
+
+Update now? OsmoOverlay will download it, close, install it and start again.
+
+If you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
+  </data>
+  <data name="Main_UpdateAvailableTitle" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="Main_UtcTime" xml:space="preserve">
+    <value>UTC time</value>
+  </data>
+  <data name="Main_Video" xml:space="preserve">
+    <value>Video</value>
+  </data>
+  <data name="Main_VideoHeader" xml:space="preserve">
+    <value>VIDEO</value>
+  </data>
+  <data name="Main_View" xml:space="preserve">
+    <value>VIEW</value>
+  </data>
+  <data name="Main_Widgets" xml:space="preserve">
+    <value>WIDGETS</value>
+  </data>
+  <data name="Main_WidgetSettings" xml:space="preserve">
+    <value>Widget settings</value>
+  </data>
+  <data name="Main_WidgetSettingsHeader" xml:space="preserve">
+    <value>WIDGET SETTINGS -</value>
+  </data>
+  <data name="Main_Zoom219" xml:space="preserve">
+    <value>Zoom (2-19)</value>
+  </data>
+  <data name="Main_ZoomFraming" xml:space="preserve">
+    <value>ZOOM &amp; FRAMING</value>
+  </data>
+  <data name="Main_ZoomsOutAsTheDriven" xml:space="preserve">
+    <value>Zooms out as the driven trail grows, so it stays fully in view. When off, the map keeps a fixed zoom and the trail may get cut off at the edge.</value>
+  </data>
+  <data name="MapCredit_Hint" xml:space="preserve">
+    <value>The credit's text comes from the maps on screen at the moment. You can move it and change its look.</value>
+  </data>
+  <data name="MapCredit_Locked" xml:space="preserve">
+    <value>The terms of the map on screen require its credit the whole time it's shown. The app shows it then by itself, so its appear time and hiding can't be set here.</value>
+  </data>
+  <data name="MapSource_ApiKey" xml:space="preserve">
+    <value>API key</value>
+  </data>
+  <data name="MapTerms_VideoNotStated" xml:space="preserve">
+    <value>The terms say nothing about films</value>
+  </data>
+  <data name="MapTerms_VideoPaid" xml:space="preserve">
+    <value>In a film only on a paid plan</value>
+  </data>
+  <data name="MapTerms_VideoNotAllowed" xml:space="preserve">
+    <value>Not allowed in a published film</value>
+  </data>
+  <data name="MapTerms_VideoAllowed" xml:space="preserve">
+    <value>Allowed in a film</value>
+  </data>
+  <data name="MapTerms_VideoConditional" xml:space="preserve">
+    <value>Allowed in a film, with conditions</value>
+  </data>
+  <data name="MapSource_BestNoKey" xml:space="preserve">
+    <value>Esri's public server without a key is used now, fine for previews and testing only. Paste a free Esri key below and the same map may be shown in a film.</value>
+  </data>
+  <data name="MapSource_BestUses" xml:space="preserve">
+    <value>{0} with your key is used now.</value>
+  </data>
+  <data name="MapSource_GetKeyShort" xml:space="preserve">
+    <value>How do I get a key?</value>
+  </data>
+  <data name="MapSource_KeyPage" xml:space="preserve">
+    <value>Create a key on {0}'s site</value>
+  </data>
+  <data name="MapSource_KeyFor" xml:space="preserve">
+    <value>{0} API key</value>
+  </data>
+  <data name="MapSource_AutoDescription" xml:space="preserve">
+    <value>Esri World Imagery satellite photos: with your Esri key they may be shown in a film, without one they come from Esri's public server.</value>
+  </data>
+  <data name="MapSource_AutoSatellite" xml:space="preserve">
+    <value>Satellite - best available (default)</value>
+  </data>
+  <data name="MapSource_AutoStreetsDescription" xml:space="preserve">
+    <value>A street map with names, like Google Maps, from Esri: with your Esri key it may be shown in a film, without one it comes from Esri's public server.</value>
+  </data>
+  <data name="MapSource_AutoStreets" xml:space="preserve">
+    <value>Streets - best available</value>
+  </data>
+  <data name="MapSource_Custom" xml:space="preserve">
+    <value>Custom...</value>
+  </data>
+  <data name="MapSource_CustomCredit" xml:space="preserve">
+    <value>Custom server's credit</value>
+  </data>
+  <data name="MapSource_CustomCreditBriefly" xml:space="preserve">
+    <value>This server's terms allow showing the credit only for a while</value>
+  </data>
+  <data name="MapSource_CustomTileUrlTemplate" xml:space="preserve">
+    <value>Custom tile URL template</value>
+  </data>
+  <data name="MapSource_DoesnTLookLikeA" xml:space="preserve">
+    <value>Doesn't look like a CARTO key - expected format: xxx_xxxx_n_&lt;24 hex chars&gt;.</value>
+  </data>
+  <data name="MapSource_GetEsriKey" xml:space="preserve">
+    <value>Generate a free Esri key</value>
+  </data>
+  <data name="MapSource_ApiKeyRequired" xml:space="preserve">
+    <value>This map works only with an API key.</value>
+  </data>
+  <data name="MapSource_PasteYourApiKey" xml:space="preserve">
+    <value>Paste your API key</value>
+  </data>
+  <data name="MapSource_TheKeyAndTheCustom" xml:space="preserve">
+    <value>Keys and the custom server are shared by every map in the app.</value>
+  </data>
+  <data name="MapSource_TileProvider" xml:space="preserve">
+    <value>Tile provider</value>
+  </data>
+  <data name="MapTerms_Allowed" xml:space="preserve">
+    <value>yes</value>
+  </data>
+  <data name="MapTerms_Commercial" xml:space="preserve">
+    <value>Commercial use (e.g. monetization)</value>
+  </data>
+  <data name="MapTerms_Coverage" xml:space="preserve">
+    <value>Coverage</value>
+  </data>
+  <data name="MapTerms_Credit" xml:space="preserve">
+    <value>Credit in the video</value>
+  </data>
+  <data name="MapTerms_CreditBriefly" xml:space="preserve">
+    <value>a while is enough - set it in the Map credit widget</value>
+  </data>
+  <data name="MapTerms_CreditWhileVisible" xml:space="preserve">
+    <value>the whole time the map is shown</value>
+  </data>
+  <data name="MapTerms_Custom" xml:space="preserve">
+    <value>Only its provider knows a custom server's terms - check them before publishing a video.</value>
+  </data>
+  <data name="MapTerms_Disclaimer" xml:space="preserve">
+    <value>Based on the providers' terms as of 4 October 2026. Not legal advice - check the current terms before publishing a video.</value>
+  </data>
+  <data name="MapTerms_NotStated" xml:space="preserve">
+    <value>the terms don't say</value>
+  </data>
+  <data name="MapTerms_NotAllowed" xml:space="preserve">
+    <value>no</value>
+  </data>
+  <data name="MapTerms_Conditional" xml:space="preserve">
+    <value>with conditions</value>
+  </data>
+  <data name="MapTerms_PaidPlanOnly" xml:space="preserve">
+    <value>on a paid plan only</value>
+  </data>
+  <data name="MapTerms_ReadTerms" xml:space="preserve">
+    <value>Provider's terms</value>
+  </data>
+  <data name="MarkerStyle_Arrow" xml:space="preserve">
+    <value>Arrow</value>
+  </data>
+  <data name="MarkerStyle_Dot" xml:space="preserve">
+    <value>Dot</value>
+  </data>
+  <data name="MarkerStyle_PositionMarker" xml:space="preserve">
+    <value>Position marker</value>
+  </data>
+  <data name="MarkerStyle_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Moments_DefaultName" xml:space="preserve">
+    <value>Moment {0}</value>
+  </data>
+  <data name="Monitor_Display" xml:space="preserve">
+    <value>Display {0} - {1}</value>
+  </data>
+  <data name="Monitor_DisplayPrimary" xml:space="preserve">
+    <value>Display {0} - {1} (primary)</value>
+  </data>
+  <data name="Presets_CantDeleteLast" xml:space="preserve">
+    <value>Cannot delete the only remaining preset</value>
+  </data>
+  <data name="Presets_CopyName" xml:space="preserve">
+    <value>{0} copy</value>
+  </data>
+  <data name="Presets_Dates" xml:space="preserve">
+    <value>Created: {0:g}
+Last updated: {1:g}</value>
+  </data>
+  <data name="Presets_DeleteMessage" xml:space="preserve">
+    <value>Delete "{0}"? This can't be undone.</value>
+  </data>
+  <data name="Presets_DeleteTitle" xml:space="preserve">
+    <value>Delete preset</value>
+  </data>
+  <data name="Presets_Exported" xml:space="preserve">
+    <value>Exported preset "{0}" to {1}</value>
+  </data>
+  <data name="Presets_ExportTitle" xml:space="preserve">
+    <value>Export overlay preset</value>
+  </data>
+  <data name="Presets_FileType" xml:space="preserve">
+    <value>Overlay preset</value>
+  </data>
+  <data name="Presets_Imported" xml:space="preserve">
+    <value>Imported preset "{0}"</value>
+  </data>
+  <data name="Presets_ImportFailed" xml:space="preserve">
+    <value>Failed to import preset from {0} - see the log for details</value>
+  </data>
+  <data name="Presets_ImportTitle" xml:space="preserve">
+    <value>Import overlay preset</value>
+  </data>
+  <data name="Presets_NewName" xml:space="preserve">
+    <value>Preset {0}</value>
+  </data>
+  <data name="Presets_Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Presets_ResetMessage" xml:space="preserve">
+    <value>Reset "{0}" to the default layout? Your widget positions and settings for it will be lost.</value>
+  </data>
+  <data name="Presets_ResetTitle" xml:space="preserve">
+    <value>Reset preset</value>
+  </data>
+  <data name="Presets_ThisPreset" xml:space="preserve">
+    <value>this preset</value>
+  </data>
+  <data name="Preview_QualityFull" xml:space="preserve">
+    <value>Full resolution</value>
+  </data>
+  <data name="Preview_QualityHigh" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Preview_QualityLow" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="Preview_QualityMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Preview_QualityVeryHigh" xml:space="preserve">
+    <value>Very high</value>
+  </data>
+  <data name="Preview_Unavailable" xml:space="preserve">
+    <value>Preview unavailable: {0}</value>
+  </data>
+  <data name="Project_CantSaveBusy" xml:space="preserve">
+    <value>Can't save the project while a recording is loading or rendering.</value>
+  </data>
+  <data name="Project_CutsRemoveEverything" xml:space="preserve">
+    <value>The project's cuts remove the whole recording - they were not applied</value>
+  </data>
+  <data name="Project_FileType" xml:space="preserve">
+    <value>OsmoOverlay project</value>
+  </data>
+  <data name="Project_NoRecordings" xml:space="preserve">
+    <value>The project has no recordings.</value>
+  </data>
+  <data name="Project_Opened" xml:space="preserve">
+    <value>Project opened: {0}</value>
+  </data>
+  <data name="Project_OpenFailed" xml:space="preserve">
+    <value>Could not open the project: {0}</value>
+  </data>
+  <data name="Project_OpenFailedTitle" xml:space="preserve">
+    <value>Can't open the project</value>
+  </data>
+  <data name="Project_OverlayTitle" xml:space="preserve">
+    <value>Project overlay</value>
+  </data>
+  <data name="Project_OverlayUnreadable" xml:space="preserve">
+    <value>The project's overlay is unreadable - the current preset stays</value>
+  </data>
+  <data name="Project_PresetChanged" xml:space="preserve">
+    <value>The preset "{0}" has changed since this project was saved.</value>
+  </data>
+  <data name="Project_PresetCopyName" xml:space="preserve">
+    <value>{0} (project)</value>
+  </data>
+  <data name="Project_PresetGone" xml:space="preserve">
+    <value>The preset "{0}" this project was made with no longer exists.</value>
+  </data>
+  <data name="Project_RecordingsMissing" xml:space="preserve">
+    <value>These recordings are missing:
+
+{0}
+
+The project's cuts, view and overlay are applied only after the recordings are found.</value>
+  </data>
+  <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
+    <value>Recordings not found</value>
+  </data>
+  <data name="Project_Saved" xml:space="preserve">
+    <value>Project saved: {0}</value>
+  </data>
+  <data name="Project_SaveFailed" xml:space="preserve">
+    <value>Could not save the project: {0}</value>
+  </data>
+  <data name="Project_SaveFailedTitle" xml:space="preserve">
+    <value>Can't save the project</value>
+  </data>
+  <data name="Project_SaveTitle" xml:space="preserve">
+    <value>Save project</value>
+  </data>
+  <data name="Project_UseOverlayChanged" xml:space="preserve">
+    <value>Use the overlay saved in the project? It's added as a separate preset, so the changed one stays as it is.</value>
+  </data>
+  <data name="Project_UseOverlayGone" xml:space="preserve">
+    <value>Use the overlay saved in the project? It's added as a preset.</value>
+  </data>
+  <data name="Project_UseProjects" xml:space="preserve">
+    <value>Use project overlay</value>
+  </data>
+  <data name="Reframe_Status" xml:space="preserve">
+    <value>{0:0}° {1:+0;-0;0}° roll {2:0}°, {3:0}° wide</value>
+  </data>
+  <data name="Reframe_StatusLevel" xml:space="preserve">
+    <value>{0:0}° {1:+0;-0;0}° roll {2:0}°, {3:0}° wide, level</value>
+  </data>
+  <data name="Render_Anyway" xml:space="preserve">
+    <value>Render anyway</value>
+  </data>
+  <data name="Render_BusyTitle" xml:space="preserve">
+    <value>The computer is busy</value>
+  </data>
+  <data name="Render_CheckingLoad" xml:space="preserve">
+    <value>Checking whether the computer is busy...</value>
+  </data>
+  <data name="Render_CompleteTitle" xml:space="preserve">
+    <value>Render complete</value>
+  </data>
+  <data name="Render_CpuBusyMessage" xml:space="preserve">
+    <value>The processor is already {0} busy. This render encodes on the CPU, so it will be noticeably slower.
+
+Render anyway?</value>
+  </data>
+  <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
+    <value>The processor is already {0} busy. The graphics card encodes, but the overlay is drawn on the processor, so this render will be slower.</value>
+  </data>
+  <data name="Render_DoneSummary" xml:space="preserve">
+    <value>Time: {0} · Size: {1}</value>
+  </data>
+  <data name="Render_EnterOutputPath" xml:space="preserve">
+    <value>Enter an output file path</value>
+  </data>
+  <data name="Render_FailedTitle" xml:space="preserve">
+    <value>Render failed</value>
+  </data>
+  <data name="Render_GpuBusyMessage" xml:space="preserve">
+    <value>The graphics card is already busy: GPU {0}, video encoder {1}, other programs encoding video: {2}. Something else is playing, recording or encoding (a game, OBS, GeForce's or Radeon's background recording, another render), so this render will be slower, and if the card runs out of encoding sessions it may not start at all.</value>
+  </data>
+  <data name="Render_LogCancelled" xml:space="preserve">
+    <value>Cancelled: {0}</value>
+  </data>
+  <data name="Render_LogCli" xml:space="preserve">
+    <value>CLI equivalent: {0}</value>
+  </data>
+  <data name="Render_LogDone" xml:space="preserve">
+    <value>Done: {0} (time: {1}, {2})</value>
+  </data>
+  <data name="Render_LogEncoder" xml:space="preserve">
+    <value>Encoder: {0}, cuts: {1}</value>
+  </data>
+  <data name="Render_LogLoad" xml:space="preserve">
+    <value>Load before the render: CPU {0}, GPU {1}, video encoder {2}</value>
+  </data>
+  <data name="Render_LogLowDisk" xml:space="preserve">
+    <value>Low disk space: the render needs about {0}, {1} is free on the output's drive</value>
+  </data>
+  <data name="Render_LogOutput" xml:space="preserve">
+    <value>Output: {0}</value>
+  </data>
+  <data name="Render_LogPreset" xml:space="preserve">
+    <value>Overlay preset: {0}</value>
+  </data>
+  <data name="Render_LowDiskBalloon" xml:space="preserve">
+    <value>{0} free, about {1} needed</value>
+  </data>
+  <data name="Render_LowDiskMessage" xml:space="preserve">
+    <value>The render will be about {0}, and finishing it can briefly need the same again - {1} in all. Only {2} is free on {3}.
+
+Free up some space or pick an output folder on another drive. If the drive fills up, the render fails.</value>
+  </data>
+  <data name="Render_LowDiskTitle" xml:space="preserve">
+    <value>Not enough disk space</value>
+  </data>
+  <data name="Render_ModeGreenScreen" xml:space="preserve">
+    <value>Mode: green screen (HUD only, solid background, no audio)</value>
+  </data>
+  <data name="Render_ModeNormal" xml:space="preserve">
+    <value>Mode: normal</value>
+  </data>
+  <data name="Render_NoCuts" xml:space="preserve">
+    <value>none, whole recording</value>
+  </data>
+  <data name="Render_NoPreset" xml:space="preserve">
+    <value>default (none loaded)</value>
+  </data>
+  <data name="Render_UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+  </data>
+  <data name="SecondScreen_Closed" xml:space="preserve">
+    <value>Second screen closed.</value>
+  </data>
+  <data name="SecondScreen_NoMonitor" xml:space="preserve">
+    <value>Second screen: there's no other monitor connected - choose one in Settings &gt; Behavior.</value>
+  </data>
+  <data name="SecondScreen_NoticeText" xml:space="preserve">
+    <value>It's playing on {0} and comes back here when you pause.</value>
+  </data>
+  <data name="SecondScreen_NoticeTitle" xml:space="preserve">
+    <value>The preview is on the second screen</value>
+  </data>
+  <data name="SecondScreen_On" xml:space="preserve">
+    <value>Second screen on {0}.</value>
+  </data>
+  <data name="SecondScreen_WindowTitle" xml:space="preserve">
+    <value>OsmoOverlay second screen</value>
+  </data>
+  <data name="Settings_ABackupOfTheOpen" xml:space="preserve">
+    <value>A backup of the open project in the app's data folder - the project's own file changes only on Save.</value>
+  </data>
+  <data name="Settings_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Settings_ACameraSGpsTends" xml:space="preserve">
+    <value>A camera's GPS tends to read speed low. The correction raises every shown speed - the speed widgets, top and average speed, the route intro - in the preview and in every render. One setting for all recordings, saved when you close Settings.</value>
+  </data>
+  <data name="Settings_AFullscreenCardForThe" xml:space="preserve">
+    <value>A fullscreen card for the first seconds of the render: the whole route on a map and the trip stats. Needs a GPS fix and network access for the map.</value>
+  </data>
+  <data name="Settings_AFullScreenWindowThere" xml:space="preserve">
+    <value>A full screen window on that monitor: the log while nothing is playing, the preview during playback. Esc or F9 closes it.</value>
+  </data>
+  <data name="Settings_AppliesRightAwayAFew" xml:space="preserve">
+    <value>Applies right away; a few glows and gradients update when their window is reopened.</value>
+  </data>
+  <data name="Settings_AskBeforeClosingDuringA" xml:space="preserve">
+    <value>Ask before closing during a render</value>
+  </data>
+  <data name="Settings_Associate" xml:space="preserve">
+    <value>Associate .ovproj files</value>
+  </data>
+  <data name="Settings_AssociationFailed" xml:space="preserve">
+    <value>Could not change the .ovproj association: {0}</value>
+  </data>
+  <data name="Settings_AssociationNotRegistered" xml:space="preserve">
+    <value>Not registered</value>
+  </data>
+  <data name="Settings_AssociationRegistered" xml:space="preserve">
+    <value>Registered for this app</value>
+  </data>
+  <data name="Settings_AttributionWatermark" xml:space="preserve">
+    <value>OsmoOverlay watermark</value>
+  </data>
+  <data name="Settings_Author" xml:space="preserve">
+    <value>Author</value>
+  </data>
+  <data name="Settings_AutoSaveBackup" xml:space="preserve">
+    <value>Auto-save backup</value>
+  </data>
+  <data name="Settings_AutoSaveEvery" xml:space="preserve">
+    <value>Every minute|Every {0} minutes</value>
+  </data>
+  <data name="Settings_AutoSaveOff" xml:space="preserve">
+    <value>Off (default)</value>
+  </data>
+  <data name="Settings_CacheCleanup" xml:space="preserve">
+    <value>Cache cleanup</value>
+  </data>
+  <data name="Settings_CacheCleanupAfter" xml:space="preserve">
+    <value>After {0} day|After {0} days</value>
+  </data>
+  <data name="Settings_CacheCleanupDefault" xml:space="preserve">
+    <value>After {0} days (default)</value>
+  </data>
+  <data name="Settings_CacheCleanupHint" xml:space="preserve">
+    <value>Recording analyses and audio waveforms not used for the chosen time are deleted at startup. Opening such a recording again recomputes them.</value>
+  </data>
+  <data name="Settings_CacheCleanupNever" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="Settings_DisableShadows" xml:space="preserve">
+    <value>Turn off all shadows</value>
+  </data>
+  <data name="Settings_DisableShadowsHint" xml:space="preserve">
+    <value>No widget casts a shadow: not in the preview, a frame snapshot or a render. The widgets' own shadow settings are kept, but can't be changed until this is turned off.</value>
+  </data>
+  <data name="Settings_AverageSpeed" xml:space="preserve">
+    <value>Average speed</value>
+  </data>
+  <data name="Settings_Behavior" xml:space="preserve">
+    <value>Behavior</value>
+  </data>
+  <data name="Settings_BitrateSame" xml:space="preserve">
+    <value>Same as source (default)</value>
+  </data>
+  <data name="Settings_BitrateTimes" xml:space="preserve">
+    <value>{0}x source</value>
+  </data>
+  <data name="Settings_ByDefaultARenderMatches" xml:space="preserve">
+    <value>By default, a render matches the source's own encoding 1:1 - bitrate, keyframe interval, HEVC level and no B-frames. Only choosing a non-default option here changes that.</value>
+  </data>
+  <data name="Settings_CameraDebugTrack" xml:space="preserve">
+    <value>Camera debug track</value>
+  </data>
+  <data name="Settings_CameraSerialNumberAndDevice" xml:space="preserve">
+    <value>Camera serial number and device ID</value>
+  </data>
+  <data name="Settings_Card" xml:space="preserve">
+    <value>CARD</value>
+  </data>
+  <data name="Settings_CheckForUpdates" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="Settings_CheckingForANewVersion" xml:space="preserve">
+    <value>Checking for a new version...</value>
+  </data>
+  <data name="Settings_ClosingEndsARunningRender" xml:space="preserve">
+    <value>Closing ends a running render and leaves a partial file.</value>
+  </data>
+  <data name="Settings_CodecSameAsSource" xml:space="preserve">
+    <value>Same as source (default)</value>
+  </data>
+  <data name="Settings_ColorTheRouteBySpeed" xml:space="preserve">
+    <value>Color the route by speed</value>
+  </data>
+  <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
+    <value>Config last updated: {0}</value>
+  </data>
+  <data name="Settings_ConfigNeverUpdated" xml:space="preserve">
+    <value>Config last updated: never</value>
+  </data>
+  <data name="Settings_Configuration" xml:space="preserve">
+    <value>Configuration</value>
+  </data>
+  <data name="Settings_CopiesWhatTheCameraRecorded" xml:space="preserve">
+    <value>Copies what the camera recorded alongside the video into the render, so DJI Mimo, exiftool or this app can still read it. Pick below what to keep.</value>
+  </data>
+  <data name="Settings_CoreVersion" xml:space="preserve">
+    <value>Core v{0}</value>
+  </data>
+  <data name="Settings_CoverImageCameraModelShooting" xml:space="preserve">
+    <value>Cover image, camera model, shooting settings and the file's original name on the camera.</value>
+  </data>
+  <data name="Settings_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Settings_DecodeTheSourceOnThe" xml:space="preserve">
+    <value>Decode the source on the GPU</value>
+  </data>
+  <data name="Settings_Dependencies" xml:space="preserve">
+    <value>DEPENDENCIES</value>
+  </data>
+  <data name="Settings_DjiSInternalSensorDiagnostics" xml:space="preserve">
+    <value>DJI's internal sensor diagnostics (~1.7 Mbps). No location in it, and no common tool reads it.</value>
+  </data>
+  <data name="Settings_DownloadFromGitHub" xml:space="preserve">
+    <value>Download from GitHub</value>
+  </data>
+  <data name="Settings_Downloading" xml:space="preserve">
+    <value>Downloading OsmoOverlay {0}... {1:0}%</value>
+  </data>
+  <data name="Settings_DurationSeconds" xml:space="preserve">
+    <value>Duration (seconds)</value>
+  </data>
+  <data name="Settings_EffortPerFrameAtThe" xml:space="preserve">
+    <value>How much effort the encoder puts into each frame at the same bitrate. P7 looks best (default); lower presets are faster. On AMD cards P6-P7 is the quality mode and P3-P5 balanced. Graphics card encoders only - the CPU encoder has its own settings.</value>
+  </data>
+  <data name="Settings_ElevationGain" xml:space="preserve">
+    <value>Elevation gain</value>
+  </data>
+  <data name="Settings_EncoderPresetGpu" xml:space="preserve">
+    <value>Encoder preset (GPU)</value>
+  </data>
+  <data name="Settings_EverythingBelowAppliesOnlyWhile" xml:space="preserve">
+    <value>Everything below applies only while this is on.</value>
+  </data>
+  <data name="Settings_FastStartForWebPlayback" xml:space="preserve">
+    <value>Fast start for web playback</value>
+  </data>
+  <data name="Settings_FindWhatIsFaster" xml:space="preserve">
+    <value>Find out what's faster on this computer</value>
+  </data>
+  <data name="Settings_FreeForNonCommercialUse" xml:space="preserve">
+    <value>Free for non-commercial use under the PolyForm Noncommercial License 1.0.0. The videos you make with it are yours - you can monetize them.</value>
+  </data>
+  <data name="Settings_FullScreenPreview" xml:space="preserve">
+    <value>Full screen preview</value>
+  </data>
+  <data name="Settings_GreenWhenSlowThroughYellow" xml:space="preserve">
+    <value>Green at low speed, through yellow and orange to red at top speed.</value>
+  </data>
+  <data name="Settings_HigherMakesABiggerFile" xml:space="preserve">
+    <value>Higher means a bigger file, but thin HUD text stays crisper after YouTube and similar sites re-compress it.</value>
+  </data>
+  <data name="Settings_HowTheAppLooksAnd" xml:space="preserve">
+    <value>Appearance and language.</value>
+  </data>
+  <data name="Settings_IdentifiesYourCameraNothingThat" xml:space="preserve">
+    <value>Identifies your camera; nothing that reads the telemetry needs it. When off, it's removed from the file entirely.</value>
+  </data>
+  <data name="Settings_Interface" xml:space="preserve">
+    <value>Interface</value>
+  </data>
+  <data name="Settings_InterfaceScale" xml:space="preserve">
+    <value>Interface scale</value>
+  </data>
+  <data name="Settings_KeepDebugTrack" xml:space="preserve">
+    <value>debug track</value>
+  </data>
+  <data name="Settings_KeepNothing" xml:space="preserve">
+    <value>nothing selected</value>
+  </data>
+  <data name="Settings_KeepSerial" xml:space="preserve">
+    <value>serial number</value>
+  </data>
+  <data name="Settings_KeepTelemetry" xml:space="preserve">
+    <value>telemetry</value>
+  </data>
+  <data name="Settings_KeepTheCameraSMetadata" xml:space="preserve">
+    <value>Keep the camera's metadata</value>
+  </data>
+  <data name="Settings_KeepThumbnails" xml:space="preserve">
+    <value>thumbnails</value>
+  </data>
+  <data name="Settings_LanguageHint" xml:space="preserve">
+    <value>Needs a restart - with no file loaded, the app restarts when you close Settings.</value>
+  </data>
+  <data name="Settings_LanguageSystem" xml:space="preserve">
+    <value>System ({0})</value>
+  </data>
+  <data name="Settings_LayerRows" xml:space="preserve">
+    <value>Visible layers</value>
+  </data>
+  <data name="Settings_LayersTheTimelineUnderThe" xml:space="preserve">
+    <value>How many layers the timeline under the preview shows before it scrolls.</value>
+  </data>
+  <data name="Settings_License" xml:space="preserve">
+    <value>License</value>
+  </data>
+  <data name="Settings_LoopPlaybackFromStartup" xml:space="preserve">
+    <value>Loop playback from startup</value>
+  </data>
+  <data name="Settings_LoopsTheInOutSelection" xml:space="preserve">
+    <value>Loops the In/Out selection, or the whole recording. The Loop button (Q) toggles it at any time.</value>
+  </data>
+  <data name="Settings_MadeWithOsmoOverlayAndThe" xml:space="preserve">
+    <value>'Made with OsmoOverlay' and the project link at the bottom for the first few seconds, then it fades out.</value>
+  </data>
+  <data name="Settings_Map" xml:space="preserve">
+    <value>MAP</value>
+  </data>
+  <data name="Settings_Monitor" xml:space="preserve">
+    <value>Monitor</value>
+  </data>
+  <data name="Settings_MonitorFirstOther" xml:space="preserve">
+    <value>First screen other than the main window's (default)</value>
+  </data>
+  <data name="Settings_MonitorSameAsMain" xml:space="preserve">
+    <value>Same screen as the main window (default)</value>
+  </data>
+  <data name="Settings_NvencP4" xml:space="preserve">
+    <value>P4 - fastest sensible</value>
+  </data>
+  <data name="Settings_NvencP5" xml:space="preserve">
+    <value>P5 - faster</value>
+  </data>
+  <data name="Settings_NvencP7" xml:space="preserve">
+    <value>P7 - best quality (default)</value>
+  </data>
+  <data name="Settings_OnTopOfTheSystem" xml:space="preserve">
+    <value>Applied on top of the system's display scaling. Needs a restart - with no file loaded, the app restarts when you close Settings.</value>
+  </data>
+  <data name="Settings_Open" xml:space="preserve">
+    <value>Open...</value>
+  </data>
+  <data name="Settings_OpensOvprojFilesWithThis" xml:space="preserve">
+    <value>Double-clicking a .ovproj file opens it in this app. Applies right away, for your user account only.</value>
+  </data>
+  <data name="Settings_OpenTheWindowWhereIt" xml:space="preserve">
+    <value>Open the window where it was closed</value>
+  </data>
+  <data name="Settings_OutputBitrate" xml:space="preserve">
+    <value>Output bitrate</value>
+  </data>
+  <data name="Settings_OutputCodec" xml:space="preserve">
+    <value>Codec</value>
+  </data>
+  <data name="Settings_OutputCodecHint" xml:space="preserve">
+    <value>H.264 plays everywhere, older phones and editors included, but needs more bitrate for the same quality, so it gets half as much again. H.264 is always 8-bit.</value>
+  </data>
+  <data name="Settings_OutputEightBit" xml:space="preserve">
+    <value>Write 8-bit video</value>
+  </data>
+  <data name="Settings_OutputEightBitHint" xml:space="preserve">
+    <value>10-bit video doesn't play everywhere. 8-bit plays almost anywhere, at the cost of possible banding in smooth gradients such as the sky. Doesn't apply to 8-bit recordings.</value>
+  </data>
+  <data name="Settings_OutputQuality" xml:space="preserve">
+    <value>OUTPUT QUALITY</value>
+  </data>
+  <data name="Settings_OutputResolution" xml:space="preserve">
+    <value>Resolution</value>
+  </data>
+  <data name="Settings_OutputResolutionHint" xml:space="preserve">
+    <value>Smaller is handy for sharing: the render goes faster, and the bitrate shrinks with the pixel count. A recording is never upscaled.</value>
+  </data>
+  <data name="Settings_PlaybackAndMonitors" xml:space="preserve">
+    <value>PLAYBACK AND MONITORS</value>
+  </data>
+  <data name="Settings_PreviewShadows" xml:space="preserve">
+    <value>Shadows in the preview</value>
+  </data>
+  <data name="Settings_PreviewShadowsHint" xml:space="preserve">
+    <value>Turn off on a slower computer: the widgets' shadows take most of the overlay's drawing time, and without them the preview plays more smoothly. A render and a frame snapshot have them unless all of them are turned off above.</value>
+  </data>
+  <data name="Settings_Privacy" xml:space="preserve">
+    <value>PRIVACY</value>
+  </data>
+  <data name="Settings_Project" xml:space="preserve">
+    <value>PROJECT</value>
+  </data>
+  <data name="Settings_ProjectFiles" xml:space="preserve">
+    <value>Project files</value>
+  </data>
+  <data name="Settings_Projects" xml:space="preserve">
+    <value>PROJECTS</value>
+  </data>
+  <data name="Settings_PutsTheIndexFirstSo" xml:space="preserve">
+    <value>Moves the index to the start of the file, so a browser or messenger can start playing it before it's fully downloaded. Same picture; the extra pass takes a few seconds per GB.</value>
+  </data>
+  <data name="Settings_ReadTheLicense" xml:space="preserve">
+    <value>Read the license</value>
+  </data>
+  <data name="Settings_RecordingDuration" xml:space="preserve">
+    <value>Recording duration</value>
+  </data>
+  <data name="Settings_RemoveAssociation" xml:space="preserve">
+    <value>Remove association</value>
+  </data>
+  <data name="Settings_Rendering" xml:space="preserve">
+    <value>Rendering</value>
+  </data>
+  <data name="Settings_ReopenTheLastProject" xml:space="preserve">
+    <value>Reopen the last project</value>
+  </data>
+  <data name="Settings_Repository" xml:space="preserve">
+    <value>Repository</value>
+  </data>
+  <data name="Settings_RouteIntro" xml:space="preserve">
+    <value>Route intro</value>
+  </data>
+  <data name="Settings_SameAsSource" xml:space="preserve">
+    <value>Same as source (default)</value>
+  </data>
+  <data name="Settings_Scale100" xml:space="preserve">
+    <value>100% (default)</value>
+  </data>
+  <data name="Settings_SecondScreenF9" xml:space="preserve">
+    <value>Second screen (F9)</value>
+  </data>
+  <data name="Settings_SeveralTimesFasterIdenticalFrames" xml:space="preserve">
+    <value>Several times faster, with identical frames. Turn it off only if renders fail after a driver update or on an unusual GPU.</value>
+  </data>
+  <data name="Settings_ShowTheRouteOverviewAt" xml:space="preserve">
+    <value>Show the route overview at the start</value>
+  </data>
+  <data name="Settings_SizePositionScreenAndMaximized" xml:space="preserve">
+    <value>Size, position, screen and maximized state. When off, it always starts maximized.</value>
+  </data>
+  <data name="Settings_Startup" xml:space="preserve">
+    <value>STARTUP</value>
+  </data>
+  <data name="Settings_StartupProjectsPlaybackAndMonitors" xml:space="preserve">
+    <value>Startup, projects, playback and monitors.</value>
+  </data>
+  <data name="Settings_StatsToShow" xml:space="preserve">
+    <value>STATS TO SHOW</value>
+  </data>
+  <data name="Settings_TelemetryGpsRouteSpeedAccelerometer" xml:space="preserve">
+    <value>Telemetry - GPS route, speed, accelerometer, exposure</value>
+  </data>
+  <data name="Settings_TheFirstRunGuideTools" xml:space="preserve">
+    <value>The first-run guide: tools, speed calibration, output folder and project files.</value>
+  </data>
+  <data name="Settings_TheGpsReportsAFew" xml:space="preserve">
+    <value>The GPS reports only a few fixes per second, so the compass trail and the map pause, then jump. This interpolates between fixes. Applies right away - the open preview reloads.</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings_TheMonitorF11OpensThe" xml:space="preserve">
+    <value>The monitor F11 opens the preview on. Esc leaves it.</value>
+  </data>
+  <data name="Settings_TheProjectLastSavedOr" xml:space="preserve">
+    <value>The project you last saved or opened. A project you start the app with (by double-clicking it) takes priority.</value>
+  </data>
+  <data name="Settings_ThumbnailsAndRecordingInfo" xml:space="preserve">
+    <value>Thumbnails and recording info</value>
+  </data>
+  <data name="Settings_TimeFormat" xml:space="preserve">
+    <value>Time format</value>
+  </data>
+  <data name="Settings_TimeFormatCameraTimecodeHint" xml:space="preserve">
+    <value>The time shown next to the timeline as the timecode the camera wrote - the one an NLE shows as the clip's own, e.g. 09:59:56;00. A recording without one counts from 00:00:00:00.</value>
+  </data>
+  <data name="Settings_TimeFormatMillisecondsHint" xml:space="preserve">
+    <value>The time shown next to the timeline, e.g. 01:23.456 - the format the cut editor uses.</value>
+  </data>
+  <data name="Settings_TimeFormatSecondsHint" xml:space="preserve">
+    <value>The time shown next to the timeline, e.g. 01:23. Clicking it switches between the formats.</value>
+  </data>
+  <data name="Settings_TimeFormatTimecodeHint" xml:space="preserve">
+    <value>The time shown next to the timeline as hours:minutes:seconds:frames from 00:00:00:00, e.g. 00:01:23:12 - with drop-frame (;) at 29.97 and 59.94 fps, the way an NLE numbers its timeline.</value>
+  </data>
+  <data name="Settings_UpdateCheckFailed" xml:space="preserve">
+    <value>Could not check for a new version.</value>
+  </data>
+  <data name="Settings_Updates" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="Settings_UpdateTo" xml:space="preserve">
+    <value>Update to {0}</value>
+  </data>
+  <data name="Settings_UpToDate" xml:space="preserve">
+    <value>You're using the latest version.</value>
+  </data>
+  <data name="Settings_VersionAvailable" xml:space="preserve">
+    <value>Version {0} is available.</value>
+  </data>
+  <data name="Settings_VersionAvailableReleased" xml:space="preserve">
+    <value>Version {0} is available (released {1}).</value>
+  </data>
+  <data name="Settings_WelcomeGuide" xml:space="preserve">
+    <value>Welcome guide</value>
+  </data>
+  <data name="Settings_WhatDjiMimoAndThis" xml:space="preserve">
+    <value>The data DJI Mimo and this app read the ride from. It includes your exact position in every frame.</value>
+  </data>
+  <data name="Settings_WhatToKeep" xml:space="preserve">
+    <value>What to keep: {0}</value>
+  </data>
+  <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
+    <value>Enter the speed you usually ride at, not a momentary peak - a peak is where the GPS happened to read high. With a recording loaded, the GPS speed field fills in with its cruising speed: the most common speed in the faster half of the ride, averaged over 3 seconds. Use the same unit for both.</value>
+  </data>
+  <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
+    <value>e.g. 22</value>
+  </data>
+  <data name="SpeedCalibration_MeasuredByTheGpsNo" xml:space="preserve">
+    <value>GPS speed</value>
+  </data>
+  <data name="SpeedCalibration_RealPlaceholder" xml:space="preserve">
+    <value>e.g. 25</value>
+  </data>
+  <data name="SpeedCalibration_RealSpeedSpeedometerLimiter" xml:space="preserve">
+    <value>Real speed</value>
+  </data>
+  <data name="SpeedCalibration_SpeedCorrection" xml:space="preserve">
+    <value>Speed correction (%)</value>
+  </data>
+  <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
+    <value>Work it out from a known speed</value>
+  </data>
+  <data name="Style_LabelColor" xml:space="preserve">
+    <value>Label color</value>
+  </data>
+  <data name="Summary_AtLeast" xml:space="preserve">
+    <value>at least {0}</value>
+  </data>
+  <data name="Summary_AudioCopied" xml:space="preserve">
+    <value>Copied unchanged</value>
+  </data>
+  <data name="Summary_AudioReencoded" xml:space="preserve">
+    <value>AAC (re-encoded for the cuts)</value>
+  </data>
+  <data name="Summary_CantJoinTitle" xml:space="preserve">
+    <value>These files can't be joined</value>
+  </data>
+  <data name="Summary_DiffersFromSource" xml:space="preserve">
+    <value>Differs from the source file.</value>
+  </data>
+  <data name="Summary_EstimateTip" xml:space="preserve">
+    <value>Based on your last render at this resolution/frame rate with {0}: {1:0.#} fps ({2:0.00}x realtime). Map tiles, settings or the footage itself can shift it a bit.</value>
+  </data>
+  <data name="Summary_EstimateUnknown" xml:space="preserve">
+    <value>known after the first render</value>
+  </data>
+  <data name="Summary_EstimateUnknownTip" xml:space="preserve">
+    <value>Render speed depends on this machine, the GPU and the footage - it's measured during the first full render and used for the estimate from then on.</value>
+  </data>
+  <data name="Summary_LimitedSupportTitle" xml:space="preserve">
+    <value>Limited {0} support</value>
+  </data>
+  <data name="Summary_Log360" xml:space="preserve">
+    <value>360 recording: two {0} fisheye lenses, framed into a flat {1} picture - pick the view with the globe above the preview</value>
+  </data>
+  <data name="Summary_LogAudio" xml:space="preserve">
+    <value>Audio: {0}</value>
+  </data>
+  <data name="Summary_LogAudioNone" xml:space="preserve">
+    <value>Audio: none</value>
+  </data>
+  <data name="Summary_LogCacheHit" xml:space="preserve">
+    <value>Cache hit (format v{0}): using the cached analysis, file unchanged since last run</value>
+  </data>
+  <data name="Summary_LogCacheMiss" xml:space="preserve">
+    <value>No cache for this file yet (or the file changed since) - analyzing...</value>
+  </data>
+  <data name="Summary_LogCacheSaved" xml:space="preserve">
+    <value>New cache saved (format v{0})</value>
+  </data>
+  <data name="Summary_LogCacheSaveFailed" xml:space="preserve">
+    <value>Could not save the cache - see the log; the next run will analyze this file again</value>
+  </data>
+  <data name="Summary_LogCacheStale" xml:space="preserve">
+    <value>Cache outdated: found format v{0}, current is v{1} (telemetry logic changed since). Old cache entry ({2}) deleted - generating a new one...</value>
+  </data>
+  <data name="Summary_LogCameraModel" xml:space="preserve">
+    <value>Camera model: {0}</value>
+  </data>
+  <data name="Summary_LogCheckingGpuEncoder" xml:space="preserve">
+    <value>Checking the graphics card's encoder...</value>
+  </data>
+  <data name="Summary_LogColor" xml:space="preserve">
+    <value>Color: {0}</value>
+  </data>
+  <data name="Summary_LogDuration" xml:space="preserve">
+    <value>Duration: {0}, size: {1}</value>
+  </data>
+  <data name="Summary_LogEncoderCpu" xml:space="preserve">
+    <value>Using encoder: {0} (no graphics card encoder - CPU)</value>
+  </data>
+  <data name="Summary_LogEncoderGpu" xml:space="preserve">
+    <value>Using encoder: {0} (GPU)</value>
+  </data>
+  <data name="Summary_LogExtracting" xml:space="preserve">
+    <value>Extracting telemetry...</value>
+  </data>
+  <data name="Summary_LogGpsLost" xml:space="preserve">
+    <value>GPS signal lost: {0} range, {1:0.0}s total (shown as amber marks under the preview timeline)|GPS signal lost: {0} ranges, {1:0.0}s total (shown as amber marks under the preview timeline)</value>
+  </data>
+  <data name="Summary_LogGpsNoLoss" xml:space="preserve">
+    <value>GPS signal: no loss detected</value>
+  </data>
+  <data name="Summary_LogGpsClockShift" xml:space="preserve">
+    <value>GPS time shifted by {0} h: the camera wrote it in the wrong time zone, so it was matched to the camera's clock</value>
+  </data>
+  <data name="Summary_LogGpsSpeed" xml:space="preserve">
+    <value>GPS-measured speed: {0}/{1} frames (the receiver's own velocity); the other {2} fall back to derived speed</value>
+  </data>
+  <data name="Summary_LogGpsSpeedNone" xml:space="preserve">
+    <value>GPS-measured speed: not available for this file - using derived speed for all frames</value>
+  </data>
+  <data name="Summary_LogFileMissing" xml:space="preserve">
+    <value>File not found: {0}</value>
+  </data>
+  <data name="Summary_LogInput" xml:space="preserve">
+    <value>Input: {0}</value>
+  </data>
+  <data name="Summary_LogNoCameraAxes" xml:space="preserve">
+    <value>Roll, pitch and G-meter widgets aren't available for this camera - its accelerometer's axes relative to the picture are unknown</value>
+  </data>
+  <data name="Summary_LogNoGps" xml:space="preserve">
+    <value>GPS: not present in this recording - position-based widgets (Compass, Map, Elevation, Gradient, Distance, Speed gauge, Trip progress bar, Elevation / speed chart, Trip statistic, Sun) are unavailable and greyed out</value>
+  </data>
+  <data name="Summary_LogNoGpsTime" xml:space="preserve">
+    <value>GPS timestamp: not present in this recording, and no usable recording-start time either - Date &amp; time / UTC time are unavailable and greyed out</value>
+  </data>
+  <data name="Summary_LogNoGpsTimeFallback" xml:space="preserve">
+    <value>GPS timestamp: not present in this recording - Date &amp; time / UTC time fall back to the file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)</value>
+  </data>
+  <data name="Summary_LogNoTelemetry" xml:space="preserve">
+    <value>No telemetry found - this file can be played but not rendered. Add the camera's original recording ({0}), not a file exported from another app</value>
+  </data>
+  <data name="Summary_LogProbing" xml:space="preserve">
+    <value>Probing source file(s) (ffprobe)...</value>
+  </data>
+  <data name="Summary_LogReadFailed" xml:space="preserve">
+    <value>Could not read file info: {0}</value>
+  </data>
+  <data name="Summary_LogRecordedAt" xml:space="preserve">
+    <value>Recorded at: {0} (local)</value>
+  </data>
+  <data name="Summary_LogRecordedAtUnknown" xml:space="preserve">
+    <value>Recorded at: unknown (no GPS timestamp in telemetry)</value>
+  </data>
+  <data name="Summary_LogTelemetryDetected" xml:space="preserve">
+    <value>Telemetry detected ({0}) - {1} raw samples, {2} derived frames</value>
+  </data>
+  <data name="Summary_LogTelemetrySummary" xml:space="preserve">
+    <value>Telemetry summary: {0:0.00} km, max speed {1:0.#} km/h (as measured, before smoothing and the speed correction), altitude {2:0}-{3:0} m, max G {4:0.00}</value>
+  </data>
+  <data name="Summary_LogVerifyFailed" xml:space="preserve">
+    <value>Could not verify the exported file: {0}</value>
+  </data>
+  <data name="Summary_MatchesSource" xml:space="preserve">
+    <value>Matches the source file.</value>
+  </data>
+  <data name="Summary_MaxSpeedCorrectedTip" xml:space="preserve">
+    <value>As shown on the overlay: {0:0.##} km/h measured by the GPS, +{1:0.0}% speed correction (Settings &gt; Speed).</value>
+  </data>
+  <data name="Summary_MaxSpeedTip" xml:space="preserve">
+    <value>As shown on the overlay: measured by the GPS, no speed correction (Settings &gt; Speed).</value>
+  </data>
+  <data name="Summary_NoGpsFixTip" xml:space="preserve">
+    <value>No GPS fix in this recording.</value>
+  </data>
+  <data name="Summary_NoGpsMessage" xml:space="preserve">
+    <value>The camera never got a GPS fix while recording, so the position-based widgets (speed, distance, route, map, elevation, compass, trip stats) are off. Tilt, G-force and camera settings still work.
+
+For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix before you start.</value>
+  </data>
+  <data name="Summary_NoGpsTitle" xml:space="preserve">
+    <value>No GPS in this recording</value>
+  </data>
+  <data name="Summary_NoTelemetryMessage" xml:space="preserve">
+    <value>This file carries no camera telemetry, so it can be previewed but not rendered.
+
+Use the original recording from the camera's card ({0}) - a copy exported from DJI Mimo or another app loses the telemetry.</value>
+  </data>
+  <data name="Summary_NoTelemetryTitle" xml:space="preserve">
+    <value>No telemetry in this file</value>
+  </data>
+  <data name="Summary_OrHigher" xml:space="preserve">
+    <value>{0} or higher</value>
+  </data>
+  <data name="Summary_PixelFormatTip" xml:space="preserve">
+    <value>Pixel format: {0}</value>
+  </data>
+  <data name="Summary_PlanBitrate" xml:space="preserve">
+    <value>bitrate {0:0.##}x the source</value>
+  </data>
+  <data name="Summary_PlanCodec" xml:space="preserve">
+    <value>{0} codec</value>
+  </data>
+  <data name="Summary_PlanCpuEncoder" xml:space="preserve">
+    <value>CPU encoder ({0}) instead of the GPU</value>
+  </data>
+  <data name="Summary_PlanEightBit" xml:space="preserve">
+    <value>8-bit</value>
+  </data>
+  <data name="Summary_PlanFasterPreset" xml:space="preserve">
+    <value>faster encoder preset ({0})</value>
+  </data>
+  <data name="Summary_PlanFastStart" xml:space="preserve">
+    <value>fast start</value>
+  </data>
+  <data name="Summary_PlanMatches" xml:space="preserve">
+    <value>Encoding matches the source 1:1 - resolution, frame rate, codec/profile/level, bitrate, keyframes and color tags{0}.</value>
+  </data>
+  <data name="Summary_PlanMatchesExcept" xml:space="preserve">
+    <value>Matches the source except: {0}{1}.</value>
+  </data>
+  <data name="Summary_PlanMetadataKept" xml:space="preserve">
+    <value>camera metadata kept</value>
+  </data>
+  <data name="Summary_PlanMetadataKeptSerial" xml:space="preserve">
+    <value>camera metadata kept, incl. serial number</value>
+  </data>
+  <data name="Summary_PlanResolution" xml:space="preserve">
+    <value>{0}x{1} resolution</value>
+  </data>
+  <data name="Summary_RecommendedColor" xml:space="preserve">
+    <value>bt709 / bt709 / bt709 (tv range)</value>
+  </data>
+  <data name="Summary_RecommendedNot" xml:space="preserve">
+    <value>This isn't the recommended setting for your camera - recommended: {0}.</value>
+  </data>
+  <data name="Summary_RecommendedOk" xml:space="preserve">
+    <value>Great - this is the recommended setting for your camera ({0}).</value>
+  </data>
+  <data name="Summary_TelemetryDetected" xml:space="preserve">
+    <value>Detected</value>
+  </data>
+  <data name="Summary_TelemetryNoGpsFix" xml:space="preserve">
+    <value>No GPS fix</value>
+  </data>
+  <data name="Summary_TelemetryNoGpsFixTip" xml:space="preserve">
+    <value>This recording never acquired a GPS fix - only accelerometer and camera-settings data was decoded. Speed, distance, elevation, map, compass and trip stats are unavailable.</value>
+  </data>
+  <data name="Summary_TelemetryNotFound" xml:space="preserve">
+    <value>Not found</value>
+  </data>
+  <data name="Summary_UnknownCamera" xml:space="preserve">
+    <value>unknown camera</value>
+  </data>
+  <data name="Theme_Amoled" xml:space="preserve">
+    <value>AMOLED black</value>
+  </data>
+  <data name="Theme_Blue" xml:space="preserve">
+    <value>Blue</value>
+  </data>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>Dark (default)</value>
+  </data>
+  <data name="TimeFormat_CameraTimecode" xml:space="preserve">
+    <value>Camera timecode</value>
+  </data>
+  <data name="TimeFormat_Milliseconds" xml:space="preserve">
+    <value>With milliseconds</value>
+  </data>
+  <data name="TimeFormat_Seconds" xml:space="preserve">
+    <value>Minutes and seconds</value>
+  </data>
+  <data name="TimeFormat_Timecode" xml:space="preserve">
+    <value>Timecode</value>
+  </data>
+  <data name="Timeline_End" xml:space="preserve">
+    <value>end</value>
+  </data>
+  <data name="Timeline_In" xml:space="preserve">
+    <value>In {0}</value>
+  </data>
+  <data name="Timeline_InAnimation" xml:space="preserve">
+    <value>In animation {0} s</value>
+  </data>
+  <data name="Timeline_KeyMoment" xml:space="preserve">
+    <value>Key moment</value>
+  </data>
+  <data name="Timeline_NothingOnOverlay" xml:space="preserve">
+    <value>Nothing on the overlay yet</value>
+  </data>
+  <data name="Timeline_Out" xml:space="preserve">
+    <value>Out {0}</value>
+  </data>
+  <data name="Timeline_OutAnimation" xml:space="preserve">
+    <value>Out animation {0} s</value>
+  </data>
+  <data name="Timeline_ThumbnailsUnavailable" xml:space="preserve">
+    <value>Timeline thumbnails unavailable</value>
+  </data>
+  <data name="Timeline_TracksUnavailable" xml:space="preserve">
+    <value>Timeline thumbnails and waveform unavailable</value>
+  </data>
+  <data name="TimeText_NotATime" xml:space="preserve">
+    <value>'{0}' isn't a time</value>
+  </data>
+  <data name="Timing_AnimNone" xml:space="preserve">
+    <value>None (instant)</value>
+  </data>
+  <data name="Timing_FadeIn" xml:space="preserve">
+    <value>Fade in</value>
+  </data>
+  <data name="Timing_FadeOut" xml:space="preserve">
+    <value>Fade out</value>
+  </data>
+  <data name="Timing_SlideInFromAbove" xml:space="preserve">
+    <value>Slide in from above</value>
+  </data>
+  <data name="Timing_SlideInFromBelow" xml:space="preserve">
+    <value>Slide in from below</value>
+  </data>
+  <data name="Timing_SlideInFromLeft" xml:space="preserve">
+    <value>Slide in from the left</value>
+  </data>
+  <data name="Timing_SlideInFromRight" xml:space="preserve">
+    <value>Slide in from the right</value>
+  </data>
+  <data name="Timing_SlideOutDown" xml:space="preserve">
+    <value>Slide out downward</value>
+  </data>
+  <data name="Timing_SlideOutLeft" xml:space="preserve">
+    <value>Slide out to the left</value>
+  </data>
+  <data name="Timing_SlideOutRight" xml:space="preserve">
+    <value>Slide out to the right</value>
+  </data>
+  <data name="Timing_SlideOutUp" xml:space="preserve">
+    <value>Slide out upward</value>
+  </data>
+  <data name="Tools_AppData" xml:space="preserve">
+    <value>APP DATA</value>
+  </data>
+  <data name="Tools_CacheCleared" xml:space="preserve">
+    <value>Removed {0} saved analysis|Removed {0} saved analyses</value>
+  </data>
+  <data name="Tools_CameraAudio" xml:space="preserve">
+    <value>Camera audio</value>
+  </data>
+  <data name="Tools_CameraMicrophoneAudio" xml:space="preserve">
+    <value>Camera microphone audio</value>
+  </data>
+  <data name="Tools_CameraMicrophoneAudioAac" xml:space="preserve">
+    <value>Camera microphone audio (.AAC)</value>
+  </data>
+  <data name="Tools_CantFixMessage" xml:space="preserve">
+    <value>"{0}" already has an explicit color tag that isn't Rec.709 - it looks like HDR or wide-gamut content, not a plain Rec.709 export. Forcing Rec.709 over that would mislabel the color space instead of fixing it, so this tool won't touch this file.
+
+Current tags:
+{1}</value>
+  </data>
+  <data name="Tools_CantFixTitle" xml:space="preserve">
+    <value>Can't fix this file</value>
+  </data>
+  <data name="Tools_CantReadMessage" xml:space="preserve">
+    <value>Could not read this file - it may be corrupted, still being written, or not a video file at all.
+
+Details: {0}</value>
+  </data>
+  <data name="Tools_CantReadTitle" xml:space="preserve">
+    <value>Couldn't read file</value>
+  </data>
+  <data name="Tools_ClearCache" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="Tools_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Tools_Compare" xml:space="preserve">
+    <value>Compare...</value>
+  </data>
+  <data name="Tools_CompareFiles" xml:space="preserve">
+    <value>Compare files</value>
+  </data>
+  <data name="Tools_ConversionFailedMessage" xml:space="preserve">
+    <value>Nothing was saved for the file that failed.
+
+Details: {0}</value>
+  </data>
+  <data name="Tools_ConversionFailedTitle" xml:space="preserve">
+    <value>Conversion failed</value>
+  </data>
+  <data name="Tools_ConvertedBeforeError" xml:space="preserve">
+    <value>Converted before the error:
+{0}</value>
+  </data>
+  <data name="Tools_ConvertedMessage" xml:space="preserve">
+    <value>Saved and verified - it decodes to exactly the same samples as the original:
+{0}
+
+It has the same length as the video's own audio track and starts with it, so it lines up when placed at the start of the matching MP4 on the timeline.</value>
+  </data>
+  <data name="Tools_ConvertedTitle" xml:space="preserve">
+    <value>Converted</value>
+  </data>
+  <data name="Tools_Converting" xml:space="preserve">
+    <value>Converting...</value>
+  </data>
+  <data name="Tools_ConvertingOf" xml:space="preserve">
+    <value>Converting {0}/{1}...</value>
+  </data>
+  <data name="Tools_DeletesTheCachedFileAnalysis" xml:space="preserve">
+    <value>Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result.</value>
+  </data>
+  <data name="Tools_Fix" xml:space="preserve">
+    <value>Fix</value>
+  </data>
+  <data name="Tools_FixAskMessage" xml:space="preserve">
+    <value>"{0}" is missing its Rec.709 color tag - the typical Vegas Pro export issue this tool was made for, and it's safe to fix. Rewrite the tag with a lossless stream copy (no re-encode, no quality loss)?
+
+Current tags:
+{1}</value>
+  </data>
+  <data name="Tools_FixAskTitle" xml:space="preserve">
+    <value>Fix this file?</value>
+  </data>
+  <data name="Tools_FixColorTags" xml:space="preserve">
+    <value>Fix color tags</value>
+  </data>
+  <data name="Tools_FixedMessage" xml:space="preserve">
+    <value>"{0}" was fixed successfully - the color tag was rewritten to Rec.709 with a lossless stream copy, so picture quality is untouched.
+
+Before:
+{1}
+
+After:
+{2}
+
+Saved to: {3}</value>
+  </data>
+  <data name="Tools_FixedTitle" xml:space="preserve">
+    <value>Fixed successfully</value>
+  </data>
+  <data name="Tools_FixFailedMessage" xml:space="preserve">
+    <value>Fixing "{0}" failed.
+
+Details: {1}</value>
+  </data>
+  <data name="Tools_FixFailedTitle" xml:space="preserve">
+    <value>Fix failed</value>
+  </data>
+  <data name="Tools_Fixing" xml:space="preserve">
+    <value>Fixing...</value>
+  </data>
+  <data name="Tools_MetadataRemovedMessage" xml:space="preserve">
+    <value>Saved a clean copy as "{0}" and verified it: only picture and sound are left, bit-for-bit identical, with the same color profile and rotation.
+
+Removed:
+{1}
+
+The file name itself isn't metadata - camera file names like DJI_20260916100634 contain the recording date and time, so rename it before sharing if that matters.</value>
+  </data>
+  <data name="Tools_MetadataRemovedTitle" xml:space="preserve">
+    <value>Metadata removed</value>
+  </data>
+  <data name="Tools_Mp4MovVideo" xml:space="preserve">
+    <value>MP4/MOV video</value>
+  </data>
+  <data name="Tools_NothingIdentifyingFound" xml:space="preserve">
+    <value>(nothing identifying was found)</value>
+  </data>
+  <data name="Tools_NothingToDoMessage" xml:space="preserve">
+    <value>"{0}" already has a correct Rec.709 color tag - there's nothing to fix here.
+
+Current tags:
+{1}</value>
+  </data>
+  <data name="Tools_NothingToDoTitle" xml:space="preserve">
+    <value>Nothing to do</value>
+  </data>
+  <data name="Tools_OpenDataFolder" xml:space="preserve">
+    <value>Open data folder</value>
+  </data>
+  <data name="Tools_OpenDataFolderFailed" xml:space="preserve">
+    <value>Could not open the data folder: {0}</value>
+  </data>
+  <data name="Tools_Performance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="Tools_PerformanceHint" xml:space="preserve">
+    <value>Find out which render and preview settings are fastest on this computer.</value>
+  </data>
+  <data name="Tools_PickCameraAudio" xml:space="preserve">
+    <value>Select the camera's .AAC audio file(s)</value>
+  </data>
+  <data name="Tools_PickRenderedMp4" xml:space="preserve">
+    <value>Select a rendered MP4 to check</value>
+  </data>
+  <data name="Tools_PickUpTo6Files" xml:space="preserve">
+    <value>Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side.</value>
+  </data>
+  <data name="Tools_PickVideoToStrip" xml:space="preserve">
+    <value>Select a video to remove metadata from</value>
+  </data>
+  <data name="Tools_PresetsSettingsMapTilesLogs" xml:space="preserve">
+    <value>Presets, settings, map tiles, logs and the cached file analysis.</value>
+  </data>
+  <data name="Tools_RemoveMetadata" xml:space="preserve">
+    <value>Remove metadata</value>
+  </data>
+  <data name="Tools_Replace" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="Tools_ReplaceExistingMessage" xml:space="preserve">
+    <value>These already exist and will be replaced:
+{0}</value>
+  </data>
+  <data name="Tools_ReplaceExistingTitle" xml:space="preserve">
+    <value>Replace existing files?</value>
+  </data>
+  <data name="Tools_RunBenchmark" xml:space="preserve">
+    <value>Performance test</value>
+  </data>
+  <data name="Tools_SaveCleanedCopyAs" xml:space="preserve">
+    <value>Save the cleaned copy as</value>
+  </data>
+  <data name="Tools_SavesACopySafeTo" xml:space="preserve">
+    <value>Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy).</value>
+  </data>
+  <data name="Tools_SelectFile" xml:space="preserve">
+    <value>Select file...</value>
+  </data>
+  <data name="Tools_StripFailedMessage" xml:space="preserve">
+    <value>No file was saved.
+
+Details: {0}</value>
+  </data>
+  <data name="Tools_StripFailedTitle" xml:space="preserve">
+    <value>Couldn't remove metadata</value>
+  </data>
+  <data name="Tools_ToM4a" xml:space="preserve">
+    <value>To M4A...</value>
+  </data>
+  <data name="Tools_ToWav" xml:space="preserve">
+    <value>To WAV...</value>
+  </data>
+  <data name="Tools_VegasProSMp4Export" xml:space="preserve">
+    <value>Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. This rewrites the tag with a lossless stream copy - no re-encode.</value>
+  </data>
+  <data name="Tools_VideoAudio" xml:space="preserve">
+    <value>VIDEO &amp; AUDIO</value>
+  </data>
+  <data name="Tools_WithAnExternalMicConnected" xml:space="preserve">
+    <value>With an external mic connected, the camera saves its built-in microphones' audio as a separate .AAC file that Vegas Pro and Audacity can't open. This converts it without any quality loss (verified sample by sample) and saves it next to the original. WAV works everywhere; M4A keeps the original AAC data and is 10x smaller.</value>
+  </data>
+  <data name="TrailStyle_ColorBySpeed" xml:space="preserve">
+    <value>Color by speed</value>
+  </data>
+  <data name="TrailStyle_LineThickness" xml:space="preserve">
+    <value>Line thickness</value>
+  </data>
+  <data name="TrailStyle_ShowTheRoute" xml:space="preserve">
+    <value>Show the route</value>
+  </data>
+  <data name="TrailStyle_TrailColor" xml:space="preserve">
+    <value>Trail color</value>
+  </data>
+  <data name="TrailStyle_TrailColorWhenSlowThrough" xml:space="preserve">
+    <value>The trail color at low speed, then through yellow and orange to red at the recording's top speed.</value>
+  </data>
+  <data name="Transport_Looping" xml:space="preserve">
+    <value>Looping (Q to stop) - the In/Out selection, or the whole recording if there is none</value>
+  </data>
+  <data name="Transport_Pause" xml:space="preserve">
+    <value>Pause (Space)</value>
+  </data>
+  <data name="Updates_AppCheckFailed" xml:space="preserve">
+    <value>Could not check for a new version of OsmoOverlay</value>
+  </data>
+  <data name="Updates_Checking" xml:space="preserve">
+    <value>Checking for updates...</value>
+  </data>
+  <data name="Updates_DependenciesAvailable" xml:space="preserve">
+    <value>Dependency updates available: {0} - see Settings &gt; About</value>
+  </data>
+  <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
+    <value>360° .insv recordings (tested on the X4) become a flat view you can frame freely. GPS isn't read from them yet.</value>
+  </data>
+  <data name="Welcome_AFewQuickStepsGet" xml:space="preserve">
+    <value>A few quick steps before your first render: supported cameras, tools, speed calibration and where videos are saved.</value>
+  </data>
+  <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
+    <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera.</value>
+  </data>
+  <data name="Welcome_CheckDecoder" xml:space="preserve">
+    <value>Hardware decoding</value>
+  </data>
+  <data name="Welcome_CheckDecoderOk" xml:space="preserve">
+    <value>{0} - 10-bit HEVC recordings decoded on the graphics card.</value>
+  </data>
+  <data name="Welcome_CheckDecoderWarning" xml:space="preserve">
+    <value>The card doesn't decode 10-bit HEVC - recordings will be decoded on the processor, more slowly.</value>
+  </data>
+  <data name="Welcome_CheckDisk" xml:space="preserve">
+    <value>Disk space</value>
+  </data>
+  <data name="Welcome_CheckDiskProblem" xml:space="preserve">
+    <value>Less than 20 GB - a longer 4K render won't fit.</value>
+  </data>
+  <data name="Welcome_CheckDiskValue" xml:space="preserve">
+    <value>{0} free in {1}</value>
+  </data>
+  <data name="Welcome_CheckDiskWarning" xml:space="preserve">
+    <value>An hour of 4K recording is about {0}, and a render needs as much again while it's written.</value>
+  </data>
+  <data name="Welcome_CheckEncoder" xml:space="preserve">
+    <value>Hardware encoding</value>
+  </data>
+  <data name="Welcome_CheckEncoderOk" xml:space="preserve">
+    <value>{0} - 4K 10-bit video encoded on the graphics card.</value>
+  </data>
+  <data name="Welcome_CheckEncoderWarning" xml:space="preserve">
+    <value>No graphics card encoder (NVENC, AMF, Quick Sync) - a render will be encoded on the processor ({0}), several times slower.</value>
+  </data>
+  <data name="Welcome_CheckMemory" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="Welcome_CheckMemoryProblem" xml:space="preserve">
+    <value>8 GB is the minimum - a 4K render may not fit in memory.</value>
+  </data>
+  <data name="Welcome_CheckMemoryWarning" xml:space="preserve">
+    <value>16 GB is recommended for 4K renders.</value>
+  </data>
+  <data name="Welcome_CheckNeedsFfmpeg" xml:space="preserve">
+    <value>Needs FFmpeg - install it in the previous step.</value>
+  </data>
+  <data name="Welcome_CheckOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Welcome_CheckProblem" xml:space="preserve">
+    <value>Problem</value>
+  </data>
+  <data name="Welcome_CheckProcessor" xml:space="preserve">
+    <value>Processor</value>
+  </data>
+  <data name="Welcome_CheckProcessorProblem" xml:space="preserve">
+    <value>Fewer than 4 threads - a 4K render will be very slow.</value>
+  </data>
+  <data name="Welcome_CheckProcessorWarning" xml:space="preserve">
+    <value>Fewer than 8 threads - drawing the overlay and decoding on the processor will be slower.</value>
+  </data>
+  <data name="Welcome_CheckSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Welcome_CheckSystemProblem" xml:space="preserve">
+    <value>OsmoOverlay needs a 64-bit system.</value>
+  </data>
+  <data name="Welcome_CheckUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Welcome_CheckWarning" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="Welcome_Checking" xml:space="preserve">
+    <value>Checking...</value>
+  </data>
+  <data name="Welcome_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="Welcome_DefaultOutputFolder" xml:space="preserve">
+    <value>Default output folder</value>
+  </data>
+  <data name="Welcome_DefaultsForTheFirstRender" xml:space="preserve">
+    <value>Defaults for the first render. You can change any of them later.</value>
+  </data>
+  <data name="Welcome_EverythingHereCanBeChanged" xml:space="preserve">
+    <value>Everything here can be changed later in Settings, and this guide can be opened again from there. Enter goes to the next step, Esc closes the guide.</value>
+  </data>
+  <data name="Welcome_FfmpegNeeded" xml:space="preserve">
+    <value>FFmpeg is needed for the preview and every render. Install it here, or later from Settings &gt; About.</value>
+  </data>
+  <data name="Welcome_Finish" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="Welcome_Found" xml:space="preserve">
+    <value>Found</value>
+  </data>
+  <data name="Welcome_HardwareLead" xml:space="preserve">
+    <value>A quick check of whether this computer can handle 4K renders from an Osmo Action: the system, processor, memory, encoding and decoding on the graphics card, and disk space.</value>
+  </data>
+  <data name="Welcome_HardwareOk" xml:space="preserve">
+    <value>This computer can handle 4K renders.</value>
+  </data>
+  <data name="Welcome_HardwareProblem" xml:space="preserve">
+    <value>This computer may not handle 4K renders - see above.</value>
+  </data>
+  <data name="Welcome_HardwareUnknown" xml:space="preserve">
+    <value>Some checks need FFmpeg - install it in the previous step.</value>
+  </data>
+  <data name="Welcome_HardwareWarning" xml:space="preserve">
+    <value>Rendering works, but a few things will slow it down - see above.</value>
+  </data>
+  <data name="Welcome_Installing" xml:space="preserve">
+    <value>Installing...</value>
+  </data>
+  <data name="Welcome_InstallingHint" xml:space="preserve">
+    <value>Installing {0}. This can take a minute - the main window's log shows the progress.</value>
+  </data>
+  <data name="Welcome_InstallingTool" xml:space="preserve">
+    <value>Installing {0}...</value>
+  </data>
+  <data name="Welcome_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="Welcome_NextToTheSourceFile" xml:space="preserve">
+    <value>Next to the source file</value>
+  </data>
+  <data name="Welcome_OpenOvprojProjectFilesWith" xml:space="preserve">
+    <value>Open .ovproj project files with OsmoOverlay</value>
+  </data>
+  <data name="Welcome_Optional" xml:space="preserve">
+    <value>Optional</value>
+  </data>
+  <data name="Welcome_OptionalToolsLater" xml:space="preserve">
+    <value>Optional tools can also be installed later from Settings &gt; About.</value>
+  </data>
+  <data name="Welcome_OsmoOverlayIsMadeByOne" xml:space="preserve">
+    <value>OsmoOverlay is made by one person in spare time and is free for non-commercial use. A star on GitHub helps others find it, and support keeps the project going.</value>
+  </data>
+  <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
+    <value>OsmoOverlay reads the telemetry your camera saves inside every recording - no extra files needed.</value>
+  </data>
+  <data name="Welcome_OsmoOverlayRendersWithFFmpegExifTool" xml:space="preserve">
+    <value>OsmoOverlay renders with FFmpeg. ExifTool is optional and only used for cameras whose telemetry it can't read on its own.</value>
+  </data>
+  <data name="Welcome_OtherWays" xml:space="preserve">
+    <value>Other ways:</value>
+  </data>
+  <data name="Welcome_OutputFolderHint" xml:space="preserve">
+    <value>Where finished videos are saved. Empty means next to the source recording.</value>
+  </data>
+  <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
+    <value>A saved project (cuts, key moments, overlay, 360 view) opens in this app with a double-click.</value>
+  </data>
+  <data name="Welcome_RenderingAndFiles" xml:space="preserve">
+    <value>Rendering and files</value>
+  </data>
+  <data name="Welcome_SummaryMapNoKey" xml:space="preserve">
+    <value>Esri without a key - for testing only</value>
+  </data>
+  <data name="Welcome_SummaryMapEsriKey" xml:space="preserve">
+    <value>Esri with your key</value>
+  </data>
+  <data name="Welcome_MapKeyLabel" xml:space="preserve">
+    <value>Esri API key</value>
+  </data>
+  <data name="Welcome_MapKeyHint" xml:space="preserve">
+    <value>Create a free ArcGIS Location Platform account and a key with access to Basemaps and Static Basemap Tiles. You can also do it later, in the widget settings.</value>
+  </data>
+  <data name="Welcome_MapGetKey" xml:space="preserve">
+    <value>How do I get a free key?</value>
+  </data>
+  <data name="EsriKeyGuide_Guide" xml:space="preserve">
+    <value>Esri's guide</value>
+  </data>
+  <data name="EsriKeyGuide_OpenArcGis" xml:space="preserve">
+    <value>Open ArcGIS Location Platform</value>
+  </data>
+  <data name="EsriKeyGuide_Expiry" xml:space="preserve">
+    <value>The key works for a year at most - then generate a new one in the same place.</value>
+  </data>
+  <data name="EsriKeyGuide_Steps" xml:space="preserve">
+    <value>1. Create a free account at location.arcgis.com and sign in.
+2. On the dashboard, click Create developer credentials.
+3. Pick API key credentials and click Next.
+4. Where will you use these credentials: Public application - Next.
+5. Item access: No item access - Next.
+6. Privileges: turn on Basemaps only (2/2) - nothing else - Next.
+7. Settings: the latest expiration date (a year from today), leave the referrer URLs empty - Next.
+8. Give it a name, e.g. OsmoOverlay - Next.
+9. Keep generating the key selected, click Next and copy the key right away - it's shown only once. Paste it here.</value>
+  </data>
+  <data name="EsriKeyGuide_Title" xml:space="preserve">
+    <value>How to get a free Esri key</value>
+  </data>
+  <data name="Welcome_MapLead" xml:space="preserve">
+    <value>Pick how the Map widget looks - you can change it later in its settings.</value>
+  </data>
+  <data name="Welcome_MapTitle" xml:space="preserve">
+    <value>Map</value>
+  </data>
+  <data name="Welcome_SummaryMapOwn" xml:space="preserve">
+    <value>the widget's own map</value>
+  </data>
+  <data name="Welcome_MapOwnProvider" xml:space="preserve">
+    <value>The Map widget's settings picked {0}. Tick one of these styles to go back to it.</value>
+  </data>
+  <data name="Welcome_SummaryMapValue" xml:space="preserve">
+    <value>{0}, {1}</value>
+  </data>
+  <data name="Welcome_MapRuleWithoutKey" xml:space="preserve">
+    <value>Without a key: for previews and testing only - not allowed in a published film.</value>
+  </data>
+  <data name="Welcome_MapRuleWithKey" xml:space="preserve">
+    <value>With a free Esri key you may use them in a film, a commercial one too. The app adds Esri's credit by itself.</value>
+  </data>
+  <data name="Welcome_MapPreviewFailed" xml:space="preserve">
+    <value>Couldn't load the preview - check the connection or the key.</value>
+  </data>
+  <data name="Welcome_MapPreviewLoading" xml:space="preserve">
+    <value>Loading the preview...</value>
+  </data>
+  <data name="Welcome_MapStreetsHint" xml:space="preserve">
+    <value>Streets and names like Google Maps</value>
+  </data>
+  <data name="Welcome_MapStreets" xml:space="preserve">
+    <value>Streets</value>
+  </data>
+  <data name="Welcome_MapSatelliteHint" xml:space="preserve">
+    <value>Satellite imagery - Esri World Imagery</value>
+  </data>
+  <data name="Welcome_MapSatellite" xml:space="preserve">
+    <value>Satellite</value>
+  </data>
+  <data name="Welcome_Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="Welcome_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Welcome_RunBenchmark" xml:space="preserve">
+    <value>Performance test</value>
+  </data>
+  <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
+    <value>Show the OsmoOverlay watermark</value>
+  </data>
+  <data name="Welcome_SmoothGpsHint" xml:space="preserve">
+    <value>GPS gives only a few positions per second, so without smoothing the compass trail and the map move in jumps. This fills in the motion between them.</value>
+  </data>
+  <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
+    <value>Speed from a camera's GPS is never 100% exact. Peaks tend to come out low, and signal quality can push it either way.</value>
+  </data>
+  <data name="Welcome_StarOnGitHub" xml:space="preserve">
+    <value>Star on GitHub</value>
+  </data>
+  <data name="Welcome_StepAllSet" xml:space="preserve">
+    <value>All set</value>
+  </data>
+  <data name="Welcome_StepOf" xml:space="preserve">
+    <value>STEP {0} OF {1}</value>
+  </data>
+  <data name="Welcome_StepWelcome" xml:space="preserve">
+    <value>Welcome</value>
+  </data>
+  <data name="Welcome_SummaryGpsSmoothing" xml:space="preserve">
+    <value>GPS smoothing</value>
+  </data>
+  <data name="Welcome_SummaryNotAssociated" xml:space="preserve">
+    <value>Not associated</value>
+  </data>
+  <data name="Welcome_SummaryOpenWithApp" xml:space="preserve">
+    <value>Open with OsmoOverlay</value>
+  </data>
+  <data name="Welcome_SummaryOutputFolder" xml:space="preserve">
+    <value>Output folder</value>
+  </data>
+  <data name="Welcome_SummaryOvprojFiles" xml:space="preserve">
+    <value>.ovproj files</value>
+  </data>
+  <data name="Welcome_SummarySpeedCorrection" xml:space="preserve">
+    <value>Speed correction</value>
+  </data>
+  <data name="Welcome_SummaryWatermark" xml:space="preserve">
+    <value>Watermark</value>
+  </data>
+  <data name="Welcome_SupportedCameras" xml:space="preserve">
+    <value>Supported cameras</value>
+  </data>
+  <data name="Welcome_SupportOnKoFi" xml:space="preserve">
+    <value>Support on Ko-fi</value>
+  </data>
+  <data name="Welcome_TestedOnTheAction6" xml:space="preserve">
+    <value>Tested on the Action 6 and Action 5 Pro; other models (e.g. Action 4) should work too. Pick the .MP4 files.</value>
+  </data>
+  <data name="Welcome_ThisIsWhatWillBe" xml:space="preserve">
+    <value>This is what will be saved:</value>
+  </data>
+  <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
+    <value>Use the original files from the card - a copy exported from DJI Mimo loses the telemetry. To get speed, route and map, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix before you start.</value>
+  </data>
+  <data name="Welcome_Version" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="Welcome_WatermarkHint" xml:space="preserve">
+    <value>A small "Made with OsmoOverlay" note with the project link at the bottom of the video for its first few seconds.</value>
+  </data>
+  <data name="Welcome_WelcomeToOsmoOverlay" xml:space="preserve">
+    <value>Welcome to OsmoOverlay</value>
+  </data>
+  <data name="Welcome_YouReAllSet" xml:space="preserve">
+    <value>You're all set</value>
+  </data>
+  <data name="Welcome_YourComputer" xml:space="preserve">
+    <value>Your computer</value>
+  </data>
+  <data name="Widget_ChooseImage" xml:space="preserve">
+    <value>Choose an image</value>
+  </data>
+  <data name="Widget_ImageFileType" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="Zoom_Fit" xml:space="preserve">
+    <value>Fit</value>
+  </data>
+  <data name="Settings_RouteIntroStartFinish" xml:space="preserve">
+    <value>Mark the start and finish</value>
+  </data>
+  <data name="Settings_RouteIntroStartFinishHint" xml:space="preserve">
+    <value>Markers where the route begins and ends, captioned with the text in the fields below. A blank field leaves just the marker.</value>
+  </data>
+  <data name="Settings_RouteIntroStartLabel" xml:space="preserve">
+    <value>Start caption</value>
+  </data>
+  <data name="Settings_RouteIntroFinishLabel" xml:space="preserve">
+    <value>Finish caption</value>
+  </data>
+  <data name="Settings_RouteIntroStatsHint" xml:space="preserve">
+    <value>Next to each stat you can type its own caption on the film, in your language for one. A blank field keeps the default caption.</value>
+  </data>
+  <data name="Settings_HighestPoint" xml:space="preserve">
+    <value>Highest point</value>
+  </data>
+  <data name="Settings_LowestPoint" xml:space="preserve">
+    <value>Lowest point</value>
+  </data>
+  <data name="Settings_MaxLean" xml:space="preserve">
+    <value>Maximum lean</value>
+  </data>
+  <data name="Settings_MaxGForce" xml:space="preserve">
+    <value>Maximum G-force</value>
+  </data>
+  <data name="Main_TripProgressSpeedGate" xml:space="preserve">
+    <value>Show only from a speed of (km/h)</value>
+  </data>
+  <data name="Main_TripProgressSpeedGateHint" xml:space="preserve">
+    <value>The bar appears when the speed first reaches this value, that is when the ride really starts. That moment takes the place of the appear time, so its field is locked then.</value>
+  </data>
+  <data name="KeyMoments_MovingOnly" xml:space="preserve">
+    <value>G-force and lean only while riding</value>
+  </data>
+  <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
+    <value>Standing, stopping or starting, G-force and lean are usually the camera being handled or the bike put down, not the ride. So only moments with at least 3 km/h for 3 s before and after count. Speed, altitude and slopes aren't affected.</value>
+  </data>
+</root>
