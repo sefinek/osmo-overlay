@@ -81,7 +81,7 @@ public partial class SpeedCalibrationEditor : UserControl
 			: null;
 
 		ApplyButton.IsVisible = _calculatedPercent is { } candidate && Math.Abs(candidate - Percent) > 1e-9;
-		ResultText.Foreground = _calculatedPercent is null ? Palette.TextMuted : Palette.TextPrimary;
+		ResultText.Foreground = Palette.TextPrimary;
 		if (_calculatedPercent is not { } percent)
 		{
 			ResultText.Text = Strings.Calibration_Example;

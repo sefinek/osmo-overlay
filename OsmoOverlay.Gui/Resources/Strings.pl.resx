@@ -3096,7 +3096,7 @@ Szczegóły: {0}</value>
     <value>Opcjonalne narzędzia można też zainstalować później w Ustawienia &gt; O programie.</value>
   </data>
   <data name="Welcome_OsmoOverlayIsMadeByOne" xml:space="preserve">
-    <value>OsmoOverlay rozwija jedna osoba w wolnym czasie, a do użytku niekomercyjnego jest darmowy. Gwiazdka na GitHubie pomaga innym go znaleźć, a wsparcie pozwala dalej rozwijać projekt.</value>
+    <value>OsmoOverlay to projekt rozwijany w wolnym czasie przez jedną osobę, darmowy do użytku niekomercyjnego. Jeśli jest dla Ciebie przydatny, rozważ wsparcie autora, oznacz repozytorium gwiazdką na GitHubie lub poleć go znajomym. Dzięki!</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
     <value>OsmoOverlay odczytuje telemetrię, którą kamera zapisuje w każdym nagraniu - bez dodatkowych plików.</value>
@@ -3212,7 +3212,7 @@ Szczegóły: {0}</value>
     <value>Prędkość z GPS kamery nigdy nie jest w 100% dokładna. Szczyty zwykle wychodzą zaniżone, a jakość sygnału może ją przesunąć w obie strony.</value>
   </data>
   <data name="Welcome_StarOnGitHub" xml:space="preserve">
-    <value>Daj gwiazdkę na GitHubie</value>
+    <value>Gwiazdka na GitHubie</value>
   </data>
   <data name="Welcome_StepAllSet" xml:space="preserve">
     <value>Gotowe</value>
@@ -3327,5 +3327,14 @@ Szczegóły: {0}</value>
   </data>
   <data name="MapSource_ShowEsriLabels" xml:space="preserve">
     <value>Pokaż nazwy ulic i miejsc</value>
+  </data>
+  <data name="Welcome_OutputDiskFree" xml:space="preserve">
+    <value>Wolne miejsce na dysku: {0}</value>
+  </data>
+  <data name="Welcome_OutputDiskUnknown" xml:space="preserve">
+    <value>Nie udało się odczytać wolnego miejsca na tym dysku.</value>
+  </data>
+  <data name="Welcome_OutputDiskLow" xml:space="preserve">
+    <value>Mało miejsca na dłuższe rendery. Godzina filmu 4K może potrzebować około {0}, łącznie z miejscem na czas zapisu. Dokładne zapotrzebowanie zależy od nagrania i ustawień renderu.</value>
   </data>
 </root>

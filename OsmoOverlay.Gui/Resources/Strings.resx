@@ -3096,7 +3096,7 @@ Details: {0}</value>
     <value>Optional tools can also be installed later from Settings &gt; About.</value>
   </data>
   <data name="Welcome_OsmoOverlayIsMadeByOne" xml:space="preserve">
-    <value>OsmoOverlay is made by one person in spare time and is free for non-commercial use. A star on GitHub helps others find it, and support keeps the project going.</value>
+    <value>OsmoOverlay is developed by one person in their spare time and is free for non-commercial use. If you find it useful, consider supporting the developer, starring the repository on GitHub, or recommending it to your friends. Thanks!</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
     <value>OsmoOverlay reads the telemetry your camera saves inside every recording - no extra files needed.</value>
@@ -3327,5 +3327,14 @@ Details: {0}</value>
   </data>
   <data name="MapSource_ShowEsriLabels" xml:space="preserve">
     <value>Show street and place names</value>
+  </data>
+  <data name="Welcome_OutputDiskFree" xml:space="preserve">
+    <value>Free disk space: {0}</value>
+  </data>
+  <data name="Welcome_OutputDiskUnknown" xml:space="preserve">
+    <value>Could not read the free space on this drive.</value>
+  </data>
+  <data name="Welcome_OutputDiskLow" xml:space="preserve">
+    <value>Disk space is running low for longer renders. Rendering an hour of 4K video may require around {0}, including temporary space needed to save the file. The exact amount depends on the recording and render settings.</value>
   </data>
 </root>

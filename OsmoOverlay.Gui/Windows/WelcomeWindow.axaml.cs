@@ -175,6 +175,7 @@ public partial class WelcomeWindow : Window
 
 		StepLabel.Text = string.Format(Strings.Welcome_StepOf, step + 1, _steps.Length);
 		if (_steps[step] == MapStep) ShowMapPreviews();
+		if (_steps[step] == PreferencesStep) _ = UpdateOutputDiskSpaceAsync();
 		if (IsLastStep) ShowSummary();
 
 		SkipButton.IsVisible = !IsLastStep;
@@ -654,12 +655,35 @@ public partial class WelcomeWindow : Window
 			AllowMultiple = false
 		});
 
-		if (folders.Count > 0) OutputFolderBox.Text = folders[0].Path.LocalPath;
+		if (folders.Count > 0)
+		{
+			OutputFolderBox.Text = folders[0].Path.LocalPath;
+			await UpdateOutputDiskSpaceAsync();
+		}
 	}
 
 	private void OnClearOutputClick(object? sender, RoutedEventArgs e)
 	{
 		OutputFolderBox.Text = null;
+		OutputDiskPanel.IsVisible = false;
+	}
+
+	private async Task UpdateOutputDiskSpaceAsync()
+	{
+		string? folder = OutputFolderBox.Text;
+		OutputDiskPanel.IsVisible = false;
+		if (string.IsNullOrWhiteSpace(folder)) return;
+
+		long? available = await Task.Run(() => RenderDiskSpace.AvailableBytes(Path.Combine(folder, ".")));
+		if (OutputFolderBox.Text != folder) return;
+
+		OutputDiskSpaceText.Text = available is { } bytes
+			? string.Format(Strings.Welcome_OutputDiskFree, FormatHelper.FormatBytes(bytes))
+			: Strings.Welcome_OutputDiskUnknown;
+		long recommended = RenderDiskSpace.RequiredBytes(HardwareReport.HourOf4KBytes);
+		OutputDiskWarningText.IsVisible = available is { } free && free < recommended;
+		OutputDiskWarningText.Text = string.Format(Strings.Welcome_OutputDiskLow, FormatHelper.FormatBytes(recommended));
+		OutputDiskPanel.IsVisible = true;
 	}
 
 	private void Save()
