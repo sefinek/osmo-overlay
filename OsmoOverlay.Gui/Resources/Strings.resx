@@ -3096,7 +3096,9 @@ Details: {0}</value>
     <value>Optional tools can also be installed later from Settings &gt; About.</value>
   </data>
   <data name="Welcome_OsmoOverlayIsMadeByOne" xml:space="preserve">
-    <value>OsmoOverlay is developed by one person in their spare time and is free for non-commercial use. If you find it useful, consider supporting the developer, starring the repository on GitHub, or recommending it to your friends. Thanks!</value>
+    <value>OsmoOverlay is a project developed by one person in their spare time and provided free of charge for non-commercial use. If you find it useful, consider supporting the developer, starring the repository on GitHub, or recommending the project to your friends. Thanks!
+
+Note: OsmoOverlay is provided free of charge. If someone asks you to pay for this program, they are most likely trying to scam you.</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
     <value>OsmoOverlay reads the telemetry your camera saves inside every recording - no extra files needed.</value>

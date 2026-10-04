@@ -113,7 +113,7 @@
 		</Border>
 
 		<Grid Grid.Column="1" RowDefinitions="*,Auto">
-			<ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="StepScrollViewer" Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
 			<StackPanel Margin="24,20,24,12" Spacing="6">
 				<TextBlock Name="StepLabel" Classes="stepLabel" />
 
@@ -185,9 +185,7 @@
 					<StackPanel Name="HardwareStep" Classes="step" Opacity="0" Spacing="10">
 						<TextBlock Text="{x:Static local:Strings.Welcome_YourComputer}" Classes="stepTitle" />
 						<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_HardwareLead}" />
-						<ScrollViewer MaxHeight="292" Margin="0,2,0,0">
-							<StackPanel Name="HardwareRows" Spacing="6" />
-						</ScrollViewer>
+						<StackPanel Name="HardwareRows" Spacing="6" Margin="0,2,0,0" />
 						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 							<TextBlock Name="HardwareHint" Classes="rowText" VerticalAlignment="Center" />
 							<Button Grid.Column="1" Name="BenchmarkButton" Content="{x:Static local:Strings.Welcome_RunBenchmark}" Classes="wizard" IsVisible="False"

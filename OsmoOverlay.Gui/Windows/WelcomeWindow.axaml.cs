@@ -158,13 +158,13 @@ public partial class WelcomeWindow : Window
 		return dot;
 	}
 
-	/// <summary>Every step stays laid out on top of the others, so switching only cross-fades (the Opacity transition) and nothing jumps.</summary>
 	private void ShowStep(int step)
 	{
 		_step = step;
 		for (int i = 0; i < _steps.Length; i++)
 		{
 			bool current = i == step;
+			_steps[i].IsVisible = current;
 			_steps[i].Opacity = current ? 1 : 0;
 			_steps[i].IsHitTestVisible = current;
 			_steps[i].IsEnabled = current;
@@ -173,6 +173,7 @@ public partial class WelcomeWindow : Window
 			_dots[i].Background = current ? Palette.Accent : Palette.StrokeStrong;
 		}
 
+		StepScrollViewer.Offset = default;
 		StepLabel.Text = string.Format(Strings.Welcome_StepOf, step + 1, _steps.Length);
 		if (_steps[step] == MapStep) ShowMapPreviews();
 		if (_steps[step] == PreferencesStep) _ = UpdateOutputDiskSpaceAsync();
@@ -655,9 +656,9 @@ public partial class WelcomeWindow : Window
 			AllowMultiple = false
 		});
 
-		if (folders.Count > 0)
+		if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
 		{
-			OutputFolderBox.Text = folders[0].Path.LocalPath;
+			OutputFolderBox.Text = path;
 			await UpdateOutputDiskSpaceAsync();
 		}
 	}
