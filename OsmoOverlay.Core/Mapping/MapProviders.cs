@@ -225,14 +225,16 @@ public sealed record MapSources(
 	bool CustomCreditBriefly = false,
 	MapBounds? RouteBounds = null,
 	string? DefaultProviderId = null,
-	bool ShowEsriLabels = true)
+	bool ShowEsriLabels = true,
+	bool ShowRouteIntroEsriLabels = false)
 {
 	public const string CustomKeyGroup = "custom";
 
 	public static MapSources From(OverlaySettings settings)
 	{
 		return new MapSources(settings.MapApiKeys, settings.CustomMapUrlTemplate, settings.CustomMapAttribution, settings.CustomMapCreditBriefly,
-			DefaultProviderId: settings.DefaultMapProvider, ShowEsriLabels: settings.ShowEsriMapLabels);
+			DefaultProviderId: settings.DefaultMapProvider, ShowEsriLabels: settings.ShowEsriMapLabels,
+			ShowRouteIntroEsriLabels: settings.RouteIntroShowEsriMapLabels);
 	}
 
 	/// <summary>
@@ -298,9 +300,9 @@ public sealed record MapSources(
 		return Resolve(providerId) is MapProviders.EsriImageryId or MapProviders.EsriPublicId;
 	}
 
-	public string? LabelsUrlTemplate(string? providerId)
+	public string? LabelsUrlTemplate(string? providerId, bool routeIntro = false)
 	{
-		if (!ShowEsriLabels || !SupportsLabels(providerId)) return null;
+		if (!(routeIntro ? ShowRouteIntroEsriLabels : ShowEsriLabels) || !SupportsLabels(providerId)) return null;
 		if (Resolve(providerId) == MapProviders.EsriPublicId)
 			return "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
 
@@ -309,10 +311,10 @@ public sealed record MapSources(
 	}
 
 	/// <summary>The credit line the provider requires - null for a custom server given none.</summary>
-	public string? Attribution(string? providerId)
+	public string? Attribution(string? providerId, bool routeIntro = false)
 	{
 		string id = Resolve(providerId);
-		if (LabelsUrlTemplate(providerId) is not null)
+		if (LabelsUrlTemplate(providerId, routeIntro) is not null)
 			return id == MapProviders.EsriPublicId
 				? "Esri, Maxar, Earthstar Geographics, HERE, Garmin, and the GIS User Community"
 				: "Powered by Esri | Esri, Maxar, Earthstar Geographics, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community";

@@ -404,7 +404,7 @@
 
 						<TextBlock Text="{x:Static local:Strings.Settings_Map}" Classes="sectionLabel" />
 						<Border Classes="settingsCard" Padding="16">
-							<local:MapSourcePicker Name="RouteIntroMapSource" />
+							<local:MapSourcePicker Name="RouteIntroMapSource" IsRouteIntro="True" />
 						</Border>
 
 						<TextBlock Name="RouteIntroStatsLabel" Text="{x:Static local:Strings.Settings_StatsToShow}" Classes="sectionLabel" />

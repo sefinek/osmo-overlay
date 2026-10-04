@@ -50,6 +50,7 @@ public sealed record OverlaySettings(
 	string? DefaultMapProvider = null,
 	bool CustomMapCreditBriefly = false,
 	bool ShowEsriMapLabels = true,
+	bool RouteIntroShowEsriMapLabels = false,
 	bool ShowRouteIntro = true,
 	double RouteIntroDurationSeconds = 12.0,
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,

@@ -7,8 +7,6 @@
 		<TextBlock Text="{x:Static local:Strings.MapSource_TileProvider}" Classes="infoLabel" Margin="0" />
 		<ComboBox Name="ProviderCombo" HorizontalAlignment="Stretch" SelectionChanged="OnProviderChanged" />
 		<TextBlock Name="AutoHint" Classes="hint" TextWrapping="Wrap" IsVisible="False" />
-		<ToggleSwitch Name="EsriLabelsSwitch" IsVisible="False" IsCheckedChanged="OnEsriLabelsChanged"
-		              Content="{x:Static local:Strings.MapSource_ShowEsriLabels}" />
 
 		<StackPanel Name="StatusPanel" />
 
@@ -41,6 +39,9 @@
 		<CheckBox Name="CustomCreditBrieflyCheck" IsVisible="False" Click="OnCustomCreditBrieflyClick">
 			<TextBlock Text="{x:Static local:Strings.MapSource_CustomCreditBriefly}" TextWrapping="Wrap" />
 		</CheckBox>
+
+		<ToggleSwitch Name="EsriLabelsSwitch" IsVisible="False" IsCheckedChanged="OnEsriLabelsChanged"
+		              OnContent="" OffContent="" Content="{x:Static local:Strings.MapSource_ShowEsriLabels}" />
 
 		<TextBlock Classes="hint" TextWrapping="Wrap" Margin="0,4,0,0" Text="{x:Static local:Strings.MapTerms_Disclaimer}" />
 	</StackPanel>

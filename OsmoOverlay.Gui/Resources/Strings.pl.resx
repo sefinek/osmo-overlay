@@ -1653,7 +1653,7 @@ Jeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustaw
     <value>Wklej swój klucz API</value>
   </data>
   <data name="MapSource_TheKeyAndTheCustom" xml:space="preserve">
-    <value>Klucze, opisy na zdjęciach satelitarnych i własny serwer są wspólne dla wszystkich map w programie.</value>
+    <value>Klucze i własny serwer są wspólne dla wszystkich map w programie.</value>
   </data>
   <data name="MapSource_TileProvider" xml:space="preserve">
     <value>Dostawca kafelków</value>

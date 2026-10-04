@@ -52,7 +52,7 @@ public sealed partial class OverlayRenderer
 	private RouteIntroMosaicKey CurrentRouteIntroKey()
 	{
 		return new RouteIntroMosaicKey(MapSources.UrlTemplate(RouteIntro.MapProviderId),
-			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId));
+			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, routeIntro: true));
 	}
 
 	/// <summary>
@@ -246,7 +246,7 @@ public sealed partial class OverlayRenderer
 		DrawRouteIntroMapLabel(canvas, mapRect);
 
 		// On the map, the whole time the card is: what every provider's terms ask for at the least.
-		if (MapSources.Attribution(RouteIntro.MapProviderId) is { } credit)
+		if (MapSources.Attribution(RouteIntro.MapProviderId, routeIntro: true) is { } credit)
 			DrawOutlined(canvas, credit, mapRect.Left + 24f, mapRect.Bottom - 24f, _smallFont, White);
 	}
 

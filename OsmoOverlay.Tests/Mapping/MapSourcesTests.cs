@@ -7,6 +7,11 @@ namespace OsmoOverlay.Tests.Mapping;
 [TestClass]
 public sealed class MapSourcesTests
 {
+	private static readonly string[] TilePlaceholders = ["{z}", "{x}", "{y}"];
+	private static readonly string[] HalfTilePlaceholders = ["{hz}", "{hx}", "{hy}"];
+
+	public TestContext TestContext { get; set; } = null!;
+
 	private static readonly MapBounds InPoland = new(53.2, 16.4, 53.3, 16.5);
 	private static readonly MapBounds InGermany = new(52.4, 13.3, 52.6, 13.5);
 	private static readonly MapBounds AcrossTheBorder = new(52.3, 13.9, 52.4, 14.6);
@@ -20,10 +25,10 @@ public sealed class MapSourcesTests
 			[MapProviders.MapTilerKeyGroup] = "mt"
 		});
 
-		StringAssert.Contains(sources.UrlTemplate("carto-dark"), "key=abc_def_1_0123456789abcdef01234567");
-		StringAssert.Contains(sources.UrlTemplate("carto-voyager"), "key=abc_def_1_0123456789abcdef01234567");
-		StringAssert.Contains(sources.UrlTemplate("maptiler-satellite"), "key=mt");
-		StringAssert.Contains(sources.UrlTemplate("maptiler-outdoor"), "key=mt");
+		Assert.Contains("key=abc_def_1_0123456789abcdef01234567", sources.UrlTemplate("carto-dark"));
+		Assert.Contains("key=abc_def_1_0123456789abcdef01234567", sources.UrlTemplate("carto-voyager"));
+		Assert.Contains("key=mt", sources.UrlTemplate("maptiler-satellite"));
+		Assert.Contains("key=mt", sources.UrlTemplate("maptiler-outdoor"));
 	}
 
 	[TestMethod]
@@ -58,7 +63,7 @@ public sealed class MapSourcesTests
 
 		Assert.AreEqual(MapProviders.EsriPublicId, mapTiler.Resolve(MapProviders.AutoSatelliteId), "Esri only, one source");
 		Assert.AreEqual(MapProviders.EsriImageryId, both.Resolve(MapProviders.AutoSatelliteId));
-		StringAssert.Contains(both.UrlTemplate(MapProviders.AutoSatelliteId), "token=e");
+		Assert.Contains("token=e", both.UrlTemplate(MapProviders.AutoSatelliteId));
 		Assert.AreEqual("carto-dark", both.Resolve("carto-dark"), "a picked provider stays");
 	}
 
@@ -71,7 +76,7 @@ public sealed class MapSourcesTests
 		Assert.AreEqual(MapProviders.EsriStreetsId, esri.Resolve(MapProviders.StreetsAutoId));
 		Assert.AreEqual(MapProviders.EsriStreetsPublicId, mapTiler.Resolve(MapProviders.StreetsAutoId), "Esri only, one source");
 		Assert.AreEqual(MapProviders.EsriStreetsPublicId, new MapSources().Resolve(MapProviders.StreetsAutoId));
-		StringAssert.Contains(esri.UrlTemplate(MapProviders.StreetsAutoId), "token=e");
+		Assert.Contains("token=e", esri.UrlTemplate(MapProviders.StreetsAutoId));
 	}
 
 	[TestMethod]
@@ -111,8 +116,8 @@ public sealed class MapSourcesTests
 	{
 		Assert.IsNull(new MapSources().Attribution(MapProviders.CustomId));
 		Assert.AreEqual("my credit", new MapSources(CustomAttribution: " my credit ").Attribution(MapProviders.CustomId));
-		StringAssert.Contains(new MapSources().Attribution("carto-positron"), "© OpenStreetMap contributors, © CARTO");
-		StringAssert.Contains(new MapSources(RouteBounds: InPoland).Attribution(null), "Earthstar Geographics");
+		Assert.Contains("© OpenStreetMap contributors, © CARTO", new MapSources().Attribution("carto-positron")!);
+		Assert.Contains("Earthstar Geographics", new MapSources(RouteBounds: InPoland).Attribution(null)!);
 	}
 
 	[TestMethod]
@@ -144,14 +149,17 @@ public sealed class MapSourcesTests
 		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = " e &1 " });
 		string? labels = sources.LabelsUrlTemplate(MapProviders.AutoSatelliteId);
 
-		StringAssert.Contains(labels, "/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=e%20%261");
+		Assert.IsNotNull(labels);
+		Assert.Contains("/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=e%20%261", labels);
 		Assert.AreEqual(labels, sources.LabelsUrlTemplate(MapProviders.EsriImageryId));
+		Assert.IsNull(sources.LabelsUrlTemplate(null, routeIntro: true));
+		Assert.AreEqual(labels, (sources with { ShowRouteIntroEsriLabels = true, ShowEsriLabels = false }).LabelsUrlTemplate(null, routeIntro: true));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.StreetsAutoId));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.MapTilerSatelliteId));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.CustomId));
 		Assert.IsNull((sources with { ShowEsriLabels = false }).LabelsUrlTemplate(null));
 		Assert.IsNull(new MapSources().LabelsUrlTemplate(MapProviders.EsriImageryId), "a keyed provider never requests labels without its key");
-		StringAssert.Contains(new MapSources().LabelsUrlTemplate(null), "/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}");
+		Assert.Contains("/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", new MapSources().LabelsUrlTemplate(null)!);
 	}
 
 	[TestMethod]
@@ -161,11 +169,15 @@ public sealed class MapSourcesTests
 		string? hybrid = sources.Attribution(null);
 		string? imagery = (sources with { ShowEsriLabels = false }).Attribution(null);
 
-		StringAssert.Contains(hybrid, "Earthstar Geographics");
-		StringAssert.Contains(hybrid, "TomTom");
-		StringAssert.Contains(hybrid, "© OpenStreetMap contributors");
-		StringAssert.Contains(imagery, "Earthstar Geographics");
-		Assert.IsFalse(imagery!.Contains("TomTom"));
+		Assert.IsNotNull(hybrid);
+		Assert.IsNotNull(imagery);
+		Assert.Contains("Earthstar Geographics", hybrid);
+		Assert.Contains("TomTom", hybrid);
+		Assert.Contains("© OpenStreetMap contributors", hybrid);
+		Assert.Contains("Earthstar Geographics", imagery);
+		Assert.DoesNotContain("TomTom", imagery!);
+		Assert.DoesNotContain("TomTom", sources.Attribution(null, routeIntro: true)!);
+		Assert.Contains("TomTom", (sources with { ShowRouteIntroEsriLabels = true }).Attribution(null, routeIntro: true)!);
 	}
 
 	[TestMethod]
@@ -174,27 +186,35 @@ public sealed class MapSourcesTests
 		OverlaySettings settings = JsonSerializer.Deserialize<OverlaySettings>("{}")!;
 		Assert.IsTrue(settings.ShowEsriMapLabels);
 		Assert.IsTrue(MapSources.From(settings).ShowEsriLabels);
+		Assert.IsFalse(settings.RouteIntroShowEsriMapLabels);
+		Assert.IsFalse(MapSources.From(settings).ShowRouteIntroEsriLabels);
 
-		OverlaySettings restored = JsonSerializer.Deserialize<OverlaySettings>(JsonSerializer.Serialize(settings with { ShowEsriMapLabels = false }))!;
+		OverlaySettings restored = JsonSerializer.Deserialize<OverlaySettings>(JsonSerializer.Serialize(settings with { ShowEsriMapLabels = false, RouteIntroShowEsriMapLabels = true }))!;
 		Assert.IsFalse(restored.ShowEsriMapLabels);
 		Assert.IsFalse(MapSources.From(restored).ShowEsriLabels);
+		Assert.IsTrue(restored.RouteIntroShowEsriMapLabels);
+		Assert.IsTrue(MapSources.From(restored).ShowRouteIntroEsriLabels);
 	}
 
 	[TestMethod]
-	public async Task EsriLabels_ChangingTheSwitchInvalidatesBothPreparedMaps()
+	public async Task EsriLabels_ChangingEachSwitchInvalidatesOnlyItsOwnPreparedMap()
 	{
 		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = "e" });
 		OverlayElement[] layout = [new MapWidgetElement { X = 0, Y = 0, Visible = true }];
 		using var renderer = new OverlayRenderer(1280, 720, 0, layout, [], mapSources: sources,
 			routeIntro: RouteIntroSettings.From(new OverlaySettings()));
 
-		await renderer.BuildMapMosaicAsync();
-		await renderer.BuildRouteIntroMosaicAsync();
+		await renderer.BuildMapMosaicAsync(ct: TestContext.CancellationToken);
+		await renderer.BuildRouteIntroMosaicAsync(ct: TestContext.CancellationToken);
 		Assert.IsFalse(renderer.NeedsMapPrepare(layout));
 		Assert.IsFalse(renderer.NeedsRouteIntroPrepare());
 
 		renderer.MapSources = sources with { ShowEsriLabels = false };
 		Assert.IsTrue(renderer.NeedsMapPrepare(layout));
+		Assert.IsFalse(renderer.NeedsRouteIntroPrepare());
+
+		renderer.MapSources = sources with { ShowRouteIntroEsriLabels = true };
+		Assert.IsFalse(renderer.NeedsMapPrepare(layout));
 		Assert.IsTrue(renderer.NeedsRouteIntroPrepare());
 	}
 
@@ -204,8 +224,8 @@ public sealed class MapSourcesTests
 		foreach (MapProvider provider in MapProviders.BuiltIn)
 		{
 			Assert.IsFalse(string.IsNullOrWhiteSpace(provider.Attribution), provider.Id);
-			StringAssert.StartsWith(provider.Terms.TermsUrl, "https://", provider.Id);
-			Assert.IsTrue(new[] { "{z}", "{x}", "{y}" }.All(provider.UrlTemplate.Contains) || new[] { "{hz}", "{hx}", "{hy}" }.All(provider.UrlTemplate.Contains),
+			Assert.StartsWith("https://", provider.Terms.TermsUrl, provider.Id);
+			Assert.IsTrue(TilePlaceholders.All(provider.UrlTemplate.Contains) || HalfTilePlaceholders.All(provider.UrlTemplate.Contains),
 				provider.Id);
 			Assert.AreEqual(provider.NeedsApiKey, provider.UrlTemplate.Contains("{api_key}"), provider.Id);
 		}
