@@ -33,8 +33,8 @@ public sealed class KeyMomentsTests
 		}
 
 		Assert.AreEqual(60, KeyMoments.Find(frames, PeakKind.MaxLean, Fps, Total)!.Value.Value, 1e-9);
-		Assert.AreEqual(25, KeyMoments.Find(frames, PeakKind.MaxLean, Fps, Total, movingOnly: true)!.Value.Value, 1e-9);
-		Assert.AreEqual(20, KeyMoments.Find(frames, PeakKind.TopSpeed, Fps, Total, movingOnly: true)!.Value.Value, 1e-9, "speed unaffected");
+		Assert.AreEqual(25, KeyMoments.Find(frames, PeakKind.MaxLean, Fps, Total, TripStats.MovingThresholdKmh)!.Value.Value, 1e-9);
+		Assert.AreEqual(20, KeyMoments.Find(frames, PeakKind.TopSpeed, Fps, Total, TripStats.MovingThresholdKmh)!.Value.Value, 1e-9, "speed unaffected");
 		CollectionAssert.AreEqual(new[] { false, false, false, false, false, false, true, true, true, true }, TripStats.Riding(frames),
 			"three seconds either side of a stop");
 	}

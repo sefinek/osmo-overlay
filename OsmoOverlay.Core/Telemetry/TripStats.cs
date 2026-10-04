@@ -107,12 +107,12 @@ public sealed class TripStats
 	public const double RidingMarginSeconds = 3;
 
 	/// <summary>
-	///     Per frame, whether the ride was under way: MovingThresholdKmh or faster on every frame within RidingMarginSeconds
-	///     either side - not only on the frame itself. A jolt or a lean while stopping, starting or standing (the camera
+	///     Per frame, whether the ride was under way: `thresholdKmh` (MovingThresholdKmh unless given) or faster on every
+	///     frame within RidingMarginSeconds either side - not only on the frame itself. A jolt or a lean while stopping, starting or standing (the camera
 	///     handled, the bike put down) falls at a low speed the GPS still reads above the threshold for a moment; the
 	///     G-force and lean peaks leave those out.
 	/// </summary>
-	public static bool[] Riding(IReadOnlyList<DerivedFrame> frames)
+	public static bool[] Riding(IReadOnlyList<DerivedFrame> frames, double thresholdKmh = MovingThresholdKmh)
 	{
 		bool[] riding = new bool[frames.Count];
 		// The latest frame below the threshold so far, and the next one from each frame on.
@@ -120,14 +120,14 @@ public sealed class TripStats
 		int next = -1;
 		for (int i = frames.Count - 1; i >= 0; i--)
 		{
-			if (frames[i].SpeedKmh < MovingThresholdKmh) next = i;
+			if (frames[i].SpeedKmh < thresholdKmh) next = i;
 			nextSlow[i] = next;
 		}
 
 		int lastSlow = -1;
 		for (int i = 0; i < frames.Count; i++)
 		{
-			if (frames[i].SpeedKmh < MovingThresholdKmh)
+			if (frames[i].SpeedKmh < thresholdKmh)
 			{
 				lastSlow = i;
 				continue;

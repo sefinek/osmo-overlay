@@ -59,13 +59,13 @@ public partial class KeyMomentsEditor : UserControl
 	/// </summary>
 	private void ShowPeaks()
 	{
-		bool movingOnly = MovingOnlyCheck.IsChecked == true;
+		double? ridingFrom = MovingOnlyCheck.IsChecked == true ? (double)(RidingFromBox.Value ?? 2) : null;
 		bool any = false;
 		int position = 0;
 		foreach (PeakKind kind in PeakKinds)
 		{
 			List<Peak> peaks = _frames is { Count: > 0 } frames && _totalFrames > 0
-				? KeyMoments.FindTop(frames, kind, _fps, _totalFrames, PeaksPerCategory, movingOnly)
+				? KeyMoments.FindTop(frames, kind, _fps, _totalFrames, PeaksPerCategory, ridingFrom)
 				: [];
 			Expander? shown = PeakRows.Children.OfType<Expander>().FirstOrDefault(e => e.Tag is PeakKind k && k == kind);
 			if (peaks.Count == 0)
@@ -113,7 +113,13 @@ public partial class KeyMomentsEditor : UserControl
 	/// <summary>A filter of this view only, on again for every start of the app.</summary>
 	private void OnMovingOnlyClick(object? sender, RoutedEventArgs e)
 	{
+		RidingFromPanel.IsVisible = MovingOnlyCheck.IsChecked == true;
 		ShowPeaks();
+	}
+
+	private void OnRidingFromChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_frames is not null) ShowPeaks();
 	}
 
 	private void OnAddClick(object? sender, RoutedEventArgs e)

@@ -38,6 +38,11 @@
 			<TextBlock Name="NoPeaksText" Classes="hint" IsVisible="False" Text="{x:Static local:Strings.KeyMoments_ThisRecordingHasNoTelemetry}" />
 			<CheckBox Name="MovingOnlyCheck" Margin="0,2,0,0" IsChecked="True" Content="{x:Static local:Strings.KeyMoments_MovingOnly}"
 			          ToolTip.Tip="{x:Static local:Strings.KeyMoments_MovingOnlyHint}" Click="OnMovingOnlyClick" />
+			<Grid Name="RidingFromPanel" ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="28,0,0,0">
+				<TextBlock Text="{x:Static local:Strings.KeyMoments_RidingFrom}" Classes="infoLabel" Margin="0" VerticalAlignment="Center" />
+				<NumericUpDown Grid.Column="1" Name="RidingFromBox" Width="130" Minimum="0.5" Maximum="50" Increment="0.5" Value="2"
+				               FormatString="0.0" ValueChanged="OnRidingFromChanged" />
+			</Grid>
 		</StackPanel>
 
 		<StackPanel Name="MomentListPanel" Spacing="6" IsVisible="False">
