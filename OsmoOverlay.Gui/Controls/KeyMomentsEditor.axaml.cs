@@ -33,7 +33,6 @@ public partial class KeyMomentsEditor : UserControl
 	{
 		InitializeComponent();
 		IsEnabled = false;
-		MovingOnlyCheck.IsChecked = OverlaySettingsStore.Load().KeyMomentsMovingOnly;
 	}
 
 	public event Action? AddRequested;
@@ -56,12 +55,11 @@ public partial class KeyMomentsEditor : UserControl
 	/// <summary>
 	///     Each category with its peaks. The categories already shown are updated in place, not built again: a new expander
 	///     plays its chevron's turn, which made every switch of "only while riding" flick all of them. A new recording
-	///     starts from an empty list, with the first category open.
+	///     starts from an empty list, every category closed.
 	/// </summary>
 	private void ShowPeaks()
 	{
 		bool movingOnly = MovingOnlyCheck.IsChecked == true;
-		bool fresh = PeakRows.Children.Count == 0;
 		bool any = false;
 		int position = 0;
 		foreach (PeakKind kind in PeakKinds)
@@ -88,7 +86,6 @@ public partial class KeyMomentsEditor : UserControl
 					CornerRadius = new CornerRadius(8),
 					// The peaks fade in and out instead of popping up as the expander opens and closes.
 					ContentTransition = new CrossFade(TimeSpan.FromMilliseconds(150)),
-					IsExpanded = fresh && !any,
 					Tag = kind
 				};
 				PeakRows.Children.Insert(position, shown);
@@ -113,12 +110,9 @@ public partial class KeyMomentsEditor : UserControl
 		MomentListPanel.IsVisible = _moments.Count > 0;
 	}
 
-	/// <summary>Saved at once, like a view setting, and the peaks found again.</summary>
+	/// <summary>A filter of this view only, on again for every start of the app.</summary>
 	private void OnMovingOnlyClick(object? sender, RoutedEventArgs e)
 	{
-		bool movingOnly = MovingOnlyCheck.IsChecked == true;
-		OverlaySettings settings = OverlaySettingsStore.Load();
-		if (settings.KeyMomentsMovingOnly != movingOnly) OverlaySettingsStore.Save(settings with { KeyMomentsMovingOnly = movingOnly });
 		ShowPeaks();
 	}
 

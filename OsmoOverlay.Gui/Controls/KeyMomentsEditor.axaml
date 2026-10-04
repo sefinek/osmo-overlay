@@ -36,7 +36,7 @@
 			<TextBlock Text="{x:Static local:Strings.KeyMoments_JumpTo}" Classes="infoLabel" Margin="0" />
 			<StackPanel Name="PeakRows" Spacing="6" />
 			<TextBlock Name="NoPeaksText" Classes="hint" IsVisible="False" Text="{x:Static local:Strings.KeyMoments_ThisRecordingHasNoTelemetry}" />
-			<CheckBox Name="MovingOnlyCheck" Margin="0,2,0,0" Content="{x:Static local:Strings.KeyMoments_MovingOnly}"
+			<CheckBox Name="MovingOnlyCheck" Margin="0,2,0,0" IsChecked="True" Content="{x:Static local:Strings.KeyMoments_MovingOnly}"
 			          ToolTip.Tip="{x:Static local:Strings.KeyMoments_MovingOnlyHint}" Click="OnMovingOnlyClick" />
 		</StackPanel>
 

@@ -59,8 +59,6 @@ public sealed record OverlaySettings(
 	bool RouteIntroColorBySpeed = false,
 	// The trip's first and last positions marked on the overview map, captioned with these (blank = a dot only).
 	bool RouteIntroShowStartFinish = true,
-	// The key moments panel leaves out the G-force and lean of standing still (KeyMoments.FindTop's movingOnly).
-	bool KeyMomentsMovingOnly = true,
 	string? RouteIntroStartLabel = RouteIntroSettings.DefaultStartLabel,
 	string? RouteIntroFinishLabel = RouteIntroSettings.DefaultFinishLabel,
 	bool PreviewSnapToGrid = true,
