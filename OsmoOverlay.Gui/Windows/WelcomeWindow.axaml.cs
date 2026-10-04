@@ -674,8 +674,8 @@ public partial class WelcomeWindow : Window
 		{
 			MapApiKeys = keys.Count == 0 ? null : keys,
 			DefaultMapProvider = StreetsChoice.IsChecked == true ? MapProviders.StreetsAutoId
-				: SatelliteChoice.IsChecked == true ? null
-				: settings.DefaultMapProvider,
+			: SatelliteChoice.IsChecked == true ? null
+			: settings.DefaultMapProvider,
 			SpeedCorrectionPercent = SpeedEditor.Percent,
 			SmoothGpsMotion = SmoothGpsCheck.IsChecked == true,
 			ShowWatermark = WatermarkCheck.IsChecked == true,

@@ -69,7 +69,7 @@ internal static class DjiMetaTelemetryParser
 	{
 		if (Mp4CameraMetadata.ReadSourceTracks(inputPath).FirstOrDefault(t => t.Format == "djmd") is not { } track) return null;
 
-		long total = track.Sizes.Sum(size => (long)size);
+		long total = track.Sizes.Sum(size => size);
 		if (total > Array.MaxLength) throw new InvalidDataException($"djmd track of {total} bytes");
 
 		int[] at = new int[track.Sizes.Length];

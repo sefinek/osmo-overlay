@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -110,7 +111,7 @@ internal static partial class BenchmarkSystemInfo
 	/// </summary>
 	public static async Task<BenchmarkLoad> SampleLoadAsync(uint? gpuVendor, CancellationToken ct)
 	{
-		using LoadMonitor monitor = LoadMonitor.Start();
+		using var monitor = LoadMonitor.Start();
 		await Task.Delay(TimeSpan.FromSeconds(1), ct);
 		return await monitor.ReadAsync(gpuVendor, false, ct);
 	}
@@ -194,7 +195,7 @@ internal static partial class BenchmarkSystemInfo
 			}
 		}
 		catch (Exception ex) when (ex is IOException or SecurityException or UnauthorizedAccessException or InvalidOperationException
-			                           or System.ComponentModel.Win32Exception)
+			                           or Win32Exception)
 		{
 			// Only for the report.
 		}

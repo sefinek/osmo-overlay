@@ -162,7 +162,7 @@ public partial class BenchmarkWindow : Window
 	/// </summary>
 	private async Task ShowLiveLoadAsync(CancellationToken ct)
 	{
-		using LoadMonitor monitor = LoadMonitor.Start();
+		using var monitor = LoadMonitor.Start();
 		try
 		{
 			while (true)

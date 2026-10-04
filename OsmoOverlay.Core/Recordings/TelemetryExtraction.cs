@@ -127,7 +127,7 @@ public static class TelemetryExtraction
 				knownOffset = files[i].Offset;
 			}
 
-			DateTime fileStart = DateTime.SpecifyKind(files[i].ClockStart ?? known.AddSeconds(files[i].Offset - knownOffset), DateTimeKind.Utc);
+			var fileStart = DateTime.SpecifyKind(files[i].ClockStart ?? known.AddSeconds(files[i].Offset - knownOffset), DateTimeKind.Utc);
 			int end = i + 1 < files.Count ? files[i + 1].FirstFrame : frames.Count;
 			for (int f = files[i].FirstFrame; f < end; f++)
 				frames[f] = frames[f] with { GpsTimestamp = fileStart.AddSeconds(frames[f].SampleTimeSeconds - files[i].Offset) };

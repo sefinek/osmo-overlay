@@ -1,8 +1,10 @@
 using System.Text.RegularExpressions;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
@@ -142,13 +144,13 @@ public sealed partial class MapSourcePicker : UserControl
 		var headline = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 8 };
 		headline.Children.Add(new IconView
 		{
-			Data = icon, Foreground = color, Width = 16, Height = 16, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+			Data = icon, Foreground = color, Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center
 		});
 		var verdictText = new TextBlock { Text = verdict, Foreground = color, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap };
 		Grid.SetColumn(verdictText, 1);
 		headline.Children.Add(verdictText);
 		TextBlock termsLink = Link(Strings.MapTerms_ReadTerms, terms.TermsUrl);
-		termsLink.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
+		termsLink.VerticalAlignment = VerticalAlignment.Center;
 		Grid.SetColumn(termsLink, 2);
 		headline.Children.Add(termsLink);
 
@@ -161,6 +163,7 @@ public sealed partial class MapSourcePicker : UserControl
 		if (detail is not null) panel.Children.Add(Hint(detail));
 
 		var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12, RowSpacing = 3 };
+
 		void Fact(string label, string value, IBrush? color = null)
 		{
 			int row = facts.RowDefinitions.Count;
@@ -188,14 +191,14 @@ public sealed partial class MapSourcePicker : UserControl
 
 		if (publicEsri && !best) panel.Children.Add(Link(Strings.MapSource_GetEsriKey, MapProviders.KeyPages[MapProviders.EsriKeyGroup]));
 
-		var card = new Border { Padding = new Avalonia.Thickness(12, 10), Child = panel };
+		var card = new Border { Padding = new Thickness(12, 10), Child = panel };
 		card.Classes.Add("card");
 		StatusPanel.Children.Add(card);
 	}
 
 	private static TextBlock Link(string text, string url)
 	{
-		var link = new TextBlock { Text = text, Classes = { "link" }, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+		var link = new TextBlock { Text = text, Classes = { "link" }, HorizontalAlignment = HorizontalAlignment.Left };
 		link.PointerPressed += (_, _) => AppUpdateFlow.OpenInBrowser(url);
 		return link;
 	}

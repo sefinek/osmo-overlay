@@ -522,8 +522,11 @@ public partial class MainWindow
 			deviations.Add(string.Format(Strings.Summary_PlanBitrate, settings.OutputBitrateMultiplier));
 		// Settings' own name (P5), and what this encoder calls it where that's another (AMF's "balanced", Quick Sync's "slow").
 		if (FfmpegPipeline.PresetName(encoder, settings.NvencPreset) is { } preset && preset != FfmpegPipeline.PresetName(encoder, "p7"))
+		{
 			deviations.Add(string.Format(Strings.Summary_PlanFasterPreset,
 				preset == settings.NvencPreset ? preset.ToUpperInvariant() : $"{settings.NvencPreset.ToUpperInvariant()}, {preset}"));
+		}
+
 		if (!FfmpegPipeline.IsGpuEncoder(encoder))
 			deviations.Add(string.Format(Strings.Summary_PlanCpuEncoder, encoder));
 

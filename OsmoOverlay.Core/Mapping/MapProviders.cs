@@ -1,4 +1,3 @@
-using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
@@ -315,9 +314,12 @@ public sealed record MapSources(
 	{
 		string id = Resolve(providerId);
 		if (LabelsUrlTemplate(providerId, routeIntro) is not null)
+		{
 			return id == MapProviders.EsriPublicId
 				? "Esri, Maxar, Earthstar Geographics, HERE, Garmin, and the GIS User Community"
 				: "Powered by Esri | Esri, Maxar, Earthstar Geographics, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community";
+		}
+
 		string? text = id == MapProviders.CustomId ? CustomAttribution : MapProviders.Get(id).Attribution;
 		return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 	}

@@ -59,7 +59,7 @@ public sealed class MapSourcesTests
 	public void TheDefault_IsEsri_KeyedWithItsKey()
 	{
 		var mapTiler = new MapSources(new Dictionary<string, string> { [MapProviders.MapTilerKeyGroup] = "mt" }, RouteBounds: InPoland);
-		var both = mapTiler with { ApiKeys = new Dictionary<string, string> { [MapProviders.MapTilerKeyGroup] = "mt", [MapProviders.EsriKeyGroup] = "e" } };
+		MapSources both = mapTiler with { ApiKeys = new Dictionary<string, string> { [MapProviders.MapTilerKeyGroup] = "mt", [MapProviders.EsriKeyGroup] = "e" } };
 
 		Assert.AreEqual(MapProviders.EsriPublicId, mapTiler.Resolve(MapProviders.AutoSatelliteId), "Esri only, one source");
 		Assert.AreEqual(MapProviders.EsriImageryId, both.Resolve(MapProviders.AutoSatelliteId));

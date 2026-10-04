@@ -21,7 +21,7 @@ public sealed class RouteIntroSettingsTests
 	[TestMethod]
 	public void Labels_AreTheUsersOwn_ElseTheDefault_AndCompareByContent()
 	{
-		RouteIntroLabels labels = RouteIntroLabels.From(new Dictionary<string, string>
+		var labels = RouteIntroLabels.From(new Dictionary<string, string>
 		{
 			[nameof(RouteIntroStats.Distance)] = " DYSTANS ",
 			[nameof(RouteIntroStats.Date)] = "  "

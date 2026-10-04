@@ -110,7 +110,7 @@ public sealed class OverlayRendererTests
 		byte[] RenderWith(bool parallel)
 		{
 			using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, layout, frames,
-				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, true) { ParallelWidgets = parallel };
+				TelemetryProcessor.Summarize(frames).MaxSpeedKmh) { ParallelWidgets = parallel };
 			return Render(renderer, frames);
 		}
 
@@ -192,7 +192,7 @@ public sealed class OverlayRendererTests
 	{
 		List<DerivedFrame> frames = Route(300, 0);
 		var eox = new MapWidgetElement { X = 1920, Y = 1080, MapProviderId = MapProviders.EoxId };
-		var gugik = eox with { MapProviderId = MapProviders.GugikId };
+		MapWidgetElement gugik = eox with { MapProviderId = MapProviders.GugikId };
 		var hiddenCredit = new MapAttributionElement { X = 100, Y = 2000, Visible = false };
 
 		// Without a mosaic both maps draw the same placeholder, so only the credit tells them apart.

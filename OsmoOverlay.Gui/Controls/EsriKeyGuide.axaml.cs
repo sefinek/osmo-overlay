@@ -1,7 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Interactivity;
 using OsmoOverlay.Core.Mapping;
 
 namespace OsmoOverlay.Gui;

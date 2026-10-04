@@ -56,8 +56,10 @@ internal static unsafe partial class GpuAdapters
 					var getDesc1 = (delegate* unmanaged[Stdcall]<IntPtr, AdapterDesc1*, int>)(*(void***)adapter)[10];
 					AdapterDesc1 desc;
 					if (getDesc1(adapter, &desc) >= 0)
+					{
 						adapters.Add(new GpuAdapter((int)i, desc.VendorId, ((long)desc.LuidHighPart << 32) | desc.LuidLowPart, desc.DedicatedVideoMemory,
 							new string(desc.Description).TrimEnd('\0').Trim()));
+					}
 				}
 				finally
 				{

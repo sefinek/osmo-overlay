@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Updates;
 using SkiaSharp;
@@ -115,7 +114,7 @@ public static class MapTileFetcher
 		SKBitmap quarter = subset.Copy() ?? throw NotAnImage(whole);
 		if (!store) return (quarter, null);
 
-		using SKImage image = SKImage.FromBitmap(quarter);
+		using var image = SKImage.FromBitmap(quarter);
 		using SKData png = image.Encode(SKEncodedImageFormat.Png, 100);
 		return (quarter, png.ToArray());
 	}

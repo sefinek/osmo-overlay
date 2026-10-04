@@ -85,8 +85,11 @@ public sealed class OverlayPresetTests
 		var preset = OverlayPreset.CreateDefault("d", "Default");
 		List<DerivedFrame> frames = [];
 		for (int i = 0; i < 30; i++)
+		{
 			frames.Add(new DerivedFrame(new TelemetryFrame(i, i / 30.0, 50, 20, 200, DateTime.UtcNow, 0, 0, 1, Iso: 400, ShutterSeconds: 0.001,
 				ColorTemperatureKelvin: 5000), 20, 0, 0, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
+		}
+
 		using var renderer = new OverlayRenderer((int)OverlayElementBounds.ReferenceWidth, (int)OverlayElementBounds.ReferenceHeight, 200,
 			preset.Elements, frames, 30, false, "DJI Osmo Action 6");
 

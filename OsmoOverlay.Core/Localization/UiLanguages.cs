@@ -27,7 +27,7 @@ public static class UiLanguages
 
 	public static void Apply(string? code)
 	{
-		CultureInfo culture = CultureInfo.GetCultureInfo(Resolve(code));
+		var culture = CultureInfo.GetCultureInfo(Resolve(code));
 		CultureInfo.DefaultThreadCurrentUICulture = culture;
 		CultureInfo.CurrentUICulture = culture;
 	}

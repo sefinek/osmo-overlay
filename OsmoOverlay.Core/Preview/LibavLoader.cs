@@ -1,6 +1,5 @@
 using FFmpeg.AutoGen;
 using OsmoOverlay.Core.Dependencies;
-using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;

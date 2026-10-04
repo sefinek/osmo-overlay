@@ -1,4 +1,3 @@
-using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Reframe;
 

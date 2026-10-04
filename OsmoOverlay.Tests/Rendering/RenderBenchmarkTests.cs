@@ -27,7 +27,7 @@ public sealed class RenderBenchmarkTests
 	[TestMethod]
 	public void Stat_IsTheMedianOfTheRuns_LeavingOutFailedOnes()
 	{
-		BenchmarkStat stat = BenchmarkStat.Of([30, null, 10, 20, double.NaN])!;
+		var stat = BenchmarkStat.Of([30, null, 10, 20, double.NaN])!;
 
 		Assert.AreEqual((20, 10, 30, 3), (stat.Median, stat.Min, stat.Max, stat.Runs));
 		Assert.AreEqual(15, Runs(10, 20).Median);
@@ -45,7 +45,7 @@ public sealed class RenderBenchmarkTests
 	[TestMethod]
 	public void FrameTimes_TakeTheMedianAndThe95thPercentile()
 	{
-		FrameTimes times = FrameTimes.Of([.. Enumerable.Range(1, 100).Select(i => (double)i)]);
+		var times = FrameTimes.Of([.. Enumerable.Range(1, 100).Select(i => (double)i)]);
 
 		Assert.AreEqual(50.5, times.MedianMs);
 		Assert.AreEqual(95, times.P95Ms);

@@ -1,4 +1,3 @@
-using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
@@ -63,6 +62,7 @@ public sealed partial class OverlayRenderer
 	{
 		return RouteIntro.Enabled && _preparedRouteIntroKey != CurrentRouteIntroKey();
 	}
+
 	private List<SKPoint>? _routeIntroTrailPixels;
 
 	// The whole card (backdrop, map mosaic, route, stats) only depends on the recording as a whole, never
@@ -346,7 +346,7 @@ public sealed partial class OverlayRenderer
 		float width = font.MeasureText(text) + padX * 2;
 		float height = font.Size + padY * 2;
 		float reach = RouteEndRadius + gap;
-		SKRect inside = SKRect.Inflate(mapRect, -inset, -inset);
+		var inside = SKRect.Inflate(mapRect, -inset, -inset);
 
 		// In order of preference, the first of the least covering wins.
 		(float X, float Y)[] sides = [(0, -1), (0, 1), (1, 0), (-1, 0), (1, -1), (-1, -1), (1, 1), (-1, 1)];
@@ -390,6 +390,7 @@ public sealed partial class OverlayRenderer
 			    Math.Min(a.Y, b.Y) > rect.Bottom) continue;
 
 			float dx = b.X - a.X, dy = b.Y - a.Y, t0 = 0, t1 = 1;
+
 			bool Clip(float p, float q)
 			{
 				if (p == 0) return q >= 0;
@@ -466,7 +467,8 @@ public sealed partial class OverlayRenderer
 		{
 			double? extreme = null;
 			foreach (DerivedFrame frame in _allFrames)
-				if (frame.Raw.HasGpsFix) extreme = extreme is { } e ? pick(e, frame.Raw.AltitudeMeters) : frame.Raw.AltitudeMeters;
+				if (frame.Raw.HasGpsFix)
+					extreme = extreme is { } e ? pick(e, frame.Raw.AltitudeMeters) : frame.Raw.AltitudeMeters;
 			return extreme is { } meters ? Joined(FormatAltitude(meters, units)) : "--";
 		}
 	}
@@ -498,7 +500,8 @@ public sealed partial class OverlayRenderer
 		bool[] riding = TripStats.Riding(_allFrames);
 		double? max = null;
 		for (int i = 0; i < _allFrames.Count; i++)
-			if (riding[i]) max = Math.Max(max ?? double.MinValue, value(_allFrames[i]));
+			if (riding[i])
+				max = Math.Max(max ?? double.MinValue, value(_allFrames[i]));
 		return max;
 	}
 

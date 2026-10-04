@@ -3,6 +3,7 @@ using System.Security;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
@@ -321,7 +322,7 @@ public partial class SettingsWindow : Window
 			{
 				int row = RouteIntroStatsGrid.RowDefinitions.Count;
 				RouteIntroStatsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-				var check = new CheckBox { Content = StatName(stat), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+				var check = new CheckBox { Content = StatName(stat), VerticalAlignment = VerticalAlignment.Center };
 				var label = new TextBox { PlaceholderText = RouteIntroStat.DefaultLabel(stat), MaxLength = 40 };
 				check.IsCheckedChanged += (_, _) => label.IsEnabled = check.IsChecked == true;
 				Grid.SetRow(check, row);

@@ -234,7 +234,7 @@ public static class RenderBenchmark
 			bool decodeOnGpu = !(softwareDecode?.Median > hardwareDecode?.Median);
 			BenchmarkStat? feedingDecode = decodeOnGpu ? hardwareDecode : softwareDecode;
 			string cpuEncoder = output.CodecName == "h264" ? "libx264" : "libx265";
-			Dictionary<string, List<double?>> encodeRuns = presets.ToDictionary(p => p, _ => new List<double?>());
+			var encodeRuns = presets.ToDictionary(p => p, _ => new List<double?>());
 			List<double?> cpuRuns = [];
 			for (int run = 0; run < EncodeRuns; run++)
 			{
@@ -390,7 +390,7 @@ public static class RenderBenchmark
 
 	private static EncoderSpeed Encoder(string encoder, string? preset, List<double?> runs, BenchmarkStat? decode)
 	{
-		BenchmarkStat? speed = BenchmarkStat.Of(runs);
+		var speed = BenchmarkStat.Of(runs);
 		return new EncoderSpeed(encoder, preset, speed, speed is not null && decode is not null && speed.Median >= decode.Median * DecodeLimit);
 	}
 
@@ -516,7 +516,7 @@ public static class RenderBenchmark
 			var channel = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(RenderPrefetch) { SingleReader = true, SingleWriter = true });
 			var freeBuffers = new ConcurrentQueue<byte[]>();
 			CancellationToken producerCt = stop.Token;
-			Task producer = Task.Run(async () =>
+			var producer = Task.Run(async () =>
 			{
 				try
 				{
@@ -584,7 +584,7 @@ public static class RenderBenchmark
 		Action step, CancellationToken ct)
 	{
 		using var renderer = new OverlayRenderer(video.Width, video.Height, route[0].Raw.AltitudeMeters, layout, route,
-			TelemetryProcessor.Summarize(route).MaxSpeedKmh, true, mapSources: MapSources.From(OverlaySettingsStore.Load()));
+			TelemetryProcessor.Summarize(route).MaxSpeedKmh, mapSources: MapSources.From(OverlaySettingsStore.Load()));
 		step();
 		await renderer.PrepareMapAsync(ct: ct);
 

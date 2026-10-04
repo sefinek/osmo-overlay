@@ -1,5 +1,4 @@
 using FFmpeg.AutoGen;
-using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Core.Preview;
 

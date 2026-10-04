@@ -40,9 +40,9 @@
 			<TextBlock Text="{x:Static local:Strings.MapSource_CustomCreditBriefly}" TextWrapping="Wrap" />
 		</CheckBox>
 
+		<TextBlock Classes="hint" TextWrapping="Wrap" Margin="0,4,0,0" Text="{x:Static local:Strings.MapTerms_Disclaimer}" />
+
 		<ToggleSwitch Name="EsriLabelsSwitch" IsVisible="False" IsCheckedChanged="OnEsriLabelsChanged"
 		              OnContent="" OffContent="" Content="{x:Static local:Strings.MapSource_ShowEsriLabels}" />
-
-		<TextBlock Classes="hint" TextWrapping="Wrap" Margin="0,4,0,0" Text="{x:Static local:Strings.MapTerms_Disclaimer}" />
 	</StackPanel>
 </UserControl>

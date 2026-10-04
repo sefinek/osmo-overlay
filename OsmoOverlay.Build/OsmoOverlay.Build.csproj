@@ -1,13 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
 
-    <AssemblyName>OsmoOverlay.Build</AssemblyName>
-    <RootNamespace>OsmoOverlay.Build</RootNamespace>
+		<AssemblyName>OsmoOverlay.Build</AssemblyName>
+		<RootNamespace>OsmoOverlay.Build</RootNamespace>
 
-    <AssemblyTitle>OsmoOverlay Build</AssemblyTitle>
-    <Description>Builds the OsmoOverlay release packages for every supported OS and architecture.</Description>
-  </PropertyGroup>
+		<AssemblyTitle>OsmoOverlay Build</AssemblyTitle>
+		<Description>Builds the OsmoOverlay release packages for every supported OS and architecture.</Description>
+	</PropertyGroup>
 
 </Project>

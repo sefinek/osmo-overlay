@@ -330,7 +330,6 @@ public sealed partial class OverlayRenderer : IDisposable
 		ClearProfiles();
 	}
 
-
 	public int FrameBufferSize(int? outputWidth = null, int? outputHeight = null)
 	{
 		return (outputWidth ?? _width) * (outputHeight ?? _height) * 4;
@@ -564,8 +563,11 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// <summary>The credit of every Map widget visible at `seconds`, one line - null with none on screen or none to credit.</summary>
 	private MapCredit? MapCreditAt(double seconds)
 	{
-		List<MapWidgetElement> maps = [.. Layout.OfType<MapWidgetElement>()
-			.Where(m => m.Visible && ElementAnimation.At(m, seconds, OutputDurationSeconds).Progress > 0f)];
+		List<MapWidgetElement> maps =
+		[
+			.. Layout.OfType<MapWidgetElement>()
+				.Where(m => m.Visible && ElementAnimation.At(m, seconds, OutputDurationSeconds).Progress > 0f)
+		];
 		return CreditOf(maps);
 	}
 
@@ -618,7 +620,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			Parallel.For(0, widgets.Count, i =>
 			{
-				SKRectI box = SKRectI.Intersect(SKRectI.Ceiling(widgets[i].Bounds, true), frame);
+				var box = SKRectI.Intersect(SKRectI.Ceiling(widgets[i].Bounds, true), frame);
 				if (box.IsEmpty) return;
 
 				var bitmap = new SKBitmap(new SKImageInfo(box.Width, box.Height, SKColorType.Bgra8888, SKAlphaType.Premul));
@@ -894,7 +896,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			if (_lastSeconds is { } same && seconds == same) return Value;
 
-		if (_lastSeconds is not { } last || seconds < last || seconds - last > resetGapSeconds)
+			if (_lastSeconds is not { } last || seconds < last || seconds - last > resetGapSeconds)
 			{
 				Value = target;
 			}

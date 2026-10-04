@@ -75,8 +75,10 @@ public sealed record RouteIntroLabels(IReadOnlyDictionary<string, string> Texts)
 
 	public static RouteIntroLabels From(IReadOnlyDictionary<string, string>? texts)
 	{
-		return texts is null ? None : new RouteIntroLabels(texts.Where(t => !string.IsNullOrWhiteSpace(t.Value))
-			.ToDictionary(t => t.Key, t => t.Value.Trim()));
+		return texts is null
+			? None
+			: new RouteIntroLabels(texts.Where(t => !string.IsNullOrWhiteSpace(t.Value))
+				.ToDictionary(t => t.Key, t => t.Value.Trim()));
 	}
 
 	public string For(RouteIntroStats stat)

@@ -1,4 +1,3 @@
-using OsmoOverlay.Core.Localization;
 namespace OsmoOverlay.Core;
 
 /// <summary>A stretch of the recording in seconds, e.g. a part to cut out - Transition is what a cut does where it joins the parts around it.</summary>

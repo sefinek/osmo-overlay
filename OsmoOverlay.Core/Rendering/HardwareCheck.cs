@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
-using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Core;
 
@@ -94,7 +93,9 @@ public static class HardwareCheck
 
 		string folder = !string.IsNullOrWhiteSpace(outputFolder) && Directory.Exists(outputFolder)
 			? outputFolder
-			: Environment.GetFolderPath(Environment.SpecialFolder.MyVideos) is { Length: > 0 } videos ? videos : Environment.CurrentDirectory;
+			: Environment.GetFolderPath(Environment.SpecialFolder.MyVideos) is { Length: > 0 } videos
+				? videos
+				: Environment.CurrentDirectory;
 		long? free = RenderDiskSpace.AvailableBytes(Path.Combine(folder, "render.mp4"));
 
 		string? card = encoder is not null && FfmpegPipeline.GpuVendor(encoder) is { } vendor ? GpuAdapters.Pick(GpuAdapters.All, vendor)?.Name : null;
@@ -127,8 +128,10 @@ public static class HardwareCheck
 
 			string[] device = encoder is null ? [] : FfmpegPipeline.EncoderDeviceArgs(encoder);
 			string[] hwaccel = device.Length > 0 ? [.. device, .. FfmpegPipeline.HwDecodeArgs(encoder!)] : ["-hwaccel", method];
-			ProcessStartInfo decode = ProcessHelper.CreateHiddenQuiet("ffmpeg", ["-hide_banner", "-loglevel", "error", .. hwaccel,
-				"-hwaccel_output_format", frames, "-i", clip, "-f", "null", "-"]);
+			ProcessStartInfo decode = ProcessHelper.CreateHiddenQuiet("ffmpeg", [
+				"-hide_banner", "-loglevel", "error", .. hwaccel,
+				"-hwaccel_output_format", frames, "-i", clip, "-f", "null", "-"
+			]);
 			return (await ProcessHelper.TryRunCapturedAsync(decode, ct)).ExitCode == 0;
 		}
 		finally
