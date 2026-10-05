@@ -40,7 +40,7 @@
     <value>Could not open {0} in a browser</value>
   </data>
   <data name="AppUpdate_Confirm" xml:space="preserve">
-    <value>OsmoOverlay will download v{0}, close, install it and start again.</value>
+    <value>Install version {0}? OsmoOverlay will download the installer, close for installation and then restart.</value>
   </data>
   <data name="AppUpdate_Downloading" xml:space="preserve">
     <value>Downloading OsmoOverlay {0}...</value>
@@ -55,7 +55,7 @@
     <value>Update OsmoOverlay</value>
   </data>
   <data name="AppUpdate_WhileRendering" xml:space="preserve">
-    <value>OsmoOverlay has to close to install the update. Wait for the render to finish, or cancel it.</value>
+    <value>Updating requires the app to close. Wait for rendering to finish or cancel it.</value>
   </data>
   <data name="Audio_Mute" xml:space="preserve">
     <value>Mute (M)</value>
@@ -360,7 +360,9 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>Close and cancel</value>
   </data>
   <data name="Close_RenderInProgressMessage" xml:space="preserve">
-    <value>If you close OsmoOverlay now, the render stops and leaves an incomplete file.</value>
+    <value>Closing the app will stop rendering. The output file may be left incomplete.
+
+Close OsmoOverlay?</value>
   </data>
   <data name="Close_RenderInProgressTitle" xml:space="preserve">
     <value>Render in progress</value>
@@ -495,10 +497,10 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>Extension</value>
   </data>
   <data name="Compare_LimitAddedMessage" xml:space="preserve">
-    <value>Only added the first {0} files - this tool compares up to {0} at a time.</value>
+    <value>The first {0} files were added. The remaining files were skipped because you can compare up to {0} files at a time.</value>
   </data>
   <data name="Compare_LimitMessage" xml:space="preserve">
-    <value>You can compare up to {0} files at a time - remove one first.</value>
+    <value>You can compare up to {0} files at a time. Remove a file from the list to add another.</value>
   </data>
   <data name="Compare_LimitTitle" xml:space="preserve">
     <value>Limit reached</value>
@@ -682,7 +684,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Done</value>
   </data>
   <data name="DependencyPrompt_ExifToolOptional" xml:space="preserve">
-    <value>ExifTool is optional - it's only used for cameras whose telemetry OsmoOverlay can't read on its own.</value>
+    <value>ExifTool is optional. It helps read telemetry from cameras for which the app has no built-in decoder.</value>
   </data>
   <data name="DependencyPrompt_Install" xml:space="preserve">
     <value>Install</value>
@@ -697,7 +699,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Missing dependencies</value>
   </data>
   <data name="DependencyPrompt_SomeFailed" xml:space="preserve">
-    <value>Some installs failed - see log above</value>
+    <value>Some tools could not be installed. See the log above for details.</value>
   </data>
   <data name="DependencyPrompt_ToolOptional" xml:space="preserve">
     <value>{0} (optional)</value>
@@ -736,7 +738,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>not found</value>
   </data>
   <data name="Deps_UpdateAfterRestart" xml:space="preserve">
-    <value>The preview keeps {0}'s libraries in use, so OsmoOverlay will close, update {0} to {1} in a separate window and then start again.</value>
+    <value>The preview uses the {0} libraries. To update them to version {1}, OsmoOverlay will close, run the update in a separate window and then restart.</value>
   </data>
   <data name="Deps_UpdatedDone" xml:space="preserve">
     <value>Updated</value>
@@ -745,7 +747,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Update {0}</value>
   </data>
   <data name="Deps_UpdateWhileRendering" xml:space="preserve">
-    <value>OsmoOverlay has to close to update {0}. Wait for the render to finish, or cancel it.</value>
+    <value>Updating {0} requires the app to close. Wait for rendering to finish or cancel it.</value>
   </data>
   <data name="Deps_Updating" xml:space="preserve">
     <value>Updating {0}...</value>
@@ -1002,7 +1004,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Camera recordings</value>
   </data>
   <data name="Main_CanTReadThisFile" xml:space="preserve">
-    <value>Can't read this file - it must be a PNG, JPEG or WebP no larger than 8192 px per side, and still at this path.</value>
+    <value>Unable to load the image. Check that the file still exists. Supported formats are PNG, JPEG and WebP, with a maximum size of 8192 px on each side.</value>
   </data>
   <data name="Main_ChangeFromStart" xml:space="preserve">
     <value>Change from start</value>
@@ -1539,18 +1541,18 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Update</value>
   </data>
   <data name="Main_UpdateAvailableDownload" xml:space="preserve">
-    <value>OsmoOverlay {0} is available - you have {1}.
+    <value>OsmoOverlay {0} is available. You are currently using version {1}.
 
 Open the download page?
 
-If you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
+If you cancel, the app will not remind you about this version again. You can find the update in Settings &gt; About.</value>
   </data>
   <data name="Main_UpdateAvailableInstall" xml:space="preserve">
-    <value>OsmoOverlay {0} is available - you have {1}.
+    <value>OsmoOverlay {0} is available. You are currently using version {1}.
 
-Update now? OsmoOverlay will download it, close, install it and start again.
+Install the update now? The app will download the installer, close for installation and then restart.
 
-If you cancel, you won't be asked about this version again - it stays available in Settings &gt; About.</value>
+If you cancel, the app will not remind you about this version again. You can find the update in Settings &gt; About.</value>
   </data>
   <data name="Main_UpdateAvailableTitle" xml:space="preserve">
     <value>Update available</value>
@@ -1830,11 +1832,11 @@ Last updated: {1:g}</value>
     <value>The preset "{0}" this project was made with no longer exists.</value>
   </data>
   <data name="Project_RecordingsMissing" xml:space="preserve">
-    <value>These recordings are missing:
+    <value>The following recordings used by the project could not be found:
 
 {0}
 
-The project's cuts, view and overlay are applied only after the recordings are found.</value>
+The cuts, view settings and overlay will be applied once these files are located.</value>
   </data>
   <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
     <value>Recordings not found</value>
@@ -1852,10 +1854,10 @@ The project's cuts, view and overlay are applied only after the recordings are f
     <value>Save project</value>
   </data>
   <data name="Project_UseOverlayChanged" xml:space="preserve">
-    <value>Use the overlay saved in the project? It's added as a separate preset, so the changed one stays as it is.</value>
+    <value>Load the overlay saved in the project? It will be added as a separate preset. The current preset will keep its settings.</value>
   </data>
   <data name="Project_UseOverlayGone" xml:space="preserve">
-    <value>Use the overlay saved in the project? It's added as a preset.</value>
+    <value>Load the overlay saved in the project? It will be added to the preset list.</value>
   </data>
   <data name="Project_UseProjects" xml:space="preserve">
     <value>Use project overlay</value>
@@ -1870,21 +1872,21 @@ The project's cuts, view and overlay are applied only after the recordings are f
     <value>Render anyway</value>
   </data>
   <data name="Render_BusyTitle" xml:space="preserve">
-    <value>The computer is busy</value>
+    <value>High system load</value>
   </data>
   <data name="Render_CheckingLoad" xml:space="preserve">
     <value>Checking whether the computer is busy...</value>
   </data>
   <data name="Render_CompleteTitle" xml:space="preserve">
-    <value>Render complete</value>
+    <value>Rendering complete</value>
   </data>
   <data name="Render_CpuBusyMessage" xml:space="preserve">
-    <value>The processor is already {0} busy. This render encodes on the CPU, so it will be noticeably slower.
+    <value>CPU usage is {0}. Rendering uses the CPU encoder, so it will take longer under the current load.
 
-Render anyway?</value>
+Continue rendering?</value>
   </data>
   <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
-    <value>The processor is already {0} busy. The graphics card encodes, but the overlay is drawn on the processor, so this render will be slower.</value>
+    <value>CPU usage is {0}. The graphics card encodes the video, but the CPU draws the overlay. Rendering will take longer under the current load.</value>
   </data>
   <data name="Render_DoneSummary" xml:space="preserve">
     <value>Time: {0} · Size: {1}</value>
@@ -1893,10 +1895,12 @@ Render anyway?</value>
     <value>Enter an output file path</value>
   </data>
   <data name="Render_FailedTitle" xml:space="preserve">
-    <value>Render failed</value>
+    <value>Unable to complete rendering</value>
   </data>
   <data name="Render_GpuBusyMessage" xml:space="preserve">
-    <value>The graphics card is already busy: GPU {0}, video encoder {1}, other programs encoding video: {2}. Another application is using the card, such as a game, OBS, GeForce or Radeon background recording, or another render. Rendering will be slower. If the limit on simultaneous encoding sessions is reached, the render may not start.</value>
+    <value>Graphics card usage: GPU {0}, video encoder {1}. Encoding sessions in other apps: {2}.
+
+The card is already under load, for example from a game, OBS or background recording. Rendering may take longer. If the limit on simultaneous encoding sessions is reached, rendering cannot start.</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Cancelled: {0}</value>
@@ -1914,7 +1918,7 @@ Render anyway?</value>
     <value>Load before the render: CPU {0}, GPU {1}, video encoder {2}</value>
   </data>
   <data name="Render_LogLowDisk" xml:space="preserve">
-    <value>Low disk space: the render needs about {0}, {1} is free on the output's drive</value>
+    <value>Not enough space on the output drive: about {0} required, {1} available</value>
   </data>
   <data name="Render_LogOutput" xml:space="preserve">
     <value>Output: {0}</value>
@@ -1923,12 +1927,12 @@ Render anyway?</value>
     <value>Overlay preset: {0}</value>
   </data>
   <data name="Render_LowDiskBalloon" xml:space="preserve">
-    <value>{0} free, about {1} needed</value>
+    <value>Available space: {0}. Required: about {1}.</value>
   </data>
   <data name="Render_LowDiskMessage" xml:space="preserve">
-    <value>The render will be about {0}, and finishing it can briefly need the same again - {1} in all. Only {2} is free on {3}.
+    <value>The estimated video size is {0}. Finalizing the file may require additional space, bringing the total to about {1}. Only {2} is available on drive {3}.
 
-Free up some space or pick an output folder on another drive. If the drive fills up, the render fails.</value>
+Free up space or choose a folder on another drive. Rendering will fail if the drive runs out of space.</value>
   </data>
   <data name="Render_LowDiskTitle" xml:space="preserve">
     <value>Not enough disk space</value>
@@ -1955,7 +1959,7 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>Second screen: there's no other monitor connected - choose one in Settings &gt; Behavior.</value>
   </data>
   <data name="SecondScreen_NoticeText" xml:space="preserve">
-    <value>It's playing on {0} and comes back here when you pause.</value>
+    <value>The preview is playing on screen: {0}. It will return to this window when you pause playback.</value>
   </data>
   <data name="SecondScreen_NoticeTitle" xml:space="preserve">
     <value>The preview is on the second screen</value>
@@ -2519,7 +2523,7 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>GPS timestamp: not present in this recording - Date &amp; time / UTC time fall back to the file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)</value>
   </data>
   <data name="Summary_LogNoTelemetry" xml:space="preserve">
-    <value>No telemetry found - this file can be played but not rendered. Add the camera's original recording ({0}), not a file exported from another app</value>
+    <value>No telemetry found. The recording can be played, but an overlay using camera data cannot be added. Select the original file from the camera&apos;s memory card ({0})</value>
   </data>
   <data name="Summary_LogProbing" xml:space="preserve">
     <value>Probing source file(s) (ffprobe)...</value>
@@ -2555,20 +2559,20 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>No GPS fix in this recording.</value>
   </data>
   <data name="Summary_NoGpsMessage" xml:space="preserve">
-    <value>The camera never got a GPS fix while recording, so the position-based widgets (speed, distance, route, map, elevation, compass, trip stats) are off. Tilt, G-force and camera settings still work.
+    <value>This recording does not contain GPS positions. Widgets that need this data, including the speedometer, map, compass and trip statistics, are unavailable. You can still use other widgets supported by your camera.
 
-For GPS, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix before you start.</value>
+For DJI cameras, record with the DJI GPS Bluetooth Remote or use your phone&apos;s GPS through DJI Mimo. Wait for the GPS receiver to acquire a position before you start recording.</value>
   </data>
   <data name="Summary_NoGpsTitle" xml:space="preserve">
-    <value>No GPS in this recording</value>
+    <value>No GPS data</value>
   </data>
   <data name="Summary_NoTelemetryMessage" xml:space="preserve">
-    <value>This file carries no camera telemetry, so it can be previewed but not rendered.
+    <value>No telemetry data was found in this file. You can play the recording, but you cannot add an overlay using data from the camera.
 
-Use the original recording from the camera's card ({0}) - a copy exported from DJI Mimo or another app loses the telemetry.</value>
+Select the original file from the camera&apos;s memory card ({0}). Recordings exported from DJI Mimo or other apps may no longer contain telemetry.</value>
   </data>
   <data name="Summary_NoTelemetryTitle" xml:space="preserve">
-    <value>No telemetry in this file</value>
+    <value>No telemetry data</value>
   </data>
   <data name="Summary_OrHigher" xml:space="preserve">
     <value>{0} or higher</value>
@@ -2625,7 +2629,7 @@ Use the original recording from the camera's card ({0}) - a copy exported from D
     <value>No GPS fix</value>
   </data>
   <data name="Summary_TelemetryNoGpsFixTip" xml:space="preserve">
-    <value>This recording never acquired a GPS fix - only accelerometer and camera-settings data was decoded. Speed, distance, elevation, map, compass and trip stats are unavailable.</value>
+    <value>This recording does not contain GPS positions. Accelerometer data and camera settings were read, but speed, distance, elevation, map, compass and trip statistics are unavailable.</value>
   </data>
   <data name="Summary_TelemetryNotFound" xml:space="preserve">
     <value>Not found</value>
@@ -2733,7 +2737,9 @@ Use the original recording from the camera's card ({0}) - a copy exported from D
     <value>Camera microphone audio (.AAC)</value>
   </data>
   <data name="Tools_CantFixMessage" xml:space="preserve">
-    <value>"{0}" already has an explicit color tag that isn't Rec.709 - it looks like HDR or wide-gamut content, not a plain Rec.709 export. Forcing Rec.709 over that would mislabel the color space instead of fixing it, so this tool won't touch this file.
+    <value>The color tags in &quot;{0}&quot; specify a color space other than Rec.709. This may be HDR footage or a recording in a wider color space.
+
+Changing the tags to Rec.709 would not convert the colors and could cause them to display incorrectly. This file will therefore remain unchanged.
 
 Current tags:
 {1}</value>
@@ -2742,7 +2748,7 @@ Current tags:
     <value>Can't fix this file</value>
   </data>
   <data name="Tools_CantReadMessage" xml:space="preserve">
-    <value>Could not read this file - it may be corrupted, still being written, or not a video file at all.
+    <value>Unable to read the video file. It may be damaged, still being written or in an unsupported format.
 
 Details: {0}</value>
   </data>
@@ -2762,7 +2768,7 @@ Details: {0}</value>
     <value>Compare files</value>
   </data>
   <data name="Tools_ConversionFailedMessage" xml:space="preserve">
-    <value>Nothing was saved for the file that failed.
+    <value>No output was saved for the file whose conversion failed.
 
 Details: {0}</value>
   </data>
@@ -2774,10 +2780,12 @@ Details: {0}</value>
 {0}</value>
   </data>
   <data name="Tools_ConvertedMessage" xml:space="preserve">
-    <value>Saved and verified - it decodes to exactly the same samples as the original:
+    <value>Saved file:
 {0}
 
-It has the same length as the video's own audio track and starts with it, so it lines up when placed at the start of the matching MP4 on the timeline.</value>
+Verification confirmed that the file decodes to the same audio samples as the original. It also has the same duration and start time as the video&apos;s audio track.
+
+To synchronize the audio, place it at the same position on the timeline as the matching MP4 file.</value>
   </data>
   <data name="Tools_ConvertedTitle" xml:space="preserve">
     <value>Converted</value>
@@ -2795,7 +2803,9 @@ It has the same length as the video's own audio track and starts with it, so it 
     <value>Fix</value>
   </data>
   <data name="Tools_FixAskMessage" xml:space="preserve">
-    <value>"{0}" is missing its Rec.709 color tag - the typical Vegas Pro export issue this tool was made for, and it's safe to fix. Rewrite the tag with a lossless stream copy (no re-encode, no quality loss)?
+    <value>The Rec.709 color tags are missing from &quot;{0}&quot;. This is a common issue with recordings exported from Vegas Pro.
+
+Add the missing tags? Video and audio will be copied without re-encoding or quality loss.
 
 Current tags:
 {1}</value>
@@ -2807,7 +2817,7 @@ Current tags:
     <value>Fix color tags</value>
   </data>
   <data name="Tools_FixedMessage" xml:space="preserve">
-    <value>"{0}" was fixed successfully - the color tag was rewritten to Rec.709 with a lossless stream copy, so picture quality is untouched.
+    <value>The missing Rec.709 color tags were added to &quot;{0}&quot;. Video and audio were copied without re-encoding or quality loss.
 
 Before:
 {1}
@@ -2815,7 +2825,7 @@ Before:
 After:
 {2}
 
-Saved to: {3}</value>
+Saved file: {3}</value>
   </data>
   <data name="Tools_FixedTitle" xml:space="preserve">
     <value>Fixed successfully</value>
@@ -2832,12 +2842,12 @@ Details: {1}</value>
     <value>Fixing...</value>
   </data>
   <data name="Tools_MetadataRemovedMessage" xml:space="preserve">
-    <value>Saved a clean copy as "{0}" and verified it: only picture and sound are left, bit-for-bit identical, with the same color profile and rotation.
+    <value>Saved and verified a copy named &quot;{0}&quot;. Video and audio were preserved without any changes, along with the color profile and image orientation.
 
-Removed:
+Removed metadata:
 {1}
 
-The file name can also reveal information about the recording. Names generated by the camera, such as DJI_20260916100634, contain the recording date and time. To hide this information, rename the file before sharing it.</value>
+The file name may also contain the recording date and time, for example DJI_20260916100634. To hide this information, rename the file before sharing it.</value>
   </data>
   <data name="Tools_MetadataRemovedTitle" xml:space="preserve">
     <value>Metadata removed</value>
@@ -2849,13 +2859,13 @@ The file name can also reveal information about the recording. Names generated b
     <value>(nothing identifying was found)</value>
   </data>
   <data name="Tools_NothingToDoMessage" xml:space="preserve">
-    <value>"{0}" already has a correct Rec.709 color tag - there's nothing to fix here.
+    <value>The Rec.709 color tags in &quot;{0}&quot; are already correct. No changes are needed.
 
 Current tags:
 {1}</value>
   </data>
   <data name="Tools_NothingToDoTitle" xml:space="preserve">
-    <value>Nothing to do</value>
+    <value>Color tags are correct</value>
   </data>
   <data name="Tools_OpenDataFolder" xml:space="preserve">
     <value>Open data folder</value>
@@ -2891,8 +2901,10 @@ Current tags:
     <value>Replace</value>
   </data>
   <data name="Tools_ReplaceExistingMessage" xml:space="preserve">
-    <value>These already exist and will be replaced:
-{0}</value>
+    <value>The following files already exist:
+{0}
+
+Replace them with the new files?</value>
   </data>
   <data name="Tools_ReplaceExistingTitle" xml:space="preserve">
     <value>Replace existing files?</value>
@@ -2910,7 +2922,7 @@ Current tags:
     <value>Select file...</value>
   </data>
   <data name="Tools_StripFailedMessage" xml:space="preserve">
-    <value>No file was saved.
+    <value>Unable to save a copy without metadata.
 
 Details: {0}</value>
   </data>

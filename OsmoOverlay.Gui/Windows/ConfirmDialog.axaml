@@ -8,16 +8,16 @@
         Width="560" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="{x:Static local:Strings.ConfirmDialog_Confirm}">
 
 	<Grid ColumnDefinitions="Auto,*" Margin="20">
 		<Panel Name="KindArt" Grid.Column="0" Width="145" VerticalAlignment="Center" Margin="0,0,20,0" IsVisible="False">
-			<Image Name="SuccessArt" Source="/Assets/Dialogs/Success.webp" IsVisible="False" />
-			<Image Name="WarningArt" Source="/Assets/Dialogs/Warning.webp" IsVisible="False" />
-			<Image Name="InfoArt" Source="/Assets/Dialogs/Info.webp" IsVisible="False" />
-			<Image Name="DangerArt" Source="/Assets/Dialogs/Error.webp" IsVisible="False" />
-			<Image Name="NoGpsArt" Source="/Assets/Dialogs/NoGps.webp" IsVisible="False" />
+			<Image Name="SuccessArt" Source="{local:AssetImage Path=Dialogs/Success.webp}" IsVisible="False" />
+			<Image Name="WarningArt" Source="{local:AssetImage Path=Dialogs/Warning.webp}" IsVisible="False" />
+			<Image Name="InfoArt" Source="{local:AssetImage Path=Dialogs/Info.webp}" IsVisible="False" />
+			<Image Name="DangerArt" Source="{local:AssetImage Path=Dialogs/Error.webp}" IsVisible="False" />
+			<Image Name="NoGpsArt" Source="{local:AssetImage Path=Dialogs/NoGps.webp}" IsVisible="False" />
 		</Panel>
 		<StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Center">
 			<StackPanel Spacing="6">

@@ -40,7 +40,7 @@
     <value>Nie udało się otworzyć {0} w przeglądarce</value>
   </data>
   <data name="AppUpdate_Confirm" xml:space="preserve">
-    <value>OsmoOverlay pobierze wersję {0}, zamknie się, zainstaluje ją i uruchomi ponownie.</value>
+    <value>Zainstalować wersję {0}? OsmoOverlay pobierze instalator, zamknie się na czas instalacji, a następnie uruchomi ponownie.</value>
   </data>
   <data name="AppUpdate_Downloading" xml:space="preserve">
     <value>Pobieranie OsmoOverlay {0}...</value>
@@ -55,7 +55,7 @@
     <value>Aktualizacja OsmoOverlay</value>
   </data>
   <data name="AppUpdate_WhileRendering" xml:space="preserve">
-    <value>Aby zainstalować aktualizację, OsmoOverlay musi się zamknąć. Poczekaj, aż render się zakończy, albo go anuluj.</value>
+    <value>Aktualizacja wymaga zamknięcia aplikacji. Poczekaj na zakończenie renderowania lub je anuluj.</value>
   </data>
   <data name="Audio_Mute" xml:space="preserve">
     <value>Wycisz (M)</value>
@@ -360,7 +360,9 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Zamknij i przerwij</value>
   </data>
   <data name="Close_RenderInProgressMessage" xml:space="preserve">
-    <value>Jeśli teraz zamkniesz OsmoOverlay, render zostanie przerwany, a plik pozostanie niekompletny.</value>
+    <value>Zamknięcie aplikacji przerwie renderowanie. Plik wyjściowy może pozostać niekompletny.
+
+Zamknąć OsmoOverlay?</value>
   </data>
   <data name="Close_RenderInProgressTitle" xml:space="preserve">
     <value>Trwa renderowanie</value>
@@ -495,10 +497,10 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Rozszerzenie</value>
   </data>
   <data name="Compare_LimitAddedMessage" xml:space="preserve">
-    <value>Dodano tylko {0} pierwszych plików - narzędzie porównuje maksymalnie {0} naraz.</value>
+    <value>Dodano pierwsze {0} plików. Pozostałe pominięto, ponieważ jednocześnie można porównać maksymalnie {0} plików.</value>
   </data>
   <data name="Compare_LimitMessage" xml:space="preserve">
-    <value>Naraz można porównać maksymalnie {0} plików - najpierw usuń któryś.</value>
+    <value>Możesz porównać maksymalnie {0} plików jednocześnie. Usuń jeden z listy, aby dodać kolejny.</value>
   </data>
   <data name="Compare_LimitTitle" xml:space="preserve">
     <value>Osiągnięto limit</value>
@@ -682,7 +684,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Gotowe</value>
   </data>
   <data name="DependencyPrompt_ExifToolOptional" xml:space="preserve">
-    <value>ExifTool jest opcjonalny - przydaje się tylko przy kamerach, których telemetrii OsmoOverlay nie odczyta samodzielnie.</value>
+    <value>ExifTool jest opcjonalny. Pomaga odczytywać telemetrię z kamer, dla których aplikacja nie ma własnego dekodera.</value>
   </data>
   <data name="DependencyPrompt_Install" xml:space="preserve">
     <value>Zainstaluj</value>
@@ -697,7 +699,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Brakujące zależności</value>
   </data>
   <data name="DependencyPrompt_SomeFailed" xml:space="preserve">
-    <value>Część instalacji się nie powiodła - szczegóły w logu powyżej</value>
+    <value>Nie udało się zainstalować wszystkich narzędzi. Szczegóły znajdziesz w logu powyżej.</value>
   </data>
   <data name="DependencyPrompt_ToolOptional" xml:space="preserve">
     <value>{0} (opcjonalny)</value>
@@ -736,7 +738,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>nie znaleziono</value>
   </data>
   <data name="Deps_UpdateAfterRestart" xml:space="preserve">
-    <value>Podgląd korzysta z bibliotek {0}, więc OsmoOverlay zamknie się, zaktualizuje {0} do wersji {1} w osobnym oknie i uruchomi się ponownie.</value>
+    <value>Podgląd korzysta z bibliotek {0}. Aby zaktualizować je do wersji {1}, OsmoOverlay zamknie się, przeprowadzi aktualizację w osobnym oknie i uruchomi ponownie.</value>
   </data>
   <data name="Deps_UpdatedDone" xml:space="preserve">
     <value>Zaktualizowano</value>
@@ -745,7 +747,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Aktualizacja {0}</value>
   </data>
   <data name="Deps_UpdateWhileRendering" xml:space="preserve">
-    <value>Aby zaktualizować {0}, OsmoOverlay musi się zamknąć. Poczekaj, aż render się zakończy, albo go anuluj.</value>
+    <value>Aktualizacja {0} wymaga zamknięcia aplikacji. Poczekaj na zakończenie renderowania lub je anuluj.</value>
   </data>
   <data name="Deps_Updating" xml:space="preserve">
     <value>Aktualizowanie {0}...</value>
@@ -1002,7 +1004,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Nagrania z kamery</value>
   </data>
   <data name="Main_CanTReadThisFile" xml:space="preserve">
-    <value>Nie można odczytać tego pliku - musi to być PNG, JPEG lub WebP o boku do 8192 px i musi nadal znajdować się pod tą ścieżką.</value>
+    <value>Nie udało się wczytać obrazka. Sprawdź, czy plik nadal istnieje. Obsługiwane formaty to PNG, JPEG i WebP, a maksymalna długość każdego boku wynosi 8192 px.</value>
   </data>
   <data name="Main_ChangeFromStart" xml:space="preserve">
     <value>Zmiana od startu</value>
@@ -1539,18 +1541,18 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Aktualizuj</value>
   </data>
   <data name="Main_UpdateAvailableDownload" xml:space="preserve">
-    <value>Dostępny jest OsmoOverlay {0} - masz {1}.
+    <value>Dostępna jest wersja {0} OsmoOverlay. Obecnie używasz wersji {1}.
 
 Otworzyć stronę pobierania?
 
-Jeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustawienia &gt; O programie.</value>
+Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajdziesz w sekcji Ustawienia &gt; O programie.</value>
   </data>
   <data name="Main_UpdateAvailableInstall" xml:space="preserve">
-    <value>Dostępny jest OsmoOverlay {0} - masz {1}.
+    <value>Dostępna jest wersja {0} OsmoOverlay. Obecnie używasz wersji {1}.
 
-Zaktualizować teraz? OsmoOverlay pobierze go, zamknie się, zainstaluje i uruchomi ponownie.
+Zainstalować aktualizację teraz? Aplikacja pobierze instalator, zamknie się na czas instalacji, a następnie uruchomi ponownie.
 
-Jeśli anulujesz, nie zapytamy już o tę wersję - pozostanie dostępna w Ustawienia &gt; O programie.</value>
+Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajdziesz w sekcji Ustawienia &gt; O programie.</value>
   </data>
   <data name="Main_UpdateAvailableTitle" xml:space="preserve">
     <value>Dostępna aktualizacja</value>
@@ -1830,11 +1832,11 @@ Ostatnia zmiana: {1:g}</value>
     <value>Preset „{0}”, z którym utworzono ten projekt, już nie istnieje.</value>
   </data>
   <data name="Project_RecordingsMissing" xml:space="preserve">
-    <value>Brakuje tych nagrań:
+    <value>Nie znaleziono nagrań używanych w projekcie:
 
 {0}
 
-Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu nagrań.</value>
+Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych plików.</value>
   </data>
   <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
     <value>Nie znaleziono nagrań</value>
@@ -1852,10 +1854,10 @@ Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu
     <value>Zapisz projekt</value>
   </data>
   <data name="Project_UseOverlayChanged" xml:space="preserve">
-    <value>Użyć nakładki zapisanej w projekcie? Zostanie dodana jako osobny preset, a zmieniony preset pozostanie bez zmian.</value>
+    <value>Wczytać nakładkę zapisaną w projekcie? Zostanie dodana jako osobny preset. Obecny preset zachowa swoje ustawienia.</value>
   </data>
   <data name="Project_UseOverlayGone" xml:space="preserve">
-    <value>Użyć nakładki zapisanej w projekcie? Zostanie dodana jako preset.</value>
+    <value>Wczytać nakładkę zapisaną w projekcie? Zostanie dodana do listy presetów.</value>
   </data>
   <data name="Project_UseProjects" xml:space="preserve">
     <value>Użyj z projektu</value>
@@ -1870,21 +1872,21 @@ Cięcia, widok i nakładka projektu zostaną zastosowane dopiero po odnalezieniu
     <value>Renderuj mimo to</value>
   </data>
   <data name="Render_BusyTitle" xml:space="preserve">
-    <value>Komputer jest zajęty</value>
+    <value>Wysokie obciążenie komputera</value>
   </data>
   <data name="Render_CheckingLoad" xml:space="preserve">
     <value>Sprawdzam, czy komputer nie jest zajęty...</value>
   </data>
   <data name="Render_CompleteTitle" xml:space="preserve">
-    <value>Render zakończony</value>
+    <value>Renderowanie zakończone</value>
   </data>
   <data name="Render_CpuBusyMessage" xml:space="preserve">
-    <value>Procesor jest już zajęty w {0}. Ten render koduje na CPU, więc będzie wyraźnie wolniejszy.
+    <value>Obciążenie procesora wynosi {0}. Renderowanie korzysta z enkodera CPU, więc przy obecnym obciążeniu potrwa dłużej.
 
-Renderować mimo to?</value>
+Kontynuować renderowanie?</value>
   </data>
   <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
-    <value>Procesor jest już zajęty w {0}. Koduje karta graficzna, ale overlay rysuje się na procesorze, więc ten render będzie wolniejszy.</value>
+    <value>Obciążenie procesora wynosi {0}. Film koduje karta graficzna, ale nakładkę przygotowuje procesor. Przy obecnym obciążeniu renderowanie potrwa dłużej.</value>
   </data>
   <data name="Render_DoneSummary" xml:space="preserve">
     <value>Czas: {0} · Rozmiar: {1}</value>
@@ -1893,10 +1895,12 @@ Renderować mimo to?</value>
     <value>Podaj ścieżkę pliku wyjściowego</value>
   </data>
   <data name="Render_FailedTitle" xml:space="preserve">
-    <value>Render nie powiódł się</value>
+    <value>Nie udało się ukończyć renderowania</value>
   </data>
   <data name="Render_GpuBusyMessage" xml:space="preserve">
-    <value>Karta graficzna jest już obciążona: GPU {0}, enkoder wideo {1}, inne programy kodujące wideo: {2}. Inna aplikacja obciąża kartę, np. gra, OBS, nagrywanie w tle GeForce lub Radeon albo drugi render. Renderowanie będzie wolniejsze. Jeśli zostanie osiągnięty limit jednoczesnych sesji kodowania, render może się nie uruchomić.</value>
+    <value>Obciążenie karty graficznej: GPU {0}, enkoder wideo {1}. Liczba sesji kodowania w innych aplikacjach: {2}.
+
+Karta jest już obciążona, np. przez grę, OBS lub nagrywanie w tle. Renderowanie może potrwać dłużej. Po osiągnięciu limitu jednoczesnych sesji kodowania nie uda się go rozpocząć.</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Anulowano: {0}</value>
@@ -1914,7 +1918,7 @@ Renderować mimo to?</value>
     <value>Obciążenie przed renderem: CPU {0}, GPU {1}, enkoder wideo {2}</value>
   </data>
   <data name="Render_LogLowDisk" xml:space="preserve">
-    <value>Mało miejsca na dysku: render potrzebuje około {0}, a na dysku wyjściowym wolne jest {1}</value>
+    <value>Za mało miejsca na dysku wyjściowym: potrzeba około {0}, dostępne {1}</value>
   </data>
   <data name="Render_LogOutput" xml:space="preserve">
     <value>Wyjście: {0}</value>
@@ -1923,12 +1927,12 @@ Renderować mimo to?</value>
     <value>Preset nakładki: {0}</value>
   </data>
   <data name="Render_LowDiskBalloon" xml:space="preserve">
-    <value>Wolne {0}, potrzeba około {1}</value>
+    <value>Dostępne miejsce: {0}. Potrzebne: około {1}.</value>
   </data>
   <data name="Render_LowDiskMessage" xml:space="preserve">
-    <value>Render zajmie około {0}, a na jego zakończenie może być chwilowo potrzebne drugie tyle - łącznie {1}. Na dysku {3} wolne jest tylko {2}.
+    <value>Szacowany rozmiar filmu to {0}. Podczas końcowego zapisu może być potrzebne dodatkowe miejsce, łącznie około {1}. Na dysku {3} dostępne jest tylko {2}.
 
-Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dysk się zapełni, render się nie powiedzie.</value>
+Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, renderowanie zakończy się błędem.</value>
   </data>
   <data name="Render_LowDiskTitle" xml:space="preserve">
     <value>Za mało miejsca na dysku</value>
@@ -1955,7 +1959,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Drugi ekran: nie podłączono innego monitora - wybierz go w Ustawienia &gt; Zachowanie.</value>
   </data>
   <data name="SecondScreen_NoticeText" xml:space="preserve">
-    <value>Odtwarza się na: {0}. Wróci tutaj, gdy zatrzymasz odtwarzanie.</value>
+    <value>Podgląd jest odtwarzany na ekranie: {0}. Po zatrzymaniu odtwarzania wróci do tego okna.</value>
   </data>
   <data name="SecondScreen_NoticeTitle" xml:space="preserve">
     <value>Podgląd jest na drugim ekranie</value>
@@ -2519,7 +2523,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Znacznik czasu GPS: brak w tym nagraniu - Data i godzina oraz Czas UTC korzystają z czasu rozpoczęcia nagrania zapisanego w pliku (przybliżonego, bez synchronizacji z GPS; oznaczone ikoną ostrzeżenia na liście widżetów)</value>
   </data>
   <data name="Summary_LogNoTelemetry" xml:space="preserve">
-    <value>Nie znaleziono telemetrii - ten plik można odtworzyć, ale nie wyrenderować. Dodaj oryginalne nagranie z kamery ({0}), a nie plik wyeksportowany z innej aplikacji</value>
+    <value>Nie znaleziono telemetrii. Nagranie można odtworzyć, ale nie można dodać nakładki z danymi z kamery. Wybierz oryginalny plik z karty pamięci kamery ({0})</value>
   </data>
   <data name="Summary_LogProbing" xml:space="preserve">
     <value>Badanie plików źródłowych (ffprobe)...</value>
@@ -2555,20 +2559,20 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Brak pozycji GPS w tym nagraniu.</value>
   </data>
   <data name="Summary_NoGpsMessage" xml:space="preserve">
-    <value>Kamera nie złapała sygnału GPS podczas nagrywania, więc widżety oparte na pozycji (prędkość, dystans, trasa, mapa, wysokość, kompas, statystyki przejazdu) są wyłączone. Przechył, przeciążenie i ustawienia kamery działają normalnie.
+    <value>To nagranie nie zawiera pozycji GPS. Widżety korzystające z tych danych, m.in. prędkościomierz, mapa, kompas i statystyki trasy, są niedostępne. Nadal możesz używać pozostałych widżetów obsługiwanych przez kamerę.
 
-Aby mieć GPS, nagrywaj z pilotem DJI GPS Bluetooth Remote (lub z GPS telefonu przez DJI Mimo) i przed startem poczekaj, aż złapie satelity.</value>
+W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote lub korzystaj z GPS telefonu przez DJI Mimo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik ustali pozycję.</value>
   </data>
   <data name="Summary_NoGpsTitle" xml:space="preserve">
-    <value>Brak GPS w tym nagraniu</value>
+    <value>Brak danych GPS</value>
   </data>
   <data name="Summary_NoTelemetryMessage" xml:space="preserve">
-    <value>Ten plik nie zawiera telemetrii z kamery, więc można go podejrzeć, ale nie wyrenderować.
+    <value>W tym pliku nie znaleziono danych telemetrycznych. Możesz odtworzyć nagranie, ale nie dodasz do niego nakładki z danymi z kamery.
 
-Użyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mimo lub innej aplikacji traci telemetrię.</value>
+Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z DJI Mimo lub innych aplikacji mogą nie zawierać telemetrii.</value>
   </data>
   <data name="Summary_NoTelemetryTitle" xml:space="preserve">
-    <value>Brak telemetrii w tym pliku</value>
+    <value>Brak danych telemetrycznych</value>
   </data>
   <data name="Summary_OrHigher" xml:space="preserve">
     <value>{0} lub więcej</value>
@@ -2625,7 +2629,7 @@ Użyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mi
     <value>Brak pozycji GPS</value>
   </data>
   <data name="Summary_TelemetryNoGpsFixTip" xml:space="preserve">
-    <value>To nagranie nigdy nie złapało pozycji GPS - odczytano tylko dane z akcelerometru i ustawienia kamery. Prędkość, dystans, wysokość, mapa, kompas i statystyki przejazdu są niedostępne.</value>
+    <value>Nagranie nie zawiera pozycji GPS. Odczytano dane z akcelerometru i ustawienia kamery, ale prędkość, dystans, wysokość, mapa, kompas i statystyki trasy są niedostępne.</value>
   </data>
   <data name="Summary_TelemetryNotFound" xml:space="preserve">
     <value>Nie znaleziono</value>
@@ -2733,7 +2737,9 @@ Użyj oryginalnego nagrania z karty kamery ({0}) - kopia wyeksportowana z DJI Mi
     <value>Dźwięk z mikrofonu kamery (.AAC)</value>
   </data>
   <data name="Tools_CantFixMessage" xml:space="preserve">
-    <value>„{0}” ma już jawny znacznik kolorów inny niż Rec.709 - wygląda na materiał HDR lub z szerokim gamutem, a nie zwykły eksport Rec.709. Wymuszenie Rec.709 błędnie oznaczyłoby przestrzeń kolorów zamiast ją naprawić, dlatego to narzędzie nie zmieni tego pliku.
+    <value>Plik „{0}” ma znaczniki kolorów inne niż Rec.709. Może to być materiał HDR lub nagranie w szerszej przestrzeni kolorów.
+
+Zmiana samych znaczników na Rec.709 nie przekształci kolorów i mogłaby spowodować ich nieprawidłowe wyświetlanie. Dlatego ten plik nie zostanie zmieniony.
 
 Obecne znaczniki:
 {1}</value>
@@ -2742,7 +2748,7 @@ Obecne znaczniki:
     <value>Nie można naprawić tego pliku</value>
   </data>
   <data name="Tools_CantReadMessage" xml:space="preserve">
-    <value>Nie udało się odczytać tego pliku - może być uszkodzony, wciąż zapisywany albo w ogóle nie jest plikiem wideo.
+    <value>Nie udało się odczytać pliku wideo. Plik może być uszkodzony, nadal zapisywany lub mieć nieobsługiwany format.
 
 Szczegóły: {0}</value>
   </data>
@@ -2762,7 +2768,7 @@ Szczegóły: {0}</value>
     <value>Porównaj pliki</value>
   </data>
   <data name="Tools_ConversionFailedMessage" xml:space="preserve">
-    <value>Dla pliku, którego nie udało się skonwertować, nic nie zostało zapisane.
+    <value>Nie zapisano wyniku dla pliku, którego konwersja się nie powiodła.
 
 Szczegóły: {0}</value>
   </data>
@@ -2774,10 +2780,12 @@ Szczegóły: {0}</value>
 {0}</value>
   </data>
   <data name="Tools_ConvertedMessage" xml:space="preserve">
-    <value>Zapisano i sprawdzono - plik dekoduje się do dokładnie tych samych próbek co oryginał:
+    <value>Zapisano plik:
 {0}
 
-Ma tę samą długość co ścieżka dźwiękowa filmu i zaczyna się razem z nią, więc wystarczy umieścić go na początku odpowiedniego MP4 na osi czasu.</value>
+Weryfikacja potwierdziła, że po dekodowaniu zawiera te same próbki dźwięku co oryginał. Ma też tę samą długość i moment rozpoczęcia co ścieżka audio filmu.
+
+Aby zsynchronizować dźwięk, umieść go na osi czasu w tym samym miejscu co odpowiadający mu plik MP4.</value>
   </data>
   <data name="Tools_ConvertedTitle" xml:space="preserve">
     <value>Skonwertowano</value>
@@ -2795,7 +2803,9 @@ Ma tę samą długość co ścieżka dźwiękowa filmu i zaczyna się razem z ni
     <value>Napraw</value>
   </data>
   <data name="Tools_FixAskMessage" xml:space="preserve">
-    <value>„{0}” nie ma znacznika kolorów Rec.709 - to typowy brak w eksporcie z Vegas Pro, dla którego powstało to narzędzie, i można go bezpiecznie naprawić. Przepisać znacznik bezstratnym kopiowaniem strumieni (bez ponownego kodowania i utraty jakości)?
+    <value>W pliku „{0}” brakuje znaczników kolorów Rec.709. To częsty problem z nagraniami wyeksportowanymi z Vegas Pro.
+
+Uzupełnić znaczniki? Obraz i dźwięk zostaną skopiowane bez ponownego kodowania i utraty jakości.
 
 Obecne znaczniki:
 {1}</value>
@@ -2807,15 +2817,15 @@ Obecne znaczniki:
     <value>Napraw znaczniki kolorów</value>
   </data>
   <data name="Tools_FixedMessage" xml:space="preserve">
-    <value>„{0}” został naprawiony - znacznik kolorów przepisano na Rec.709 bezstratnym kopiowaniem strumieni, więc jakość obrazu się nie zmieniła.
+    <value>Uzupełniono znaczniki kolorów Rec.709 w pliku „{0}”. Obraz i dźwięk skopiowano bez ponownego kodowania i utraty jakości.
 
-Przed:
+Przed zmianą:
 {1}
 
-Po:
+Po zmianie:
 {2}
 
-Zapisano do: {3}</value>
+Zapisany plik: {3}</value>
   </data>
   <data name="Tools_FixedTitle" xml:space="preserve">
     <value>Naprawiono</value>
@@ -2832,12 +2842,12 @@ Szczegóły: {1}</value>
     <value>Naprawianie...</value>
   </data>
   <data name="Tools_MetadataRemovedMessage" xml:space="preserve">
-    <value>Zapisano oczyszczoną kopię jako „{0}” i ją sprawdzono: zostały tylko obraz i dźwięk, identyczne bit po bicie, z tym samym profilem kolorów i obrotem.
+    <value>Zapisano i sprawdzono kopię „{0}”. Zachowano obraz i dźwięk bez żadnych zmian, a także profil kolorów i orientację obrazu.
 
-Usunięto:
+Usunięte metadane:
 {1}
 
-Nazwa pliku również może ujawniać informacje o nagraniu. Nazwy nadawane przez kamerę, np. DJI_20260916100634, zawierają datę i godzinę nagrania. Jeśli chcesz je ukryć, zmień nazwę przed udostępnieniem pliku.</value>
+Pamiętaj, że nazwa pliku też może zawierać datę i godzinę nagrania, np. DJI_20260916100634. Jeśli chcesz ukryć te informacje, zmień nazwę przed udostępnieniem.</value>
   </data>
   <data name="Tools_MetadataRemovedTitle" xml:space="preserve">
     <value>Metadane usunięte</value>
@@ -2849,13 +2859,13 @@ Nazwa pliku również może ujawniać informacje o nagraniu. Nazwy nadawane prze
     <value>(nie znaleziono niczego identyfikującego)</value>
   </data>
   <data name="Tools_NothingToDoMessage" xml:space="preserve">
-    <value>„{0}” ma już poprawny znacznik kolorów Rec.709 - nie ma tu czego naprawiać.
+    <value>Plik „{0}” ma już poprawne znaczniki kolorów Rec.709. Nie wymaga zmian.
 
 Obecne znaczniki:
 {1}</value>
   </data>
   <data name="Tools_NothingToDoTitle" xml:space="preserve">
-    <value>Nic do zrobienia</value>
+    <value>Znaczniki kolorów są poprawne</value>
   </data>
   <data name="Tools_OpenDataFolder" xml:space="preserve">
     <value>Otwórz folder danych</value>
@@ -2891,8 +2901,10 @@ Obecne znaczniki:
     <value>Zastąp</value>
   </data>
   <data name="Tools_ReplaceExistingMessage" xml:space="preserve">
-    <value>Te pliki już istnieją i zostaną zastąpione:
-{0}</value>
+    <value>Poniższe pliki już istnieją:
+{0}
+
+Zastąpić je nowymi plikami?</value>
   </data>
   <data name="Tools_ReplaceExistingTitle" xml:space="preserve">
     <value>Zastąpić istniejące pliki?</value>
@@ -2910,7 +2922,7 @@ Obecne znaczniki:
     <value>Wybierz plik...</value>
   </data>
   <data name="Tools_StripFailedMessage" xml:space="preserve">
-    <value>Nie zapisano żadnego pliku.
+    <value>Nie udało się zapisać kopii bez metadanych.
 
 Szczegóły: {0}</value>
   </data>

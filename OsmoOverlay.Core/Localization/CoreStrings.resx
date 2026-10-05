@@ -28,7 +28,7 @@
     <value>Native djmd decode failed for {0}, falling back to exiftool</value>
   </data>
   <data name="Dji_NotSupported" xml:space="preserve">
-    <value>{0} isn't officially supported. OsmoOverlay is tested on the DJI Osmo Action 6 and Action 5 Pro. The telemetry will most likely still be read, but some widgets may be unavailable or read wrong (tilt, G-meter) and the recording settings check won't apply.</value>
+    <value>The {0} is not officially supported. OsmoOverlay is tested on the DJI Osmo Action 6 and Action 5 Pro. Telemetry from this model may still be readable, but some widgets, such as tilt and the G-meter, may be unavailable or show incorrect values. Recommended recording settings cannot be checked for this model.</value>
   </data>
   <data name="Dji_SourceExifTool" xml:space="preserve">
     <value>Telemetry source: exiftool fallback (native djmd decode failed or ISO/shutter/CT unavailable)</value>
@@ -49,7 +49,7 @@
     <value>Telemetry source: Insta360 trailer (accelerometer averaged per frame, exposure)</value>
   </data>
   <data name="Insta360_SupportNotice" xml:space="preserve">
-    <value>OsmoOverlay is made mainly for the DJI Osmo Action 6. Insta360 recordings haven't been tested much, and their GPS data isn't supported at all. Some widgets may be unavailable or read wrong.</value>
+    <value>Insta360 camera support is experimental and has not been thoroughly tested. The app does not yet read GPS data from these recordings. Some widgets may be unavailable or show incorrect values.</value>
   </data>
   <data name="Install_AlreadyInstalled" xml:space="preserve">
     <value>{0} is already installed</value>
@@ -115,10 +115,10 @@
     <value>{0} will be updated to {1} once OsmoOverlay closes</value>
   </data>
   <data name="Join_DifferentCamera" xml:space="preserve">
-    <value>{0} is from {1}, but {2} is from {3} - all files must come from the same camera.</value>
+    <value>File {0} is from camera {1}, while file {2} is from camera {3}. To join recordings, select files from the same camera.</value>
   </data>
   <data name="Join_DifferentFormat" xml:space="preserve">
-    <value>{0} ({1}) doesn't match {2} ({3}) - files must share the same resolution, frame rate and pixel format to be joined.</value>
+    <value>File {0} ({1}) has different video parameters from file {2} ({3}). Recordings must have the same resolution, frame rate and pixel format to be joined.</value>
   </data>
   <data name="Join_DifferentLens" xml:space="preserve">
     <value>{0} and {1} weren't recorded with the same lens setup (360 or flat).</value>
@@ -349,7 +349,7 @@
     <value>ffmpeg exited with an error ({0}): {1}</value>
   </data>
   <data name="Render_FfmpegFailedSummary" xml:space="preserve">
-    <value>ffmpeg exited with an error ({0}). Its full output is in the log; the important part:
+    <value>FFmpeg exited with error code {0}. An excerpt of the error message is shown below. See the log for full details.
 
 {1}</value>
   </data>

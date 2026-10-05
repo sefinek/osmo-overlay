@@ -8,7 +8,7 @@
         Width="1000" Height="640" MinWidth="860" MinHeight="520" CanResize="True"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="{x:Static local:Strings.Welcome_WelcomeToOsmoOverlay}">
 
 	<Window.Styles>
@@ -93,14 +93,14 @@
 								</RadialGradientBrush>
 							</Ellipse.Fill>
 						</Ellipse>
-						<Image Name="WelcomeArt" Classes="art" Source="/Assets/Welcome/Welcome.webp" />
-						<Image Name="CameraArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Camera.webp" />
-						<Image Name="ToolsArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Tools.webp" />
-						<Image Name="HardwareArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Hardware.webp" />
-						<Image Name="SpeedArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Speed.webp" />
-						<Image Name="MapArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Map.webp" />
-						<Image Name="PreferencesArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Preferences.webp" />
-						<Image Name="FinishArt" Classes="art" Opacity="0" Source="/Assets/Welcome/Support.webp" />
+						<Image Name="WelcomeArt" Classes="art" Source="{local:AssetImage Path=Welcome/Welcome.webp}" />
+						<Image Name="CameraArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Camera.webp}" />
+						<Image Name="ToolsArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Tools.webp}" />
+						<Image Name="HardwareArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Hardware.webp}" />
+						<Image Name="SpeedArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Speed.webp}" />
+						<Image Name="MapArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Map.webp}" />
+						<Image Name="PreferencesArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Preferences.webp}" />
+						<Image Name="FinishArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Support.webp}" />
 					</Panel>
 					<TextBlock Text="OsmoOverlay" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" />
 					<StackPanel Name="StepDots" Orientation="Horizontal" HorizontalAlignment="Center" />

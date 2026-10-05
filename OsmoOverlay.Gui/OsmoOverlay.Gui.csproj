@@ -41,11 +41,9 @@
 
   <ItemGroup>
     <None Include="NLog.config" CopyToOutputDirectory="PreserveNewest" />
-    <AvaloniaResource Include="Assets\OsmoOverlay.ico" />
-    <AvaloniaResource Include="Assets\OsmoOverlay.png" />
-    <AvaloniaResource Include="Assets\EmptyPreview.webp" />
-    <AvaloniaResource Include="Assets\Welcome\*.webp" />
-    <AvaloniaResource Include="Assets\Dialogs\*.webp" />
+    <None Update="Assets\**\*.webp;Assets\*.png;Assets\*.ico"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Assets\Sounds\*.wav" LogicalName="OsmoOverlay.Gui.Sounds.%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

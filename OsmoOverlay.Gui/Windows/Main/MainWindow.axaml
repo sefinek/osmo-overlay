@@ -10,7 +10,7 @@
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource WindowBackgroundBrush}"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="OsmoOverlay">
 
 	<Window.Styles>
@@ -921,7 +921,7 @@
 								</Button>
 							</Canvas>
 							<StackPanel Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-								<Image Source="/Assets/EmptyPreview.webp" Width="260" Margin="0,0,0,6" />
+								<Image Source="{local:AssetImage Path=EmptyPreview.webp}" Width="260" Margin="0,0,0,6" />
 								<TextBlock Text="{x:Static local:Strings.Main_NoVideoLoaded}" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
 								<TextBlock Text="{x:Static local:Strings.Main_PickADjiOsmoAction}"
 								           Foreground="{StaticResource TextMutedBrush}" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"

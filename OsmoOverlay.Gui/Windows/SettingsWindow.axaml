@@ -8,7 +8,7 @@
         Width="920" Height="640" MinWidth="760" MinHeight="460"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="{x:Static local:Strings.Common_Settings}">
 
 	<Window.Resources>
@@ -608,7 +608,7 @@
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<Border Classes="settingsCard" Padding="18,16">
 						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-							<Image Source="/Assets/OsmoOverlay.png" Width="48" Height="48" VerticalAlignment="Center" />
+							<Image Source="{local:AssetImage Path=OsmoOverlay.png}" Width="48" Height="48" VerticalAlignment="Center" />
 							<StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
 								<TextBlock Name="AppVersionText" Text="OsmoOverlay" FontSize="18" FontWeight="Bold" />
 								<TextBlock Name="CoreVersionText" Text="Core" Classes="rowHint" Margin="0" />

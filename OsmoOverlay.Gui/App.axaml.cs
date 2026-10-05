@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
 
@@ -39,7 +40,14 @@ public class App : Application
 		};
 
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+		{
 			desktop.MainWindow = new MainWindow { StartupProject = StartupProjectFrom(desktop.Args) };
+			desktop.Exit += (_, _) =>
+			{
+				AppSound.Dispose();
+				AppAssets.Dispose();
+			};
+		}
 
 		base.OnFrameworkInitializationCompleted();
 	}

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
 
@@ -33,16 +34,26 @@ public partial class ConfirmDialog : Window
 	private readonly Action? _onExtra;
 	private readonly Action? _onSecondary;
 	private readonly string? _workingText;
+	private readonly UiSound _sound = UiSound.Question;
 
 	public ConfirmDialog()
 	{
 		InitializeComponent();
+		Opened += (_, _) => AppSound.Play(_sound);
 	}
 
 	private ConfirmDialog(string title, string message, string confirmText, DialogKind kind, bool alert,
 		string? windowTitle, Func<Task>? onConfirm, string? workingText, string? secondaryText, Action? onSecondary,
-		string? extraText, Action? onExtra, DialogArt art = DialogArt.ForKind) : this()
+		string? extraText, Action? onExtra, DialogArt art = DialogArt.ForKind, UiSound? sound = null) : this()
 	{
+		_sound = sound ?? kind switch
+		{
+			DialogKind.Info => UiSound.Info,
+			DialogKind.Success => UiSound.Success,
+			DialogKind.Warning => UiSound.Warning,
+			DialogKind.Danger => UiSound.Error,
+			_ => UiSound.Question
+		};
 		// windowTitle (the OS window chrome/taskbar text) is deliberately separate from `title` (the
 		// heading shown in the body) - a caller that shows several outcomes for the same action (e.g.
 		// ToolsWindow's color tag fixer) wants a stable window title across all of them while the
@@ -96,10 +107,10 @@ public partial class ConfirmDialog : Window
 	/// </summary>
 	public static Task ShowAsync(Window owner, string title, string message, string? closeText = null,
 		DialogKind kind = DialogKind.Info, string? windowTitle = null, string? secondaryText = null, Action? onSecondary = null,
-		string? extraText = null, Action? onExtra = null, DialogArt art = DialogArt.ForKind)
+		string? extraText = null, Action? onExtra = null, DialogArt art = DialogArt.ForKind, UiSound? sound = null)
 	{
 		return new ConfirmDialog(title, message, closeText ?? Strings.ConfirmDialog_Ok, kind, true, windowTitle, null, null, secondaryText,
-			onSecondary, extraText, onExtra, art).ShowDialog(owner);
+			onSecondary, extraText, onExtra, art, sound).ShowDialog(owner);
 	}
 
 	/// <summary>The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one.</summary>

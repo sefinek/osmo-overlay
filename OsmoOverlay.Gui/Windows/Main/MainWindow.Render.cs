@@ -159,7 +159,7 @@ public partial class MainWindow
 	/// <summary>
 	///     A render finishing always gets the app's own dialog (so there's a clear, unambiguous answer
 	///     to what the user just clicked, whether or not the window is currently focused) and always
-	///     plays the OS notification sound. The taskbar balloon is additive, not a replacement: it only
+	///     plays its matching app sound. The taskbar balloon is additive, not a replacement: it only
 	///     appears when the window is unfocused, since that's the one case where the dialog - fully
 	///     shown, just not the visible surface right now - could otherwise go unnoticed until the user
 	///     switches back to it.
@@ -212,7 +212,6 @@ public partial class MainWindow
 			reasons.Add(string.Format(gpuEncoder ? Strings.Render_CpuBusyGpuEncoderMessage : Strings.Render_CpuBusyMessage, LoadPercent(load.Cpu)));
 		string message = string.Join("\n\n", reasons);
 
-		SystemSound.PlayNotification();
 		if (!IsActive) BalloonNotifier.Show(this, Strings.Render_BusyTitle, message);
 
 		return await ConfirmDialog.AskAsync(this, Strings.Render_BusyTitle, message, Strings.Render_Anyway, DialogKind.Warning);
@@ -230,7 +229,6 @@ public partial class MainWindow
 		string message = string.Format(Strings.Render_LowDiskMessage, FormatHelper.FormatBytes(estimate), FormatHelper.FormatBytes(required),
 			FormatHelper.FormatBytes(available), drive);
 
-		SystemSound.PlayNotification();
 		if (!IsActive)
 			BalloonNotifier.Show(this, title, string.Format(Strings.Render_LowDiskBalloon, FormatHelper.FormatBytes(available), FormatHelper.FormatBytes(required)));
 
@@ -239,13 +237,12 @@ public partial class MainWindow
 
 	internal async Task NotifyRenderFinishedAsync(string title, string message, DialogKind kind, string? outputPath = null)
 	{
-		SystemSound.PlayNotification();
-
 		if (!IsActive)
 			BalloonNotifier.Show(this, title, message);
 
 		await ConfirmDialog.ShowAsync(this, title, message, kind: kind,
 			secondaryText: outputPath is not null ? Strings.Common_ShowInFolder : null,
-			onSecondary: outputPath is not null ? () => ExplorerHelper.ShowInFolder(outputPath) : null);
+			onSecondary: outputPath is not null ? () => ExplorerHelper.ShowInFolder(outputPath) : null,
+			sound: kind == DialogKind.Success ? UiSound.RenderComplete : null);
 	}
 }

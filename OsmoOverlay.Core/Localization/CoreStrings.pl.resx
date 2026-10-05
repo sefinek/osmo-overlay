@@ -28,7 +28,7 @@
     <value>Natywne dekodowanie djmd nie powiodło się dla {0} - używam exiftool</value>
   </data>
   <data name="Dji_NotSupported" xml:space="preserve">
-    <value>{0} nie jest oficjalnie obsługiwany. OsmoOverlay jest testowany na DJI Osmo Action 6 i Action 5 Pro. Telemetria najpewniej i tak zostanie odczytana, ale niektóre widżety mogą być niedostępne lub pokazywać błędne wartości (przechył, miernik G), a sprawdzanie ustawień nagrywania nie zadziała.</value>
+    <value>Model {0} nie jest oficjalnie obsługiwany. OsmoOverlay jest testowany na DJI Osmo Action 6 i Action 5 Pro. Odczyt telemetrii z tego modelu może działać, ale niektóre widżety, np. przechył i miernik G, mogą być niedostępne lub wskazywać błędne wartości. Sprawdzanie zalecanych ustawień nagrywania nie jest dostępne.</value>
   </data>
   <data name="Dji_SourceExifTool" xml:space="preserve">
     <value>Źródło telemetrii: awaryjnie exiftool (natywne dekodowanie djmd nie powiodło się lub brak ISO/migawki/temperatury)</value>
@@ -49,7 +49,7 @@
     <value>Źródło telemetrii: blok danych na końcu pliku Insta360 (akcelerometr uśredniony na klatkę, ekspozycja)</value>
   </data>
   <data name="Insta360_SupportNotice" xml:space="preserve">
-    <value>OsmoOverlay powstał głównie dla DJI Osmo Action 6. Nagrania z Insta360 nie były dużo testowane, a ich dane GPS w ogóle nie są obsługiwane. Niektóre widżety mogą być niedostępne lub pokazywać błędne wartości.</value>
+    <value>Obsługa kamer Insta360 jest eksperymentalna i nie została dokładnie przetestowana. Aplikacja nie odczytuje jeszcze danych GPS z tych nagrań. Niektóre widżety mogą być niedostępne lub wskazywać błędne wartości.</value>
   </data>
   <data name="Install_AlreadyInstalled" xml:space="preserve">
     <value>{0} jest już zainstalowany</value>
@@ -115,10 +115,10 @@
     <value>{0} zostanie zaktualizowany do {1} po zamknięciu OsmoOverlay</value>
   </data>
   <data name="Join_DifferentCamera" xml:space="preserve">
-    <value>{0} pochodzi z {1}, a {2} z {3} - wszystkie pliki muszą pochodzić z tej samej kamery.</value>
+    <value>Plik {0} pochodzi z kamery {1}, a plik {2} z kamery {3}. Aby połączyć nagrania, wybierz pliki z tej samej kamery.</value>
   </data>
   <data name="Join_DifferentFormat" xml:space="preserve">
-    <value>{0} ({1}) nie pasuje do {2} ({3}) - aby połączyć pliki, muszą mieć tę samą rozdzielczość, liczbę klatek i format pikseli.</value>
+    <value>Plik {0} ({1}) ma inne parametry niż plik {2} ({3}). Łączone nagrania muszą mieć taką samą rozdzielczość, liczbę klatek na sekundę i format pikseli.</value>
   </data>
   <data name="Join_DifferentLens" xml:space="preserve">
     <value>{0} i {1} nie zostały nagrane w tym samym trybie obiektywu (360 lub płaski).</value>
@@ -349,7 +349,7 @@
     <value>ffmpeg zakończył się błędem ({0}): {1}</value>
   </data>
   <data name="Render_FfmpegFailedSummary" xml:space="preserve">
-    <value>ffmpeg zakończył się błędem ({0}). Pełne wyjście jest w logu, najważniejsza część:
+    <value>FFmpeg zakończył pracę z kodem błędu {0}. Poniżej znajduje się fragment komunikatu. Pełne szczegóły są w logu.
 
 {1}</value>
   </data>

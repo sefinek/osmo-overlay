@@ -20,6 +20,7 @@ internal static class BalloonNotifier
 	private const int NifTip = 0x00000004;
 	private const int NifInfo = 0x00000010;
 	private const int NiifInfo = 0x00000001;
+	private const int NiifNoSound = 0x00000010;
 	private const int IdiInformation = 32516;
 
 	public static void Show(Window window, string title, string message)
@@ -41,7 +42,7 @@ internal static class BalloonNotifier
 				szTip = "OsmoOverlay",
 				szInfo = message,
 				szInfoTitle = title,
-				dwInfoFlags = NiifInfo
+				dwInfoFlags = NiifInfo | NiifNoSound
 			};
 
 			// NIM_ADD can fail harmlessly if an icon with this uID is already registered (e.g. a

@@ -8,7 +8,7 @@
         Width="840" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="{x:Static local:Strings.Common_Tools}">
 
 	<Window.Styles>

@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="560"
@@ -7,7 +8,7 @@
         Width="620" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="Developer tools">
 
 	<Window.Styles>
@@ -68,10 +69,18 @@
 				<WrapPanel>
 					<Button Content="Balloon" Tag="balloon" Click="OnActionClick" />
 					<Button Content="Balloon in 3 s" Tag="balloon-later" Click="OnActionClick" />
-					<Button Content="Sound" Tag="sound" Click="OnActionClick" />
 					<Button Content="Log: info" Tag="log:info" Click="OnActionClick" />
 					<Button Content="Log: warning" Tag="log:warn" Click="OnActionClick" />
 					<Button Content="Log: error" Tag="log:error" Click="OnActionClick" />
+				</WrapPanel>
+				<TextBlock Text="SOUNDS" Classes="sectionLabel" />
+				<WrapPanel>
+					<Button Content="Question" Tag="sound:Question" Click="OnActionClick" />
+					<Button Content="Info" Tag="sound:Info" Click="OnActionClick" />
+					<Button Content="Success" Tag="sound:Success" Click="OnActionClick" />
+					<Button Content="Warning" Tag="sound:Warning" Click="OnActionClick" />
+					<Button Content="Error" Tag="sound:Error" Click="OnActionClick" />
+					<Button Content="Render complete" Tag="sound:RenderComplete" Click="OnActionClick" />
 				</WrapPanel>
 				<TextBlock Text="TASKBAR PROGRESS (WINDOWS)" Classes="sectionLabel" />
 				<WrapPanel>

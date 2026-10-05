@@ -87,7 +87,7 @@ public partial class DeveloperWindow : Window
 				BalloonNotifier.Show(this, SampleTitle, SampleMessage);
 				break;
 			case "sound":
-				SystemSound.PlayNotification();
+				AppSound.Play(Enum.Parse<UiSound>(argument));
 				break;
 			case "log":
 				if (argument == "warn") AppLogger.Warn("Sample warning from the developer tools");

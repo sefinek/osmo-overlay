@@ -10,7 +10,7 @@
         WindowState="Maximized"
         Background="{StaticResource WindowBackgroundBrush}"
         FontSize="15"
-        Icon="/Assets/OsmoOverlay.ico"
+        Icon="{x:Static local:AppAssets.Icon}"
         Title="{x:Static local:Strings.Common_CompareVideos}">
 
 	<Window.Styles>
