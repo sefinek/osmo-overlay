@@ -182,14 +182,14 @@ public partial class SpeedCalibrationPreviewWindow : Window
 
 			OverlaySettings settings = OverlaySettingsStore.Load() with { SpeedCorrectionPercent = 0, ShowRouteIntro = false, ShowWatermark = false };
 			SetLoadStage(Strings.Calibration_LoadSpeeds);
-			(IReadOnlyList<DerivedFrame> frames, double cruising, List<Peak> peaks, double maxSpeed) = await Task.Run(() =>
+			(IReadOnlyList<DerivedFrame> frames, double cruising, List<Peak> peaks) = await Task.Run(() =>
 			{
 				IReadOnlyList<DerivedFrame> processed = !settings.SmoothGpsMotion && summary.DerivedFrames is { Count: > 0 } derived
 					? derived : TelemetryProcessor.Process(raw, summary.CameraFormat, settings.SmoothGpsMotion, 0);
 				ct.ThrowIfCancellationRequested();
 				double estimatedCruising = SpeedCalibration.CruisingSpeedKmh(processed);
 				List<Peak> topSpeeds = KeyMoments.FindTop(processed, PeakKind.TopSpeed, summary.Video.Fps, summary.TotalFrameCount, 3);
-				return (processed, estimatedCruising, topSpeeds, processed.Max(frame => frame.SpeedKmh));
+				return (processed, estimatedCruising, topSpeeds);
 			}, ct);
 			if (_closed) return;
 			_frames = frames;
@@ -204,7 +204,7 @@ public partial class SpeedCalibrationPreviewWindow : Window
 			PreviewVideo.Width = width;
 			PreviewVideo.Height = height;
 			await _player.OpenAsync(summary, width, height, settings,
-				[new SpeedGaugeElement { X = OverlayElementBounds.ReferenceWidth - 650, Y = 1500, Scale = 1.75f, MaxSpeed = Math.Max(50, maxSpeed * 1.5) }], _frames);
+				[new SpeedGaugeElement { X = OverlayElementBounds.ReferenceWidth - 650, Y = 1500, Scale = 1.75f }], _frames);
 			if (_closed) return;
 			Timeline.Maximum = Math.Max(0, _player.Duration.TotalSeconds - 1 / summary.Video.Fps);
 			double initialPercent = Percent;
