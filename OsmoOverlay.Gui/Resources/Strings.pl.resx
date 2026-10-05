@@ -2780,12 +2780,12 @@ Szczegóły: {0}</value>
 {0}</value>
   </data>
   <data name="Tools_ConvertedMessage" xml:space="preserve">
-    <value>Zapisano plik:
+    <value>Zapisano i zweryfikowano:
 {0}
 
-Weryfikacja potwierdziła, że po dekodowaniu zawiera te same próbki dźwięku co oryginał. Ma też tę samą długość i moment rozpoczęcia co ścieżka audio filmu.
+Weryfikacja potwierdziła zgodność próbek dźwięku z oryginalnym plikiem audio.
 
-Aby zsynchronizować dźwięk, umieść go na osi czasu w tym samym miejscu co odpowiadający mu plik MP4.</value>
+Zaimportuj pliki do edytora i dopasuj je na osi czasu do odpowiadających im nagrań MP4.</value>
   </data>
   <data name="Tools_ConvertedTitle" xml:space="preserve">
     <value>Skonwertowano</value>
@@ -2990,7 +2990,7 @@ Szczegóły: {0}</value>
     <value>{0} - nagrania HEVC 10-bit dekodowane na karcie graficznej.</value>
   </data>
   <data name="Welcome_CheckDecoderWarning" xml:space="preserve">
-    <value>Karta graficzna nie obsługuje dekodowania HEVC 10-bit. Nagrania będą dekodowane na CPU, co może obniżyć wydajność.</value>
+    <value>Test nie potwierdził sprzętowego dekodowania HEVC 10-bit. Dekodowanie na CPU może obniżyć wydajność.</value>
   </data>
   <data name="Welcome_CheckDisk" xml:space="preserve">
     <value>Miejsce na dysku</value>

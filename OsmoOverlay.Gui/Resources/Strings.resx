@@ -1511,7 +1511,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Time</value>
   </data>
   <data name="Main_TimeFormatMinutesAndSeconds" xml:space="preserve">
-    <value>Choose minutes and seconds, milliseconds, or timecode. Camera timecode is also available. Clicking the time display switches formats.</value>
+    <value>Choose minutes and seconds, optionally with milliseconds, or timecode. Camera timecode is also available. Clicking the time display switches formats.</value>
   </data>
   <data name="Main_TimelineWithThumbnailsAndAudio" xml:space="preserve">
     <value>Timeline with thumbnails and audio waveform, instead of the log</value>
@@ -2780,12 +2780,12 @@ Details: {0}</value>
 {0}</value>
   </data>
   <data name="Tools_ConvertedMessage" xml:space="preserve">
-    <value>Saved file:
+    <value>Saved and verified:
 {0}
 
-Verification confirmed that the file decodes to the same audio samples as the original. It also has the same duration and start time as the video&apos;s audio track.
+Verification confirmed that the audio samples match the original audio file.
 
-To synchronize the audio, place it at the same position on the timeline as the matching MP4 file.</value>
+Import the files into your editor and align them on the timeline with the matching MP4 recordings.</value>
   </data>
   <data name="Tools_ConvertedTitle" xml:space="preserve">
     <value>Converted</value>
@@ -2990,7 +2990,7 @@ Details: {0}</value>
     <value>{0} - 10-bit HEVC recordings decoded on the graphics card.</value>
   </data>
   <data name="Welcome_CheckDecoderWarning" xml:space="preserve">
-    <value>The graphics card does not support 10-bit HEVC decoding. Recordings will be decoded on the CPU, which may reduce performance.</value>
+    <value>The test could not confirm hardware decoding of 10-bit HEVC. CPU decoding may reduce performance.</value>
   </data>
   <data name="Welcome_CheckDisk" xml:space="preserve">
     <value>Disk space</value>
