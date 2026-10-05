@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
@@ -38,6 +39,23 @@ public partial class SpeedCalibrationPreviewWindow : Window
 	public double? RealSpeedValue => SpeedEditor.RealSpeedValue;
 	public double? GpsSpeedValue => SpeedEditor.GpsSpeedValue;
 	public double? CruisingSpeedKmh { get; private set; }
+
+	public static async Task ShowForEditorAsync(Window owner, SpeedCalibrationEditor editor)
+	{
+		IReadOnlyList<IStorageFile> files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = Strings.Main_PickRecordings,
+			AllowMultiple = false,
+			FileTypeFilter = [new FilePickerFileType(Strings.Main_CameraRecordings) { Patterns = ["*.mp4", "*.insv", "*.lrv"] }]
+		});
+		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+
+		var preview = new SpeedCalibrationPreviewWindow(path, editor.Percent, editor.RealSpeedValue);
+		await preview.ShowDialog(owner);
+		if (!preview.Accepted) return;
+		editor.Load(preview.Percent, preview.CruisingSpeedKmh);
+		editor.SetComparisonSpeeds(preview.RealSpeedValue, preview.GpsSpeedValue);
+	}
 
 	public SpeedCalibrationPreviewWindow() : this("", 0)
 	{

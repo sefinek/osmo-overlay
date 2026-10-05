@@ -664,24 +664,8 @@ public partial class WelcomeWindow : Window
 		}
 	}
 
-	private async void OnCalibrationPreviewClick(object? sender, RoutedEventArgs e)
-	{
-		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-		{
-			Title = Strings.Main_PickRecordings,
-			AllowMultiple = false,
-			FileTypeFilter = [new FilePickerFileType(Strings.Main_CameraRecordings) { Patterns = ["*.mp4", "*.insv", "*.lrv"] }]
-		});
-		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
-
-		var preview = new SpeedCalibrationPreviewWindow(path, SpeedEditor.Percent, SpeedEditor.RealSpeedValue);
-		await preview.ShowDialog(this);
-		if (preview.Accepted)
-		{
-			SpeedEditor.Load(preview.Percent, preview.CruisingSpeedKmh);
-			SpeedEditor.SetComparisonSpeeds(preview.RealSpeedValue, preview.GpsSpeedValue);
-		}
-	}
+	private async void OnCalibrationPreviewClick(object? sender, RoutedEventArgs e) =>
+		await SpeedCalibrationPreviewWindow.ShowForEditorAsync(this, SpeedEditor);
 
 	private async void OnBrowseOutputClick(object? sender, RoutedEventArgs e)
 	{

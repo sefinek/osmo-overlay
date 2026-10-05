@@ -469,6 +469,9 @@ public partial class SettingsWindow : Window
 		PreviewShadowsCheck.IsChecked = saved.PreviewShadows;
 	}
 
+	private async void OnCalibrationPreviewClick(object? sender, RoutedEventArgs e) =>
+		await SpeedCalibrationPreviewWindow.ShowForEditorAsync(this, SpeedEditor);
+
 	private async void OnWelcomeClick(object? sender, RoutedEventArgs e)
 	{
 		await new WelcomeWindow(false, RecordingCruisingSpeedKmh)

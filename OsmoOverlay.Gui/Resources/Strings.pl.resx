@@ -1973,7 +1973,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>O programie</value>
   </data>
   <data name="Settings_ACameraSGpsTends" xml:space="preserve">
-    <value>GPS kamery zwykle zaniża prędkość. Korekta podnosi każdą wyświetlaną prędkość - w widżetach prędkości, prędkości maksymalnej i średniej oraz we wstępie z trasą - zarówno w podglądzie, jak i w każdym renderze. Jedno ustawienie dla wszystkich nagrań, zapisywane po zamknięciu Ustawień.</value>
+    <value>Korekta zwiększa odczyty prędkości na nakładce w podglądzie i renderze. Możesz obliczyć ją z porównywanych odczytów lub sprawdzić na nagraniu. Ustawienie dotyczy wszystkich nagrań i zapisuje się po zamknięciu tego okna.</value>
   </data>
   <data name="Settings_AFullscreenCardForThe" xml:space="preserve">
     <value>Pełnoekranowa plansza na pierwsze sekundy renderu: cała trasa na mapie i statystyki przejazdu. Wymaga pozycji GPS, a mapa - dostępu do sieci.</value>

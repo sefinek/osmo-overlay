@@ -1973,7 +1973,7 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>About</value>
   </data>
   <data name="Settings_ACameraSGpsTends" xml:space="preserve">
-    <value>A camera's GPS tends to read speed low. The correction raises every shown speed - the speed widgets, top and average speed, the route intro - in the preview and in every render. One setting for all recordings, saved when you close Settings.</value>
+    <value>Correction increases speed readings on the overlay in the preview and render. Calculate it from two readings or check it on a recording. The setting applies to all recordings and is saved when you close this window.</value>
   </data>
   <data name="Settings_AFullscreenCardForThe" xml:space="preserve">
     <value>A fullscreen card for the first seconds of the render: the whole route on a map and the trip stats. Needs a GPS fix and network access for the map.</value>

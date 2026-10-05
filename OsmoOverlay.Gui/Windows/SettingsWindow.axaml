@@ -334,7 +334,11 @@
 						           Text="{x:Static local:Strings.Settings_ACameraSGpsTends}" />
 					</StackPanel>
 					<Border Classes="settingsCard" Padding="16">
-						<local:SpeedCalibrationEditor Name="SpeedEditor" />
+						<StackPanel Spacing="14">
+							<local:SpeedCalibrationEditor Name="SpeedEditor" />
+							<Button Content="{x:Static local:Strings.Calibration_LoadPreview}" HorizontalAlignment="Center"
+							        Click="OnCalibrationPreviewClick" />
+						</StackPanel>
 					</Border>
 				</StackPanel>
 			</ScrollViewer>
