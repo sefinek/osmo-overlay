@@ -79,10 +79,10 @@
     <value>Nie znaleziono obsługiwanego menedżera pakietów (apt, dnf, pacman). Zainstaluj {0} ręcznie</value>
   </data>
   <data name="Install_NoSupportedVersion" xml:space="preserve">
-    <value>Nie znaleziono {0} {1}.x w winget ({2}) - tylko tej głównej wersji może używać ta wersja OsmoOverlay</value>
+    <value>Nie znaleziono {0} w wersji {1}.x w winget ({2}). Ta wersja OsmoOverlay wymaga właśnie tej głównej wersji narzędzia.</value>
   </data>
   <data name="Install_NotFromWinget" xml:space="preserve">
-    <value>{0} nie został zainstalowany przez winget, więc nie da się go stąd zaktualizować - zaktualizuj go w ten sam sposób, w jaki go zainstalowano</value>
+    <value>Narzędzie {0} nie zostało zainstalowane przez winget, więc nie można go tutaj zaktualizować. Użyj tego samego sposobu aktualizacji co przy instalacji.</value>
   </data>
   <data name="Install_NotOnPath" xml:space="preserve">
     <value>Menedżer pakietów zgłasza, że {0} jest zainstalowany, ale {1} nadal nie ma w PATH. Uruchom ponownie aplikację albo ręcznie dodaj jego folder do PATH</value>
@@ -145,7 +145,7 @@
     <value>Widżet mapy: nie udało się pobrać żadnego kafelka (brak sieci lub serwer kafelków jest nieosiągalny) - pomijam mapę</value>
   </data>
   <data name="Map_ApiKeyMissing" xml:space="preserve">
-    <value>Mapa {0} wymaga klucza API, a nie jest wpisany, więc kafelki nie zostaną pobrane. Klucz wpiszesz tam, gdzie wybierasz mapę</value>
+    <value>Nie podano klucza API wymaganego przez mapę {0}, więc kafelki nie zostaną pobrane. Wpisz klucz w ustawieniach widżetu Mapa.</value>
   </data>
   <data name="Map_CacheTileFailed" xml:space="preserve">
     <value>Nie udało się zapisać kafelka mapy {0}</value>
@@ -307,7 +307,7 @@
     <value>Kopiowanie metadanych kamery do pliku wyjściowego: {0}...</value>
   </data>
   <data name="Render_CopyMetadataFailed" xml:space="preserve">
-    <value>Nie udało się skopiować metadanych kamery do renderu - sam film jest w porządku, po prostu ich nie zawiera</value>
+    <value>Nie udało się skopiować metadanych kamery do pliku wyjściowego. Film został zapisany poprawnie, ale nie zawiera tych metadanych.</value>
   </data>
   <data name="Render_EncoderCpu" xml:space="preserve">
     <value>Enkoder: {0} (brak enkodera na karcie graficznej - renderowanie na CPU)</value>
@@ -331,7 +331,7 @@
     <value>Przenoszenie indeksu pliku na początek (szybki start)...</value>
   </data>
   <data name="Render_FastStartFailed" xml:space="preserve">
-    <value>Nie udało się zastosować szybkiego startu - sam film jest w porządku</value>
+    <value>Nie udało się przenieść indeksu na początek pliku. Film został zapisany poprawnie.</value>
   </data>
   <data name="Render_FetchingOverview" xml:space="preserve">
     <value>Pobieranie mapy przeglądu trasy...</value>
@@ -363,7 +363,7 @@
     <value>Nie znaleziono próbek telemetrii w plikach</value>
   </data>
   <data name="Render_NoTelemetry" xml:space="preserve">
-    <value>{0} nie ma telemetrii - to nie jest oryginalne nagranie z obsługiwanej kamery (np. plik wyeksportowany z innej aplikacji)</value>
+    <value>W pliku {0} nie znaleziono telemetrii. Wybierz oryginalne nagranie z obsługiwanej kamery; pliki wyeksportowane z innych aplikacji mogą nie zawierać tych danych.</value>
   </data>
   <data name="Render_OutputExists" xml:space="preserve">
     <value>Plik wyjściowy już istnieje: {0}</value>
@@ -372,7 +372,7 @@
     <value>ścieżka diagnostyczna</value>
   </data>
   <data name="Render_PartialNoTracks" xml:space="preserve">
-    <value>Częściowy render - ścieżki telemetrii i diagnostyczna kamery nie są kopiowane (obejmują całe nagranie)</value>
+    <value>Przy renderowaniu części nagrania ścieżki telemetrii i diagnostyki kamery są pomijane, ponieważ odnoszą się do całego nagrania.</value>
   </data>
   <data name="Render_PartTelemetry" xml:space="preserve">
     <value>telemetria</value>

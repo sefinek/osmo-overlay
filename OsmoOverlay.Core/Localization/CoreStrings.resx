@@ -79,10 +79,10 @@
     <value>No supported package manager (apt, dnf, pacman) was found. Install {0} manually</value>
   </data>
   <data name="Install_NoSupportedVersion" xml:space="preserve">
-    <value>Couldn't find {0} {1}.x in winget ({2}) - the only major version this release of OsmoOverlay can use</value>
+    <value>Version {1}.x of {0} was not found in winget ({2}). This release of OsmoOverlay requires that major version of the tool.</value>
   </data>
   <data name="Install_NotFromWinget" xml:space="preserve">
-    <value>{0} wasn't installed through winget, so it can't be updated from here - update it the same way it was installed</value>
+    <value>The tool {0} was not installed through winget, so it cannot be updated here. Update it using the same method you used to install it.</value>
   </data>
   <data name="Install_NotOnPath" xml:space="preserve">
     <value>The package manager reports {0} as installed, but {1} still can't be found on PATH. Restart the app, or add its folder to PATH manually</value>
@@ -145,7 +145,7 @@
     <value>Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map</value>
   </data>
   <data name="Map_ApiKeyMissing" xml:space="preserve">
-    <value>The {0} map needs an API key and none is entered, so no tiles will be fetched. Enter the key where you pick the map</value>
+    <value>The API key required for the {0} map is missing, so tiles will not be downloaded. Enter the key in the Map widget settings.</value>
   </data>
   <data name="Map_CacheTileFailed" xml:space="preserve">
     <value>Failed to cache map tile {0}</value>
@@ -307,7 +307,7 @@
     <value>Copying camera metadata into the output: {0}...</value>
   </data>
   <data name="Render_CopyMetadataFailed" xml:space="preserve">
-    <value>Could not copy the camera metadata into the render - the video itself is fine, it just won't carry it</value>
+    <value>Unable to copy camera metadata to the output file. The video was saved correctly but does not contain this metadata.</value>
   </data>
   <data name="Render_EncoderCpu" xml:space="preserve">
     <value>Using encoder: {0} (no graphics card encoder - rendering on CPU)</value>
@@ -331,7 +331,7 @@
     <value>Moving the file index to the front (fast start)...</value>
   </data>
   <data name="Render_FastStartFailed" xml:space="preserve">
-    <value>Could not apply fast start to the render - the video itself is fine</value>
+    <value>Unable to move the index to the start of the file. The video was saved correctly.</value>
   </data>
   <data name="Render_FetchingOverview" xml:space="preserve">
     <value>Fetching route overview map...</value>
@@ -363,7 +363,7 @@
     <value>No telemetry samples found in the file(s)</value>
   </data>
   <data name="Render_NoTelemetry" xml:space="preserve">
-    <value>{0} has no telemetry - it isn't an original recording from a supported camera (e.g. a file exported from another app)</value>
+    <value>No telemetry was found in {0}. Select an original recording from a supported camera; files exported from other apps may no longer contain this data.</value>
   </data>
   <data name="Render_OutputExists" xml:space="preserve">
     <value>Output file already exists: {0}</value>
@@ -372,7 +372,7 @@
     <value>debug track</value>
   </data>
   <data name="Render_PartialNoTracks" xml:space="preserve">
-    <value>Partial render - the camera's telemetry/debug tracks aren't copied (they cover the whole recording)</value>
+    <value>When rendering part of a recording, camera telemetry and diagnostic tracks are omitted because they refer to the entire recording.</value>
   </data>
   <data name="Render_PartTelemetry" xml:space="preserve">
     <value>telemetry</value>

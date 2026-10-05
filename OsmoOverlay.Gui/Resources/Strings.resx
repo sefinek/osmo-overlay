@@ -61,7 +61,7 @@
     <value>Mute (M)</value>
   </data>
   <data name="Audio_NoSound" xml:space="preserve">
-    <value>No sound: this recording has no audio track, or there's no playback device</value>
+    <value>No sound: the recording has no audio track or the playback device is unavailable.</value>
   </data>
   <data name="AutoSave_Failed" xml:space="preserve">
     <value>Could not auto-save a backup: {0}</value>
@@ -79,13 +79,13 @@
     <value>This computer draws the preview's shadows with ease. Turn them back on?</value>
   </data>
   <data name="Benchmark_AdviceSkippedBusy" xml:space="preserve">
-    <value>Suggestions about decoding were left out because the computer was busy - with the GPU busy, decoding on the CPU would come out ahead only because of that.</value>
+    <value>Decoding recommendations were skipped because the computer was under load. GPU load could skew the comparison in favor of CPU decoding.</value>
   </data>
   <data name="Benchmark_AdviceSkippedSample" xml:space="preserve">
-    <value>Decoding on the GPU and the CPU wasn't compared: the generated sample decodes on the processor far more easily than a camera's recording. Load a recording and run the test again.</value>
+    <value>GPU and CPU decoding were not compared. The generated sample is much easier for the CPU to decode than camera footage. Load a recording and run the test again.</value>
   </data>
   <data name="Benchmark_AdviceSoftwareDecode" xml:space="preserve">
-    <value>Decoding on the CPU comes out {0}% faster on this computer. Turn off decoding on the GPU?</value>
+    <value>CPU decoding is {0}% faster on this computer. Disable GPU decoding?</value>
   </data>
   <data name="Benchmark_Applied" xml:space="preserve">
     <value>Applied</value>
@@ -97,7 +97,7 @@
     <value>{0}: {1} fps. A render won't be faster than this stage.</value>
   </data>
   <data name="Benchmark_BottleneckWithRender" xml:space="preserve">
-    <value>{0}: {1} fps. The short render reached {2} fps, {3}% of that - the stages sharing the CPU and GPU take the rest.</value>
+    <value>{0}: {1} fps. The short render reached {2} fps, or {3}% of this rate. During a full render, the stages share CPU and GPU resources, reducing performance.</value>
   </data>
   <data name="Benchmark_ColumnNotes" xml:space="preserve">
     <value>Notes</value>
@@ -133,7 +133,7 @@
     <value>Performance test (finished in {0} s)</value>
   </data>
   <data name="Benchmark_EncoderNote" xml:space="preserve">
-    <value>The encoder preset also affects the file's quality, so this is for information only - change it in Settings.</value>
+    <value>The encoder preset also affects image quality. These results compare performance; you can change the preset in Settings.</value>
   </data>
   <data name="Benchmark_Encoding" xml:space="preserve">
     <value>Encoding {0}</value>
@@ -177,7 +177,7 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>CPU {0}, GPU {1}</value>
   </data>
   <data name="Benchmark_LoadWarning" xml:space="preserve">
-    <value>The computer was busy before the test (CPU {0}, GPU {1}), so the results come out low. Close games and other programs and run the test again.</value>
+    <value>High system load was detected before the test (CPU {0}, GPU {1}), which may have reduced performance. Close demanding programs and run the test again.</value>
   </data>
   <data name="Benchmark_Memory" xml:space="preserve">
     <value>Memory</value>
@@ -201,10 +201,10 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>Your settings are already the fastest on this computer.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
-    <value>The test cuts a {0} s sample out of the loaded recording ({1}) and measures everything on it. The short render draws your preset along a sample route.</value>
+    <value>The test will prepare a {0}-second sample from the loaded recording ({1}) and use it for all measurements. The short render will apply your selected preset using sample route data.</value>
   </data>
   <data name="Benchmark_OnSynthetic" xml:space="preserve">
-    <value>No recording is loaded, so the test generates a 4K sample like an Osmo Action's. It decodes on the processor far more easily than real footage, so decoding on the GPU and the CPU won't be compared - for a full result, load a recording before the test.</value>
+    <value>No recording is loaded, so the test will generate a 4K sample with parameters similar to Osmo Action footage. The sample is easier for the CPU to decode than real footage, so the GPU and CPU decoding comparison will be skipped. Load a recording before the test to get complete results.</value>
   </data>
   <data name="Benchmark_Os" xml:space="preserve">
     <value>System</value>
@@ -321,7 +321,7 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>unstable</value>
   </data>
   <data name="Benchmark_UnstableWarning" xml:space="preserve">
-    <value>Some measurements' repeats differed by more than 10% - something in the background was taking resources. Treat the ones marked unstable with caution.</value>
+    <value>Results from repeated measurements differed by more than 10% in some tests. Background programs may have contributed to the variation. Treat results marked as unstable with caution.</value>
   </data>
   <data name="Benchmark_VideoValue" xml:space="preserve">
     <value>{0} {1}x{2}, {3} fps, {4}-bit, {5} Mbps</value>
@@ -603,7 +603,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Nothing selected yet.</value>
   </data>
   <data name="Cut_OverlapNote" xml:space="preserve">
-    <value>The preview doesn't show this blend - it plays the end of the earlier part, then skips past the start of the later one. The render includes the blend and is shorter by the transition's length.</value>
+    <value>The preview does not show the crossfade. It plays the end of the earlier section and skips the overlapping start of the next one. The rendered video includes the crossfade and is shorter by the transition duration.</value>
   </data>
   <data name="Cut_RemovesEverything" xml:space="preserve">
     <value>The cuts remove the whole recording - nothing would be left to render.</value>
@@ -636,7 +636,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>The selection starts with the frame on screen (I)</value>
   </data>
   <data name="Cut_TheTelemetryEitherSideOf" xml:space="preserve">
-    <value>The telemetry on either side of a cut ends up joined, so a plain line would cut straight across whatever the removed part went around. Applies to the compass trail, the map and the route intro.</value>
+    <value>After a section is removed, the adjacent route points may be far apart. Connecting them with a straight line would create a shortcut across the omitted section. This applies to the trail in the compass, map and route intro.</value>
   </data>
   <data name="Cut_To" xml:space="preserve">
     <value>To</value>
@@ -684,7 +684,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Done</value>
   </data>
   <data name="DependencyPrompt_ExifToolOptional" xml:space="preserve">
-    <value>ExifTool is optional. It helps read telemetry from cameras for which the app has no built-in decoder.</value>
+    <value>ExifTool is optional. It provides a fallback for reading telemetry when the built-in decoder cannot read the recording data.</value>
   </data>
   <data name="DependencyPrompt_Install" xml:space="preserve">
     <value>Install</value>
@@ -873,7 +873,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Save frame as PNG</value>
   </data>
   <data name="Fullscreen_NoticeText" xml:space="preserve">
-    <value>It's showing on {0}. Press Esc or F11 there, or use the button below, to bring it back here.</value>
+    <value>The preview is displayed on screen: {0}. To bring it back to this window, press Esc or F11 in the preview window, or use the button below.</value>
   </data>
   <data name="Fullscreen_SameScreen" xml:space="preserve">
     <value>{0} (the same screen as this window)</value>
@@ -920,7 +920,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Save it as a key moment</value>
   </data>
   <data name="KeyMoments_ThisRecordingHasNoTelemetry" xml:space="preserve">
-    <value>This recording has no telemetry to find a peak in.</value>
+    <value>The recording has no telemetry data to search for peak values.</value>
   </data>
   <data name="Layers_DefaultName" xml:space="preserve">
     <value>Layer {0}</value>
@@ -947,7 +947,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Speed chart</value>
   </data>
   <data name="Main_360ViewWhereTheFlat" xml:space="preserve">
-    <value>360 view - the direction the flat picture faces: turn, tilt, roll and field of view (change it with the globe above the preview)</value>
+    <value>The framing of the 360° recording: viewing direction, pitch, roll and field of view. Adjust them using the globe button above the preview.</value>
   </data>
   <data name="Main_AboveSeaLevel" xml:space="preserve">
     <value>Above sea level</value>
@@ -1034,7 +1034,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>CONTENT</value>
   </data>
   <data name="Main_CountedUpToTheMoment" xml:space="preserve">
-    <value>Counted up to the moment on screen. Moving time and the average leave out stops (under 3 km/h); climbs under 3 m are GPS altitude noise and don't count.</value>
+    <value>Statistics cover the recording up to the current frame. Moving time counts only speeds of at least 3 km/h, and average speed is the distance traveled divided by that time. Elevation changes under 3 m are excluded from total ascent and descent to reduce GPS noise.</value>
   </data>
   <data name="Main_CurrentFrameTheNumberOf" xml:space="preserve">
     <value>Current frame - the number of the frame at the cursor</value>
@@ -1064,7 +1064,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>DISPLAY</value>
   </data>
   <data name="Main_DisplayThePreviewSSize" xml:space="preserve">
-    <value>Display - the preview's size on screen and, while playing, how many frames per second reach it (yellow, then orange and red the further it falls below what the playback speed needs)</value>
+    <value>The preview size on screen and the number of frames displayed per second during playback. As the frame rate falls below what the selected playback speed requires, the value changes to yellow, orange or red.</value>
   </data>
   <data name="Main_Distance" xml:space="preserve">
     <value>Distance</value>
@@ -1076,7 +1076,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Drag to resize</value>
   </data>
   <data name="Main_DrawnAtItsOwnPixel" xml:space="preserve">
-    <value>Drawn at its native pixel size on a 4K frame (smaller at lower resolutions) - resize it with the handle. The file is linked, not copied, so keep it where it is.</value>
+    <value>On a 4K frame, the image uses its original pixel dimensions. It is scaled down at lower resolutions. Use the handle to resize it. The project references the file, so keep it in its current location.</value>
   </data>
   <data name="Main_Duplicate" xml:space="preserve">
     <value>Duplicate</value>
@@ -1130,7 +1130,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Frames</value>
   </data>
   <data name="Main_FrameThe360ViewDrag" xml:space="preserve">
-    <value>Frame the 360 view - drag the video to turn and tilt it, Shift+drag to roll it, use the mouse wheel to widen or narrow it, and double-click to reset. The render uses this view.</value>
+    <value>Frame the 360° recording: drag the image to change the viewing direction and pitch, or hold Shift while dragging to adjust roll. The mouse wheel changes the field of view, and a double-click restores the defaults. Rendering uses the same framing.</value>
   </data>
   <data name="Main_FullScaleRangeG" xml:space="preserve">
     <value>Full-scale range (G)</value>
@@ -1160,13 +1160,13 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Grid guides</value>
   </data>
   <data name="Main_HowCloseToTheTotal" xml:space="preserve">
-    <value>How close to the total distance counts as 'arrived' - without it, GPS jitter would never quite bring the remaining distance down to zero.</value>
+    <value>The remaining distance within which the route counts as complete. This tolerance prevents GPS position fluctuations from keeping the route from reaching completion.</value>
   </data>
   <data name="Main_HowFarOutTheMap" xml:space="preserve">
-    <value>How far the map may zoom out to keep the trail in view (higher = more area, further from the zoom level set above).</value>
+    <value>The maximum zoom-out relative to the selected zoom level. A higher value allows a wider area to keep the entire route trail visible.</value>
   </data>
   <data name="Main_HowManyGSPut" xml:space="preserve">
-    <value>How many G it takes to put the dot at the edge of the ring - lower for a gentle ride, higher for motorsport.</value>
+    <value>The G-force at which the dot reaches the edge of the ring. Choose a lower value for gentle riding or a higher one for motorsport.</value>
   </data>
   <data name="Main_HowMuchHigherOrLower" xml:space="preserve">
     <value>How much higher or lower than where the video starts</value>
@@ -1187,10 +1187,10 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Input file(s)</value>
   </data>
   <data name="Main_InTheGaugeSUnits" xml:space="preserve">
-    <value>In the gauge's units. Leave it empty to use the recording's top speed, rounded up to 10.</value>
+    <value>In the speedometer&apos;s units. Leave blank to use the recording&apos;s maximum speed, rounded up to the nearest multiple of 10.</value>
   </data>
   <data name="Main_KeepThe360ViewLevel" xml:space="preserve">
-    <value>Keep the 360 view level - the camera's accelerometer holds the horizon straight however the camera was tilted. When off, the view turns with the camera.</value>
+    <value>Keeps the horizon level in the 360° recording using accelerometer data. When disabled, the view tilts with the camera.</value>
   </data>
   <data name="Main_KeepTheMarkerInThe" xml:space="preserve">
     <value>Keep the marker in the center</value>
@@ -1460,7 +1460,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>STATISTIC</value>
   </data>
   <data name="Main_StopsTakeNoRoomThe" xml:space="preserve">
-    <value>Stops take no room - the classic elevation profile</value>
+    <value>Values plotted against distance. Stops do not extend the chart.</value>
   </data>
   <data name="Main_Style" xml:space="preserve">
     <value>STYLE</value>
@@ -1481,16 +1481,16 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>The altitude the camera's GPS reports</value>
   </data>
   <data name="Main_TheCameraSLeftRight" xml:space="preserve">
-    <value>The camera's left/right lean. With GPS, cornering forces are subtracted - a bike leaning into a turn shows its lean, while a car in a turn stays level.</value>
+    <value>The camera&apos;s sideways lean. If the recording contains GPS data, the measurement compensates for cornering forces. This shows a bike&apos;s lean into a turn without treating a car&apos;s cornering forces as sideways tilt.</value>
   </data>
   <data name="Main_TheCameraSNoseUp" xml:space="preserve">
-    <value>The camera's up/down tilt. With GPS, acceleration and braking are subtracted, so they don't show up as tilt.</value>
+    <value>The camera&apos;s upward or downward tilt. If the recording contains GPS data, the measurement compensates for acceleration and braking so these forces are not mistaken for tilt.</value>
   </data>
   <data name="Main_TheEarlierDefaultLookFour" xml:space="preserve">
-    <value>The earlier default look - four colored bands and a thin needle. Kept for presets that use it.</value>
+    <value>The previous default style: four colored bands and a thin needle. Retained for presets that still use it.</value>
   </data>
   <data name="Main_TheMarkerStaysInThe" xml:space="preserve">
-    <value>The marker stays in the middle and the trail moves around it, instead of the marker moving along the whole route.</value>
+    <value>The position marker stays centered while the route trail moves around it.</value>
   </data>
   <data name="Main_Theme" xml:space="preserve">
     <value>THEME</value>
@@ -1499,7 +1499,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>The preview is full screen</value>
   </data>
   <data name="Main_TheWholeRecordingSProfile" xml:space="preserve">
-    <value>The whole recording's profile - the part already covered is highlighted and the marker follows the video.</value>
+    <value>Elevation or speed plotted for the entire recording. The traveled section is highlighted, and the marker indicates the current position in the video.</value>
   </data>
   <data name="Main_ThirdsMargin" xml:space="preserve">
     <value>Thirds + margin</value>
@@ -1511,7 +1511,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Time</value>
   </data>
   <data name="Main_TimeFormatMinutesAndSeconds" xml:space="preserve">
-    <value>Time format - minutes and seconds, with milliseconds, or timecode. Clicking the time readout also switches it.</value>
+    <value>Choose minutes and seconds, milliseconds, or timecode. Camera timecode is also available. Clicking the time display switches formats.</value>
   </data>
   <data name="Main_TimelineWithThumbnailsAndAudio" xml:space="preserve">
     <value>Timeline with thumbnails and audio waveform, instead of the log</value>
@@ -1585,13 +1585,13 @@ If you cancel, the app will not remind you about this version again. You can fin
     <value>ZOOM &amp; FRAMING</value>
   </data>
   <data name="Main_ZoomsOutAsTheDriven" xml:space="preserve">
-    <value>Zooms out as the driven trail grows, so it stays fully in view. When off, the map keeps a fixed zoom and the trail may get cut off at the edge.</value>
+    <value>Automatically zooms out to keep the entire traveled route visible. When disabled, the zoom level stays fixed and the trail may extend beyond the map edges.</value>
   </data>
   <data name="MapCredit_Hint" xml:space="preserve">
-    <value>The credit's text comes from the maps on screen at the moment. You can move it and change its look.</value>
+    <value>The attribution text matches the map currently displayed. You can change its position and appearance.</value>
   </data>
   <data name="MapCredit_Locked" xml:space="preserve">
-    <value>The terms of the map on screen require its credit the whole time it's shown. The app shows it then by itself, so its appear time and hiding can't be set here.</value>
+    <value>The map provider requires attribution to remain visible while the map is displayed. The app shows it automatically, so you cannot set when it appears or disappears.</value>
   </data>
   <data name="MapSource_ApiKey" xml:space="preserve">
     <value>API key</value>
@@ -1956,7 +1956,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Second screen closed.</value>
   </data>
   <data name="SecondScreen_NoMonitor" xml:space="preserve">
-    <value>Second screen: there's no other monitor connected - choose one in Settings &gt; Behavior.</value>
+    <value>No monitor was found for the second screen. Connect another monitor and check the selection in Settings &gt; Behavior.</value>
   </data>
   <data name="SecondScreen_NoticeText" xml:space="preserve">
     <value>The preview is playing on screen: {0}. It will return to this window when you pause playback.</value>
@@ -1971,7 +1971,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>OsmoOverlay second screen</value>
   </data>
   <data name="Settings_ABackupOfTheOpen" xml:space="preserve">
-    <value>A backup of the open project in the app's data folder - the project's own file changes only on Save.</value>
+    <value>Saves a backup of the open project in the app data folder. The original project file is updated only when you save it manually.</value>
   </data>
   <data name="Settings_About" xml:space="preserve">
     <value>About</value>
@@ -1980,10 +1980,10 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Correction increases speed readings on the overlay in the preview and render. Calculate it from two readings or check it on a recording. The setting applies to all recordings and is saved when you close this window.</value>
   </data>
   <data name="Settings_AFullscreenCardForThe" xml:space="preserve">
-    <value>A fullscreen card for the first seconds of the render: the whole route on a map and the trip stats. Needs a GPS fix and network access for the map.</value>
+    <value>Displays a full-screen card at the start of the video with a map of the entire route and trip statistics. Requires GPS data and an internet connection to download the map.</value>
   </data>
   <data name="Settings_AFullScreenWindowThere" xml:space="preserve">
-    <value>A full screen window on that monitor: the log while nothing is playing, the preview during playback. Esc or F9 closes it.</value>
+    <value>Opens a full-screen window on the selected monitor. It shows the preview during playback and the log otherwise. Press Esc or F9 to close it.</value>
   </data>
   <data name="Settings_AppliesRightAwayAFew" xml:space="preserve">
     <value>Applies right away; a few glows and gradients update when their window is reopened.</value>
@@ -2028,7 +2028,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>After {0} days (default)</value>
   </data>
   <data name="Settings_CacheCleanupHint" xml:space="preserve">
-    <value>Recording analyses and audio waveforms not used for the chosen time are deleted at startup. Opening such a recording again recomputes them.</value>
+    <value>At startup, deletes recording analyses and audio waveforms that have not been used for the selected period. They will be regenerated when you reopen the recording.</value>
   </data>
   <data name="Settings_CacheCleanupNever" xml:space="preserve">
     <value>Never</value>
@@ -2070,7 +2070,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Checking for a new version...</value>
   </data>
   <data name="Settings_ClosingEndsARunningRender" xml:space="preserve">
-    <value>Closing ends a running render and leaves a partial file.</value>
+    <value>Closing the app stops rendering. The output file may be left incomplete.</value>
   </data>
   <data name="Settings_CodecSameAsSource" xml:space="preserve">
     <value>Same as source (default)</value>
@@ -2088,7 +2088,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Configuration</value>
   </data>
   <data name="Settings_CopiesWhatTheCameraRecorded" xml:space="preserve">
-    <value>Copies what the camera recorded alongside the video into the render, so DJI Mimo, exiftool or this app can still read it. Pick below what to keep.</value>
+    <value>Copies camera metadata to the output file so DJI Mimo, ExifTool and OsmoOverlay can still read it. Select the data you want to keep below.</value>
   </data>
   <data name="Settings_CoreVersion" xml:space="preserve">
     <value>Core v{0}</value>
@@ -2106,7 +2106,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>DEPENDENCIES</value>
   </data>
   <data name="Settings_DjiSInternalSensorDiagnostics" xml:space="preserve">
-    <value>DJI's internal sensor diagnostics (~1.7 Mbps). No location in it, and no common tool reads it.</value>
+    <value>Internal diagnostic data from DJI sensors (~1.7 Mbps). It contains no GPS positions and is not read by common tools.</value>
   </data>
   <data name="Settings_DownloadFromGitHub" xml:space="preserve">
     <value>Download from GitHub</value>
@@ -2118,7 +2118,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Duration (seconds)</value>
   </data>
   <data name="Settings_EffortPerFrameAtThe" xml:space="preserve">
-    <value>How much effort the encoder puts into each frame at the same bitrate. P7 looks best (default); lower presets are faster. On AMD cards P6-P7 is the quality mode and P3-P5 balanced. Graphics card encoders only - the CPU encoder has its own settings.</value>
+    <value>Controls encoder effort at the same bitrate. The default P7 preset gives the best quality, while lower presets encode faster. On AMD cards, P6-P7 use quality mode and P3-P5 use balanced mode. Applies only to GPU encoders; the CPU encoder has separate settings.</value>
   </data>
   <data name="Settings_ElevationGain" xml:space="preserve">
     <value>Elevation gain</value>
@@ -2127,7 +2127,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Encoder preset (GPU)</value>
   </data>
   <data name="Settings_EverythingBelowAppliesOnlyWhile" xml:space="preserve">
-    <value>Everything below applies only while this is on.</value>
+    <value>The settings below apply only when this option is enabled.</value>
   </data>
   <data name="Settings_FastStartForWebPlayback" xml:space="preserve">
     <value>Fast start for web playback</value>
@@ -2142,16 +2142,16 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Full screen preview</value>
   </data>
   <data name="Settings_GreenWhenSlowThroughYellow" xml:space="preserve">
-    <value>Green at low speed, through yellow and orange to red at top speed.</value>
+    <value>The color changes from green at low speed, through yellow and orange, to red at maximum speed.</value>
   </data>
   <data name="Settings_HigherMakesABiggerFile" xml:space="preserve">
-    <value>Higher means a bigger file, but thin HUD text stays crisper after YouTube and similar sites re-compress it.</value>
+    <value>A higher bitrate increases file size but helps preserve small overlay text after recompression by YouTube and similar services.</value>
   </data>
   <data name="Settings_HowTheAppLooksAnd" xml:space="preserve">
     <value>Appearance and language.</value>
   </data>
   <data name="Settings_IdentifiesYourCameraNothingThat" xml:space="preserve">
-    <value>Identifies your camera; nothing that reads the telemetry needs it. When off, it's removed from the file entirely.</value>
+    <value>The serial number identifies your camera but is not needed to read telemetry. When this option is disabled, it is removed entirely from the output file.</value>
   </data>
   <data name="Settings_Interface" xml:space="preserve">
     <value>Interface</value>
@@ -2178,7 +2178,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>thumbnails</value>
   </data>
   <data name="Settings_LanguageHint" xml:space="preserve">
-    <value>Needs a restart - with no file loaded, the app restarts when you close Settings.</value>
+    <value>Changing the language requires an app restart. If no recording is loaded, the app will restart when you close Settings.</value>
   </data>
   <data name="Settings_LanguageSystem" xml:space="preserve">
     <value>System ({0})</value>
@@ -2199,7 +2199,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Loops the In/Out selection, or the whole recording. The Loop button (Q) toggles it at any time.</value>
   </data>
   <data name="Settings_MadeWithOsmoOverlayAndThe" xml:space="preserve">
-    <value>'Made with OsmoOverlay' and the project link at the bottom for the first few seconds, then it fades out.</value>
+    <value>Shows &apos;Made with OsmoOverlay&apos; and the project link at the bottom of the video for the first few seconds, then fades them out.</value>
   </data>
   <data name="Settings_Map" xml:space="preserve">
     <value>MAP</value>
@@ -2223,7 +2223,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>P7 - best quality (default)</value>
   </data>
   <data name="Settings_OnTopOfTheSystem" xml:space="preserve">
-    <value>Applied on top of the system's display scaling. Needs a restart - with no file loaded, the app restarts when you close Settings.</value>
+    <value>Additional interface scaling applied on top of the system display scaling. Changing it requires an app restart. If no recording is loaded, the app will restart when you close Settings.</value>
   </data>
   <data name="Settings_Open" xml:space="preserve">
     <value>Open...</value>
@@ -2241,13 +2241,13 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Codec</value>
   </data>
   <data name="Settings_OutputCodecHint" xml:space="preserve">
-    <value>H.264 plays everywhere, older phones and editors included, but needs more bitrate for the same quality, so it gets half as much again. H.264 is always 8-bit.</value>
+    <value>H.264 is supported by most players and editors, including older devices. It needs a higher bitrate than HEVC for similar quality, so the app increases the bitrate by 50% when switching to H.264. H.264 output in this app is always 8-bit.</value>
   </data>
   <data name="Settings_OutputEightBit" xml:space="preserve">
     <value>Write 8-bit video</value>
   </data>
   <data name="Settings_OutputEightBitHint" xml:space="preserve">
-    <value>10-bit video doesn't play everywhere. 8-bit plays almost anywhere, at the cost of possible banding in smooth gradients such as the sky. Doesn't apply to 8-bit recordings.</value>
+    <value>8-bit output is supported by more devices than 10-bit video, but it may introduce visible bands in smooth color gradients, such as the sky. This option does not change recordings that are already 8-bit.</value>
   </data>
   <data name="Settings_OutputQuality" xml:space="preserve">
     <value>OUTPUT QUALITY</value>
@@ -2256,7 +2256,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Resolution</value>
   </data>
   <data name="Settings_OutputResolutionHint" xml:space="preserve">
-    <value>Smaller is handy for sharing: the render goes faster, and the bitrate shrinks with the pixel count. A recording is never upscaled.</value>
+    <value>A lower resolution makes the video easier to share: rendering is faster and the bitrate decreases with the pixel count. The recording is never upscaled beyond its source resolution.</value>
   </data>
   <data name="Settings_PlaybackAndMonitors" xml:space="preserve">
     <value>PLAYBACK AND MONITORS</value>
@@ -2265,7 +2265,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Shadows in the preview</value>
   </data>
   <data name="Settings_PreviewShadowsHint" xml:space="preserve">
-    <value>Turn off on a slower computer: the widgets' shadows take most of the overlay's drawing time, and without them the preview plays more smoothly. A render and a frame snapshot have them unless all of them are turned off above.</value>
+    <value>Disabling shadows can make the preview smoother on a slower computer, as drawing them accounts for much of the overlay rendering time. Shadows remain in rendered videos and saved frames unless you disable them entirely using the option above.</value>
   </data>
   <data name="Settings_Privacy" xml:space="preserve">
     <value>PRIVACY</value>
@@ -2280,7 +2280,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>PROJECTS</value>
   </data>
   <data name="Settings_PutsTheIndexFirstSo" xml:space="preserve">
-    <value>Moves the index to the start of the file, so a browser or messenger can start playing it before it's fully downloaded. Same picture; the extra pass takes a few seconds per GB.</value>
+    <value>Moves the index to the start of the file so playback in a browser or messaging app can begin before the entire video is downloaded. The image remains unchanged. This extra step takes a few seconds per GB.</value>
   </data>
   <data name="Settings_ReadTheLicense" xml:space="preserve">
     <value>Read the license</value>
@@ -2313,7 +2313,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Second screen (F9)</value>
   </data>
   <data name="Settings_SeveralTimesFasterIdenticalFrames" xml:space="preserve">
-    <value>Several times faster, with identical frames. Turn it off only if renders fail after a driver update or on an unusual GPU.</value>
+    <value>Speeds up frame processing without changing the image. Disable this option if rendering fails after a driver update or on an unusual graphics card.</value>
   </data>
   <data name="Settings_ShowTheRouteOverviewAt" xml:space="preserve">
     <value>Show the route overview at the start</value>
@@ -2343,7 +2343,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Theme</value>
   </data>
   <data name="Settings_TheMonitorF11OpensThe" xml:space="preserve">
-    <value>The monitor F11 opens the preview on. Esc leaves it.</value>
+    <value>The monitor used for full-screen preview when you press F11. Press Esc to return to the main window.</value>
   </data>
   <data name="Settings_TheProjectLastSavedOr" xml:space="preserve">
     <value>The project you last saved or opened. A project you start the app with (by double-clicking it) takes priority.</value>
@@ -2355,7 +2355,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Time format</value>
   </data>
   <data name="Settings_TimeFormatCameraTimecodeHint" xml:space="preserve">
-    <value>The time shown next to the timeline as the timecode the camera wrote - the one an NLE shows as the clip's own, e.g. 09:59:56;00. A recording without one counts from 00:00:00:00.</value>
+    <value>Displays the camera timecode next to the timeline, for example 09:59:56;00. This is the same timecode used for the clip in a video editor. If the recording has no timecode, counting starts at 00:00:00:00.</value>
   </data>
   <data name="Settings_TimeFormatMillisecondsHint" xml:space="preserve">
     <value>The time shown next to the timeline, e.g. 01:23.456 - the format the cut editor uses.</value>
@@ -2364,7 +2364,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>The time shown next to the timeline, e.g. 01:23. Clicking it switches between the formats.</value>
   </data>
   <data name="Settings_TimeFormatTimecodeHint" xml:space="preserve">
-    <value>The time shown next to the timeline as hours:minutes:seconds:frames from 00:00:00:00, e.g. 00:01:23:12 - with drop-frame (;) at 29.97 and 59.94 fps, the way an NLE numbers its timeline.</value>
+    <value>Displays time next to the timeline as hours:minutes:seconds:frames, starting at 00:00:00:00, for example 00:01:23:12. At 29.97 and 59.94 fps, it uses drop-frame numbering with a semicolon, as video editors do.</value>
   </data>
   <data name="Settings_UpdateCheckFailed" xml:space="preserve">
     <value>Could not check for a new version.</value>
@@ -2388,7 +2388,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Welcome guide</value>
   </data>
   <data name="Settings_WhatDjiMimoAndThis" xml:space="preserve">
-    <value>The data DJI Mimo and this app read the ride from. It includes your exact position in every frame.</value>
+    <value>Telemetry data read by DJI Mimo and OsmoOverlay. It includes a detailed record of GPS positions during the recording.</value>
   </data>
   <data name="Settings_WhatToKeep" xml:space="preserve">
     <value>What to keep: {0}</value>
@@ -2433,13 +2433,13 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Differs from the source file.</value>
   </data>
   <data name="Summary_EstimateTip" xml:space="preserve">
-    <value>Based on your last render at this resolution/frame rate with {0}: {1:0.#} fps ({2:0.00}x realtime). Map tiles, settings or the footage itself can shift it a bit.</value>
+    <value>Estimated from the last render at the same resolution and frame rate with encoder {0}: {1:0.#} fps ({2:0.00}x real-time speed). Map tile downloads, settings and source footage also affect performance.</value>
   </data>
   <data name="Summary_EstimateUnknown" xml:space="preserve">
     <value>known after the first render</value>
   </data>
   <data name="Summary_EstimateUnknownTip" xml:space="preserve">
-    <value>Render speed depends on this machine, the GPU and the footage - it's measured during the first full render and used for the estimate from then on.</value>
+    <value>Rendering speed depends on the computer, graphics card and source footage. The app measures it during the first full render and uses the result for future estimates.</value>
   </data>
   <data name="Summary_LimitedSupportTitle" xml:space="preserve">
     <value>Limited {0} support</value>
@@ -2490,7 +2490,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Extracting telemetry...</value>
   </data>
   <data name="Summary_LogGpsLost" xml:space="preserve">
-    <value>GPS signal lost: {0} range, {1:0.0}s total (shown as amber marks under the preview timeline)|GPS signal lost: {0} ranges, {1:0.0}s total (shown as amber marks under the preview timeline)</value>
+    <value>GPS signal lost: {0} gap, {1:0.0} s in total. The gap is marked in amber below the preview timeline.|GPS signal lost: {0} gaps, {1:0.0} s in total. The gaps are marked in amber below the preview timeline.</value>
   </data>
   <data name="Summary_LogGpsNoLoss" xml:space="preserve">
     <value>GPS signal: no loss detected</value>
@@ -2499,7 +2499,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>GPS time shifted by {0} h: the camera wrote it in the wrong time zone, so it was matched to the camera's clock</value>
   </data>
   <data name="Summary_LogGpsSpeed" xml:space="preserve">
-    <value>GPS-measured speed: {0}/{1} frames (the receiver's own velocity); the other {2} fall back to derived speed</value>
+    <value>Speed measured by the GPS receiver is available for {0}/{1} frames. For the remaining {2} frames, speed was calculated from position changes.</value>
   </data>
   <data name="Summary_LogGpsSpeedNone" xml:space="preserve">
     <value>GPS-measured speed: not available for this file - using derived speed for all frames</value>
@@ -2617,10 +2617,10 @@ Select the original file from the camera&apos;s memory card ({0}). Recordings ex
     <value>bt709 / bt709 / bt709 (tv range)</value>
   </data>
   <data name="Summary_RecommendedNot" xml:space="preserve">
-    <value>This isn't the recommended setting for your camera - recommended: {0}.</value>
+    <value>This setting is not recommended for your camera. Recommended value: {0}.</value>
   </data>
   <data name="Summary_RecommendedOk" xml:space="preserve">
-    <value>Great - this is the recommended setting for your camera ({0}).</value>
+    <value>Recommended setting for your camera ({0}).</value>
   </data>
   <data name="Summary_TelemetryDetected" xml:space="preserve">
     <value>Detected</value>
@@ -2797,7 +2797,7 @@ To synchronize the audio, place it at the same position on the timeline as the m
     <value>Converting {0}/{1}...</value>
   </data>
   <data name="Tools_DeletesTheCachedFileAnalysis" xml:space="preserve">
-    <value>Deletes the cached file analysis (telemetry, video info) for every file, so the next 'Get Summary' recomputes everything from scratch instead of reusing a stored result.</value>
+    <value>Deletes cached analyses of all recordings, including telemetry and video information. The next time you use Get Summary, the recording will be analyzed again.</value>
   </data>
   <data name="Tools_Fix" xml:space="preserve">
     <value>Fix</value>
@@ -2916,7 +2916,7 @@ Replace them with the new files?</value>
     <value>Save the cleaned copy as</value>
   </data>
   <data name="Tools_SavesACopySafeTo" xml:space="preserve">
-    <value>Saves a copy safe to share: removes the GPS/telemetry track, camera serial number, recording date, timecode and thumbnail. Picture, sound, color profile and rotation stay untouched (lossless stream copy).</value>
+    <value>Saves a copy without the GPS track, telemetry, camera serial number, recording date, timecode or thumbnail. Video and audio are copied without re-encoding. The color profile and image orientation remain unchanged.</value>
   </data>
   <data name="Tools_SelectFile" xml:space="preserve">
     <value>Select file...</value>
@@ -2936,13 +2936,13 @@ Details: {0}</value>
     <value>To WAV...</value>
   </data>
   <data name="Tools_VegasProSMp4Export" xml:space="preserve">
-    <value>Vegas Pro's MP4 export can leave the color space (Rec.709) untagged even when the project is set correctly, which makes some players guess the wrong color matrix. This rewrites the tag with a lossless stream copy - no re-encode.</value>
+    <value>Vegas Pro may export an MP4 without Rec.709 color tags even when the project settings are correct. Some players may then display colors incorrectly. This tool adds the missing tags without re-encoding video or audio.</value>
   </data>
   <data name="Tools_VideoAudio" xml:space="preserve">
     <value>VIDEO &amp; AUDIO</value>
   </data>
   <data name="Tools_WithAnExternalMicConnected" xml:space="preserve">
-    <value>With an external mic connected, the camera saves its built-in microphones' audio as a separate .AAC file that Vegas Pro and Audacity can't open. This converts it without any quality loss (verified sample by sample) and saves it next to the original. WAV works everywhere; M4A keeps the original AAC data and is 10x smaller.</value>
+    <value>When an external microphone is connected, the camera saves audio from its built-in microphones in a separate .AAC file. Vegas Pro and Audacity may not open it directly. This tool saves a WAV or M4A copy next to the original and verifies that the audio samples match. WAV is widely supported by audio editors. M4A preserves the original AAC data and takes much less space than WAV.</value>
   </data>
   <data name="TrailStyle_ColorBySpeed" xml:space="preserve">
     <value>Color by speed</value>
@@ -2975,7 +2975,7 @@ Details: {0}</value>
     <value>Dependency updates available: {0} - see Settings &gt; About</value>
   </data>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
-    <value>360° .insv recordings (tested on the X4) become a flat view you can frame freely. GPS isn't read from them yet.</value>
+    <value>360° recordings in .insv format are displayed as a standard frame with adjustable viewing direction and field of view. Support has been tested on the X4. The app does not yet read GPS data from these files.</value>
   </data>
   <data name="Welcome_AFewQuickStepsGet" xml:space="preserve">
     <value>A few quick steps before your first render: supported cameras, tools, speed calibration and where videos are saved.</value>
@@ -2990,7 +2990,7 @@ Details: {0}</value>
     <value>{0} - 10-bit HEVC recordings decoded on the graphics card.</value>
   </data>
   <data name="Welcome_CheckDecoderWarning" xml:space="preserve">
-    <value>The card doesn't decode 10-bit HEVC - recordings will be decoded on the processor, more slowly.</value>
+    <value>The graphics card does not support 10-bit HEVC decoding. Recordings will be decoded on the CPU, which may reduce performance.</value>
   </data>
   <data name="Welcome_CheckDisk" xml:space="preserve">
     <value>Disk space</value>
@@ -3002,7 +3002,7 @@ Details: {0}</value>
     <value>{0} free in {1}</value>
   </data>
   <data name="Welcome_CheckDiskWarning" xml:space="preserve">
-    <value>An hour of 4K recording is about {0}, and a render needs as much again while it's written.</value>
+    <value>An hour of 4K footage takes about {0}. Saving the rendered video may temporarily require twice that amount of free space.</value>
   </data>
   <data name="Welcome_CheckEncoder" xml:space="preserve">
     <value>Hardware encoding</value>
@@ -3011,7 +3011,7 @@ Details: {0}</value>
     <value>{0} - 4K 10-bit video encoded on the graphics card.</value>
   </data>
   <data name="Welcome_CheckEncoderWarning" xml:space="preserve">
-    <value>No graphics card encoder (NVENC, AMF, Quick Sync) - a render will be encoded on the processor ({0}), several times slower.</value>
+    <value>No GPU encoder was found (NVENC, AMF or Quick Sync). Video will be encoded on the CPU ({0}), which may significantly increase rendering time.</value>
   </data>
   <data name="Welcome_CheckMemory" xml:space="preserve">
     <value>Memory</value>
@@ -3095,7 +3095,7 @@ Details: {0}</value>
     <value>Installing...</value>
   </data>
   <data name="Welcome_InstallingHint" xml:space="preserve">
-    <value>Installing {0}. This can take a minute - the main window's log shows the progress.</value>
+    <value>Installing {0}. This may take about a minute. Progress is shown in the main window log.</value>
   </data>
   <data name="Welcome_InstallingTool" xml:space="preserve">
     <value>Installing {0}...</value>
@@ -3124,7 +3124,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>OsmoOverlay reads the telemetry your camera saves inside every recording - no extra files needed.</value>
   </data>
   <data name="Welcome_OsmoOverlayRendersWithFFmpegExifTool" xml:space="preserve">
-    <value>OsmoOverlay renders with FFmpeg. ExifTool is optional and only used for cameras whose telemetry it can't read on its own.</value>
+    <value>OsmoOverlay uses FFmpeg for rendering. The optional ExifTool provides a fallback for reading telemetry when the built-in decoder cannot read the recording data.</value>
   </data>
   <data name="Welcome_OtherWays" xml:space="preserve">
     <value>Other ways:</value>
@@ -3228,7 +3228,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Show the OsmoOverlay watermark</value>
   </data>
   <data name="Welcome_SmoothGpsHint" xml:space="preserve">
-    <value>GPS gives only a few positions per second, so without smoothing the compass trail and the map move in jumps. This fills in the motion between them.</value>
+    <value>GPS records only a few positions per second, so the compass trail and map may move in jumps. Smoothing provides continuous movement between consecutive positions.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
     <value>If GPS consistently reads too low while driving at a steady speed, you can increase speeds on the overlay by a chosen percentage. Calculate the correction from two readings or enter it manually. If you do not need calibration, leave it at 0%.</value>
@@ -3279,7 +3279,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>This is what will be saved:</value>
   </data>
   <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
-    <value>Use the original files from the card - a copy exported from DJI Mimo loses the telemetry. To get speed, route and map, record with the DJI GPS Bluetooth Remote (or your phone's GPS through DJI Mimo) and wait for a satellite fix before you start.</value>
+    <value>Select the original files from the memory card. Recordings exported from DJI Mimo may no longer contain telemetry. For speed, route and map widgets, record with the DJI GPS Bluetooth Remote or your phone&apos;s GPS through DJI Mimo. Wait for the receiver to acquire a position before recording.</value>
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Version {0}</value>
@@ -3318,7 +3318,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Finish caption</value>
   </data>
   <data name="Settings_RouteIntroStatsHint" xml:space="preserve">
-    <value>Next to each stat you can type its own caption on the film, in your language for one. A blank field keeps the default caption.</value>
+    <value>You can enter a custom caption for each statistic shown in the video, for example in another language. Leave the field blank to use the default caption.</value>
   </data>
   <data name="Settings_HighestPoint" xml:space="preserve">
     <value>Highest point</value>
@@ -3336,7 +3336,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Show only from a speed of (km/h)</value>
   </data>
   <data name="Main_TripProgressSpeedGateHint" xml:space="preserve">
-    <value>The bar appears when the speed first reaches this value, that is when the ride really starts. That moment takes the place of the appear time, so its field is locked then.</value>
+    <value>The bar appears when the speed first reaches the selected threshold. This replaces the manually set appearance time, so the time field is disabled.</value>
   </data>
   <data name="KeyMoments_MovingOnly" xml:space="preserve">
     <value>G-force and lean only while riding</value>
