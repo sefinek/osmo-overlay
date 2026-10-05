@@ -19,12 +19,13 @@ internal static class AppSound
 	private static readonly Dictionary<UiSound, float[]> Samples = [];
 	private static AudioOutput? _output;
 	private static bool _unavailable;
+	private static DateTime _retryAfterUtc;
 
 	public static void Play(UiSound sound)
 	{
 		lock (Gate)
 		{
-			if (_unavailable) return;
+			if (_unavailable || DateTime.UtcNow < _retryAfterUtc) return;
 
 			try
 			{
@@ -37,7 +38,7 @@ internal static class AppSound
 				_output ??= AudioOutput.TryOpen(48000, 2);
 				if (_output is null)
 				{
-					_unavailable = true;
+					_retryAfterUtc = DateTime.UtcNow.AddSeconds(5);
 					return;
 				}
 

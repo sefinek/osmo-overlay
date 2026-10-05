@@ -125,7 +125,7 @@ public partial class ConfirmDialog : Window
 			(_, DialogKind.Danger) => DangerArt,
 			_ => null
 		};
-		if (art is null) return;
+		if (art is null || art is Image { Source: null }) return;
 
 		art.IsVisible = true;
 		KindArt.IsVisible = true;

@@ -60,6 +60,9 @@
   <data name="Audio_Mute" xml:space="preserve">
     <value>Mute (M)</value>
   </data>
+  <data name="Assets_LoadFailed" xml:space="preserve">
+    <value>Unable to load the interface image: {0}</value>
+  </data>
   <data name="Audio_NoSound" xml:space="preserve">
     <value>No sound: the recording has no audio track or the playback device is unavailable.</value>
   </data>

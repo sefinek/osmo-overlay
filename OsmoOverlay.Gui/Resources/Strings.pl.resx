@@ -60,6 +60,9 @@
   <data name="Audio_Mute" xml:space="preserve">
     <value>Wycisz (M)</value>
   </data>
+  <data name="Assets_LoadFailed" xml:space="preserve">
+    <value>Nie udało się wczytać grafiki interfejsu: {0}</value>
+  </data>
   <data name="Audio_NoSound" xml:space="preserve">
     <value>Brak dźwięku: nagranie nie zawiera ścieżki audio lub urządzenie odtwarzające jest niedostępne.</value>
   </data>
