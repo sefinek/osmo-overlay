@@ -73,7 +73,7 @@
     <value>Na tym komputerze dekodowanie na GPU wypada o {0}% szybciej. Włączyć je?</value>
   </data>
   <data name="Benchmark_AdvicePreviewShadowsOff" xml:space="preserve">
-    <value>Cienie zajmują podglądowi za dużo czasu na każdą klatkę - bez nich nakładka rysuje się {0}x szybciej. Wyłączyć cienie w podglądzie? Render nadal będzie je miał.</value>
+    <value>Rysowanie cieni spowalnia podgląd. Bez nich nakładka jest rysowana {0}x szybciej. Wyłączyć cienie w podglądzie? W renderze pozostaną włączone.</value>
   </data>
   <data name="Benchmark_AdvicePreviewShadowsOn" xml:space="preserve">
     <value>Ten komputer bez trudu rysuje cienie w podglądzie. Włączyć je z powrotem?</value>
@@ -163,7 +163,9 @@
     <value>używane teraz</value>
   </data>
   <data name="Benchmark_Intro" xml:space="preserve">
-    <value>Sprawdza każdy etap renderu na tym komputerze: dekodowanie na GPU i na CPU, rysowanie nakładki z cieniami i bez, przesył klatek do ffmpeg, kodowanie, ffmpeg w całości oraz krótki prawdziwy render. Każdy pomiar jest powtarzany na zmianę z porównywanym, a wynikiem jest mediana razem z zakresem powtórzeń. Na koniec test wskazuje najwolniejszy etap i podpowiada, które ustawienia będą tu szybsze. Trwa 2-3 minuty - na ten czas zamknij gry i inne programy mocno używające CPU lub GPU.</value>
+    <value>Test porównuje dekodowanie na GPU i CPU, rysowanie nakładki z cieniami i bez oraz przesył klatek i kodowanie w FFmpeg. Sprawdza też cały proces FFmpeg i wykonuje krótki render. Wskazuje najwolniejszy etap i proponuje szybsze ustawienia.
+
+Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują medianę i zakres pomiarów. Test trwa 2-3 minuty. Na ten czas zamknij gry i inne programy mocno obciążające CPU lub GPU.</value>
   </data>
   <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
     <value>co najmniej tyle - czekało na dekodowanie</value>
@@ -331,19 +333,19 @@
     <value>bez cieni {0} ms</value>
   </data>
   <data name="Calibration_Example" xml:space="preserve">
-    <value>Przykład: twoja hulajnoga ma ograniczenie do 25 km/h, a GPS przy pełnej prędkości pokazuje zwykle około 22 km/h - wpisz 25 i 22.</value>
+    <value>Przykład: licznik samochodu pokazuje 50 km/h, a GPS 46 km/h. Wpisz 50 i 46.</value>
   </data>
   <data name="Calibration_NoneNeeded" xml:space="preserve">
-    <value>GPS pokazuje już tyle lub więcej - korekta nie jest potrzebna.</value>
+    <value>Odczyt GPS jest równy prędkości odniesienia lub wyższy. Pozostaw korektę 0%.</value>
   </data>
   <data name="Calibration_Off" xml:space="preserve">
-    <value>Wyłączona - prędkości są pokazywane dokładnie tak, jak zmierzył je GPS.</value>
+    <value>Korekta wyłączona. Nakładka pokazuje prędkość z GPS bez zwiększania odczytu.</value>
   </data>
   <data name="Calibration_Raised" xml:space="preserve">
-    <value>Każda prędkość jest zwiększana o {0:0.0}% - zmierzone 20 km/h pokaże się jako {1:0.0} km/h. Dystans, trasa i przechył się nie zmieniają.</value>
+    <value>Korekta zwiększa prędkości na nakładce o {0:0.0}%. Odczyt GPS 46 km/h będzie pokazany jako {1:0.0} km/h. Dystans, trasa i przechył pozostają bez zmian.</value>
   </data>
   <data name="Calibration_Result" xml:space="preserve">
-    <value>Przy korekcie {0:0.0}% zmierzone {1:0.##} zmienia się w {2:0.##}, więc widżet pokaże {3:0}. Wynik jest zaokrąglany w dół do 0,1%, żeby nigdy nie przekroczyć prawdziwej prędkości.</value>
+    <value>Obliczona korekta: {0:0.0}%. Odczyt GPS {1:0.##} km/h po korekcie: {2:0.##} km/h.</value>
   </data>
   <data name="Calibration_Set" xml:space="preserve">
     <value>Ustawiono korektę {0:0.0}%. Zapisze się razem z pozostałymi ustawieniami.</value>
@@ -352,7 +354,7 @@
     <value>Użyj {0:0.0}%</value>
   </data>
   <data name="Calibration_UseRecording" xml:space="preserve">
-    <value>Przywróć prędkość z wczytanego nagrania ({0:0.##} km/h)</value>
+    <value>Przywróć odczyt GPS: {0:0.##} km/h</value>
   </data>
   <data name="Close_CloseAndCancel" xml:space="preserve">
     <value>Zamknij i przerwij</value>
@@ -580,7 +582,11 @@
     <value>Oznacz koniec (O)</value>
   </data>
   <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
-    <value>Zaznacz tylko to, co ma zostać usunięte - cała reszta trafi do renderu. Wybierz fragment klawiszami I i O, wytnij go klawiszem X i powtórz to dla każdego fragmentu. Czasy możesz też wpisać jako 1:30 lub 1:30.250, a kliknięcie numeru cięcia przenosi do niego. Cięcie między dwoma zachowanymi fragmentami może przejść przez czerń lub biel (długość renderu się nie zmienia) albo nałożyć oba fragmenty na siebie - wtedy render skraca się o długość każdego takiego przejścia, a podgląd pokazuje w tym miejscu koniec wcześniejszego fragmentu zamiast przenikania. Zmienia się tylko obraz i dźwięk, nakładka zostaje bez zmian. Wycięte fragmenty znikają z filmu i z telemetrii: wstęp z trasą zaczyna się od pierwszej zachowanej klatki, a dystans, czas i statystyki trasy obejmują tylko to, co zostało. Podgląd pomija je podczas odtwarzania.</value>
+    <value>Zaznacz fragment do usunięcia klawiszami I i O, a następnie wytnij go klawiszem X. Powtórz dla kolejnych fragmentów. Reszta nagrania trafi do renderu. Czasy możesz wpisywać jako 1:30 lub 1:30.250. Kliknięcie numeru cięcia przenosi do niego.
+
+Między zachowanymi fragmentami możesz dodać przejście przez czerń lub biel bez zmiany długości filmu albo przenikanie, które skraca film o długość przejścia. Podgląd nie pokazuje przenikania: odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. Przejścia obejmują obraz i dźwięk; nakładka pozostaje bez zmian.
+
+Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z trasą zaczyna się od pierwszej zachowanej klatki, a dystans, czas i statystyki obejmują tylko zachowaną część nagrania.</value>
   </data>
   <data name="Cut_MarkStartI" xml:space="preserve">
     <value>Oznacz początek (I)</value>
@@ -883,7 +889,9 @@
     <value>Dodaje kluczowy moment w klatce widocznej na ekranie (B)</value>
   </data>
   <data name="KeyMoments_AKeyMomentIsA" xml:space="preserve">
-    <value>Kluczowy moment to nazwany punkt nagrania, oznaczony flagą na osi czasu. Strzałki w górę i w dół przeskakują między znacznikami na osi czasu, w tym między momentami. Momenty nie wpływają na render. Każda kategoria pokazuje trzy najwyższe wartości - możesz do nich przejść albo zapisać je jako kluczowy moment przyciskiem z flagą. Momenty zapisują się w projekcie.</value>
+    <value>Kluczowy moment to punkt nagrania z własną nazwą, oznaczony flagą na osi czasu. Strzałkami w górę i w dół przechodzisz między znacznikami, w tym kluczowymi momentami.
+
+Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej wartości lub zapisać ją jako kluczowy moment przyciskiem z flagą. Momenty są zapisywane w projekcie i nie wpływają na render.</value>
   </data>
   <data name="KeyMoments_GoToMoment" xml:space="preserve">
     <value>Przejdź do tego momentu</value>
@@ -1318,7 +1326,7 @@
     <value>Preset</value>
   </data>
   <data name="Main_PreviewQualityHowSharpThe" xml:space="preserve">
-    <value>Jakość podglądu - ostrość podglądu na żywo. Niższa dekoduje się szybciej; wyeksportowany film zawsze ma pełną rozdzielczość źródła.</value>
+    <value>Jakość podglądu określa jego ostrość. Niższa jakość przyspiesza dekodowanie i nie wpływa na rozdzielczość eksportowanego filmu.</value>
   </data>
   <data name="Main_PreviewTheResolutionThePreview" xml:space="preserve">
     <value>Podgląd - rozdzielczość, w jakiej dekodowany jest podgląd (wybór jakości po lewej stronie paska narzędzi; Auto dopasowuje ją do rozmiaru podglądu na ekranie)</value>
@@ -1888,7 +1896,7 @@ Renderować mimo to?</value>
     <value>Render nie powiódł się</value>
   </data>
   <data name="Render_GpuBusyMessage" xml:space="preserve">
-    <value>Karta graficzna jest już obciążona: GPU {0}, enkoder wideo {1}, inne programy kodujące wideo: {2}. Coś innego gra, nagrywa albo koduje (gra, OBS, nagrywanie w tle GeForce lub Radeon, drugi render), więc ten render będzie wolniejszy, a gdy karta wyczerpie limit sesji kodowania, może się w ogóle nie uruchomić.</value>
+    <value>Karta graficzna jest już obciążona: GPU {0}, enkoder wideo {1}, inne programy kodujące wideo: {2}. Inna aplikacja obciąża kartę, np. gra, OBS, nagrywanie w tle GeForce lub Radeon albo drugi render. Renderowanie będzie wolniejsze. Jeśli zostanie osiągnięty limit jednoczesnych sesji kodowania, render może się nie uruchomić.</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Anulowano: {0}</value>
@@ -2325,7 +2333,7 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Przewodnik pierwszego uruchomienia: narzędzia, kalibracja prędkości, folder wyjściowy i pliki projektów.</value>
   </data>
   <data name="Settings_TheGpsReportsAFew" xml:space="preserve">
-    <value>GPS podaje tylko kilka pozycji na sekundę, więc ślad kompasu i mapa najpierw stoją, a potem skaczą. Ta opcja interpoluje ruch między pozycjami. Działa od razu - otwarty podgląd wczyta się ponownie.</value>
+    <value>GPS podaje tylko kilka pozycji na sekundę, więc ślad kompasu i mapa poruszają się skokowo. Ta opcja wygładza ruch między kolejnymi pozycjami. Zmiana działa od razu i powoduje ponowne wczytanie otwartego podglądu.</value>
   </data>
   <data name="Settings_Theme" xml:space="preserve">
     <value>Motyw</value>
@@ -2382,25 +2390,25 @@ Zwolnij trochę miejsca albo wybierz folder wyjściowy na innym dysku. Jeśli dy
     <value>Co zachować: {0}</value>
   </data>
   <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
-    <value>Wpisz prędkość, z jaką zwykle jedziesz, a nie chwilowy szczyt - szczyt to moment, w którym GPS akurat zawyżył odczyt. Gdy nagranie jest wczytane, pole Prędkość z GPS wypełnia się samo jego prędkością przelotową: najczęstszą prędkością w szybszej połowie jazdy, uśrednioną z 3 sekund. Obie wartości podaj w tej samej jednostce.</value>
+    <value>Wpisz prędkość odniesienia, np. wskazanie licznika samochodu, oraz odczyt GPS z tego samego fragmentu jazdy. Obie wartości podaj w km/h. Po wczytaniu nagrania pole GPS uzupełni się szacowaną prędkością przelotową. Możesz ją zmienić na odczyt z wybranego momentu.</value>
   </data>
   <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
-    <value>np. 22</value>
+    <value>np. 46</value>
   </data>
   <data name="SpeedCalibration_MeasuredByTheGpsNo" xml:space="preserve">
-    <value>Prędkość z GPS</value>
+    <value>Odczyt GPS</value>
   </data>
   <data name="SpeedCalibration_RealPlaceholder" xml:space="preserve">
-    <value>np. 25</value>
+    <value>np. 50</value>
   </data>
   <data name="SpeedCalibration_RealSpeedSpeedometerLimiter" xml:space="preserve">
-    <value>Prawdziwa prędkość</value>
+    <value>Prędkość odniesienia</value>
   </data>
   <data name="SpeedCalibration_SpeedCorrection" xml:space="preserve">
     <value>Korekta prędkości (%)</value>
   </data>
   <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
-    <value>Oblicz korektę z prawdziwej prędkości</value>
+    <value>Oblicz korektę prędkości</value>
   </data>
   <data name="Style_LabelColor" xml:space="preserve">
     <value>Kolor etykiety</value>
@@ -2829,7 +2837,7 @@ Szczegóły: {1}</value>
 Usunięto:
 {1}
 
-Sama nazwa pliku nie jest metadaną, ale nazwy z kamery, jak DJI_20260916100634, zawierają datę i godzinę nagrania - jeśli to ważne, zmień ją przed udostępnieniem.</value>
+Nazwa pliku również może ujawniać informacje o nagraniu. Nazwy nadawane przez kamerę, np. DJI_20260916100634, zawierają datę i godzinę nagrania. Jeśli chcesz je ukryć, zmień nazwę przed udostępnieniem pliku.</value>
   </data>
   <data name="Tools_MetadataRemovedTitle" xml:space="preserve">
     <value>Metadane usunięte</value>
@@ -3069,7 +3077,7 @@ Szczegóły: {0}</value>
     <value>Część sprawdzeń wymaga FFmpeg - zainstaluj go w poprzednim kroku.</value>
   </data>
   <data name="Welcome_HardwareWarning" xml:space="preserve">
-    <value>Render zadziała, ale część rzeczy go spowolni - szczegóły wyżej.</value>
+    <value>Renderowanie jest możliwe, ale może być wolniejsze z powodów opisanych powyżej.</value>
   </data>
   <data name="Welcome_Installing" xml:space="preserve">
     <value>Instalowanie...</value>
@@ -3113,7 +3121,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Miejsce zapisu gotowych filmów. Puste pole oznacza zapis obok nagrania źródłowego.</value>
   </data>
   <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
-    <value>Zapisany projekt (cięcia, kluczowe momenty, nakładka, widok 360) otworzy się w tej aplikacji po dwukliku.</value>
+    <value>Dwukrotne kliknięcie pliku projektu otworzy go w OsmoOverlay wraz z zapisanymi cięciami, kluczowymi momentami, nakładką i ustawieniami widoku 360°.</value>
   </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Renderowanie i pliki</value>
@@ -3166,7 +3174,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>własna mapa widżetu</value>
   </data>
   <data name="Welcome_MapOwnProvider" xml:space="preserve">
-    <value>W ustawieniach widżetu Mapa wybrano mapę {0}. Zaznacz jeden z tych stylów, żeby do niego wrócić.</value>
+    <value>Widżet Mapa korzysta obecnie z mapy {0}. Wybierz jeden z powyższych stylów, aby zmienić mapę.</value>
   </data>
   <data name="Welcome_SummaryMapValue" xml:space="preserve">
     <value>{0}, {1}</value>
@@ -3175,7 +3183,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Bez klucza: tylko do podglądu i testów - w publikowanym filmie nie wolno.</value>
   </data>
   <data name="Welcome_MapRuleWithKey" xml:space="preserve">
-    <value>Z darmowym kluczem Esri wolno ich użyć w filmie, także komercyjnym. Podpis Esri program doda sam.</value>
+    <value>Darmowy klucz Esri pozwala korzystać z map w filmach, także komercyjnych. Program automatycznie doda wymagany podpis Esri.</value>
   </data>
   <data name="Welcome_MapPreviewFailed" xml:space="preserve">
     <value>Nie udało się wczytać podglądu - sprawdź połączenie albo klucz.</value>
@@ -3211,7 +3219,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>GPS podaje tylko kilka pozycji na sekundę, więc bez wygładzania ślad kompasu i mapa przesuwają się skokami. Ta opcja uzupełnia ruch między pozycjami.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
-    <value>Prędkość z GPS kamery nigdy nie jest w 100% dokładna. Szczyty zwykle wychodzą zaniżone, a jakość sygnału może ją przesunąć w obie strony.</value>
+    <value>Jeśli podczas jazdy ze stałą prędkością GPS regularnie wskazuje za mało, możesz zwiększyć odczyty na nakładce o wybrany procent. Oblicz korektę z dwóch porównywanych odczytów lub wpisz ją ręcznie. Jeśli nie potrzebujesz kalibracji, pozostaw 0%.</value>
   </data>
   <data name="Welcome_StarOnGitHub" xml:space="preserve">
     <value>Gwiazdka na GitHubie</value>
@@ -3265,7 +3273,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Wersja {0}</value>
   </data>
   <data name="Welcome_WatermarkHint" xml:space="preserve">
-    <value>Mały napis „Made with OsmoOverlay” z linkiem do projektu na dole filmu przez jego pierwsze kilka sekund.</value>
+    <value>Wyświetla napis „Made with OsmoOverlay” z linkiem do projektu u dołu filmu przez kilka pierwszych sekund.</value>
   </data>
   <data name="Welcome_WelcomeToOsmoOverlay" xml:space="preserve">
     <value>Witaj w OsmoOverlay</value>
@@ -3322,7 +3330,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Przeciążenie i przechył tylko podczas jazdy</value>
   </data>
   <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
-    <value>Na postoju, przy hamowaniu i ruszaniu przeciążenie i przechył to zwykle kamera poruszana ręką albo odstawiany rower, a nie jazda. Liczą się więc tylko chwile, gdy przez 3 s przed i po prędkość była co najmniej podana. Prędkości, wysokości i nachylenia to nie dotyczy.</value>
+    <value>Na postoju oraz podczas ruszania i zatrzymywania się odczyty przeciążenia i przechyłu mogą wynikać z poruszania kamerą lub odstawiania roweru. Aby uwzględnić dany moment, prędkość musi utrzymywać się na poziomie co najmniej ustawionego progu przez 3 sekundy przed nim i 3 sekundy po nim. Filtr nie dotyczy prędkości, wysokości ani nachylenia trasy.</value>
   </data>
   <data name="KeyMoments_RidingFrom" xml:space="preserve">
     <value>Od prędkości (km/h)</value>
@@ -3338,5 +3346,149 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
   </data>
   <data name="Welcome_OutputDiskLow" xml:space="preserve">
     <value>Mało miejsca na dłuższe rendery. Godzina filmu 4K może potrzebować około {0}, łącznie z miejscem na czas zapisu. Dokładne zapotrzebowanie zależy od nagrania i ustawień renderu.</value>
+  </data>
+  <data name="Welcome_ConnectionTitle" xml:space="preserve">
+    <value>Połączenie z mapami</value>
+  </data>
+  <data name="Welcome_ConnectionDescription" xml:space="preserve">
+    <value>Mapy wymagają internetu. Test sprawdza DNS i pobranie kafelka z serwera Esri przez HTTPS.</value>
+  </data>
+  <data name="Welcome_ConnectionHttpsLabel" xml:space="preserve">
+    <value>HTTPS i kafelki map</value>
+  </data>
+  <data name="Welcome_ConnectionRetry" xml:space="preserve">
+    <value>Sprawdź ponownie</value>
+  </data>
+  <data name="Welcome_ConnectionChecking" xml:space="preserve">
+    <value>Sprawdzanie połączenia. Możesz przejść dalej bez czekania na wynik.</value>
+  </data>
+  <data name="Welcome_ConnectionOk" xml:space="preserve">
+    <value>DNS działa i pobrano poprawny kafelek mapy Esri. Test nie sprawdza klucza API ani dostępności innych dostawców map.</value>
+  </data>
+  <data name="Welcome_ConnectionProxy" xml:space="preserve">
+    <value>Pobrano poprawny kafelek mapy mimo nieudanego lokalnego testu DNS. Połączenie może korzystać z proxy, które rozwiązuje nazwę serwera. Test nie sprawdza klucza API ani innych dostawców map.</value>
+  </data>
+  <data name="Welcome_ConnectionDnsHelp" xml:space="preserve">
+    <value>Nie udało się rozwiązać nazwy serwera ani pobrać mapy. Sprawdź połączenie, ustawienia DNS i VPN. Jeśli sieć wymaga logowania, otwórz przeglądarkę i zaloguj się. Potem ponów test.</value>
+  </data>
+  <data name="Welcome_ConnectionHttpsHelp" xml:space="preserve">
+    <value>DNS działa, ale nie udało się pobrać mapy. Sprawdź zaporę, proxy, VPN i ewentualne logowanie do sieci. Przy błędzie TLS sprawdź także datę i godzinę systemową. Serwer Esri może być chwilowo niedostępny.</value>
+  </data>
+  <data name="Welcome_ConnectionDnsFailed" xml:space="preserve">
+    <value>Błąd DNS</value>
+  </data>
+  <data name="Welcome_ConnectionTimeout" xml:space="preserve">
+    <value>Przekroczono czas</value>
+  </data>
+  <data name="Welcome_ConnectionTlsFailed" xml:space="preserve">
+    <value>Błąd TLS</value>
+  </data>
+  <data name="Welcome_ConnectionFailed" xml:space="preserve">
+    <value>Błąd połączenia</value>
+  </data>
+  <data name="Welcome_ConnectionInvalidResponse" xml:space="preserve">
+    <value>Nieprawidłowy kafelek</value>
+  </data>
+  <data name="Calibration_LoadPreview" xml:space="preserve">
+    <value>Wczytaj nagranie i sprawdź korektę</value>
+  </data>
+  <data name="Calibration_PreviewTitle" xml:space="preserve">
+    <value>Podgląd korekty prędkości</value>
+  </data>
+  <data name="Calibration_PreviewLoading" xml:space="preserve">
+    <value>Wczytywanie nagrania i telemetrii...</value>
+  </data>
+  <data name="Calibration_PreviewPlay" xml:space="preserve">
+    <value>Odtwórz</value>
+  </data>
+  <data name="Calibration_PreviewPause" xml:space="preserve">
+    <value>Pauza</value>
+  </data>
+  <data name="Calibration_PreviewUse" xml:space="preserve">
+    <value>Użyj tej korekty</value>
+  </data>
+  <data name="Calibration_PreviewNoGps" xml:space="preserve">
+    <value>Nagranie nie zawiera pozycji GPS potrzebnych do kalibracji. Wybierz oryginalny film z telemetrią GPS.</value>
+  </data>
+  <data name="Calibration_PreviewHint" xml:space="preserve">
+    <value>Odtwórz film lub wybierz moment na osi czasu. Zmiana korekty od razu aktualizuje prędkościomierz. Pokazany widżet służy do kalibracji; wygląd nakładki ustawisz w edytorze.</value>
+  </data>
+  <data name="Calibration_PreviewFailed" xml:space="preserve">
+    <value>Nie udało się otworzyć podglądu. Sprawdź instalację FFmpeg i wybierz oryginalne nagranie z kamery. Szczegóły: {0}</value>
+  </data>
+  <data name="Calibration_PreviewReading" xml:space="preserve">
+    <value>GPS: {0:0.0} km/h · Po korekcie: {1:0.0} km/h</value>
+  </data>
+  <data name="Calibration_LoadCache" xml:space="preserve">
+    <value>Sprawdzanie zapisanej analizy nagrania</value>
+  </data>
+  <data name="Calibration_LoadProbe" xml:space="preserve">
+    <value>Odczytywanie informacji o filmie przez FFprobe</value>
+  </data>
+  <data name="Calibration_LoadTelemetry" xml:space="preserve">
+    <value>Odczytywanie telemetrii GPS z nagrania</value>
+  </data>
+  <data name="Calibration_LoadSpeeds" xml:space="preserve">
+    <value>Obliczanie prędkości i danych do kalibracji</value>
+  </data>
+  <data name="Calibration_LoadCamera" xml:space="preserve">
+    <value>Odczytywanie modelu kamery</value>
+  </data>
+  <data name="Calibration_LoadSave" xml:space="preserve">
+    <value>Zapisywanie analizy w pamięci podręcznej</value>
+  </data>
+  <data name="Calibration_LoadDecoder" xml:space="preserve">
+    <value>Uruchamianie dekodera i przygotowanie pierwszej klatki</value>
+  </data>
+  <data name="Calibration_LoadReady" xml:space="preserve">
+    <value>Podgląd kalibracji gotowy: {0}. Wczytywanie trwało {1}.</value>
+  </data>
+  <data name="Calibration_LoadProgress" xml:space="preserve">
+    <value>{0}. Czas oczekiwania: {1}</value>
+  </data>
+  <data name="Calibration_PreviewPeaks" xml:space="preserve">
+    <value>Najwyższe prędkości po korekcie - kliknij, aby przejść do momentu</value>
+  </data>
+  <data name="Calibration_FaqTitle" xml:space="preserve">
+    <value>FAQ: dokładność GPS i kalibracja</value>
+  </data>
+  <data name="Calibration_FaqAccuracyQuestion" xml:space="preserve">
+    <value>Od czego zależy dokładność GPS?</value>
+  </data>
+  <data name="Calibration_FaqAccuracyAnswer" xml:space="preserve">
+    <value>Od odbiornika, dostępnych satelitów i otoczenia. Ten sam odbiornik może działać dobrze na otwartej przestrzeni, a gorzej między wysokimi budynkami lub pod drzewami.</value>
+  </data>
+  <data name="Calibration_FaqObstaclesQuestion" xml:space="preserve">
+    <value>Skąd biorą się skoki pozycji i prędkości?</value>
+  </data>
+  <data name="Calibration_FaqObstaclesAnswer" xml:space="preserve">
+    <value>Słaby sygnał i jego odbicia od budynków mogą powodować błędne odczyty. W tunelu odbiornik może całkiem stracić sygnał. Przed rozpoczęciem jazdy poczekaj, aż odbiornik ustali pozycję.</value>
+  </data>
+  <data name="Calibration_FaqSpeedQuestion" xml:space="preserve">
+    <value>Czy dokładność pozycji określa dokładność prędkości?</value>
+  </data>
+  <data name="Calibration_FaqSpeedAnswer" xml:space="preserve">
+    <value>Nie. Informacja, że pozycja jest ustalana z dokładnością do kilku metrów, nie określa błędu prędkości w km/h. Dokładność obu pomiarów ocenia się osobno.</value>
+  </data>
+  <data name="Calibration_FaqReferenceQuestion" xml:space="preserve">
+    <value>Jak dobrać korektę prędkości?</value>
+  </data>
+  <data name="Calibration_FaqReferenceAnswer" xml:space="preserve">
+    <value>Przykład: podczas jazdy ze stałą prędkością licznik samochodu pokazuje 50 km/h, a GPS 46 km/h. Jeśli przyjmujesz wskazanie licznika jako punkt odniesienia, wpisz 50 w polu „Prędkość odniesienia” i 46 w polu „Odczyt GPS”. Program obliczy korektę 8,6%. Porównaj odczyty w kilku fragmentach nagrania, zamiast opierać się na pojedynczym maksimum.</value>
+  </data>
+  <data name="Calibration_FaqLimitsQuestion" xml:space="preserve">
+    <value>Co zmienia korekta w OsmoOverlay?</value>
+  </data>
+  <data name="Calibration_FaqLimitsAnswer" xml:space="preserve">
+    <value>W tym przykładzie korekta 8,6% zwiększa odczyt GPS z 46 km/h do około 50 km/h. Dotyczy prędkości na nakładce; dystans, trasa i przechył pozostają bez zmian. Nie usuwa błędów GPS ani nie obniża zawyżonych odczytów.</value>
+  </data>
+  <data name="Calibration_FaqCivilianQuestion" xml:space="preserve">
+    <value>Czy cywilny GPS jest celowo mniej dokładny?</value>
+  </data>
+  <data name="Calibration_FaqCivilianAnswer" xml:space="preserve">
+    <value>Nie. Celowe pogarszanie dokładności cywilnego GPS wyłączono w maju 2000 roku. Dzisiejsze błędy pomiaru nie wynikają z tego ograniczenia.</value>
+  </data>
+  <data name="Calibration_FaqSource" xml:space="preserve">
+    <value>Więcej o dokładności GPS: GPS.gov</value>
   </data>
 </root>

@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        x:Class="OsmoOverlay.Gui.SpeedCalibrationPreviewWindow"
+        Width="1300" SizeToContent="Height" MinWidth="1020"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource WindowBackgroundBrush}"
+        Icon="/Assets/OsmoOverlay.ico" Title="{x:Static local:Strings.Calibration_PreviewTitle}">
+	<Window.Styles>
+		<Style Selector="Button.transport">
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+	<Grid Name="ContentGrid" RowDefinitions="Auto,Auto,Auto" Margin="20" RowSpacing="14">
+		<StackPanel Spacing="6">
+			<TextBlock Name="RecordingName" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+			<TextBlock Name="StatusText" Text="{x:Static local:Strings.Calibration_PreviewLoading}" TextWrapping="Wrap" />
+			<ProgressBar Name="LoadingProgress" IsIndeterminate="True" Height="4" />
+		</StackPanel>
+		<Grid Grid.Row="1" ColumnDefinitions="*,380" ColumnSpacing="16">
+			<Grid Name="VideoPanel" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" VerticalAlignment="Top">
+				<Viewbox Name="VideoBox" Stretch="Uniform" HorizontalAlignment="Left">
+					<Border Background="Black" CornerRadius="8" ClipToBounds="True">
+						<local:VideoView Name="PreviewVideo" Width="960" Height="540" />
+					</Border>
+				</Viewbox>
+				<Slider Name="Timeline" Grid.Row="1" Minimum="0" IsEnabled="False" />
+				<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+					<StackPanel Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
+						<Button Classes="transport" Click="OnStartClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToStartHome}">
+							<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />
+						</Button>
+						<Button Classes="transport" Click="OnPreviousClick" ToolTip.Tip="{x:Static local:Strings.Main_PreviousFrameLeft}">
+							<local:IconView Data="{StaticResource IconFramePrevious}" Width="14" Height="14" />
+						</Button>
+						<Button Name="PlayButton" Classes="transport" Click="OnPlayClick" ToolTip.Tip="{x:Static local:Strings.Main_PlaySpace}">
+							<local:IconView Name="PlayPauseIcon" Data="{StaticResource IconPlay}" Width="14" Height="14" />
+						</Button>
+						<Button Classes="transport" Click="OnNextClick" ToolTip.Tip="{x:Static local:Strings.Main_NextFrameRight}">
+							<local:IconView Data="{StaticResource IconFrameNext}" Width="14" Height="14" />
+						</Button>
+						<Button Classes="transport" Click="OnEndClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToEndEnd}">
+							<local:IconView Data="{StaticResource IconSkipEnd}" Width="14" Height="14" />
+						</Button>
+					</StackPanel>
+					<TextBlock Name="SpeedReading" Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap" />
+					<TextBlock Name="PositionText" Grid.Column="2" VerticalAlignment="Center" />
+				</Grid>
+			</Grid>
+			<ScrollViewer Grid.Column="1" Height="{Binding #VideoPanel.Bounds.Height}" HorizontalScrollBarVisibility="Disabled">
+				<local:SpeedCalibrationEditor Name="SpeedEditor" />
+			</ScrollViewer>
+		</Grid>
+		<Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+			<StackPanel Name="SpeedPeaksPanel" Spacing="6" IsVisible="False" VerticalAlignment="Bottom">
+				<TextBlock Text="{x:Static local:Strings.Calibration_PreviewPeaks}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" />
+				<WrapPanel Name="SpeedPeakButtons" />
+			</StackPanel>
+			<StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="10" Margin="0,0,0,4">
+				<Button Content="{x:Static local:Strings.Common_Cancel}" Click="OnCancelClick" />
+				<Button Name="UseButton" Content="{x:Static local:Strings.Calibration_PreviewUse}" Classes="accent" IsEnabled="False" Click="OnUseClick" />
+			</StackPanel>
+		</Grid>
+	</Grid>
+</Window>

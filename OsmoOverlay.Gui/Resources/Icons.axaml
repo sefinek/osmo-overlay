@@ -40,4 +40,5 @@
 
 	<StreamGeometry x:Key="IconSphere">F0 M1,8 A7,7 0 1 0 15,8 A7,7 0 1 0 1,8 Z M2.2,8 A5.8,5.8 0 1 0 13.8,8 A5.8,5.8 0 1 0 2.2,8 Z M2.2,8 A5.8,2.6 0 1 0 13.8,8 A5.8,2.6 0 1 0 2.2,8 Z M3.4,8 A4.6,1.4 0 1 0 12.6,8 A4.6,1.4 0 1 0 3.4,8 Z</StreamGeometry>
 	<StreamGeometry x:Key="IconHorizon">M1,9.4 H15 V11 H1 Z M4.2,8.2 A3.8,3.8 0 0 1 11.8,8.2 Z M3,12.6 H13 V13.8 H3 Z</StreamGeometry>
+	<StreamGeometry x:Key="IconExternalLink">M2,4 H7 V5.3 H3.3 V12.7 H10.7 V9 H12 V14 H2 Z M9,2 H14 V7 H12.7 V4.2 L7.5,9.4 L6.6,8.5 L11.8,3.3 H9 Z</StreamGeometry>
 </ResourceDictionary>

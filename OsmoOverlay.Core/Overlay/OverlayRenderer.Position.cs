@@ -263,13 +263,13 @@ public sealed partial class OverlayRenderer
 	///     max, so one GPS speed spike can't push the whole rest of the route into green. The 5 km/h floor keeps
 	///     a clip spent standing around from lighting up red at walking pace.
 	/// </summary>
-	private static double ComputeTrailSpeedScale(IReadOnlyList<DerivedFrame> frames)
+	private static double ComputeTrailSpeedPercentile(IReadOnlyList<DerivedFrame> frames)
 	{
-		if (frames.Count == 0) return 5;
+		if (frames.Count == 0) return 0;
 		double[] speeds = [.. frames.Select(f => f.SpeedKmh).Where(double.IsFinite)];
-		if (speeds.Length == 0) return 5;
+		if (speeds.Length == 0) return 0;
 		Array.Sort(speeds);
-		return Math.Max(speeds[(int)((speeds.Length - 1) * 0.98)], 5);
+		return speeds[(int)((speeds.Length - 1) * 0.98)];
 	}
 
 	/// <summary>

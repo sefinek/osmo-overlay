@@ -30,8 +30,8 @@ public partial class WelcomeWindow : Window
 {
 	private static readonly string[] StepNames =
 	[
-		Strings.Welcome_StepWelcome, Strings.Welcome_SupportedCameras, Strings.Common_Tools, Strings.Welcome_YourComputer, Strings.Common_SpeedCalibration,
-		Strings.Welcome_MapTitle, Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
+		Strings.Welcome_StepWelcome, Strings.Welcome_SupportedCameras, Strings.Common_Tools, Strings.Welcome_YourComputer, Strings.Welcome_MapTitle,
+		Strings.Common_SpeedCalibration, Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
 	];
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
@@ -59,8 +59,8 @@ public partial class WelcomeWindow : Window
 	{
 		InitializeComponent();
 		_offerOpenRecording = offerOpenRecording;
-		_steps = [WelcomeStep, CameraStep, ToolsStep, HardwareStep, SpeedStep, MapStep, PreferencesStep, FinishStep];
-		_arts = [WelcomeArt, CameraArt, ToolsArt, HardwareArt, SpeedArt, MapArt, PreferencesArt, FinishArt];
+		_steps = [WelcomeStep, CameraStep, ToolsStep, HardwareStep, MapStep, SpeedStep, PreferencesStep, FinishStep];
+		_arts = [WelcomeArt, CameraArt, ToolsArt, HardwareArt, MapArt, SpeedArt, PreferencesArt, FinishArt];
 		_dots = [.. _steps.Select((_, i) => StepDot(i))];
 		VersionText.Text = string.Format(Strings.Welcome_Version, AppUpdates.CurrentVersion);
 
@@ -70,6 +70,7 @@ public partial class WelcomeWindow : Window
 		WatermarkCheck.IsChecked = settings.ShowWatermark;
 		OutputFolderBox.Text = settings.DefaultOutputFolder;
 		EsriKeyBox.Text = new MapSources(settings.MapApiKeys).ApiKey(MapProviders.EsriKeyGroup);
+		ShowMapKeyStatus();
 		_mapApiKeys = settings.MapApiKeys;
 		_defaultMapProvider = settings.DefaultMapProvider;
 		ShowMapStyle();
@@ -82,8 +83,10 @@ public partial class WelcomeWindow : Window
 		ShowStep(0);
 		AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Bubble, true);
 		AddHandler(KeyDownEvent, OnWindowArrowKeyDown, RoutingStrategies.Tunnel);
+		Opened += async (_, _) => await CheckConnectionAsync();
 		Closed += (_, _) =>
 		{
+			_connectionLifetime.Cancel();
 			OverlaySettings now = OverlaySettingsStore.Load();
 			if (!now.WelcomeShown) OverlaySettingsStore.Save(now with { WelcomeShown = true });
 		};
@@ -545,6 +548,19 @@ public partial class WelcomeWindow : Window
 		StreetsChoice.IsChecked = streets;
 	}
 
+	private void OnEsriKeyTextChanged(object? sender, TextChangedEventArgs e)
+	{
+		ShowMapKeyStatus();
+	}
+
+	private void ShowMapKeyStatus()
+	{
+		bool hasKey = !string.IsNullOrWhiteSpace(EsriKeyBox.Text);
+		MapRuleText.Text = hasKey ? Strings.Welcome_MapRuleWithKey : Strings.Welcome_MapRuleWithoutKey;
+		MapRuleIcon.Data = hasKey ? Icons.Check : Icons.Warning;
+		MapRuleIcon.Foreground = hasKey ? Palette.Success : Palette.Warning;
+	}
+
 	private void OnEsriKeyLostFocus(object? sender, RoutedEventArgs e)
 	{
 		ShowMapPreviews();
@@ -645,6 +661,25 @@ public partial class WelcomeWindow : Window
 			Grid.SetRow(value, i);
 			Grid.SetColumn(value, 1);
 			SummaryGrid.Children.Add(value);
+		}
+	}
+
+	private async void OnCalibrationPreviewClick(object? sender, RoutedEventArgs e)
+	{
+		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = Strings.Main_PickRecordings,
+			AllowMultiple = false,
+			FileTypeFilter = [new FilePickerFileType(Strings.Main_CameraRecordings) { Patterns = ["*.mp4", "*.insv", "*.lrv"] }]
+		});
+		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+
+		var preview = new SpeedCalibrationPreviewWindow(path, SpeedEditor.Percent, SpeedEditor.RealSpeedValue);
+		await preview.ShowDialog(this);
+		if (preview.Accepted)
+		{
+			SpeedEditor.Load(preview.Percent, preview.CruisingSpeedKmh);
+			SpeedEditor.SetComparisonSpeeds(preview.RealSpeedValue, preview.GpsSpeedValue);
 		}
 	}
 

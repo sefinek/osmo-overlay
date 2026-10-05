@@ -73,7 +73,7 @@
     <value>Decoding on the GPU comes out {0}% faster on this computer. Turn it on?</value>
   </data>
   <data name="Benchmark_AdvicePreviewShadowsOff" xml:space="preserve">
-    <value>Shadows take up too much of each preview frame - without them the overlay draws {0}x faster. Turn off shadows in the preview? A render still has them.</value>
+    <value>Drawing shadows slows down the preview. Without them, the overlay is drawn {0}x faster. Turn off shadows in the preview? They will remain enabled in the render.</value>
   </data>
   <data name="Benchmark_AdvicePreviewShadowsOn" xml:space="preserve">
     <value>This computer draws the preview's shadows with ease. Turn them back on?</value>
@@ -163,7 +163,9 @@
     <value>in use now</value>
   </data>
   <data name="Benchmark_Intro" xml:space="preserve">
-    <value>Measures each stage of a render on this computer: decoding on the GPU and on the CPU, drawing the overlay with and without shadows, handing frames to ffmpeg, encoding, ffmpeg as a whole and a short real render. Every measurement is repeated, taking turns with the one it's compared to, and the result is the median along with the range of the runs. Then it points out the slowest stage and suggests which settings will be faster here. It takes 2-3 minutes - close games and other programs that use the CPU or GPU heavily meanwhile.</value>
+    <value>The test compares GPU and CPU decoding, drawing the overlay with and without shadows, and transferring frames and encoding in FFmpeg. It also measures the complete FFmpeg pipeline and performs a short render. It identifies the slowest stage and suggests faster settings.
+
+Each comparison alternates between the options over multiple runs. Results show the median and range of measurements. The test takes 2-3 minutes. Close games and other programs that heavily use the CPU or GPU during the test.</value>
   </data>
   <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
     <value>at least this - it waited for decoding</value>
@@ -331,19 +333,19 @@
     <value>{0} ms without shadows</value>
   </data>
   <data name="Calibration_Example" xml:space="preserve">
-    <value>Example: your scooter is limited to 25 km/h, but at full speed the GPS usually shows about 22 km/h - enter 25 and 22.</value>
+    <value>Example: the car's speedometer reads 50 km/h, while GPS reads 46 km/h. Enter 50 and 46.</value>
   </data>
   <data name="Calibration_NoneNeeded" xml:space="preserve">
-    <value>The GPS already shows this speed or more - no correction needed.</value>
+    <value>The GPS reading is equal to or higher than the reference speed. Leave the correction at 0%.</value>
   </data>
   <data name="Calibration_Off" xml:space="preserve">
-    <value>Off - speeds are shown exactly as the GPS measured them.</value>
+    <value>Correction is off. The overlay shows GPS speed without increasing the reading.</value>
   </data>
   <data name="Calibration_Raised" xml:space="preserve">
-    <value>Every speed is raised by {0:0.0}% - a measured 20 km/h shows as {1:0.0} km/h. Distance, route and tilt stay as measured.</value>
+    <value>Correction increases speeds on the overlay by {0:0.0}%. A GPS reading of 46 km/h will be shown as {1:0.0} km/h. Distance, route, and lean stay the same.</value>
   </data>
   <data name="Calibration_Result" xml:space="preserve">
-    <value>With a {0:0.0}% correction, the measured {1:0.##} becomes {2:0.##}, so the widget shows {3:0}. It's rounded down to 0.1%, so it never goes above the real speed.</value>
+    <value>Calculated correction: {0:0.0}%. GPS reading of {1:0.##} km/h after correction: {2:0.##} km/h.</value>
   </data>
   <data name="Calibration_Set" xml:space="preserve">
     <value>Correction set to {0:0.0}%. It's saved with the other settings.</value>
@@ -352,7 +354,7 @@
     <value>Use {0:0.0}%</value>
   </data>
   <data name="Calibration_UseRecording" xml:space="preserve">
-    <value>Reset to the loaded recording's speed ({0:0.##} km/h)</value>
+    <value>Reset GPS reading: {0:0.##} km/h</value>
   </data>
   <data name="Close_CloseAndCancel" xml:space="preserve">
     <value>Close and cancel</value>
@@ -580,7 +582,11 @@
     <value>Mark end (O)</value>
   </data>
   <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
-    <value>Mark only what gets removed - everything else is rendered. Select a part with I and O, cut it out with X, repeat for every part. Times can also be typed as 1:30 or 1:30.250; click a cut's number to jump to it. A cut between two kept parts can fade through black or white (the render keeps its length) or blend the two parts over each other - then the render is shorter by the length of each such transition, and the preview shows the end of the earlier part there instead of the blend. Only the picture and the sound change, the overlay stays. Cut parts are left out of the video and of the telemetry: the route intro starts with the first kept frame, and distance, elapsed time and the route stats count only what stays in. Playback in the preview skips them.</value>
+    <value>Select a section to remove with I and O, then cut it out with X. Repeat for any other sections. The rest of the recording will be rendered. You can enter times as 1:30 or 1:30.250. Click a cut's number to jump to it.
+
+Between the remaining sections, you can add a fade through black or white without changing the video's length, or a crossfade that shortens it by the transition's duration. The preview does not show crossfades: it plays the end of the earlier section and skips the overlapping start of the next one. Transitions affect video and audio; the overlay remains unchanged.
+
+Removed sections are excluded from the preview, render, and telemetry. The route intro starts at the first remaining frame, and distance, elapsed time, and statistics cover only the remaining footage.</value>
   </data>
   <data name="Cut_MarkStartI" xml:space="preserve">
     <value>Mark start (I)</value>
@@ -883,7 +889,9 @@
     <value>Adds a key moment at the frame on screen (B)</value>
   </data>
   <data name="KeyMoments_AKeyMomentIsA" xml:space="preserve">
-    <value>A key moment is a named point in the recording, shown as a flag on the timeline. The Up and Down arrow keys jump between the timeline's markers, moments included. Moments don't change the render. Each category lists its three highest peaks - jump to one, or save it as a key moment with the flag button next to it. Moments are saved with the project.</value>
+    <value>A key moment is a point in the recording with a custom name, marked by a flag on the timeline. Use the Up and Down arrow keys to move between markers, including key moments.
+
+Each category lists its three highest values. You can jump to a value or save it as a key moment using the flag button. Key moments are saved in the project and do not affect the render.</value>
   </data>
   <data name="KeyMoments_GoToMoment" xml:space="preserve">
     <value>Go to this moment</value>
@@ -1318,7 +1326,7 @@
     <value>Preset</value>
   </data>
   <data name="Main_PreviewQualityHowSharpThe" xml:space="preserve">
-    <value>Preview quality - how sharp the live preview is. Lower decodes faster; the exported video always renders at the source's full resolution.</value>
+    <value>Preview quality controls how sharp the preview looks. Lower quality speeds up decoding and does not affect the exported video's resolution.</value>
   </data>
   <data name="Main_PreviewTheResolutionThePreview" xml:space="preserve">
     <value>Preview - the resolution the preview is decoded at (set with the quality picker on the left of the toolbar; Auto fits it to the preview's size on screen)</value>
@@ -1888,7 +1896,7 @@ Render anyway?</value>
     <value>Render failed</value>
   </data>
   <data name="Render_GpuBusyMessage" xml:space="preserve">
-    <value>The graphics card is already busy: GPU {0}, video encoder {1}, other programs encoding video: {2}. Something else is playing, recording or encoding (a game, OBS, GeForce's or Radeon's background recording, another render), so this render will be slower, and if the card runs out of encoding sessions it may not start at all.</value>
+    <value>The graphics card is already busy: GPU {0}, video encoder {1}, other programs encoding video: {2}. Another application is using the card, such as a game, OBS, GeForce or Radeon background recording, or another render. Rendering will be slower. If the limit on simultaneous encoding sessions is reached, the render may not start.</value>
   </data>
   <data name="Render_LogCancelled" xml:space="preserve">
     <value>Cancelled: {0}</value>
@@ -2325,7 +2333,7 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>The first-run guide: tools, speed calibration, output folder and project files.</value>
   </data>
   <data name="Settings_TheGpsReportsAFew" xml:space="preserve">
-    <value>The GPS reports only a few fixes per second, so the compass trail and the map pause, then jump. This interpolates between fixes. Applies right away - the open preview reloads.</value>
+    <value>GPS reports only a few positions per second, causing the compass trail and map to move in jumps. This option smooths movement between consecutive positions. Changes apply immediately and reload the open preview.</value>
   </data>
   <data name="Settings_Theme" xml:space="preserve">
     <value>Theme</value>
@@ -2382,25 +2390,25 @@ Free up some space or pick an output folder on another drive. If the drive fills
     <value>What to keep: {0}</value>
   </data>
   <data name="SpeedCalibration_CompareTheSpeedYouRide" xml:space="preserve">
-    <value>Enter the speed you usually ride at, not a momentary peak - a peak is where the GPS happened to read high. With a recording loaded, the GPS speed field fills in with its cruising speed: the most common speed in the faster half of the ride, averaged over 3 seconds. Use the same unit for both.</value>
+    <value>Enter a reference speed, such as the car's speedometer reading, and the GPS reading from the same part of the drive. Enter both values in km/h. Loading a recording fills the GPS field with its estimated cruising speed. You can replace it with a reading from a chosen moment.</value>
   </data>
   <data name="SpeedCalibration_GpsPlaceholder" xml:space="preserve">
-    <value>e.g. 22</value>
+    <value>e.g. 46</value>
   </data>
   <data name="SpeedCalibration_MeasuredByTheGpsNo" xml:space="preserve">
-    <value>GPS speed</value>
+    <value>GPS reading</value>
   </data>
   <data name="SpeedCalibration_RealPlaceholder" xml:space="preserve">
-    <value>e.g. 25</value>
+    <value>e.g. 50</value>
   </data>
   <data name="SpeedCalibration_RealSpeedSpeedometerLimiter" xml:space="preserve">
-    <value>Real speed</value>
+    <value>Reference speed</value>
   </data>
   <data name="SpeedCalibration_SpeedCorrection" xml:space="preserve">
     <value>Speed correction (%)</value>
   </data>
   <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
-    <value>Work it out from a known speed</value>
+    <value>Calculate speed correction</value>
   </data>
   <data name="Style_LabelColor" xml:space="preserve">
     <value>Label color</value>
@@ -2829,7 +2837,7 @@ Details: {1}</value>
 Removed:
 {1}
 
-The file name itself isn't metadata - camera file names like DJI_20260916100634 contain the recording date and time, so rename it before sharing if that matters.</value>
+The file name can also reveal information about the recording. Names generated by the camera, such as DJI_20260916100634, contain the recording date and time. To hide this information, rename the file before sharing it.</value>
   </data>
   <data name="Tools_MetadataRemovedTitle" xml:space="preserve">
     <value>Metadata removed</value>
@@ -3069,7 +3077,7 @@ Details: {0}</value>
     <value>Some checks need FFmpeg - install it in the previous step.</value>
   </data>
   <data name="Welcome_HardwareWarning" xml:space="preserve">
-    <value>Rendering works, but a few things will slow it down - see above.</value>
+    <value>Rendering is possible, but may be slower for the reasons listed above.</value>
   </data>
   <data name="Welcome_Installing" xml:space="preserve">
     <value>Installing...</value>
@@ -3113,7 +3121,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Where finished videos are saved. Empty means next to the source recording.</value>
   </data>
   <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
-    <value>A saved project (cuts, key moments, overlay, 360 view) opens in this app with a double-click.</value>
+    <value>Double-click a project file to open it in OsmoOverlay with its saved cuts, key moments, overlay, and 360° view settings.</value>
   </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Rendering and files</value>
@@ -3166,7 +3174,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>the widget's own map</value>
   </data>
   <data name="Welcome_MapOwnProvider" xml:space="preserve">
-    <value>The Map widget's settings picked {0}. Tick one of these styles to go back to it.</value>
+    <value>The Map widget currently uses {0}. Select one of the styles above to change the map.</value>
   </data>
   <data name="Welcome_SummaryMapValue" xml:space="preserve">
     <value>{0}, {1}</value>
@@ -3175,7 +3183,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Without a key: for previews and testing only - not allowed in a published film.</value>
   </data>
   <data name="Welcome_MapRuleWithKey" xml:space="preserve">
-    <value>With a free Esri key you may use them in a film, a commercial one too. The app adds Esri's credit by itself.</value>
+    <value>A free Esri key lets you use these maps in videos, including commercial ones. The app automatically adds the required Esri attribution.</value>
   </data>
   <data name="Welcome_MapPreviewFailed" xml:space="preserve">
     <value>Couldn't load the preview - check the connection or the key.</value>
@@ -3211,7 +3219,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>GPS gives only a few positions per second, so without smoothing the compass trail and the map move in jumps. This fills in the motion between them.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
-    <value>Speed from a camera's GPS is never 100% exact. Peaks tend to come out low, and signal quality can push it either way.</value>
+    <value>If GPS consistently reads too low while driving at a steady speed, you can increase speeds on the overlay by a chosen percentage. Calculate the correction from two readings or enter it manually. If you do not need calibration, leave it at 0%.</value>
   </data>
   <data name="Welcome_StarOnGitHub" xml:space="preserve">
     <value>Star on GitHub</value>
@@ -3265,7 +3273,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Version {0}</value>
   </data>
   <data name="Welcome_WatermarkHint" xml:space="preserve">
-    <value>A small "Made with OsmoOverlay" note with the project link at the bottom of the video for its first few seconds.</value>
+    <value>Displays a "Made with OsmoOverlay" watermark with a link to the project at the bottom of the video for the first few seconds.</value>
   </data>
   <data name="Welcome_WelcomeToOsmoOverlay" xml:space="preserve">
     <value>Welcome to OsmoOverlay</value>
@@ -3322,7 +3330,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>G-force and lean only while riding</value>
   </data>
   <data name="KeyMoments_MovingOnlyHint" xml:space="preserve">
-    <value>Standing, stopping or starting, G-force and lean are usually the camera being handled or the bike put down, not the ride. So only moments with at least the given speed for 3 s before and after count. Speed, altitude and slopes aren't affected.</value>
+    <value>When stationary, starting, or stopping, G-force and lean readings may come from handling the camera or putting the bike down. To include a moment, speed must stay at or above the selected threshold for 3 seconds before it and 3 seconds after it. This filter does not apply to speed, altitude, or route gradient.</value>
   </data>
   <data name="KeyMoments_RidingFrom" xml:space="preserve">
     <value>From a speed of (km/h)</value>
@@ -3338,5 +3346,149 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="Welcome_OutputDiskLow" xml:space="preserve">
     <value>Disk space is running low for longer renders. Rendering an hour of 4K video may require around {0}, including temporary space needed to save the file. The exact amount depends on the recording and render settings.</value>
+  </data>
+  <data name="Welcome_ConnectionTitle" xml:space="preserve">
+    <value>Map connectivity</value>
+  </data>
+  <data name="Welcome_ConnectionDescription" xml:space="preserve">
+    <value>Maps require an internet connection. This test checks DNS and downloads a tile from Esri over HTTPS.</value>
+  </data>
+  <data name="Welcome_ConnectionHttpsLabel" xml:space="preserve">
+    <value>HTTPS and map tiles</value>
+  </data>
+  <data name="Welcome_ConnectionRetry" xml:space="preserve">
+    <value>Check again</value>
+  </data>
+  <data name="Welcome_ConnectionChecking" xml:space="preserve">
+    <value>Checking the connection. You can continue without waiting for the result.</value>
+  </data>
+  <data name="Welcome_ConnectionOk" xml:space="preserve">
+    <value>DNS is working and a valid Esri map tile was downloaded. This test does not check your API key or other map providers.</value>
+  </data>
+  <data name="Welcome_ConnectionProxy" xml:space="preserve">
+    <value>A valid map tile was downloaded despite the local DNS test failing. A proxy may be resolving the server name. This test does not check your API key or other map providers.</value>
+  </data>
+  <data name="Welcome_ConnectionDnsHelp" xml:space="preserve">
+    <value>Could not resolve the server name or download the map. Check your connection, DNS settings, and VPN. If the network requires a login, open your browser and sign in, then try again.</value>
+  </data>
+  <data name="Welcome_ConnectionHttpsHelp" xml:space="preserve">
+    <value>DNS is working, but the map could not be downloaded. Check your firewall, proxy, VPN, and any required network login. For TLS errors, also check your system date and time. Esri's server may be temporarily unavailable.</value>
+  </data>
+  <data name="Welcome_ConnectionDnsFailed" xml:space="preserve">
+    <value>DNS failed</value>
+  </data>
+  <data name="Welcome_ConnectionTimeout" xml:space="preserve">
+    <value>Timed out</value>
+  </data>
+  <data name="Welcome_ConnectionTlsFailed" xml:space="preserve">
+    <value>TLS failed</value>
+  </data>
+  <data name="Welcome_ConnectionFailed" xml:space="preserve">
+    <value>Connection failed</value>
+  </data>
+  <data name="Welcome_ConnectionInvalidResponse" xml:space="preserve">
+    <value>Invalid map tile</value>
+  </data>
+  <data name="Calibration_LoadPreview" xml:space="preserve">
+    <value>Load a recording and preview the correction</value>
+  </data>
+  <data name="Calibration_PreviewTitle" xml:space="preserve">
+    <value>Speed correction preview</value>
+  </data>
+  <data name="Calibration_PreviewLoading" xml:space="preserve">
+    <value>Loading the recording and telemetry...</value>
+  </data>
+  <data name="Calibration_PreviewPlay" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="Calibration_PreviewPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Calibration_PreviewUse" xml:space="preserve">
+    <value>Use this correction</value>
+  </data>
+  <data name="Calibration_PreviewNoGps" xml:space="preserve">
+    <value>The recording has no GPS positions for calibration. Choose an original video with GPS telemetry.</value>
+  </data>
+  <data name="Calibration_PreviewHint" xml:space="preserve">
+    <value>Play the video or select a point on the timeline. Changing the correction updates the speedometer immediately. This widget is for calibration; you can customize the overlay in the editor.</value>
+  </data>
+  <data name="Calibration_PreviewFailed" xml:space="preserve">
+    <value>Could not open the preview. Check your FFmpeg installation and choose an original camera recording. Details: {0}</value>
+  </data>
+  <data name="Calibration_PreviewReading" xml:space="preserve">
+    <value>GPS: {0:0.0} km/h · Corrected: {1:0.0} km/h</value>
+  </data>
+  <data name="Calibration_LoadCache" xml:space="preserve">
+    <value>Checking the cached recording analysis</value>
+  </data>
+  <data name="Calibration_LoadProbe" xml:space="preserve">
+    <value>Reading video information with FFprobe</value>
+  </data>
+  <data name="Calibration_LoadTelemetry" xml:space="preserve">
+    <value>Extracting GPS telemetry from the recording</value>
+  </data>
+  <data name="Calibration_LoadSpeeds" xml:space="preserve">
+    <value>Calculating speeds and calibration data</value>
+  </data>
+  <data name="Calibration_LoadCamera" xml:space="preserve">
+    <value>Reading the camera model</value>
+  </data>
+  <data name="Calibration_LoadSave" xml:space="preserve">
+    <value>Saving the analysis to the cache</value>
+  </data>
+  <data name="Calibration_LoadDecoder" xml:space="preserve">
+    <value>Opening the decoder and preparing the first frame</value>
+  </data>
+  <data name="Calibration_LoadReady" xml:space="preserve">
+    <value>Calibration preview ready: {0}. Loading took {1}.</value>
+  </data>
+  <data name="Calibration_LoadProgress" xml:space="preserve">
+    <value>{0}. Time elapsed: {1}</value>
+  </data>
+  <data name="Calibration_PreviewPeaks" xml:space="preserve">
+    <value>Highest corrected speeds - click to jump to a moment</value>
+  </data>
+  <data name="Calibration_FaqTitle" xml:space="preserve">
+    <value>FAQ: GPS accuracy and calibration</value>
+  </data>
+  <data name="Calibration_FaqAccuracyQuestion" xml:space="preserve">
+    <value>What affects GPS accuracy?</value>
+  </data>
+  <data name="Calibration_FaqAccuracyAnswer" xml:space="preserve">
+    <value>The receiver, available satellites, and surroundings. The same receiver may work well in an open area and less accurately between tall buildings or under trees.</value>
+  </data>
+  <data name="Calibration_FaqObstaclesQuestion" xml:space="preserve">
+    <value>What causes jumps in position and speed?</value>
+  </data>
+  <data name="Calibration_FaqObstaclesAnswer" xml:space="preserve">
+    <value>Weak signals and reflections from buildings can cause incorrect readings. In a tunnel, the receiver may lose the signal entirely. Wait for the receiver to establish its position before you start riding.</value>
+  </data>
+  <data name="Calibration_FaqSpeedQuestion" xml:space="preserve">
+    <value>Does position accuracy determine speed accuracy?</value>
+  </data>
+  <data name="Calibration_FaqSpeedAnswer" xml:space="preserve">
+    <value>No. Knowing that position is accurate within a few meters does not tell you the speed error in km/h. The accuracy of each measurement is assessed separately.</value>
+  </data>
+  <data name="Calibration_FaqReferenceQuestion" xml:space="preserve">
+    <value>How should I choose a speed correction?</value>
+  </data>
+  <data name="Calibration_FaqReferenceAnswer" xml:space="preserve">
+    <value>Example: while driving at a steady speed, the car's speedometer reads 50 km/h and GPS reads 46 km/h. If you use the speedometer as your reference, enter 50 in the reference speed field and 46 in the GPS reading field. The app will calculate an 8.6% correction. Compare the readings in several parts of the recording instead of relying on a single peak.</value>
+  </data>
+  <data name="Calibration_FaqLimitsQuestion" xml:space="preserve">
+    <value>What does correction change in OsmoOverlay?</value>
+  </data>
+  <data name="Calibration_FaqLimitsAnswer" xml:space="preserve">
+    <value>In this example, an 8.6% correction raises the GPS reading from 46 km/h to about 50 km/h. It applies to speeds on the overlay; distance, route, and lean stay the same. It does not remove GPS errors or reduce readings that are too high.</value>
+  </data>
+  <data name="Calibration_FaqCivilianQuestion" xml:space="preserve">
+    <value>Is civilian GPS deliberately made less accurate?</value>
+  </data>
+  <data name="Calibration_FaqCivilianAnswer" xml:space="preserve">
+    <value>No. Deliberate degradation of civilian GPS accuracy ended in May 2000. Today's measurement errors are not caused by that restriction.</value>
+  </data>
+  <data name="Calibration_FaqSource" xml:space="preserve">
+    <value>More about GPS accuracy: GPS.gov</value>
   </data>
 </root>

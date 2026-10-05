@@ -132,6 +132,21 @@
 								           Text="{x:Static local:Strings.Welcome_EverythingHereCanBeChanged}" />
 							</Grid>
 						</Border>
+						<Border Classes="card" Padding="16">
+							<StackPanel Spacing="10">
+								<TextBlock Text="{x:Static local:Strings.Welcome_ConnectionTitle}" Classes="rowTitle" FontSize="15" />
+								<TextBlock Text="{x:Static local:Strings.Welcome_ConnectionDescription}" Classes="rowText" FontSize="13" />
+								<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+									<TextBlock Text="DNS (server.arcgisonline.com)" FontSize="13" TextWrapping="Wrap" />
+									<TextBlock Name="ConnectionDnsStatus" Grid.Column="1" FontSize="13" Text="{x:Static local:Strings.Welcome_Checking}" />
+									<TextBlock Grid.Row="1" Text="{x:Static local:Strings.Welcome_ConnectionHttpsLabel}" FontSize="13" />
+									<TextBlock Name="ConnectionHttpsStatus" Grid.Row="1" Grid.Column="1" FontSize="13" Text="{x:Static local:Strings.Welcome_Checking}" />
+								</Grid>
+								<TextBlock Name="ConnectionHint" Classes="rowText" FontSize="13" />
+								<Button Name="ConnectionRetryButton" Content="{x:Static local:Strings.Welcome_ConnectionRetry}" HorizontalAlignment="Right"
+								        Classes="wizard" Click="OnConnectionRetryClick" />
+							</StackPanel>
+						</Border>
 					</StackPanel>
 
 					<StackPanel Name="CameraStep" Classes="step" Opacity="0" Spacing="12">
@@ -198,6 +213,51 @@
 						<TextBlock Classes="lead"
 						           Text="{x:Static local:Strings.Welcome_SpeedFromACameraS}" />
 						<local:SpeedCalibrationEditor Name="SpeedEditor" Margin="0,4,0,0" />
+						<Button Content="{x:Static local:Strings.Calibration_LoadPreview}" HorizontalAlignment="Center"
+						        Click="OnCalibrationPreviewClick" />
+						<Expander HorizontalAlignment="Stretch" Background="{StaticResource SurfaceBrush}"
+						          BorderBrush="{StaticResource CardBorderBrush}" CornerRadius="12" Padding="16">
+							<Expander.Resources>
+								<StaticResource x:Key="ExpanderHeaderBackground" ResourceKey="SurfaceBrush" />
+								<StaticResource x:Key="ExpanderHeaderBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+								<StaticResource x:Key="ExpanderHeaderBackgroundPressed" ResourceKey="ControlPressedBrush" />
+								<StaticResource x:Key="ExpanderHeaderBorderBrush" ResourceKey="CardBorderBrush" />
+								<StaticResource x:Key="ExpanderHeaderBorderBrushPointerOver" ResourceKey="ControlBorderHoverBrush" />
+								<StaticResource x:Key="ExpanderHeaderBorderBrushPressed" ResourceKey="CardBorderBrush" />
+								<StaticResource x:Key="ExpanderHeaderForeground" ResourceKey="TextPrimaryBrush" />
+								<StaticResource x:Key="ExpanderHeaderForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+								<StaticResource x:Key="ExpanderHeaderForegroundPressed" ResourceKey="TextPrimaryBrush" />
+								<StaticResource x:Key="ExpanderChevronForeground" ResourceKey="AccentHoverBrush" />
+								<StaticResource x:Key="ExpanderChevronForegroundPointerOver" ResourceKey="AccentHoverBrush" />
+								<StaticResource x:Key="ExpanderChevronForegroundPressed" ResourceKey="AccentBrush" />
+								<StaticResource x:Key="ExpanderChevronBackgroundPointerOver" ResourceKey="SubtleFillBrush" />
+								<StaticResource x:Key="ExpanderChevronBackgroundPressed" ResourceKey="SubtleFillBrush" />
+							</Expander.Resources>
+							<Expander.Header>
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqTitle}" Classes="rowTitle" FontSize="15" TextWrapping="Wrap" />
+							</Expander.Header>
+							<StackPanel Spacing="10">
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqAccuracyQuestion}" Classes="rowTitle" TextWrapping="Wrap" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqAccuracyAnswer}" Classes="lead" FontSize="13" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqObstaclesQuestion}" Classes="rowTitle" TextWrapping="Wrap" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqObstaclesAnswer}" Classes="lead" FontSize="13" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqSpeedQuestion}" Classes="rowTitle" TextWrapping="Wrap" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqSpeedAnswer}" Classes="lead" FontSize="13" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqReferenceQuestion}" Classes="rowTitle" TextWrapping="Wrap" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqReferenceAnswer}" Classes="lead" FontSize="13" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqLimitsQuestion}" Classes="rowTitle" TextWrapping="Wrap" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqLimitsAnswer}" Classes="lead" FontSize="13" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqCivilianQuestion}" Classes="rowTitle" TextWrapping="Wrap" />
+								<TextBlock Text="{x:Static local:Strings.Calibration_FaqCivilianAnswer}" Classes="lead" FontSize="13" />
+								<Button HorizontalAlignment="Left" Margin="0,4,0,0"
+								        Tag="https://www.gps.gov/gps-accuracy" Click="OnLinkButtonClick">
+									<StackPanel Orientation="Horizontal" Spacing="8">
+										<TextBlock Text="{x:Static local:Strings.Calibration_FaqSource}" VerticalAlignment="Center" />
+										<local:IconView Data="{StaticResource IconExternalLink}" Width="14" Height="14" VerticalAlignment="Center" />
+									</StackPanel>
+								</Button>
+							</StackPanel>
+						</Expander>
 					</StackPanel>
 
 					<StackPanel Name="MapStep" Classes="step" Opacity="0" Spacing="10">
@@ -251,7 +311,7 @@
 							</Grid>
 							<StackPanel Spacing="8">
 								<TextBox Name="EsriKeyBox" PasswordChar="•" PlaceholderText="{x:Static local:Strings.MapSource_PasteYourApiKey}"
-								         LostFocus="OnEsriKeyLostFocus" />
+								         TextChanged="OnEsriKeyTextChanged" LostFocus="OnEsriKeyLostFocus" />
 								<TextBlock Name="ArcGisLink" Classes="link" FontSize="13" HorizontalAlignment="Left"
 								           Text="{x:Static local:Strings.Welcome_MapGetKey}" PointerPressed="OnGetKeyPressed">
 									<FlyoutBase.AttachedFlyout>
@@ -264,9 +324,9 @@
 							</StackPanel>
 							<Border BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
 								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-									<local:IconView Data="{StaticResource IconWarning}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,2,0,0"
+									<local:IconView Name="MapRuleIcon" Data="{StaticResource IconWarning}" Width="18" Height="18" VerticalAlignment="Top" Margin="0,2,0,0"
 									                Foreground="{StaticResource WarningBrush}" />
-									<TextBlock Grid.Column="1" Text="{x:Static local:Strings.Welcome_MapRuleWithoutKey}" FontSize="12" LineHeight="18"
+									<TextBlock Name="MapRuleText" Grid.Column="1" Text="{x:Static local:Strings.Welcome_MapRuleWithoutKey}" FontSize="13" LineHeight="19"
 									           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
 								</Grid>
 							</Border>

@@ -18,7 +18,13 @@ internal sealed class OverlayCompositor : IDisposable
 {
 	private readonly Lock _lock = new();
 	private readonly FrameBufferPool _pool;
-	private readonly IReadOnlyList<DerivedFrame> _recordingFrames;
+	private readonly IReadOnlyList<DerivedFrame> _initialRecordingFrames;
+	private readonly double _initialSpeedCorrectionPercent;
+	private double _speedCorrectionPercent;
+	private double _initialTrailSpeedPercentileKmh;
+	private int _speedCorrectionGeneration;
+	private int _timelineGeneration;
+	private IReadOnlyList<DerivedFrame> _recordingFrames;
 	private readonly OverlayAvailability _availability;
 	private readonly double _recordingDurationSeconds;
 	private IReadOnlyList<DerivedFrame> _frames;
@@ -35,9 +41,13 @@ internal sealed class OverlayCompositor : IDisposable
 	/// <param name="recordingFrames">Telemetry on the recording's own timeline - mapped per the output timeline from here on.</param>
 	/// <param name="recordingDurationSeconds">The whole recording's length - the output's while nothing is cut.</param>
 	public OverlayCompositor(Func<IReadOnlyList<DerivedFrame>, OverlayRenderer> createRenderer, IReadOnlyList<DerivedFrame> recordingFrames,
-		double recordingDurationSeconds, OverlayAvailability availability, OutputTimeline? timeline, bool showOverlay, FrameBufferPool pool)
+		double recordingDurationSeconds, OverlayAvailability availability, OutputTimeline? timeline, bool showOverlay, FrameBufferPool pool,
+		double initialSpeedCorrectionPercent = 0)
 	{
 		_recordingFrames = recordingFrames;
+		_initialRecordingFrames = recordingFrames;
+		_initialSpeedCorrectionPercent = initialSpeedCorrectionPercent;
+		_speedCorrectionPercent = SpeedCalibration.Clamp(initialSpeedCorrectionPercent);
 		_recordingDurationSeconds = recordingDurationSeconds;
 		_availability = availability;
 		_timeline = timeline;
@@ -45,6 +55,7 @@ internal sealed class OverlayCompositor : IDisposable
 		_pool = pool;
 		_frames = MapToOutput(timeline);
 		Renderer = createRenderer(_frames);
+		_initialTrailSpeedPercentileKmh = Renderer.TrailSpeedPercentileKmh;
 		Renderer.OutputDurationSeconds = OutputDuration(timeline);
 	}
 
@@ -113,6 +124,68 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 
+	public async Task<ComposedPreviewFrame?> SetSpeedCorrectionAsync(double percent, CancellationToken ct = default)
+	{
+		ct.ThrowIfCancellationRequested();
+		percent = SpeedCalibration.Clamp(percent);
+		int generation;
+		lock (_lock)
+		{
+			if (_disposed) return null;
+			generation = ++_speedCorrectionGeneration;
+			if (percent == _speedCorrectionPercent) return null;
+		}
+
+		double factor = SpeedCalibration.Factor(percent) / SpeedCalibration.Factor(_initialSpeedCorrectionPercent);
+		while (true)
+		{
+			OutputTimeline? timeline;
+			int timelineGeneration;
+			double trailSpeedPercentile;
+			lock (_lock)
+			{
+				if (_disposed || generation != _speedCorrectionGeneration) return null;
+				timeline = _timeline;
+				timelineGeneration = _timelineGeneration;
+				trailSpeedPercentile = _initialTrailSpeedPercentileKmh * factor;
+			}
+
+			var prepared = await Task.Run(() =>
+			{
+				IReadOnlyList<DerivedFrame> recordingFrames = _initialRecordingFrames;
+				if (factor != 1)
+				{
+					var corrected = new DerivedFrame[_initialRecordingFrames.Count];
+					for (int i = 0; i < corrected.Length; i++)
+					{
+						if ((i & 1023) == 0) ct.ThrowIfCancellationRequested();
+						DerivedFrame frame = _initialRecordingFrames[i];
+						corrected[i] = frame with { SpeedKmh = frame.SpeedKmh * factor };
+					}
+					recordingFrames = corrected;
+				}
+				ct.ThrowIfCancellationRequested();
+				IReadOnlyList<DerivedFrame> frames = MapToOutput(timeline, recordingFrames);
+				TripStats stats = TripStats.Compute(frames);
+				ct.ThrowIfCancellationRequested();
+				return (RecordingFrames: recordingFrames, Frames: frames, Stats: stats, MaxSpeed: frames.Max(frame => frame.SpeedKmh));
+			}, ct);
+
+			lock (_lock)
+			{
+				ct.ThrowIfCancellationRequested();
+				if (_disposed || generation != _speedCorrectionGeneration) return null;
+				if (timelineGeneration != _timelineGeneration) continue;
+				_recordingFrames = prepared.RecordingFrames;
+				_frames = prepared.Frames;
+				Renderer.SetSpeedFrames(_frames, prepared.MaxSpeed, prepared.Stats, trailSpeedPercentile);
+				_speedCorrectionPercent = percent;
+				_measured.Clear();
+				return RecomposeLocked();
+			}
+		}
+	}
+
 	/// <summary>New cuts: the renderer takes the newly mapped telemetry (stats like total distance change with them).</summary>
 	public ComposedPreviewFrame? SetTimeline(OutputTimeline? timeline)
 	{
@@ -121,8 +194,11 @@ internal sealed class OverlayCompositor : IDisposable
 			if (_disposed) return null;
 
 			_timeline = timeline;
+			_timelineGeneration++;
 			_frames = MapToOutput(timeline);
 			Renderer.SetFrames(_frames, _frames[0].Raw.AltitudeMeters, TelemetryProcessor.Summarize(_frames).MaxSpeedKmh);
+			double factor = SpeedCalibration.Factor(_speedCorrectionPercent) / SpeedCalibration.Factor(_initialSpeedCorrectionPercent);
+			_initialTrailSpeedPercentileKmh = Renderer.TrailSpeedPercentileKmh / factor;
 			Renderer.OutputDurationSeconds = OutputDuration(timeline);
 			_measured.Clear();
 			return RecomposeLocked();
@@ -241,8 +317,11 @@ internal sealed class OverlayCompositor : IDisposable
 
 	private IReadOnlyList<DerivedFrame> MapToOutput(OutputTimeline? timeline)
 	{
-		return timeline?.MapFrames(_recordingFrames) is { Count: > 0 } mapped ? mapped : _recordingFrames;
+		return MapToOutput(timeline, _recordingFrames);
 	}
+
+	private static IReadOnlyList<DerivedFrame> MapToOutput(OutputTimeline? timeline, IReadOnlyList<DerivedFrame> recordingFrames) =>
+		timeline?.MapFrames(recordingFrames) is { Count: > 0 } mapped ? mapped : recordingFrames;
 
 	public void Dispose()
 	{

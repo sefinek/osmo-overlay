@@ -61,8 +61,9 @@ public sealed partial class OverlayRenderer : IDisposable
 	private static readonly SKRect MeasureArea = new(-100_000, -100_000, 100_000, 100_000);
 	private const int MeasureMaxPixels = 16_000_000;
 	private const byte MeasureMinAlpha = 16;
-	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedScale).
+	// The speed a route colored by speed reaches full red at (ComputeTrailSpeedPercentile).
 	private double _trailSpeedScaleKmh;
+	internal double TrailSpeedPercentileKmh { get; private set; }
 
 	private readonly SKTypeface _hudTypeface;
 	private readonly SKFont _dateFont;
@@ -300,7 +301,24 @@ public sealed partial class OverlayRenderer : IDisposable
 	public void SetFrames(IReadOnlyList<DerivedFrame> allFrames, double startAltitude, double observedMaxSpeedKmh)
 	{
 		ApplyFrames(allFrames, startAltitude, observedMaxSpeedKmh);
+		ResetFrameCaches();
+	}
 
+	internal void SetSpeedFrames(IReadOnlyList<DerivedFrame> allFrames, double observedMaxSpeedKmh,
+		TripStats tripStats, double trailSpeedPercentileKmh)
+	{
+		_allFrames = allFrames;
+		_observedMaxSpeedKmh = observedMaxSpeedKmh;
+		_tripStats = tripStats;
+		_firstReachingSeconds.Clear();
+		TrailSpeedPercentileKmh = trailSpeedPercentileKmh;
+		_trailSpeedScaleKmh = Math.Max(trailSpeedPercentileKmh, 5);
+		ClearProfiles();
+		ResetFrameCaches();
+	}
+
+	private void ResetFrameCaches()
+	{
 		_trail.Clear();
 		_trailPixels.Clear();
 		DisposeRoutes(_compassRoutes);
@@ -323,7 +341,8 @@ public sealed partial class OverlayRenderer : IDisposable
 		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
 		_tripStats = TripStats.Compute(allFrames);
 		_firstReachingSeconds.Clear();
-		_trailSpeedScaleKmh = ComputeTrailSpeedScale(allFrames);
+		TrailSpeedPercentileKmh = ComputeTrailSpeedPercentile(allFrames);
+		_trailSpeedScaleKmh = Math.Max(TrailSpeedPercentileKmh, 5);
 		_gMeterDeltas = GMeterDeltas.Compute(allFrames);
 		_routeBounds = MapBounds.Of(allFrames.Select(f => f.Raw));
 		_mapSources = _mapSources with { RouteBounds = _routeBounds };

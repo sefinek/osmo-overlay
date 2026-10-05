@@ -56,6 +56,16 @@ public enum FileSummaryCacheEventKind
 /// <summary>PreviousFormatVersion and PreviousSizeBytes are set only for Stale - the version the deleted entry was written with and its file size.</summary>
 public sealed record FileSummaryCacheEvent(FileSummaryCacheEventKind Kind, int CurrentFormatVersion, int? PreviousFormatVersion = null, long PreviousSizeBytes = 0);
 
+public enum FileSummaryReadStage
+{
+	Cache,
+	Probe,
+	Extract,
+	Process,
+	CameraModel,
+	Save
+}
+
 public static class FileSummaryReader
 {
 	/// <summary>The current on-disk cache format - bumped whenever telemetry extraction/derivation logic changes (see FileSummaryCache.FormatVersion).</summary>
@@ -84,8 +94,9 @@ public static class FileSummaryReader
 	///     fact), and once more after a recompute with whether it made it into the cache.
 	/// </summary>
 	public static (FileSummary? Summary, string? Problem) Read(IReadOnlyList<string> inputPaths,
-		Action<FileSummaryCacheEvent>? onCacheEvent = null)
+		Action<FileSummaryCacheEvent>? onCacheEvent = null, Action<FileSummaryReadStage>? onProgress = null)
 	{
+		onProgress?.Invoke(FileSummaryReadStage.Cache);
 		(FileSummary? cached, int? staleFormatVersion, long staleSizeBytes) = FileSummaryCache.TryLoad(inputPaths);
 		if (cached is not null)
 		{
@@ -97,6 +108,7 @@ public static class FileSummaryReader
 			? new FileSummaryCacheEvent(FileSummaryCacheEventKind.Stale, CurrentCacheFormatVersion, previous, staleSizeBytes)
 			: new FileSummaryCacheEvent(FileSummaryCacheEventKind.Miss, CurrentCacheFormatVersion));
 
+		onProgress?.Invoke(FileSummaryReadStage.Probe);
 		IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(inputPaths);
 		if (VideoSegments.FindMismatch(segments) is { } mismatch) return (null, mismatch);
 		VideoSegment first = segments[0];
@@ -109,6 +121,7 @@ public static class FileSummaryReader
 		FileSummary summary;
 		if (!segments.AllHaveTelemetry())
 		{
+			onProgress?.Invoke(FileSummaryReadStage.CameraModel);
 			string? cameraModelOnly = TryGetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, segmentFrames, cameraModelOnly, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, false, null, null, null, totalFrameCount,
@@ -117,15 +130,18 @@ public static class FileSummaryReader
 		else
 		{
 			ICameraFormat camera = first.Source.Camera!.Format;
+			onProgress?.Invoke(FileSummaryReadStage.Extract);
 			TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
 			List<DerivedFrame>? derivedFrames = null;
 			TelemetrySummary? telemetry = null;
 			if (extraction.Frames.Count > 0)
 			{
+				onProgress?.Invoke(FileSummaryReadStage.Process);
 				derivedFrames = TelemetryProcessor.Process(extraction.Frames, camera);
 				telemetry = TelemetryProcessor.Summarize(derivedFrames);
 			}
 
+			if (extraction.CameraModel is null) onProgress?.Invoke(FileSummaryReadStage.CameraModel);
 			string? cameraModel = extraction.CameraModel ?? TryGetCameraModel(inputPaths[0]);
 			summary = new FileSummary(inputPaths, segmentDurations, segmentFrames, cameraModel, first.Source.Video,
 				first.Source.Audio, durationSeconds, fileSize, true, extraction.Frames, derivedFrames, telemetry,
@@ -133,6 +149,7 @@ public static class FileSummaryReader
 				GpsClockShift: extraction.GpsClockShift);
 		}
 
+		onProgress?.Invoke(FileSummaryReadStage.Save);
 		bool saved = FileSummaryCache.Save(inputPaths, summary);
 		onCacheEvent?.Invoke(new FileSummaryCacheEvent(
 			saved ? FileSummaryCacheEventKind.Saved : FileSummaryCacheEventKind.SaveFailed, CurrentCacheFormatVersion));

@@ -12,6 +12,7 @@ public partial class SpeedCalibrationEditor : UserControl
 {
 	private double? _recordingCruisingSpeedKmh;
 	private double? _calculatedPercent;
+	public event Action<double>? PercentChanged;
 
 	public SpeedCalibrationEditor()
 	{
@@ -31,6 +32,14 @@ public partial class SpeedCalibrationEditor : UserControl
 
 	/// <summary>The correction as edited, within SpeedCalibration's range.</summary>
 	public double Percent => SpeedCalibration.Clamp((double)(CorrectionBox.Value ?? 0));
+	public double? RealSpeedValue => RealSpeedBox.Value is { } value ? (double)value : null;
+	public double? GpsSpeedValue => ShownSpeedBox.Value is { } value ? (double)value : null;
+
+	public void SetComparisonSpeeds(double? actual, double? measured)
+	{
+		RealSpeedBox.Value = actual is { } real ? (decimal)real : null;
+		ShownSpeedBox.Value = measured is { } gps ? (decimal)gps : null;
+	}
 
 	/// <summary>Whether Enter in one of the calculator's fields should apply its result.</summary>
 	public bool HasCalculation => _calculatedPercent is not null;
@@ -59,8 +68,7 @@ public partial class SpeedCalibrationEditor : UserControl
 		if (_calculatedPercent is not { } percent) return false;
 
 		CorrectionBox.Value = (decimal)percent;
-		RealSpeedBox.Value = null;
-		ShownSpeedBox.Value = null;
+		ApplyButton.IsVisible = false;
 		ResultText.Foreground = Palette.Success;
 		ResultText.Text = string.Format(Strings.Calibration_Set, percent);
 		return true;
@@ -70,12 +78,16 @@ public partial class SpeedCalibrationEditor : UserControl
 	{
 		double percent = Percent;
 		CorrectionText.Text = percent > 0
-			? string.Format(Strings.Calibration_Raised, percent, SpeedCalibration.Corrected(20, percent))
+			? string.Format(Strings.Calibration_Raised, percent, SpeedCalibration.Corrected(46, percent))
 			: Strings.Calibration_Off;
+		UpdateCalculation();
+		PercentChanged?.Invoke(percent);
 	}
 
 	private void UpdateCalculation()
 	{
+		UseRecordingButton.IsEnabled = _recordingCruisingSpeedKmh is { } recorded &&
+			ShownSpeedBox.Value != (decimal)Math.Round(recorded, 2);
 		_calculatedPercent = RealSpeedBox.Value is { } real && ShownSpeedBox.Value is { } shown
 			? SpeedCalibration.PercentFor((double)real, (double)shown, 0)
 			: null;
@@ -93,6 +105,6 @@ public partial class SpeedCalibrationEditor : UserControl
 		ApplyButton.Content = string.Format(Strings.Calibration_Use, percent);
 		ResultText.Text = percent <= 0
 			? Strings.Calibration_NoneNeeded
-			: string.Format(Strings.Calibration_Result, percent, measured, corrected, Math.Round(corrected, MidpointRounding.AwayFromZero));
+			: string.Format(Strings.Calibration_Result, percent, measured, corrected);
 	}
 }

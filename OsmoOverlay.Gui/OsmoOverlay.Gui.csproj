@@ -35,6 +35,8 @@
                       PublicClass="true"
                       StronglyTypedFileName="$(IntermediateOutputPath)Strings.g.cs" />
     <EmbeddedResource Update="Resources\Strings.pl.resx" LogicalName="OsmoOverlay.Gui.Strings.pl.resources" />
+    <Compile Include="$(IntermediateOutputPath)Strings.g.cs"
+             Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)Strings.g.cs')" />
   </ItemGroup>
 
   <ItemGroup>

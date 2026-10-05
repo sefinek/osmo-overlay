@@ -103,7 +103,10 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	public event Action<double?>? MapDownloadProgress;
 
-	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight)
+	/// <param name="processedFrames">Optional telemetry already processed with the supplied settings, on the recording's timeline.</param>
+	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight,
+		OverlaySettings? settingsOverride = null, IReadOnlyList<OverlayElement>? layoutOverride = null,
+		IReadOnlyList<DerivedFrame>? processedFrames = null)
 	{
 		Close();
 		int generation = _openGeneration;
@@ -113,9 +116,11 @@ public sealed class PreviewPlayer : IDisposable
 		IReadOnlyList<TelemetryFrame> rawFrames = plain ? PlainRecordingFrames.Create(summary.DurationSeconds) : summary.TelemetryFrames!;
 
 		// Recomputed rather than taken from summary.DerivedFrames, so a changed SmoothGpsMotion applies on every open.
-		OverlaySettings settings = OverlaySettingsStore.Load();
+		OverlaySettings settings = settingsOverride ?? OverlaySettingsStore.Load();
 		ICameraFormat? camera = summary.CameraFormat;
-		List<DerivedFrame> recordingFrames = TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent);
+		IReadOnlyList<DerivedFrame> recordingFrames = processedFrames ?? await Task.Run(() =>
+			TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent));
+		if (generation != _openGeneration) return;
 		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
 		var reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
@@ -138,7 +143,9 @@ public sealed class PreviewPlayer : IDisposable
 
 		(int width, int height) = (summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout = [];
-		if (!plain)
+		if (!plain && layoutOverride is not null)
+			layout = availability.Apply(layoutOverride);
+		else if (!plain)
 		{
 			(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load();
 			layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
@@ -151,7 +158,7 @@ public sealed class PreviewPlayer : IDisposable
 			{
 				RouteAcrossCuts = settings.RouteAcrossCuts, DrawShadows = settings.PreviewDrawsShadows
 			},
-			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool)
+			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool, settings.SpeedCorrectionPercent)
 		{
 			SnapshotShadows = !settings.DisableShadows
 		};
@@ -364,6 +371,12 @@ public sealed class PreviewPlayer : IDisposable
 		// The map widget's mosaic stays unless the route now reaches past it; the route intro's unless the route's extent changed.
 		OverlayRenderer renderer = recording.Compositor.Renderer;
 		StartMosaics(recording, intro: renderer.NeedsRouteIntroPrepare(), map: !renderer.MapMosaicCoversRoute);
+	}
+
+	public async Task SetSpeedCorrectionAsync(double percent, CancellationToken ct = default)
+	{
+		if (_recording is not { } recording) return;
+		PublishStill(recording, await recording.Compositor.SetSpeedCorrectionAsync(percent, ct));
 	}
 
 	/// <summary>
