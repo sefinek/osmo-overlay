@@ -1348,6 +1348,39 @@
 											</StackPanel>
 										</Border>
 									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="WatermarkListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Watermark}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Main_Watermark}" />
+										</Border>
+										<Border Name="WatermarkSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Watermark_Hint}" />
+												<TextBlock Name="WatermarkOffHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
+												           Text="{x:Static local:Strings.Watermark_OffInSettings}" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="WatermarkStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="WatermarkShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="WatermarkTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="SpeedListItem" Classes="overlayListItem"
@@ -2105,6 +2138,14 @@
 					                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
 				</ScrollViewer>
 			</Border>
+		</Border>
+		<Border Name="PreviewBenchmarkStatus" Grid.Row="1" IsVisible="False" Classes="card"
+		        HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="470" Padding="16">
+			<StackPanel Spacing="8">
+				<TextBlock Text="{x:Static local:Strings.PreviewBenchmark_Title}" FontWeight="SemiBold" />
+				<TextBlock Name="PreviewBenchmarkProgress" TextWrapping="Wrap" />
+				<Button Content="{x:Static local:Strings.Benchmark_Stop}" HorizontalAlignment="Left" Click="OnCancelPreviewBenchmarkClick" />
+			</StackPanel>
 		</Border>
 	</Grid>
 </Window>

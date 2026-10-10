@@ -165,11 +165,15 @@ public sealed class VideoView : Control
 
 			using ISkiaSharpApiLease lease = skia.Lease();
 			TimeSpan? playedPosition = _pendingFrame?.Position;
+			PreviewMeasurements? measurements = playedPosition is not null ? _source?.Measurements : null;
+			long drawStarted = measurements is not null ? Stopwatch.GetTimestamp() : 0;
+			bool presented = false;
 			if (TakePendingImage(lease.GrContext) is { } image)
 			{
 				_image?.Dispose();
 				_image = image;
 				if (playedPosition is { } position) onShown(position, CountShown());
+				presented = playedPosition is not null;
 			}
 
 			if (_image is null) return;
@@ -177,6 +181,11 @@ public sealed class VideoView : Control
 			Rect bounds = GetRenderBounds();
 			lease.SkCanvas.DrawImage(_image, new SKRect((float)bounds.Left, (float)bounds.Top, (float)bounds.Right, (float)bounds.Bottom),
 				Sampling);
+			if (presented && measurements is not null)
+			{
+				measurements.RecordStage(PreviewStage.Draw, drawStarted);
+				measurements.RecordPresented();
+			}
 		}
 
 		/// <summary>Frames a second over the last second, counting this one - NaN over less than a quarter of a second.</summary>
@@ -233,7 +242,11 @@ public sealed class VideoView : Control
 
 		private void DropPending()
 		{
-			if (_pendingFrame is { } frame) PlaybackFrameSource.Release(frame);
+			if (_pendingFrame is { } frame)
+			{
+				_source?.Measurements?.RecordDrop(PreviewDrop.Display);
+				PlaybackFrameSource.Release(frame);
+			}
 			_pendingFrame = null;
 			_pendingStill?.Dispose();
 			_pendingStill = null;

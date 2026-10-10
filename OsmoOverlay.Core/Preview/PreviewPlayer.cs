@@ -63,6 +63,7 @@ public sealed class PreviewPlayer : IDisposable
 
 	public bool IsPlaying => _session is not null;
 	public bool HasAudio => _recording?.AudioOutput is not null;
+	public string? DecoderDescription => _recording?.Video.DecoderDescription;
 
 	/// <summary>1 = real time. Other speeds keep the sound, tempo-changed without changing its pitch (AudioTempo).</summary>
 	public double PlaybackRate { get; private set; } = 1;
@@ -266,7 +267,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		var plan = PlaybackPlan.For(_outputTimeline, fromPosition, recording.Video.Duration, Loop, LoopRange);
 		var session = new PlaybackSession(recording.Video, recording.AudioSource, recording.AudioOutput, recording.Compositor,
-			recording.Pool, plan, PlaybackRate);
+			recording.Pool, plan, PlaybackRate, Frames);
 		_session = session;
 		Frames.Attach(session);
 		_ = StartWhenFreeAsync(session, _sessionsStopped);

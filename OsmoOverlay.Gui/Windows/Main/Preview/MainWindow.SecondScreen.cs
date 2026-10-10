@@ -124,7 +124,7 @@ public partial class MainWindow
 
 	private void OnSecondScreenPlaybackStarted()
 	{
-		if (_secondScreen is null || _movingViewport || _viewportOnSecondScreen || _previewFullscreen) return;
+		if (_previewBenchmarkRunning || _secondScreen is null || _movingViewport || _viewportOnSecondScreen || _previewFullscreen) return;
 
 		// Not from inside the event: the move pauses and restarts the playback that's just starting.
 		Dispatcher.UIThread.Post(() =>
@@ -135,7 +135,7 @@ public partial class MainWindow
 
 	private void OnSecondScreenPlaybackStopped()
 	{
-		if (_secondScreen is not { } window || _movingViewport || !_viewportOnSecondScreen) return;
+		if (_previewBenchmarkRunning || _secondScreen is not { } window || _movingViewport || !_viewportOnSecondScreen) return;
 
 		Dispatcher.UIThread.Post(() =>
 		{

@@ -440,7 +440,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Kalibracja prędkości</value>
   </data>
   <data name="Common_SystemDefault" xml:space="preserve">
-    <value>Domyślny systemowy</value>
+    <value>Jak w systemie</value>
   </data>
   <data name="Common_Tools" xml:space="preserve">
     <value>Narzędzia</value>
@@ -932,7 +932,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Usuń warstwę</value>
   </data>
   <data name="Layers_DeleteMessage" xml:space="preserve">
-    <value>Usunąć tę warstwę i {0} widżet, który się na niej znajduje?|Usunąć tę warstwę i {0} widżety, które się na niej znajdują?|Usunąć tę warstwę i {0} widżetów, które się na niej znajdują?</value>
+    <value>Czy na pewno chcesz usunąć tę warstwę razem z widżetem, który na niej jest?|Czy na pewno chcesz usunąć tę warstwę razem z {0} widżetami, które na niej są?|Czy na pewno chcesz usunąć tę warstwę razem z {0} widżetami, które na niej są?</value>
   </data>
   <data name="Layers_ElevationChart" xml:space="preserve">
     <value>Wykres wysokości</value>
@@ -1572,6 +1572,9 @@ Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajd
   <data name="Main_View" xml:space="preserve">
     <value>WIDOK</value>
   </data>
+  <data name="Main_Watermark" xml:space="preserve">
+    <value>Znak wodny</value>
+  </data>
   <data name="Main_Widgets" xml:space="preserve">
     <value>WIDŻETY</value>
   </data>
@@ -1742,7 +1745,7 @@ Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajd
 Ostatnia zmiana: {1:g}</value>
   </data>
   <data name="Presets_DeleteMessage" xml:space="preserve">
-    <value>Usunąć „{0}”? Tego nie można cofnąć.</value>
+    <value>Czy na pewno chcesz usunąć preset „{0}”? Tej operacji nie da się cofnąć.</value>
   </data>
   <data name="Presets_DeleteTitle" xml:space="preserve">
     <value>Usuń preset</value>
@@ -1772,7 +1775,7 @@ Ostatnia zmiana: {1:g}</value>
     <value>Resetuj</value>
   </data>
   <data name="Presets_ResetMessage" xml:space="preserve">
-    <value>Przywrócić domyślny układ presetu „{0}”? Położenie i ustawienia jego widżetów zostaną utracone.</value>
+    <value>Czy na pewno chcesz przywrócić domyślny układ presetu „{0}”? Położenie i ustawienia jego widżetów zostaną utracone.</value>
   </data>
   <data name="Presets_ResetTitle" xml:space="preserve">
     <value>Zresetuj preset</value>
@@ -2417,6 +2420,9 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
     <value>Oblicz korektę prędkości</value>
   </data>
+  <data name="Style_DefaultFont" xml:space="preserve">
+    <value>Domyślna ({0})</value>
+  </data>
   <data name="Style_LabelColor" xml:space="preserve">
     <value>Kolor etykiety</value>
   </data>
@@ -2692,7 +2698,7 @@ Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z
     <value>'{0}' to nie jest czas</value>
   </data>
   <data name="Timing_AnimNone" xml:space="preserve">
-    <value>Brak (natychmiast)</value>
+    <value>Natychmiastowa</value>
   </data>
   <data name="Timing_FadeIn" xml:space="preserve">
     <value>Rozjaśnienie</value>
@@ -2976,6 +2982,12 @@ Szczegóły: {0}</value>
   </data>
   <data name="Updates_DependenciesAvailable" xml:space="preserve">
     <value>Dostępne aktualizacje zależności: {0} - zobacz Ustawienia &gt; O programie</value>
+  </data>
+  <data name="Watermark_Hint" xml:space="preserve">
+    <value>Napis „Made with OsmoOverlay” z adresem projektu. Włączasz go w Ustawieniach, a tu ustawiasz jego miejsce, wygląd i czas. Na karcie przeglądu trasy zostaje w jej prawym dolnym rogu.</value>
+  </data>
+  <data name="Watermark_OffInSettings" xml:space="preserve">
+    <value>Znak wodny jest wyłączony w Ustawieniach, więc nie pojawi się na filmie.</value>
   </data>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>Nagrania 360° w formacie .insv są wyświetlane jako standardowy kadr z regulowanym kierunkiem i polem widzenia. Obsługę przetestowano na X4. Aplikacja nie odczytuje jeszcze danych GPS z tych plików.</value>
@@ -3505,5 +3517,101 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
   </data>
   <data name="Calibration_FaqSource" xml:space="preserve">
     <value>Więcej o dokładności GPS: GPS.gov</value>
+  </data>
+  <data name="PreviewBenchmark_Title" xml:space="preserve">
+    <value>Test płynności podglądu</value>
+  </data>
+  <data name="PreviewBenchmark_Description" xml:space="preserve">
+    <value>Odtwarza wczytane nagranie z bieżącymi ustawieniami podglądu. Rozgrzewka trwa do 3 sekund, a pomiar 20 sekund. Po teście zostaną przywrócone pozycja odtwarzania i układ podglądu. Esc przerywa test.</value>
+  </data>
+  <data name="PreviewBenchmark_Fullscreen" xml:space="preserve">
+    <value>Testuj na pełnym ekranie na monitorze wybranym w ustawieniach</value>
+  </data>
+  <data name="PreviewBenchmark_SecondScreen" xml:space="preserve">
+    <value>Tryb drugiego ekranu jest włączony. Test zostanie przeprowadzony na tym ekranie.</value>
+  </data>
+  <data name="PreviewBenchmark_MeasurementNote" xml:space="preserve">
+    <value>Klatki są liczone na wątku renderowania kompozytora po zleceniu rysowania. Czas rysowania obejmuje przygotowanie obrazu i zlecenie operacji przez CPU, bez oczekiwania na GPU i bez pomiaru opóźnienia monitora. Obciążenie CPU/GPU uwzględnia inne aplikacje.</value>
+  </data>
+  <data name="PreviewBenchmark_ToolsHint" xml:space="preserve">
+    <value>Zmierz płynność odtwarzania podglądu, także na pełnym ekranie na wybranym monitorze. Wymaga wczytanego nagrania.</value>
+  </data>
+  <data name="PreviewBenchmark_Close" xml:space="preserve">
+    <value>Zamknij</value>
+  </data>
+  <data name="PreviewBenchmark_NotReady" xml:space="preserve">
+    <value>Przed uruchomieniem testu wczytaj nagranie zawierające co najmniej sekundę filmu. Renderowanie musi być zatrzymane.</value>
+  </data>
+  <data name="PreviewBenchmark_WarmingUp" xml:space="preserve">
+    <value>Rozgrzewanie dekodera i podglądu... Esc przerywa test.</value>
+  </data>
+  <data name="PreviewBenchmark_Progress" xml:space="preserve">
+    <value>Pomiar płynności podglądu: {0} / {1} s. Esc przerywa test.</value>
+  </data>
+  <data name="PreviewBenchmark_EndedDuringWarmup" xml:space="preserve">
+    <value>Odtwarzanie zakończyło się podczas rozgrzewki. Wybierz dłuższe nagranie lub włącz zapętlanie podglądu.</value>
+  </data>
+  <data name="PreviewBenchmark_Cancelled" xml:space="preserve">
+    <value>Test płynności podglądu został przerwany.</value>
+  </data>
+  <data name="PreviewBenchmark_LoadFailed" xml:space="preserve">
+    <value>Nie udało się odczytać obciążenia komputera podczas testu podglądu.</value>
+  </data>
+  <data name="PreviewBenchmark_Source" xml:space="preserve">
+    <value>Nagranie: {0}</value>
+  </data>
+  <data name="PreviewBenchmark_Display" xml:space="preserve">
+    <value>Tryb: {0}; monitor: {1}</value>
+  </data>
+  <data name="PreviewBenchmark_Resolution" xml:space="preserve">
+    <value>Dekodowany obraz: {0}x{1}; wyświetlany obraz: {2}x{3} px; skala DPI: {4}x</value>
+  </data>
+  <data name="PreviewBenchmark_Rate" xml:space="preserve">
+    <value>Prędkość odtwarzania: {0}x; oczekiwana płynność: {1} FPS</value>
+  </data>
+  <data name="PreviewBenchmark_Result" xml:space="preserve">
+    <value>Wyświetlono: {0} klatek w {1} s; średnia: {2} FPS</value>
+  </data>
+  <data name="PreviewBenchmark_ShortSample" xml:space="preserve">
+    <value>Krótka próbka: odtwarzanie zakończyło się przed upływem 20 sekund pomiaru.</value>
+  </data>
+  <data name="PreviewBenchmark_NoFrames" xml:space="preserve">
+    <value>Podczas pomiaru nie wyświetlono żadnej klatki. Sprawdź, czy okno podglądu było widoczne.</value>
+  </data>
+  <data name="PreviewBenchmark_Gaps" xml:space="preserve">
+    <value>Odstępy między klatkami: mediana {0} ms; P95 {1} ms; najdłuższa przerwa {2} ms; zacięcia: {3} (powyżej 100 ms lub trzech odstępów między klatkami, zależnie od tego, co trwa dłużej)</value>
+  </data>
+  <data name="PreviewBenchmark_Dropped" xml:space="preserve">
+    <value>Pominięte klatki źródłowe przy nadrabianiu opóźnienia: {0}; klatki odrzucone przed nakładką: {1}; klatki odrzucone przed rysowaniem: {2}</value>
+  </data>
+  <data name="PreviewBenchmark_Draw" xml:space="preserve">
+    <value>Przygotowanie obrazu i zlecenie rysowania</value>
+  </data>
+  <data name="PreviewBenchmark_Timing" xml:space="preserve">
+    <value>{0}: mediana {1} ms; P95 {2} ms</value>
+  </data>
+  <data name="PreviewBenchmark_Load" xml:space="preserve">
+    <value>Średnie obciążenie komputera: CPU {0}; GPU {1}; dekoder wideo {2}; największe zmierzone użycie pamięci aplikacji: {3}</value>
+  </data>
+  <data name="PreviewBenchmark_ModeFullscreen" xml:space="preserve">
+    <value>pełny ekran</value>
+  </data>
+  <data name="PreviewBenchmark_ModeSecondScreen" xml:space="preserve">
+    <value>drugi ekran</value>
+  </data>
+  <data name="PreviewBenchmark_ModeWindow" xml:space="preserve">
+    <value>okno główne</value>
+  </data>
+  <data name="PreviewBenchmark_Refresh" xml:space="preserve">
+    <value>Zmierzona częstotliwość odświeżania kompozytora: {0} Hz</value>
+  </data>
+  <data name="PreviewBenchmark_Settings" xml:space="preserve">
+    <value>Dekoder: {0}; nakładka włączona: {1}; cienie podglądu włączone: {2}</value>
+  </data>
+  <data name="PreviewBenchmark_On" xml:space="preserve">
+    <value>tak</value>
+  </data>
+  <data name="PreviewBenchmark_Off" xml:space="preserve">
+    <value>nie</value>
   </data>
 </root>

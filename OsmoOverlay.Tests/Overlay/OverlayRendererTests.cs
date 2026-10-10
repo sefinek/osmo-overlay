@@ -161,7 +161,7 @@ public sealed class OverlayRendererTests
 			{
 				OverlayElement shown = (element is ImageElement image ? image with { ImagePath = imagePath } : element) with
 				{
-					Visible = true, AppearAtSeconds = null, AnimationType = OverlayAnimationType.None
+					Visible = true, AppearAtSeconds = null, DisappearAtSeconds = null, AnimationType = OverlayAnimationType.None
 				};
 				if (shown is MapAttributionElement)
 				{
@@ -171,7 +171,8 @@ public sealed class OverlayRendererTests
 					continue;
 				}
 
-				Assert.IsTrue(RenderLayout([shown]).Any(b => b != 0), $"{element.Type} drew nothing");
+				// The watermark is drawn only with Settings' switch on.
+				Assert.IsTrue(RenderLayout([shown], shown is WatermarkElement).Any(b => b != 0), $"{element.Type} drew nothing");
 			}
 		}
 		finally
@@ -179,12 +180,30 @@ public sealed class OverlayRendererTests
 			File.Delete(imagePath);
 		}
 
-		byte[] RenderLayout(List<OverlayElement> layout)
+		byte[] RenderLayout(List<OverlayElement> layout, bool watermark = false)
 		{
 			using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, layout, frames,
-				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, false);
+				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, watermark);
 			return Render(renderer, frames);
 		}
+	}
+
+	[TestMethod]
+	public void Watermark_FollowsTheSettingsSwitch_AndAPresetWithoutOneGetsTheDefault()
+	{
+		List<DerivedFrame> frames = Route(300, 0);
+		WatermarkElement watermark = OverlayPreset.CreateDefault("test", "Test").Elements.OfType<WatermarkElement>().Single();
+
+		byte[] Draw(List<OverlayElement> layout, bool show)
+		{
+			using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, layout, frames, 30, show);
+			return Render(renderer, frames);
+		}
+
+		Assert.IsTrue(Draw([watermark], true).Any(b => b != 0), "drawn in its first seconds");
+		CollectionAssert.AreEqual(Draw([watermark], true), Draw([], true), "a preset without one gets the default");
+		Assert.IsTrue(Draw([watermark with { Visible = false }], true).All(b => b == 0), "hidden");
+		Assert.IsTrue(Draw([watermark], false).All(b => b == 0), "Settings' switch off");
 	}
 
 	[TestMethod]

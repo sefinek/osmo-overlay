@@ -35,6 +35,19 @@ public static class OverlayElementBounds
 	public const float ValueFontSize = 95f;
 	public const float UnitFontSize = 46f;
 	public const float SmallFontSize = 36f;
+	public const float WatermarkTitleFontSize = 40f;
+	public const float WatermarkSubtitleFontSize = 30f;
+	// From the subtitle's baseline (the watermark's Y) up to the title's.
+	public const float WatermarkLineGap = 46f;
+	public const string WatermarkTitle = "Made with OsmoOverlay";
+	private const string SampleWatermarkSubtitle = "github.com/sefinek/osmo-overlay  •  v0.0.0";
+
+	/// <summary>A line measured from its start, moved to sit centered on the anchor - how the watermark draws it.</summary>
+	private static SKRect Centered(SKRect line)
+	{
+		line.Offset(-(line.Left + line.Right) / 2, 0);
+		return line;
+	}
 	// The map credit: a source note the terms ask to be readable, not a part of the HUD - smaller and fainter than its text.
 	public const float CreditFontSize = 24f;
 	public const float SpeedFontSize = 115f;
@@ -90,6 +103,9 @@ public static class OverlayElementBounds
 	// the same font family/style deterministically, so the metrics measured here can't drift from what
 	// gets drawn even though the two never share a handle.
 	private static readonly SKTypeface HudTypeface = CreateHudTypeface();
+
+	/// <summary>The family the widgets draw in without one of their own (CreateHudTypeface's pick on this system).</summary>
+	public static string HudFontFamily => HudTypeface.FamilyName;
 	private static readonly Dictionary<string, SKTypeface> TypefacesByFamily = [];
 	private static readonly Dictionary<(string Family, float Size), SKFont> FontsBySize = [];
 	// Read by the GUI's hit-testing and by OverlayRenderer on the preview's compose thread - hence the lock. One entry per
@@ -188,6 +204,9 @@ public static class OverlayElementBounds
 					OffsetY(MeasureLine(label.ToUpperInvariant(), LabelFontSize, fontFamily), -CaptionAboveOffset)),
 			OverlayElementType.CameraModelText => MeasureLine(cameraModel ?? SampleCameraModel, DateFontSize, fontFamily),
 			OverlayElementType.MapAttribution => MeasureLine(text ?? SampleMapCredit, CreditFontSize, fontFamily),
+			OverlayElementType.Watermark => SKRect.Union(
+				OffsetY(Centered(MeasureLine(WatermarkTitle, WatermarkTitleFontSize, fontFamily)), -WatermarkLineGap),
+				Centered(MeasureLine(text ?? SampleWatermarkSubtitle, WatermarkSubtitleFontSize, fontFamily))),
 			OverlayElementType.Elevation => MeasureStat(label ?? "ELEVATION", SampleElevationValue, "M", fontFamily),
 			OverlayElementType.Gradient => MeasureStat(label ?? "GRADIENT", SampleGradientValue, "%", fontFamily),
 			OverlayElementType.Distance => MeasureStat(label ?? "TOTAL DISTANCE", SampleDistanceValue, "KM", fontFamily),

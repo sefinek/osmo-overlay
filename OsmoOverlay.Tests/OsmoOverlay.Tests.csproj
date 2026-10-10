@@ -17,4 +17,20 @@
     <ProjectReference Include="..\OsmoOverlay.Cameras.Insta360\OsmoOverlay.Cameras.Insta360.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="MSTest.TestAdapter" Version="4.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="MSTest.TestFramework" Version="4.5.1" />
+  </ItemGroup>
+
 </Project>

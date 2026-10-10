@@ -932,7 +932,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Delete layer</value>
   </data>
   <data name="Layers_DeleteMessage" xml:space="preserve">
-    <value>Delete this layer and the {0} widget on it?|Delete this layer and the {0} widgets on it?</value>
+    <value>Are you sure you want to delete this layer along with the widget on it?|Are you sure you want to delete this layer along with the {0} widgets on it?</value>
   </data>
   <data name="Layers_ElevationChart" xml:space="preserve">
     <value>Elevation chart</value>
@@ -1572,6 +1572,9 @@ If you cancel, the app will not remind you about this version again. You can fin
   <data name="Main_View" xml:space="preserve">
     <value>VIEW</value>
   </data>
+  <data name="Main_Watermark" xml:space="preserve">
+    <value>Watermark</value>
+  </data>
   <data name="Main_Widgets" xml:space="preserve">
     <value>WIDGETS</value>
   </data>
@@ -1742,7 +1745,7 @@ If you cancel, the app will not remind you about this version again. You can fin
 Last updated: {1:g}</value>
   </data>
   <data name="Presets_DeleteMessage" xml:space="preserve">
-    <value>Delete "{0}"? This can't be undone.</value>
+    <value>Are you sure you want to delete the preset "{0}"? This can't be undone.</value>
   </data>
   <data name="Presets_DeleteTitle" xml:space="preserve">
     <value>Delete preset</value>
@@ -1772,7 +1775,7 @@ Last updated: {1:g}</value>
     <value>Reset</value>
   </data>
   <data name="Presets_ResetMessage" xml:space="preserve">
-    <value>Reset "{0}" to the default layout? Your widget positions and settings for it will be lost.</value>
+    <value>Are you sure you want to reset the preset "{0}" to its default layout? Its widgets' positions and settings will be lost.</value>
   </data>
   <data name="Presets_ResetTitle" xml:space="preserve">
     <value>Reset preset</value>
@@ -2417,6 +2420,9 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="SpeedCalibration_WorkItOutFromYour" xml:space="preserve">
     <value>Calculate speed correction</value>
   </data>
+  <data name="Style_DefaultFont" xml:space="preserve">
+    <value>Default ({0})</value>
+  </data>
   <data name="Style_LabelColor" xml:space="preserve">
     <value>Label color</value>
   </data>
@@ -2692,7 +2698,7 @@ Select the original file from the camera&apos;s memory card ({0}). Recordings ex
     <value>'{0}' isn't a time</value>
   </data>
   <data name="Timing_AnimNone" xml:space="preserve">
-    <value>None (instant)</value>
+    <value>Instant</value>
   </data>
   <data name="Timing_FadeIn" xml:space="preserve">
     <value>Fade in</value>
@@ -2976,6 +2982,12 @@ Details: {0}</value>
   </data>
   <data name="Updates_DependenciesAvailable" xml:space="preserve">
     <value>Dependency updates available: {0} - see Settings &gt; About</value>
+  </data>
+  <data name="Watermark_Hint" xml:space="preserve">
+    <value>The “Made with OsmoOverlay” line with the project's address. You turn it on in Settings; here you set where it goes, how it looks and when. On the route overview card it stays in the card's bottom-right corner.</value>
+  </data>
+  <data name="Watermark_OffInSettings" xml:space="preserve">
+    <value>The watermark is turned off in Settings, so it won't appear in the video.</value>
   </data>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>360° recordings in .insv format are displayed as a standard frame with adjustable viewing direction and field of view. Support has been tested on the X4. The app does not yet read GPS data from these files.</value>
@@ -3505,5 +3517,101 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="Calibration_FaqSource" xml:space="preserve">
     <value>More about GPS accuracy: GPS.gov</value>
+  </data>
+  <data name="PreviewBenchmark_Title" xml:space="preserve">
+    <value>Preview smoothness test</value>
+  </data>
+  <data name="PreviewBenchmark_Description" xml:space="preserve">
+    <value>Plays the loaded recording with the current preview settings. Up to 3 seconds of warm-up, then 20 seconds of measurement. The test restores the playback position and preview layout afterwards. Press Esc to stop.</value>
+  </data>
+  <data name="PreviewBenchmark_Fullscreen" xml:space="preserve">
+    <value>Test fullscreen on the monitor selected in Settings</value>
+  </data>
+  <data name="PreviewBenchmark_SecondScreen" xml:space="preserve">
+    <value>The second-screen mode is enabled. The test will use that screen.</value>
+  </data>
+  <data name="PreviewBenchmark_MeasurementNote" xml:space="preserve">
+    <value>Frames are counted on the compositor's render thread after drawing is submitted. Drawing times include CPU image upload and draw submission, not GPU completion or physical display latency. CPU/GPU load includes other applications.</value>
+  </data>
+  <data name="PreviewBenchmark_ToolsHint" xml:space="preserve">
+    <value>Measure actual preview playback, including frame pacing and fullscreen on the selected monitor. Requires a loaded recording.</value>
+  </data>
+  <data name="PreviewBenchmark_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="PreviewBenchmark_NotReady" xml:space="preserve">
+    <value>Load a recording with at least one second of playable video before running the preview test. Rendering must be stopped.</value>
+  </data>
+  <data name="PreviewBenchmark_WarmingUp" xml:space="preserve">
+    <value>Warming up the decoder and preview... Esc stops the test.</value>
+  </data>
+  <data name="PreviewBenchmark_Progress" xml:space="preserve">
+    <value>Measuring preview playback: {0} / {1} s. Esc stops the test.</value>
+  </data>
+  <data name="PreviewBenchmark_EndedDuringWarmup" xml:space="preserve">
+    <value>Playback ended during warm-up. Try a longer recording or enable playback looping.</value>
+  </data>
+  <data name="PreviewBenchmark_Cancelled" xml:space="preserve">
+    <value>Preview smoothness test cancelled.</value>
+  </data>
+  <data name="PreviewBenchmark_LoadFailed" xml:space="preserve">
+    <value>Unable to read system load during the preview test.</value>
+  </data>
+  <data name="PreviewBenchmark_Source" xml:space="preserve">
+    <value>Recording: {0}</value>
+  </data>
+  <data name="PreviewBenchmark_Display" xml:space="preserve">
+    <value>Mode: {0}; monitor: {1}</value>
+  </data>
+  <data name="PreviewBenchmark_Resolution" xml:space="preserve">
+    <value>Decoded image: {0}x{1}; displayed image: {2}x{3} px; DPI scale: {4}x</value>
+  </data>
+  <data name="PreviewBenchmark_Rate" xml:space="preserve">
+    <value>Playback speed: {0}x; expected frame rate: {1} FPS</value>
+  </data>
+  <data name="PreviewBenchmark_Result" xml:space="preserve">
+    <value>Presented: {0} frames in {1} s; average: {2} FPS</value>
+  </data>
+  <data name="PreviewBenchmark_ShortSample" xml:space="preserve">
+    <value>Short sample: playback ended before the full 20-second measurement.</value>
+  </data>
+  <data name="PreviewBenchmark_NoFrames" xml:space="preserve">
+    <value>No frames were presented during measurement. Check whether the preview window was visible.</value>
+  </data>
+  <data name="PreviewBenchmark_Gaps" xml:space="preserve">
+    <value>Frame intervals: median {0} ms; P95 {1} ms; longest gap {2} ms; stalls: {3} (over 100 ms or three frame intervals, whichever is longer)</value>
+  </data>
+  <data name="PreviewBenchmark_Dropped" xml:space="preserve">
+    <value>Skipped source frames while catching up: {0}; frames dropped before overlay: {1}; frames dropped before drawing: {2}</value>
+  </data>
+  <data name="PreviewBenchmark_Draw" xml:space="preserve">
+    <value>Image upload and draw submission</value>
+  </data>
+  <data name="PreviewBenchmark_Timing" xml:space="preserve">
+    <value>{0}: median {1} ms; P95 {2} ms</value>
+  </data>
+  <data name="PreviewBenchmark_Load" xml:space="preserve">
+    <value>Average system load: CPU {0}; GPU {1}; video decoder {2}; peak sampled application memory: {3}</value>
+  </data>
+  <data name="PreviewBenchmark_ModeFullscreen" xml:space="preserve">
+    <value>fullscreen</value>
+  </data>
+  <data name="PreviewBenchmark_ModeSecondScreen" xml:space="preserve">
+    <value>second screen</value>
+  </data>
+  <data name="PreviewBenchmark_ModeWindow" xml:space="preserve">
+    <value>main window</value>
+  </data>
+  <data name="PreviewBenchmark_Refresh" xml:space="preserve">
+    <value>Observed compositor refresh rate: {0} Hz</value>
+  </data>
+  <data name="PreviewBenchmark_Settings" xml:space="preserve">
+    <value>Decoder: {0}; overlay enabled: {1}; preview shadows enabled: {2}</value>
+  </data>
+  <data name="PreviewBenchmark_On" xml:space="preserve">
+    <value>yes</value>
+  </data>
+  <data name="PreviewBenchmark_Off" xml:space="preserve">
+    <value>no</value>
   </data>
 </root>

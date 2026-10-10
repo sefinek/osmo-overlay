@@ -120,7 +120,7 @@ public partial class MainWindow : Window
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
 			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
 			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
-			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming
+			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming
 		];
 		foreach (ElementTimingEditor timing in timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
@@ -129,7 +129,7 @@ public partial class MainWindow : Window
 			DateTimeShadow, UtcTimeShadow, CameraInfoShadow, CompassShadow, MapShadow,
 			SpeedShadow, RollShadow, PitchShadow, SunShadow, GMeterShadow, ElapsedTimeShadow,
 			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
-			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow
+			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow
 		];
 		foreach (ElementShadowEditor shadow in _shadowEditors)
 		{
@@ -161,7 +161,7 @@ public partial class MainWindow : Window
 		[
 			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, RollStyle, PitchStyle, SunStyle,
 			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
-			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle
+			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle
 		];
 		foreach (ElementStyleEditor style in styleEditors)
 		{
@@ -484,6 +484,8 @@ public partial class MainWindow : Window
 			if (_inputPaths.Count == 0) RestartApp();
 			else AppLogger.Notify(Strings.Main_RestartToApply);
 		}
+		if (settings.PreviewBenchmarkRequested && !(needsRestart && _inputPaths.Count == 0))
+			await ShowPreviewBenchmarkAsync();
 	}
 
 	private static void RestartApp()
@@ -505,7 +507,7 @@ public partial class MainWindow : Window
 
 	private async void OnToolsClick(object? sender, RoutedEventArgs e)
 	{
-		await new ToolsWindow { OpenBenchmark = ShowBenchmarkAsync }.ShowDialog(this);
+		await new ToolsWindow { OpenBenchmark = ShowBenchmarkAsync, OpenPreviewBenchmark = ShowPreviewBenchmarkAsync }.ShowDialog(this);
 	}
 
 	/// <summary>

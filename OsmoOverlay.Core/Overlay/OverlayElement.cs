@@ -39,7 +39,8 @@ public enum OverlayElementType
 	TripStat,
 	Text,
 	Image,
-	MapAttribution
+	MapAttribution,
+	Watermark
 }
 
 /// <summary>
@@ -86,6 +87,7 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(TextElement), (int)OverlayElementType.Text)]
 [JsonDerivedType(typeof(ImageElement), (int)OverlayElementType.Image)]
 [JsonDerivedType(typeof(MapAttributionElement), (int)OverlayElementType.MapAttribution)]
+[JsonDerivedType(typeof(WatermarkElement), (int)OverlayElementType.Watermark)]
 public abstract record OverlayElement
 {
 	[JsonIgnore] public abstract OverlayElementType Type { get; }
@@ -237,6 +239,17 @@ public sealed record CameraModelTextElement : StyledOverlayElement
 public sealed record MapAttributionElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.MapAttribution;
+}
+
+/// <summary>
+///     The "Made with OsmoOverlay" watermark, centered on X with the second line's baseline on Y. OverlaySettings.ShowWatermark
+///     turns it on and off for every preset (the default one can't hide a widget); this only places, styles and times it.
+///     A preset without one gets it at the default spot (OverlayRenderer.DrawWidgets); the route overview card shows it in
+///     its own corner instead (DrawWatermark).
+/// </summary>
+public sealed record WatermarkElement : StyledOverlayElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Watermark;
 }
 
 /// <summary>

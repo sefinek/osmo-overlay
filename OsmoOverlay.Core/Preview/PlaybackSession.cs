@@ -53,6 +53,7 @@ internal sealed class PlaybackSession
 	private readonly OverlayCompositor _compositor;
 	private readonly FrameBufferPool _pool;
 	private readonly PlaybackPlan _plan;
+	private readonly PlaybackFrameSource _frames;
 	private readonly PlaybackClock _clock;
 	private readonly Channel<DecodedFrame> _decoded =
 		Channel.CreateBounded<DecodedFrame>(new BoundedChannelOptions(DecodedQueueFrames) { SingleReader = true, SingleWriter = true });
@@ -83,7 +84,7 @@ internal sealed class PlaybackSession
 	private double _lateMax;
 
 	public PlaybackSession(LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput, OverlayCompositor compositor,
-		FrameBufferPool pool, PlaybackPlan plan, double rate)
+		FrameBufferPool pool, PlaybackPlan plan, double rate, PlaybackFrameSource frames)
 	{
 		_video = video;
 		_audioSource = audioSource;
@@ -91,6 +92,7 @@ internal sealed class PlaybackSession
 		_compositor = compositor;
 		_pool = pool;
 		_plan = plan;
+		_frames = frames;
 		_clock = new PlaybackClock(audioOutput, audioSource?.SampleRate ?? 1, rate);
 		_rate = rate;
 		_step = FrameStep(rate, video.Fps);
@@ -187,6 +189,7 @@ internal sealed class PlaybackSession
 			{
 				_pool.Return(skipped.Composed.Bgra);
 				_skippedAtDisplay++;
+				_frames.Measurements?.RecordDrop(PreviewDrop.Display);
 			}
 
 			shown = next;
@@ -220,6 +223,7 @@ internal sealed class PlaybackSession
 		if (_lastTake != 0)
 		{
 			double interval = Stopwatch.GetElapsedTime(_lastTake, now).TotalSeconds;
+			_frames.Measurements?.RecordRefresh(interval);
 			// A window that stopped rendering for a while (minimized) says nothing about the refresh rate.
 			if (interval is > 0.002 and < 0.05) _displayInterval += (interval - _displayInterval) * 0.1;
 		}
@@ -313,13 +317,17 @@ internal sealed class PlaybackSession
 							if (!stream.Skip(skip)) break;
 
 							Interlocked.Add(ref _decodedPast, skip);
+							_frames.Measurements?.RecordDrop(PreviewDrop.Decode, skip);
 							if (stream.NextPosition >= stretch.End - halfFrame) break;
 
 							continue;
 						}
 					}
 
+					PreviewMeasurements? measurements = _frames.Measurements;
+					long decodeStarted = measurements is not null ? Stopwatch.GetTimestamp() : 0;
 					VideoFrame? frame = stream.TryReadNextFrame(step);
+					if (frame is not null) measurements?.RecordStage(PreviewStage.Decode, decodeStarted);
 					if (frame is null) break;
 
 					if (stream.Position >= stretch.End - halfFrame)
@@ -367,10 +375,15 @@ internal sealed class PlaybackSession
 					{
 						_pool.Return(decoded.Frame.Bgra);
 						Interlocked.Increment(ref _droppedLate);
+						_frames.Measurements?.RecordDrop(PreviewDrop.Overlay);
 						continue;
 					}
 
-					if (_compositor.ComposeInPlace(decoded.Frame, decoded.Position) is not { } composed)
+					PreviewMeasurements? measurements = _frames.Measurements;
+					long overlayStarted = measurements is not null ? Stopwatch.GetTimestamp() : 0;
+					ComposedPreviewFrame? composed = _compositor.ComposeInPlace(decoded.Frame, decoded.Position);
+					measurements?.RecordStage(PreviewStage.Overlay, overlayStarted);
+					if (composed is null)
 					{
 						open = false;
 						break;

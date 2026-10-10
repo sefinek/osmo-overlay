@@ -63,6 +63,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		// at their default positions.
 		float progressBarCx = width / 2f;
 		float progressBarCy = height - m - 16;
+		// Top center, under the Text widget's slot: the bottom center is the progress bar's, which may show from the start.
+		float watermarkY = dateY + 130;
 		// Centered above the progress bar, which is as wide.
 		float chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2;
 		float chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop + OverlayElementBounds.ChartHeight);
@@ -88,6 +90,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new MapWidgetElement { X = mapCx, Y = mapCy },
 			new MapAttributionElement { X = mapCreditInset, Y = mapCreditY, Scale = 0.9f },
 			new GMeterElement { X = gMeterCx, Y = gMeterCy },
+			// The first seconds only, fading out - with the route overview card on, that's all on the card, in its corner.
+			new WatermarkElement
+			{
+				X = width / 2f, Y = watermarkY, DisappearAtSeconds = 6, OutAnimationType = OverlayAnimationType.Fade, OutAnimationDurationSeconds = 1
+			},
 			// Fades in once the ride gets going (its ShowFromSpeedKmh default) rather than being on screen the whole time.
 			new TripProgressBarElement { X = progressBarCx, Y = progressBarCy, AnimationType = OverlayAnimationType.Fade },
 			// The rest are off by default - added after the layout above, so they mustn't move or cover any of it.

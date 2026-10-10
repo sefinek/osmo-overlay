@@ -88,6 +88,15 @@ public partial class SettingsWindow : Window
 
 	/// <summary>Opens the performance test over the given window - MainWindow's, which knows the loaded recording.</summary>
 	public Func<Window, Task>? OpenBenchmark { get; init; }
+	public bool PreviewBenchmarkRequested { get; private set; }
+
+	private void OnPreviewBenchmarkClick(object? sender, PointerPressedEventArgs e)
+	{
+		if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+		PreviewBenchmarkRequested = true;
+		e.Handled = true;
+		Close();
+	}
 
 	/// <summary>For the first-run window opened from here: the Map widget's own provider now, and how to give it back to the default style.</summary>
 	public Func<string?>? MapWidgetProvider { get; init; }

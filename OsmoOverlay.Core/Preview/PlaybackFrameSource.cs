@@ -9,6 +9,13 @@ namespace OsmoOverlay.Core.Preview;
 public sealed class PlaybackFrameSource
 {
 	private volatile PlaybackSession? _session;
+	private PreviewMeasurements? _measurements;
+
+	public PreviewMeasurements? Measurements
+	{
+		get => Volatile.Read(ref _measurements);
+		set => Volatile.Write(ref _measurements, value);
+	}
 
 	public bool IsPlaying => _session is not null;
 

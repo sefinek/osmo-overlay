@@ -4,6 +4,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      avalonia:
+        patterns:
+          - "Avalonia*"
+      skiasharp:
+        patterns:
+          - "SkiaSharp*"
   - package-ecosystem: github-actions
     directory: /
     schedule:

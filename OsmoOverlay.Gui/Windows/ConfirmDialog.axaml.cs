@@ -46,7 +46,10 @@ public partial class ConfirmDialog : Window
 		string? windowTitle, Func<Task>? onConfirm, string? workingText, string? secondaryText, Action? onSecondary,
 		string? extraText, Action? onExtra, DialogArt art = DialogArt.ForKind, UiSound? sound = null) : this()
 	{
-		_sound = sound ?? kind switch
+		// Asked before something that can't be undone (deleting a preset), Danger is a question, not an error or a warning:
+		// only the confirm button stays red - the error's or warning's picture and sound read as if something had gone wrong.
+		DialogKind look = !alert && kind == DialogKind.Danger ? DialogKind.Neutral : kind;
+		_sound = sound ?? look switch
 		{
 			DialogKind.Info => UiSound.Info,
 			DialogKind.Success => UiSound.Success,
@@ -63,9 +66,9 @@ public partial class ConfirmDialog : Window
 		MessageText.Text = message;
 		ConfirmButton.Content = confirmText;
 		ConfirmButton.Classes.Add(ButtonClassFor(kind));
-		KindDot.Background = DotBrushFor(kind);
-		KindIcon.Data = IconFor(kind);
-		ShowArt(kind, art);
+		KindDot.Background = DotBrushFor(look);
+		KindIcon.Data = IconFor(look);
+		ShowArt(look, art, !alert);
 		_onConfirm = onConfirm;
 		_workingText = workingText;
 		_onSecondary = onSecondary;
@@ -113,12 +116,16 @@ public partial class ConfirmDialog : Window
 			onSecondary, extraText, onExtra, art, sound).ShowDialog(owner);
 	}
 
-	/// <summary>The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one.</summary>
-	private void ShowArt(DialogKind kind, DialogArt situation)
+	/// <summary>
+	///     The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one, and for a
+	///     plain question (AskAsync's Neutral, which a question before something that can't be undone is shown as).
+	/// </summary>
+	private void ShowArt(DialogKind kind, DialogArt situation, bool question)
 	{
 		Control? art = (situation, kind) switch
 		{
 			(DialogArt.NoGps, _) => NoGpsArt,
+			(_, DialogKind.Neutral) when question => QuestionArt,
 			(_, DialogKind.Info) => InfoArt,
 			(_, DialogKind.Success) => SuccessArt,
 			(_, DialogKind.Warning) => WarningArt,

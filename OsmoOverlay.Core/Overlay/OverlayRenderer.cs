@@ -455,15 +455,12 @@ public sealed partial class OverlayRenderer : IDisposable
 			DrawWidgets(canvas, frame);
 		}
 
-		// On the route-intro card, centering under the whole frame (the normal-frame default) lands the
-		// watermark under the map alone (which only occupies the card's left portion) rather than the
-		// card as a whole - right-aligned to the same margin the stats column and map panel already use
-		// reads as part of that summary instead.
-		float? watermarkAnchorX = isRouteIntroFrame ? _width - OverlayElementBounds.Margin * _scale : null;
-		SKTextAlign watermarkAlign = isRouteIntroFrame ? SKTextAlign.Right : SKTextAlign.Center;
-
-		if (ShowWatermark) DrawWatermark(canvas, sampleTime, watermarkAnchorX, watermarkAlign);
+		// Over the widgets the watermark is a widget of its own; the card shows it in its own corner.
+		if (isRouteIntroFrame && ShowWatermark && WatermarkOn) DrawWatermark(canvas, sampleTime);
 	}
+
+	/// <summary>A layout without a watermark widget gets it at the default spot; one with them shows it when any is visible.</summary>
+	private bool WatermarkOn => Layout.OfType<WatermarkElement>().ToList() is var marks && (marks.Count == 0 || marks.Any(m => m.Visible));
 
 	/// <summary>Off: the widgets are drawn one after another straight onto the frame - the reference ParallelWidgets is checked against.</summary>
 	internal bool ParallelWidgets { get; set; } = true;
@@ -484,7 +481,9 @@ public sealed partial class OverlayRenderer : IDisposable
 		bool creditPlaced = false;
 		IEnumerable<OverlayElement> drawn = Layout;
 		if (credit is { Required: true } && !Layout.Any(e => e is MapAttributionElement))
-			drawn = Layout.Append(DefaultMapCredit);
+			drawn = drawn.Append(DefaultMapCredit);
+		if (ShowWatermark && !Layout.Any(e => e is WatermarkElement))
+			drawn = drawn.Append(DefaultWatermark);
 
 		bool parallel = ParallelWidgets && drawn.Any(e => (e.Visible || e is MapAttributionElement) && IsShadowed(e));
 		List<(SKPicture Picture, SKRect Bounds)> widgets = [];
@@ -503,7 +502,7 @@ public sealed partial class OverlayRenderer : IDisposable
 				}
 				else
 				{
-					if (!element.Visible) continue;
+					if (!element.Visible || (element is WatermarkElement && !ShowWatermark)) continue;
 					state = ElementAnimation.At(WithSpeedGate(element), sampleTime, OutputDurationSeconds);
 				}
 
@@ -574,6 +573,10 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>The credit line of the maps on screen and whether any of their terms require it (MapCreditRule.WhileMapVisible).</summary>
 	private readonly record struct MapCredit(string Text, bool Required);
+
+	/// <summary>Where the watermark goes, and for how long, in a layout without a watermark widget - the default preset's.</summary>
+	private static readonly WatermarkElement DefaultWatermark =
+		OverlayPreset.CreateDefault("", "").Elements.OfType<WatermarkElement>().First() with { Visible = true };
 
 	/// <summary>Where the credit goes when a map needs it and the layout has no credit widget - the default preset's spot, the bottom-left corner.</summary>
 	private static readonly MapAttributionElement DefaultMapCredit =
@@ -714,6 +717,9 @@ public sealed partial class OverlayRenderer : IDisposable
 				break;
 			case CameraModelTextElement cameraModel:
 				DrawCameraModel(canvas, cameraModel);
+				break;
+			case WatermarkElement watermark:
+				DrawWatermarkWidget(canvas, watermark);
 				break;
 			case MapAttributionElement mapCredit:
 				DrawOutlined(canvas, MapCreditText(), 0, 0, TextFont(mapCredit, OverlayElementBounds.CreditFontSize), TextColorOf(mapCredit),

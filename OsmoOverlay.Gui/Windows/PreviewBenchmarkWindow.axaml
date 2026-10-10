@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        x:Class="OsmoOverlay.Gui.PreviewBenchmarkWindow"
+        Width="680" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="{x:Static local:AppAssets.Icon}"
+        Title="{x:Static local:Strings.PreviewBenchmark_Title}">
+    <StackPanel Margin="24" Spacing="16">
+        <TextBlock Text="{x:Static local:Strings.PreviewBenchmark_Title}" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock Name="DescriptionText" Text="{x:Static local:Strings.PreviewBenchmark_Description}" TextWrapping="Wrap" />
+        <CheckBox Name="FullscreenCheck" Content="{x:Static local:Strings.PreviewBenchmark_Fullscreen}" />
+        <ScrollViewer Name="ReportScroll" IsVisible="False" MaxHeight="480" HorizontalScrollBarVisibility="Disabled">
+            <SelectableTextBlock Name="ReportText" TextWrapping="Wrap" FontFamily="Cascadia Mono,Consolas,monospace" FontSize="13" />
+        </ScrollViewer>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button Name="CopyButton" IsVisible="False" Content="{x:Static local:Strings.Benchmark_CopyReport}" Click="OnCopyClick" />
+            <Button Name="StartButton" Classes="accent" Content="{x:Static local:Strings.Benchmark_Start}" Click="OnStartClick" />
+            <Button Content="{x:Static local:Strings.PreviewBenchmark_Close}" Click="OnCloseClick" />
+        </StackPanel>
+    </StackPanel>
+</Window>

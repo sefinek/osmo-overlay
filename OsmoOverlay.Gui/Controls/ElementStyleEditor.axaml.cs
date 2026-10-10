@@ -104,7 +104,7 @@ public partial class ElementStyleEditor : UserControl
 	/// </summary>
 	private static List<FontOption> BuildFontOptions()
 	{
-		List<FontOption> options = [new(Strings.Common_SystemDefault, null)];
+		List<FontOption> options = [new(string.Format(Strings.Style_DefaultFont, OverlayElementBounds.HudFontFamily), null)];
 		options.AddRange(FontManager.Current.SystemFonts
 			.Select(f => f.Name)
 			.Distinct(StringComparer.OrdinalIgnoreCase)

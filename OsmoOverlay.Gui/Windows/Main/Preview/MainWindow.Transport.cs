@@ -26,7 +26,7 @@ public partial class MainWindow
 
 	private bool _spaceTookPlayback;
 
-	private bool PreviewShortcutsActive => TransportPanel.IsEnabled && FocusManager?.GetFocusedElement() is not TextBox;
+	private bool PreviewShortcutsActive => !_previewBenchmarkRunning && TransportPanel.IsEnabled && FocusManager?.GetFocusedElement() is not TextBox;
 
 	private void OnPreviewSpaceKeyDown(object? sender, KeyEventArgs e)
 	{

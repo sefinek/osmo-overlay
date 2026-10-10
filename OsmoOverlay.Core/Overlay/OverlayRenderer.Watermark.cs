@@ -2,53 +2,45 @@ using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
 
-/// <summary>The "Made with OsmoOverlay" watermark.</summary>
+/// <summary>The "Made with OsmoOverlay" watermark: a widget (WatermarkElement) over the video, in its own corner on the route overview card.</summary>
 public sealed partial class OverlayRenderer
 {
-	// Watermark holds at full opacity from frame 0, then fades out. These fixed numbers are the fallback for when there's no route-intro card at all; with one
-	// enabled, WatermarkFadeOutStartSecondsEffective/WatermarkFadeOutEndSeconds below replace them so
-	// the watermark's own fade locks to the card's actual crossfade instead of running on its own
-	// unrelated clock.
-	private const double WatermarkFadeOutStartSeconds = 5.0;
-	private const double WatermarkDurationSeconds = 6.0;
+	// On the card it holds from frame 0 and fades out with the card's own crossfade.
 	private const float WatermarkBottomMargin = 110f;
-	private const float WatermarkLineGap = 46f;
-
-	private double WatermarkFadeOutStartSecondsEffective =>
-		RouteIntro.Enabled ? RouteIntroTransitionStartSeconds : WatermarkFadeOutStartSeconds;
-
-	private double WatermarkFadeOutEndSeconds =>
-		RouteIntro.Enabled ? RouteIntro.DurationSeconds : WatermarkDurationSeconds;
 
 	private static readonly string WatermarkSubtitle =
 		$"github.com/sefinek/osmo-overlay  •  v{FormatVersion(typeof(OverlayRenderer).Assembly.GetName().Version)}";
 
 	/// <summary>
-	///     Bottom-center attribution watermark, full opacity from frame 0 then fading out (see
-	///     WatermarkAlpha). The maps' own credit is a widget of its own (MapAttributionElement). anchorX/align
-	///     default to centered under the whole frame (the normal per-frame widget pass); Render passes a
-	///     right-aligned override for the route-intro card, whose map only covers the card's left portion.
+	///     On the route overview card: right-aligned to the margin the stats column and map panel use - centered under the
+	///     frame it would sit under the map alone, which only covers the card's left part.
 	/// </summary>
-	private void DrawWatermark(SKCanvas canvas, double sampleTimeSeconds, float? anchorX = null,
-		SKTextAlign align = SKTextAlign.Center)
+	private void DrawWatermark(SKCanvas canvas, double sampleTimeSeconds)
 	{
-		float alpha = WatermarkAlpha(sampleTimeSeconds);
+		float alpha = FadeAlpha(sampleTimeSeconds, 0, 0, RouteIntroTransitionStartSeconds, RouteIntro.DurationSeconds);
 		if (alpha <= 0f) return;
 
 		canvas.Save();
-		canvas.Translate(anchorX ?? _width / 2f, _height - WatermarkBottomMargin * _scale);
+		canvas.Translate(_width - OverlayElementBounds.Margin * _scale, _height - WatermarkBottomMargin * _scale);
 		canvas.Scale(_scale, _scale);
-
-		DrawOutlined(canvas, "Made with OsmoOverlay", 0, -WatermarkLineGap, _watermarkTitleFont, White, align, alpha);
-		DrawOutlined(canvas, WatermarkSubtitle, 0, 0, _watermarkSubtitleFont, Accent, align, alpha);
-
+		DrawWatermarkLines(canvas, _watermarkTitleFont, _watermarkSubtitleFont, White, Accent, Shadow, 1f, SKTextAlign.Right, alpha);
 		canvas.Restore();
 	}
 
-	/// <summary>No fade-in - it's on screen from the very first frame, so an instant appearance reads as the video simply starting, not as something popping in.</summary>
-	private float WatermarkAlpha(double sampleTimeSeconds)
+	/// <summary>The widget, centered on its anchor in its own font and colors; the second line keeps the accent.</summary>
+	private void DrawWatermarkWidget(SKCanvas canvas, WatermarkElement element)
 	{
-		return FadeAlpha(sampleTimeSeconds, 0, 0, WatermarkFadeOutStartSecondsEffective, WatermarkFadeOutEndSeconds);
+		DrawWatermarkLines(canvas, TextFont(element, OverlayElementBounds.WatermarkTitleFontSize),
+			TextFont(element, OverlayElementBounds.WatermarkSubtitleFontSize), TextColorOf(element), Accent, OutlineColorOf(element),
+			element.OutlineWidth, SKTextAlign.Center, 1f);
+	}
+
+	private void DrawWatermarkLines(SKCanvas canvas, SKFont titleFont, SKFont subtitleFont, SKColor title, SKColor subtitle, SKColor outline,
+		float outlineWidth, SKTextAlign align, float alpha)
+	{
+		DrawOutlined(canvas, OverlayElementBounds.WatermarkTitle, 0, -OverlayElementBounds.WatermarkLineGap, titleFont, title, align, alpha,
+			outline, outlineWidth);
+		DrawOutlined(canvas, WatermarkSubtitle, 0, 0, subtitleFont, subtitle, align, alpha, outline, outlineWidth);
 	}
 
 	/// <summary>

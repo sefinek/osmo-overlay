@@ -24,6 +24,14 @@ public partial class ToolsWindow : Window
 
 	/// <summary>Opens the performance test over the given window - MainWindow's, which knows the loaded recording.</summary>
 	public Func<Window, Task>? OpenBenchmark { get; init; }
+	public Func<Task>? OpenPreviewBenchmark { get; init; }
+
+	private async void OnPreviewBenchmarkClick(object? sender, RoutedEventArgs e)
+	{
+		if (OpenPreviewBenchmark is null) return;
+		Close();
+		await OpenPreviewBenchmark();
+	}
 
 	private async void OnBenchmarkClick(object? sender, RoutedEventArgs e)
 	{

@@ -224,6 +224,7 @@ public partial class MainWindow
 			OverlayElementType.Text => TextListItem,
 			OverlayElementType.Image => ImageListItem,
 			OverlayElementType.MapAttribution => MapCreditListItem,
+			OverlayElementType.Watermark => WatermarkListItem,
 			_ => null
 		};
 	}
@@ -817,6 +818,16 @@ public partial class MainWindow
 				MapCreditTiming.Populate(x);
 				MapCreditShadow.Populate(x);
 				UpdateMapCreditLock();
+				break;
+			}
+
+			case OverlayElementType.Watermark:
+			{
+				var x = (WatermarkElement)el;
+				WatermarkStyle.Populate(x);
+				WatermarkTiming.Populate(x);
+				WatermarkShadow.Populate(x);
+				WatermarkOffHint.IsVisible = !_showWatermark;
 				break;
 			}
 

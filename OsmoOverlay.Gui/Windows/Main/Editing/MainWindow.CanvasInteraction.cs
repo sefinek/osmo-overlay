@@ -67,6 +67,7 @@ public partial class MainWindow
 			OverlayElementType.Text => TextSettingsPanel,
 			OverlayElementType.Image => ImageSettingsPanel,
 			OverlayElementType.MapAttribution => MapCreditSettingsPanel,
+			OverlayElementType.Watermark => WatermarkSettingsPanel,
 			_ => null
 		};
 	}

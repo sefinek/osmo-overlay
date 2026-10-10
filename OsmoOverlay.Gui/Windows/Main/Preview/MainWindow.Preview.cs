@@ -216,7 +216,7 @@ public partial class MainWindow
 	private void ApplyAutoQuality()
 	{
 		_autoQualityDelay.Stop();
-		if (_summary is not { } summary || _phase != UiPhase.SummaryReady || _previewMaxWidth != AutoPreviewWidth) return;
+		if (_previewBenchmarkRunning || _summary is not { } summary || _phase != UiPhase.SummaryReady || _previewMaxWidth != AutoPreviewWidth) return;
 
 		// Reopening stops the playback - it's looked at again when the playback ends (OnPreviewPlaybackStopped).
 		if (_previewPlayer.IsPlaying || _timelineScrubbing || ResolvePreviewMaxWidth(summary) == _openedPreviewMaxWidth) return;

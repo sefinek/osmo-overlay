@@ -18,6 +18,7 @@
 			<Image Name="InfoArt" Source="{local:AssetImage Path=Dialogs/Info.webp}" IsVisible="False" />
 			<Image Name="DangerArt" Source="{local:AssetImage Path=Dialogs/Error.webp}" IsVisible="False" />
 			<Image Name="NoGpsArt" Source="{local:AssetImage Path=Dialogs/NoGps.webp}" IsVisible="False" />
+			<Image Name="QuestionArt" Source="{local:AssetImage Path=Dialogs/Question.webp}" IsVisible="False" />
 		</Panel>
 		<StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Center">
 			<StackPanel Spacing="6">

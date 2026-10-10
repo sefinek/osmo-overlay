@@ -91,6 +91,14 @@
 			</Grid>
 		</Border>
 
+		<Border Classes="card toolCard">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+				           Text="{x:Static local:Strings.PreviewBenchmark_ToolsHint}" />
+				<Button Grid.Column="1" Content="{x:Static local:Strings.PreviewBenchmark_Title}" Click="OnPreviewBenchmarkClick" />
+			</Grid>
+		</Border>
+
 		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_AppData}" Margin="0,8,0,0" />
 
 		<Border Classes="card toolCard">
