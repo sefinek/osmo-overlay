@@ -50,6 +50,12 @@ public partial class MainWindow
 				? [.. TelemetryProcessor.FindGpsLossRanges(rawFrames).Select(r => new TimeRange(r.Start, r.End))]
 				: [];
 			foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = gpsLoss;
+			IReadOnlyList<GpsAnomaly> anomalies = _availability.GpsFix && summary.TelemetryFrames is { Count: > 0 } telemetry
+				? TelemetryProcessor.FindGpsAnomalies(telemetry)
+				: [];
+			foreach (PreviewTimeline timeline in Timelines) timeline.GpsAnomalies = anomalies;
+			IReadOnlyList<TimelineFile> files = TimelineFiles(summary);
+			foreach (PreviewTimeline timeline in Timelines) timeline.Files = files;
 		}
 		catch (Exception ex)
 		{
@@ -74,7 +80,34 @@ public partial class MainWindow
 		CutScrim.IsVisible = false;
 		PreviewPlaceholder.IsVisible = true;
 		_overlayPresetsLoaded = false;
-		foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = [];
+		foreach (PreviewTimeline timeline in Timelines)
+		{
+			timeline.GpsLoss = [];
+			timeline.GpsAnomalies = [];
+			timeline.RouteIntro = null;
+			timeline.Files = [];
+		}
+	}
+
+	/// <summary>
+	///     The recording's files on the timeline: each after the previous ones' frames, as they're joined (VideoSegments.Join), and
+	///     whether it was recorded after a stop (its first telemetry frame StartsAfterGap).
+	/// </summary>
+	private static IReadOnlyList<TimelineFile> TimelineFiles(FileSummary summary)
+	{
+		double fps = summary.Video.Fps > 0 ? summary.Video.Fps : 30;
+		List<TimelineFile> files = [];
+		double start = 0;
+		for (int i = 0; i < summary.InputPaths.Count && i < summary.SegmentFrameCounts.Count; i++)
+		{
+			double end = start + summary.SegmentFrameCounts[i] / fps;
+			double from = start;
+			bool afterGap = i > 0 && summary.TelemetryFrames?.FirstOrDefault(f => f.SampleTimeSeconds >= from - 0.5 / fps) is { StartsAfterGap: true };
+			files.Add(new TimelineFile(start, end, Path.GetFileName(summary.InputPaths[i]), afterGap));
+			start = end;
+		}
+
+		return files;
 	}
 
 	/// <summary>A still (paused, seeking) - played frames go to PreviewVideo on the render thread, see OnPlaybackFrameShown.</summary>
@@ -216,7 +249,7 @@ public partial class MainWindow
 	private void ApplyAutoQuality()
 	{
 		_autoQualityDelay.Stop();
-		if (_previewBenchmarkRunning || _summary is not { } summary || _phase != UiPhase.SummaryReady || _previewMaxWidth != AutoPreviewWidth) return;
+		if (_previewTestRunning || _summary is not { } summary || _phase != UiPhase.SummaryReady || _previewMaxWidth != AutoPreviewWidth) return;
 
 		// Reopening stops the playback - it's looked at again when the playback ends (OnPreviewPlaybackStopped).
 		if (_previewPlayer.IsPlaying || _timelineScrubbing || ResolvePreviewMaxWidth(summary) == _openedPreviewMaxWidth) return;

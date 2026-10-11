@@ -67,7 +67,10 @@ public interface ICameraFormat
 	}
 }
 
-/// <summary>The cameras the app knows - registered once at startup by the app (Program), in the order they're tried.</summary>
+/// <summary>
+///     The cameras the app knows - registered once at startup by the app (Program), in the order they're tried. After them
+///     the performance test's own recording (SyntheticCamera), which isn't a camera and so isn't in All.
+/// </summary>
 public static class CameraFormats
 {
 	private static ICameraFormat[] _formats = [];
@@ -81,7 +84,9 @@ public static class CameraFormats
 
 	public static ICameraFormat? Find(string? id)
 	{
-		return id is null ? null : Array.Find(_formats, f => f.Id == id);
+		if (id is null) return null;
+
+		return Array.Find(_formats, f => f.Id == id) ?? (id == SyntheticCamera.Instance.Id ? SyntheticCamera.Instance : null);
 	}
 
 	/// <summary>The first registered camera that recorded the file - null for a file none of them knows.</summary>
@@ -93,6 +98,6 @@ public static class CameraFormats
 				return recording;
 		}
 
-		return null;
+		return SyntheticCamera.Instance.Detect(path, streams);
 	}
 }

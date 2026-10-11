@@ -464,4 +464,10 @@
   <data name="Versions_UpToDate" xml:space="preserve">
     <value>{0}: zainstalowana {1} - aktualna</value>
   </data>
+  <data name="Synthetic_Name" xml:space="preserve">
+    <value>Nagranie testowe</value>
+  </data>
+  <data name="Synthetic_Source" xml:space="preserve">
+    <value>Źródło telemetrii: telemetria wygenerowana do testu wydajności (z celowymi anomaliami)</value>
+  </data>
 </root>

@@ -109,6 +109,9 @@ public partial class MainWindow
 				}
 				else
 				{
+					List<GpsAnomaly> anomalies = TelemetryProcessor.FindGpsAnomalies(rawFrames);
+					if (anomalies.Count > 0) AppendLog(Plural.Format(Strings.Summary_LogGpsAnomalies, anomalies.Count), LogLevel.Warn);
+
 					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
 					if (gpsLossRanges.Count > 0)
 					{

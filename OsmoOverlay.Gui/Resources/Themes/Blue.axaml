@@ -35,6 +35,10 @@
 	<Color x:Key="WarningPressedColor">#D9A80F</Color>
 	<Color x:Key="CautionColor">#E6D24E</Color>
 	<Color x:Key="AlertColor">#F07A2E</Color>
+	<Color x:Key="ChartSeries1Color">#3987E5</Color>
+	<Color x:Key="ChartSeries2Color">#D95926</Color>
+	<Color x:Key="ChartSeries3Color">#199E70</Color>
+	<Color x:Key="ChartSeries4Color">#9085E9</Color>
 	<Color x:Key="DangerColor">#E3132F</Color>
 	<Color x:Key="DangerHoverColor">#F23A52</Color>
 	<Color x:Key="DangerPressedColor">#B80E26</Color>

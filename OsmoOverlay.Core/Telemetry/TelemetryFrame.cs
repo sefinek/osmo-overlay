@@ -27,10 +27,21 @@ public sealed record TelemetryFrame(
 	double? SourceTimeSeconds = null,
 	// First frame of a file recorded after the camera had stopped (TelemetryExtraction.ExtractCombined) - next
 	// to the previous file on the timeline but not in time, so speed, distance and the route don't run across it.
-	bool StartsAfterGap = false)
+	bool StartsAfterGap = false,
+	// What GpsOutliers filled in on this frame - an implausible position or receiver speed (the GPS alert widget says so).
+	GpsCorrection GpsCorrected = GpsCorrection.None)
 {
 	public double GForce => Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
 
 	/// <summary>Seconds since the recording's own first frame, whichever timeline SampleTimeSeconds is on.</summary>
 	public double RecordingTimeSeconds => SourceTimeSeconds ?? SampleTimeSeconds;
+}
+
+/// <summary>Which GPS readings of a frame GpsOutliers repaired.</summary>
+[Flags]
+public enum GpsCorrection
+{
+	None = 0,
+	Position = 1,
+	Speed = 2
 }

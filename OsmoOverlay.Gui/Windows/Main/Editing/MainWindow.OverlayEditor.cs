@@ -828,6 +828,7 @@ public partial class MainWindow
 				WatermarkTiming.Populate(x);
 				WatermarkShadow.Populate(x);
 				WatermarkOffHint.IsVisible = !_showWatermark;
+				WatermarkIntroHint.IsVisible = _previewPlayer.IntroShiftSeconds(x) > 0;
 				break;
 			}
 
@@ -843,6 +844,7 @@ public partial class MainWindow
 				TripProgressBarPanelFill.Populate(x);
 				TripProgressBarTiming.Populate(x);
 				LockTripProgressAppear(x);
+				TripProgressIntroHint.IsVisible = _previewPlayer.IntroShiftSeconds(x) > 0;
 				TripProgressBarShadow.Populate(x);
 				break;
 			}

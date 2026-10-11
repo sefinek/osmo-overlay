@@ -93,18 +93,22 @@ public sealed class OverlayPresetTests
 		using var renderer = new OverlayRenderer((int)OverlayElementBounds.ReferenceWidth, (int)OverlayElementBounds.ReferenceHeight, 200,
 			preset.Elements, frames, 30, false, "DJI Osmo Action 6");
 
-		List<(OverlayElementType Type, SKRect Drawn)> widgets = [];
+		List<(OverlayElementType Type, SKRect Drawn, double From, double Until)> widgets = [];
 		foreach (OverlayElement element in preset.Elements.Select(e => e with { Visible = true }))
 		{
 			if (renderer.MeasureElement(element, frames[10]) is not { } drawn) continue;
 			drawn = new SKRect(drawn.Left * element.Scale, drawn.Top * element.Scale, drawn.Right * element.Scale, drawn.Bottom * element.Scale);
 			drawn.Offset(element.X, element.Y);
-			widgets.Add((element.Type, drawn));
+			widgets.Add((element.Type, drawn, element.AppearAtSeconds ?? 0, element.DisappearAtSeconds ?? double.PositiveInfinity));
 		}
 
+		// Two taking turns in one place (the watermark, then the progress bar) never cover each other.
 		for (int i = 0; i < widgets.Count; i++)
 		for (int j = i + 1; j < widgets.Count; j++)
-			Assert.IsFalse(widgets[i].Drawn.IntersectsWith(widgets[j].Drawn), $"{widgets[i].Type} covers {widgets[j].Type}");
+		{
+			bool together = widgets[i].From < widgets[j].Until && widgets[j].From < widgets[i].Until;
+			Assert.IsFalse(together && widgets[i].Drawn.IntersectsWith(widgets[j].Drawn), $"{widgets[i].Type} covers {widgets[j].Type}");
+		}
 	}
 
 	[TestMethod]

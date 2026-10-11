@@ -50,6 +50,19 @@ public sealed class CameraTiltTests
 	}
 
 	[TestMethod]
+	public void EndOfAGpsLoss_IsNoAcceleration()
+	{
+		// A held position reads 0 km/h through a GPS loss; the real speed is back the moment the fix is.
+		var drive = Drive(5, 0, 0, -1, t => t < 2 ? 0 : 35, _ => 0);
+		for (int i = 0; i < drive.Frames.Count; i++)
+			drive.Frames[i] = drive.Frames[i] with { HasGpsFix = drive.Frames[i].SampleTimeSeconds >= 2 };
+
+		double[] pitch = Tilt(drive).Pitch;
+
+		Assert.IsTrue(pitch.All(p => Math.Abs(p) < 0.5), $"pitch reached {pitch.Max(Math.Abs):0.0} degrees");
+	}
+
+	[TestMethod]
 	public void TiltedAtRest_ReadsTheTilt()
 	{
 		double roll = Middle(Drive(4, 0, -Math.Sin(20 * Math.PI / 180), -Math.Cos(20 * Math.PI / 180), _ => 0, _ => 0)).Roll;

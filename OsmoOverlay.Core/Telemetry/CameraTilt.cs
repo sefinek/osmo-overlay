@@ -100,7 +100,9 @@ internal static class CameraTilt
 	{
 		double weight = Math.Clamp((speedKmh[i] - CompensationStartKmh) / (CompensationFullKmh - CompensationStartKmh), 0, 1);
 		double dt = frames[after].SampleTimeSeconds - frames[before].SampleTimeSeconds;
-		if (weight <= 0 || !frames[i].HasGpsFix || dt < DerivativeWindowSeconds / 2) return (0, 0);
+		// Both ends need a fix: across the edge of a GPS loss the speed jumps between the held position's 0 and the real one.
+		if (weight <= 0 || !frames[i].HasGpsFix || !frames[before].HasGpsFix || !frames[after].HasGpsFix || dt < DerivativeWindowSeconds / 2)
+			return (0, 0);
 
 		double forward = (speedKmh[after] - speedKmh[before]) / 3.6 / dt / G;
 		double turn = AngleMath.DegToRad(AngleMath.NormalizeDegrees(headingDegrees[after] - headingDegrees[before] + 180) - 180);

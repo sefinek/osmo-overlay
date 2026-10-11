@@ -152,7 +152,7 @@ public sealed class PreviewPlayer : IDisposable
 			layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
 		}
 
-		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix);
+		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix, camera);
 		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
 				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
 				summary.ContainerRecordingStartUtc, MapSources.From(settings), routeIntro)
@@ -164,7 +164,7 @@ public sealed class PreviewPlayer : IDisposable
 			SnapshotShadows = !settings.DisableShadows
 		};
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
-			routeIntro.Enabled, reframer);
+			routeIntro, reframer);
 		_recording = recording;
 
 		ComposedPreviewFrame? first;
@@ -400,6 +400,21 @@ public sealed class PreviewPlayer : IDisposable
 		return _recording?.Compositor.SpeedGateSeconds(element);
 	}
 
+	/// <summary>The widget timed as the open recording shows it (OverlayRenderer.AsShown) - as it is with none open.</summary>
+	public OverlayElement AsShown(OverlayElement element)
+	{
+		return _recording?.Compositor.AsShown(element) ?? element;
+	}
+
+	/// <summary>How much later than its own times a widget shows in the open recording (OverlayRenderer.IntroShiftSeconds) - 0 with none open.</summary>
+	public double IntroShiftSeconds(OverlayElement element)
+	{
+		return _recording?.Compositor.IntroShiftSeconds(element) ?? 0;
+	}
+
+	/// <summary>The route overview card in the open recording, on the output timeline - null without one (or none open).</summary>
+	public (double FadeFrom, double End)? RouteIntroSpan => _recording?.Compositor.RouteIntroSpan;
+
 	/// <summary>The scale top a speed gauge gets on its own for the open recording - null with none open.</summary>
 	public double? AutoGaugeMaxSpeed(UnitSystem units)
 	{
@@ -439,6 +454,16 @@ public sealed class PreviewPlayer : IDisposable
 		PublishStill(recording, recording.Compositor.Change(r => r.MapSources = sources));
 		OverlayRenderer renderer = recording.Compositor.Renderer;
 		StartMosaics(recording, intro: renderer.NeedsRouteIntroPrepare(), map: renderer.NeedsMapPrepare(renderer.Layout));
+	}
+
+	/// <summary>
+	///     The route overview card left out (the performance test measures the video playing, not a card over it) or back as
+	///     the recording was opened with - on the frame on screen right away, without reopening.
+	/// </summary>
+	public void SuppressRouteIntro(bool suppress)
+	{
+		if (_recording is { } recording)
+			PublishStill(recording, recording.Compositor.Change(r => r.RouteIntro = suppress ? RouteIntroSettings.Disabled : recording.RouteIntro));
 	}
 
 	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
@@ -723,7 +748,7 @@ public sealed class PreviewPlayer : IDisposable
 		int width,
 		int height,
 		double fps,
-		bool showsRouteIntro,
+		RouteIntroSettings routeIntro,
 		Reframer? reframer) : IDisposable
 	{
 		public LibavVideoSource Video { get; } = video;
@@ -741,7 +766,9 @@ public sealed class PreviewPlayer : IDisposable
 		public int Width { get; } = width;
 		public int Height { get; } = height;
 		public double Fps { get; } = fps;
-		public bool ShowsRouteIntro { get; } = showsRouteIntro;
+		// The card as opened - SuppressRouteIntro gives it back.
+		public RouteIntroSettings RouteIntro { get; } = routeIntro;
+		public bool ShowsRouteIntro => RouteIntro.Enabled;
 		// A 360 recording's lenses and leveling - the view is the player's own (_reframe).
 		public Reframer? Reframer { get; } = reframer;
 

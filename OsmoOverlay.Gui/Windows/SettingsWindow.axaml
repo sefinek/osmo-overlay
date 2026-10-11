@@ -277,12 +277,8 @@
 							</Grid>
 						</StackPanel>
 					</Border>
-					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
-						<TextBlock Classes="link" Text="{x:Static local:Strings.Settings_FindWhatIsFaster}"
-						           PointerPressed="OnBenchmarkClick" />
-						<TextBlock Classes="link" Text="{x:Static local:Strings.PreviewBenchmark_Title}"
-						           PointerPressed="OnPreviewBenchmarkClick" />
-					</StackPanel>
+					<TextBlock Classes="link" HorizontalAlignment="Left" Text="{x:Static local:Strings.Settings_FindWhatIsFaster}"
+					           PointerPressed="OnBenchmarkClick" />
 
 					<TextBlock Text="{x:Static local:Strings.Settings_Privacy}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">

@@ -173,7 +173,7 @@ public sealed class VideoView : Control
 				_image?.Dispose();
 				_image = image;
 				if (playedPosition is { } position) onShown(position, CountShown());
-				presented = playedPosition is not null;
+				presented = true;
 			}
 
 			if (_image is null) return;

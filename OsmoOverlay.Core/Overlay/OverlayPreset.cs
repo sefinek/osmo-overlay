@@ -14,6 +14,10 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	///     The built-in default layout, in OverlayElementBounds' 4K reference space - the same space every widget's
 	///     X/Y is in, so it fits any resolution and aspect ratio without being rebuilt for one.
 	/// </summary>
+	// The default watermark's seconds on screen, and its baseline under the progress bar's center - where the bar is drawn.
+	private const double WatermarkSeconds = 6;
+	private const float WatermarkBelowBar = 14;
+
 	public static OverlayPreset CreateDefault(string id, string name)
 	{
 		const float width = OverlayElementBounds.ReferenceWidth;
@@ -63,8 +67,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		// at their default positions.
 		float progressBarCx = width / 2f;
 		float progressBarCy = height - m - 16;
-		// Top center, under the Text widget's slot: the bottom center is the progress bar's, which may show from the start.
-		float watermarkY = dateY + 130;
+		// In the progress bar's place, before it: the bar takes over the bottom center once the watermark has gone.
+		float watermarkY = progressBarCy + WatermarkBelowBar;
 		// Centered above the progress bar, which is as wide.
 		float chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2;
 		float chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop + OverlayElementBounds.ChartHeight);
@@ -90,18 +94,24 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new MapWidgetElement { X = mapCx, Y = mapCy },
 			new MapAttributionElement { X = mapCreditInset, Y = mapCreditY, Scale = 0.9f },
 			new GMeterElement { X = gMeterCx, Y = gMeterCy },
-			// The first seconds only, fading out - with the route overview card on, that's all on the card, in its corner.
+			// The opening of the bottom center, one layer: the watermark for the first seconds, fading out, and the progress bar
+			// fading in where it was as soon as it's gone (both counted from the route overview card's end when it's on).
 			new WatermarkElement
 			{
-				X = width / 2f, Y = watermarkY, DisappearAtSeconds = 6, OutAnimationType = OverlayAnimationType.Fade, OutAnimationDurationSeconds = 1
+				X = width / 2f, Y = watermarkY, DisappearAtSeconds = WatermarkSeconds, OutAnimationType = OverlayAnimationType.Fade
 			},
-			// Fades in once the ride gets going (its ShowFromSpeedKmh default) rather than being on screen the whole time.
-			new TripProgressBarElement { X = progressBarCx, Y = progressBarCy, AnimationType = OverlayAnimationType.Fade },
+			new TripProgressBarElement
+			{
+				X = progressBarCx, Y = progressBarCy, AnimationType = OverlayAnimationType.Fade, AppearAtSeconds = WatermarkSeconds,
+				ShowFromSpeedKmh = null, LayerId = nameof(OverlayElementType.Watermark)
+			},
 			// The rest are off by default - added after the layout above, so they mustn't move or cover any of it.
 			new PitchGaugeElement { X = pitchCx, Y = rollCy, Visible = false },
 			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },
 			new TripStatElement { X = m - 1, Y = tripStatY, Visible = false },
 			new TextElement { X = width / 2f, Y = dateY, Visible = false },
+			// Under the Text widget's slot, top center - where a notice is read first and covers no gauge.
+			new GpsAlertElement { X = width / 2f, Y = dateY + 90, Visible = false },
 			new ImageElement { X = width / 2f, Y = m, Visible = false }
 		];
 

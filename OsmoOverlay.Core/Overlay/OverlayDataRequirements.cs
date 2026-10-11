@@ -39,6 +39,8 @@ public static class OverlayDataRequirements
 			OverlayElementType.Compass or OverlayElementType.MapWidget or OverlayElementType.Elevation
 				or OverlayElementType.Gradient or OverlayElementType.Distance or OverlayElementType.SpeedGauge
 				or OverlayElementType.TripProgressBar or OverlayElementType.ProfileChart or OverlayElementType.TripStat => data.GpsFix,
+			// Without a fix anywhere it would only ever say it's searching.
+			OverlayElementType.GpsAlert => data.GpsFix,
 			// The sun dot needs a real position and a real GPS timestamp (TelemetryProcessor leaves Sun at
 			// default otherwise, which would draw a fake sun on the horizon) - the container creation_time
 			// fallback DateTimeText uses isn't good enough here, it's the camera's own unsynced clock.

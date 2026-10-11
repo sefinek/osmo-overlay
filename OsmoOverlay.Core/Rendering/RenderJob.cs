@@ -187,7 +187,7 @@ public static class RenderJob
 			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
 			using var renderer = new OverlayRenderer(output.Width, output.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
-				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), RouteIntroSettings.ForRecording(settings, hasGpsFix))
+				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), RouteIntroSettings.ForRecording(settings, hasGpsFix, camera))
 			{
 				RouteAcrossCuts = settings.RouteAcrossCuts,
 				OutputDurationSeconds = plan.TotalFrames / fps,

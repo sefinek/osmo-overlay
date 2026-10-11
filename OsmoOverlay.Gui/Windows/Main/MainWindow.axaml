@@ -1360,6 +1360,8 @@
 												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Watermark_Hint}" />
 												<TextBlock Name="WatermarkOffHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
 												           Text="{x:Static local:Strings.Watermark_OffInSettings}" />
+												<TextBlock Name="WatermarkIntroHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
+												           Text="{x:Static local:Strings.Watermark_AfterRouteIntro}" />
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
@@ -1696,6 +1698,8 @@
 										</Border>
 										<Border Name="TripProgressBarSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Name="TripProgressIntroHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
+												           Text="{x:Static local:Strings.TripProgress_AfterRouteIntro}" />
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Settings}" Classes="settingsGroupTitle" />
@@ -2138,14 +2142,6 @@
 					                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
 				</ScrollViewer>
 			</Border>
-		</Border>
-		<Border Name="PreviewBenchmarkStatus" Grid.Row="1" IsVisible="False" Classes="card"
-		        HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="470" Padding="16">
-			<StackPanel Spacing="8">
-				<TextBlock Text="{x:Static local:Strings.PreviewBenchmark_Title}" FontWeight="SemiBold" />
-				<TextBlock Name="PreviewBenchmarkProgress" TextWrapping="Wrap" />
-				<Button Content="{x:Static local:Strings.Benchmark_Stop}" HorizontalAlignment="Left" Click="OnCancelPreviewBenchmarkClick" />
-			</StackPanel>
 		</Border>
 	</Grid>
 </Window>

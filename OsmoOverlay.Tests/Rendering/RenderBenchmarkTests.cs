@@ -18,10 +18,12 @@ public sealed class RenderBenchmarkTests
 		double previewPlainMs = 2, BenchmarkStat? hardwareRender = null, BenchmarkStat? softwareRender = null, double overlayMs = 16,
 		BenchmarkStat? pipe = null, IReadOnlyList<EncoderSpeed>? encoders = null, BenchmarkStat? graph = null)
 	{
-		return new BenchmarkResult(new BenchmarkSystem("test", null, 8, 1, [], null, "1.0.0"), new BenchmarkLoad(0, 0), Source, Source, true,
+		// The loaded recording measured like the test one - what decoding is judged on.
+		var recording = new SourceSpeeds(Source, hardwareDecode ?? Runs(150), softwareDecode ?? Runs(150), hardwareRender, softwareRender);
+		return new BenchmarkResult(new BenchmarkSystem("test", null, 8, 1, [], null, "1.0.0"), new BenchmarkLoad(0, 0), Source, Source,
 			hardwareDecode ?? Runs(150), softwareDecode ?? Runs(150), new FrameTimes(overlayMs, overlayMs * 1.2), new FrameTimes(4, 5), 1920, 1080,
 			new FrameTimes(previewMs, previewMs * 1.2), new FrameTimes(previewPlainMs, previewPlainMs), pipe, graph, encoders ?? [], hardwareRender,
-			softwareRender, TimeSpan.FromMinutes(2));
+			softwareRender, TimeSpan.FromMinutes(2), recording);
 	}
 
 	[TestMethod]
@@ -178,12 +180,25 @@ public sealed class RenderBenchmarkTests
 	}
 
 	[TestMethod]
-	public void Advise_SaysNothingAboutDecoding_OnAGeneratedSample()
+	public void Advise_SaysNothingAboutDecoding_OnTheTestRecordingAlone()
 	{
-		BenchmarkResult result = Result(Runs(100, 101, 99), Runs(250, 251, 249)) with { FromRecording = false };
+		BenchmarkResult result = Result(Runs(100, 101, 99), Runs(250, 251, 249)) with { Recording = null };
 
 		Assert.IsFalse(RenderBenchmark.Advise(result, new OverlaySettings()).Any(a => a.Kind == BenchmarkAdviceKind.SoftwareDecode),
-			"a generated sample decodes on the CPU far more easily than a camera's recording");
+			"the test recording decodes on the CPU far more easily than a camera's");
+	}
+
+	[TestMethod]
+	public void InUse_IsTheLoadedRecordingsWhenItWasTested()
+	{
+		BenchmarkResult result = Result(Runs(150), Runs(120), hardwareRender: Runs(30)) with
+		{
+			Recording = new SourceSpeeds(Source, Runs(140), Runs(40), Runs(28), Runs(20))
+		};
+
+		Assert.AreEqual(140, RenderBenchmark.DecodeInUse(result, new OverlaySettings())!.Median);
+		Assert.AreEqual(20, RenderBenchmark.RenderInUse(result, new OverlaySettings { HardwareDecoding = false })!.Median);
+		Assert.AreEqual(150, RenderBenchmark.DecodeInUse(result with { Recording = null }, new OverlaySettings())!.Median);
 	}
 
 	[TestMethod]

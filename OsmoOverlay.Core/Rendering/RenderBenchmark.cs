@@ -2,12 +2,14 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
+using SkiaSharp;
 
 namespace OsmoOverlay.Core;
 
@@ -29,10 +31,31 @@ public enum BenchmarkStage
 public sealed record BenchmarkProgress(BenchmarkStage Stage, int Done, int Total, string? Encoder = null);
 
 /// <summary>
-///     What the benchmark runs on: the loaded recording (a few seconds of it are copied out as the sample; null = a generated
-///     4K clip) and the layout a render would draw. No file is picked: the test makes its own sample either way.
+///     What the benchmark runs on: the test recording (SyntheticRecording, read like any recording - its telemetry is the
+///     route every overlay step draws), the loaded recording when there is one (a few seconds of it are copied out as the
+///     sample) and the layout a render would draw. No file is picked.
 /// </summary>
-public sealed record BenchmarkInput(string? RecordingPath, IReadOnlyList<OverlayElement> Layout, int PreviewWidth);
+public sealed record BenchmarkInput(FileSummary Synthetic, string? RecordingPath, IReadOnlyList<OverlayElement> Layout, int PreviewWidth);
+
+/// <summary>
+///     A reading while the test runs, for the window to show live: the step's frames a second right now, or now and then a
+///     frame it drew, scaled down.
+/// </summary>
+public sealed record BenchmarkLive(BenchmarkStage Stage, double? Fps, BenchmarkThumbnail? Frame = null);
+
+/// <summary>BGRA, Width * 4 bytes a row - straight alpha (an overlay frame as ffmpeg gets it) unless Opaque.</summary>
+public sealed record BenchmarkThumbnail(byte[] Bgra, int Width, int Height, bool Opaque);
+
+/// <summary>The loaded recording's decoding and short renders, measured beside the test recording's full run.</summary>
+public sealed record SourceSpeeds(
+	VideoInfo Video,
+	BenchmarkStat? HardwareDecode,
+	BenchmarkStat? SoftwareDecode,
+	BenchmarkStat? HardwareRender,
+	BenchmarkStat? SoftwareRender)
+{
+	public IEnumerable<BenchmarkStat?> All => [HardwareDecode, SoftwareDecode, HardwareRender, SoftwareRender];
+}
 
 /// <summary>Repeated runs of one measurement (frames a second): their median, the slowest and the fastest.</summary>
 public sealed record BenchmarkStat(double Median, double Min, double Max, int Runs)
@@ -76,15 +99,15 @@ public sealed record EncoderSpeed(string Encoder, string? Preset, BenchmarkStat?
 
 /// <summary>
 ///     Every measurement of a run - frames a second, or milliseconds a frame for the overlay; null where a step couldn't run.
-///     FromRecording: the sample was cut from the loaded recording - otherwise generated, which decodes on the CPU far more
-///     easily than a camera's own (measured 105-139 against 37 fps), so decoding isn't compared then.
+///     The steps ran on the test recording (Source); Recording holds the loaded recording's decoding and short renders when
+///     it was tested too. The test recording decodes on the CPU far more easily than a camera's own (measured 105-139 against
+///     37 fps), so decoding is compared on Recording only.
 /// </summary>
 public sealed record BenchmarkResult(
 	BenchmarkSystem System,
 	BenchmarkLoad Load,
 	VideoInfo Source,
 	VideoInfo Output,
-	bool FromRecording,
 	BenchmarkStat? HardwareDecode,
 	BenchmarkStat? SoftwareDecode,
 	FrameTimes Overlay,
@@ -98,13 +121,15 @@ public sealed record BenchmarkResult(
 	IReadOnlyList<EncoderSpeed> Encoders,
 	BenchmarkStat? HardwareRender,
 	BenchmarkStat? SoftwareRender,
-	TimeSpan Duration)
+	TimeSpan Duration,
+	SourceSpeeds? Recording = null)
 {
 	public double Fps => Source.Fps;
 
 	/// <summary>Some measurement's runs disagreed - the computer wasn't left alone for the test.</summary>
 	public bool IsUnstable =>
-		new[] { HardwareDecode, SoftwareDecode, Pipe, Graph, HardwareRender, SoftwareRender }.Concat(Encoders.Select(e => e.Speed)).Any(s => s?.IsUnstable == true);
+		new[] { HardwareDecode, SoftwareDecode, Pipe, Graph, HardwareRender, SoftwareRender }.Concat(Encoders.Select(e => e.Speed))
+			.Concat(Recording?.All ?? []).Any(s => s?.IsUnstable == true);
 }
 
 public enum BenchmarkAdviceKind
@@ -112,7 +137,9 @@ public enum BenchmarkAdviceKind
 	SoftwareDecode,
 	HardwareDecode,
 	PreviewShadowsOff,
-	PreviewShadowsOn
+	PreviewShadowsOn,
+	// The app's preview decoded far more than it showed and didn't keep up - Auto quality (from the preview test, in the GUI).
+	PreviewQualityAuto
 }
 
 /// <summary>A setting worth changing: Gain is how much faster it is (0.4 = 40%), or for the preview's shadows how many times.</summary>
@@ -128,13 +155,14 @@ public sealed record BenchmarkBottleneck(BenchmarkStage Stage, double Fps, doubl
 /// <summary>
 ///     Measures each stage a render goes through on this computer - decoding (on the GPU and on the CPU), drawing the overlay
 ///     (with and without the widgets' shadows, at the render's and the preview's size), handing frames to ffmpeg, encoding (each
-///     NVENC preset and the CPU encoder), ffmpeg as a whole, and a short render the way RenderJob runs one (the overlay of the
-///     layout with a sample route, over the pipe, through the render's own graph and encoder) - and says which settings would
-///     be faster here (Advise) and which stage holds a render back (Bottleneck). It makes its own sample: a few seconds copied
-///     out of the loaded recording, or a generated 4K clip. Every ffmpeg step runs several times, alternating which of the
-///     compared ones goes first so a computer warming up favors neither, after a warm-up run; a result is the runs' median
-///     with their spread. Measured for the output Settings ask for (OutputVideo). Nothing is saved: a run under load would
-///     skew the main window's estimate, which only real renders feed.
+///     GPU preset and the CPU encoder), ffmpeg as a whole, and a short render the way RenderJob runs one (the overlay of the
+///     layout over the pipe, through the render's own graph and encoder) - and says which settings would be faster here
+///     (Advise) and which stage holds a render back (Bottleneck). The overlay always draws the test recording's telemetry,
+///     anomalies and all. Every stage runs on the test recording - its three files joined, as a render joins a camera's - and
+///     decoding and the short render again on a few seconds copied out of the loaded recording when it's asked for (Recording). Every ffmpeg step runs several times, alternating which of the compared ones goes first so a computer warming
+///     up favors neither, after a warm-up run; a result is the runs' median with their spread. Measured for the output Settings
+///     ask for (OutputVideo). Nothing is saved: a run under load would skew the main window's estimate, which only real renders
+///     feed.
 /// </summary>
 public static class RenderBenchmark
 {
@@ -167,16 +195,19 @@ public static class RenderBenchmark
 	// Settings' scale (FfmpegPipeline.PresetName) - for AMF its three steps.
 	private static readonly string[] GpuPresets = ["p1", "p4", "p7"];
 
-	public static async Task<BenchmarkResult> RunAsync(BenchmarkInput input, Action<BenchmarkProgress>? onProgress, CancellationToken ct)
+	public static async Task<BenchmarkResult> RunAsync(BenchmarkInput input, Action<BenchmarkProgress>? onProgress, Action<BenchmarkLive>? onLive,
+		CancellationToken ct)
 	{
 		var clock = Stopwatch.StartNew();
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		List<string> tempFiles = [];
 		int done = 0, total = 0;
 		string? measuredWith = null;
+		var live = new Live(onLive);
 
 		void Step(BenchmarkStage stage)
 		{
+			live.Stage = stage;
 			onProgress?.Invoke(new BenchmarkProgress(stage, done, total, measuredWith));
 			done++;
 		}
@@ -186,9 +217,9 @@ public static class RenderBenchmark
 			onProgress?.Invoke(new BenchmarkProgress(BenchmarkStage.Preparing, 0, 0));
 			BenchmarkSystem system = await BenchmarkSystemInfo.CollectAsync(ct);
 
-			string? fromRecording = input.RecordingPath is { } recording ? await CutSampleAsync(recording, tempFiles, ct) : null;
-			string source = fromRecording ?? await GenerateSampleAsync(tempFiles, ct);
-			VideoInfo video = await Task.Run(() => SourceProbe.Probe(source).Video, ct);
+			string[] source = JoinedInput(input.Synthetic.InputPaths, tempFiles);
+			string? sample = input.RecordingPath is { } recording ? await CutSampleAsync(recording, tempFiles, ct) : null;
+			VideoInfo video = input.Synthetic.Video;
 			VideoInfo output = OutputVideo.For(video, settings);
 			(int num, int den) = FfmpegPipeline.ParseFrameRate(video.FrameRate);
 			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output), ct);
@@ -197,38 +228,29 @@ public static class RenderBenchmark
 			// the computer busy, on the card the encoder runs on (a laptop's other one drawing the desktop isn't the test's).
 			BenchmarkLoad load = await SampleLoadAsync(encoder, ct);
 			string[] presets = FfmpegPipeline.IsGpuEncoder(encoder) ? GpuPresets : [];
-			total = 1 + DecodeRuns * 2 + 3 + PipeRuns + (presets.Length + 1) * EncodeRuns + GraphRuns + RenderRuns * 2;
-			AppLogger.Info($"Benchmark on {(fromRecording is not null ? $"{SampleSeconds} s of {Path.GetFileName(input.RecordingPath)}" : "a generated clip")}: " +
+			int recordingSteps = sample is not null ? DecodeRuns * 2 + RenderRuns * 2 : 0;
+			total = 1 + DecodeRuns * 2 + 3 + PipeRuns + (presets.Length + 1) * EncodeRuns + GraphRuns + RenderRuns * 2 + recordingSteps;
+			AppLogger.Info($"Benchmark on the test recording{(sample is not null ? $" and {SampleSeconds} s of {Path.GetFileName(input.RecordingPath)}" : "")}: " +
 			               $"{video.CodecName} {video.Width}x{video.Height} {video.FrameRate} {video.PixFmt}, output {output.CodecName} {output.Width}x{output.Height} " +
 			               $"{output.PixFmt}, {system}, GPUs: {string.Join("; ", system.Gpus)}, {load}");
 
+			List<DerivedFrame> route = TelemetryProcessor.Process(input.Synthetic.TelemetryFrames!, input.Synthetic.CameraFormat, settings.SmoothGpsMotion,
+				settings.SpeedCorrectionPercent);
+
 			// Warm-up: the first run pays for the GPU's decoder starting up and the file coming off the disk.
 			Step(BenchmarkStage.Decode);
-			await MeasureFfmpegAsync([.. DecodeInput(source, true, encoder), "-map", "0:v:0", "-frames:v", Invariant(DecodeFrames / 4), "-f", "null", "-"], ct);
-
-			List<double?> hardwareRuns = [], softwareRuns = [];
-			for (int run = 0; run < DecodeRuns; run++)
-			{
-				foreach (bool hardware in Alternate(run))
-				{
-					Step(BenchmarkStage.Decode);
-					(hardware ? hardwareRuns : softwareRuns).Add(
-						await MeasureFfmpegAsync([.. DecodeInput(source, hardware, encoder), "-map", "0:v:0", "-frames:v", Invariant(DecodeFrames), "-f", "null", "-"], ct));
-				}
-			}
-
-			BenchmarkStat? hardwareDecode = BenchmarkStat.Of(hardwareRuns), softwareDecode = BenchmarkStat.Of(softwareRuns);
+			await MeasureFfmpegAsync([.. DecodeInput(source, true, encoder), "-map", "0:v:0", "-frames:v", Invariant(DecodeFrames / 4), "-f", "null", "-"], live, ct);
+			(BenchmarkStat? hardwareDecode, BenchmarkStat? softwareDecode) = await MeasureDecodingAsync(source, encoder, Step, live, ct);
 
 			(int previewWidth, int previewHeight) = PreviewSize(video.Width, video.Height, input.PreviewWidth);
-			List<DerivedFrame> route = SampleRoute(video.Fps);
 			(FrameTimes overlay, FrameTimes overlayPlain, FrameTimes preview, FrameTimes previewPlain) =
-				await TimeOverlayAsync(input.Layout, route, video, output, previewWidth, previewHeight, () => Step(BenchmarkStage.Overlay), ct);
+				await TimeOverlayAsync(input.Layout, route, video, output, previewWidth, previewHeight, () => Step(BenchmarkStage.Overlay), live, ct);
 
 			List<double?> pipeRuns = [];
 			for (int run = 0; run < PipeRuns; run++)
 			{
 				Step(BenchmarkStage.Pipe);
-				pipeRuns.Add(await MeasurePipeAsync(output, num, den, ct));
+				pipeRuns.Add(await MeasurePipeAsync(output, num, den, live, ct));
 			}
 
 			bool decodeOnGpu = !(softwareDecode?.Median > hardwareDecode?.Median);
@@ -241,11 +263,11 @@ public static class RenderBenchmark
 				foreach (string preset in run % 2 == 0 ? presets : presets.Reverse())
 				{
 					Step(BenchmarkStage.Encode);
-					encodeRuns[preset].Add(await MeasureEncodeAsync(source, video, output, encoder, preset, NvencFrames, decodeOnGpu, num, den, ct));
+					encodeRuns[preset].Add(await MeasureEncodeAsync(source, video, output, encoder, preset, NvencFrames, decodeOnGpu, num, den, live, ct));
 				}
 
 				Step(BenchmarkStage.Encode);
-				cpuRuns.Add(await MeasureEncodeAsync(source, video, output, cpuEncoder, null, CpuEncodeFrames, decodeOnGpu, num, den, ct));
+				cpuRuns.Add(await MeasureEncodeAsync(source, video, output, cpuEncoder, null, CpuEncodeFrames, decodeOnGpu, num, den, live, ct));
 			}
 
 			List<EncoderSpeed> encoders =
@@ -260,23 +282,32 @@ public static class RenderBenchmark
 			for (int run = 0; run < GraphRuns; run++)
 			{
 				Step(BenchmarkStage.Graph);
-				graphRuns.Add(await MeasureGraphAsync(source, video, output, encoder, settings, num, den, ct));
+				graphRuns.Add(await MeasureGraphAsync(source, video, output, encoder, settings, num, den, live, ct));
 			}
 
-			List<double?> hardwareRenderRuns = [], softwareRenderRuns = [];
-			for (int run = 0; run < RenderRuns; run++)
+			(BenchmarkStat? hardwareRender, BenchmarkStat? softwareRender) =
+				await MeasureRendersAsync(source, video, output, encoder, settings, input.Layout, route, num, den, Step, live, ct);
+
+			// The loaded recording: the camera's own bitstream, which decoding is judged on, rendered to the output Settings ask
+			// for it with the encoder that picks.
+			SourceSpeeds? recordingSpeeds = null;
+			if (sample is not null)
 			{
-				foreach (bool hardware in Alternate(run))
-				{
-					Step(BenchmarkStage.Render);
-					(hardware ? hardwareRenderRuns : softwareRenderRuns).Add(
-						await MeasureRenderAsync(source, video, output, encoder, settings, hardware, input.Layout, route, num, den, ct));
-				}
+				string[] recordingSource = ["-i", sample];
+				VideoInfo recordingVideo = await Task.Run(() => SourceProbe.Probe(sample).Video, ct);
+				VideoInfo recordingOutput = OutputVideo.For(recordingVideo, settings);
+				string recordingEncoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(recordingOutput), ct);
+				(int recordingNum, int recordingDen) = FfmpegPipeline.ParseFrameRate(recordingVideo.FrameRate);
+				(BenchmarkStat? recordingHardware, BenchmarkStat? recordingSoftware) =
+					await MeasureDecodingAsync(recordingSource, recordingEncoder, Step, live, ct);
+				(BenchmarkStat? recordingHardwareRender, BenchmarkStat? recordingSoftwareRender) = await MeasureRendersAsync(recordingSource, recordingVideo,
+					recordingOutput, recordingEncoder, settings, input.Layout, route, recordingNum, recordingDen, Step, live, ct);
+				recordingSpeeds = new SourceSpeeds(recordingVideo, recordingHardware, recordingSoftware, recordingHardwareRender, recordingSoftwareRender);
 			}
 
-			var result = new BenchmarkResult(system, load, video, output, fromRecording is not null, hardwareDecode, softwareDecode, overlay, overlayPlain,
-				previewWidth, previewHeight, preview, previewPlain, BenchmarkStat.Of(pipeRuns), BenchmarkStat.Of(graphRuns), encoders,
-				BenchmarkStat.Of(hardwareRenderRuns), BenchmarkStat.Of(softwareRenderRuns), clock.Elapsed);
+			var result = new BenchmarkResult(system, load, video, output, hardwareDecode, softwareDecode, overlay, overlayPlain, previewWidth, previewHeight,
+				preview, previewPlain, BenchmarkStat.Of(pipeRuns), BenchmarkStat.Of(graphRuns), encoders, hardwareRender, softwareRender, clock.Elapsed,
+				recordingSpeeds);
 			AppLogger.Info($"Benchmark: {result}, encoders: {string.Join("; ", encoders)}");
 			return result;
 		}
@@ -284,6 +315,43 @@ public static class RenderBenchmark
 		{
 			foreach (string file in tempFiles) TryDelete(file);
 		}
+	}
+
+	/// <summary>Decoding on the GPU and on the CPU, DecodeRuns each, taking turns going first.</summary>
+	private static async Task<(BenchmarkStat? Hardware, BenchmarkStat? Software)> MeasureDecodingAsync(string[] source, string encoder,
+		Action<BenchmarkStage> step, Live live, CancellationToken ct)
+	{
+		List<double?> hardwareRuns = [], softwareRuns = [];
+		for (int run = 0; run < DecodeRuns; run++)
+		{
+			foreach (bool hardware in Alternate(run))
+			{
+				step(BenchmarkStage.Decode);
+				(hardware ? hardwareRuns : softwareRuns).Add(await MeasureFfmpegAsync(
+					[.. DecodeInput(source, hardware, encoder), "-map", "0:v:0", "-frames:v", Invariant(DecodeFrames), "-f", "null", "-"], live, ct));
+			}
+		}
+
+		return (BenchmarkStat.Of(hardwareRuns), BenchmarkStat.Of(softwareRuns));
+	}
+
+	/// <summary>The short render with the video decoded on the GPU and on the CPU, RenderRuns each, taking turns going first.</summary>
+	private static async Task<(BenchmarkStat? Hardware, BenchmarkStat? Software)> MeasureRendersAsync(string[] source, VideoInfo video, VideoInfo output,
+		string encoder, OverlaySettings settings, IReadOnlyList<OverlayElement> layout, IReadOnlyList<DerivedFrame> route, int num, int den,
+		Action<BenchmarkStage> step, Live live, CancellationToken ct)
+	{
+		List<double?> hardwareRuns = [], softwareRuns = [];
+		for (int run = 0; run < RenderRuns; run++)
+		{
+			foreach (bool hardware in Alternate(run))
+			{
+				step(BenchmarkStage.Render);
+				(hardware ? hardwareRuns : softwareRuns).Add(
+					await MeasureRenderAsync(source, video, output, encoder, settings, hardware, layout, route, num, den, live, ct));
+			}
+		}
+
+		return (BenchmarkStat.Of(hardwareRuns), BenchmarkStat.Of(softwareRuns));
 	}
 
 	/// <summary>How busy the computer is right now, over about a second, on the card `encoder` runs on - the benchmark's check, also asked before a render.</summary>
@@ -294,8 +362,8 @@ public static class RenderBenchmark
 
 	/// <summary>
 	///     The settings this computer would be faster with, given the ones in use. Nothing about decoding when the computer was
-	///     busy before the test (a game on the GPU slows its decoder down, and the CPU would win only because of it), nor on a
-	///     generated sample (it decodes on the CPU far more easily than a camera's recording).
+	///     busy before the test (a game on the GPU slows its decoder down, and the CPU would win only because of it), and only on
+	///     the loaded recording (the test recording decodes on the CPU far more easily than a camera's).
 	/// </summary>
 	public static List<BenchmarkAdvice> Advise(BenchmarkResult result, OverlaySettings settings)
 	{
@@ -303,10 +371,11 @@ public static class RenderBenchmark
 
 		// A render says it best: decoding shares the CPU with drawing the overlay there. Decoding alone only counts when it's
 		// far apart.
-		(BenchmarkStat? hardware, BenchmarkStat? software, double minGain) = result.HardwareRender is not null && result.SoftwareRender is not null
-			? (result.HardwareRender, result.SoftwareRender, MinGain)
-			: (result.HardwareDecode, result.SoftwareDecode, MinGain * 2);
-		if (hardware is not null && software is not null && !result.Load.IsBusy && result.FromRecording)
+		SourceSpeeds? recording = result.Recording;
+		(BenchmarkStat? hardware, BenchmarkStat? software, double minGain) = recording is { HardwareRender: not null, SoftwareRender: not null }
+			? (recording.HardwareRender, recording.SoftwareRender, MinGain)
+			: (recording?.HardwareDecode, recording?.SoftwareDecode, MinGain * 2);
+		if (hardware is not null && software is not null && !result.Load.IsBusy)
 		{
 			if (settings.HardwareDecoding && ClearlyFaster(software, hardware, minGain))
 				advice.Add(new BenchmarkAdvice(BenchmarkAdviceKind.SoftwareDecode, software.Median / hardware.Median - 1));
@@ -332,11 +401,14 @@ public static class RenderBenchmark
 		return slower.Median > 0 && faster.Median / slower.Median - 1 >= minGain && (faster.Runs < 2 || slower.Runs < 2 || faster.Min > slower.Max);
 	}
 
-	/// <summary>The stage that holds a render back with the settings in use - the overlay as a render draws it, with shadows.</summary>
+	/// <summary>
+	///     The stage that holds a render back with the settings in use - the overlay as a render draws it, with shadows. Decoding and
+	///     the short render are the loaded recording's when it was tested (its bitstream is what a render decodes).
+	/// </summary>
 	public static BenchmarkBottleneck? Bottleneck(BenchmarkResult result, OverlaySettings settings)
 	{
 		List<(BenchmarkStage Stage, double Fps)> stages = [];
-		if ((settings.HardwareDecoding ? result.HardwareDecode : result.SoftwareDecode) is { } decode) stages.Add((BenchmarkStage.Decode, decode.Median));
+		if (DecodeInUse(result, settings) is { } decode) stages.Add((BenchmarkStage.Decode, decode.Median));
 		if (result.Overlay.Fps > 0) stages.Add((BenchmarkStage.Overlay, result.Overlay.Fps));
 		if (result.Pipe is { } pipe) stages.Add((BenchmarkStage.Pipe, pipe.Median));
 		if (EncoderInUse(result, settings)?.Speed is { } encode) stages.Add((BenchmarkStage.Encode, encode.Median));
@@ -344,7 +416,23 @@ public static class RenderBenchmark
 		if (stages.Count == 0) return null;
 
 		(BenchmarkStage stage, double fps) = stages.MinBy(s => s.Fps);
-		return new BenchmarkBottleneck(stage, fps, (settings.HardwareDecoding ? result.HardwareRender : result.SoftwareRender)?.Median);
+		return new BenchmarkBottleneck(stage, fps, RenderInUse(result, settings)?.Median);
+	}
+
+	/// <summary>Decoding the way Settings decode - the loaded recording's when it was tested, else the test recording's.</summary>
+	public static BenchmarkStat? DecodeInUse(BenchmarkResult result, OverlaySettings settings)
+	{
+		return result.Recording is { } recording
+			? settings.HardwareDecoding ? recording.HardwareDecode : recording.SoftwareDecode
+			: settings.HardwareDecoding ? result.HardwareDecode : result.SoftwareDecode;
+	}
+
+	/// <summary>The short render the way Settings decode - the loaded recording's when it was tested, else the test recording's.</summary>
+	public static BenchmarkStat? RenderInUse(BenchmarkResult result, OverlaySettings settings)
+	{
+		return result.Recording is { } recording
+			? settings.HardwareDecoding ? recording.HardwareRender : recording.SoftwareRender
+			: settings.HardwareDecoding ? result.HardwareRender : result.SoftwareRender;
 	}
 
 	/// <summary>The encoder a render uses: NVENC at the chosen preset, or the CPU one where there's no NVENC.</summary>
@@ -395,32 +483,40 @@ public static class RenderBenchmark
 	}
 
 	/// <summary>
-	///     The sample as an input, looped so every step gets the frames it measures over, decoded as a render with `encoder`
-	///     decodes it (FfmpegPipeline.HwDecodeArgs) - input options only: an output option here (a -map) would land before a
-	///     second input, which ffmpeg refuses.
+	///     The sample as an input (its -i, or the test recording's files joined - JoinedInput), looped so every step gets the
+	///     frames it measures over, decoded as a render with `encoder` decodes it (FfmpegPipeline.HwDecodeArgs) - input options
+	///     only: an output option here (a -map) would land before a second input, which ffmpeg refuses.
 	/// </summary>
-	private static string[] DecodeInput(string source, bool hardware, string encoder)
+	private static string[] DecodeInput(string[] source, bool hardware, string encoder)
 	{
-		string[] input = ["-stream_loop", "-1", "-i", source];
-		return [.. FfmpegPipeline.EncoderDeviceArgs(encoder), .. hardware ? FfmpegPipeline.HwDecodeArgs(encoder) : [], .. input];
+		return [.. FfmpegPipeline.EncoderDeviceArgs(encoder), .. hardware ? FfmpegPipeline.HwDecodeArgs(encoder) : [], "-stream_loop", "-1", .. source];
 	}
 
-	private static async Task<double?> MeasureEncodeAsync(string source, VideoInfo video, VideoInfo output, string encoder, string? preset, int frames,
-		bool decodeOnGpu, int num, int den, CancellationToken ct)
+	/// <summary>The files as one input through the concat demuxer, the way a render reads a camera's split recording.</summary>
+	private static string[] JoinedInput(IReadOnlyList<string> paths, List<string> tempFiles)
+	{
+		string list = Path.Combine(Path.GetTempPath(), $"osmooverlay-benchmark-{Guid.NewGuid():N}.txt");
+		tempFiles.Add(list);
+		File.WriteAllLines(list, paths.Select(path => $"file '{path.Replace("'", "'\\''")}'"));
+		return ["-f", "concat", "-safe", "0", "-i", list];
+	}
+
+	private static async Task<double?> MeasureEncodeAsync(string[] source, VideoInfo video, VideoInfo output, string encoder, string? preset, int frames,
+		bool decodeOnGpu, int num, int den, Live live, CancellationToken ct)
 	{
 		List<string> args = [.. DecodeInput(source, decodeOnGpu, encoder), "-map", "0:v:0", "-frames:v", Invariant(frames)];
 		if (FfmpegPipeline.ResizeFilter(video, output) is { Length: > 0 } resize) args.AddRange(["-vf", resize.TrimEnd(',')]);
 		FfmpegPipeline.AddVideoEncoderArgs(args, output, encoder, new RenderEncodeSettings(preset ?? "p7", decodeOnGpu, 1, false), num, den);
 		args.AddRange(["-f", "null", "-"]);
-		return await MeasureFfmpegAsync(args, ct);
+		return await MeasureFfmpegAsync(args, live, ct);
 	}
 
 	/// <summary>
 	///     The render's whole ffmpeg side with the settings in use - its decoding, its filter graph and its encoder at the
 	///     chosen preset - with a still half-transparent overlay generated in ffmpeg instead of the pipe.
 	/// </summary>
-	private static async Task<double?> MeasureGraphAsync(string source, VideoInfo video, VideoInfo output, string encoder, OverlaySettings settings,
-		int num, int den, CancellationToken ct)
+	private static async Task<double?> MeasureGraphAsync(string[] source, VideoInfo video, VideoInfo output, string encoder, OverlaySettings settings,
+		int num, int den, Live live, CancellationToken ct)
 	{
 		bool gpu = FfmpegPipeline.IsGpuEncoder(encoder);
 		List<string> args =
@@ -432,14 +528,14 @@ public static class RenderBenchmark
 		];
 		FfmpegPipeline.AddVideoEncoderArgs(args, output, encoder, new RenderEncodeSettings(settings.NvencPreset, settings.HardwareDecoding, 1, false), num, den);
 		args.AddRange(["-f", "null", "-"]);
-		return await MeasureFfmpegAsync(args, ct);
+		return await MeasureFfmpegAsync(args, live, ct);
 	}
 
 	/// <summary>
 	///     Frames handed to ffmpeg the way a render does - raw BGRA at the output's size through its stdin - and only read there:
 	///     how fast the pipe alone carries them. Timed after the first PipeWarmUpFrames.
 	/// </summary>
-	private static async Task<double?> MeasurePipeAsync(VideoInfo output, int num, int den, CancellationToken ct)
+	private static async Task<double?> MeasurePipeAsync(VideoInfo output, int num, int den, Live live, CancellationToken ct)
 	{
 		ProcessStartInfo psi = ProcessHelper.CreateHiddenQuietWithStdin("ffmpeg",
 		[
@@ -461,6 +557,7 @@ public static class RenderBenchmark
 					{
 						if (i == PipeWarmUpFrames) clock.Start();
 						stdin.Write(frame, 0, frame.Length);
+						live.Count(i + 1);
 					}
 
 					stdin.Close();
@@ -489,8 +586,8 @@ public static class RenderBenchmark
 	///     metadata. Frames a second as the pipe takes them, after RenderWarmUpFrames. The drawing stops when ffmpeg does, as
 	///     RenderJob's: a producer left waiting on a full channel nobody reads would never finish.
 	/// </summary>
-	private static async Task<double?> MeasureRenderAsync(string source, VideoInfo video, VideoInfo output, string encoder, OverlaySettings settings,
-		bool hardwareDecoding, IReadOnlyList<OverlayElement> layout, IReadOnlyList<DerivedFrame> route, int num, int den, CancellationToken ct)
+	private static async Task<double?> MeasureRenderAsync(string[] source, VideoInfo video, VideoInfo output, string encoder, OverlaySettings settings,
+		bool hardwareDecoding, IReadOnlyList<OverlayElement> layout, IReadOnlyList<DerivedFrame> route, int num, int den, Live live, CancellationToken ct)
 	{
 		using var renderer = new OverlayRenderer(output.Width, output.Height, route[0].Raw.AltitudeMeters, layout, route,
 			TelemetryProcessor.Summarize(route).MaxSpeedKmh, settings.ShowWatermark, mapSources: MapSources.From(settings))
@@ -524,6 +621,7 @@ public static class RenderBenchmark
 					{
 						if (!freeBuffers.TryDequeue(out byte[]? pixels)) pixels = new byte[renderer.FrameBufferSize()];
 						renderer.RenderInto(route[i % route.Count], pixels);
+						live.Frame(pixels, output.Width, output.Height, false);
 						await channel.Writer.WriteAsync(pixels, producerCt);
 					}
 				}
@@ -548,6 +646,7 @@ public static class RenderBenchmark
 					stdin.Write(pixels, 0, pixels.Length);
 					freeBuffers.Enqueue(pixels);
 					if (++written == RenderWarmUpFrames) clock.Start();
+					live.Count(written);
 				}
 
 				stdin.Close();
@@ -581,7 +680,7 @@ public static class RenderBenchmark
 	/// </summary>
 	private static async Task<(FrameTimes Render, FrameTimes RenderPlain, FrameTimes Preview, FrameTimes PreviewPlain)> TimeOverlayAsync(
 		IReadOnlyList<OverlayElement> layout, IReadOnlyList<DerivedFrame> route, VideoInfo video, VideoInfo output, int previewWidth, int previewHeight,
-		Action step, CancellationToken ct)
+		Action step, Live live, CancellationToken ct)
 	{
 		using var renderer = new OverlayRenderer(video.Width, video.Height, route[0].Raw.AltitudeMeters, layout, route,
 			TelemetryProcessor.Summarize(route).MaxSpeedKmh, mapSources: MapSources.From(OverlaySettingsStore.Load()));
@@ -592,60 +691,58 @@ public static class RenderBenchmark
 		{
 			byte[] rendered = new byte[renderer.FrameBufferSize(output.Width, output.Height)];
 			byte[] picture = new byte[previewWidth * previewHeight * 4];
-			Array.Fill(picture, (byte)96);
+			void ResetPicture() => Array.Fill(picture, (byte)96);
 
-			FrameTimes Time(bool shadows, Action<DerivedFrame> draw)
+			// The preview draws onto a fresh video frame each time - a gray one here, filled again untimed.
+			FrameTimes Time(bool shadows, Action<DerivedFrame> draw, Action? reset = null)
 			{
 				ct.ThrowIfCancellationRequested();
 				renderer.DrawShadows = shadows;
-				return TimeFrames(route, draw);
+				return TimeFrames(route, draw, reset, live);
 			}
 
-			FrameTimes render = Time(true, f => renderer.RenderInto(f, rendered, output.Width, output.Height));
-			FrameTimes renderPlain = Time(false, f => renderer.RenderInto(f, rendered, output.Width, output.Height));
+			void Render(DerivedFrame frame)
+			{
+				renderer.RenderInto(frame, rendered, output.Width, output.Height);
+				live.Frame(rendered, output.Width, output.Height, false);
+			}
+
+			void Preview(DerivedFrame frame)
+			{
+				renderer.RenderOnto(frame, picture, previewWidth, previewHeight);
+				live.Frame(picture, previewWidth, previewHeight, true);
+			}
+
+			FrameTimes render = Time(true, Render);
+			FrameTimes renderPlain = Time(false, Render);
 			step();
-			FrameTimes preview = Time(true, f => renderer.RenderOnto(f, picture, previewWidth, previewHeight));
-			FrameTimes previewPlain = Time(false, f => renderer.RenderOnto(f, picture, previewWidth, previewHeight));
+			FrameTimes preview = Time(true, Preview, ResetPicture);
+			FrameTimes previewPlain = Time(false, Preview, ResetPicture);
 			step();
 			return (render, renderPlain, preview, previewPlain);
 		}, ct);
 	}
 
-	private static FrameTimes TimeFrames(IReadOnlyList<DerivedFrame> frames, Action<DerivedFrame> draw)
+	private static FrameTimes TimeFrames(IReadOnlyList<DerivedFrame> frames, Action<DerivedFrame> draw, Action? reset, Live live)
 	{
 		List<double> milliseconds = [];
+		int drawn = 0;
 		foreach (int start in WindowStarts(frames.Count))
 		{
 			// Brings the route drawn (and every cache) up to here untimed - a render arrives at it one frame at a time.
+			reset?.Invoke();
 			draw(frames[start]);
 			for (int i = start + 1; i <= start + WindowFrames && i < frames.Count; i++)
 			{
+				reset?.Invoke();
 				long started = Stopwatch.GetTimestamp();
 				draw(frames[i]);
 				milliseconds.Add(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+				live.Count(++drawn);
 			}
 		}
 
 		return FrameTimes.Of(milliseconds);
-	}
-
-	/// <summary>
-	///     The sample route every test draws, the same on every computer: riding a gentle curve at about 25 km/h, climbing a
-	///     little. Long enough for the overlay's three timed stretches and for the short render.
-	/// </summary>
-	private static List<DerivedFrame> SampleRoute(double fps)
-	{
-		List<DerivedFrame> frames = [];
-		for (int i = 0; i < Math.Max(RenderFrames, 3 * (WindowFrames + 1) * 4); i++)
-		{
-			double seconds = i / Math.Max(fps, 1);
-			double east = 150 * Math.Sin(seconds * 0.05), north = seconds * 7;
-			var raw = new TelemetryFrame(i, seconds, 50 + north / 111_320.0, 20 + east / 71_560.0, 200 + seconds * 0.2, DateTime.UtcNow, 0, 0, 1, 7);
-			frames.Add(new DerivedFrame(raw, 25 + Math.Sin(seconds) * 3, (seconds * 4) % 360, 3, seconds * 7, 4, 2, new SunPosition(140, 35), east, north, 1,
-				0.1, 0.05));
-		}
-
-		return frames;
 	}
 
 	/// <summary>The first SampleSeconds of the loaded recording's picture, copied as it is - instant, and the camera's own bitstream.</summary>
@@ -657,32 +754,17 @@ public static class RenderBenchmark
 		return ok ? path : null;
 	}
 
-	/// <summary>
-	///     Without a recording: a 4K 59.94 10-bit HEVC clip at the Osmo Action's ~90 Mbps, with film grain so it isn't trivial to
-	///     decode, encoded on the GPU when it can. It still decodes on the CPU far more easily than a camera's own (Advise).
-	/// </summary>
-	private static async Task<string> GenerateSampleAsync(List<string> tempFiles, CancellationToken ct)
-	{
-		string path = Path.Combine(Path.GetTempPath(), $"osmooverlay-benchmark-{Guid.NewGuid():N}.mp4");
-		tempFiles.Add(path);
-		string[] input = ["-f", "lavfi", "-i", "testsrc2=s=3840x2160:r=60000/1001,format=yuv420p10le,noise=alls=10:allf=t", "-t", "4"];
-		string[] rate = ["-rc", "cbr", "-b:v", "90M", "-bufsize", "90M", "-bf", "0", "-g", "60"];
-		foreach (string[] encoder in new[] { ["-c:v", "hevc_nvenc", "-preset", "p1", "-profile:v", "main10", .. rate], new[] { "-c:v", "libx265", "-preset", "ultrafast", "-b:v", "90M" } })
-		{
-			if ((await RunFfmpegAsync([.. input, .. encoder, "-tag:v", "hvc1", path], ct)).Ok) return path;
-		}
-
-		throw new InvalidOperationException("ffmpeg couldn't make the benchmark's sample.");
-	}
-
 	/// <summary>Frames a second ffmpeg ran `args` at - null when it failed.</summary>
-	private static async Task<double?> MeasureFfmpegAsync(IReadOnlyList<string> args, CancellationToken ct)
+	private static async Task<double?> MeasureFfmpegAsync(IReadOnlyList<string> args, Live live, CancellationToken ct)
 	{
-		return (await RunFfmpegAsync(args, ct)).Fps;
+		return (await RunFfmpegAsync(args, ct, (_, fps) => live.Fps(fps))).Fps;
 	}
 
-	/// <summary>Runs ffmpeg reporting its progress to stdout, killed on cancellation.</summary>
-	private static async Task<(bool Ok, double? Fps)> RunFfmpegAsync(IReadOnlyList<string> args, CancellationToken ct)
+	/// <summary>
+	///     Runs ffmpeg reporting its progress to stdout, killed on cancellation. onProgress gets each periodic report: the frames
+	///     done and the frames a second since the report before.
+	/// </summary>
+	internal static async Task<(bool Ok, double? Fps)> RunFfmpegAsync(IReadOnlyList<string> args, CancellationToken ct, Action<long, double>? onProgress = null)
 	{
 		ct.ThrowIfCancellationRequested();
 		ProcessStartInfo psi = ProcessHelper.CreateHiddenQuiet("ffmpeg",
@@ -700,7 +782,12 @@ public static class RenderBenchmark
 					long.TryParse(line.AsSpan(6), NumberStyles.Integer, CultureInfo.InvariantCulture, out frame);
 				// Only the periodic reports: the last one ("progress=end") comes after ffmpeg has flushed and closed everything.
 				else if (line == "progress=continue" && frame > 0)
-					samples.Add((clock.Elapsed.TotalSeconds, frame));
+				{
+					double seconds = clock.Elapsed.TotalSeconds;
+					if (onProgress is not null && samples.Count > 0 && seconds > samples[^1].Seconds)
+						onProgress(frame, (frame - samples[^1].Frame) / (seconds - samples[^1].Seconds));
+					samples.Add((seconds, frame));
+				}
 			}
 
 			await process.WaitForExitAsync(CancellationToken.None);
@@ -755,5 +842,93 @@ public static class RenderBenchmark
 	private static string Invariant(int value)
 	{
 		return value.ToString(CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>
+	///     The running step's live readings for the window: its frames a second (from ffmpeg's reports, or a count of frames
+	///     done turned into a rate) and, a few times a second, a frame it drew scaled down. Called from the steps' threads.
+	/// </summary>
+	private sealed class Live(Action<BenchmarkLive>? sink)
+	{
+		private const double FrameEverySeconds = 0.25;
+		private const double CountEverySeconds = 0.25;
+		private const int ThumbnailWidth = 640;
+		private long _lastFrame;
+		private long _countStarted;
+		private int _countFrom;
+		private volatile BenchmarkStage _stage;
+
+		public BenchmarkStage Stage
+		{
+			get => _stage;
+			set
+			{
+				_stage = value;
+				Interlocked.Exchange(ref _countStarted, 0);
+			}
+		}
+
+		public void Fps(double fps)
+		{
+			sink?.Invoke(new BenchmarkLive(Stage, fps));
+		}
+
+		/// <summary>`done` frames into the step: every CountEverySeconds, the rate since the last time.</summary>
+		public void Count(int done)
+		{
+			if (sink is null) return;
+
+			long now = Stopwatch.GetTimestamp();
+			long started = Interlocked.Read(ref _countStarted);
+			if (started == 0 || done < _countFrom)
+			{
+				Interlocked.Exchange(ref _countStarted, now);
+				_countFrom = done;
+				return;
+			}
+
+			double seconds = Stopwatch.GetElapsedTime(started, now).TotalSeconds;
+			if (seconds < CountEverySeconds) return;
+
+			Fps((done - _countFrom) / seconds);
+			Interlocked.Exchange(ref _countStarted, now);
+			_countFrom = done;
+		}
+
+		public void Frame(byte[] pixels, int width, int height, bool opaque)
+		{
+			if (sink is null) return;
+
+			long now = Stopwatch.GetTimestamp();
+			long last = Interlocked.Read(ref _lastFrame);
+			if (last != 0 && Stopwatch.GetElapsedTime(last, now).TotalSeconds < FrameEverySeconds) return;
+
+			Interlocked.Exchange(ref _lastFrame, now);
+			sink(new BenchmarkLive(Stage, null, Thumbnail(pixels, width, height, opaque)));
+		}
+
+		private static BenchmarkThumbnail Thumbnail(byte[] pixels, int width, int height, bool opaque)
+		{
+			int thumbWidth = Math.Min(ThumbnailWidth, width);
+			int thumbHeight = Math.Max(1, (int)Math.Round(height * (double)thumbWidth / width));
+			SKAlphaType alpha = opaque ? SKAlphaType.Opaque : SKAlphaType.Unpremul;
+			var sourceInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, alpha);
+			var thumbInfo = new SKImageInfo(thumbWidth, thumbHeight, SKColorType.Bgra8888, alpha);
+			byte[] thumb = new byte[thumbInfo.BytesSize];
+			GCHandle source = GCHandle.Alloc(pixels, GCHandleType.Pinned), target = GCHandle.Alloc(thumb, GCHandleType.Pinned);
+			try
+			{
+				using var from = new SKPixmap(sourceInfo, source.AddrOfPinnedObject(), sourceInfo.RowBytes);
+				using var to = new SKPixmap(thumbInfo, target.AddrOfPinnedObject(), thumbInfo.RowBytes);
+				from.ScalePixels(to, new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None));
+			}
+			finally
+			{
+				source.Free();
+				target.Free();
+			}
+
+			return new BenchmarkThumbnail(thumb, thumbWidth, thumbHeight, opaque);
+		}
 	}
 }

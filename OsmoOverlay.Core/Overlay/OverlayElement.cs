@@ -40,7 +40,8 @@ public enum OverlayElementType
 	Text,
 	Image,
 	MapAttribution,
-	Watermark
+	Watermark,
+	GpsAlert
 }
 
 /// <summary>
@@ -88,6 +89,7 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(ImageElement), (int)OverlayElementType.Image)]
 [JsonDerivedType(typeof(MapAttributionElement), (int)OverlayElementType.MapAttribution)]
 [JsonDerivedType(typeof(WatermarkElement), (int)OverlayElementType.Watermark)]
+[JsonDerivedType(typeof(GpsAlertElement), (int)OverlayElementType.GpsAlert)]
 public abstract record OverlayElement
 {
 	[JsonIgnore] public abstract OverlayElementType Type { get; }
@@ -250,6 +252,17 @@ public sealed record MapAttributionElement : StyledOverlayElement
 public sealed record WatermarkElement : StyledOverlayElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Watermark;
+}
+
+/// <summary>
+///     A notice on a panel while the GPS has something to say (OverlayRenderer.GpsAlert.cs): searching for a first fix, the
+///     signal lost and back, a reading the processing corrected - nothing the rest of the time. Centered on X, its top on Y.
+/// </summary>
+public sealed record GpsAlertElement : StyledOverlayElement, IPanelElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.GpsAlert;
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 }
 
 /// <summary>

@@ -460,7 +460,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	}
 
 	/// <summary>A layout without a watermark widget gets it at the default spot; one with them shows it when any is visible.</summary>
-	private bool WatermarkOn => Layout.OfType<WatermarkElement>().ToList() is var marks && (marks.Count == 0 || marks.Any(m => m.Visible));
+	private bool WatermarkOn => !Layout.Any(e => e is WatermarkElement) || Layout.Any(e => e is WatermarkElement { Visible: true });
 
 	/// <summary>Off: the widgets are drawn one after another straight onto the frame - the reference ParallelWidgets is checked against.</summary>
 	internal bool ParallelWidgets { get; set; } = true;
@@ -503,7 +503,7 @@ public sealed partial class OverlayRenderer : IDisposable
 				else
 				{
 					if (!element.Visible || (element is WatermarkElement && !ShowWatermark)) continue;
-					state = ElementAnimation.At(WithSpeedGate(element), sampleTime, OutputDurationSeconds);
+					state = ElementAnimation.At(AsShown(element), sampleTime, OutputDurationSeconds);
 				}
 
 				if (state.Progress <= 0f) continue;
@@ -538,14 +538,42 @@ public sealed partial class OverlayRenderer : IDisposable
 	public const double TripProgressSpeedGateDefaultKmh = 2;
 
 	/// <summary>
-	///     A trip progress bar waiting for the ride to start (TripProgressBarElement.ShowFromSpeedKmh) appears, with its own
-	///     way in, when the speed first reaches its threshold - that takes the place of its own appear time; never if the
-	///     ride never gets that fast. Per frame set, so a frame draws the same whatever was drawn before it.
+	///     The widget timed as it's shown. A trip progress bar waiting for the ride to start (TripProgressBarElement.ShowFromSpeedKmh)
+	///     appears, with its own way in, when the speed first reaches its threshold - that takes the place of its own appear
+	///     time; never if the ride never gets that fast. Per frame set, so a frame draws the same whatever was drawn before it.
+	///     The opening after the route overview card (IntroShiftSeconds) is moved past it - and without a way in of its own it
+	///     comes in the way it goes out: with no way in it showed from the video's first frame, which reads as the video starting,
+	///     but mid-video it would pop in.
 	/// </summary>
-	private OverlayElement WithSpeedGate(OverlayElement element)
+	public OverlayElement AsShown(OverlayElement element)
 	{
-		return SpeedGateSeconds(element) is { } reached && reached != element.AppearAtSeconds ? element with { AppearAtSeconds = reached } : element;
+		if (SpeedGateSeconds(element) is { } reached && reached != element.AppearAtSeconds) return element with { AppearAtSeconds = reached };
+
+		double shift = IntroShiftSeconds(element);
+		if (shift <= 0) return element;
+
+		OverlayElement moved = element with { AppearAtSeconds = (element.AppearAtSeconds ?? 0) + shift, DisappearAtSeconds = element.DisappearAtSeconds + shift };
+		OverlayAnimationType way = ElementAnimation.OutType(element.OutAnimationType);
+		return element.AnimationType == OverlayAnimationType.None && way != OverlayAnimationType.None
+			? moved with { AnimationType = way, AnimationDurationSeconds = ElementAnimation.OutDuration(element.OutAnimationDurationSeconds) }
+			: moved;
 	}
+
+	/// <summary>
+	///     How much later than its own times a widget is shown: the opening of the bottom center - the watermark, and the trip
+	///     progress bar that takes its place (unless it waits for a speed instead) - counts them from the route overview card's
+	///     end. On the card the watermark is in the card's own corner (DrawWatermark); as widgets the two come after it, one
+	///     after the other as on a video without it. 0 for the rest, timed to the video.
+	/// </summary>
+	public double IntroShiftSeconds(OverlayElement element)
+	{
+		bool opening = element is WatermarkElement or TripProgressBarElement { ShowFromSpeedKmh: null };
+		return opening && RouteIntro.Enabled ? RouteIntro.DurationSeconds : 0;
+	}
+
+	/// <summary>The route overview card on the output timeline: where it ends and where the widgets start fading in over it - null without one.</summary>
+	public (double FadeFrom, double End)? RouteIntroSpan =>
+		RouteIntro.Enabled ? (RouteIntroTransitionStartSeconds, RouteIntro.DurationSeconds) : null;
 
 	/// <summary>When a speed-gated trip progress bar appears (infinity: never) - null for any other widget.</summary>
 	public double? SpeedGateSeconds(OverlayElement element)

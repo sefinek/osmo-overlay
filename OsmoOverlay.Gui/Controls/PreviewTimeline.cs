@@ -12,11 +12,15 @@ using Avalonia.Rendering;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Preview;
+using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Gui;
 
 /// <summary>A key moment on the timeline: where it is, in recording seconds, and its name.</summary>
 public sealed record TimelineMoment(double Seconds, string Name);
+
+/// <summary>One of the recording's files, in recording seconds - AfterGap: recorded after the camera had stopped, not a split.</summary>
+public sealed record TimelineFile(double StartSeconds, double EndSeconds, string Name, bool AfterGap);
 
 /// <summary>
 ///     The preview's timeline, in two forms of one control (MainWindow has one of each - the compact one in the
@@ -78,6 +82,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen WaveformCenterPen = new Pen(Palette.Tint(Palette.Accent, 0.3));
 	private static readonly IBrush PlayedBrush = Palette.Accent;
 	private static readonly IBrush GpsLossBrush = Palette.Warning;
+	private static readonly IBrush RouteIntroBrush = Palette.Accent;
+	private static readonly IBrush GpsAnomalyBrush = Palette.Alert;
+	private const double GpsBarHeight = 4;
+	private static readonly IPen FilePen = new Pen(Palette.TextMuted, 1.5);
+	private static readonly IPen FileGapPen = new Pen(Palette.TextMuted, 1.5, new DashStyle([3, 3], 0));
+	private static readonly IPen RouteIntroPen = new Pen(Palette.Accent);
+	// How far off its 3 px line a GPS loss still shows its tip.
+	private const double GpsLossHoverPixels = 4;
 	private static readonly IBrush MomentBrush = Palette.Caution;
 	private static readonly IPen MomentPen = new Pen(Palette.Caution, 1.5);
 	private static readonly IBrush CutFill = Palette.Tint(Palette.SurfaceSunken, 0.6);
@@ -99,8 +111,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private DispatcherTimer? _stripeTimer;
 	private IReadOnlyList<TimeRange> _cuts = [];
 	private IReadOnlyList<TimeRange> _gpsLoss = [];
+	private IReadOnlyList<GpsAnomaly> _gpsAnomalies = [];
 	private IReadOnlyList<TimelineMoment> _moments = [];
-	private TimelineMoment? _momentTip;
+	private string? _tip;
+	private (double FadeFrom, double End)? _routeIntro;
+	private IReadOnlyList<TimelineFile> _files = [];
 	private TimeRange? _selection;
 	private TimelineThumbnails? _thumbnails;
 	private AudioWaveform? _waveform;
@@ -210,12 +225,52 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	/// <summary>
+	///     The route overview card, in recording seconds: where the widgets start fading in over it and where it ends - null
+	///     without one. Marked over the expanded timeline's video track.
+	/// </summary>
+	public (double FadeFrom, double End)? RouteIntro
+	{
+		get => _routeIntro;
+		set
+		{
+			_routeIntro = value;
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>
+	///     The recording's files when there are several: a line where each later one starts (dashed after a stop) and its name
+	///     on the expanded timeline's video track, a tick on the compact one, which file it is in a tip.
+	/// </summary>
+	public IReadOnlyList<TimelineFile> Files
+	{
+		get => _files;
+		set
+		{
+			_files = value;
+			InvalidateVisual();
+		}
+	}
+
 	public IReadOnlyList<TimeRange> GpsLoss
 	{
 		get => _gpsLoss;
 		set
 		{
 			_gpsLoss = value;
+			_contentVersion++;
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>Implausible GPS readings the processing repaired (TelemetryProcessor.FindGpsAnomalies) - marked like the losses, in their own color.</summary>
+	public IReadOnlyList<GpsAnomaly> GpsAnomalies
+	{
+		get => _gpsAnomalies;
+		set
+		{
+			_gpsAnomalies = value;
 			_contentVersion++;
 			InvalidateVisual();
 		}
@@ -228,7 +283,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_moments = value;
-			UpdateMomentTip(null);
+			UpdateTip(null);
 			InvalidateVisual();
 		}
 	}
@@ -316,11 +371,21 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		// The part already played, up to the thumb - under the cuts and the selection, which stay readable on top.
 		context.DrawRectangle(PlayedBrush, null, track.WithWidth(Math.Max(0, X(Value) - Inset)), CompactTrackHeight / 2, CompactTrackHeight / 2);
 
-		foreach (TimeRange loss in _gpsLoss)
+		foreach ((TimeRange range, IBrush brush) in GpsMarks())
 		{
-			(double x1, double x2) = Span(loss, 3);
-			context.DrawRectangle(GpsLossBrush, null, new Rect(x1, middle + CompactTrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
+			(double x1, double x2) = Span(range, 3);
+			context.DrawRectangle(brush, null, new Rect(x1, middle + CompactTrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
 		}
+
+		if (_files.Count > 1)
+		{
+			foreach (TimelineFile file in _files.Skip(1))
+				context.DrawLine(file.AfterGap ? FileGapPen : FilePen, new Point(X(file.StartSeconds), track.Top - 2), new Point(X(file.StartSeconds), track.Bottom + 2));
+		}
+
+		// The route overview card above the track, as the GPS losses below it.
+		if (_routeIntro is { End: > 0 } intro)
+			context.DrawRectangle(RouteIntroBrush, null, new Rect(X(0), CompactIntroTop(middle), Math.Max(3, X(intro.End) - X(0)), 3), 1.5, 1.5);
 
 		DrawCuts(context, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
 		if (_selection is { } selection)
@@ -355,12 +420,86 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		// Played so far, along the ruler's bottom edge.
 		context.FillRectangle(PlayedBrush, new Rect(0, RulerHeight - 2, Math.Max(0, X(Value)), 2));
 
+		DrawRouteIntro(context, videoTop);
+		DrawFiles(context, videoTop, bottom);
 		DrawCuts(context, videoTop, bottom);
 		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
 		DrawMoments(context, 0, bottom);
 
 		if (_hoverX is { } hover) context.DrawLine(HoverPen, new Point(hover, 0), new Point(hover, bottom));
 		DrawPlayhead(context, bottom);
+	}
+
+	/// <summary>The card over the video's first seconds: a band across the video track, fading out where the widgets fade in, named.</summary>
+	/// <summary>Each later file's start as a line through the tracks (dashed after a stop), every file's number and name at its bottom-left.</summary>
+	private void DrawFiles(DrawingContext context, double videoTop, double bottom)
+	{
+		if (_files.Count < 2) return;
+
+		for (int i = 0; i < _files.Count; i++)
+		{
+			TimelineFile file = _files[i];
+			double start = X(file.StartSeconds), end = X(file.EndSeconds);
+			if (i > 0) context.DrawLine(file.AfterGap ? FileGapPen : FilePen, new Point(start, videoTop), new Point(start, bottom));
+
+			var label = new FormattedText(string.Format(Strings.Timeline_FileLabel, i + 1, file.Name), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+				new Typeface(FontFamily.Default), 12, Palette.TextPrimary);
+			double left = Math.Max(start, 0) + 4;
+			if (left + label.Width + 10 > Math.Min(end, Bounds.Width) - 4) continue;
+
+			var chip = new Rect(left, videoTop + VideoTrackHeight - label.Height - 8, label.Width + 10, label.Height + 4);
+			context.DrawRectangle(Palette.SurfaceSunken, FilePen, chip, 3, 3);
+			context.DrawText(label, new Point(chip.X + 5, chip.Y + 2));
+		}
+	}
+
+	/// <summary>The file at a recording time, or at its start line - for the tip.</summary>
+	private (TimelineFile File, int Index)? FileAt(Point point)
+	{
+		if (_files.Count < 2) return null;
+
+		for (int i = 0; i < _files.Count; i++)
+		{
+			TimelineFile file = _files[i];
+			if (i > 0 && Math.Abs(point.X - X(file.StartSeconds)) <= GpsLossHoverPixels) return (file, i);
+		}
+
+		if (!_expanded) return null;
+
+		double videoTop = RulerHeight + TrackGap;
+		if (point.Y < videoTop + VideoTrackHeight - 24 || point.Y > videoTop + VideoTrackHeight) return null;
+
+		for (int i = 0; i < _files.Count; i++)
+		{
+			if (point.X >= X(_files[i].StartSeconds) && point.X < X(_files[i].EndSeconds)) return (_files[i], i);
+		}
+
+		return null;
+	}
+
+	private void DrawRouteIntro(DrawingContext context, double videoTop)
+	{
+		if (_routeIntro is not { } intro || intro.End <= 0) return;
+
+		double x0 = X(0), fadeFrom = X(intro.FadeFrom), end = X(intro.End);
+		var band = new Rect(x0, videoTop, Math.Max(0, end - x0), VideoTrackHeight);
+		Color tint = ((ISolidColorBrush)RouteIntroBrush).Color;
+		var fill = new LinearGradientBrush
+		{
+			StartPoint = new RelativePoint(fadeFrom, 0, RelativeUnit.Absolute),
+			EndPoint = new RelativePoint(Math.Max(end, fadeFrom + 1), 0, RelativeUnit.Absolute),
+			GradientStops = [new GradientStop(Color.FromArgb(150, tint.R, tint.G, tint.B), 0), new GradientStop(Color.FromArgb(30, tint.R, tint.G, tint.B), 1)]
+		};
+		context.FillRectangle(fill, band);
+		context.DrawRectangle(null, RouteIntroPen, band.Deflate(0.5));
+
+		var label = new FormattedText(Strings.Timeline_RouteIntro, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default), 12,
+			Palette.TextPrimary);
+		if (label.Width + 12 > band.Width) return;
+
+		var chip = new Rect(Math.Max(x0, 0) + 4, videoTop + 4, label.Width + 10, label.Height + 4);
+		context.DrawRectangle(Palette.SurfaceSunken, RouteIntroPen, chip, 3, 3);
+		context.DrawText(label, new Point(chip.X + 5, chip.Y + 2));
 	}
 
 	private RenderTargetBitmap RenderTracksLayer(double scaling, double width, double videoTop, double audioTop)
@@ -381,10 +520,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		DrawFilmstrip(context, videoTop, width);
 		DrawWaveform(context, audioTop, width, scaling);
 
-		foreach (TimeRange loss in _gpsLoss)
+		// Over the video's picture there: a bar along its top edge, the stretch tinted.
+		foreach ((TimeRange range, IBrush brush) in GpsMarks())
 		{
-			(double x1, double x2) = Span(loss, 3);
-			context.FillRectangle(GpsLossBrush, new Rect(x1, RulerHeight - 3, x2 - x1, 3));
+			(double x1, double x2) = Span(range, 3);
+			context.FillRectangle(Palette.Tint(brush, 0.22), new Rect(x1, videoTop, x2 - x1, VideoTrackHeight));
+			context.FillRectangle(brush, new Rect(x1, videoTop, x2 - x1, GpsBarHeight));
 		}
 
 		return layer;
@@ -838,7 +979,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 				break;
 			default:
 				Cursor = EdgeAt(x) is null ? HandCursor : ResizeCursor;
-				UpdateMomentTip(MomentAt(x));
+				UpdateTip(TipAt(e.GetPosition(this)));
 				break;
 		}
 
@@ -852,7 +993,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnPointerExited(e);
 		_hoverX = null;
-		UpdateMomentTip(null);
+		UpdateTip(null);
 		InvalidateVisual();
 	}
 
@@ -924,22 +1065,82 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		return nearest;
 	}
 
-	/// <summary>Opened by hand: a tip set while the pointer is already over the control isn't shown by the usual hover delay.</summary>
-	private void UpdateMomentTip(TimelineMoment? moment)
+	/// <summary>What the pointer is over: a key moment, or a stretch without a GPS fix (its line under the track) - null for neither.</summary>
+	private string? TipAt(Point point)
 	{
-		if (moment == _momentTip) return;
+		if (MomentAt(point.X) is { } moment)
+			return $"{(string.IsNullOrWhiteSpace(moment.Name) ? Strings.Timeline_KeyMoment : moment.Name)}  -  {TimeText.Format(moment.Seconds)}";
 
-		_momentTip = moment;
-		if (moment is null)
+		if (GpsTipAt(point) is { } gps) return gps;
+
+		if (FileAt(point) is { } at)
 		{
-			ToolTip.SetIsOpen(this, false);
-			ToolTip.SetTip(this, null);
-			return;
+			string tip = string.Format(Strings.Timeline_FileTip, at.Index + 1, _files.Count, at.File.Name, TimeText.Format(at.File.StartSeconds),
+				TimeText.Format(at.File.EndSeconds));
+			return at.File.AfterGap ? tip + " " + Strings.Timeline_FileAfterGap : tip;
 		}
 
-		string name = string.IsNullOrWhiteSpace(moment.Name) ? Strings.Timeline_KeyMoment : moment.Name;
-		ToolTip.SetTip(this, $"{name}  -  {TimeText.Format(moment.Seconds)}");
-		ToolTip.SetIsOpen(this, true);
+		if (_routeIntro is not { } intro || point.X < X(0) - GpsLossHoverPixels || point.X > X(intro.End) + GpsLossHoverPixels) return null;
+
+		(double top, double bottom) = _expanded
+			? (RulerHeight + TrackGap, RulerHeight + TrackGap + VideoTrackHeight)
+			: (CompactIntroTop(Bounds.Height / 2) - GpsLossHoverPixels, CompactIntroTop(Bounds.Height / 2) + 3 + GpsLossHoverPixels);
+		return point.Y >= top && point.Y <= bottom ? string.Format(Strings.Timeline_RouteIntroTip, TimeText.Format(intro.End)) : null;
+	}
+
+	private static double CompactIntroTop(double middle)
+	{
+		return middle - CompactTrackHeight / 2 - 6;
+	}
+
+	/// <summary>The GPS losses (warning) and the repaired anomalies (alert), each with its color.</summary>
+	private IEnumerable<(TimeRange Range, IBrush Brush)> GpsMarks()
+	{
+		return _gpsLoss.Select(l => (l, GpsLossBrush)).Concat(_gpsAnomalies.Select(a => (new TimeRange(a.Start, a.End), GpsAnomalyBrush)));
+	}
+
+	/// <summary>
+	///     The GPS loss or anomaly under `point`: on the compact timeline its line, a few pixels around it so a 3 px line is easy
+	///     to hit; on the expanded one its stretch of the video track.
+	/// </summary>
+	private string? GpsTipAt(Point point)
+	{
+		(double top, double bottom) = _expanded
+			? (RulerHeight + TrackGap, RulerHeight + TrackGap + VideoTrackHeight)
+			: (Bounds.Height / 2 + CompactTrackHeight / 2 + 3 - GpsLossHoverPixels, Bounds.Height / 2 + CompactTrackHeight / 2 + 6 + GpsLossHoverPixels);
+		if (point.Y < top || point.Y > bottom) return null;
+
+		bool Hit(TimeRange range)
+		{
+			(double x1, double x2) = Span(range, 3);
+			return point.X >= x1 - GpsLossHoverPixels && point.X <= x2 + GpsLossHoverPixels;
+		}
+
+		foreach (GpsAnomaly anomaly in _gpsAnomalies)
+		{
+			if (!Hit(new TimeRange(anomaly.Start, anomaly.End))) continue;
+
+			string kind = anomaly is { Position: true, Speed: true } ? Strings.Timeline_GpsJumpBoth
+				: anomaly.Position ? Strings.Timeline_GpsJumpPosition : Strings.Timeline_GpsJumpSpeed;
+			return string.Format(Strings.Timeline_GpsAnomalyTip, TimeText.Format(anomaly.Start), TimeText.Format(anomaly.End), kind);
+		}
+
+		foreach (TimeRange loss in _gpsLoss)
+		{
+			if (Hit(loss)) return string.Format(Strings.Timeline_GpsLossTip, TimeText.Format(loss.StartSeconds), TimeText.Format(loss.EndSeconds));
+		}
+
+		return null;
+	}
+
+	/// <summary>Opened by hand: a tip set while the pointer is already over the control isn't shown by the usual hover delay.</summary>
+	private void UpdateTip(string? tip)
+	{
+		if (tip == _tip) return;
+
+		_tip = tip;
+		ToolTip.SetTip(this, tip);
+		ToolTip.SetIsOpen(this, tip is not null);
 	}
 
 	private int? CutIndexAt(double seconds)

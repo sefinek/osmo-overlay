@@ -13,6 +13,9 @@ public sealed record TelemetrySummary(
 	double MaxGForce,
 	DateTime? RecordedAtUtc);
 
+/// <summary>A stretch of implausible GPS readings the processing repaired: a jumped position, a spiked receiver speed, or both.</summary>
+public sealed record GpsAnomaly(double Start, double End, bool Position, bool Speed);
+
 public static class TelemetryProcessor
 {
 	// Reference window for speed/heading/gradient, and the smoothing time constant for the on-screen
@@ -39,6 +42,7 @@ public static class TelemetryProcessor
 		double speedCorrectionPercent = 0)
 	{
 		double speedFactor = SpeedCalibration.Factor(speedCorrectionPercent);
+		frames = GpsOutliers.Repair(frames);
 		if (smoothGps) frames = GpsInterpolation.Apply(frames);
 
 		double[] cumulativeDistances = SteppedDistances(frames);
@@ -254,6 +258,30 @@ public static class TelemetryProcessor
 	///     that want to flag only genuine anomalies (a fix that dropped out mid-recording, not a file
 	///     that never had one at all) should gate this behind HasAnyGpsFix themselves.
 	/// </summary>
+	/// <summary>
+	///     The stretches GpsOutliers repairs - a position or a receiver speed no vehicle could have produced - with which of the
+	///     two each holds. Consecutive frames make one stretch; a gap between files ends it.
+	/// </summary>
+	public static List<GpsAnomaly> FindGpsAnomalies(IReadOnlyList<TelemetryFrame> frames)
+	{
+		(bool[] position, bool[] speed) = GpsOutliers.Detect(frames);
+		List<GpsAnomaly> anomalies = [];
+		int start = -1;
+		for (int i = 0; i <= frames.Count; i++)
+		{
+			bool bad = i < frames.Count && (position[i] || speed[i]) && !(start >= 0 && frames[i].StartsAfterGap);
+			if (bad && start < 0) start = i;
+			if (bad || start < 0) continue;
+
+			anomalies.Add(new GpsAnomaly(frames[start].SampleTimeSeconds, frames[i - 1].SampleTimeSeconds,
+				position.Skip(start).Take(i - start).Contains(true), speed.Skip(start).Take(i - start).Contains(true)));
+			start = -1;
+			if (i < frames.Count && (position[i] || speed[i])) start = i;
+		}
+
+		return anomalies;
+	}
+
 	public static List<(double Start, double End)> FindGpsLossRanges(IReadOnlyList<TelemetryFrame> frames)
 	{
 		var ranges = new List<(double Start, double End)>();

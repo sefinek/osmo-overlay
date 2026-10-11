@@ -62,6 +62,15 @@ public sealed class PreviewMeasurements(double expectedFps, TimeProvider? timePr
 		}
 	}
 
+	/// <summary>Frames on screen so far and frames dropped at any stage - for a live reading while it runs.</summary>
+	public (int Presented, int Dropped) Counts
+	{
+		get
+		{
+			lock (_gate) return (_presented, _drops.Sum());
+		}
+	}
+
 	public PreviewMeasurementResult Finish()
 	{
 		lock (_gate)

@@ -99,6 +99,11 @@ public partial class MainWindow
 			LayerTracks.ToOutput = seconds => seconds;
 		}
 
+		(double FadeFrom, double End)? intro = _previewPlayer.RouteIntroSpan;
+		LayerTracks.RouteIntro = intro;
+		// The timelines show the recording: the card's output seconds where they fall in it, after the cuts.
+		foreach (PreviewTimeline timeline in Timelines)
+			timeline.RouteIntro = intro is { } span ? (LayerTracks.ToRecording(span.FadeFrom), LayerTracks.ToRecording(span.End)) : null;
 		LayerTracks.Editable = !IsActivePresetDefault;
 		LayerTracks.SelectedId = _selectedElementId;
 		NewLayerButton.IsEnabled = !IsActivePresetDefault;
@@ -109,19 +114,21 @@ public partial class MainWindow
 		[
 			.. ActiveLayers.Select((layer, i) => new LayerTrack(layer.Id, layer.Name ?? string.Format(Strings.Layers_DefaultName, i + 1),
 			[
-				.. widgets.Where(w => OverlayLayers.Key(w.Element) == layer.Id).Select(w => new LayerClip(w.Element.Id, ClipLabel(w.Element, w.Name),
-					ClipAppear(w.Element), w.Element.DisappearAtSeconds, w.Element.AnimationType, w.Element.AnimationDurationSeconds,
-					w.Element.OutAnimationType, w.Element.OutAnimationDurationSeconds, IsTypeSupported(w.Element.Type)))
+				.. widgets.Where(w => OverlayLayers.Key(w.Element) == layer.Id).Select(w => ClipFor(w.Element, w.Name))
 			], layer.Muted, layer.Solo, layer.Locked, layer.Muted || (anySolo && !layer.Solo)))
 		];
 	}
 
-	/// <summary>Where a clip starts: the widget's own appear time, or for a speed-gated bar when the speed is first reached (never: at the end).</summary>
-	private double? ClipAppear(OverlayElement element)
+	/// <summary>
+	///     A widget's clip, timed as the recording shows it (OverlayRenderer.AsShown): a speed-gated bar from when the speed is
+	///     first reached (never: at the end), the opening after the route overview card, coming in as it goes out.
+	/// </summary>
+	private LayerClip ClipFor(OverlayElement element, string name)
 	{
-		return _previewPlayer.SpeedGateSeconds(element) is { } reached
-			? double.IsFinite(reached) ? reached : LayerTracks.OutputDurationSeconds
-			: element.AppearAtSeconds;
+		OverlayElement shown = _previewPlayer.AsShown(element);
+		double? appear = shown.AppearAtSeconds is { } start && !double.IsFinite(start) ? LayerTracks.OutputDurationSeconds : shown.AppearAtSeconds;
+		return new LayerClip(element.Id, ClipLabel(element, name), appear, shown.DisappearAtSeconds, shown.AnimationType, shown.AnimationDurationSeconds,
+			shown.OutAnimationType, shown.OutAnimationDurationSeconds, IsTypeSupported(element.Type), _previewPlayer.SpeedGateSeconds(element) is not null);
 	}
 
 	/// <summary>What a clip says: what the widget shows where it's its own (a text, a picked file, a statistic), else its name.</summary>
@@ -136,6 +143,7 @@ public partial class MainWindow
 			ImageElement { ImagePath: { } path } when !string.IsNullOrWhiteSpace(path) => Path.GetFileName(path),
 			ImageElement => string.Format(Strings.Layers_NoFileChosen, name),
 			TripStatElement stat => stat.Label ?? SentenceCase(OverlayRenderer.DefaultTripStatLabel(stat.Stat)),
+			TripProgressBarElement { ShowFromSpeedKmh: { } kmh } => string.Format(Strings.Layers_FromSpeed, name, kmh.ToString("0.#")),
 			ProfileChartElement chart => chart.Label ?? (chart.Series == ProfileSeries.Speed ? Strings.Layers_SpeedChart : Strings.Layers_ElevationChart),
 			ElapsedTimeTextElement { Label: { } label } when !string.IsNullOrWhiteSpace(label) => label,
 			LabeledStatElement { Label: { } label } => label,
@@ -173,13 +181,19 @@ public partial class MainWindow
 		int index = elements.FindIndex(el => el.Id == timing.Id);
 		if (index < 0) return;
 
-		OverlayElement edited = elements[index] = elements[index] with
+		// The clip is the widget as shown (ClipFor) - stored as its own again: the opening's times without the route overview
+		// card's shift, and a way in the clip only showed (coming in as it goes out) left as it was unless it was changed.
+		OverlayElement own = elements[index], shown = _previewPlayer.AsShown(own);
+		double shift = _previewPlayer.IntroShiftSeconds(own);
+		double? appear = shift > 0 && timing.AppearAtSeconds is { } start ? Math.Max(0, start - shift) : timing.AppearAtSeconds;
+		bool wayInAsShown = timing.Animation == shown.AnimationType && Math.Abs(timing.AnimationDurationSeconds - shown.AnimationDurationSeconds) < 1e-9;
+		OverlayElement edited = elements[index] = own with
 		{
-			// A speed-gated bar's start isn't its own (ClipAppear) - it keeps its stored one.
-			AppearAtSeconds = _previewPlayer.SpeedGateSeconds(elements[index]) is null ? timing.AppearAtSeconds : elements[index].AppearAtSeconds,
-			DisappearAtSeconds = timing.DisappearAtSeconds,
-			AnimationType = timing.Animation,
-			AnimationDurationSeconds = timing.AnimationDurationSeconds,
+			// A speed-gated bar's start isn't its own (ClipFor) - it keeps its stored one.
+			AppearAtSeconds = _previewPlayer.SpeedGateSeconds(own) is null ? appear : own.AppearAtSeconds,
+			DisappearAtSeconds = timing.DisappearAtSeconds - shift,
+			AnimationType = wayInAsShown ? own.AnimationType : timing.Animation,
+			AnimationDurationSeconds = wayInAsShown ? own.AnimationDurationSeconds : timing.AnimationDurationSeconds,
 			OutAnimationType = timing.OutAnimation,
 			OutAnimationDurationSeconds = timing.OutAnimationDurationSeconds
 		};

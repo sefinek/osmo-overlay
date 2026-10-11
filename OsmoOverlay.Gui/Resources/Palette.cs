@@ -20,6 +20,12 @@ internal static class Palette
 	public static IBrush StrokeStrong => Brush("StrokeStrongBrush");
 	public static IBrush SubtleFill => Brush("SubtleFillBrush");
 
+	// Chart lines that share a chart, in this order: checked for color-blind and normal vision on every theme's chart surface.
+	public static IBrush ChartSeries1 => Brush("ChartSeries1Brush");
+	public static IBrush ChartSeries2 => Brush("ChartSeries2Brush");
+	public static IBrush ChartSeries3 => Brush("ChartSeries3Brush");
+	public static IBrush ChartSeries4 => Brush("ChartSeries4Brush");
+
 	/// <summary>The color `t` (0..1) of the way along `stops`, blended between the two neighbouring ones.</summary>
 	public static IBrush Blend(double t, params IBrush[] stops)
 	{

@@ -484,8 +484,6 @@ public partial class MainWindow : Window
 			if (_inputPaths.Count == 0) RestartApp();
 			else AppLogger.Notify(Strings.Main_RestartToApply);
 		}
-		if (settings.PreviewBenchmarkRequested && !(needsRestart && _inputPaths.Count == 0))
-			await ShowPreviewBenchmarkAsync();
 	}
 
 	private static void RestartApp()
@@ -507,12 +505,13 @@ public partial class MainWindow : Window
 
 	private async void OnToolsClick(object? sender, RoutedEventArgs e)
 	{
-		await new ToolsWindow { OpenBenchmark = ShowBenchmarkAsync, OpenPreviewBenchmark = ShowPreviewBenchmarkAsync }.ShowDialog(this);
+		await new ToolsWindow { OpenBenchmark = ShowBenchmarkAsync, LoadRecording = LoadTestRecordingAsync }.ShowDialog(this);
 	}
 
 	/// <summary>
-	///     The performance test over `owner`, on the loaded recording (or its test clip) with the layout a render would draw.
-	///     Playback stops first - it would take the GPU from the test. A preview shadow setting it applied reaches the preview.
+	///     The performance test over `owner`, on the test recording and the loaded one, with the layout a render would draw - its
+	///     last part played in this window's player (RunAppPreviewTestAsync). Playback stops first - it would take the GPU from
+	///     the test. A preview shadow setting it applied reaches the preview.
 	/// </summary>
 	private async Task ShowBenchmarkAsync(Window owner)
 	{
@@ -521,11 +520,17 @@ public partial class MainWindow : Window
 		IReadOnlyList<OverlayElement> layout = _overlayPresets.Count > 0
 			? OverlayLayers.Drawn(ActiveElements, ActiveLayers)
 			: OverlayPreset.CreateDefault(OverlayPresetStore.DefaultPresetId, Strings.Benchmark_Title).Elements;
-		var input = new BenchmarkInput(_summary?.InputPaths[0], layout, _openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
-		await new BenchmarkWindow(input, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering).ShowDialog(owner);
+		var request = new BenchmarkRequest(_summary?.InputPaths[0], layout, _openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
+		await new BenchmarkWindow(request, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering, RunAppPreviewTestAsync).ShowDialog(owner);
 
 		OverlaySettings after = OverlaySettingsStore.Load();
 		if (after.PreviewDrawsShadows != shadows) _previewPlayer.SetShadows(after.PreviewDrawsShadows, !after.DisableShadows);
+		if (after.PreviewMaxWidth != _previewMaxWidth)
+		{
+			_previewMaxWidth = after.PreviewMaxWidth;
+			ShowQualityPicker();
+			await ReopenPreviewAsync();
+		}
 	}
 
 	private async void OnPickOutputClick(object? sender, RoutedEventArgs e)

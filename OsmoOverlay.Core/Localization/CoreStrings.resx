@@ -464,4 +464,10 @@
   <data name="Versions_UpToDate" xml:space="preserve">
     <value>{0}: installed {1} - up to date</value>
   </data>
+  <data name="Synthetic_Name" xml:space="preserve">
+    <value>Test recording</value>
+  </data>
+  <data name="Synthetic_Source" xml:space="preserve">
+    <value>Telemetry source: telemetry generated for the performance test (with deliberate anomalies)</value>
+  </data>
 </root>

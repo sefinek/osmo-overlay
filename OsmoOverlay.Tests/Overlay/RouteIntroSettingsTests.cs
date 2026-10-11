@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Tests.Overlay;
@@ -5,6 +6,16 @@ namespace OsmoOverlay.Tests.Overlay;
 [TestClass]
 public sealed class RouteIntroSettingsTests
 {
+	[TestMethod]
+	public void ForRecording_OnlyWithAFix_AndNeverForTheTestRecording()
+	{
+		var settings = new OverlaySettings { ShowRouteIntro = true };
+
+		Assert.IsTrue(RouteIntroSettings.ForRecording(settings, true, null).Enabled);
+		Assert.IsFalse(RouteIntroSettings.ForRecording(settings, false, null).Enabled, "no fix, nothing to sum up");
+		Assert.IsFalse(RouteIntroSettings.ForRecording(settings, true, CameraFormats.Find("synthetic")).Enabled, "the test recording shows its widgets");
+	}
+
 	[TestMethod]
 	public void ApplyTo_IsTheReverseOfFrom_AndLeavesTheRestAlone()
 	{

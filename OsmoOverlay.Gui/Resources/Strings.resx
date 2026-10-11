@@ -85,7 +85,7 @@
     <value>Decoding recommendations were skipped because the computer was under load. GPU load could skew the comparison in favor of CPU decoding.</value>
   </data>
   <data name="Benchmark_AdviceSkippedSample" xml:space="preserve">
-    <value>GPU and CPU decoding were not compared. The generated sample is much easier for the CPU to decode than camera footage. Load a recording and run the test again.</value>
+    <value>GPU and CPU decoding were not compared. The test recording is much easier for the CPU to decode than camera footage. Load your recording, tick "Also test my recording" and run the test again.</value>
   </data>
   <data name="Benchmark_AdviceSoftwareDecode" xml:space="preserve">
     <value>CPU decoding is {0}% faster on this computer. Disable GPU decoding?</value>
@@ -153,9 +153,6 @@
   <data name="Benchmark_FpsRange" xml:space="preserve">
     <value>{0}-{1} fps (±{2}%)</value>
   </data>
-  <data name="Benchmark_GeneratedSample" xml:space="preserve">
-    <value>generated sample</value>
-  </data>
   <data name="Benchmark_Gpu" xml:space="preserve">
     <value>Graphics card</value>
   </data>
@@ -166,9 +163,9 @@
     <value>in use now</value>
   </data>
   <data name="Benchmark_Intro" xml:space="preserve">
-    <value>The test compares GPU and CPU decoding, drawing the overlay with and without shadows, and transferring frames and encoding in FFmpeg. It also measures the complete FFmpeg pipeline and performs a short render. It identifies the slowest stage and suggests faster settings.
+    <value>The test compares GPU and CPU decoding, drawing the overlay with and without shadows, and transferring frames and encoding in FFmpeg. It also measures the complete FFmpeg pipeline, performs a short render and measures how smoothly the preview plays, both in this window and in the app's player. Everything is shown live. Finally, it identifies the slowest stage and suggests faster settings.
 
-Each comparison alternates between the options over multiple runs. Results show the median and range of measurements. The test takes 2-3 minutes. Close games and other programs that heavily use the CPU or GPU during the test.</value>
+Each comparison alternates between the options over multiple runs. Results show the median and range of measurements. The test takes 3-4 minutes. Close games and other programs that heavily use the CPU or GPU during the test.</value>
   </data>
   <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
     <value>at least this - it waited for decoding</value>
@@ -204,10 +201,10 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>Your settings are already the fastest on this computer.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
-    <value>The test will prepare a {0}-second sample from the loaded recording ({1}) and use it for all measurements. The short render will apply your selected preset using sample route data.</value>
+    <value>Every stage is measured on the test recording, and decoding and the short render are repeated on a {0}-second sample of your recording ({1}). GPU and CPU decoding are compared on that one only. The preview in the app plays your recording.</value>
   </data>
   <data name="Benchmark_OnSynthetic" xml:space="preserve">
-    <value>No recording is loaded, so the test will generate a 4K sample with parameters similar to Osmo Action footage. The sample is easier for the CPU to decode than real footage, so the GPU and CPU decoding comparison will be skipped. Load a recording before the test to get complete results.</value>
+    <value>No recording is loaded, so every measurement runs on the test recording. It's easier for the CPU to decode than camera footage, so the GPU and CPU decoding comparison will be skipped. The test recording will also be loaded into the app's preview. Load your recording before the test to compare decoding.</value>
   </data>
   <data name="Benchmark_Os" xml:space="preserve">
     <value>System</value>
@@ -234,7 +231,7 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>{0}x real time</value>
   </data>
   <data name="Benchmark_Recording" xml:space="preserve">
-    <value>Recording</value>
+    <value>Your recording</value>
   </data>
   <data name="Benchmark_RecordingSample" xml:space="preserve">
     <value>a {0} s sample of the loaded recording</value>
@@ -249,10 +246,10 @@ Each comparison alternates between the options over multiple runs. Results show 
     <value>Results</value>
   </data>
   <data name="Benchmark_SampleComesOutHigh" xml:space="preserve">
-    <value>comes out high - the sample decodes more easily than a recording</value>
+    <value>comes out high - the test recording decodes more easily than camera footage</value>
   </data>
   <data name="Benchmark_SampleRoute" xml:space="preserve">
-    <value>sample route</value>
+    <value>the test recording's route</value>
   </data>
   <data name="Benchmark_SlowestStage" xml:space="preserve">
     <value>Slowest stage</value>
@@ -1073,7 +1070,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Distance</value>
   </data>
   <data name="Main_DragAWidgetFromThe" xml:space="preserve">
-    <value>Drag a widget from the palette below onto the preview to add it. Drag it to move it; hover over it and use the gear for its settings or the cross to remove it.</value>
+    <value>Drag a widget from "Available to add" below onto the preview to add it. Drag it to move it; hover over it and use the gear for its settings or the cross to remove it.</value>
   </data>
   <data name="Main_DragToResize" xml:space="preserve">
     <value>Drag to resize</value>
@@ -1277,7 +1274,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>None - just the time</value>
   </data>
   <data name="Main_NothingOnTheOverlayYet" xml:space="preserve">
-    <value>Nothing on the overlay yet - drag a widget from the palette below onto the preview.</value>
+    <value>Nothing on the overlay yet - drag a widget from "Available to add" below onto the preview.</value>
   </data>
   <data name="Main_NoVideoLoaded" xml:space="preserve">
     <value>No video loaded</value>
@@ -1286,7 +1283,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Off</value>
   </data>
   <data name="Main_OnOverlay" xml:space="preserve">
-    <value>ON OVERLAY</value>
+    <value>ADDED WIDGETS</value>
   </data>
   <data name="Main_OpenGitHub" xml:space="preserve">
     <value>Open GitHub</value>
@@ -1301,7 +1298,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Output file</value>
   </data>
   <data name="Main_PaletteDragOntoPreview" xml:space="preserve">
-    <value>PALETTE - DRAG ONTO PREVIEW</value>
+    <value>AVAILABLE TO ADD</value>
   </data>
   <data name="Main_Panel" xml:space="preserve">
     <value>PANEL</value>
@@ -2085,10 +2082,10 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Color the route by speed</value>
   </data>
   <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
-    <value>Config last updated: {0}</value>
+    <value>Your configuration (app settings) last changed: {0}</value>
   </data>
   <data name="Settings_ConfigNeverUpdated" xml:space="preserve">
-    <value>Config last updated: never</value>
+    <value>Your configuration (app settings) last changed: never</value>
   </data>
   <data name="Settings_Configuration" xml:space="preserve">
     <value>Configuration</value>
@@ -2680,7 +2677,7 @@ Select the original file from the camera&apos;s memory card ({0}). Recordings ex
     <value>Key moment</value>
   </data>
   <data name="Timeline_NothingOnOverlay" xml:space="preserve">
-    <value>Nothing on the overlay yet</value>
+    <value>No widgets added yet - drag one from "Available to add" onto the preview.</value>
   </data>
   <data name="Timeline_Out" xml:space="preserve">
     <value>Out {0}</value>
@@ -3518,44 +3515,17 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   <data name="Calibration_FaqSource" xml:space="preserve">
     <value>More about GPS accuracy: GPS.gov</value>
   </data>
-  <data name="PreviewBenchmark_Title" xml:space="preserve">
-    <value>Preview smoothness test</value>
-  </data>
-  <data name="PreviewBenchmark_Description" xml:space="preserve">
-    <value>Plays the loaded recording with the current preview settings. Up to 3 seconds of warm-up, then 20 seconds of measurement. The test restores the playback position and preview layout afterwards. Press Esc to stop.</value>
-  </data>
-  <data name="PreviewBenchmark_Fullscreen" xml:space="preserve">
-    <value>Test fullscreen on the monitor selected in Settings</value>
-  </data>
-  <data name="PreviewBenchmark_SecondScreen" xml:space="preserve">
-    <value>The second-screen mode is enabled. The test will use that screen.</value>
-  </data>
   <data name="PreviewBenchmark_MeasurementNote" xml:space="preserve">
     <value>Frames are counted on the compositor's render thread after drawing is submitted. Drawing times include CPU image upload and draw submission, not GPU completion or physical display latency. CPU/GPU load includes other applications.</value>
   </data>
-  <data name="PreviewBenchmark_ToolsHint" xml:space="preserve">
-    <value>Measure actual preview playback, including frame pacing and fullscreen on the selected monitor. Requires a loaded recording.</value>
-  </data>
-  <data name="PreviewBenchmark_Close" xml:space="preserve">
-    <value>Close</value>
-  </data>
-  <data name="PreviewBenchmark_NotReady" xml:space="preserve">
-    <value>Load a recording with at least one second of playable video before running the preview test. Rendering must be stopped.</value>
-  </data>
   <data name="PreviewBenchmark_WarmingUp" xml:space="preserve">
-    <value>Warming up the decoder and preview... Esc stops the test.</value>
+    <value>Warming up the decoder and preview...</value>
   </data>
   <data name="PreviewBenchmark_Progress" xml:space="preserve">
-    <value>Measuring preview playback: {0} / {1} s. Esc stops the test.</value>
+    <value>Measuring preview playback: {0} / {1} s</value>
   </data>
   <data name="PreviewBenchmark_EndedDuringWarmup" xml:space="preserve">
-    <value>Playback ended during warm-up. Try a longer recording or enable playback looping.</value>
-  </data>
-  <data name="PreviewBenchmark_Cancelled" xml:space="preserve">
-    <value>Preview smoothness test cancelled.</value>
-  </data>
-  <data name="PreviewBenchmark_LoadFailed" xml:space="preserve">
-    <value>Unable to read system load during the preview test.</value>
+    <value>playback ended during the warm-up - turn looping on or load a longer recording</value>
   </data>
   <data name="PreviewBenchmark_Source" xml:space="preserve">
     <value>Recording: {0}</value>
@@ -3567,10 +3537,10 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Decoded image: {0}x{1}; displayed image: {2}x{3} px; DPI scale: {4}x</value>
   </data>
   <data name="PreviewBenchmark_Rate" xml:space="preserve">
-    <value>Playback speed: {0}x; expected frame rate: {1} FPS</value>
+    <value>Playback speed: {0}x; expected: {1} fps</value>
   </data>
   <data name="PreviewBenchmark_Result" xml:space="preserve">
-    <value>Presented: {0} frames in {1} s; average: {2} FPS</value>
+    <value>Shown: {0} frames in {1} s; {2} fps on average</value>
   </data>
   <data name="PreviewBenchmark_ShortSample" xml:space="preserve">
     <value>Short sample: playback ended before the full 20-second measurement.</value>
@@ -3613,5 +3583,179 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="PreviewBenchmark_Off" xml:space="preserve">
     <value>no</value>
+  </data>
+  <data name="Benchmark_TestRecordingContents" xml:space="preserve">
+    <value>The test recording is three 10-second 4K 59.94 fps files in 10-bit HEVC, split the way a camera splits them. The picture is deliberately hard: film grain, a zone plate, a fractal, a fast pan, scene cuts and flashes. The stream has B-frames, irregular keyframes, a variable bitrate, a frozen stretch and a dropped frame. At the joins the sound runs longer than the picture, and the third file starts after the camera was stopped. The telemetry is a ride along field roads at up to 150 km/h: no GPS fix or time at the start, a wandering position while standing, jolts, a GPS loss at full speed, a position jump, hard braking before a corner, a lean and a dip in the ground. The first time, the recording is generated (under a minute on a graphics card, a few minutes on the CPU) and kept in the app's data folder (about 360 MB).</value>
+  </data>
+  <data name="Benchmark_FullscreenPreview" xml:space="preserve">
+    <value>Preview in the app in full screen</value>
+  </data>
+  <data name="Benchmark_ChartFps" xml:space="preserve">
+    <value>Frames per second</value>
+  </data>
+  <data name="Benchmark_ChartLoad" xml:space="preserve">
+    <value>CPU and graphics card (%)</value>
+  </data>
+  <data name="Benchmark_LivePreparing" xml:space="preserve">
+    <value>Preparing the test recording...</value>
+  </data>
+  <data name="Benchmark_StagePreparingRecording" xml:space="preserve">
+    <value>Generating the test recording... {0}%</value>
+  </data>
+  <data name="Benchmark_StageReadingRecording" xml:space="preserve">
+    <value>Reading the test recording...</value>
+  </data>
+  <data name="Benchmark_TestRecordingUnreadable" xml:space="preserve">
+    <value>The test recording's telemetry couldn't be read.</value>
+  </data>
+  <data name="Benchmark_PreviewInWindow" xml:space="preserve">
+    <value>In the test window</value>
+  </data>
+  <data name="Benchmark_PreviewInApp" xml:space="preserve">
+    <value>In the app: {0}</value>
+  </data>
+  <data name="Benchmark_LivePlayback" xml:space="preserve">
+    <value>The test recording in the preview, with the overlay and its sound muted</value>
+  </data>
+  <data name="Benchmark_TestRecording" xml:space="preserve">
+    <value>Test recording</value>
+  </data>
+  <data name="Benchmark_ModeTestWindow" xml:space="preserve">
+    <value>test window</value>
+  </data>
+  <data name="Benchmark_LiveApp" xml:space="preserve">
+    <value>The preview is now playing in the app's window.</value>
+  </data>
+  <data name="Benchmark_PreviewSkipped" xml:space="preserve">
+    <value>The preview in the app was skipped: {0}</value>
+  </data>
+  <data name="Benchmark_LivePreviewFps" xml:space="preserve">
+    <value>{0} fps, {1}/s dropped</value>
+  </data>
+  <data name="Benchmark_LiveOverlay" xml:space="preserve">
+    <value>Overlay frames drawn for the measurement (the test recording's route)</value>
+  </data>
+  <data name="Benchmark_LiveRender" xml:space="preserve">
+    <value>Overlay frames handed to ffmpeg in the short render</value>
+  </data>
+  <data name="Benchmark_LiveFfmpeg" xml:space="preserve">
+    <value>This step runs entirely in ffmpeg - only its pace is shown.</value>
+  </data>
+  <data name="Benchmark_PreviewColumnWhere" xml:space="preserve">
+    <value>Where</value>
+  </data>
+  <data name="Benchmark_PreviewFps" xml:space="preserve">
+    <value>{0} of {1} fps</value>
+  </data>
+  <data name="Benchmark_PreviewSection" xml:space="preserve">
+    <value>Preview playback</value>
+  </data>
+  <data name="Benchmark_SkippedBusy" xml:space="preserve">
+    <value>the app is busy (a render or another test)</value>
+  </data>
+  <data name="Benchmark_LoadedTestRecording" xml:space="preserve">
+    <value>Loaded the test recording into the preview ({0}).</value>
+  </data>
+  <data name="Benchmark_SkippedNotLoaded" xml:space="preserve">
+    <value>the added files aren't loaded - load them and run the test again</value>
+  </data>
+  <data name="Benchmark_SkippedTooShort" xml:space="preserve">
+    <value>the recording is shorter than a second</value>
+  </data>
+  <data name="Benchmark_AppPreviewAskTitle" xml:space="preserve">
+    <value>Next: the preview in the app</value>
+  </data>
+  <data name="Benchmark_AppPreviewAskMessage" xml:space="preserve">
+    <value>The last part of the test takes about 25 seconds. The recording will play in the main window's preview with its sound, at the volume set in the app. The test window and the windows it was opened from will be minimized meanwhile. Don't switch windows or move the mouse over the preview, as that would skew the measurement. To stop the test, restore its window from the taskbar and click Stop. After the measurement everything goes back to where it was.</value>
+  </data>
+  <data name="Benchmark_AppPreviewStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Benchmark_SkippedByUser" xml:space="preserve">
+    <value>at your request</value>
+  </data>
+  <data name="Timeline_GpsLossTip" xml:space="preserve">
+    <value>No GPS signal: {0} - {1}. The position is held here, and speed, the route and distance aren't counted.</value>
+  </data>
+  <data name="Benchmark_AppPreviewAskTestRecording" xml:space="preserve">
+    <value>No recording is selected, so the test recording will be loaded into the main window. It stays there after the test - you can watch it, render it or replace it with your own files.</value>
+  </data>
+  <data name="Benchmark_RecordingNotTested" xml:space="preserve">
+    <value>Every stage is measured on the test recording. Your recording ({0}) won't be measured, so the GPU and CPU decoding comparison will be skipped. The preview in the app still plays your recording.</value>
+  </data>
+  <data name="Benchmark_TestYourRecording" xml:space="preserve">
+    <value>Also test my recording</value>
+  </data>
+  <data name="Benchmark_OnYourRecording" xml:space="preserve">
+    <value>{0} (your recording)</value>
+  </data>
+  <data name="Benchmark_AdvicePreviewQuality" xml:space="preserve">
+    <value>The preview in the app decoded a {0}x{1} picture, showed it at {2}x{3} px and didn't keep up. Set the preview quality to Auto? It's then matched to the preview's size on screen.</value>
+  </data>
+  <data name="Benchmark_ChartVideo" xml:space="preserve">
+    <value>Video on the graphics card (%)</value>
+  </data>
+  <data name="Tools_TestRecording" xml:space="preserve">
+    <value>Test recording</value>
+  </data>
+  <data name="Tools_TestRecordingHint" xml:space="preserve">
+    <value>The same recording the performance test uses: three 4K files with a deliberately hard picture and telemetry full of anomalies (a ride along field roads at up to 150 km/h). Handy for trying the preview, the render and the widgets without a recording of your own.</value>
+  </data>
+  <data name="Tools_TestRecordingMissing" xml:space="preserve">
+    <value>Not generated yet. It takes under a minute on a graphics card or a few minutes on the CPU, and the files take about 360 MB.</value>
+  </data>
+  <data name="Tools_TestRecordingReady" xml:space="preserve">
+    <value>Ready: {0} files, {1}.</value>
+  </data>
+  <data name="Tools_GenerateTestRecording" xml:space="preserve">
+    <value>Generate</value>
+  </data>
+  <data name="Tools_LoadTestRecording" xml:space="preserve">
+    <value>Load into the app</value>
+  </data>
+  <data name="Tools_TestRecordingFailed" xml:space="preserve">
+    <value>The test recording couldn't be generated: {0}</value>
+  </data>
+  <data name="Tools_ReplaceRecording" xml:space="preserve">
+    <value>The test recording will be loaded in place of the current files. The current recording's cuts and markers are lost unless you saved the project.</value>
+  </data>
+  <data name="Timeline_RouteIntro" xml:space="preserve">
+    <value>Route intro</value>
+  </data>
+  <data name="Timeline_RouteIntroTip" xml:space="preserve">
+    <value>Route intro until {0}. The card covers the start of the recording and the widgets appear as it fades out. The watermark is in the card's corner, and as a widget it counts its times from the card's end.</value>
+  </data>
+  <data name="Watermark_AfterRouteIntro" xml:space="preserve">
+    <value>The route intro is on, so the watermark's times count from its end. On the card itself the watermark is in its corner.</value>
+  </data>
+  <data name="Layers_FromSpeed" xml:space="preserve">
+    <value>{0} (from {1} km/h)</value>
+  </data>
+  <data name="TripProgress_AfterRouteIntro" xml:space="preserve">
+    <value>The route intro is on, so the bar's times count from its end, as do the watermark's before it. When the bar waits for a speed, only that counts.</value>
+  </data>
+  <data name="Timeline_FileLabel" xml:space="preserve">
+    <value>{0}. {1}</value>
+  </data>
+  <data name="Timeline_FileTip" xml:space="preserve">
+    <value>File {0} of {1}: {2}, from {3} to {4}.</value>
+  </data>
+  <data name="Timeline_FileAfterGap" xml:space="preserve">
+    <value>Recorded after the camera stopped: speed, distance and the route don't join the previous file.</value>
+  </data>
+  <data name="Timeline_GpsAnomalyTip" xml:space="preserve">
+    <value>GPS anomaly: {0} - {1}, {2}. The app fixed it: the values there are worked out from the readings before and after it.</value>
+  </data>
+  <data name="Timeline_GpsJumpPosition" xml:space="preserve">
+    <value>a position jump</value>
+  </data>
+  <data name="Timeline_GpsJumpSpeed" xml:space="preserve">
+    <value>a speed spike</value>
+  </data>
+  <data name="Timeline_GpsJumpBoth" xml:space="preserve">
+    <value>a position jump and a speed spike</value>
+  </data>
+  <data name="Summary_LogGpsAnomalies" xml:space="preserve">
+    <value>Fixed {0} GPS anomaly (a position or speed jump no vehicle could make)|Fixed {0} GPS anomalies (position or speed jumps no vehicle could make)</value>
   </data>
 </root>

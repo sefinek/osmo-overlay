@@ -3,9 +3,9 @@
         xmlns:local="using:OsmoOverlay.Gui"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="760"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="900"
         x:Class="OsmoOverlay.Gui.BenchmarkWindow"
-        Width="940" SizeToContent="Height" CanResize="False"
+        Width="1280" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="{x:Static local:AppAssets.Icon}"
@@ -31,7 +31,7 @@
 			<Setter Property="Margin" Value="0,4" />
 		</Style>
 		<Style Selector="TextBlock.columnHeader">
-			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontSize" Value="14" />
 			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="Opacity" Value="0.6" />
 			<Setter Property="Margin" Value="0,0,0,4" />
@@ -58,15 +58,29 @@
 			<Setter Property="TextWrapping" Value="Wrap" />
 			<Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
 		</Style>
+		<Style Selector="TextBlock.intro">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="TextBlock.chartTitle">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Opacity" Value="0.75" />
+		</Style>
+		<Style Selector="TextBlock.legend">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontFeatures" Value="+tnum" />
+		</Style>
 	</Window.Styles>
 
 	<DockPanel>
 		<Border DockPanel.Dock="Bottom" Padding="20,12" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
-			<Grid ColumnDefinitions="Auto,*,Auto">
+			<Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="16">
 				<Button Name="StartButton" Classes="accent" Content="{x:Static local:Strings.Benchmark_Start}" Click="OnStartClick" />
-				<TextBlock Name="ElapsedText" Grid.Column="1" Classes="hint" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center"
+				<CheckBox Name="RecordingCheck" Grid.Column="1" IsChecked="True" Content="{x:Static local:Strings.Benchmark_TestYourRecording}" VerticalAlignment="Center" />
+				<CheckBox Name="FullscreenCheck" Grid.Column="2" Content="{x:Static local:Strings.Benchmark_FullscreenPreview}" VerticalAlignment="Center" />
+				<TextBlock Name="ElapsedText" Grid.Column="3" Classes="hint" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center"
 				           FontFeatures="+tnum" />
-				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+				<StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
 					<Button Name="CopyReportButton" Content="{x:Static local:Strings.Benchmark_CopyReport}" IsEnabled="False" Click="OnCopyReportClick" />
 					<Button Content="{x:Static local:Strings.Tools_Close}" Click="OnCloseClick" />
 				</StackPanel>
@@ -76,36 +90,88 @@
 			<StackPanel Margin="20" Spacing="12">
 				<StackPanel Spacing="6">
 					<TextBlock Name="TitleText" Text="{x:Static local:Strings.Benchmark_Title}" FontSize="18" FontWeight="SemiBold" />
-					<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_Intro}" />
-					<TextBlock Name="SourceText" Classes="hint" />
+					<TextBlock Classes="intro" Text="{x:Static local:Strings.Benchmark_Intro}" />
+					<TextBlock Name="SourceText" Classes="intro" />
+					<TextBlock Classes="intro" Text="{x:Static local:Strings.Benchmark_TestRecordingContents}" />
 				</StackPanel>
 
 				<StackPanel Spacing="4">
 					<ProgressBar Name="Progress" IsVisible="False" Minimum="0" />
 					<TextBlock Name="StatusText" Classes="hint" />
-					<UniformGrid Name="LivePanel" Columns="4" IsVisible="False" Margin="0,4,0,0">
-						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,0,16,0">
-							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveCpu}" />
-							<ProgressBar Name="LiveCpuBar" Grid.Column="1" Classes="meter" />
-							<TextBlock Name="LiveCpuText" Grid.Column="2" Classes="meterValue" />
-						</Grid>
-						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,0,16,0">
-							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveGpu}" />
-							<ProgressBar Name="LiveGpuBar" Grid.Column="1" Classes="meter" />
-							<TextBlock Name="LiveGpuText" Grid.Column="2" Classes="meterValue" />
-						</Grid>
-						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,0,16,0">
-							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveDecoder}" />
-							<ProgressBar Name="LiveDecoderBar" Grid.Column="1" Classes="meter" />
-							<TextBlock Name="LiveDecoderText" Grid.Column="2" Classes="meterValue" />
-						</Grid>
-						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_LiveEncoder}" />
-							<ProgressBar Name="LiveEncoderBar" Grid.Column="1" Classes="meter" />
-							<TextBlock Name="LiveEncoderText" Grid.Column="2" Classes="meterValue" />
-						</Grid>
-					</UniformGrid>
 				</StackPanel>
+
+				<Grid Name="LivePanel" ColumnDefinitions="720,*" ColumnSpacing="20" IsVisible="False">
+					<StackPanel Spacing="6">
+						<Border Name="LiveScreen" Height="405" CornerRadius="6" ClipToBounds="True" Background="{StaticResource SurfaceSunkenBrush}">
+							<Panel>
+								<local:VideoView Name="LiveVideo" IsVisible="False" />
+								<Image Name="LiveFrame" Stretch="Uniform" IsVisible="False" />
+								<TextBlock Name="LiveScreenText" Classes="hint" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+								           Margin="24" Opacity="0.75" />
+							</Panel>
+						</Border>
+						<TextBlock Name="LiveCaption" Classes="hint" FontSize="13" Opacity="0.75" />
+					</StackPanel>
+					<StackPanel Grid.Column="1" Spacing="8" Grid.IsSharedSizeScope="True">
+						<Panel>
+							<local:LiveChart Name="FpsChart" Height="130" PlotTop="24" />
+							<TextBlock Classes="chartTitle" Margin="10,5" HorizontalAlignment="Left" VerticalAlignment="Top" Text="{x:Static local:Strings.Benchmark_ChartFps}" />
+							<TextBlock Name="FpsLegend" Classes="legend" Margin="10,6" HorizontalAlignment="Right" VerticalAlignment="Top" />
+						</Panel>
+						<Panel>
+							<local:LiveChart Name="LoadChart" Height="95" PlotTop="24" />
+							<TextBlock Classes="chartTitle" Margin="10,5" HorizontalAlignment="Left" VerticalAlignment="Top" Text="{x:Static local:Strings.Benchmark_ChartLoad}" />
+						</Panel>
+						<UniformGrid Columns="2">
+							<Grid ColumnSpacing="6" Margin="0,0,16,0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterLabel" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterValue" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Name="LiveCpuLabel" Classes="legend" Text="{x:Static local:Strings.Benchmark_LiveCpu}" />
+								<ProgressBar Name="LiveCpuBar" Grid.Column="1" Classes="meter" />
+								<TextBlock Name="LiveCpuText" Grid.Column="2" Classes="meterValue" />
+							</Grid>
+							<Grid ColumnSpacing="6">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterLabel" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterValue" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Name="LiveGpuLabel" Classes="legend" Text="{x:Static local:Strings.Benchmark_LiveGpu}" />
+								<ProgressBar Name="LiveGpuBar" Grid.Column="1" Classes="meter" />
+								<TextBlock Name="LiveGpuText" Grid.Column="2" Classes="meterValue" />
+							</Grid>
+						</UniformGrid>
+						<Panel>
+							<local:LiveChart Name="VideoChart" Height="95" PlotTop="24" />
+							<TextBlock Classes="chartTitle" Margin="10,5" HorizontalAlignment="Left" VerticalAlignment="Top" Text="{x:Static local:Strings.Benchmark_ChartVideo}" />
+						</Panel>
+						<UniformGrid Columns="2">
+							<Grid ColumnSpacing="6" Margin="0,0,16,0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterLabel" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterValue" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Name="LiveEncoderLabel" Classes="legend" Text="{x:Static local:Strings.Benchmark_LiveEncoder}" />
+								<ProgressBar Name="LiveEncoderBar" Grid.Column="1" Classes="meter" />
+								<TextBlock Name="LiveEncoderText" Grid.Column="2" Classes="meterValue" />
+							</Grid>
+							<Grid ColumnSpacing="6">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterLabel" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" SharedSizeGroup="MeterValue" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Name="LiveDecoderLabel" Classes="legend" Text="{x:Static local:Strings.Benchmark_LiveDecoder}" />
+								<ProgressBar Name="LiveDecoderBar" Grid.Column="1" Classes="meter" />
+								<TextBlock Name="LiveDecoderText" Grid.Column="2" Classes="meterValue" />
+							</Grid>
+						</UniformGrid>
+					</StackPanel>
+				</Grid>
 
 				<StackPanel Name="ResultsPanel" IsVisible="False" Spacing="12">
 					<Border Name="WarningCard" Classes="card" Padding="16,10" IsVisible="False">
@@ -126,6 +192,14 @@
 						<StackPanel Spacing="8">
 							<Grid Name="ResultsGrid" ColumnDefinitions="*,Auto,Auto,*" ColumnSpacing="16" />
 							<TextBlock Classes="hint" Text="{x:Static local:Strings.Benchmark_EncoderNote}" />
+						</StackPanel>
+					</Border>
+
+					<TextBlock Name="PreviewSectionLabel" Classes="sectionLabel" Text="{x:Static local:Strings.Benchmark_PreviewSection}" />
+					<Border Name="PreviewCard" Classes="card" Padding="16,10">
+						<StackPanel Spacing="8">
+							<Grid Name="PreviewGrid" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="16" />
+							<TextBlock Classes="hint" Text="{x:Static local:Strings.PreviewBenchmark_MeasurementNote}" />
 						</StackPanel>
 					</Border>
 

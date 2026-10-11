@@ -1,9 +1,11 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
@@ -112,8 +114,8 @@ public partial class DeveloperWindow : Window
 				benchmark.ShowSample(new BenchmarkResult(
 					new BenchmarkSystem("Microsoft Windows 10.0.26200", "Intel(R) Core(TM) i9-14900HX", 32, 32L << 30,
 						["NVIDIA GeForce RTX 4070 Laptop GPU (32.0.15.7714)"], "9.0.2", "1.0.0"),
-					new BenchmarkLoad(0.31, 0.64), source, source, true,
-					new BenchmarkStat(131, 124, 138, 3), new BenchmarkStat(41, 40, 43, 3),
+					new BenchmarkLoad(0.31, 0.64), source, source,
+					new BenchmarkStat(142, 139, 147, 3), new BenchmarkStat(118, 112, 121, 3),
 					new FrameTimes(16.4, 19.8), new FrameTimes(4.4, 5.1), 1920, 1080, new FrameTimes(4.4, 5.6), new FrameTimes(2.0, 2.4),
 					new BenchmarkStat(59, 57, 60, 2), new BenchmarkStat(36, 35, 37, 2),
 					[
@@ -122,7 +124,14 @@ public partial class DeveloperWindow : Window
 						new EncoderSpeed("hevc_nvenc", "p7", new BenchmarkStat(46, 45, 47, 2), false),
 						new EncoderSpeed("libx265", null, new BenchmarkStat(5, 5, 5, 2), false)
 					],
-					new BenchmarkStat(29.2, 28.4, 30.1, 2), new BenchmarkStat(24.1, 23.8, 24.5, 2), TimeSpan.FromSeconds(148)), 54_000);
+					new BenchmarkStat(31.5, 30.9, 32.0, 2), new BenchmarkStat(26.0, 25.1, 26.4, 2), TimeSpan.FromSeconds(212),
+					new SourceSpeeds(source, new BenchmarkStat(131, 124, 138, 3), new BenchmarkStat(41, 40, 43, 3), new BenchmarkStat(29.2, 28.4, 30.1, 2),
+						new BenchmarkStat(24.1, 23.8, 24.5, 2))),
+				[
+					(Strings.Benchmark_PreviewInWindow, SamplePreview(Strings.Benchmark_TestRecording, Strings.Benchmark_ModeTestWindow, 1120, 630, 0, 2)),
+					(string.Format(Strings.Benchmark_PreviewInApp, "DJI_20261004123456_0001_D.MP4"),
+						SamplePreview("DJI_20261004123456_0001_D.MP4", Strings.PreviewBenchmark_ModeWindow, 1664, 936, 3, 1))
+				], 54_000);
 				await benchmark.ShowDialog(this);
 				break;
 			default:
@@ -130,6 +139,15 @@ public partial class DeveloperWindow : Window
 		}
 
 		SetStatus(result is null ? $"Shown: {action}" : $"Shown: {action} - returned {result}");
+	}
+
+	private static PreviewRun SamplePreview(string source, string mode, int shownWidth, int shownHeight, int skipped, int dropped)
+	{
+		var result = new PreviewMeasurementResult(20.01, 1196, 59.94, new PreviewTiming(1195, 16.68, 17.42), 41.7, 0, skipped, dropped, 2,
+			new PreviewTiming(1201, 4.12, 6.85), new PreviewTiming(1199, 3.9, 5.4), new PreviewTiming(1196, 0.61, 1.12), 165.0);
+		var context = new PreviewReportContext(source, mode, "DELL U2723QE (2560x1440, 165 Hz)", new PixelSize(1280, 720), shownWidth, shownHeight, 1.25,
+			1, "hevc (d3d11va)", true, false);
+		return new PreviewRun(result, context, [new BenchmarkLoad(0.24, 0.41, Decoder: 0.18), new BenchmarkLoad(0.27, 0.43, Decoder: 0.19)], 1_412L << 20);
 	}
 
 	private void SetStatus(string text)

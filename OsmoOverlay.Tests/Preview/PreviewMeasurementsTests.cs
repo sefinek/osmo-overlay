@@ -25,6 +25,17 @@ public sealed class PreviewMeasurementsTests
 	}
 
 	[TestMethod]
+	public void Counts_PresentedAndDroppedAtEveryStage_SoFar()
+	{
+		var measurements = new PreviewMeasurements(50, new TestClock());
+		measurements.RecordPresented();
+		measurements.RecordDrop(PreviewDrop.Decode, 3);
+		measurements.RecordDrop(PreviewDrop.Display);
+
+		Assert.AreEqual((1, 4), measurements.Counts);
+	}
+
+	[TestMethod]
 	public void EmptyPlaybackDoesNotReportSuccessOrInventFrames()
 	{
 		var clock = new TestClock();

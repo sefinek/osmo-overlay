@@ -42,6 +42,10 @@
 			<SolidColorBrush x:Key="WarningPressedBrush" Color="{StaticResource WarningPressedColor}" />
 			<SolidColorBrush x:Key="CautionBrush" Color="{StaticResource CautionColor}" />
 			<SolidColorBrush x:Key="AlertBrush" Color="{StaticResource AlertColor}" />
+			<SolidColorBrush x:Key="ChartSeries1Brush" Color="{StaticResource ChartSeries1Color}" />
+			<SolidColorBrush x:Key="ChartSeries2Brush" Color="{StaticResource ChartSeries2Color}" />
+			<SolidColorBrush x:Key="ChartSeries3Brush" Color="{StaticResource ChartSeries3Color}" />
+			<SolidColorBrush x:Key="ChartSeries4Brush" Color="{StaticResource ChartSeries4Color}" />
 			<SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
 			<SolidColorBrush x:Key="DangerHoverBrush" Color="{StaticResource DangerHoverColor}" />
 			<SolidColorBrush x:Key="DangerPressedBrush" Color="{StaticResource DangerPressedColor}" />
@@ -314,7 +318,7 @@
 			<Setter Property="TextWrapping" Value="Wrap" />
 		</Style>
 		<Style Selector="TextBlock.sectionLabel">
-			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontSize" Value="12" />
 			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="LetterSpacing" Value="1" />
 			<Setter Property="Opacity" Value="0.45" />

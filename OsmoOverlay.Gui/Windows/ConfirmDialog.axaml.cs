@@ -48,7 +48,8 @@ public partial class ConfirmDialog : Window
 	{
 		// Asked before something that can't be undone (deleting a preset), Danger is a question, not an error or a warning:
 		// only the confirm button stays red - the error's or warning's picture and sound read as if something had gone wrong.
-		DialogKind look = !alert && kind == DialogKind.Danger ? DialogKind.Neutral : kind;
+		// Info asked is a question too (a choice to make), not a notice to acknowledge.
+		DialogKind look = !alert && kind is DialogKind.Danger or DialogKind.Info ? DialogKind.Neutral : kind;
 		_sound = sound ?? look switch
 		{
 			DialogKind.Info => UiSound.Info,
@@ -118,7 +119,7 @@ public partial class ConfirmDialog : Window
 
 	/// <summary>
 	///     The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one, and for a
-	///     plain question (AskAsync's Neutral, which a question before something that can't be undone is shown as).
+	///     plain question (AskAsync's Neutral, which a question before something that can't be undone, or an Info one, is shown as).
 	/// </summary>
 	private void ShowArt(DialogKind kind, DialogArt situation, bool question)
 	{

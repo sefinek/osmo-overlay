@@ -11,7 +11,8 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     One widget on a layer: what it shows (Label) and when it's on screen, in output seconds - OverlayElement's own timing,
-///     the way out as stored (null: none, see ElementAnimation).
+///     the way out as stored (null: none, see ElementAnimation). StartLocked: its start isn't its own to drag (a progress bar
+///     waiting for a speed) - its edge doesn't grab and its body doesn't move it in time.
 /// </summary>
 public sealed record LayerClip(
 	string Id,
@@ -22,7 +23,8 @@ public sealed record LayerClip(
 	double AnimationDurationSeconds,
 	OverlayAnimationType? OutAnimation,
 	double? OutAnimationDurationSeconds,
-	bool Available)
+	bool Available,
+	bool StartLocked = false)
 {
 	public OverlayAnimationType ResolvedOut => ElementAnimation.OutType(OutAnimation);
 	public double ResolvedOutSeconds => ElementAnimation.OutDuration(OutAnimationDurationSeconds);
@@ -96,6 +98,8 @@ public sealed class LayerTimeline : Control
 	private static readonly IPen FadeLine = new Pen(Palette.TextPrimary);
 	private static readonly IBrush FadeHandleBrush = Palette.TextPrimary;
 	private static readonly IBrush PastEndFill = Palette.Tint(Palette.SurfaceSunken, 0.75);
+	private static readonly IBrush IntroShade = Palette.Tint(Palette.SurfaceSunken, 0.6);
+	private static readonly IPen IntroEdge = new Pen(Palette.StrokeStrong);
 	private static readonly IPen PlayheadPen = new Pen(Palette.TextPrimary, 1.5);
 	private static readonly IPen RowDivider = new Pen(Palette.Stroke);
 	private static readonly IPen InsertPen = new Pen(Palette.Accent, 2);
@@ -224,6 +228,12 @@ public sealed class LayerTimeline : Control
 	public bool Editable { get; set; } = true;
 
 	public double OutputDurationSeconds { get; set; }
+
+	/// <summary>
+	///     The route overview card, in output seconds: where the widgets start fading in over it and where it ends - null
+	///     without one. The widgets aren't drawn under it, so that part of every track is shaded.
+	/// </summary>
+	public (double FadeFrom, double End)? RouteIntro { get; set; }
 	public double Fps { get; set; } = 30;
 	public Func<double, double> ToRecording { get; set; } = seconds => seconds;
 	public Func<double, double> ToOutput { get; set; } = seconds => seconds;
@@ -324,6 +334,8 @@ public sealed class LayerTimeline : Control
 					// A layer that isn't drawn right now (muted, or another one soloed) is shown faded.
 					using (context.PushOpacity(0.4)) DrawClips(context, i);
 				}
+
+				DrawRouteIntro(context, height);
 			}
 		}
 
@@ -332,6 +344,36 @@ public sealed class LayerTimeline : Control
 		int? insertLine = _drag == Zone.Header ? _insertIndex : _drop.Insert;
 		if (insertLine is { } line) context.DrawLine(InsertPen, new Point(0, line * RowHeight), new Point(width, line * RowHeight));
 		if (_dragLabel is { } label) DrawDragLabel(context, label.At, label.Text);
+	}
+
+	/// <summary>Over the clips: covered up to the crossfade, then less and less as the widgets fade in, named in the middle.</summary>
+	private void DrawRouteIntro(DrawingContext context, double height)
+	{
+		if (RouteIntro is not { } intro || intro.End <= 0) return;
+
+		double x0 = X(0), fadeFrom = X(intro.FadeFrom), end = X(intro.End);
+		context.FillRectangle(IntroShade, new Rect(x0, 0, Math.Max(0, fadeFrom - x0), height));
+		if (end > fadeFrom)
+		{
+			Color shade = ((ISolidColorBrush)IntroShade).Color;
+			var fade = new LinearGradientBrush
+			{
+				StartPoint = new RelativePoint(fadeFrom, 0, RelativeUnit.Absolute),
+				EndPoint = new RelativePoint(end, 0, RelativeUnit.Absolute),
+				GradientStops = [new GradientStop(shade, 0), new GradientStop(Color.FromArgb(0, shade.R, shade.G, shade.B), 1)]
+			};
+			context.FillRectangle(fade, new Rect(fadeFrom, 0, end - fadeFrom, height));
+		}
+
+		context.DrawLine(IntroEdge, new Point(end, 0), new Point(end, height));
+		var label = new FormattedText(Strings.Timeline_RouteIntro, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LabelTypeface, 12, TextBrush);
+		if (label.Width + 12 > end - x0) return;
+
+		// At the band's start in the top row, as on the video track - with more layers than fit, their middle is scrolled away.
+		double x = Math.Max(x0, HeaderWidth) + 6;
+		double y = (RowHeight - label.Height) / 2;
+		context.DrawRectangle(LabelBackground, IntroEdge, new Rect(x - 6, y - 2, label.Width + 12, label.Height + 4), 3, 3);
+		context.DrawText(label, new Point(x, y));
 	}
 
 	private void DrawClips(DrawingContext context, int track)
@@ -487,7 +529,7 @@ public sealed class LayerTimeline : Control
 
 				if (point.Y >= top && point.Y <= bottom)
 				{
-					if (Math.Abs(point.X - x1) <= EdgeGrabPixels) return (track, clip, Zone.Start);
+					if (!clip.StartLocked && Math.Abs(point.X - x1) <= EdgeGrabPixels) return (track, clip, Zone.Start);
 					if (Math.Abs(point.X - x2) <= EdgeGrabPixels) return (track, clip, Zone.End);
 				}
 			}
@@ -721,6 +763,9 @@ public sealed class LayerTimeline : Control
 				break;
 			case Zone.End:
 				disappear = OrEnd(Math.Clamp(Snap(at, clip.Id), start + MinClipSeconds, OutputDurationSeconds));
+				break;
+			case Zone.Body when clip.StartLocked:
+				// Its start is a speed's, not a time - only a drop onto another layer moves it.
 				break;
 			case Zone.Body when clip.DisappearAtSeconds is null:
 				// A clip running to the end moves its start only - the end stays "never".

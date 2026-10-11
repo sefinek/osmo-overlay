@@ -24,7 +24,7 @@
 			<Setter Property="FontWeight" Value="Bold" />
 		</Style>
 		<Style Selector="TextBlock.stepLabel">
-			<Setter Property="FontSize" Value="11" />
+			<Setter Property="FontSize" Value="12" />
 			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="LetterSpacing" Value="1" />
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />

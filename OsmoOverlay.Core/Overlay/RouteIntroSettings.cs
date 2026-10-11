@@ -1,3 +1,5 @@
+using OsmoOverlay.Core.Cameras;
+
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
@@ -63,10 +65,12 @@ public sealed record RouteIntroSettings(
 	/// <summary>
 	///     From(settings), but Disabled for a recording with no GPS fix at all - the card is a route summary
 	///     (map, distance, speeds, elevation), so without a fix it would only show "MAP UNAVAILABLE" and
-	///     zeros for its whole duration. Same availability rule OverlayDataRequirements applies to widgets.
+	///     zeros for its whole duration. Same availability rule OverlayDataRequirements applies to widgets. Disabled for the
+	///     performance test's recording too (SyntheticCamera): it's there to show the picture and the widgets, and a card over
+	///     its first seconds would hide them - the settings stay as they are for the user's own recordings.
 	/// </summary>
-	public static RouteIntroSettings ForRecording(OverlaySettings settings, bool hasGpsFix)
+	public static RouteIntroSettings ForRecording(OverlaySettings settings, bool hasGpsFix, ICameraFormat? camera)
 	{
-		return hasGpsFix ? From(settings) : Disabled;
+		return hasGpsFix && camera is not SyntheticCamera ? From(settings) : Disabled;
 	}
 }

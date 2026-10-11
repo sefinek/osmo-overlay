@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
@@ -17,20 +18,95 @@ public partial class ToolsWindow : Window
 	private static readonly string DataDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay");
 
+	private CancellationTokenSource? _testRecordingCts;
+
 	public ToolsWindow()
 	{
 		InitializeComponent();
 	}
 
+	// Not in the constructor: LoadRecording is set by the caller's initializer, after it has run.
+	protected override void OnOpened(EventArgs e)
+	{
+		base.OnOpened(e);
+		ShowTestRecording();
+	}
+
 	/// <summary>Opens the performance test over the given window - MainWindow's, which knows the loaded recording.</summary>
 	public Func<Window, Task>? OpenBenchmark { get; init; }
-	public Func<Task>? OpenPreviewBenchmark { get; init; }
 
-	private async void OnPreviewBenchmarkClick(object? sender, RoutedEventArgs e)
+	/// <summary>Loads files into the main window as its recording - false when the user kept what was loaded.</summary>
+	public Func<IReadOnlyList<string>, Task<bool>>? LoadRecording { get; init; }
+
+	protected override void OnClosing(WindowClosingEventArgs e)
 	{
-		if (OpenPreviewBenchmark is null) return;
-		Close();
-		await OpenPreviewBenchmark();
+		_testRecordingCts?.Cancel();
+		base.OnClosing(e);
+	}
+
+	/// <summary>The performance test's recording (SyntheticRecording): whether it's made, and what can be done with it then.</summary>
+	private void ShowTestRecording()
+	{
+		IReadOnlyList<string>? files = SyntheticRecording.Existing();
+		bool generating = _testRecordingCts is not null;
+		TestRecordingStatus.Text = generating ? TestRecordingStatus.Text
+			: files is null ? Strings.Tools_TestRecordingMissing
+			: string.Format(Strings.Tools_TestRecordingReady, files.Count, FormatHelper.FormatBytes(files.Sum(f => new FileInfo(f).Length)));
+		GenerateTestRecordingButton.IsVisible = files is null;
+		GenerateTestRecordingButton.Content = generating ? Strings.Benchmark_Stop : Strings.Tools_GenerateTestRecording;
+		ShowTestRecordingButton.IsVisible = files is not null;
+		LoadTestRecordingButton.IsVisible = files is not null && LoadRecording is not null;
+		TestRecordingProgress.IsVisible = generating;
+		// The test makes the same files - never both at once.
+		BenchmarkButton.IsEnabled = !generating;
+	}
+
+	private async void OnGenerateTestRecordingClick(object? sender, RoutedEventArgs e)
+	{
+		if (_testRecordingCts is { } running)
+		{
+			running.Cancel();
+			return;
+		}
+
+		using var cts = new CancellationTokenSource();
+		_testRecordingCts = cts;
+		TestRecordingProgress.Value = 0;
+		TestRecordingStatus.Text = string.Format(Strings.Benchmark_StagePreparingRecording, 0);
+		ShowTestRecording();
+		try
+		{
+			await Task.Run(() => SyntheticRecording.EnsureAsync(share => Dispatcher.UIThread.Post(() =>
+			{
+				TestRecordingProgress.Value = share;
+				TestRecordingStatus.Text = string.Format(Strings.Benchmark_StagePreparingRecording, (share * 100).ToString("0"));
+			}), cts.Token));
+		}
+		catch (OperationCanceledException)
+		{
+			// Stopped - the files half made are made again next time (no done marker).
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Warn(ex, "Generating the test recording failed");
+			AppLogger.Notify(string.Format(Strings.Tools_TestRecordingFailed, ex.Message));
+		}
+		finally
+		{
+			_testRecordingCts = null;
+			if (IsVisible) ShowTestRecording();
+		}
+	}
+
+	private void OnShowTestRecordingClick(object? sender, RoutedEventArgs e)
+	{
+		if (SyntheticRecording.Existing() is { } files) ExplorerHelper.ShowInFolder(files[0]);
+	}
+
+	private async void OnLoadTestRecordingClick(object? sender, RoutedEventArgs e)
+	{
+		if (LoadRecording is null || SyntheticRecording.Existing() is not { } files) return;
+		if (await LoadRecording(files)) Close();
 	}
 
 	private async void OnBenchmarkClick(object? sender, RoutedEventArgs e)

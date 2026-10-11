@@ -102,6 +102,36 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 
+	/// <summary>See OverlayRenderer.AsShown.</summary>
+	public OverlayElement AsShown(OverlayElement element)
+	{
+		lock (_lock)
+		{
+			return Renderer.AsShown(element);
+		}
+	}
+
+	/// <summary>See OverlayRenderer.IntroShiftSeconds.</summary>
+	public double IntroShiftSeconds(OverlayElement element)
+	{
+		lock (_lock)
+		{
+			return Renderer.IntroShiftSeconds(element);
+		}
+	}
+
+	/// <summary>See OverlayRenderer.RouteIntroSpan.</summary>
+	public (double FadeFrom, double End)? RouteIntroSpan
+	{
+		get
+		{
+			lock (_lock)
+			{
+				return Renderer.RouteIntroSpan;
+			}
+		}
+	}
+
 	/// <summary>Changes the renderer (layout, watermark, route joins, a map mosaic) and composes the still again.</summary>
 	public ComposedPreviewFrame? Change(Action<OverlayRenderer> change)
 	{

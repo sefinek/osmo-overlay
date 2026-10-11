@@ -41,13 +41,6 @@ public static class OverlayElementBounds
 	public const float WatermarkLineGap = 46f;
 	public const string WatermarkTitle = "Made with OsmoOverlay";
 	private const string SampleWatermarkSubtitle = "github.com/sefinek/osmo-overlay  •  v0.0.0";
-
-	/// <summary>A line measured from its start, moved to sit centered on the anchor - how the watermark draws it.</summary>
-	private static SKRect Centered(SKRect line)
-	{
-		line.Offset(-(line.Left + line.Right) / 2, 0);
-		return line;
-	}
 	// The map credit: a source note the terms ask to be readable, not a part of the HUD - smaller and fainter than its text.
 	public const float CreditFontSize = 24f;
 	public const float SpeedFontSize = 115f;
@@ -204,6 +197,7 @@ public static class OverlayElementBounds
 					OffsetY(MeasureLine(label.ToUpperInvariant(), LabelFontSize, fontFamily), -CaptionAboveOffset)),
 			OverlayElementType.CameraModelText => MeasureLine(cameraModel ?? SampleCameraModel, DateFontSize, fontFamily),
 			OverlayElementType.MapAttribution => MeasureLine(text ?? SampleMapCredit, CreditFontSize, fontFamily),
+			OverlayElementType.GpsAlert => GpsAlertBox(fontFamily),
 			OverlayElementType.Watermark => SKRect.Union(
 				OffsetY(Centered(MeasureLine(WatermarkTitle, WatermarkTitleFontSize, fontFamily)), -WatermarkLineGap),
 				Centered(MeasureLine(text ?? SampleWatermarkSubtitle, WatermarkSubtitleFontSize, fontFamily))),
@@ -285,12 +279,38 @@ public static class OverlayElementBounds
 		return new SKRect(rect.Left, rect.Top + dy, rect.Right, rect.Bottom + dy);
 	}
 
+	/// <summary>A line measured from its start, moved to sit centered on the anchor - how the watermark draws it.</summary>
+	private static SKRect Centered(SKRect line)
+	{
+		line.Offset(-(line.Left + line.Right) / 2, 0);
+		return line;
+	}
+
 	/// <summary>
 	///     A single line of DrawOutlined text with its baseline at local (0, 0): horizontal extent from
 	///     measuring the actual text, vertical extent from the font's ascent/descent (see GetBounds' doc).
 	///     Padded a little on every edge for DrawOutlined's drop-shadow offset + stroke width, which both
 	///     draw slightly outside the glyph outline itself.
 	/// </summary>
+	// The GPS alert's panel: its height, the icon's size and the gaps, and its two lines' sizes. Its width is fixed per font -
+	// wide enough for its longest text, so it doesn't change width as the notice changes.
+	public const float GpsAlertHeight = 108;
+	public const float GpsAlertIcon = 64;
+	public const float GpsAlertGap = 22;
+	public const float GpsAlertTitleSize = 36;
+	public const float GpsAlertDetailSize = 27;
+	public const string GpsAlertLongestTitle = "SEARCHING FOR GPS";
+	public const string GpsAlertLongestDetail = "POSITION AND SPEED SPIKE REMOVED";
+
+	/// <summary>The GPS alert's panel around its anchor (top center), whatever it says.</summary>
+	public static SKRect GpsAlertBox(string? fontFamily)
+	{
+		float text = Math.Max(LineExtent(GpsAlertLongestTitle, GpsAlertTitleSize, fontFamily).Width,
+			LineExtent(GpsAlertLongestDetail, GpsAlertDetailSize, fontFamily).Width);
+		float width = GpsAlertGap * 2 + GpsAlertIcon + GpsAlertGap + text;
+		return new SKRect(-width / 2, 0, width / 2, GpsAlertHeight);
+	}
+
 	private static SKRect MeasureLine(string text, float fontSize, string? family)
 	{
 		(float ascent, float descent, float width) = LineExtent(text, fontSize, family);
