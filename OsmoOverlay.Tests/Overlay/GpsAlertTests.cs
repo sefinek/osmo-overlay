@@ -148,6 +148,34 @@ public sealed class GpsAlertTests
 	}
 
 	[TestMethod]
+	public void OwnText_TakesThePlaceOfTheBuiltIn_LineByLine()
+	{
+		var texts = new GpsAlertTexts().With(GpsAlertMessage.Lost, new GpsAlertText("Sygnał zgubiony", null));
+
+		(string[] titles, string[] details) = GpsAlertLines(texts);
+
+		Assert.AreEqual("SYGNAŁ ZGUBIONY", titles[(int)GpsAlertMessage.Lost]);
+		Assert.AreEqual(DefaultGpsAlertText(GpsAlertMessage.Lost).Detail!.ToUpperInvariant(), details[(int)GpsAlertMessage.Lost]);
+		Assert.AreEqual(DefaultGpsAlertText(GpsAlertMessage.Back).Title!.ToUpperInvariant(), titles[(int)GpsAlertMessage.Back]);
+	}
+
+	[TestMethod]
+	public void NoLineOfItsOwn_StoredAsNone()
+	{
+		GpsAlertTexts texts = new GpsAlertTexts().With(GpsAlertMessage.Found, new GpsAlertText("A", "B")).With(GpsAlertMessage.Found, new GpsAlertText());
+
+		Assert.AreEqual(new GpsAlertTexts(), texts);
+	}
+
+	[TestMethod]
+	public void Panel_FitsALongerOwnText()
+	{
+		var texts = new GpsAlertTexts().With(GpsAlertMessage.Searching, new GpsAlertText(new string('W', 40), null));
+
+		Assert.IsTrue(OverlayElementBounds.GpsAlertBox(null, texts).Width > OverlayElementBounds.GpsAlertBox(null, null).Width);
+	}
+
+	[TestMethod]
 	public void NeedsAFix_SomewhereInTheRecording()
 	{
 		Assert.IsTrue(OverlayDataRequirements.IsSupported(OverlayElementType.GpsAlert, new OverlayAvailability(true, false, false, false, false)));

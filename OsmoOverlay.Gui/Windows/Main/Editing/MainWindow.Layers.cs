@@ -142,7 +142,7 @@ public partial class MainWindow
 				: name,
 			ImageElement { ImagePath: { } path } when !string.IsNullOrWhiteSpace(path) => Path.GetFileName(path),
 			ImageElement => string.Format(Strings.Layers_NoFileChosen, name),
-			TripStatElement stat => stat.Label ?? SentenceCase(OverlayRenderer.DefaultTripStatLabel(stat.Stat)),
+			TripStatElement stat => stat.Label ?? OverlayRenderer.DefaultTripStatLabel(stat.Stat),
 			TripProgressBarElement { ShowFromSpeedKmh: { } kmh } => string.Format(Strings.Layers_FromSpeed, name, kmh.ToString("0.#")),
 			ProfileChartElement chart => chart.Label ?? (chart.Series == ProfileSeries.Speed ? Strings.Layers_SpeedChart : Strings.Layers_ElevationChart),
 			ElapsedTimeTextElement { Label: { } label } when !string.IsNullOrWhiteSpace(label) => label,

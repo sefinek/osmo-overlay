@@ -208,7 +208,7 @@ public sealed partial class OverlayRenderer
 
 		if (_routeIntroMosaic is null)
 		{
-			DrawOutlined(canvas, "MAP UNAVAILABLE", (mapRect.Left + mapRect.Right) / 2, (mapRect.Top + mapRect.Bottom) / 2,
+			DrawOutlined(canvas, CoreStrings.Overlay_MapUnavailable.ToUpperInvariant(), (mapRect.Left + mapRect.Right) / 2, (mapRect.Top + mapRect.Bottom) / 2,
 				_labelFont, White, SKTextAlign.Center);
 			canvas.DrawRect(mapRect, _ringStroke3White160);
 			DrawRouteIntroMapLabel(canvas, mapRect);
@@ -269,8 +269,8 @@ public sealed partial class OverlayRenderer
 
 		SKPoint start = toCard.MapPoint(pixels[first]);
 		SKPoint finish = toCard.MapPoint(pixels[last]);
-		string startLabel = RouteIntro.StartLabel.Trim();
-		string finishLabel = RouteIntro.FinishLabel.Trim();
+		string startLabel = (RouteIntro.StartLabel ?? RouteIntroSettings.DefaultStartLabel).Trim();
+		string finishLabel = (RouteIntro.FinishLabel ?? RouteIntroSettings.DefaultFinishLabel).Trim();
 		List<SKPoint> route = RouteOnCard(pixels, toCard);
 
 		if (SKPoint.Distance(start, finish) < RouteEndRadius * 3)
@@ -417,7 +417,7 @@ public sealed partial class OverlayRenderer
 		// _routeIntroLabelFont (36, already used for this card's stat labels), not the shared _labelFont
 		// (30) every other widget's small text reuses - bumping that one would resize labels across the
 		// whole HUD, not just this badge.
-		DrawOutlined(canvas, "ROUTE", mapRect.Right - labelPadding, mapRect.Bottom - labelPadding, _routeIntroLabelFont,
+		DrawOutlined(canvas, CoreStrings.Overlay_Route.ToUpperInvariant(), mapRect.Right - labelPadding, mapRect.Bottom - labelPadding, _routeIntroLabelFont,
 			White, SKTextAlign.Right);
 	}
 

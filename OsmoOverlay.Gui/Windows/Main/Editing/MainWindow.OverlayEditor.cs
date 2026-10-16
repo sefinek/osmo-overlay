@@ -30,6 +30,17 @@ public partial class MainWindow
 
 	private static readonly List<LocaleOption> LocaleOptions = BuildLocaleOptions();
 
+	private static readonly List<GpsAlertMessageOption> GpsAlertMessageOptions =
+	[
+		new(Strings.GpsAlert_MessageSearching, GpsAlertMessage.Searching),
+		new(Strings.GpsAlert_MessageLost, GpsAlertMessage.Lost),
+		new(Strings.GpsAlert_MessageFound, GpsAlertMessage.Found),
+		new(Strings.GpsAlert_MessageBack, GpsAlertMessage.Back),
+		new(Strings.GpsAlert_MessagePositionCorrected, GpsAlertMessage.PositionCorrected),
+		new(Strings.GpsAlert_MessageSpeedCorrected, GpsAlertMessage.SpeedCorrected),
+		new(Strings.GpsAlert_MessagePositionAndSpeedCorrected, GpsAlertMessage.PositionAndSpeedCorrected)
+	];
+
 	private static readonly List<TripStatOption> TripStatOptions =
 	[
 		new(Strings.Common_MaxSpeed, TripStatKind.MaxSpeed),
@@ -38,13 +49,6 @@ public partial class MainWindow
 		new(Strings.Editor_StatElevationLoss, TripStatKind.ElevationLoss),
 		new(Strings.Editor_StatMovingTime, TripStatKind.MovingTime)
 	];
-
-	// Shown in the Label box in place of a null Label - matches the fallback caption OverlayRenderer.
-	// TextWidgets.cs itself draws (case-insensitively; the renderer uppercases whatever it gets).
-	private const string DefaultElevationLabel = "Elevation";
-	private const string DefaultGradientLabel = "Gradient";
-	private const string DefaultDistanceLabel = "Total distance";
-	private const string DefaultCameraInfoLabel = "Camera";
 
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
@@ -421,7 +425,7 @@ public partial class MainWindow
 		return OverlayElementBounds.GetBounds(element.Type, x, y, scale,
 			(element as TimeTextElementBase)?.DateFormat, (element as TimeTextElementBase)?.Locale,
 			(element as LabeledStatElement)?.Label ?? (element as ElapsedTimeTextElement)?.Label, _summary?.CameraModel, (element as StyledOverlayElement)?.FontFamily,
-			(element as TextElement)?.Text, (element as ImageElement)?.ImagePath);
+			(element as TextElement)?.Text, (element as ImageElement)?.ImagePath, (element as GpsAlertElement)?.Texts);
 	}
 
 	/// <summary>
@@ -661,7 +665,8 @@ public partial class MainWindow
 			case OverlayElementType.Elevation:
 			{
 				var x = (ElevationElement)el;
-				ElevationLabelBox.Text = x.Label ?? DefaultElevationLabel;
+				ElevationLabelBox.Text = x.Label;
+				ElevationLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				SetUnitsRadio(ElevationMetricRadio, ElevationImperialRadio, x.Units);
 				ElevationFromStartRadio.IsChecked = x.Reference == ElevationReference.Start;
 				ElevationSeaLevelRadio.IsChecked = x.Reference == ElevationReference.SeaLevel;
@@ -674,7 +679,8 @@ public partial class MainWindow
 			case OverlayElementType.Gradient:
 			{
 				var x = (GradientElement)el;
-				GradientLabelBox.Text = x.Label ?? DefaultGradientLabel;
+				GradientLabelBox.Text = x.Label;
+				GradientLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				GradientStyle.Populate(x);
 				GradientTiming.Populate(x);
 				GradientShadow.Populate(x);
@@ -684,7 +690,8 @@ public partial class MainWindow
 			case OverlayElementType.Distance:
 			{
 				var x = (DistanceElement)el;
-				DistanceLabelBox.Text = x.Label ?? DefaultDistanceLabel;
+				DistanceLabelBox.Text = x.Label;
+				DistanceLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				SetUnitsRadio(DistanceMetricRadio, DistanceImperialRadio, x.Units);
 				DistanceStyle.Populate(x);
 				DistanceTiming.Populate(x);
@@ -695,7 +702,8 @@ public partial class MainWindow
 			case OverlayElementType.CameraInfo:
 			{
 				var x = (CameraInfoElement)el;
-				CameraInfoLabelBox.Text = x.Label ?? DefaultCameraInfoLabel;
+				CameraInfoLabelBox.Text = x.Label;
+				CameraInfoLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				CameraInfoStyle.Populate(x);
 				CameraInfoTiming.Populate(x);
 				CameraInfoShadow.Populate(x);
@@ -825,6 +833,8 @@ public partial class MainWindow
 			case OverlayElementType.GpsAlert:
 			{
 				var x = (GpsAlertElement)el;
+				GpsAlertMessageCombo.SelectedItem ??= GpsAlertMessageOptions[0];
+				ShowGpsAlertText(x);
 				GpsAlertStyle.Populate(x);
 				GpsAlertPanelFill.Populate(x);
 				GpsAlertShadow.Populate(x);
@@ -849,6 +859,7 @@ public partial class MainWindow
 				SetUnitsRadio(TripProgressMetricRadio, TripProgressImperialRadio, x.Units);
 				TripProgressToleranceBox.Value = (decimal)x.TripArrivedToleranceMeters;
 				TripProgressLabelBox.Text = x.TripArrivedLabel;
+				TripProgressLabelBox.PlaceholderText = OverlayRenderer.DefaultTripArrivedLabel;
 				TripProgressSpeedGateCheck.IsChecked = x.ShowFromSpeedKmh is not null;
 				TripProgressSpeedGateBox.Value = (decimal)(x.ShowFromSpeedKmh ?? OverlayRenderer.TripProgressSpeedGateDefaultKmh);
 				TripProgressSpeedGateBox.IsEnabled = x.ShowFromSpeedKmh is not null;
@@ -868,7 +879,7 @@ public partial class MainWindow
 				ProfileDistanceRadio.IsChecked = x.Axis == ProfileAxis.Distance;
 				ProfileTimeRadio.IsChecked = x.Axis == ProfileAxis.Time;
 				ProfileLabelBox.Text = x.Label;
-				ProfileLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultProfileLabel(x.Series));
+				ProfileLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				SetUnitsRadio(ProfileMetricRadio, ProfileImperialRadio, x.Units);
 				ProfileChartStyle.Populate(x);
 				ProfileChartPanelFill.Populate(x);
@@ -882,7 +893,7 @@ public partial class MainWindow
 				var x = (TripStatElement)el;
 				TripStatCombo.SelectedItem = TripStatOptions.First(o => o.Stat == x.Stat);
 				TripStatLabelBox.Text = x.Label;
-				TripStatLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultTripStatLabel(x.Stat));
+				TripStatLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				SetUnitsRadio(TripStatMetricRadio, TripStatImperialRadio, x.Units);
 				TripStatStyle.Populate(x);
 				TripStatTiming.Populate(x);
@@ -912,12 +923,6 @@ public partial class MainWindow
 		}
 
 		_suppressOverlayEvents = false;
-	}
-
-	/// <summary>"ELEVATION GAIN" -> "Elevation gain", the way the other Label boxes show their built-in caption.</summary>
-	private static string SentenceCase(string caption)
-	{
-		return caption.Length == 0 ? caption : caption[..1] + caption[1..].ToLowerInvariant();
 	}
 
 	private static void SetUnitsRadio(RadioButton metric, RadioButton imperial, UnitSystem units)
@@ -963,6 +968,14 @@ public partial class MainWindow
 	}
 
 	private sealed record LocaleOption(string Display, string? CultureName)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	private sealed record GpsAlertMessageOption(string Display, GpsAlertMessage Message)
 	{
 		public override string ToString()
 		{

@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
@@ -42,26 +43,26 @@ public static class RouteIntroStat
 		RouteIntroStats.CameraModel
 	];
 
-	/// <summary>The caption on the card when the user gave none - English like the overlay's other built-in texts.</summary>
+	/// <summary>The caption on the card when the user gave none, in the interface's language - drawn as is, so in capitals.</summary>
 	public static string DefaultLabel(RouteIntroStats stat)
 	{
-		return stat switch
+		return (stat switch
 		{
-			RouteIntroStats.Distance => "DISTANCE",
-			RouteIntroStats.ElevationGain => "ELEVATION GAIN",
-			RouteIntroStats.MaxSpeed => "MAX SPEED",
-			RouteIntroStats.AverageSpeed => "AVG SPEED",
-			RouteIntroStats.Date => "DATE",
-			RouteIntroStats.Duration => "DURATION",
-			RouteIntroStats.MovingTime => "MOVING TIME",
-			RouteIntroStats.ElevationLoss => "ELEVATION LOSS",
-			RouteIntroStats.HighestPoint => "HIGHEST POINT",
-			RouteIntroStats.LowestPoint => "LOWEST POINT",
-			RouteIntroStats.MaxLean => "MAX LEAN",
-			RouteIntroStats.MaxGForce => "MAX G-FORCE",
-			RouteIntroStats.CameraModel => "CAMERA",
-			_ => stat.ToString().ToUpperInvariant()
-		};
+			RouteIntroStats.Distance => CoreStrings.Overlay_Distance,
+			RouteIntroStats.ElevationGain => CoreStrings.Overlay_ElevationGain,
+			RouteIntroStats.MaxSpeed => CoreStrings.Overlay_MaxSpeed,
+			RouteIntroStats.AverageSpeed => CoreStrings.Overlay_AverageSpeed,
+			RouteIntroStats.Date => CoreStrings.Overlay_Date,
+			RouteIntroStats.Duration => CoreStrings.Overlay_Duration,
+			RouteIntroStats.MovingTime => CoreStrings.Overlay_MovingTime,
+			RouteIntroStats.ElevationLoss => CoreStrings.Overlay_ElevationLoss,
+			RouteIntroStats.HighestPoint => CoreStrings.Overlay_HighestPoint,
+			RouteIntroStats.LowestPoint => CoreStrings.Overlay_LowestPoint,
+			RouteIntroStats.MaxLean => CoreStrings.Overlay_MaxLean,
+			RouteIntroStats.MaxGForce => CoreStrings.Overlay_MaxGForce,
+			RouteIntroStats.CameraModel => CoreStrings.Overlay_Camera,
+			_ => stat.ToString()
+		}).ToUpperInvariant();
 	}
 }
 

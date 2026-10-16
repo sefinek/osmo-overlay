@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
@@ -35,7 +36,7 @@ public sealed partial class OverlayRenderer
 		SKColor accent = AccentColorOf(element);
 		SKColor outlineColor = OutlineColorOf(element);
 
-		DrawOutlined(canvas, (element.Label ?? DefaultProfileLabel(element.Series)).ToUpperInvariant(), 0, 0,
+		DrawOutlined(canvas, (element.Label ?? DefaultLabel(element)).ToUpperInvariant(), 0, 0,
 			TextFont(element, OverlayElementBounds.LabelFontSize), textColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 		(string value, string unit) = element.Series == ProfileSeries.Speed
 			? FormatSpeed(frame.SpeedKmh, element.Units)
@@ -81,7 +82,7 @@ public sealed partial class OverlayRenderer
 
 	public static string DefaultProfileLabel(ProfileSeries series)
 	{
-		return series == ProfileSeries.Speed ? "SPEED" : "ELEVATION";
+		return series == ProfileSeries.Speed ? CoreStrings.Overlay_Speed : CoreStrings.Overlay_Elevation;
 	}
 
 	/// <summary>0..1 along the chart's X axis - the share of the distance or time covered at `frame`.</summary>

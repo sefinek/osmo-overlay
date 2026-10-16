@@ -160,8 +160,8 @@ public partial class SettingsWindow : Window
 		RouteIntroColorBySpeedCheck.IsChecked = routeIntro.ColorBySpeed;
 		RouteIntroStartFinishCheck.IsChecked = routeIntro.ShowStartFinish;
 		RouteIntroEndLabels.IsEnabled = routeIntro.ShowStartFinish;
-		RouteIntroStartLabelBox.Text = routeIntro.StartLabel;
-		RouteIntroFinishLabelBox.Text = routeIntro.FinishLabel;
+		RouteIntroStartLabelBox.Text = routeIntro.StartLabel ?? RouteIntroSettings.DefaultStartLabel;
+		RouteIntroFinishLabelBox.Text = routeIntro.FinishLabel ?? RouteIntroSettings.DefaultFinishLabel;
 	}
 
 	private void LoadExportSettings(OverlaySettings settings)
@@ -307,9 +307,19 @@ public partial class SettingsWindow : Window
 		RouteIntroColorBySpeedCheck.IsChecked == true,
 		_routeIntroProvider,
 		RouteIntroStartFinishCheck.IsChecked == true,
-		RouteIntroStartLabelBox.Text?.Trim() ?? "",
-		RouteIntroFinishLabelBox.Text?.Trim() ?? "",
+		OwnEndLabel(RouteIntroStartLabelBox.Text, RouteIntroSettings.DefaultStartLabel),
+		OwnEndLabel(RouteIntroFinishLabelBox.Text, RouteIntroSettings.DefaultFinishLabel),
 		RouteIntroLabels.From(_routeIntroStatRows.ToDictionary(r => r.Key.ToString(), r => r.Value.Label.Text ?? "")));
+
+	/// <summary>
+	///     A start/finish caption as typed - the box shows the built-in one, and left as that it stays the built-in (null), so it
+	///     follows the interface's language; blank is a dot without a caption.
+	/// </summary>
+	private static string? OwnEndLabel(string? text, string builtIn)
+	{
+		string typed = text?.Trim() ?? "";
+		return typed == builtIn ? null : typed;
+	}
 
 	// One row per stat the card can show: whether it does, and its caption on the film (blank = the default, shown faded).
 	private readonly Dictionary<RouteIntroStats, (CheckBox Check, TextBox Label)> _routeIntroStatRows = [];

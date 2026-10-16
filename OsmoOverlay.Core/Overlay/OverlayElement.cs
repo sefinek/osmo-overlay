@@ -263,6 +263,67 @@ public sealed record GpsAlertElement : StyledOverlayElement, IPanelElement
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.GpsAlert;
 	public string? PanelColor { get; init; }
 	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
+	public GpsAlertTexts Texts { get; init; } = new();
+}
+
+/// <summary>What the GPS alert can say, one title and detail line each.</summary>
+public enum GpsAlertMessage
+{
+	Searching,
+	Lost,
+	Found,
+	Back,
+	PositionCorrected,
+	SpeedCorrected,
+	PositionAndSpeedCorrected
+}
+
+/// <summary>
+///     One message's lines as the user wrote them - null keeps the built-in one (OverlayRenderer.DefaultGpsAlertText).
+///     "{time}" in the detail is how long the loss has lasted (searching, lost) or lasted (found, back).
+/// </summary>
+public sealed record GpsAlertText(string? Title = null, string? Detail = null);
+
+/// <summary>The user's lines for each GpsAlertMessage - null for a message keeps both of its built-in lines.</summary>
+public sealed record GpsAlertTexts
+{
+	public GpsAlertText? Searching { get; init; }
+	public GpsAlertText? Lost { get; init; }
+	public GpsAlertText? Found { get; init; }
+	public GpsAlertText? Back { get; init; }
+	public GpsAlertText? PositionCorrected { get; init; }
+	public GpsAlertText? SpeedCorrected { get; init; }
+	public GpsAlertText? PositionAndSpeedCorrected { get; init; }
+
+	public GpsAlertText? For(GpsAlertMessage message)
+	{
+		return message switch
+		{
+			GpsAlertMessage.Searching => Searching,
+			GpsAlertMessage.Lost => Lost,
+			GpsAlertMessage.Found => Found,
+			GpsAlertMessage.Back => Back,
+			GpsAlertMessage.PositionCorrected => PositionCorrected,
+			GpsAlertMessage.SpeedCorrected => SpeedCorrected,
+			_ => PositionAndSpeedCorrected
+		};
+	}
+
+	/// <summary>A copy with `text` for `message`; one with neither line set is stored as null.</summary>
+	public GpsAlertTexts With(GpsAlertMessage message, GpsAlertText? text)
+	{
+		if (text is { Title: null, Detail: null }) text = null;
+		return message switch
+		{
+			GpsAlertMessage.Searching => this with { Searching = text },
+			GpsAlertMessage.Lost => this with { Lost = text },
+			GpsAlertMessage.Found => this with { Found = text },
+			GpsAlertMessage.Back => this with { Back = text },
+			GpsAlertMessage.PositionCorrected => this with { PositionCorrected = text },
+			GpsAlertMessage.SpeedCorrected => this with { SpeedCorrected = text },
+			_ => this with { PositionAndSpeedCorrected = text }
+		};
+	}
 }
 
 /// <summary>
@@ -423,7 +484,8 @@ public sealed record MapWidgetElement : TrailOverlayElement
 
 /// <summary>
 ///     TripArrivedToleranceMeters/TripArrivedLabel: how close (in meters) to the recorded total distance
-///     counts as "arrived", and what to show in place of "X LEFT" once within that margin - see
+///     counts as "arrived", and what to show in place of "X LEFT" once within that margin (null: the built-in
+///     OverlayRenderer.DefaultTripArrivedLabel, in the interface's language) - see
 ///     OverlayRenderer.DrawTripProgressBar. No style fields - this widget always draws in its own fixed
 ///     white/black look, never the per-element FontFamily/TextColor/etc.
 /// </summary>
@@ -435,7 +497,7 @@ public sealed record TripProgressBarElement : OverlayElement, IPanelElement
 
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
 	public double TripArrivedToleranceMeters { get; init; } = OverlayRenderer.TripArrivedToleranceMetersDefault;
-	public string TripArrivedLabel { get; init; } = OverlayRenderer.TripArrivedLabelDefault;
+	public string? TripArrivedLabel { get; init; }
 	// Kept off screen until the ride first reaches this speed (km/h), in place of AppearAtSeconds - null shows it on its own
 	// timing. On by default: "X% / Y km left" reads as a status update only once the ride is under way.
 	public double? ShowFromSpeedKmh { get; init; } = OverlayRenderer.TripProgressSpeedGateDefaultKmh;

@@ -1,4 +1,5 @@
 using System.Globalization;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
@@ -20,28 +21,10 @@ public sealed partial class OverlayRenderer
 	// A shorter stretch without a fix says nothing: it would be over before the panel faded in, leaving "back after 0.0 s".
 	internal const double GpsLossMinSeconds = 1;
 
-	private const string GpsSearchingTitle = "SEARCHING FOR GPS";
-	private const string GpsLostTitle = "GPS SIGNAL LOST";
-	private const string GpsFoundTitle = "GPS FIX ACQUIRED";
-	private const string GpsBackTitle = "GPS SIGNAL BACK";
-	private const string GpsCorrectedTitle = "GPS CORRECTED";
-	private const string GpsSearchingDetail = "NO POSITION YET  ·  {0}";
-	private const string GpsLostDetail = "LAST POSITION HELD  ·  {0}";
-	private const string GpsAfterDetail = "AFTER {0} S";
-	private const string GpsPositionDetail = "POSITION JUMP REMOVED";
-	private const string GpsSpeedDetail = "SPEED SPIKE REMOVED";
-	private const string GpsPositionAndSpeedDetail = "POSITION AND SPEED JUMPS REMOVED";
+	// "{time}" as it is once the lines are in capitals (GpsAlertLines).
+	private const string GpsTimeToken = "{TIME}";
 
-	/// <summary>Every title, and every detail at its widest - what OverlayElementBounds.GpsAlertBox fits the panel to.</summary>
-	internal static readonly string[] GpsAlertTitles = [GpsSearchingTitle, GpsLostTitle, GpsFoundTitle, GpsBackTitle, GpsCorrectedTitle];
-
-	internal static readonly string[] GpsAlertDetails =
-	[
-		string.Format(CultureInfo.InvariantCulture, GpsSearchingDetail, "00:00"),
-		string.Format(CultureInfo.InvariantCulture, GpsLostDetail, "00:00"),
-		string.Format(CultureInfo.InvariantCulture, GpsAfterDetail, "000.0"),
-		GpsPositionDetail, GpsSpeedDetail, GpsPositionAndSpeedDetail
-	];
+	private static readonly GpsAlertMessage[] GpsAlertMessages = Enum.GetValues<GpsAlertMessage>();
 
 	private static readonly SKColor GpsSearchingColor = SKColor.Parse("#4FC3F7");
 	private static readonly SKColor GpsLostColor = SKColor.Parse("#F7C51E");
@@ -54,7 +37,7 @@ public sealed partial class OverlayRenderer
 
 	private readonly SKPaint _gpsAlertPaint = new() { IsAntialias = true };
 	private GpsAlerts? _gpsAlerts;
-	private (string? Family, SKRect Box)? _gpsAlertBox;
+	private GpsAlertLook? _gpsAlertLook;
 
 	internal enum GpsNotice
 	{
@@ -74,6 +57,50 @@ public sealed partial class OverlayRenderer
 	/// <summary>The notices in time order, and the stretches they make together (a loss and its "back" run on) - what fades in and out.</summary>
 	internal sealed record GpsAlerts(List<GpsAlertEvent> Events, List<(double Start, double End)> Shown);
 
+	/// <summary>The lines (by GpsAlertMessage) and the panel for one font and set of texts - worked out when they change, not every frame.</summary>
+	private sealed record GpsAlertLook(string? Family, GpsAlertTexts Texts, SKRect Box, string[] Titles, string[] Details);
+
+	/// <summary>A message's built-in lines, in the interface's language.</summary>
+	public static GpsAlertText DefaultGpsAlertText(GpsAlertMessage message)
+	{
+		return message switch
+		{
+			GpsAlertMessage.Searching => new GpsAlertText(CoreStrings.Overlay_GpsSearching, CoreStrings.Overlay_GpsSearchingDetail),
+			GpsAlertMessage.Lost => new GpsAlertText(CoreStrings.Overlay_GpsLost, CoreStrings.Overlay_GpsLostDetail),
+			GpsAlertMessage.Found => new GpsAlertText(CoreStrings.Overlay_GpsFound, CoreStrings.Overlay_GpsAfterDetail),
+			GpsAlertMessage.Back => new GpsAlertText(CoreStrings.Overlay_GpsBack, CoreStrings.Overlay_GpsAfterDetail),
+			GpsAlertMessage.PositionCorrected => new GpsAlertText(CoreStrings.Overlay_GpsCorrected, CoreStrings.Overlay_GpsPositionDetail),
+			GpsAlertMessage.SpeedCorrected => new GpsAlertText(CoreStrings.Overlay_GpsCorrected, CoreStrings.Overlay_GpsSpeedDetail),
+			_ => new GpsAlertText(CoreStrings.Overlay_GpsCorrected, CoreStrings.Overlay_GpsPositionAndSpeedDetail)
+		};
+	}
+
+	/// <summary>The lines each message is drawn with, by GpsAlertMessage: the user's where set, else the built-in, in capitals like every widget's caption.</summary>
+	internal static (string[] Titles, string[] Details) GpsAlertLines(GpsAlertTexts texts)
+	{
+		string[] titles = new string[GpsAlertMessages.Length], details = new string[GpsAlertMessages.Length];
+		foreach (GpsAlertMessage message in GpsAlertMessages)
+		{
+			GpsAlertText? own = texts.For(message);
+			GpsAlertText? builtIn = own is { Title: not null, Detail: not null } ? null : DefaultGpsAlertText(message);
+			titles[(int)message] = (own?.Title ?? builtIn!.Title!).ToUpperInvariant();
+			details[(int)message] = (own?.Detail ?? builtIn!.Detail!).ToUpperInvariant();
+		}
+
+		return (titles, details);
+	}
+
+	/// <summary>A detail line with "{time}" at its widest - what the panel's width is measured with.</summary>
+	internal static string GpsDetailAtWidest(string detail, GpsAlertMessage message)
+	{
+		return detail.Replace(GpsTimeToken, message switch
+		{
+			GpsAlertMessage.Searching or GpsAlertMessage.Lost => "00:00",
+			GpsAlertMessage.Found or GpsAlertMessage.Back => "000.0",
+			_ => ""
+		}, StringComparison.Ordinal);
+	}
+
 	private void DrawGpsAlert(SKCanvas canvas, DerivedFrame frame, GpsAlertElement element)
 	{
 		double t = frame.Raw.SampleTimeSeconds;
@@ -91,12 +118,21 @@ public sealed partial class OverlayRenderer
 
 		if (alpha <= 0f) return;
 
-		if (_gpsAlertBox is not { } cached || cached.Family != element.FontFamily)
-			_gpsAlertBox = cached = (element.FontFamily, OverlayElementBounds.GpsAlertBox(element.FontFamily));
-		SKRect box = cached.Box;
-		const float radius = OverlayElementBounds.GpsAlertHeight / 2;
+		if (_gpsAlertLook is not { } look || look.Family != element.FontFamily || look.Texts != element.Texts)
+		{
+			(string[] titles, string[] details) = GpsAlertLines(element.Texts);
+			_gpsAlertLook = look = new GpsAlertLook(element.FontFamily, element.Texts,
+				OverlayElementBounds.GpsAlertBox(element.FontFamily, titles, details), titles, details);
+		}
 
-		(SKColor color, string title, string detail) = GpsNoticeText(notice, frame.Raw.RecordingTimeSeconds);
+		SKRect box = look.Box;
+		const float radius = OverlayElementBounds.GpsAlertHeight / 2;
+		var message = (int)MessageOf(notice);
+		string title = look.Titles[message];
+		string detail = look.Details[message];
+		if (detail.Contains(GpsTimeToken, StringComparison.Ordinal))
+			detail = detail.Replace(GpsTimeToken, GpsTimeText(notice, frame.Raw.RecordingTimeSeconds), StringComparison.Ordinal);
+		SKColor color = GpsNoticeColor(notice.Notice);
 
 		SKPaint fill = PanelFillPaint(element);
 		fill.Color = fill.Color.WithAlpha((byte)(fill.Color.Alpha * alpha));
@@ -137,32 +173,46 @@ public sealed partial class OverlayRenderer
 		return best;
 	}
 
-	/// <summary>The notice's color and lines at `recordingSeconds` - a loss counts in recording time, like its Since.</summary>
-	private static (SKColor Color, string Title, string Detail) GpsNoticeText(GpsAlertEvent notice, double recordingSeconds)
+	private static GpsAlertMessage MessageOf(GpsAlertEvent notice)
 	{
 		return notice.Notice switch
 		{
-			GpsNotice.Searching => (GpsSearchingColor, GpsSearchingTitle, Format(GpsSearchingDetail, Clock(recordingSeconds - notice.Since))),
-			GpsNotice.Lost => (GpsLostColor, GpsLostTitle, Format(GpsLostDetail, Clock(recordingSeconds - notice.Since))),
-			GpsNotice.Found => (GpsBackColor, GpsFoundTitle, Format(GpsAfterDetail, notice.Lasted.ToString("0.0", CultureInfo.InvariantCulture))),
-			GpsNotice.Back => (GpsBackColor, GpsBackTitle, Format(GpsAfterDetail, notice.Lasted.ToString("0.0", CultureInfo.InvariantCulture))),
-			_ => (GpsCorrectedColor, GpsCorrectedTitle, notice.What switch
+			GpsNotice.Searching => GpsAlertMessage.Searching,
+			GpsNotice.Lost => GpsAlertMessage.Lost,
+			GpsNotice.Found => GpsAlertMessage.Found,
+			GpsNotice.Back => GpsAlertMessage.Back,
+			_ => notice.What switch
 			{
-				GpsCorrection.Position => GpsPositionDetail,
-				GpsCorrection.Speed => GpsSpeedDetail,
-				_ => GpsPositionAndSpeedDetail
-			})
+				GpsCorrection.Position => GpsAlertMessage.PositionCorrected,
+				GpsCorrection.Speed => GpsAlertMessage.SpeedCorrected,
+				_ => GpsAlertMessage.PositionAndSpeedCorrected
+			}
 		};
+	}
 
-		static string Format(string format, string value)
+	private static SKColor GpsNoticeColor(GpsNotice notice)
+	{
+		return notice switch
 		{
-			return string.Format(CultureInfo.InvariantCulture, format, value);
-		}
+			GpsNotice.Searching => GpsSearchingColor,
+			GpsNotice.Lost => GpsLostColor,
+			GpsNotice.Found or GpsNotice.Back => GpsBackColor,
+			_ => GpsCorrectedColor
+		};
+	}
 
-		static string Clock(double seconds)
+	/// <summary>What "{time}" says at `recordingSeconds`: a loss counting in recording time (like its Since), how long it lasted once it's over.</summary>
+	private static string GpsTimeText(GpsAlertEvent notice, double recordingSeconds)
+	{
+		switch (notice.Notice)
 		{
-			var span = TimeSpan.FromSeconds(Math.Max(0, Math.Floor(seconds)));
-			return $"{(int)span.TotalMinutes}:{span.Seconds:00}";
+			case GpsNotice.Searching or GpsNotice.Lost:
+				var span = TimeSpan.FromSeconds(Math.Max(0, Math.Floor(recordingSeconds - notice.Since)));
+				return $"{(int)span.TotalMinutes}:{span.Seconds:00}";
+			case GpsNotice.Found or GpsNotice.Back:
+				return notice.Lasted.ToString("0.0", CultureInfo.InvariantCulture);
+			default:
+				return "";
 		}
 	}
 

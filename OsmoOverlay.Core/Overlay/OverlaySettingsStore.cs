@@ -59,10 +59,11 @@ public sealed record OverlaySettings(
 	UnitSystem RouteIntroUnits = UnitSystem.Metric,
 	// The overview map's route colored by speed like the compass/map widgets' TrailColorBySpeed - off here by default.
 	bool RouteIntroColorBySpeed = false,
-	// The trip's first and last positions marked on the overview map, captioned with these (blank = a dot only).
+	// The trip's first and last positions marked on the overview map, captioned with these (null = the built-in caption in
+	// the interface's language, blank = a dot only).
 	bool RouteIntroShowStartFinish = true,
-	string? RouteIntroStartLabel = RouteIntroSettings.DefaultStartLabel,
-	string? RouteIntroFinishLabel = RouteIntroSettings.DefaultFinishLabel,
+	string? RouteIntroStartLabel = null,
+	string? RouteIntroFinishLabel = null,
 	bool PreviewSnapToGrid = true,
 	// The preview's time readout - the GUI's PreviewTimeFormat as a string, like PreviewGridMode below.
 	string PreviewTimeFormat = "Seconds",

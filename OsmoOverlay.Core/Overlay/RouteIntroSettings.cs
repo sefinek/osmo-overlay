@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Cameras;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -16,12 +17,13 @@ public sealed record RouteIntroSettings(
 	bool ColorBySpeed,
 	string? MapProviderId = null,
 	bool ShowStartFinish = false,
-	string StartLabel = RouteIntroSettings.DefaultStartLabel,
-	string FinishLabel = RouteIntroSettings.DefaultFinishLabel,
+	string? StartLabel = null,
+	string? FinishLabel = null,
 	RouteIntroLabels? Labels = null)
 {
-	public const string DefaultStartLabel = "START";
-	public const string DefaultFinishLabel = "FINISH";
+	// The start's and finish's captions when the user gave none (null) - "" is a dot without one. Drawn as is, so in capitals.
+	public static string DefaultStartLabel => CoreStrings.Overlay_Start.ToUpperInvariant();
+	public static string DefaultFinishLabel => CoreStrings.Overlay_Finish.ToUpperInvariant();
 
 	public static readonly RouteIntroSettings Disabled = new(false, 0, RouteIntroStats.None, UnitSystem.Metric, false);
 
@@ -40,7 +42,7 @@ public sealed record RouteIntroSettings(
 	{
 		return new RouteIntroSettings(settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats,
 			settings.RouteIntroUnits, settings.RouteIntroColorBySpeed, settings.RouteIntroMapProvider, settings.RouteIntroShowStartFinish,
-			settings.RouteIntroStartLabel ?? DefaultStartLabel, settings.RouteIntroFinishLabel ?? DefaultFinishLabel,
+			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel,
 			RouteIntroLabels.From(settings.RouteIntroLabels));
 	}
 

@@ -470,4 +470,112 @@
   <data name="Synthetic_Source" xml:space="preserve">
     <value>Źródło telemetrii: telemetria wygenerowana do testu wydajności (z celowymi anomaliami)</value>
   </data>
+  <data name="Overlay_Elevation" xml:space="preserve">
+    <value>Wysokość</value>
+  </data>
+  <data name="Overlay_Gradient" xml:space="preserve">
+    <value>Nachylenie</value>
+  </data>
+  <data name="Overlay_TotalDistance" xml:space="preserve">
+    <value>Dystans</value>
+  </data>
+  <data name="Overlay_Distance" xml:space="preserve">
+    <value>Dystans</value>
+  </data>
+  <data name="Overlay_Camera" xml:space="preserve">
+    <value>Kamera</value>
+  </data>
+  <data name="Overlay_Speed" xml:space="preserve">
+    <value>Prędkość</value>
+  </data>
+  <data name="Overlay_MaxSpeed" xml:space="preserve">
+    <value>Maks. prędkość</value>
+  </data>
+  <data name="Overlay_AverageSpeed" xml:space="preserve">
+    <value>Śr. prędkość</value>
+  </data>
+  <data name="Overlay_ElevationGain" xml:space="preserve">
+    <value>Przewyższenie</value>
+  </data>
+  <data name="Overlay_ElevationLoss" xml:space="preserve">
+    <value>Spadek wysokości</value>
+  </data>
+  <data name="Overlay_MovingTime" xml:space="preserve">
+    <value>Czas w ruchu</value>
+  </data>
+  <data name="Overlay_Date" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="Overlay_Duration" xml:space="preserve">
+    <value>Czas trwania</value>
+  </data>
+  <data name="Overlay_HighestPoint" xml:space="preserve">
+    <value>Najwyższy punkt</value>
+  </data>
+  <data name="Overlay_LowestPoint" xml:space="preserve">
+    <value>Najniższy punkt</value>
+  </data>
+  <data name="Overlay_MaxLean" xml:space="preserve">
+    <value>Maks. przechył</value>
+  </data>
+  <data name="Overlay_MaxGForce" xml:space="preserve">
+    <value>Maks. przeciążenie</value>
+  </data>
+  <data name="Overlay_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Overlay_Finish" xml:space="preserve">
+    <value>Meta</value>
+  </data>
+  <data name="Overlay_Remaining" xml:space="preserve">
+    <value>Zostało {0}</value>
+  </data>
+  <data name="Overlay_Map" xml:space="preserve">
+    <value>Mapa</value>
+  </data>
+  <data name="Overlay_Unavailable" xml:space="preserve">
+    <value>Niedostępna</value>
+  </data>
+  <data name="Overlay_MapUnavailable" xml:space="preserve">
+    <value>Mapa niedostępna</value>
+  </data>
+  <data name="Overlay_Route" xml:space="preserve">
+    <value>Trasa</value>
+  </data>
+  <data name="Overlay_GpsSearching" xml:space="preserve">
+    <value>Szukanie sygnału GPS</value>
+  </data>
+  <data name="Overlay_GpsSearchingDetail" xml:space="preserve">
+    <value>Brak pozycji  ·  {time}</value>
+  </data>
+  <data name="Overlay_GpsLost" xml:space="preserve">
+    <value>Utracono sygnał GPS</value>
+  </data>
+  <data name="Overlay_GpsLostDetail" xml:space="preserve">
+    <value>Ostatnia znana pozycja  ·  {time}</value>
+  </data>
+  <data name="Overlay_GpsFound" xml:space="preserve">
+    <value>Złapano sygnał GPS</value>
+  </data>
+  <data name="Overlay_GpsBack" xml:space="preserve">
+    <value>Sygnał GPS wrócił</value>
+  </data>
+  <data name="Overlay_GpsAfterDetail" xml:space="preserve">
+    <value>Po {time} s</value>
+  </data>
+  <data name="Overlay_GpsCorrected" xml:space="preserve">
+    <value>Korekta GPS</value>
+  </data>
+  <data name="Overlay_GpsPositionDetail" xml:space="preserve">
+    <value>Usunięto skok pozycji</value>
+  </data>
+  <data name="Overlay_GpsSpeedDetail" xml:space="preserve">
+    <value>Usunięto skok prędkości</value>
+  </data>
+  <data name="Overlay_GpsPositionAndSpeedDetail" xml:space="preserve">
+    <value>Usunięto skoki pozycji i prędkości</value>
+  </data>
+  <data name="Overlay_Watermark" xml:space="preserve">
+    <value>Stworzono w OsmoOverlay</value>
+  </data>
 </root>

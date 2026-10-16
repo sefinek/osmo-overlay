@@ -1114,9 +1114,6 @@ Each category lists its three highest values. You can jump to a value or save it
   <data name="Main_FileSize" xml:space="preserve">
     <value>File size</value>
   </data>
-  <data name="Main_Finish" xml:space="preserve">
-    <value>FINISH</value>
-  </data>
   <data name="Main_Format" xml:space="preserve">
     <value>Format</value>
   </data>
@@ -3765,6 +3762,39 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>GPS alert</value>
   </data>
   <data name="GpsAlert_Hint" xml:space="preserve">
-    <value>Shows up only when something happens with the GPS: searching for a first signal, the signal lost for at least a second (for how long) and back, and a wrong position or speed reading that was corrected. It goes away right after. Its texts are in English, like the other widgets' default labels. To see it in the preview, scrub to a GPS problem - the timeline marks it in yellow or orange.</value>
+    <value>Shows up only when something happens with the GPS: searching for a first signal, the signal lost for at least a second (for how long) and back, and a wrong position or speed reading that was corrected. It goes away right after. To see it in the preview, scrub to a GPS problem - the timeline marks it in yellow or orange.</value>
+  </data>
+  <data name="GpsAlert_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="GpsAlert_Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="GpsAlert_Detail" xml:space="preserve">
+    <value>Second line</value>
+  </data>
+  <data name="GpsAlert_TextsHint" xml:space="preserve">
+    <value>An empty box keeps the built-in text in the app's language. {time} in the second line becomes the time: how long the signal has been lost, or after how many seconds it came back.</value>
+  </data>
+  <data name="GpsAlert_MessageSearching" xml:space="preserve">
+    <value>Searching for a signal</value>
+  </data>
+  <data name="GpsAlert_MessageLost" xml:space="preserve">
+    <value>Signal lost</value>
+  </data>
+  <data name="GpsAlert_MessageFound" xml:space="preserve">
+    <value>First fix</value>
+  </data>
+  <data name="GpsAlert_MessageBack" xml:space="preserve">
+    <value>Signal back</value>
+  </data>
+  <data name="GpsAlert_MessagePositionCorrected" xml:space="preserve">
+    <value>Position corrected</value>
+  </data>
+  <data name="GpsAlert_MessageSpeedCorrected" xml:space="preserve">
+    <value>Speed corrected</value>
+  </data>
+  <data name="GpsAlert_MessagePositionAndSpeedCorrected" xml:space="preserve">
+    <value>Position and speed corrected</value>
   </data>
 </root>

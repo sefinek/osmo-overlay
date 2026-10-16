@@ -1156,7 +1156,7 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_LabelHeader}" Classes="settingsGroupTitle" />
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
-														<TextBox Name="CameraInfoLabelBox" PlaceholderText="{x:Static local:Strings.Main_Camera}"
+														<TextBox Name="CameraInfoLabelBox"
 														         LostFocus="OnCameraInfoLabelChanged" />
 													</StackPanel>
 												</Border>
@@ -1400,6 +1400,20 @@
 										<Border Name="GpsAlertSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.GpsAlert_Hint}" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Content}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.GpsAlert_Message}" Classes="infoLabel" Margin="0" />
+														<ComboBox Name="GpsAlertMessageCombo" HorizontalAlignment="Stretch"
+														          SelectionChanged="OnGpsAlertMessageChanged" />
+														<TextBlock Text="{x:Static local:Strings.GpsAlert_Title}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="GpsAlertTitleBox" MaxLength="60" LostFocus="OnGpsAlertTextChanged" />
+														<TextBlock Text="{x:Static local:Strings.GpsAlert_Detail}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="GpsAlertDetailBox" MaxLength="60" LostFocus="OnGpsAlertTextChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+														           Text="{x:Static local:Strings.GpsAlert_TextsHint}" />
+													</StackPanel>
+												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
@@ -1762,7 +1776,7 @@
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_HowCloseToTheTotal}" />
 														<TextBlock Text="{x:Static local:Strings.Main_ArrivedLabel}" Classes="infoLabel" Margin="0" />
-														<TextBox Name="TripProgressLabelBox" PlaceholderText="{x:Static local:Strings.Main_Finish}"
+														<TextBox Name="TripProgressLabelBox"
 														         LostFocus="OnTripProgressLabelChanged" />
 														<CheckBox Name="TripProgressSpeedGateCheck" Content="{x:Static local:Strings.Main_TripProgressSpeedGate}"
 														          Click="OnTripProgressSpeedGateClick" />
@@ -1926,7 +1940,7 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
-														<TextBox Name="ElevationLabelBox" PlaceholderText="{x:Static local:Strings.Main_Elevation}"
+														<TextBox Name="ElevationLabelBox"
 														         LostFocus="OnElevationLabelChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
@@ -1981,7 +1995,7 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_LabelHeader}" Classes="settingsGroupTitle" />
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
-														<TextBox Name="GradientLabelBox" PlaceholderText="{x:Static local:Strings.Main_Gradient}"
+														<TextBox Name="GradientLabelBox"
 														         LostFocus="OnGradientLabelChanged" />
 													</StackPanel>
 												</Border>
@@ -2020,7 +2034,7 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
-														<TextBox Name="DistanceLabelBox" PlaceholderText="{x:Static local:Strings.Common_TotalDistance}"
+														<TextBox Name="DistanceLabelBox"
 														         LostFocus="OnDistanceLabelChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">

@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -39,7 +40,7 @@ public static class OverlayElementBounds
 	public const float WatermarkSubtitleFontSize = 30f;
 	// From the subtitle's baseline (the watermark's Y) up to the title's.
 	public const float WatermarkLineGap = 46f;
-	public const string WatermarkTitle = "Made with OsmoOverlay";
+	public static string WatermarkTitle => CoreStrings.Overlay_Watermark;
 	private const string SampleWatermarkSubtitle = "github.com/sefinek/osmo-overlay  •  v0.0.0";
 	// The map credit: a source note the terms ask to be readable, not a part of the HUD - smaller and fainter than its text.
 	public const float CreditFontSize = 24f;
@@ -195,7 +196,7 @@ public static class OverlayElementBounds
 	/// </summary>
 	public static SKRect GetBounds(OverlayElementType type, float x, float y, float scale,
 		string? dateFormat = null, string? locale = null, string? label = null, string? cameraModel = null,
-		string? fontFamily = null, string? text = null, string? imagePath = null)
+		string? fontFamily = null, string? text = null, string? imagePath = null, GpsAlertTexts? gpsAlertTexts = null)
 	{
 		SKRect local = type switch
 		{
@@ -210,19 +211,18 @@ public static class OverlayElementBounds
 					OffsetY(MeasureLine(label.ToUpperInvariant(), LabelFontSize, fontFamily), -CaptionAboveOffset)),
 			OverlayElementType.CameraModelText => MeasureLine(cameraModel ?? SampleCameraModel, DateFontSize, fontFamily),
 			OverlayElementType.MapAttribution => MeasureCredit(text ?? SampleMapCredit, fontFamily),
-			OverlayElementType.GpsAlert => GpsAlertBox(fontFamily),
+			OverlayElementType.GpsAlert => GpsAlertBox(fontFamily, gpsAlertTexts),
 			OverlayElementType.Watermark => SKRect.Union(
 				OffsetY(Centered(MeasureLine(WatermarkTitle, WatermarkTitleFontSize, fontFamily)), -WatermarkLineGap),
 				Centered(MeasureLine(text ?? SampleWatermarkSubtitle, WatermarkSubtitleFontSize, fontFamily))),
-			OverlayElementType.Elevation => MeasureStat(label ?? "ELEVATION", SampleElevationValue, "M", fontFamily),
-			OverlayElementType.Gradient => MeasureStat(label ?? "GRADIENT", SampleGradientValue, "%", fontFamily),
-			OverlayElementType.Distance => MeasureStat(label ?? "TOTAL DISTANCE", SampleDistanceValue, "KM", fontFamily),
-			OverlayElementType.CameraInfo => MeasureCameraInfo(label ?? "CAMERA", fontFamily),
+			OverlayElementType.Elevation => MeasureStat(label ?? CoreStrings.Overlay_Elevation, SampleElevationValue, "M", fontFamily),
+			OverlayElementType.Gradient => MeasureStat(label ?? CoreStrings.Overlay_Gradient, SampleGradientValue, "%", fontFamily),
+			OverlayElementType.Distance => MeasureStat(label ?? CoreStrings.Overlay_TotalDistance, SampleDistanceValue, "KM", fontFamily),
+			OverlayElementType.CameraInfo => MeasureCameraInfo(label ?? CoreStrings.Overlay_Camera, fontFamily),
 			// The widest built-in caption, since the one shown depends on the stat picked.
-			OverlayElementType.TripStat => MeasureStat(label ?? OverlayRenderer.DefaultTripStatLabel(TripStatKind.ElevationLoss),
-				SampleTripStatValue, "KM/H", fontFamily),
+			OverlayElementType.TripStat => MeasureStat(label ?? WidestTripStatLabel(fontFamily), SampleTripStatValue, "KM/H", fontFamily),
 			OverlayElementType.Text => MeasureText(text ?? OverlayRenderer.TextDefault, fontFamily),
-			OverlayElementType.ProfileChart => MeasureChart(label ?? "ELEVATION", fontFamily),
+			OverlayElementType.ProfileChart => MeasureChart(label ?? OverlayRenderer.DefaultProfileLabel(ProfileSeries.Elevation), fontFamily),
 			OverlayElementType.Image => ImageSize(imagePath) is { } size
 				? new SKRect(0, 0, size.Width, size.Height)
 				: new SKRect(0, 0, ImagePlaceholder.Width, ImagePlaceholder.Height),
@@ -280,6 +280,13 @@ public static class OverlayElementBounds
 		return font;
 	}
 
+	/// <summary>The built-in TripStat caption that takes the most room in this font - the languages differ in which one it is.</summary>
+	private static string WidestTripStatLabel(string? family)
+	{
+		return Enum.GetValues<TripStatKind>().Select(OverlayRenderer.DefaultTripStatLabel)
+			.MaxBy(l => LineExtent(l.ToUpperInvariant(), LabelFontSize, family).Width)!;
+	}
+
 	private static (float Ascent, float Descent, float Width) LineExtent(string text, float fontSize, string? family)
 	{
 		SKFont font = GetFont(family, fontSize);
@@ -322,13 +329,20 @@ public static class OverlayElementBounds
 	public const float GpsAlertDetailBaseline = 87;
 
 	/// <summary>The GPS alert's panel around its anchor (top center), whatever it says.</summary>
-	public static SKRect GpsAlertBox(string? fontFamily)
+	public static SKRect GpsAlertBox(string? fontFamily, GpsAlertTexts? texts)
+	{
+		(string[] titles, string[] details) = OverlayRenderer.GpsAlertLines(texts ?? new GpsAlertTexts());
+		return GpsAlertBox(fontFamily, titles, details);
+	}
+
+	/// <summary>The panel for these lines (OverlayRenderer.GpsAlertLines, by GpsAlertMessage).</summary>
+	internal static SKRect GpsAlertBox(string? fontFamily, string[] titles, string[] details)
 	{
 		float text = 0;
-		foreach (string title in OverlayRenderer.GpsAlertTitles)
+		foreach (string title in titles)
 			text = Math.Max(text, LineExtent(title, GpsAlertTitleSize, fontFamily).Width);
-		foreach (string detail in OverlayRenderer.GpsAlertDetails)
-			text = Math.Max(text, LineExtent(detail, GpsAlertDetailSize, fontFamily).Width);
+		for (int i = 0; i < details.Length; i++)
+			text = Math.Max(text, LineExtent(OverlayRenderer.GpsDetailAtWidest(details[i], (GpsAlertMessage)i), GpsAlertDetailSize, fontFamily).Width);
 
 		float width = GpsAlertGap * 2 + GpsAlertIcon + GpsAlertGap + text;
 		return new SKRect(-width / 2, 0, width / 2, GpsAlertHeight);

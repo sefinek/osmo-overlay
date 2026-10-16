@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
@@ -27,7 +28,9 @@ public sealed partial class OverlayRenderer
 	// DrawTripProgressBar's remarks for why a tolerance is needed at all. 1.5m default: comfortably
 	// above typical consumer GPS jitter, negligible next to any real trip distance.
 	public const double TripArrivedToleranceMetersDefault = 1.5;
-	public const string TripArrivedLabelDefault = "FINISH";
+
+	/// <summary>What the trip progress bar says on arrival without a TripArrivedLabel of its own - drawn as is, so in capitals.</summary>
+	public static string DefaultTripArrivedLabel => CoreStrings.Overlay_Finish.ToUpperInvariant();
 
 	// A speed gauge's scale top (in the gauge's units) moves in steps of 10, floored at 20 - the same grid the automatic
 	// scale rounds the recording's top speed up to, so a hand-picked value and the automatic one are interchangeable.
@@ -399,12 +402,12 @@ public sealed partial class OverlayRenderer
 
 		if (arrived)
 		{
-			DrawOutlined(canvas, element.TripArrivedLabel, halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+			DrawOutlined(canvas, element.TripArrivedLabel ?? DefaultTripArrivedLabel, halfWidth, -26, _smallFont, White, SKTextAlign.Right);
 		}
 		else
 		{
 			(string remainingValue, string remainingUnit) = FormatDistance(remainingMeters, element.Units);
-			DrawOutlined(canvas, $"{remainingValue} {remainingUnit} LEFT", halfWidth, -26, _smallFont, White, SKTextAlign.Right);
+			DrawOutlined(canvas, string.Format(CoreStrings.Overlay_Remaining, $"{remainingValue} {remainingUnit}").ToUpperInvariant(), halfWidth, -26, _smallFont, White, SKTextAlign.Right);
 		}
 	}
 }

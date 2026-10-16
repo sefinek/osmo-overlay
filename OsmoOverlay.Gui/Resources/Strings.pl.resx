@@ -1114,9 +1114,6 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
   <data name="Main_FileSize" xml:space="preserve">
     <value>Rozmiar pliku</value>
   </data>
-  <data name="Main_Finish" xml:space="preserve">
-    <value>META</value>
-  </data>
   <data name="Main_Format" xml:space="preserve">
     <value>Format</value>
   </data>
@@ -2205,7 +2202,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Zapętla zaznaczenie In/Out albo całe nagranie. Przycisk Pętla (Q) przełącza to w dowolnej chwili.</value>
   </data>
   <data name="Settings_MadeWithOsmoOverlayAndThe" xml:space="preserve">
-    <value>Wyświetla napis „Made with OsmoOverlay” i link do projektu u dołu filmu przez kilka pierwszych sekund, a następnie stopniowo je wygasza.</value>
+    <value>Wyświetla napis „Stworzono w OsmoOverlay” i link do projektu u dołu filmu przez kilka pierwszych sekund, a następnie stopniowo je wygasza.</value>
   </data>
   <data name="Settings_Map" xml:space="preserve">
     <value>MAPA</value>
@@ -2984,7 +2981,7 @@ Szczegóły: {0}</value>
     <value>Dostępne aktualizacje zależności: {0} - zobacz Ustawienia &gt; O programie</value>
   </data>
   <data name="Watermark_Hint" xml:space="preserve">
-    <value>Napis „Made with OsmoOverlay” z adresem projektu. Włączasz go w Ustawieniach, a tu ustawiasz jego miejsce, wygląd i czas. Na karcie przeglądu trasy zostaje w jej prawym dolnym rogu.</value>
+    <value>Napis „Stworzono w OsmoOverlay” z adresem projektu. Włączasz go w Ustawieniach, a tu ustawiasz jego miejsce, wygląd i czas. Na karcie przeglądu trasy zostaje w jej prawym dolnym rogu.</value>
   </data>
   <data name="Watermark_OffInSettings" xml:space="preserve">
     <value>Znak wodny jest wyłączony w Ustawieniach, więc nie pojawi się na filmie.</value>
@@ -3300,7 +3297,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Wersja {0}</value>
   </data>
   <data name="Welcome_WatermarkHint" xml:space="preserve">
-    <value>Wyświetla napis „Made with OsmoOverlay” z linkiem do projektu u dołu filmu przez kilka pierwszych sekund.</value>
+    <value>Wyświetla napis „Stworzono w OsmoOverlay” z linkiem do projektu u dołu filmu przez kilka pierwszych sekund.</value>
   </data>
   <data name="Welcome_WelcomeToOsmoOverlay" xml:space="preserve">
     <value>Witaj w OsmoOverlay</value>
@@ -3765,6 +3762,39 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Alert GPS</value>
   </data>
   <data name="GpsAlert_Hint" xml:space="preserve">
-    <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału na co najmniej sekundę (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Teksty są po angielsku, jak domyślne podpisy innych widżetów. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
+    <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału na co najmniej sekundę (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
+  </data>
+  <data name="GpsAlert_Message" xml:space="preserve">
+    <value>Komunikat</value>
+  </data>
+  <data name="GpsAlert_Title" xml:space="preserve">
+    <value>Tytuł</value>
+  </data>
+  <data name="GpsAlert_Detail" xml:space="preserve">
+    <value>Druga linia</value>
+  </data>
+  <data name="GpsAlert_TextsHint" xml:space="preserve">
+    <value>Puste pole to domyślny tekst w języku aplikacji. {time} w drugiej linii zamienia się na czas: jak długo trwa utrata sygnału albo po ilu sekundach wrócił.</value>
+  </data>
+  <data name="GpsAlert_MessageSearching" xml:space="preserve">
+    <value>Szukanie sygnału</value>
+  </data>
+  <data name="GpsAlert_MessageLost" xml:space="preserve">
+    <value>Utrata sygnału</value>
+  </data>
+  <data name="GpsAlert_MessageFound" xml:space="preserve">
+    <value>Pierwszy sygnał</value>
+  </data>
+  <data name="GpsAlert_MessageBack" xml:space="preserve">
+    <value>Powrót sygnału</value>
+  </data>
+  <data name="GpsAlert_MessagePositionCorrected" xml:space="preserve">
+    <value>Poprawiona pozycja</value>
+  </data>
+  <data name="GpsAlert_MessageSpeedCorrected" xml:space="preserve">
+    <value>Poprawiona prędkość</value>
+  </data>
+  <data name="GpsAlert_MessagePositionAndSpeedCorrected" xml:space="preserve">
+    <value>Poprawiona pozycja i prędkość</value>
   </data>
 </root>

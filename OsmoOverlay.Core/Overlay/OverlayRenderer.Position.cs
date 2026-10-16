@@ -332,8 +332,8 @@ public sealed partial class OverlayRenderer
 		if (_mapMosaic is null)
 		{
 			canvas.DrawCircle(0, 0, radius, PanelFillPaint(null, PanelOpacityDefault));
-			DrawOutlined(canvas, "MAP", 0, -10, _labelFont, White, SKTextAlign.Center);
-			DrawOutlined(canvas, "UNAVAILABLE", 0, 24, _smallFont, White, SKTextAlign.Center);
+			DrawOutlined(canvas, CoreStrings.Overlay_Map.ToUpperInvariant(), 0, -10, _labelFont, White, SKTextAlign.Center);
+			DrawOutlined(canvas, CoreStrings.Overlay_Unavailable.ToUpperInvariant(), 0, 24, _smallFont, White, SKTextAlign.Center);
 		}
 		else
 		{

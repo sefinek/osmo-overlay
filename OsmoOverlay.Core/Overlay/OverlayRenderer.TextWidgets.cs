@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
@@ -86,7 +87,7 @@ public sealed partial class OverlayRenderer
 	{
 		double meters = element.Reference == ElevationReference.SeaLevel ? frame.Raw.AltitudeMeters : frame.Raw.AltitudeMeters - _startAltitude;
 		(string value, string unit) = FormatAltitude(meters, element.Units);
-		DrawStat(canvas, element, element.Label ?? "ELEVATION", value, unit);
+		DrawStat(canvas, element, element.Label ?? DefaultLabel(element), value, unit);
 	}
 
 	/// <summary>The value so far at `frame` (TripStats) - where it is in the recording found by its time.</summary>
@@ -103,18 +104,33 @@ public sealed partial class OverlayRenderer
 				TripStatKind.ElevationLoss => FormatAltitude(_tripStats.ElevationLossMeters(i), element.Units),
 				_ => (OverlayTimeFormatting.FormatElapsed(_tripStats.MovingSeconds(i)), "")
 			};
-		DrawStat(canvas, element, element.Label ?? DefaultTripStatLabel(element.Stat), value, unit);
+		DrawStat(canvas, element, element.Label ?? DefaultLabel(element), value, unit);
+	}
+
+	/// <summary>A labeled widget's caption without a Label of its own, in the interface's language (drawn in capitals).</summary>
+	public static string DefaultLabel(LabeledStatElement element)
+	{
+		return element switch
+		{
+			ElevationElement => CoreStrings.Overlay_Elevation,
+			GradientElement => CoreStrings.Overlay_Gradient,
+			DistanceElement => CoreStrings.Overlay_TotalDistance,
+			CameraInfoElement => CoreStrings.Overlay_Camera,
+			TripStatElement stat => DefaultTripStatLabel(stat.Stat),
+			ProfileChartElement chart => DefaultProfileLabel(chart.Series),
+			_ => ""
+		};
 	}
 
 	public static string DefaultTripStatLabel(TripStatKind stat)
 	{
 		return stat switch
 		{
-			TripStatKind.MaxSpeed => "MAX SPEED",
-			TripStatKind.AverageSpeed => "AVG SPEED",
-			TripStatKind.ElevationGain => "ELEVATION GAIN",
-			TripStatKind.ElevationLoss => "ELEVATION LOSS",
-			_ => "MOVING TIME"
+			TripStatKind.MaxSpeed => CoreStrings.Overlay_MaxSpeed,
+			TripStatKind.AverageSpeed => CoreStrings.Overlay_AverageSpeed,
+			TripStatKind.ElevationGain => CoreStrings.Overlay_ElevationGain,
+			TripStatKind.ElevationLoss => CoreStrings.Overlay_ElevationLoss,
+			_ => CoreStrings.Overlay_MovingTime
 		};
 	}
 
@@ -128,13 +144,13 @@ public sealed partial class OverlayRenderer
 
 	private void DrawGradient(SKCanvas canvas, DerivedFrame frame, GradientElement element)
 	{
-		DrawStat(canvas, element, element.Label ?? "GRADIENT", F(frame.GradientPercent, "0"), "%");
+		DrawStat(canvas, element, element.Label ?? DefaultLabel(element), F(frame.GradientPercent, "0"), "%");
 	}
 
 	private void DrawDistance(SKCanvas canvas, DerivedFrame frame, DistanceElement element)
 	{
 		(string distanceValue, string distanceUnit) = FormatDistance(frame.CumulativeDistanceMeters, element.Units);
-		DrawStat(canvas, element, element.Label ?? "TOTAL DISTANCE", distanceValue, distanceUnit);
+		DrawStat(canvas, element, element.Label ?? DefaultLabel(element), distanceValue, distanceUnit);
 	}
 
 	/// <summary>
@@ -176,7 +192,7 @@ public sealed partial class OverlayRenderer
 		SKColor accentColor = AccentColorOf(element);
 		SKColor outlineColor = OutlineColorOf(element);
 
-		DrawOutlined(canvas, (element.Label ?? "CAMERA").ToUpperInvariant(), 0, 0, labelFont, textColor,
+		DrawOutlined(canvas, (element.Label ?? DefaultLabel(element)).ToUpperInvariant(), 0, 0, labelFont, textColor,
 			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 
 		string isoText = frame.Raw.Iso is { } iso ? $"ISO {F(iso, "0")}" : "ISO --";

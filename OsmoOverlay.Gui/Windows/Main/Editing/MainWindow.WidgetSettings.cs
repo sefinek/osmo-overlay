@@ -37,7 +37,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id) return;
 		ProfileSeries series = ProfileSpeedRadio.IsChecked == true ? ProfileSeries.Speed : ProfileSeries.Elevation;
-		ProfileLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultProfileLabel(series));
+		ProfileLabelBox.PlaceholderText = OverlayRenderer.DefaultProfileLabel(series);
 		UpdateElement(id, el => el is ProfileChartElement p ? p with { Series = series } : el);
 	}
 
@@ -64,8 +64,41 @@ public partial class MainWindow
 	private void OnTripStatKindChanged(object? sender, SelectionChangedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id || TripStatCombo.SelectedItem is not TripStatOption option) return;
-		TripStatLabelBox.PlaceholderText = SentenceCase(OverlayRenderer.DefaultTripStatLabel(option.Stat));
+		TripStatLabelBox.PlaceholderText = OverlayRenderer.DefaultTripStatLabel(option.Stat);
 		UpdateElement(id, el => el is TripStatElement t ? t with { Stat = option.Stat } : el);
+	}
+
+	private void OnGpsAlertMessageChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+		if (ActiveElements.FirstOrDefault(el => el.Id == id) is GpsAlertElement alert) ShowGpsAlertText(alert);
+	}
+
+	/// <summary>The picked message's own lines in the boxes, its built-in ones (in the interface's language) as their placeholders.</summary>
+	private void ShowGpsAlertText(GpsAlertElement alert)
+	{
+		if (GpsAlertMessageCombo.SelectedItem is not GpsAlertMessageOption option) return;
+
+		GpsAlertText? own = alert.Texts.For(option.Message);
+		GpsAlertText builtIn = OverlayRenderer.DefaultGpsAlertText(option.Message);
+		GpsAlertTitleBox.Text = own?.Title;
+		GpsAlertTitleBox.PlaceholderText = builtIn.Title;
+		GpsAlertDetailBox.Text = own?.Detail;
+		GpsAlertDetailBox.PlaceholderText = builtIn.Detail;
+	}
+
+	private void OnGpsAlertTextChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is not { } id || GpsAlertMessageCombo.SelectedItem is not GpsAlertMessageOption option) return;
+
+		var text = new GpsAlertText(OwnText(GpsAlertTitleBox.Text), OwnText(GpsAlertDetailBox.Text));
+		UpdateElement(id, el => el is GpsAlertElement alert ? alert with { Texts = alert.Texts.With(option.Message, text) } : el);
+		RefreshSelectionHighlight();
+
+		static string? OwnText(string? typed)
+		{
+			return string.IsNullOrWhiteSpace(typed) ? null : typed.Trim();
+		}
 	}
 
 	private void OnTripStatLabelChanged(object? sender, RoutedEventArgs e)
@@ -289,9 +322,7 @@ public partial class MainWindow
 	private void OnTripProgressLabelChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		string label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text)
-			? OverlayRenderer.TripArrivedLabelDefault
-			: TripProgressLabelBox.Text.Trim();
+		string? label = string.IsNullOrWhiteSpace(TripProgressLabelBox.Text) ? null : TripProgressLabelBox.Text.Trim();
 		UpdateElement(id, el => el is TripProgressBarElement t ? t with { TripArrivedLabel = label } : el);
 	}
 

@@ -113,6 +113,7 @@ public partial class MainWindow : Window
 		UtcTimeFormatCombo.ItemsSource = DateFormatOptions;
 		UtcTimeLocaleCombo.ItemsSource = LocaleOptions;
 		TripStatCombo.ItemsSource = TripStatOptions;
+		GpsAlertMessageCombo.ItemsSource = GpsAlertMessageOptions;
 		PresetComboBox.ItemTemplate = PresetItemTemplate();
 
 		ElementTimingEditor[] timingEditors =
