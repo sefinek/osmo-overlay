@@ -57,6 +57,7 @@ internal sealed class OverlayCompositor : IDisposable
 		Renderer = createRenderer(_frames);
 		_initialTrailSpeedPercentileKmh = Renderer.TrailSpeedPercentileKmh;
 		Renderer.OutputDurationSeconds = OutputDuration(timeline);
+		Renderer.CutCaptions = timeline?.Captions ?? [];
 	}
 
 	/// <summary>
@@ -239,6 +240,7 @@ internal sealed class OverlayCompositor : IDisposable
 			double factor = SpeedCalibration.Factor(_speedCorrectionPercent) / SpeedCalibration.Factor(_initialSpeedCorrectionPercent);
 			_initialTrailSpeedPercentileKmh = Renderer.TrailSpeedPercentileKmh / factor;
 			Renderer.OutputDurationSeconds = OutputDuration(timeline);
+			Renderer.CutCaptions = timeline?.Captions ?? [];
 			_measured.Clear();
 			return RecomposeLocked();
 		}

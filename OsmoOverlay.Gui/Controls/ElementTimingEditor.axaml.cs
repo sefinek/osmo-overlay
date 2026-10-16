@@ -139,8 +139,7 @@ public partial class ElementTimingEditor : UserControl
 	private void ShowAppear()
 	{
 		double? appear = _shift > 0 ? (_ownAppear ?? 0) + _shift : _ownAppear;
-		if (VisibleFromSeconds > 0) appear = Math.Max(appear ?? 0, VisibleFromSeconds);
-		AppearAtBox.Value = _shownAppear = (decimal?)appear;
+		AppearAtBox.Value = _shownAppear = (decimal?)ElementAnimation.VisibleFrom(appear, VisibleFromSeconds);
 	}
 
 	private void ShowDisappear()

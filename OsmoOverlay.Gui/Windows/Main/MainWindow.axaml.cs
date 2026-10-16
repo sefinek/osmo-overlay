@@ -570,6 +570,21 @@ public partial class MainWindow : Window
 		}
 	}
 
+	/// <summary>Renders the part selected on the timeline (Shift+drag, or the I and O keys); with none, opens the timeline to pick one.</summary>
+	private async void OnRenderRangeClick(object? sender, RoutedEventArgs e)
+	{
+		if (_phase != UiPhase.SummaryReady || _summary is null) return;
+
+		if (Selection is not { } selection)
+		{
+			SetTimelineExpanded(true, false);
+			AppendLog(Strings.Render_PickRange);
+			return;
+		}
+
+		await RunRenderAsync(false, selection);
+	}
+
 	private async void OnGreenScreenRenderClick(object? sender, RoutedEventArgs e)
 	{
 		await RunRenderAsync(true);
@@ -599,6 +614,7 @@ public partial class MainWindow : Window
 		ActionButton.IsVisible = phase != UiPhase.Rendering;
 		ActionButton.Content = phase == UiPhase.SummaryReady ? Strings.Main_Render : Strings.Main_GetSummary;
 		GreenScreenButton.IsVisible = phase == UiPhase.SummaryReady;
+		RenderRangeButton.IsVisible = phase == UiPhase.SummaryReady;
 
 		bool busy = phase is UiPhase.LoadingSummary or UiPhase.Rendering;
 		// Editing the input list mid-run would reset the phase under a running summary/render.

@@ -32,6 +32,15 @@ public static class ElementAnimation
 		return outSeconds ?? OverlayRenderer.AnimationDurationSecondsDefault;
 	}
 
+	/// <summary>
+	///     When a widget timed to appear at `appearSeconds` (null: from the start) is first seen: the route overview card covers
+	///     the video, and every widget on it, until `introEndSeconds` (0: no card), so none is seen before. Unchanged from there on.
+	/// </summary>
+	public static double? VisibleFrom(double? appearSeconds, double introEndSeconds)
+	{
+		return introEndSeconds > 0 && (appearSeconds ?? 0) < introEndSeconds ? introEndSeconds : appearSeconds;
+	}
+
 	/// <param name="endSeconds">The rendered video's length, on the same (output) timeline as `seconds`.</param>
 	public static ElementState At(OverlayElement element, double seconds, double endSeconds = double.PositiveInfinity)
 	{

@@ -455,15 +455,19 @@
 									<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Main_Action}" />
 								</StackPanel>
 
-								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+								<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
 									<Button Grid.Column="0" Name="ActionButton" Content="{x:Static local:Strings.Main_GetSummary}" Click="OnActionClick"
 									        Classes="accent" IsEnabled="False" HorizontalAlignment="Stretch"
 									        HorizontalContentAlignment="Center" />
-									<Button Grid.Column="1" Name="GreenScreenButton" Content="{x:Static local:Strings.Main_GreenScreen}"
+									<Button Grid.Column="1" Name="RenderRangeButton" Content="{x:Static local:Strings.Main_RenderRange}"
+									        Click="OnRenderRangeClick" IsEnabled="False" IsVisible="False"
+									        HorizontalContentAlignment="Center"
+									        ToolTip.Tip="{x:Static local:Strings.Main_RenderRangeHint}" />
+									<Button Grid.Column="2" Name="GreenScreenButton" Content="{x:Static local:Strings.Main_GreenScreen}"
 									        Click="OnGreenScreenRenderClick" IsEnabled="False" IsVisible="False"
 									        HorizontalContentAlignment="Center"
 									        ToolTip.Tip="{x:Static local:Strings.Main_RenderJustTheHudOverlay}" />
-									<Button Grid.Column="0" Grid.ColumnSpan="2" Name="CancelButton" Content="{x:Static local:Strings.Common_Cancel}"
+									<Button Grid.Column="0" Grid.ColumnSpan="3" Name="CancelButton" Content="{x:Static local:Strings.Common_Cancel}"
 									        Click="OnCancelClick" IsVisible="False" HorizontalAlignment="Stretch"
 									        HorizontalContentAlignment="Center" />
 								</Grid>
@@ -2210,5 +2214,7 @@
 				</ScrollViewer>
 			</Border>
 		</Border>
+
+		<Border Name="SaveCursorShield" Grid.Row="0" Grid.RowSpan="2" Background="Transparent" Cursor="Wait" IsVisible="False" />
 	</Grid>
 </Window>

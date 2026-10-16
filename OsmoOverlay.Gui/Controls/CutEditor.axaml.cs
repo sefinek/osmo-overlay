@@ -213,6 +213,32 @@ public partial class CutEditor : UserControl
 			transition.Children.Add(transitionCells[i]);
 		}
 
+		var caption = new TextBox
+		{
+			Text = cut.Caption?.Text,
+			PlaceholderText = Strings.Cut_CaptionPlaceholder,
+			AcceptsReturn = true,
+			TextWrapping = TextWrapping.Wrap,
+			MaxHeight = 96
+		};
+		ToolTip.SetTip(caption, Strings.Cut_CaptionHint);
+		var captionLength = new NumericUpDown
+		{
+			Minimum = (decimal)CutCaption.MinSeconds,
+			Maximum = (decimal)CutCaption.MaxSeconds,
+			Increment = 0.5m,
+			FormatString = "0.0",
+			Value = (decimal)(cut.Caption?.Seconds ?? CutCaption.DefaultSeconds),
+			MinWidth = 110
+		};
+		var captionRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 6 };
+		Control[] captionCells = [caption, captionLength, new TextBlock { Text = "s", VerticalAlignment = VerticalAlignment.Center, Opacity = 0.55 }];
+		for (int i = 0; i < captionCells.Length; i++)
+		{
+			Grid.SetColumn(captionCells[i], i);
+			captionRow.Children.Add(captionCells[i]);
+		}
+
 		var unit = (TextBlock)transitionCells[2];
 		var overlapNote = new TextBlock
 		{
@@ -221,8 +247,8 @@ public partial class CutEditor : UserControl
 			TextWrapping = TextWrapping.Wrap,
 			IsVisible = false
 		};
-		var row = new StackPanel { Spacing = 4, Children = { times, transition, overlapNote } };
-		var entry = new CutRow(from, to, kind, length);
+		var row = new StackPanel { Spacing = 4, Children = { times, transition, captionRow, overlapNote } };
+		var entry = new CutRow(from, to, kind, length, caption, captionLength);
 
 		void RefreshTransitionRow()
 		{
@@ -230,6 +256,8 @@ public partial class CutEditor : UserControl
 			bool joins = ReadFrame(from.Text, "", out long start) is null && ReadFrame(to.Text, "", out long end) is null &&
 			             start > 0 && end < _totalFrames;
 			transition.IsVisible = joins;
+			captionRow.IsVisible = joins;
+			captionCells[1].IsVisible = captionCells[2].IsVisible = !string.IsNullOrWhiteSpace(caption.Text);
 			length.IsVisible = unit.IsVisible = kind.SelectedIndex > 0;
 			overlapNote.IsVisible = joins && TransitionKinds[Math.Max(0, kind.SelectedIndex)].Kind is { } selected &&
 			                        new CutTransition(selected).Overlaps;
@@ -259,6 +287,12 @@ public partial class CutEditor : UserControl
 			OnEdited(true);
 		};
 		length.ValueChanged += (_, _) => OnEdited(false);
+		caption.TextChanged += (_, _) =>
+		{
+			RefreshTransitionRow();
+			OnEdited(false);
+		};
+		captionLength.ValueChanged += (_, _) => OnEdited(false);
 		remove.Click += (_, _) =>
 		{
 			_rows.Remove(entry);
@@ -309,7 +343,7 @@ public partial class CutEditor : UserControl
 		List<FrameRange> parsed = [];
 		for (int i = 0; i < _rows.Count; i++)
 		{
-			(TextBox fromBox, TextBox toBox, ComboBox kindBox, NumericUpDown lengthBox) = _rows[i];
+			(TextBox fromBox, TextBox toBox, ComboBox kindBox, NumericUpDown lengthBox, TextBox captionBox, NumericUpDown captionLengthBox) = _rows[i];
 			string name = string.Format(Strings.Cut_Name, i + 1);
 			if (ReadFrame(fromBox.Text, $"{name}: {Strings.Cut_From}", out long start) is { } fromError) return fromError;
 			if (ReadFrame(toBox.Text, $"{name}: {Strings.Cut_To}", out long end) is { } toError) return toError;
@@ -320,7 +354,8 @@ public partial class CutEditor : UserControl
 			CutTransition? transition = kind is { } k
 				? new CutTransition(k, lengthBox.Value is { } seconds ? (double)seconds : CutTransition.DefaultLengthSeconds)
 				: null;
-			parsed.Add(new FrameRange(start, end, transition));
+			CutCaption? caption = CutCaption.Of(captionBox.Text, captionLengthBox.Value is { } captionSeconds ? (double)captionSeconds : CutCaption.DefaultSeconds);
+			parsed.Add(new FrameRange(start, end, transition, caption));
 		}
 
 		if (CutList.RemovesEverything(parsed, _totalFrames)) return Strings.Cut_RemovesEverything;
@@ -329,7 +364,7 @@ public partial class CutEditor : UserControl
 		return null;
 	}
 
-	private sealed record CutRow(TextBox From, TextBox To, ComboBox Kind, NumericUpDown Length);
+	private sealed record CutRow(TextBox From, TextBox To, ComboBox Kind, NumericUpDown Length, TextBox Caption, NumericUpDown CaptionLength);
 
 	/// <summary>A typed time as the nearest frame, within the recording.</summary>
 	private string? ReadFrame(string? text, string name, out long frame)

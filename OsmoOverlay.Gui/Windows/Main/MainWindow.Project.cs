@@ -85,16 +85,22 @@ public partial class MainWindow
 	{
 		try
 		{
-			BuildProject().Save(path);
+			// Built here (it reads the window), written off the UI thread - the pointer is the busy one for as long as that takes, over
+			// a shield across the window as many controls set a cursor of their own (the timelines, buttons).
+			OverlayProject project = BuildProject();
+			SaveCursorShield.IsVisible = true;
+			await Task.Run(() => project.Save(path));
 		}
 		catch (Exception ex)
 		{
+			SaveCursorShield.IsVisible = false;
 			AppLogger.Error(ex, string.Format(Strings.Project_SaveFailed, ex.Message));
 			await ConfirmDialog.ShowAsync(this, Strings.Project_SaveFailedTitle, ex.Message, kind: DialogKind.Warning);
 			return;
 		}
 
-		SetProjectPath(path);
+		SaveCursorShield.IsVisible = false;
+		SetProjectPath(path, DateTime.Now);
 		AppendLog(string.Format(Strings.Project_Saved, path));
 	}
 
@@ -238,10 +244,12 @@ public partial class MainWindow
 		SaveOverlayPresets();
 	}
 
-	private void SetProjectPath(string path)
+	/// <param name="savedAt">When it was saved - the title says so, which is how a save shows with the log out of sight.</param>
+	private void SetProjectPath(string path, DateTime? savedAt = null)
 	{
 		_projectPath = path;
-		Title = $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}";
+		string title = $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}";
+		Title = savedAt is { } at ? $"{title} ({string.Format(Strings.Project_SavedAtTitle, at.ToString("T"))})" : title;
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		if (settings.LastProject != path) OverlaySettingsStore.Save(settings with { LastProject = path });
 	}

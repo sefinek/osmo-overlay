@@ -155,7 +155,7 @@ public sealed class PreviewPlayer : IDisposable
 		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix, camera);
 		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
 				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
-				summary.ContainerRecordingStartUtc, MapSources.From(settings), routeIntro)
+				summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, _outputTimeline))
 			{
 				RouteAcrossCuts = settings.RouteAcrossCuts, DrawShadows = settings.PreviewDrawsShadows
 			},
@@ -368,10 +368,17 @@ public sealed class PreviewPlayer : IDisposable
 		_outputTimeline = timeline;
 		if (_recording is not { } recording) return;
 
+		recording.Compositor.Change(r => r.RouteIntro = RouteIntroFor(recording.RouteIntro, timeline));
 		PublishStill(recording, recording.Compositor.SetTimeline(timeline));
 		// The map widget's mosaic stays unless the route now reaches past it; the route intro's unless the route's extent changed.
 		OverlayRenderer renderer = recording.Compositor.Renderer;
 		StartMosaics(recording, intro: renderer.NeedsRouteIntroPrepare(), map: !renderer.MapMosaicCoversRoute);
+	}
+
+	/// <summary>The card the recording opened with - or none on an output starting later than the recording (a trimmed start), unless the card is wanted there too.</summary>
+	private static RouteIntroSettings RouteIntroFor(RouteIntroSettings opened, OutputTimeline? timeline)
+	{
+		return RouteIntroSettings.Applies(opened.ShowWhenTrimmed, timeline?.Plan.StartsLate == true) ? opened : RouteIntroSettings.Disabled;
 	}
 
 	public async Task SetSpeedCorrectionAsync(double percent, CancellationToken ct = default)
@@ -469,7 +476,7 @@ public sealed class PreviewPlayer : IDisposable
 	public void SuppressRouteIntro(bool suppress)
 	{
 		if (_recording is { } recording)
-			PublishStill(recording, recording.Compositor.Change(r => r.RouteIntro = suppress ? RouteIntroSettings.Disabled : recording.RouteIntro));
+			PublishStill(recording, recording.Compositor.Change(r => r.RouteIntro = suppress ? RouteIntroSettings.Disabled : RouteIntroFor(recording.RouteIntro, _outputTimeline)));
 	}
 
 	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
@@ -615,7 +622,7 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	private async void StartMosaics(OpenRecording recording, bool intro, bool map)
 	{
-		intro &= recording.ShowsRouteIntro;
+		intro &= RouteIntroFor(recording.RouteIntro, _outputTimeline).Enabled;
 		if (!intro && !map) return;
 
 		_mosaicRecording = recording;
@@ -774,7 +781,6 @@ public sealed class PreviewPlayer : IDisposable
 		public double Fps { get; } = fps;
 		// The card as opened - SuppressRouteIntro gives it back.
 		public RouteIntroSettings RouteIntro { get; } = routeIntro;
-		public bool ShowsRouteIntro => RouteIntro.Enabled;
 		// A 360 recording's lenses and leveling - the view is the player's own (_reframe).
 		public Reframer? Reframer { get; } = reframer;
 

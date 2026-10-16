@@ -638,8 +638,7 @@ public partial class MainWindow
 	{
 		_suppressOverlayEvents = true;
 
-		double visibleFrom = _previewPlayer.RouteIntroSpan?.End ?? 0;
-		foreach (ElementTimingEditor timing in _timingEditors) timing.VisibleFromSeconds = visibleFrom;
+		foreach (ElementTimingEditor timing in _timingEditors) timing.VisibleFromSeconds = RouteIntroEnd;
 
 		switch (el.Type)
 		{

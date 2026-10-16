@@ -62,6 +62,9 @@ public sealed record OverlaySettings(
 	// The trip's first and last positions marked on the overview map, captioned with these (null = the built-in caption in
 	// the interface's language, blank = a dot only).
 	bool RouteIntroShowStartFinish = true,
+	// The card also on a render or preview that starts later than the recording does (a trimmed start, a range) - off: the card sums up
+	// the ride from its start, which that output no longer opens with.
+	bool RouteIntroWhenTrimmed = false,
 	string? RouteIntroStartLabel = null,
 	string? RouteIntroFinishLabel = null,
 	bool PreviewSnapToGrid = true,

@@ -458,6 +458,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		else
 		{
 			DrawWidgets(canvas, frame);
+			DrawCutCaption(canvas, sampleTime);
 		}
 
 		// Over the widgets the watermark is a widget of its own; the card shows it in its own corner.

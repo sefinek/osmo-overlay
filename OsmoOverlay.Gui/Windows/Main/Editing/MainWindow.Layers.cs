@@ -127,20 +127,14 @@ public partial class MainWindow
 	{
 		OverlayElement shown = _previewPlayer.AsShown(element);
 		double? appear = shown.AppearAtSeconds is { } start && !double.IsFinite(start) ? LayerTracks.OutputDurationSeconds : shown.AppearAtSeconds;
-		if (StartsUnderRouteIntro(shown)) appear = _previewPlayer.RouteIntroSpan!.Value.End;
+		appear = ElementAnimation.VisibleFrom(appear, RouteIntroEnd);
 		return new LayerClip(element.Id, ClipLabel(element, name), appear, shown.DisappearAtSeconds, shown.AnimationType, shown.AnimationDurationSeconds,
 			shown.OutAnimationType, shown.OutAnimationDurationSeconds, IsTypeSupported(element.Type), _previewPlayer.SpeedGateSeconds(element) is not null,
 			_previewPlayer.ArrivalHideSeconds(element) is not null, element is GpsAlertElement);
 	}
 
-	/// <summary>
-	///     A widget showing from the start (or any moment under the route overview card) is really seen from the card's end - its
-	///     clip starts there, not under the card where nothing of it is drawn.
-	/// </summary>
-	private bool StartsUnderRouteIntro(OverlayElement shown)
-	{
-		return _previewPlayer.RouteIntroSpan is { } intro && intro.End > 0 && (shown.AppearAtSeconds ?? 0) < intro.End;
-	}
+	/// <summary>Where the route overview card ends on the output timeline - 0 without one. A clip starts no earlier (ElementAnimation.VisibleFrom).</summary>
+	private double RouteIntroEnd => _previewPlayer.RouteIntroSpan?.End ?? 0;
 
 	/// <summary>What a clip says: what the widget shows where it's its own (a text, a picked file, a statistic), else its name.</summary>
 	private static string ClipLabel(OverlayElement element, string name)
@@ -198,7 +192,8 @@ public partial class MainWindow
 		double shift = _previewPlayer.IntroShiftSeconds(own);
 		double? appear = shift > 0 && timing.AppearAtSeconds is { } start ? Math.Max(0, start - shift) : timing.AppearAtSeconds;
 		// A start the clip only showed (lifted to the card's end by ClipFor) is no edit - the widget keeps its own.
-		if (StartsUnderRouteIntro(shown) && timing.AppearAtSeconds == _previewPlayer.RouteIntroSpan!.Value.End) appear = own.AppearAtSeconds;
+		if (ElementAnimation.VisibleFrom(shown.AppearAtSeconds, RouteIntroEnd) != shown.AppearAtSeconds && timing.AppearAtSeconds == RouteIntroEnd)
+			appear = own.AppearAtSeconds;
 		bool wayInAsShown = timing.Animation == shown.AnimationType && Math.Abs(timing.AnimationDurationSeconds - shown.AnimationDurationSeconds) < 1e-9;
 		// Likewise the way out an arrival-hidden bar only showed (it leaves the way it came in).
 		bool wayOutAsShown = timing.OutAnimation == shown.OutAnimationType && timing.OutAnimationDurationSeconds == shown.OutAnimationDurationSeconds;

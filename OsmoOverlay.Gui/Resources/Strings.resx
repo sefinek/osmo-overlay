@@ -602,6 +602,12 @@ Removed sections are excluded from the preview, render, and telemetry. The route
   <data name="Cut_NothingSelected" xml:space="preserve">
     <value>Nothing selected yet.</value>
   </data>
+  <data name="Cut_CaptionPlaceholder" xml:space="preserve">
+    <value>Text at the cut (optional)</value>
+  </data>
+  <data name="Cut_CaptionHint" xml:space="preserve">
+    <value>The text appears in the middle of the picture at the cut and disappears after the time set next to it. Use it to explain what was cut out.</value>
+  </data>
   <data name="Cut_OverlapNote" xml:space="preserve">
     <value>The preview does not show the crossfade. It plays the end of the earlier section and skips the overlapping start of the next one. The rendered video includes the crossfade and is shorter by the transition duration.</value>
   </data>
@@ -1844,6 +1850,27 @@ The cuts, view settings and overlay will be applied once these files are located
   <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
     <value>Recordings not found</value>
   </data>
+  <data name="Project_SavedAtTitle" xml:space="preserve">
+    <value>saved at {0}</value>
+  </data>
+  <data name="Main_RenderRange" xml:space="preserve">
+    <value>Selection</value>
+  </data>
+  <data name="Main_RenderRangeHint" xml:space="preserve">
+    <value>Renders only the selected part. Select it on the timeline by Shift-dragging, or with the I (start) and O (end) keys.</value>
+  </data>
+  <data name="Render_PickRange" xml:space="preserve">
+    <value>Select a part on the timeline (Shift-drag, or the I and O keys), then click the button again.</value>
+  </data>
+  <data name="Render_LogRange" xml:space="preserve">
+    <value>Rendering only the selected part: {0}</value>
+  </data>
+  <data name="Settings_RouteIntroWhenTrimmed" xml:space="preserve">
+    <value>Show the intro even when the start of the recording is trimmed</value>
+  </data>
+  <data name="Settings_RouteIntroWhenTrimmedHint" xml:space="preserve">
+    <value>By default, the intro is omitted if the video does not include the start of the recording. Cuts later in the recording do not disable the intro.</value>
+  </data>
   <data name="Project_Saved" xml:space="preserve">
     <value>Project saved: {0}</value>
   </data>
@@ -1983,7 +2010,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Correction increases speed readings on the overlay in the preview and render. Calculate it from two readings or check it on a recording. The setting applies to all recordings and is saved when you close this window.</value>
   </data>
   <data name="Settings_AFullscreenCardForThe" xml:space="preserve">
-    <value>Displays a full-screen card at the start of the video with a map of the entire route and trip statistics. Requires GPS data and an internet connection to download the map.</value>
+    <value>Shows a card with the route map and statistics for the retained parts of the recording during the first seconds of the video. It does not extend the video. GPS data is required. An internet connection is needed to download the map.</value>
   </data>
   <data name="Settings_AFullScreenWindowThere" xml:space="preserve">
     <value>Opens a full-screen window on the selected monitor. It shows the preview during playback and the log otherwise. Press Esc or F9 to close it.</value>
@@ -2043,7 +2070,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>No widget casts a shadow: not in the preview, a frame snapshot or a render. The widgets' own shadow settings are kept, but can't be changed until this is turned off.</value>
   </data>
   <data name="Settings_AverageSpeed" xml:space="preserve">
-    <value>Average speed</value>
+    <value>Average moving speed</value>
   </data>
   <data name="Settings_Behavior" xml:space="preserve">
     <value>Behavior</value>
@@ -2118,7 +2145,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Downloading OsmoOverlay {0}... {1:0}%</value>
   </data>
   <data name="Settings_DurationSeconds" xml:space="preserve">
-    <value>Duration (seconds)</value>
+    <value>Display duration (seconds)</value>
   </data>
   <data name="Settings_EffortPerFrameAtThe" xml:space="preserve">
     <value>Controls encoder effort at the same bitrate. The default P7 preset gives the best quality, while lower presets encode faster. On AMD cards, P6-P7 use quality mode and P3-P5 use balanced mode. Applies only to GPU encoders; the CPU encoder has separate settings.</value>
@@ -2130,7 +2157,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Encoder preset (GPU)</value>
   </data>
   <data name="Settings_EverythingBelowAppliesOnlyWhile" xml:space="preserve">
-    <value>The settings below apply only when this option is enabled.</value>
+    <value>Enable this option to use the settings below.</value>
   </data>
   <data name="Settings_FastStartForWebPlayback" xml:space="preserve">
     <value>Fast start for web playback</value>
@@ -2145,7 +2172,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Full screen preview</value>
   </data>
   <data name="Settings_GreenWhenSlowThroughYellow" xml:space="preserve">
-    <value>The color changes from green at low speed, through yellow and orange, to red at maximum speed.</value>
+    <value>The route color changes from green at low speeds, through yellow and orange, to red at high speeds. The scale adapts to the speeds in the video.</value>
   </data>
   <data name="Settings_HigherMakesABiggerFile" xml:space="preserve">
     <value>A higher bitrate increases file size but helps preserve small overlay text after recompression by YouTube and similar services.</value>
@@ -2289,7 +2316,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Read the license</value>
   </data>
   <data name="Settings_RecordingDuration" xml:space="preserve">
-    <value>Recording duration</value>
+    <value>Video duration</value>
   </data>
   <data name="Settings_RemoveAssociation" xml:space="preserve">
     <value>Remove association</value>
@@ -2319,7 +2346,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Speeds up frame processing without changing the image. Disable this option if rendering fails after a driver update or on an unusual graphics card.</value>
   </data>
   <data name="Settings_ShowTheRouteOverviewAt" xml:space="preserve">
-    <value>Show the route overview at the start</value>
+    <value>Show the route overview card at the start of the video</value>
   </data>
   <data name="Settings_SizePositionScreenAndMaximized" xml:space="preserve">
     <value>Size, position, screen and maximized state. When off, it always starts maximized.</value>
@@ -3321,7 +3348,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Mark the start and finish</value>
   </data>
   <data name="Settings_RouteIntroStartFinishHint" xml:space="preserve">
-    <value>Markers where the route begins and ends, captioned with the text in the fields below. A blank field leaves just the marker.</value>
+    <value>Marks the start and end of the route on the map. You can edit the marker captions below. Leave a field blank to show the marker without a caption.</value>
   </data>
   <data name="Settings_RouteIntroStartLabel" xml:space="preserve">
     <value>Start caption</value>
@@ -3330,7 +3357,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Finish caption</value>
   </data>
   <data name="Settings_RouteIntroStatsHint" xml:space="preserve">
-    <value>You can enter a custom caption for each statistic shown in the video, for example in another language. Leave the field blank to use the default caption.</value>
+    <value>You can change the caption of each statistic shown on the card. Leave a field blank to use the default caption.</value>
   </data>
   <data name="Settings_HighestPoint" xml:space="preserve">
     <value>Highest point</value>
@@ -3351,7 +3378,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Hide after reaching the finish (s)</value>
   </data>
   <data name="Main_TripProgressHideAfterArrivalHint" xml:space="preserve">
-    <value>The bar goes this many seconds after the ride gets within the arrival margin of the finish. This replaces the manually set disappear time, so the time field is disabled.</value>
+    <value>The bar disappears the set number of seconds after the ride reaches the finish (gets within the arrival margin). This replaces the manually set disappear time, so that field is locked.</value>
   </data>
   <data name="Main_TripProgressSpeedGateHint" xml:space="preserve">
     <value>The bar appears when the speed first reaches the selected threshold. This replaces the manually set appearance time, so the time field is disabled.</value>
@@ -3732,13 +3759,13 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Route intro until {0}. The card covers the start of the recording and the widgets appear as it fades out. The watermark is in the card's corner, and as a widget it counts its times from the card's end.</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
-    <value>The route intro is on, so the watermark only appears after it ends - the time fields show when it is actually visible. On the card itself the watermark is in its corner.</value>
+    <value>The route intro is on, so the watermark only appears after the intro ends. The time fields show when it is really visible. On the card itself the watermark is in its corner.</value>
   </data>
   <data name="Layers_FromSpeed" xml:space="preserve">
     <value>{0} (from {1} km/h)</value>
   </data>
   <data name="TripProgress_AfterRouteIntro" xml:space="preserve">
-    <value>The route intro is on, so the bar only appears after it ends, as does the watermark before it - the time fields show when it is actually visible. When the bar waits for a speed, only that counts.</value>
+    <value>The route intro is on, so the bar (like the watermark before it) only appears after the intro ends. The time fields show when it is really visible. When the bar waits for a speed, only that counts.</value>
   </data>
   <data name="Timeline_FileLabel" xml:space="preserve">
     <value>{0}. {1}</value>

@@ -16,6 +16,18 @@ public sealed class ElementAnimationTests
 	}
 
 	[TestMethod]
+	public void VisibleFrom_NothingIsSeenBeforeTheRouteIntroEnds()
+	{
+		Assert.IsNull(ElementAnimation.VisibleFrom(null, 0), "no card: from the start");
+		Assert.AreEqual(4.0, ElementAnimation.VisibleFrom(4, 0));
+		Assert.AreEqual(12.0, ElementAnimation.VisibleFrom(null, 12), "from the start, under the card");
+		Assert.AreEqual(12.0, ElementAnimation.VisibleFrom(5, 12), "appearing under the card");
+		Assert.AreEqual(20.0, ElementAnimation.VisibleFrom(20, 12), "after the card");
+		Assert.AreEqual(12.0, ElementAnimation.VisibleFrom(12, 12));
+		Assert.AreEqual(double.PositiveInfinity, ElementAnimation.VisibleFrom(double.PositiveInfinity, 12), "never stays never");
+	}
+
+	[TestMethod]
 	public void NoTiming_IsAlwaysShown()
 	{
 		Assert.AreEqual(ElementState.Shown, ElementAnimation.At(new TextElement { X = 0, Y = 0 }, 123));

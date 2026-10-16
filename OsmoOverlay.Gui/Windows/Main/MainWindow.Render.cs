@@ -12,7 +12,8 @@ namespace OsmoOverlay.Gui;
 /// <summary>Running the actual render (RenderJob), progress reporting, and the completion dialog/balloon.</summary>
 public partial class MainWindow
 {
-	private async Task RunRenderAsync(bool greenScreen)
+	/// <param name="range">Only this part of the recording (frames, as the selection on the timeline) - the cuts still apply inside it.</param>
+	private async Task RunRenderAsync(bool greenScreen, FrameRange? range = null)
 	{
 		string normalOutputPath = OutputPathBox.Text ?? "";
 
@@ -25,7 +26,11 @@ public partial class MainWindow
 		// Derived from whatever's in OutputPathBox (respects a location the user picked via "..."),
 		// not a second independent path the user has to manage themselves - this render is a
 		// compositing asset, not an alternative final output, so it shouldn't need its own UI.
+		double fps = _summary?.Video.Fps ?? 0;
+		double? rangeStart = range is { } part && fps > 0 ? part.Start / fps : null;
+		double? rangeEnd = range is { } part2 && fps > 0 ? part2.End / fps : null;
 		string outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
+		if (rangeStart is { } from && rangeEnd is { } to) outputPath = RenderOptions.RangeOutputPath(outputPath, from, to);
 		if (!await ConfirmDiskSpaceAsync(outputPath)) return;
 		if (!await ConfirmComputerNotBusyAsync()) return;
 
@@ -47,16 +52,17 @@ public partial class MainWindow
 		List<TimeRange>? cutOuts = CutOutsForRender();
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
-			GreenScreen: greenScreen, CutOuts: cutOuts, Reframe: _reframe);
+			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe);
 
 		AppendLog(greenScreen ? Strings.Render_ModeGreenScreen : Strings.Render_ModeNormal);
+		if (range is { } shown) AppendLog(string.Format(Strings.Render_LogRange, DescribeSelection(shown)));
 		AppendLog(string.Format(Strings.Render_LogOutput, outputPath));
 		AppendLog(string.Format(Strings.Render_LogEncoder, _detectedEncoder, HasCuts ? DescribeCuts() : Strings.Render_NoCuts));
 		string? presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
 		AppendLog(string.Format(Strings.Render_LogPreset, presetName ?? Strings.Render_NoPreset));
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null)));
+			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null, rangeStart, rangeEnd)));
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -109,10 +115,11 @@ public partial class MainWindow
 		SetPhase(UiPhase.SummaryReady);
 		ActionButton.IsEnabled = true;
 		GreenScreenButton.IsEnabled = true;
+		RenderRangeButton.IsEnabled = true;
 	}
 
 	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts,
-		ReframeView? view)
+		ReframeView? view, double? rangeStart = null, double? rangeEnd = null)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
 		parts.AddRange(inputPaths.Select(QuoteArg));
@@ -124,6 +131,8 @@ public partial class MainWindow
 			if (!view.Level) parts.Add("--no-level");
 		}
 
+		if (rangeStart is { } from) parts.AddRange(["--from", from.ToString("0.###", CultureInfo.InvariantCulture)]);
+		if (rangeEnd is { } to) parts.AddRange(["--to", to.ToString("0.###", CultureInfo.InvariantCulture)]);
 		foreach (TimeRange cut in cutOuts)
 		{
 			parts.AddRange([

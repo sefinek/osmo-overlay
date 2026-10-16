@@ -17,6 +17,26 @@ public sealed class RouteIntroSettingsTests
 	}
 
 	[TestMethod]
+	public void ForRecording_ATrimmedStartHasNoCard_UnlessAskedFor()
+	{
+		var settings = new OverlaySettings { ShowRouteIntro = true };
+
+		Assert.IsTrue(RouteIntroSettings.ForRecording(settings, true, null, trimmed: false).Enabled);
+		Assert.IsFalse(RouteIntroSettings.ForRecording(settings, true, null, trimmed: true).Enabled, "off by default: the card sums up the ride from its start");
+		Assert.IsTrue(RouteIntroSettings.ForRecording(settings with { RouteIntroWhenTrimmed = true }, true, null, trimmed: true).Enabled);
+		Assert.IsFalse(new OverlaySettings().RouteIntroWhenTrimmed, "off unless asked for");
+	}
+
+	[TestMethod]
+	public void Applies_OnlyATrimmedStartNeedsTheSetting()
+	{
+		Assert.IsTrue(RouteIntroSettings.Applies(false, trimmed: false));
+		Assert.IsFalse(RouteIntroSettings.Applies(false, trimmed: true));
+		Assert.IsTrue(RouteIntroSettings.Applies(true, trimmed: true));
+		Assert.IsTrue(RouteIntroSettings.Applies(true, trimmed: false));
+	}
+
+	[TestMethod]
 	public void ApplyTo_IsTheReverseOfFrom_AndLeavesTheRestAlone()
 	{
 		var routeIntro = new RouteIntroSettings(false, 7.5, RouteIntroStats.MaxSpeed | RouteIntroStats.MaxLean, UnitSystem.Imperial, true, "carto-dark",

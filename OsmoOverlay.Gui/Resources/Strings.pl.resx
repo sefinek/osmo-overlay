@@ -602,6 +602,12 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
   <data name="Cut_NothingSelected" xml:space="preserve">
     <value>Jeszcze nic nie zaznaczono.</value>
   </data>
+  <data name="Cut_CaptionPlaceholder" xml:space="preserve">
+    <value>Tekst przy cięciu (opcjonalnie)</value>
+  </data>
+  <data name="Cut_CaptionHint" xml:space="preserve">
+    <value>Tekst pojawi się na środku obrazu w miejscu cięcia i zniknie po czasie podanym obok. Możesz w nim wyjaśnić, co zostało wycięte.</value>
+  </data>
   <data name="Cut_OverlapNote" xml:space="preserve">
     <value>Podgląd nie pokazuje przenikania. Odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. Wyrenderowany film zawiera przenikanie i jest krótszy o czas trwania przejścia.</value>
   </data>
@@ -1844,6 +1850,27 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
   <data name="Project_RecordingsNotFoundTitle" xml:space="preserve">
     <value>Nie znaleziono nagrań</value>
   </data>
+  <data name="Project_SavedAtTitle" xml:space="preserve">
+    <value>zapisano o {0}</value>
+  </data>
+  <data name="Main_RenderRange" xml:space="preserve">
+    <value>Fragment</value>
+  </data>
+  <data name="Main_RenderRangeHint" xml:space="preserve">
+    <value>Renderuje tylko zaznaczony fragment. Zaznacz go na osi czasu, przeciągając z Shiftem, albo klawiszami I (początek) i O (koniec).</value>
+  </data>
+  <data name="Render_PickRange" xml:space="preserve">
+    <value>Zaznacz fragment na osi czasu (przeciągnij z Shiftem albo użyj klawiszy I i O), a potem kliknij przycisk jeszcze raz.</value>
+  </data>
+  <data name="Render_LogRange" xml:space="preserve">
+    <value>Renderuję tylko zaznaczony fragment: {0}</value>
+  </data>
+  <data name="Settings_RouteIntroWhenTrimmed" xml:space="preserve">
+    <value>Pokazuj wstęp także po przycięciu początku nagrania</value>
+  </data>
+  <data name="Settings_RouteIntroWhenTrimmedHint" xml:space="preserve">
+    <value>Domyślnie wstęp jest pomijany, jeśli film nie zawiera początku nagrania. Wycięcia w dalszej części nagrania nie wyłączają wstępu.</value>
+  </data>
   <data name="Project_Saved" xml:space="preserve">
     <value>Zapisano projekt: {0}</value>
   </data>
@@ -1983,7 +2010,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Korekta zwiększa odczyty prędkości na nakładce w podglądzie i renderze. Możesz obliczyć ją z porównywanych odczytów lub sprawdzić na nagraniu. Ustawienie dotyczy wszystkich nagrań i zapisuje się po zamknięciu tego okna.</value>
   </data>
   <data name="Settings_AFullscreenCardForThe" xml:space="preserve">
-    <value>Wyświetla na początku filmu pełnoekranową planszę z mapą całej trasy i statystykami przejazdu. Wymaga danych GPS oraz połączenia z internetem do pobrania mapy.</value>
+    <value>Przez pierwsze sekundy filmu pokazuje planszę z mapą i statystykami zachowanej części nagrania. Nie wydłuża filmu. Wymaga danych GPS. Do pobrania mapy potrzebne jest połączenie z internetem.</value>
   </data>
   <data name="Settings_AFullScreenWindowThere" xml:space="preserve">
     <value>Otwiera okno pełnoekranowe na wybranym monitorze. Podczas odtwarzania pokazuje podgląd, a poza nim log. Naciśnij Esc lub F9, aby je zamknąć.</value>
@@ -2043,7 +2070,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Żaden widżet nie rzuca cienia: ani w podglądzie, ani w zrzucie klatki, ani w renderze. Ustawienia cienia w widżetach zostają zachowane, ale do czasu wyłączenia tej opcji nie da się ich zmieniać.</value>
   </data>
   <data name="Settings_AverageSpeed" xml:space="preserve">
-    <value>Średnia prędkość</value>
+    <value>Średnia prędkość w ruchu</value>
   </data>
   <data name="Settings_Behavior" xml:space="preserve">
     <value>Zachowanie</value>
@@ -2118,7 +2145,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Pobieranie OsmoOverlay {0}... {1:0}%</value>
   </data>
   <data name="Settings_DurationSeconds" xml:space="preserve">
-    <value>Czas trwania (sekundy)</value>
+    <value>Czas wyświetlania (sekundy)</value>
   </data>
   <data name="Settings_EffortPerFrameAtThe" xml:space="preserve">
     <value>Określa nakład pracy enkodera przy niezmienionym bitrate. Domyślny preset P7 zapewnia najlepszą jakość, a niższe presety przyspieszają kodowanie. Na kartach AMD P6-P7 odpowiadają trybowi quality, a P3-P5 trybowi balanced. Dotyczy tylko enkoderów GPU; enkoder CPU ma osobne ustawienia.</value>
@@ -2130,7 +2157,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Preset enkodera (GPU)</value>
   </data>
   <data name="Settings_EverythingBelowAppliesOnlyWhile" xml:space="preserve">
-    <value>Poniższe ustawienia działają tylko wtedy, gdy ta opcja jest włączona.</value>
+    <value>Włącz tę opcję, aby korzystać z poniższych ustawień.</value>
   </data>
   <data name="Settings_FastStartForWebPlayback" xml:space="preserve">
     <value>Szybki start przy odtwarzaniu w sieci</value>
@@ -2145,7 +2172,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Podgląd pełnoekranowy</value>
   </data>
   <data name="Settings_GreenWhenSlowThroughYellow" xml:space="preserve">
-    <value>Kolor zmienia się od zielonego przy niskiej prędkości, przez żółty i pomarańczowy, do czerwonego przy prędkości maksymalnej.</value>
+    <value>Kolor trasy zmienia się od zielonego przy małej prędkości, przez żółty i pomarańczowy, do czerwonego przy dużej. Skala dopasowuje się do prędkości w filmie.</value>
   </data>
   <data name="Settings_HigherMakesABiggerFile" xml:space="preserve">
     <value>Wyższy bitrate zwiększa rozmiar pliku, ale pomaga zachować ostrość drobnego tekstu nakładki po ponownej kompresji przez YouTube i podobne serwisy.</value>
@@ -2289,7 +2316,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Przeczytaj licencję</value>
   </data>
   <data name="Settings_RecordingDuration" xml:space="preserve">
-    <value>Czas trwania nagrania</value>
+    <value>Czas trwania filmu</value>
   </data>
   <data name="Settings_RemoveAssociation" xml:space="preserve">
     <value>Usuń skojarzenie</value>
@@ -2319,7 +2346,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Przyspiesza przetwarzanie klatek bez zmiany obrazu. Wyłącz tę opcję, jeśli renderowanie kończy się błędem po aktualizacji sterownika lub na nietypowej karcie graficznej.</value>
   </data>
   <data name="Settings_ShowTheRouteOverviewAt" xml:space="preserve">
-    <value>Pokaż przegląd trasy na początku</value>
+    <value>Pokazuj planszę z trasą na początku filmu</value>
   </data>
   <data name="Settings_SizePositionScreenAndMaximized" xml:space="preserve">
     <value>Rozmiar, położenie, ekran i stan maksymalizacji. Po wyłączeniu okno zawsze startuje zmaksymalizowane.</value>
@@ -3321,16 +3348,16 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Zaznacz start i metę</value>
   </data>
   <data name="Settings_RouteIntroStartFinishHint" xml:space="preserve">
-    <value>Znaczniki na początku i na końcu trasy, podpisane tekstem z pól poniżej. Puste pole zostawia sam znacznik.</value>
+    <value>Oznacza początek i koniec trasy na mapie. Podpisy znaczników możesz zmienić poniżej. Zostaw puste pole, aby wyświetlić znacznik bez podpisu.</value>
   </data>
   <data name="Settings_RouteIntroStartLabel" xml:space="preserve">
-    <value>Napis przy starcie</value>
+    <value>Podpis startu</value>
   </data>
   <data name="Settings_RouteIntroFinishLabel" xml:space="preserve">
-    <value>Napis przy mecie</value>
+    <value>Podpis mety</value>
   </data>
   <data name="Settings_RouteIntroStatsHint" xml:space="preserve">
-    <value>Dla każdej statystyki możesz wpisać własny podpis wyświetlany w filmie, np. w innym języku. Puste pole oznacza podpis domyślny.</value>
+    <value>Możesz zmienić podpis każdej statystyki wyświetlanej na planszy. Zostaw puste pole, aby użyć domyślnego podpisu.</value>
   </data>
   <data name="Settings_HighestPoint" xml:space="preserve">
     <value>Najwyższy punkt</value>
@@ -3351,7 +3378,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Ukryj po dojechaniu do mety (s)</value>
   </data>
   <data name="Main_TripProgressHideAfterArrivalHint" xml:space="preserve">
-    <value>Pasek zniknie po tylu sekundach od dojechania do mety, czyli od wjazdu w margines dojazdu. To zdarzenie zastępuje ręcznie ustawiony czas zniknięcia, dlatego pole czasu jest zablokowane.</value>
+    <value>Pasek zniknie podaną liczbę sekund po dojechaniu do mety (gdy wjedziesz w margines dojazdu). Zastępuje to ręcznie ustawiony czas zniknięcia, więc to pole jest zablokowane.</value>
   </data>
   <data name="Main_TripProgressSpeedGateHint" xml:space="preserve">
     <value>Pasek pojawi się, gdy prędkość po raz pierwszy osiągnie ustawiony próg. To zdarzenie zastępuje ręcznie ustawiony czas pojawienia się, dlatego pole czasu jest zablokowane.</value>
@@ -3732,13 +3759,13 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Wstęp z trasą do {0}. Karta zasłania początek nagrania, a widżety pojawiają się, gdy się ona rozmywa. Znak wodny jest na karcie w rogu, a jako widżet liczy czas od jej końca.</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
-    <value>Wstęp z trasą jest włączony, więc znak wodny pojawia się dopiero po jego końcu - pola czasu pokazują, kiedy jest faktycznie widoczny. Na samej karcie trasy znak wodny jest w jej rogu.</value>
+    <value>Wstęp z trasą jest włączony, więc znak wodny pojawia się dopiero po jego zakończeniu. Pola czasu pokazują, kiedy widać go naprawdę. Na samej karcie trasy znak wodny jest w jej rogu.</value>
   </data>
   <data name="Layers_FromSpeed" xml:space="preserve">
     <value>{0} (od {1} km/h)</value>
   </data>
   <data name="TripProgress_AfterRouteIntro" xml:space="preserve">
-    <value>Wstęp z trasą jest włączony, więc pasek pojawia się dopiero po jego końcu, tak samo jak znak wodny przed nim - pola czasu pokazują, kiedy jest faktycznie widoczny. Gdy pasek czeka na prędkość, liczy się tylko ona.</value>
+    <value>Wstęp z trasą jest włączony, więc pasek (jak znak wodny przed nim) pojawia się dopiero po jego zakończeniu. Pola czasu pokazują, kiedy widać go naprawdę. Gdy pasek czeka na prędkość, liczy się tylko ona.</value>
   </data>
   <data name="Timeline_FileLabel" xml:space="preserve">
     <value>{0}. {1}</value>

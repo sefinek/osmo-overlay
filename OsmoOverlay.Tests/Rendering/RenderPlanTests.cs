@@ -94,6 +94,16 @@ public sealed class RenderPlanTests
 	}
 
 	[TestMethod]
+	public void StartsLate_OnlyWhenTheOutputDoesNotOpenWithTheRecordingsFirstFrame()
+	{
+		Assert.IsFalse(Resolve().StartsLate, "the whole recording");
+		Assert.IsFalse(Resolve(null, 100).StartsLate, "an end trimmed");
+		Assert.IsFalse(Resolve(null, null, null, new TimeRange(65, 70)).StartsLate, "a cut further in keeps the start");
+		Assert.IsTrue(Resolve(60, null).StartsLate, "a range from later");
+		Assert.IsTrue(Resolve(null, null, null, new TimeRange(0, 30)).StartsLate, "the start cut off");
+	}
+
+	[TestMethod]
 	public void CutCoveringEverything_Throws()
 	{
 		Assert.ThrowsExactly<InvalidOperationException>(() => Resolve(60, 70, null, new TimeRange(50, 80)));

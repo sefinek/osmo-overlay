@@ -362,6 +362,15 @@
 					</Border>
 
 					<StackPanel Name="RouteIntroOptionsPanel" Spacing="14">
+						<Border Classes="settingsCard">
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroWhenTrimmed}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroWhenTrimmedHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="RouteIntroWhenTrimmedCheck" />
+							</Grid>
+						</Border>
 						<TextBlock Text="{x:Static local:Strings.Settings_Card}" Classes="sectionLabel" />
 						<Border Classes="settingsCard">
 							<StackPanel>

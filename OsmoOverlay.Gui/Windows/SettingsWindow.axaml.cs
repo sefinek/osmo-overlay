@@ -154,6 +154,7 @@ public partial class SettingsWindow : Window
 		ShowRouteIntroCheck.IsChecked = routeIntro.Enabled;
 		RouteIntroOptionsPanel.IsEnabled = routeIntro.Enabled;
 		RouteIntroDurationBox.Value = (decimal)routeIntro.DurationSeconds;
+		RouteIntroWhenTrimmedCheck.IsChecked = routeIntro.ShowWhenTrimmed;
 		LoadRouteIntroStats(routeIntro);
 		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
 		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
@@ -309,7 +310,8 @@ public partial class SettingsWindow : Window
 		RouteIntroStartFinishCheck.IsChecked == true,
 		OwnEndLabel(RouteIntroStartLabelBox.Text, RouteIntroSettings.DefaultStartLabel),
 		OwnEndLabel(RouteIntroFinishLabelBox.Text, RouteIntroSettings.DefaultFinishLabel),
-		RouteIntroLabels.From(_routeIntroStatRows.ToDictionary(r => r.Key.ToString(), r => r.Value.Label.Text ?? "")));
+		RouteIntroLabels.From(_routeIntroStatRows.ToDictionary(r => r.Key.ToString(), r => r.Value.Label.Text ?? "")),
+		RouteIntroWhenTrimmedCheck.IsChecked == true);
 
 	/// <summary>
 	///     A start/finish caption as typed - the box shows the built-in one, and left as that it stays the built-in (null), so it

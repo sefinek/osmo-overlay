@@ -1,12 +1,15 @@
 using OsmoOverlay.Core.Localization;
 namespace OsmoOverlay.Core;
 
-/// <summary>A stretch of the recording in seconds, e.g. a part to cut out - Transition is what a cut does where it joins the parts around it.</summary>
-public sealed record TimeRange(double StartSeconds, double EndSeconds, CutTransition? Transition = null);
+/// <summary>
+///     A stretch of the recording in seconds, e.g. a part to cut out - Transition is what a cut does where it joins the parts around
+///     it, Caption the text shown there.
+/// </summary>
+public sealed record TimeRange(double StartSeconds, double EndSeconds, CutTransition? Transition = null, CutCaption? Caption = null);
 
 /// <summary>
 ///     Frames [SourceStartFrame, SourceStartFrame + FrameCount) of the recording, on the combined timeline of all segments.
-///     TransitionIn/TransitionOut are those of the cuts this piece follows and precedes. A fade through a color happens
+///     TransitionIn/TransitionOut are those of the cuts this piece follows and precedes, CaptionIn the text of the one it follows. A fade through a color happens
 ///     within the piece's own frames; an overlapping transition (CutTransition.Overlaps) instead shows this piece's first
 ///     OverlapIn frames together with the previous piece's last ones, so those frames take no time of their own in the output.
 /// </summary>
@@ -15,7 +18,8 @@ public sealed record RenderPiece(
 	long FrameCount,
 	CutTransition? TransitionIn = null,
 	CutTransition? TransitionOut = null,
-	int OverlapIn = 0)
+	int OverlapIn = 0,
+	CutCaption? CaptionIn = null)
 {
 	public long SourceEndFrame => SourceStartFrame + FrameCount;
 }
@@ -27,6 +31,9 @@ public sealed record RenderPiece(
 /// </summary>
 public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartial)
 {
+	/// <summary>True when the output starts later than the recording does - its first kept frame isn't the recording's first.</summary>
+	public bool StartsLate => Pieces[0].SourceStartFrame > 0;
+
 	/// <summary>The output's length - every kept frame, less those two parts share in an overlapping transition.</summary>
 	public long TotalFrames => Pieces.Sum(p => p.FrameCount - p.OverlapIn);
 
@@ -53,6 +60,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 		List<RenderPiece> pieces = [];
 		long cursor = start;
 		CutTransition? joinTransition = null;
+		CutCaption? joinCaption = null;
 
 		// The cut just passed joins the piece before it to this one.
 		void AddPiece(long from, long count)
@@ -64,12 +72,15 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 				piece = piece with { TransitionIn = joinTransition };
 			}
 
+			if (joinCaption is not null && pieces.Count > 0) piece = piece with { CaptionIn = joinCaption };
+
 			joinTransition = null;
+			joinCaption = null;
 			pieces.Add(piece);
 		}
 
-		foreach ((long cutStart, long cutEnd, CutTransition? transition) in (cutOuts ?? [])
-		         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds), c.Transition))
+		foreach ((long cutStart, long cutEnd, CutTransition? transition, CutCaption? caption) in (cutOuts ?? [])
+		         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds), c.Transition, c.Caption))
 		         .Where(c => c.End > c.Start)
 		         .OrderBy(c => c.Start))
 		{
@@ -79,6 +90,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 			{
 				AddPiece(cursor, cutStart - cursor);
 				joinTransition = transition;
+				joinCaption = caption;
 			}
 
 			cursor = Math.Max(cursor, cutEnd);

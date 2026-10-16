@@ -30,6 +30,38 @@ public sealed class OutputTimeline
 
 	public RenderPlan Plan { get; }
 
+	/// <summary>
+	///     The captions of the cuts that join two kept parts (CutCaption), each from where the cut's transition begins on screen: for
+	///     an overlapping one (crossfade, wipe, slide) where the later part starts, for a fade through a color where the earlier part
+	///     begins to fade out - so the text comes in with the transition, and without one at the join.
+	/// </summary>
+	public IReadOnlyList<CutCaptionAt> Captions
+	{
+		get
+		{
+			List<CutCaptionAt> captions = [];
+			for (int i = 1; i < Plan.Pieces.Count; i++)
+			{
+				if (Plan.Pieces[i].CaptionIn is not { } caption) continue;
+
+				// The transition as it plays on screen: the frames an overlap shares, a dip's two halves (each as long as its part lets it be).
+				long startFrame = _outputStartFrames[i], transitionFrames = Plan.Pieces[i].OverlapIn;
+				if (Plan.Pieces[i].TransitionIn is { Overlaps: false } dip)
+				{
+					int outHalf = dip.HalfFrames(_fps, Plan.Pieces[i - 1].FrameCount);
+					startFrame -= outHalf;
+					transitionFrames = outHalf + dip.HalfFrames(_fps, Plan.Pieces[i].FrameCount);
+				}
+
+				double start = startFrame / _fps;
+				double fade = transitionFrames > 0 ? transitionFrames / _fps : CutCaptionAt.DefaultFadeSeconds;
+				captions.Add(new CutCaptionAt(start, Math.Min(start + caption.Seconds, DurationSeconds), caption.Text, fade));
+			}
+
+			return captions;
+		}
+	}
+
 	/// <summary>The output's length - every kept frame back to back.</summary>
 	public double DurationSeconds => Plan.TotalFrames / _fps;
 

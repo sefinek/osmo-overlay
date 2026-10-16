@@ -58,6 +58,26 @@ public sealed record RenderOptions(
 			name = name[..^"_overlay".Length];
 		return Path.Combine(dir, $"{name}_greenscreen{ext}");
 	}
+
+	/// <summary>
+	///     The output path of a render of just a part of the recording: the normal one with the part's times in the name
+	///     ("clip_01m30s-02m10s.mp4"), so it can't overwrite the render of the whole recording.
+	/// </summary>
+	public static string RangeOutputPath(string outputPath, double startSeconds, double endSeconds)
+	{
+		string dir = Path.GetDirectoryName(outputPath) ?? ".";
+		string name = Path.GetFileNameWithoutExtension(outputPath);
+		string ext = Path.GetExtension(outputPath);
+		if (name.EndsWith("_overlay", StringComparison.OrdinalIgnoreCase))
+			name = name[..^"_overlay".Length];
+		return Path.Combine(dir, $"{name}_{FileTime(startSeconds)}-{FileTime(endSeconds)}{ext}");
+	}
+
+	private static string FileTime(double seconds)
+	{
+		var time = TimeSpan.FromSeconds(Math.Floor(Math.Max(0, seconds)));
+		return time.TotalHours >= 1 ? $"{(int)time.TotalHours}h{time.Minutes:00}m{time.Seconds:00}s" : $"{time.Minutes:00}m{time.Seconds:00}s";
+	}
 }
 
 public enum RenderPhase
@@ -156,7 +176,8 @@ public static class RenderJob
 			var plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
 				fps, segments.TotalFrameCount());
 			// The overlay describes the video as rendered: telemetry moved onto the output's own timeline.
-			List<DerivedFrame> derived = new OutputTimeline(plan, fps).MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps, settings.SpeedCorrectionPercent));
+			var outputTimeline = new OutputTimeline(plan, fps);
+			List<DerivedFrame> derived = outputTimeline.MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps, settings.SpeedCorrectionPercent));
 			double startAltitude = derived[0].Raw.AltitudeMeters;
 			double maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
@@ -185,12 +206,14 @@ public static class RenderJob
 			bool hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
 			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
+			RouteIntroSettings routeIntro = RouteIntroSettings.ForRecording(settings, hasGpsFix, camera, plan.StartsLate);
 			using var renderer = new OverlayRenderer(output.Width, output.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
-				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), RouteIntroSettings.ForRecording(settings, hasGpsFix, camera))
+				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), routeIntro)
 			{
 				RouteAcrossCuts = settings.RouteAcrossCuts,
 				OutputDurationSeconds = plan.TotalFrames / fps,
+				CutCaptions = outputTimeline.Captions,
 				DrawShadows = !settings.DisableShadows
 			};
 
@@ -209,7 +232,7 @@ public static class RenderJob
 				}
 			}
 
-			if (settings.ShowRouteIntro && hasGpsFix)
+			if (routeIntro.Enabled)
 			{
 				Report(RenderPhase.Rendering, CoreStrings.Render_FetchingOverview);
 				try
