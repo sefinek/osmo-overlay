@@ -86,6 +86,7 @@ public partial class MainWindow : Window
 	private bool _suppressOverlayEvents;
 	// Every widget panel's shadow controls, set up in the constructor (LockShadowEditors).
 	private readonly ElementShadowEditor[] _shadowEditors;
+	private readonly ElementTimingEditor[] _timingEditors;
 	private bool _suppressTimelineEvent;
 	private bool _timelineScrubbing;
 
@@ -116,14 +117,14 @@ public partial class MainWindow : Window
 		GpsAlertMessageCombo.ItemsSource = GpsAlertMessageOptions;
 		PresetComboBox.ItemTemplate = PresetItemTemplate();
 
-		ElementTimingEditor[] timingEditors =
+		_timingEditors =
 		[
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
 			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
 			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
 			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming
 		];
-		foreach (ElementTimingEditor timing in timingEditors) timing.TimingChanged += OnElementTimingChanged;
+		foreach (ElementTimingEditor timing in _timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
 		_shadowEditors =
 		[
@@ -468,6 +469,9 @@ public partial class MainWindow : Window
 		// The picker in Settings writes the shared keys itself - the open preview picks them up here.
 		else OnMapSourcesShared();
 		RefreshMapSourceEditor();
+		// The route overview card moves the opening widgets' times (IntroShiftSeconds) - an open panel shows them anew.
+		if (needsPreviewReopen && _editingElementId is { } editing && ActiveElements.FirstOrDefault(el => el.Id == editing) is { } editingElement)
+			PopulateElementSettings(editingElement);
 
 		if (_summary is { } summary && _phase == UiPhase.SummaryReady)
 		{

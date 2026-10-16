@@ -112,6 +112,34 @@ public sealed class OverlayPresetTests
 	}
 
 	[TestMethod]
+	public void CreateDefault_GpsAlert_IsOn_AndCoversNoWidgetThatIsOnByDefault()
+	{
+		// The alert is on screen only with a GPS notice, so the test above can't measure it - its panel is measured here.
+		var preset = OverlayPreset.CreateDefault("d", "Default");
+		GpsAlertElement alert = preset.Elements.OfType<GpsAlertElement>().Single();
+		Assert.IsTrue(alert.Visible);
+
+		List<DerivedFrame> frames = [];
+		for (int i = 0; i < 30; i++)
+		{
+			frames.Add(new DerivedFrame(new TelemetryFrame(i, i / 30.0, 50, 20, 200, DateTime.UtcNow, 0, 0, 1, Iso: 400, ShutterSeconds: 0.001,
+				ColorTemperatureKelvin: 5000), 20, 0, 0, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
+		}
+
+		using var renderer = new OverlayRenderer((int)OverlayElementBounds.ReferenceWidth, (int)OverlayElementBounds.ReferenceHeight, 200,
+			preset.Elements, frames, 30, false, "DJI Osmo Action 6");
+		SKRect panel = OverlayElementBounds.GpsAlertBox(alert.FontFamily, alert.Texts);
+		panel.Offset(alert.X, alert.Y);
+
+		foreach (OverlayElement element in preset.Elements.Where(e => e.Visible && e is not GpsAlertElement))
+		{
+			if (renderer.MeasureElement(element, frames[10]) is not { } drawn) continue;
+			drawn.Offset(element.X, element.Y);
+			Assert.IsFalse(panel.IntersectsWith(drawn), $"the GPS alert covers {element.Type}");
+		}
+	}
+
+	[TestMethod]
 	public void CreateDefault_StaysInsideTheReferenceFrame()
 	{
 		foreach (OverlayElement element in OverlayPreset.CreateDefault("d", "Default").Elements)

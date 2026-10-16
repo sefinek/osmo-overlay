@@ -95,8 +95,8 @@ public sealed partial class OverlayRenderer
 	{
 		return detail.Replace(GpsTimeToken, message switch
 		{
-			GpsAlertMessage.Searching or GpsAlertMessage.Lost => "00:00",
-			GpsAlertMessage.Found or GpsAlertMessage.Back => "000.0",
+			GpsAlertMessage.Searching or GpsAlertMessage.Lost => "000:00",
+			GpsAlertMessage.Found or GpsAlertMessage.Back => "0000.0",
 			_ => ""
 		}, StringComparison.Ordinal);
 	}
@@ -118,10 +118,11 @@ public sealed partial class OverlayRenderer
 
 		if (alpha <= 0f) return;
 
-		if (_gpsAlertLook is not { } look || look.Family != element.FontFamily || look.Texts != element.Texts)
+		GpsAlertTexts texts = element.Texts ?? new GpsAlertTexts();
+		if (_gpsAlertLook is not { } look || look.Family != element.FontFamily || look.Texts != texts)
 		{
-			(string[] titles, string[] details) = GpsAlertLines(element.Texts);
-			_gpsAlertLook = look = new GpsAlertLook(element.FontFamily, element.Texts,
+			(string[] titles, string[] details) = GpsAlertLines(texts);
+			_gpsAlertLook = look = new GpsAlertLook(element.FontFamily, texts,
 				OverlayElementBounds.GpsAlertBox(element.FontFamily, titles, details), titles, details);
 		}
 

@@ -3347,6 +3347,12 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
   <data name="Main_TripProgressSpeedGate" xml:space="preserve">
     <value>Pokaż dopiero od prędkości (km/h)</value>
   </data>
+  <data name="Main_TripProgressHideAfterArrival" xml:space="preserve">
+    <value>Ukryj po dojechaniu do mety (s)</value>
+  </data>
+  <data name="Main_TripProgressHideAfterArrivalHint" xml:space="preserve">
+    <value>Pasek zniknie po tylu sekundach od dojechania do mety, czyli od wjazdu w margines dojazdu. To zdarzenie zastępuje ręcznie ustawiony czas zniknięcia, dlatego pole czasu jest zablokowane.</value>
+  </data>
   <data name="Main_TripProgressSpeedGateHint" xml:space="preserve">
     <value>Pasek pojawi się, gdy prędkość po raz pierwszy osiągnie ustawiony próg. To zdarzenie zastępuje ręcznie ustawiony czas pojawienia się, dlatego pole czasu jest zablokowane.</value>
   </data>
@@ -3726,13 +3732,13 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Wstęp z trasą do {0}. Karta zasłania początek nagrania, a widżety pojawiają się, gdy się ona rozmywa. Znak wodny jest na karcie w rogu, a jako widżet liczy czas od jej końca.</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
-    <value>Wstęp z trasą jest włączony, więc czas znaku wodnego liczy się od końca wstępu. Na samej karcie trasy znak wodny jest w jej rogu.</value>
+    <value>Wstęp z trasą jest włączony, więc znak wodny pojawia się dopiero po jego końcu - pola czasu pokazują, kiedy jest faktycznie widoczny. Na samej karcie trasy znak wodny jest w jej rogu.</value>
   </data>
   <data name="Layers_FromSpeed" xml:space="preserve">
     <value>{0} (od {1} km/h)</value>
   </data>
   <data name="TripProgress_AfterRouteIntro" xml:space="preserve">
-    <value>Wstęp z trasą jest włączony, więc czas paska liczy się od końca wstępu, tak samo jak znaku wodnego, który pojawia się przed nim. Gdy pasek czeka na prędkość, liczy się tylko ona.</value>
+    <value>Wstęp z trasą jest włączony, więc pasek pojawia się dopiero po jego końcu, tak samo jak znak wodny przed nim - pola czasu pokazują, kiedy jest faktycznie widoczny. Gdy pasek czeka na prędkość, liczy się tylko ona.</value>
   </data>
   <data name="Timeline_FileLabel" xml:space="preserve">
     <value>{0}. {1}</value>
@@ -3763,6 +3769,9 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
   </data>
   <data name="GpsAlert_Hint" xml:space="preserve">
     <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału na co najmniej sekundę (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
+  </data>
+  <data name="GpsAlert_TimingHint" xml:space="preserve">
+    <value>Moment pojawienia się i zniknięcia alertu zależy od GPS-a (np. utraty sygnału lub poprawy dokładności odczytu). Nie ma potrzeby zmieniania tych ustawień w widgecie.</value>
   </data>
   <data name="GpsAlert_Message" xml:space="preserve">
     <value>Komunikat</value>

@@ -102,6 +102,15 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 
+	/// <summary>See OverlayRenderer.ArrivalHideSeconds.</summary>
+	public double? ArrivalHideSeconds(OverlayElement element)
+	{
+		lock (_lock)
+		{
+			return Renderer.ArrivalHideSeconds(element);
+		}
+	}
+
 	/// <summary>See OverlayRenderer.AsShown.</summary>
 	public OverlayElement AsShown(OverlayElement element)
 	{

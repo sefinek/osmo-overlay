@@ -400,6 +400,12 @@ public sealed class PreviewPlayer : IDisposable
 		return _recording?.Compositor.SpeedGateSeconds(element);
 	}
 
+	/// <summary>When a trip progress bar set to leave after the finish goes in the open recording (OverlayRenderer.ArrivalHideSeconds) - null with none open.</summary>
+	public double? ArrivalHideSeconds(OverlayElement element)
+	{
+		return _recording?.Compositor.ArrivalHideSeconds(element);
+	}
+
 	/// <summary>The widget timed as the open recording shows it (OverlayRenderer.AsShown) - as it is with none open.</summary>
 	public OverlayElement AsShown(OverlayElement element)
 	{

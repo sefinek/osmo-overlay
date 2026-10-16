@@ -12,7 +12,9 @@ namespace OsmoOverlay.Gui;
 /// <summary>
 ///     One widget on a layer: what it shows (Label) and when it's on screen, in output seconds - OverlayElement's own timing,
 ///     the way out as stored (null: none, see ElementAnimation). StartLocked: its start isn't its own to drag (a progress bar
-///     waiting for a speed) - its edge doesn't grab and its body doesn't move it in time.
+///     waiting for a speed) - its edge doesn't grab and its body doesn't move it in time; EndLocked the same for the end
+///     (a progress bar leaving after the finish). TimingFixed: the widget times itself (the GPS alert), so nothing about its
+///     timing is dragged - no edge, no fade handle, no move in time (a drop onto another layer still works).
 /// </summary>
 public sealed record LayerClip(
 	string Id,
@@ -24,7 +26,9 @@ public sealed record LayerClip(
 	OverlayAnimationType? OutAnimation,
 	double? OutAnimationDurationSeconds,
 	bool Available,
-	bool StartLocked = false)
+	bool StartLocked = false,
+	bool EndLocked = false,
+	bool TimingFixed = false)
 {
 	public OverlayAnimationType ResolvedOut => ElementAnimation.OutType(OutAnimation);
 	public double ResolvedOutSeconds => ElementAnimation.OutDuration(OutAnimationDurationSeconds);
@@ -444,7 +448,7 @@ public sealed class LayerTimeline : Control
 
 		context.DrawRectangle(null, selected ? SelectedClipBorder : ClipBorder, rect.Deflate(0.5), 3, 3);
 
-		if (CanEdit(clip, track))
+		if (CanEdit(clip, track) && !clip.TimingFixed)
 		{
 			const double half = FadeHandleSize / 2;
 			context.FillRectangle(FadeHandleBrush, new Rect(X(fadeIn) - half, top, FadeHandleSize, FadeHandleSize / 1.4));
@@ -518,7 +522,7 @@ public sealed class LayerTimeline : Control
 		{
 			LayerClip clip = clips[i];
 			(double x1, double x2, double top, double bottom) = ClipRect(clip, track);
-			if (CanEdit(clip, track))
+			if (CanEdit(clip, track) && !clip.TimingFixed)
 			{
 				(double fadeIn, double fadeOut) = FadeEnds(clip);
 				if (point.Y <= top + FadeHandleSize)
@@ -530,7 +534,7 @@ public sealed class LayerTimeline : Control
 				if (point.Y >= top && point.Y <= bottom)
 				{
 					if (!clip.StartLocked && Math.Abs(point.X - x1) <= EdgeGrabPixels) return (track, clip, Zone.Start);
-					if (Math.Abs(point.X - x2) <= EdgeGrabPixels) return (track, clip, Zone.End);
+					if (!clip.EndLocked && Math.Abs(point.X - x2) <= EdgeGrabPixels) return (track, clip, Zone.End);
 				}
 			}
 
@@ -764,8 +768,8 @@ public sealed class LayerTimeline : Control
 			case Zone.End:
 				disappear = OrEnd(Math.Clamp(Snap(at, clip.Id), start + MinClipSeconds, OutputDurationSeconds));
 				break;
-			case Zone.Body when clip.StartLocked:
-				// Its start is a speed's, not a time - only a drop onto another layer moves it.
+			case Zone.Body when clip.StartLocked || clip.EndLocked || clip.TimingFixed:
+				// Its start is a speed's, or its end the finish's, not a time - only a drop onto another layer moves it.
 				break;
 			case Zone.Body when clip.DisappearAtSeconds is null:
 				// A clip running to the end moves its start only - the end stays "never".

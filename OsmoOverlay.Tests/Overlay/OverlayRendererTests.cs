@@ -255,6 +255,26 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
+	public void TripProgressBar_LeavesAfterTheRideArrives()
+	{
+		List<DerivedFrame> frames = Route(300, 0);
+		using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, [], frames,
+			TelemetryProcessor.Summarize(frames).MaxSpeedKmh, false);
+		var bar = new TripProgressBarElement { X = 320, Y = 330, ShowFromSpeedKmh = null };
+		double total = frames[^1].CumulativeDistanceMeters;
+		double arrived = frames.First(f => total - f.CumulativeDistanceMeters <= bar.TripArrivedToleranceMeters).Raw.SampleTimeSeconds;
+
+		OverlayElement shown = renderer.AsShown(bar);
+		Assert.AreEqual(arrived + OverlayRenderer.TripProgressHideAfterArrivalDefaultSeconds, shown.DisappearAtSeconds);
+		Assert.AreEqual(OverlayAnimationType.Fade, shown.OutAnimationType, "leaves the way it came in rather than cutting");
+
+		Assert.AreEqual(arrived + 1, renderer.AsShown(bar with { HideAfterArrivalSeconds = 1 }).DisappearAtSeconds);
+		Assert.IsNull(renderer.AsShown(bar with { HideAfterArrivalSeconds = null }).DisappearAtSeconds, "off");
+		Assert.AreEqual(arrived + 5, renderer.AsShown(bar with { DisappearAtSeconds = 2 }).DisappearAtSeconds, "it takes the disappear time's place");
+		Assert.AreEqual(2, renderer.AsShown(bar with { HideAfterArrivalSeconds = null, DisappearAtSeconds = 2 }).DisappearAtSeconds, "off: its own end");
+	}
+
+	[TestMethod]
 	public void ProfileChart_MovesWithTheRide()
 	{
 		List<DerivedFrame> frames = Route(300, 0);

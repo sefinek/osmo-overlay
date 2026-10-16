@@ -501,6 +501,8 @@ public sealed record TripProgressBarElement : OverlayElement, IPanelElement
 	// Kept off screen until the ride first reaches this speed (km/h), in place of AppearAtSeconds - null shows it on its own
 	// timing. On by default: "X% / Y km left" reads as a status update only once the ride is under way.
 	public double? ShowFromSpeedKmh { get; init; } = OverlayRenderer.TripProgressSpeedGateDefaultKmh;
+	// Leaves this many seconds after the ride reaches the finish (TripArrivedToleranceMeters) - null keeps it to its own DisappearAtSeconds.
+	public double? HideAfterArrivalSeconds { get; init; } = OverlayRenderer.TripProgressHideAfterArrivalDefaultSeconds;
 }
 
 public enum ProfileSeries

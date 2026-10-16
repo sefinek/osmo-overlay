@@ -89,7 +89,7 @@ public partial class MainWindow
 
 	private void OnGpsAlertTextChanged(object? sender, RoutedEventArgs e)
 	{
-		if (_editingElementId is not { } id || GpsAlertMessageCombo.SelectedItem is not GpsAlertMessageOption option) return;
+		if (_suppressOverlayEvents || _editingElementId is not { } id || GpsAlertMessageCombo.SelectedItem is not GpsAlertMessageOption option) return;
 
 		var text = new GpsAlertText(OwnText(GpsAlertTitleBox.Text), OwnText(GpsAlertDetailBox.Text));
 		UpdateElement(id, el => el is GpsAlertElement alert ? alert with { Texts = alert.Texts.With(option.Message, text) } : el);
@@ -309,14 +309,40 @@ public partial class MainWindow
 		TripProgressSpeedGateBox.IsEnabled = on;
 		double? kmh = on ? (double)(TripProgressSpeedGateBox.Value ?? (decimal)OverlayRenderer.TripProgressSpeedGateDefaultKmh) : null;
 		UpdateElement(id, el => el is TripProgressBarElement t ? t with { ShowFromSpeedKmh = kmh } : el);
-		if (ActiveElements.FirstOrDefault(e => e.Id == id) is TripProgressBarElement bar) LockTripProgressAppear(bar);
+		if (ActiveElements.FirstOrDefault(e => e.Id == id) is TripProgressBarElement bar) LockTripProgressTiming(bar);
 	}
 
-	/// <summary>With the speed gate on, the bar's appear time is the moment the speed is first reached - shown, not edited.</summary>
-	private void LockTripProgressAppear(TripProgressBarElement bar)
+	private void OnTripProgressHideClick(object? sender, RoutedEventArgs e)
+	{
+		OnTripProgressHideChanged();
+	}
+
+	private void OnTripProgressHideValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		OnTripProgressHideChanged();
+	}
+
+	private void OnTripProgressHideChanged()
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool on = TripProgressHideCheck.IsChecked == true;
+		TripProgressHideBox.IsEnabled = on;
+		double? seconds = on ? (double)(TripProgressHideBox.Value ?? (decimal)OverlayRenderer.TripProgressHideAfterArrivalDefaultSeconds) : null;
+		UpdateElement(id, el => el is TripProgressBarElement t ? t with { HideAfterArrivalSeconds = seconds } : el);
+		if (ActiveElements.FirstOrDefault(e => e.Id == id) is TripProgressBarElement bar) LockTripProgressTiming(bar);
+	}
+
+	/// <summary>
+	///     With the speed gate on, the bar's appear time is the moment the speed is first reached, and with leaving after the finish
+	///     on its disappear time is that moment - shown, not edited.
+	/// </summary>
+	private void LockTripProgressTiming(TripProgressBarElement bar)
 	{
 		double? reached = _previewPlayer.SpeedGateSeconds(bar);
 		TripProgressBarTiming.LockAppear(bar.ShowFromSpeedKmh is not null, reached is { } at && double.IsFinite(at) ? at : null);
+		double? hideAt = _previewPlayer.ArrivalHideSeconds(bar);
+		TripProgressBarTiming.LockDisappear(bar.HideAfterArrivalSeconds is not null && hideAt is not null, hideAt);
 	}
 
 	private void OnTripProgressLabelChanged(object? sender, RoutedEventArgs e)

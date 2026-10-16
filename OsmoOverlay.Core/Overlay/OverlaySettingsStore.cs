@@ -192,8 +192,14 @@ public static class OverlaySettingsStore
 		{
 			if (File.Exists(StorePath))
 			{
-				OverlaySettings? settings = JsonSerializer.Deserialize<OverlaySettings>(File.ReadAllText(StorePath));
-				if (settings is not null) return settings;
+				OverlaySettings? stored = JsonSerializer.Deserialize<OverlaySettings>(File.ReadAllText(StorePath));
+				if (stored is not null)
+				{
+					OverlaySettings settings = Unprotect(stored);
+					// A key written in the clear by an earlier version is protected on the spot, not only at some later save.
+					if (HasPlainSecrets(stored)) Save(settings);
+					return settings;
+				}
 			}
 		}
 		catch (Exception ex)
@@ -210,13 +216,46 @@ public static class OverlaySettingsStore
 		try
 		{
 			Directory.CreateDirectory(StoreDir);
-			AtomicFile.WriteAllText(StorePath, JsonSerializer.Serialize(settings));
+			AtomicFile.WriteAllText(StorePath, JsonSerializer.Serialize(Protect(settings)));
 		}
 		catch (Exception ex)
 		{
 			// Best-effort cache: a failed write should not break the editing flow.
 			AppLogger.Warn(ex, CoreStrings.Settings_WriteFailed);
 		}
+	}
+
+	/// <summary>
+	///     The secrets in the file are the map API keys and the custom tile server's URL (its template often carries a key) -
+	///     protected on disk by SecretProtector, plain in memory.
+	/// </summary>
+	internal static OverlaySettings Protect(OverlaySettings settings)
+	{
+		return MapSecrets(settings, SecretProtector.Protect);
+	}
+
+	internal static OverlaySettings Unprotect(OverlaySettings settings)
+	{
+		return MapSecrets(settings, SecretProtector.Unprotect);
+	}
+
+	internal static bool HasPlainSecrets(OverlaySettings settings)
+	{
+		return (settings.MapApiKeys?.Values.Any(IsPlain) ?? false) || IsPlain(settings.CustomMapUrlTemplate);
+
+		static bool IsPlain(string? value)
+		{
+			return !string.IsNullOrEmpty(value) && !SecretProtector.IsProtected(value);
+		}
+	}
+
+	private static OverlaySettings MapSecrets(OverlaySettings settings, Func<string, string?> map)
+	{
+		Dictionary<string, string>? keys = settings.MapApiKeys is null
+			? null
+			: settings.MapApiKeys.Select(k => (k.Key, Value: map(k.Value))).Where(k => k.Value is not null).ToDictionary(k => k.Key, k => k.Value!);
+		string? template = string.IsNullOrEmpty(settings.CustomMapUrlTemplate) ? settings.CustomMapUrlTemplate : map(settings.CustomMapUrlTemplate);
+		return settings with { MapApiKeys = keys, CustomMapUrlTemplate = template };
 	}
 
 	/// <summary>

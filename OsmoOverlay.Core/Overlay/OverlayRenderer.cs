@@ -312,6 +312,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_observedMaxSpeedKmh = observedMaxSpeedKmh;
 		_tripStats = tripStats;
 		_firstReachingSeconds.Clear();
+		_arrivalSeconds.Clear();
 		_gpsAlerts = null;
 		TrailSpeedPercentileKmh = trailSpeedPercentileKmh;
 		_trailSpeedScaleKmh = Math.Max(trailSpeedPercentileKmh, 5);
@@ -343,6 +344,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
 		_tripStats = TripStats.Compute(allFrames);
 		_firstReachingSeconds.Clear();
+		_arrivalSeconds.Clear();
 		_gpsAlerts = null;
 		TrailSpeedPercentileKmh = ComputeTrailSpeedPercentile(allFrames);
 		_trailSpeedScaleKmh = Math.Max(TrailSpeedPercentileKmh, 5);
@@ -540,6 +542,8 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	public const double TripProgressSpeedGateDefaultKmh = 2;
 
+	public const double TripProgressHideAfterArrivalDefaultSeconds = 5;
+
 	/// <summary>
 	///     The widget timed as it's shown. A trip progress bar waiting for the ride to start (TripProgressBarElement.ShowFromSpeedKmh)
 	///     appears, with its own way in, when the speed first reaches its threshold - that takes the place of its own appear
@@ -549,6 +553,31 @@ public sealed partial class OverlayRenderer : IDisposable
 	///     but mid-video it would pop in.
 	/// </summary>
 	public OverlayElement AsShown(OverlayElement element)
+	{
+		// The GPS alert times itself (it's up only while the GPS has something to say, fading in and out on its own): a time or an
+		// animation of the widget's own would only cut a notice short.
+		if (element is GpsAlertElement)
+			return element with { AppearAtSeconds = null, DisappearAtSeconds = null, AnimationType = OverlayAnimationType.None, OutAnimationType = null };
+
+		OverlayElement shown = AsShownFromStart(element);
+		if (ArrivalHideSeconds(element) is not { } hideAt) return shown;
+
+		// Without a way out of its own it leaves the way it came in: a hard cut a few seconds after the finish reads as a glitch.
+		OverlayAnimationType way = ElementAnimation.OutType(shown.OutAnimationType);
+		return shown with { DisappearAtSeconds = hideAt, OutAnimationType = way == OverlayAnimationType.None ? OverlayAnimationType.Fade : way };
+	}
+
+	/// <summary>
+	///     When a trip progress bar set to leave after the finish (HideAfterArrivalSeconds) goes - that takes the place of its own
+	///     disappear time, like the speed gate does for the appear time. Null for any other widget, with the option off, or a
+	///     ride that never arrives.
+	/// </summary>
+	public double? ArrivalHideSeconds(OverlayElement element)
+	{
+		return element is TripProgressBarElement { HideAfterArrivalSeconds: { } after } bar && ArrivalSeconds(bar) is { } arrived ? arrived + after : null;
+	}
+
+	private OverlayElement AsShownFromStart(OverlayElement element)
 	{
 		if (SpeedGateSeconds(element) is { } reached && reached != element.AppearAtSeconds) return element with { AppearAtSeconds = reached };
 
@@ -601,6 +630,31 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	// When the frames first reach a speed (WithSpeedGate), per threshold - cleared with the frames.
 	private readonly Dictionary<double, double> _firstReachingSeconds = [];
+
+	// When the ride first comes within a tolerance of its total distance (NaN: it never does), per tolerance - cleared with the frames.
+	private readonly Dictionary<double, double> _arrivalSeconds = [];
+
+	/// <summary>When the ride first counts as arrived for this bar (the same margin DrawTripProgressBar shows "arrived" by) - null if it can't.</summary>
+	private double? ArrivalSeconds(TripProgressBarElement bar)
+	{
+		double tolerance = bar.TripArrivedToleranceMeters;
+		if (_totalDistanceMeters <= tolerance) return null;
+
+		if (!_arrivalSeconds.TryGetValue(tolerance, out double arrived))
+		{
+			arrived = double.NaN;
+			foreach (DerivedFrame frame in _allFrames)
+			{
+				if (_totalDistanceMeters - frame.CumulativeDistanceMeters > tolerance) continue;
+				arrived = frame.Raw.SampleTimeSeconds;
+				break;
+			}
+
+			_arrivalSeconds[tolerance] = arrived;
+		}
+
+		return double.IsNaN(arrived) ? null : arrived;
+	}
 
 	/// <summary>The credit line of the maps on screen and whether any of their terms require it (MapCreditRule.WhileMapVisible).</summary>
 	private readonly record struct MapCredit(string Text, bool Required);

@@ -1435,7 +1435,8 @@
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
-														<local:ElementTimingEditor Name="GpsAlertTiming" />
+														<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.GpsAlert_TimingHint}" />
+														<local:ElementTimingEditor Name="GpsAlertTiming" IsEnabled="False" />
 													</StackPanel>
 												</Border>
 											</StackPanel>
@@ -1786,6 +1787,14 @@
 														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_TripProgressSpeedGateHint}" />
+														<CheckBox Name="TripProgressHideCheck" Content="{x:Static local:Strings.Main_TripProgressHideAfterArrival}"
+														          Click="OnTripProgressHideClick" />
+														<NumericUpDown Name="TripProgressHideBox" Minimum="0" Maximum="600"
+														               Increment="1" FormatString="0.0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnTripProgressHideValueChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+														           TextWrapping="Wrap"
+														           Text="{x:Static local:Strings.Main_TripProgressHideAfterArrivalHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

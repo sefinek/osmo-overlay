@@ -638,6 +638,9 @@ public partial class MainWindow
 	{
 		_suppressOverlayEvents = true;
 
+		double visibleFrom = _previewPlayer.RouteIntroSpan?.End ?? 0;
+		foreach (ElementTimingEditor timing in _timingEditors) timing.VisibleFromSeconds = visibleFrom;
+
 		switch (el.Type)
 		{
 			case OverlayElementType.DateTimeText:
@@ -846,7 +849,7 @@ public partial class MainWindow
 			{
 				var x = (WatermarkElement)el;
 				WatermarkStyle.Populate(x);
-				WatermarkTiming.Populate(x);
+				WatermarkTiming.Populate(x, _previewPlayer.IntroShiftSeconds(x));
 				WatermarkShadow.Populate(x);
 				WatermarkOffHint.IsVisible = !_showWatermark;
 				WatermarkIntroHint.IsVisible = _previewPlayer.IntroShiftSeconds(x) > 0;
@@ -863,9 +866,12 @@ public partial class MainWindow
 				TripProgressSpeedGateCheck.IsChecked = x.ShowFromSpeedKmh is not null;
 				TripProgressSpeedGateBox.Value = (decimal)(x.ShowFromSpeedKmh ?? OverlayRenderer.TripProgressSpeedGateDefaultKmh);
 				TripProgressSpeedGateBox.IsEnabled = x.ShowFromSpeedKmh is not null;
+				TripProgressHideCheck.IsChecked = x.HideAfterArrivalSeconds is not null;
+				TripProgressHideBox.Value = (decimal)(x.HideAfterArrivalSeconds ?? OverlayRenderer.TripProgressHideAfterArrivalDefaultSeconds);
+				TripProgressHideBox.IsEnabled = x.HideAfterArrivalSeconds is not null;
 				TripProgressBarPanelFill.Populate(x);
-				TripProgressBarTiming.Populate(x);
-				LockTripProgressAppear(x);
+				TripProgressBarTiming.Populate(x, _previewPlayer.IntroShiftSeconds(x));
+				LockTripProgressTiming(x);
 				TripProgressIntroHint.IsVisible = _previewPlayer.IntroShiftSeconds(x) > 0;
 				TripProgressBarShadow.Populate(x);
 				break;

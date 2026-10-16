@@ -35,10 +35,10 @@ public sealed class GpsAlertTests
 		});
 	}
 
-	private static int DrawnPixels(double seconds)
+	private static int DrawnPixels(double seconds, GpsAlertElement? element = null)
 	{
 		List<DerivedFrame> frames = LossAndCorrection();
-		var alert = new GpsAlertElement { X = 1920, Y = 400 };
+		GpsAlertElement alert = element ?? new GpsAlertElement { X = 1920, Y = 400 };
 		using var renderer = new OverlayRenderer(3840, 2160, 200, [alert], frames, 20, false);
 		byte[] pixels = new byte[renderer.FrameBufferSize()];
 		renderer.RenderInto(TelemetryProcessor.FindNearest(frames, seconds), pixels, premultiplied: true);
@@ -57,6 +57,18 @@ public sealed class GpsAlertTests
 		Assert.IsTrue(DrawnPixels(4.5) > 10_000, "the signal lost");
 		Assert.IsTrue(DrawnPixels(5.8) > 10_000, "back, for a moment");
 		Assert.IsTrue(DrawnPixels(6.5) > 10_000, "a reading corrected");
+	}
+
+	[TestMethod]
+	public void ItsOwnTimingAndAnimation_AreIgnored()
+	{
+		var timed = new GpsAlertElement
+		{
+			X = 1920, Y = 400, AppearAtSeconds = 9, DisappearAtSeconds = 9.5, AnimationType = OverlayAnimationType.SlideUp
+		};
+
+		Assert.AreEqual(DrawnPixels(4.5), DrawnPixels(4.5, timed), "drawn the same during the loss, before its own appear time");
+		Assert.AreEqual(0, DrawnPixels(2, timed));
 	}
 
 	[TestMethod]
