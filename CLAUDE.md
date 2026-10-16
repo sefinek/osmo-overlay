@@ -127,6 +127,8 @@ Performance test (`BenchmarkWindow`, Core `RenderBenchmark`): opened from Tools'
 
 Ctrl+Shift+D in the main window opens `DeveloperWindow`: every `ConfirmDialog` kind, the render notifications, balloon, sound, log lines, taskbar states and the first-run windows with sample text. A new dialog or notification gets a button there.
 
+- Debug mode (`OverlaySettings.DebugMode`, Settings' Behavior tab; Shift held at startup turns it on for that run only, Windows, `StartupKeys`): `AppLogger.Verbose` makes `Info` raise `Notified` as `AppLogLevel.Debug`, so the log panel shows what the file log gets (muted). The panel's own `AppendLog` writes the file through `AppLogger.FileOnly`, or each of its lines would show twice.
+
 ## Conventions
 
 - Real recordings embed GPS tracks and the camera serial number. Never commit one (`.gitignore` excludes them) and never paste their telemetry into anything shared externally.

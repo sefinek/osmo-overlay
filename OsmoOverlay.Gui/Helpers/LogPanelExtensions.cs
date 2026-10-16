@@ -15,6 +15,7 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public enum LogLevel
 {
+	Debug,
 	Info,
 	Warn,
 	Error
@@ -24,6 +25,7 @@ internal static class LogPanelExtensions
 {
 	private static readonly IBrush WarnBrush = Palette.Warning;
 	private static readonly IBrush ErrorBrush = Palette.Danger;
+	private static readonly IBrush DebugBrush = Palette.TextMuted;
 
 	extension(SelectableTextBlock logBox)
 	{
@@ -35,7 +37,7 @@ internal static class LogPanelExtensions
 		public void AppendLog(ScrollViewer logScroll, string message, LogLevel level = LogLevel.Info)
 		{
 			logBox.AppendLogLine(logScroll, message, level);
-			AppLogger.Info(message);
+			AppLogger.FileOnly(message);
 		}
 
 		/// <summary>
@@ -54,6 +56,7 @@ internal static class LogPanelExtensions
 			// and lock it in as an explicit local value - invisible text on a near-black panel.
 			if (level == LogLevel.Warn) run.Foreground = WarnBrush;
 			else if (level == LogLevel.Error) run.Foreground = ErrorBrush;
+			else if (level == LogLevel.Debug) run.Foreground = DebugBrush;
 
 			InlineCollection inlines = logBox.Inlines ??= [];
 			inlines.Add(run);

@@ -202,6 +202,7 @@ public partial class SettingsWindow : Window
 		PreviewShadowsCheck.IsChecked = settings.PreviewShadows;
 		DisableShadowsCheck.IsChecked = settings.DisableShadows;
 		ConfirmCloseWhileRenderingCheck.IsChecked = settings.ConfirmCloseWhileRendering;
+		DebugModeCheck.IsChecked = settings.DebugMode;
 		ProjectFilesGroup.IsVisible = ProjectFileAssociation.IsSupported;
 		ShowProjectAssociation();
 	}
@@ -290,6 +291,7 @@ public partial class SettingsWindow : Window
 			PreviewShadows = PreviewShadowsCheck.IsChecked == true,
 			DisableShadows = DisableShadowsCheck.IsChecked == true,
 			ConfirmCloseWhileRendering = ConfirmCloseWhileRenderingCheck.IsChecked == true,
+			DebugMode = DebugModeCheck.IsChecked == true,
 			LayerRowsVisible = Math.Clamp((int)(LayerRowsBox.Value ?? LayerTimeline.DefaultVisibleTracks), LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks)
 		};
 	}

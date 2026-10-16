@@ -558,6 +558,14 @@
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="ConfirmCloseWhileRenderingCheck" />
 							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_DebugMode}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_DebugModeHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="DebugModeCheck" />
+							</Grid>
 						</StackPanel>
 					</Border>
 

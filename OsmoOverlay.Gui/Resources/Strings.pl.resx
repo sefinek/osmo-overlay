@@ -3833,4 +3833,16 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
   <data name="GpsAlert_MessagePositionAndSpeedCorrected" xml:space="preserve">
     <value>Poprawiona pozycja i prędkość</value>
   </data>
+  <data name="Settings_DebugMode" xml:space="preserve">
+    <value>Tryb debugowania</value>
+  </data>
+  <data name="Settings_DebugModeHint" xml:space="preserve">
+    <value>Panel logów pokazuje wszystko, co trafia do pliku logu, także wpisy techniczne. Możesz też uruchomić aplikację w tym trybie, przytrzymując Shift podczas startu (tylko Windows).</value>
+  </data>
+  <data name="Log_DebugModeOn" xml:space="preserve">
+    <value>Tryb debugowania włączony: panel pokazuje pełne logi (wszystko, co trafia do pliku logu).</value>
+  </data>
+  <data name="Log_DebugModeOff" xml:space="preserve">
+    <value>Tryb debugowania wyłączony.</value>
+  </data>
 </root>

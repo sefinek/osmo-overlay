@@ -6,6 +6,7 @@ namespace OsmoOverlay.Core.Logging;
 /// <summary>GUI-agnostic severity for Notified - kept here (not in the GUI's own LogLevel) since Core has no GUI dependency to define it against.</summary>
 public enum AppLogLevel
 {
+	Debug,
 	Info,
 	Warn,
 	Error
@@ -35,12 +36,25 @@ public static class AppLogger
 	/// </summary>
 	public static event Action<string, AppLogLevel>? Notified;
 
+	/// <summary>
+	///     Debug mode: Info lines are raised through Notified too, as AppLogLevel.Debug, so the GUI's panel shows everything the file log gets.
+	///     Set once at startup and again when the setting changes.
+	/// </summary>
+	public static bool Verbose { get; set; }
+
 	// Deliberately doesn't raise Notified - most Info calls are routine, high-frequency internal
 	// progress logging (ffprobe output, per-frame render status, etc.), and MainWindow's own render
 	// flow already mirrors the handful of these worth surfacing live via its own direct AppendLog
 	// calls. Raising Notified here too would double them up in the panel. Use Notify below for an
 	// Info-level line that has no other route onto the screen yet.
 	public static void Info(string message)
+	{
+		Logger.Info(Scrub(message));
+		if (Verbose) Notified?.Invoke(message, AppLogLevel.Debug);
+	}
+
+	/// <summary>A line that's already on the screen (the GUI's own log panel wrote it): only the file log, so debug mode doesn't show it twice.</summary>
+	public static void FileOnly(string message)
 	{
 		Logger.Info(Scrub(message));
 	}

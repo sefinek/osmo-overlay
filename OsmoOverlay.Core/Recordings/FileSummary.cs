@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
@@ -96,10 +97,12 @@ public static class FileSummaryReader
 	public static (FileSummary? Summary, string? Problem) Read(IReadOnlyList<string> inputPaths,
 		Action<FileSummaryCacheEvent>? onCacheEvent = null, Action<FileSummaryReadStage>? onProgress = null)
 	{
+		var stopwatch = Stopwatch.StartNew();
 		onProgress?.Invoke(FileSummaryReadStage.Cache);
 		(FileSummary? cached, int? staleFormatVersion, long staleSizeBytes) = FileSummaryCache.TryLoad(inputPaths);
 		if (cached is not null)
 		{
+			AppLogger.Info($"Summary: cache hit in {stopwatch.ElapsedMilliseconds} ms ({inputPaths.Count} file(s))");
 			onCacheEvent?.Invoke(new FileSummaryCacheEvent(FileSummaryCacheEventKind.Hit, CurrentCacheFormatVersion));
 			return (cached with { FromCache = true }, null);
 		}
@@ -108,8 +111,11 @@ public static class FileSummaryReader
 			? new FileSummaryCacheEvent(FileSummaryCacheEventKind.Stale, CurrentCacheFormatVersion, previous, staleSizeBytes)
 			: new FileSummaryCacheEvent(FileSummaryCacheEventKind.Miss, CurrentCacheFormatVersion));
 
+		long cacheMs = stopwatch.ElapsedMilliseconds;
 		onProgress?.Invoke(FileSummaryReadStage.Probe);
 		IReadOnlyList<VideoSegment> segments = VideoSegments.ProbeAll(inputPaths);
+		long probeMs = stopwatch.ElapsedMilliseconds - cacheMs;
+		long extractMs = 0, processMs = 0;
 		if (VideoSegments.FindMismatch(segments) is { } mismatch) return (null, mismatch);
 		VideoSegment first = segments[0];
 		long fileSize = inputPaths.Sum(path => new FileInfo(path).Length);
@@ -131,7 +137,10 @@ public static class FileSummaryReader
 		{
 			ICameraFormat camera = first.Source.Camera!.Format;
 			onProgress?.Invoke(FileSummaryReadStage.Extract);
+			long stageStart = stopwatch.ElapsedMilliseconds;
 			TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
+			extractMs = stopwatch.ElapsedMilliseconds - stageStart;
+			stageStart = stopwatch.ElapsedMilliseconds;
 			List<DerivedFrame>? derivedFrames = null;
 			TelemetrySummary? telemetry = null;
 			if (extraction.Frames.Count > 0)
@@ -140,6 +149,8 @@ public static class FileSummaryReader
 				derivedFrames = TelemetryProcessor.Process(extraction.Frames, camera);
 				telemetry = TelemetryProcessor.Summarize(derivedFrames);
 			}
+
+			processMs = stopwatch.ElapsedMilliseconds - stageStart;
 
 			if (extraction.CameraModel is null) onProgress?.Invoke(FileSummaryReadStage.CameraModel);
 			string? cameraModel = extraction.CameraModel ?? TryGetCameraModel(inputPaths[0]);
@@ -150,7 +161,10 @@ public static class FileSummaryReader
 		}
 
 		onProgress?.Invoke(FileSummaryReadStage.Save);
+		long saveStart = stopwatch.ElapsedMilliseconds;
 		bool saved = FileSummaryCache.Save(inputPaths, summary);
+		AppLogger.Info($"Summary: cache lookup {cacheMs} ms, probe {probeMs} ms, extraction {extractMs} ms, processing {processMs} ms, " +
+				$"cache save {stopwatch.ElapsedMilliseconds - saveStart} ms, {stopwatch.ElapsedMilliseconds} ms in all ({inputPaths.Count} file(s))");
 		onCacheEvent?.Invoke(new FileSummaryCacheEvent(
 			saved ? FileSummaryCacheEventKind.Saved : FileSummaryCacheEventKind.SaveFailed, CurrentCacheFormatVersion));
 		return (summary, null);

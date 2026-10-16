@@ -211,10 +211,13 @@ public partial class MainWindow : Window
 		AppLogger.Notified += (message, level) => Dispatcher.UIThread.Post(() =>
 			AppendLogLine(message, level switch
 			{
+				AppLogLevel.Debug => LogLevel.Debug,
 				AppLogLevel.Warn => LogLevel.Warn,
 				AppLogLevel.Error => LogLevel.Error,
 				_ => LogLevel.Info
 			}));
+
+		if (AppLogger.Verbose) AppendLog(Strings.Log_DebugModeOn, LogLevel.Debug);
 
 		// The rule-of-thirds/safe-margin guide lines are positioned in absolute canvas pixels, so a
 		// window resize (which resizes OverlayDragCanvas itself, independent of when a new preview
@@ -443,6 +446,7 @@ public partial class MainWindow : Window
 		OverlaySettings saved = OverlaySettingsStore.Load();
 		OverlaySettings updated = settings.Apply(saved);
 		if (updated != saved) OverlaySettingsStore.Save(updated);
+		SetDebugMode(updated.DebugMode);
 
 		// Export options only matter at render time (RenderJob reads them from settings.json itself) and the Interface
 		// ones apply at startup or live (the time format), so they never reopen the preview.
@@ -470,7 +474,11 @@ public partial class MainWindow : Window
 		                          RouteIntroSettings.From(updated) != RouteIntroSettings.From(saved);
 		_smoothGpsMotion = updated.SmoothGpsMotion;
 
-		if (_summary is not null) ShowMaxSpeedInfo();
+		if (_summary is { } loaded)
+		{
+			await Task.Run(() => RecordingSpeeds(loaded));
+			ShowMaxSpeedInfo();
+		}
 
 		if (needsPreviewReopen) await ReopenPreviewAsync();
 		// The picker in Settings writes the shared keys itself - the open preview picks them up here.
@@ -629,6 +637,16 @@ public partial class MainWindow : Window
 		if (busy)
 			ActionButton.IsEnabled = false;
 		UpdateReframeControls();
+	}
+
+	/// <summary>The setting, or the Shift held at startup (that run only).</summary>
+	private void SetDebugMode(bool enabled)
+	{
+		bool verbose = enabled || StartupKeys.ShiftHeld;
+		if (verbose == AppLogger.Verbose) return;
+
+		AppLogger.Verbose = verbose;
+		AppendLog(verbose ? Strings.Log_DebugModeOn : Strings.Log_DebugModeOff);
 	}
 
 	private void AppendLog(string message, LogLevel level = LogLevel.Info)

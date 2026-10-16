@@ -136,7 +136,9 @@ public sealed record OverlaySettings(
 	// Closing the window mid-render asks first.
 	bool ConfirmCloseWhileRendering = true,
 	// No widget's shadow anywhere - preview, snapshot and render - whatever the widgets' own shadow settings, which are kept.
-	bool DisableShadows = false)
+	bool DisableShadows = false,
+	// The log panel shows everything the file log gets, not just what the app surfaces; holding Shift at startup turns it on for that run.
+	bool DebugMode = false)
 {
 	/// <summary>Whether the preview draws the widgets' shadows: on in the preview and not turned off everywhere.</summary>
 	[JsonIgnore]
