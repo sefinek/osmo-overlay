@@ -236,11 +236,23 @@ public partial class MainWindow
 		OutputTimeline? previous = _outputTimeline;
 		_outputTimeline = BuildOutputTimeline();
 		// Remaps the preview's telemetry - skipped when nothing was cut before or after.
-		if (previous is not null || _outputTimeline is not null) _previewPlayer.SetOutputTimeline(_outputTimeline);
+		if (previous is not null || _outputTimeline is not null) _ = SetPreviewTimelineAsync(_outputTimeline);
 
 		RefreshCutViews(showInEditor);
 		if (_summary is not null) PopulateOutputInfo(_summary, _detectedEncoder);
 		CommitHistory();
+	}
+
+	private async Task SetPreviewTimelineAsync(OutputTimeline? timeline)
+	{
+		try
+		{
+			await _previewPlayer.SetOutputTimelineAsync(timeline);
+		}
+		catch (Exception ex)
+		{
+			AppendLog(string.Format(Strings.Preview_Unavailable, ex.Message));
+		}
 	}
 
 	/// <summary>Everything showing the cuts, apart from the preview's renderer - also for a (re)opened preview, which keeps its OutputTimeline.</summary>

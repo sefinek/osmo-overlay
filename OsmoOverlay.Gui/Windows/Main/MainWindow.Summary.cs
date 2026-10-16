@@ -60,6 +60,11 @@ public partial class MainWindow
 				return;
 			}
 
+			// Both are only needed once the log below is written, and neither depends on the other or on that.
+			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
+			Task<string> encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
+			Task speedsRead = Task.Run(() => RecordingSpeeds(summary));
+
 			AppendLog(
 				$"ffprobe: {summary.Video.CodecName} {summary.Video.Profile}, {summary.Video.Width}x{summary.Video.Height}, " +
 				$"{FormatFps(summary.Video.Fps)} fps, {summary.Video.PixFmt}, ~{summary.Video.BitRate / 1_000_000} Mbps");
@@ -109,10 +114,9 @@ public partial class MainWindow
 				}
 				else
 				{
-					List<GpsAnomaly> anomalies = TelemetryProcessor.FindGpsAnomalies(rawFrames);
+					(IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> gpsLossRanges) = await FindGpsAsync(summary);
 					if (anomalies.Count > 0) AppendLog(Plural.Format(Strings.Summary_LogGpsAnomalies, anomalies.Count), LogLevel.Warn);
 
-					List<(double Start, double End)> gpsLossRanges = TelemetryProcessor.FindGpsLossRanges(rawFrames);
 					if (gpsLossRanges.Count > 0)
 					{
 						AppendLog(Plural.Format(Strings.Summary_LogGpsLost, gpsLossRanges.Count, gpsLossRanges.Sum(r => r.End - r.Start)),
@@ -157,8 +161,8 @@ public partial class MainWindow
 			}
 
 			AppendLog(Strings.Summary_LogCheckingGpuEncoder);
-			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
-			string encoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
+			string encoder = await encoderProbe;
+			await speedsRead;
 			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
 
 			_summary = summary;
@@ -188,6 +192,17 @@ public partial class MainWindow
 		{
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 		}
+	}
+
+	/// <summary>The stretches the GPS lost or had repaired, found once off the UI thread (a long recording has hundreds of thousands of frames) for the log and the timelines.</summary>
+	private async Task<(IReadOnlyList<GpsAnomaly> Anomalies, IReadOnlyList<(double Start, double End)> LossRanges)> FindGpsAsync(FileSummary summary)
+	{
+		if (_gpsFindings is { } cached && ReferenceEquals(cached.Summary, summary)) return (cached.Anomalies, cached.LossRanges);
+		if (!_availability.GpsFix || summary.TelemetryFrames is not { Count: > 0 } frames) return ([], []);
+
+		var found = await Task.Run(() => (Anomalies: TelemetryProcessor.FindGpsAnomalies(frames), LossRanges: TelemetryProcessor.FindGpsLossRanges(frames)));
+		_gpsFindings = (summary, found.Anomalies, found.LossRanges);
+		return found;
 	}
 
 	/// <summary>

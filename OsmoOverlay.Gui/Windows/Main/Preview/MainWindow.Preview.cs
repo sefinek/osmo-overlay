@@ -46,13 +46,9 @@ public partial class MainWindow
 			_ = LoadTimelineTracksAsync(summary);
 
 			// No fix at all isn't an anomaly worth flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
-			IReadOnlyList<TimeRange> gpsLoss = _availability.GpsFix && summary.TelemetryFrames is { Count: > 0 } rawFrames
-				? [.. TelemetryProcessor.FindGpsLossRanges(rawFrames).Select(r => new TimeRange(r.Start, r.End))]
-				: [];
+			(IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges) = await FindGpsAsync(summary);
+			IReadOnlyList<TimeRange> gpsLoss = [.. lossRanges.Select(r => new TimeRange(r.Start, r.End))];
 			foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = gpsLoss;
-			IReadOnlyList<GpsAnomaly> anomalies = _availability.GpsFix && summary.TelemetryFrames is { Count: > 0 } telemetry
-				? TelemetryProcessor.FindGpsAnomalies(telemetry)
-				: [];
 			foreach (PreviewTimeline timeline in Timelines) timeline.GpsAnomalies = anomalies;
 			IReadOnlyList<TimelineFile> files = TimelineFiles(summary);
 			foreach (PreviewTimeline timeline in Timelines) timeline.Files = files;

@@ -39,9 +39,12 @@ public static class TelemetryExtraction
 		(DateTime? GpsStart, double Offset)? previous = null;
 		List<(int FirstFrame, double Offset, DateTime? ClockStart)> files = [];
 
-		foreach (VideoSegment segment in segments)
+		// The files' extractions don't depend on each other (only stitching them does), and each is mostly I/O or an external process.
+		TelemetryExtractionResult[] results = ParallelWork.Map(segments, (segment, _) => extract(segment));
+		for (int s = 0; s < segments.Count; s++)
 		{
-			TelemetryExtractionResult result = extract(segment);
+			VideoSegment segment = segments[s];
+			TelemetryExtractionResult result = results[s];
 			cameraModel ??= result.CameraModel;
 			clockShift ??= result.GpsClockShift;
 			if (result.Frames.Count == 0) continue;

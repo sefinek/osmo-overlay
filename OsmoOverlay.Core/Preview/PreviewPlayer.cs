@@ -39,6 +39,8 @@ public sealed class PreviewPlayer : IDisposable
 	private Task _sessionsStopped = Task.CompletedTask;
 	// Bumped by every OpenAsync/Close - an open overtaken while it awaited drops what it opened.
 	private int _openGeneration;
+	private int _timelineRequest;
+	private readonly SemaphoreSlim _timelineGate = new(1, 1);
 	private bool _resumeAfterScrub;
 	private CancellationTokenSource? _mapPrepareCts;
 	private CancellationTokenSource? _routeIntroPrepareCts;
@@ -127,10 +129,28 @@ public sealed class PreviewPlayer : IDisposable
 		var reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
 		var pool = new FrameBufferPool(PooledFrames);
 
-		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread.
-		LibavVideoSource video = await Task.Run(() =>
-			new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer));
-		(LibavAudioSource? audioSource, AudioOutput? audioOutput) = await Task.Run(() => OpenAudio(segments));
+		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread. The picture's and
+		// the sound's don't depend on each other, so they open at the same time.
+		var videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer));
+		var audioOpen = Task.Run(() => OpenAudio(segments));
+		try
+		{
+			await Task.WhenAll(videoOpen, audioOpen);
+		}
+		catch
+		{
+			if (videoOpen.IsCompletedSuccessfully) videoOpen.Result.Dispose();
+			if (audioOpen.IsCompletedSuccessfully)
+			{
+				audioOpen.Result.Item2?.Dispose();
+				audioOpen.Result.Item1?.Dispose();
+			}
+
+			throw;
+		}
+
+		LibavVideoSource video = videoOpen.Result;
+		(LibavAudioSource? audioSource, AudioOutput? audioOutput) = audioOpen.Result;
 		if (generation != _openGeneration)
 		{
 			video.Dispose();
@@ -153,16 +173,40 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix, camera);
-		var compositor = new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
-				TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
-				summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, _outputTimeline))
-			{
-				RouteAcrossCuts = settings.RouteAcrossCuts, DrawShadows = settings.PreviewDrawsShadows
-			},
-			recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, _outputTimeline, _showOverlay, pool, settings.SpeedCorrectionPercent)
+		// Building it maps and summarizes the whole recording's telemetry - off the UI thread, handed back through the await.
+		OutputTimeline? outputTimeline = _outputTimeline;
+		bool showOverlay = _showOverlay;
+		OverlayCompositor compositor;
+		try
 		{
-			SnapshotShadows = !settings.DisableShadows
-		};
+			compositor = await Task.Run(() => new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
+					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
+					summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, outputTimeline))
+				{
+					RouteAcrossCuts = settings.RouteAcrossCuts, DrawShadows = settings.PreviewDrawsShadows
+				},
+				recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, outputTimeline, showOverlay, pool, settings.SpeedCorrectionPercent)
+			{
+				SnapshotShadows = !settings.DisableShadows
+			});
+		}
+		catch
+		{
+			video.Dispose();
+			audioOutput?.Dispose();
+			audioSource?.Dispose();
+			throw;
+		}
+
+		if (generation != _openGeneration)
+		{
+			compositor.Dispose();
+			video.Dispose();
+			audioOutput?.Dispose();
+			audioSource?.Dispose();
+			return;
+		}
+
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
 			routeIntro, reframer);
 		_recording = recording;
@@ -362,14 +406,40 @@ public sealed class PreviewPlayer : IDisposable
 	///     video when scrubbed to and are skipped by playback. Null = the whole recording. Playback is paused first -
 	///     it plays the stretches it started with.
 	/// </summary>
-	public void SetOutputTimeline(OutputTimeline? timeline)
+	public async Task SetOutputTimelineAsync(OutputTimeline? timeline)
 	{
 		Pause();
 		_outputTimeline = timeline;
 		if (_recording is not { } recording) return;
 
-		recording.Compositor.Change(r => r.RouteIntro = RouteIntroFor(recording.RouteIntro, timeline));
-		PublishStill(recording, recording.Compositor.SetTimeline(timeline));
+		// Remapping a long recording's telemetry takes a while, so it runs off the UI thread - one at a time and in order, and a request
+		// a newer one has already replaced is skipped (the newer one applies its timeline anyway).
+		int request = ++_timelineRequest;
+		ComposedPreviewFrame? still = null;
+		await _timelineGate.WaitAsync();
+		try
+		{
+			if (request == _timelineRequest)
+			{
+				still = await Task.Run(() =>
+				{
+					recording.Compositor.Change(r => r.RouteIntro = RouteIntroFor(recording.RouteIntro, timeline));
+					return recording.Compositor.SetTimeline(timeline);
+				});
+			}
+		}
+		finally
+		{
+			_timelineGate.Release();
+		}
+
+		if (request != _timelineRequest || !ReferenceEquals(_recording, recording))
+		{
+			if (still is not null) recording.Pool.Return(still.Bgra);
+			return;
+		}
+
+		PublishStill(recording, still);
 		// The map widget's mosaic stays unless the route now reaches past it; the route intro's unless the route's extent changed.
 		OverlayRenderer renderer = recording.Compositor.Renderer;
 		StartMosaics(recording, intro: renderer.NeedsRouteIntroPrepare(), map: !renderer.MapMosaicCoversRoute);

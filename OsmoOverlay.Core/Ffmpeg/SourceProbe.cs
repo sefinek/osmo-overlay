@@ -109,12 +109,17 @@ public static partial class SourceProbe
 		if (videoStream is null)
 			throw new InvalidOperationException($"No video stream found in {inputPath}.");
 
+		string frameRate = videoStream["r_frame_rate"]!.GetValue<string>();
+		// Two more processes over the same file, independent of each other.
+		Task<int?>? keyframeInterval = encoderDetails ? Task.Run(() => ProbeKeyframeInterval(inputPath, frameRate)) : null;
+		Task<bool?>? highTier = encoderDetails && videoStream["codec_name"]?.GetValue<string>() == "hevc" ? Task.Run(() => ProbeHevcHighTier(inputPath)) : null;
+
 		var video = new VideoInfo(
 			videoStream["codec_name"]!.GetValue<string>(),
 			videoStream["profile"]?.GetValue<string>() ?? "",
 			videoStream["width"]!.GetValue<int>(),
 			videoStream["height"]!.GetValue<int>(),
-			videoStream["r_frame_rate"]!.GetValue<string>(),
+			frameRate,
 			videoStream["pix_fmt"]?.GetValue<string>() ?? "yuv420p",
 			videoStream["color_primaries"]?.GetValue<string>(),
 			videoStream["color_transfer"]?.GetValue<string>(),
@@ -122,9 +127,9 @@ public static partial class SourceProbe
 			videoStream["color_range"]?.GetValue<string>(),
 			ResolveVideoBitRate(videoStream, audioStream, root),
 			videoStream["level"]?.GetValue<int>() ?? 0,
-			encoderDetails ? ProbeKeyframeInterval(inputPath, videoStream["r_frame_rate"]!.GetValue<string>()) : null,
+			keyframeInterval?.GetAwaiter().GetResult(),
 			ResolveTimecode(videoStream, streams, root),
-			encoderDetails && videoStream["codec_name"]?.GetValue<string>() == "hevc" ? ProbeHevcHighTier(inputPath) : null,
+			highTier?.GetAwaiter().GetResult(),
 			long.TryParse(videoStream["nb_frames"]?.GetValue<string>(), CultureInfo.InvariantCulture, out long frameCount) && frameCount > 0
 				? frameCount
 				: null);

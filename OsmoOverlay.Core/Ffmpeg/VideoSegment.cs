@@ -14,7 +14,7 @@ public static class VideoSegments
 {
 	public static IReadOnlyList<VideoSegment> ProbeAll(IReadOnlyList<string> inputPaths)
 	{
-		return Join(inputPaths, [.. inputPaths.Select((path, i) => SourceProbe.Probe(path, encoderDetails: i == 0))]);
+		return Join(inputPaths, ParallelWork.Map(inputPaths, (path, i) => SourceProbe.Probe(path, encoderDetails: i == 0)));
 	}
 
 	internal static IReadOnlyList<VideoSegment> Join(IReadOnlyList<string> inputPaths, IReadOnlyList<SourceInfo> sources)

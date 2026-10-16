@@ -81,6 +81,7 @@ public partial class MainWindow : Window
 	private FileSummary? _summary;
 	// MeasuredSpeeds' result for this summary and GPS smoothing - the whole recording is processed for it.
 	private (FileSummary Summary, bool SmoothGps, MeasuredSpeeds Speeds)? _measuredSpeeds;
+	private (FileSummary Summary, IReadOnlyList<GpsAnomaly> Anomalies, IReadOnlyList<(double Start, double End)> LossRanges)? _gpsFindings;
 	// The input set SupportNotice was last shown for (ShowSupportNoticeAsync).
 	private string? _supportNoticeShownFor;
 	private bool _suppressOverlayEvents;
@@ -403,15 +404,21 @@ public partial class MainWindow : Window
 	/// </summary>
 	private MeasuredSpeeds RecordingSpeeds()
 	{
-		if (_summary?.TelemetryFrames is not { Count: > 0 } frames) return new MeasuredSpeeds(null, null);
-		if (_measuredSpeeds is { } cached && ReferenceEquals(cached.Summary, _summary) && cached.SmoothGps == _smoothGpsMotion)
+		return _summary is { } summary ? RecordingSpeeds(summary) : new MeasuredSpeeds(null, null);
+	}
+
+	private MeasuredSpeeds RecordingSpeeds(FileSummary summary)
+	{
+		if (summary.TelemetryFrames is not { Count: > 0 } frames) return new MeasuredSpeeds(null, null);
+		bool smoothGps = _smoothGpsMotion;
+		if (_measuredSpeeds is { } cached && ReferenceEquals(cached.Summary, summary) && cached.SmoothGps == smoothGps)
 			return cached.Speeds;
 
-		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, _summary.CameraFormat, _smoothGpsMotion);
+		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, summary.CameraFormat, smoothGps);
 		double peak = derived.Max(f => f.SpeedKmh);
 		double cruising = SpeedCalibration.CruisingSpeedKmh(derived);
 		var speeds = new MeasuredSpeeds(peak > 0 ? peak : null, cruising > 0 ? cruising : null);
-		_measuredSpeeds = (_summary, _smoothGpsMotion, speeds);
+		_measuredSpeeds = (summary, smoothGps, speeds);
 		return speeds;
 	}
 
