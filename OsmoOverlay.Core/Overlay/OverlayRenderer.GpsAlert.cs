@@ -17,16 +17,46 @@ public sealed partial class OverlayRenderer
 	private const double GpsCorrectedSeconds = 3;
 	private const double GpsAlertFadeSeconds = 0.35;
 
+	// A shorter stretch without a fix says nothing: it would be over before the panel faded in, leaving "back after 0.0 s".
+	internal const double GpsLossMinSeconds = 1;
+
+	private const string GpsSearchingTitle = "SEARCHING FOR GPS";
+	private const string GpsLostTitle = "GPS SIGNAL LOST";
+	private const string GpsFoundTitle = "GPS FIX ACQUIRED";
+	private const string GpsBackTitle = "GPS SIGNAL BACK";
+	private const string GpsCorrectedTitle = "GPS CORRECTED";
+	private const string GpsSearchingDetail = "NO POSITION YET  ·  {0}";
+	private const string GpsLostDetail = "LAST POSITION HELD  ·  {0}";
+	private const string GpsAfterDetail = "AFTER {0} S";
+	private const string GpsPositionDetail = "POSITION JUMP REMOVED";
+	private const string GpsSpeedDetail = "SPEED SPIKE REMOVED";
+	private const string GpsPositionAndSpeedDetail = "POSITION AND SPEED JUMPS REMOVED";
+
+	/// <summary>Every title, and every detail at its widest - what OverlayElementBounds.GpsAlertBox fits the panel to.</summary>
+	internal static readonly string[] GpsAlertTitles = [GpsSearchingTitle, GpsLostTitle, GpsFoundTitle, GpsBackTitle, GpsCorrectedTitle];
+
+	internal static readonly string[] GpsAlertDetails =
+	[
+		string.Format(CultureInfo.InvariantCulture, GpsSearchingDetail, "00:00"),
+		string.Format(CultureInfo.InvariantCulture, GpsLostDetail, "00:00"),
+		string.Format(CultureInfo.InvariantCulture, GpsAfterDetail, "000.0"),
+		GpsPositionDetail, GpsSpeedDetail, GpsPositionAndSpeedDetail
+	];
+
 	private static readonly SKColor GpsSearchingColor = SKColor.Parse("#4FC3F7");
 	private static readonly SKColor GpsLostColor = SKColor.Parse("#F7C51E");
 	private static readonly SKColor GpsBackColor = SKColor.Parse("#3DDC84");
 	private static readonly SKColor GpsCorrectedColor = SKColor.Parse("#FF8A3D");
 	private static readonly SKColor GpsGlyphColor = SKColor.Parse("#111317");
 
+	private static readonly float[] GpsSearchingArcRadii = [10f, 19f];
+	private static readonly (float X, float Y)[] GpsTargetTicks = [(0f, -1f), (0f, 1f), (-1f, 0f), (1f, 0f)];
+
 	private readonly SKPaint _gpsAlertPaint = new() { IsAntialias = true };
 	private GpsAlerts? _gpsAlerts;
+	private (string? Family, SKRect Box)? _gpsAlertBox;
 
-	private enum GpsNotice
+	internal enum GpsNotice
 	{
 		Searching,
 		Lost,
@@ -35,11 +65,14 @@ public sealed partial class OverlayRenderer
 		Corrected
 	}
 
-	/// <summary>One notice: from Start until End, about what began at Since and lasted Lasted (a loss's length, for "back").</summary>
-	private readonly record struct GpsAlertEvent(GpsNotice Notice, double Start, double End, double Since, double Lasted, GpsCorrection What);
+	/// <summary>
+	///     One notice, up from Start until End on the frames' timeline (the output's, after cuts). Since (a loss) and Lasted (how
+	///     long the loss before "back" was) are in recording seconds, so a cut through a loss doesn't make it look shorter.
+	/// </summary>
+	internal readonly record struct GpsAlertEvent(GpsNotice Notice, double Start, double End, double Since, double Lasted, GpsCorrection What);
 
 	/// <summary>The notices in time order, and the stretches they make together (a loss and its "back" run on) - what fades in and out.</summary>
-	private sealed record GpsAlerts(List<GpsAlertEvent> Events, List<(double Start, double End)> Shown);
+	internal sealed record GpsAlerts(List<GpsAlertEvent> Events, List<(double Start, double End)> Shown);
 
 	private void DrawGpsAlert(SKCanvas canvas, DerivedFrame frame, GpsAlertElement element)
 	{
@@ -58,9 +91,12 @@ public sealed partial class OverlayRenderer
 
 		if (alpha <= 0f) return;
 
-		(SKColor color, string title, string detail) = GpsNoticeText(notice, t);
-		SKRect box = OverlayElementBounds.GpsAlertBox(element.FontFamily);
+		if (_gpsAlertBox is not { } cached || cached.Family != element.FontFamily)
+			_gpsAlertBox = cached = (element.FontFamily, OverlayElementBounds.GpsAlertBox(element.FontFamily));
+		SKRect box = cached.Box;
 		const float radius = OverlayElementBounds.GpsAlertHeight / 2;
+
+		(SKColor color, string title, string detail) = GpsNoticeText(notice, frame.Raw.RecordingTimeSeconds);
 
 		SKPaint fill = PanelFillPaint(element);
 		fill.Color = fill.Color.WithAlpha((byte)(fill.Color.Alpha * alpha));
@@ -80,10 +116,11 @@ public sealed partial class OverlayRenderer
 
 		float textX = iconCenter.X + iconRadius + OverlayElementBounds.GpsAlertGap;
 		SKColor outline = OutlineColorOf(element);
-		DrawOutlined(canvas, title, textX, box.Top + 48, TextFont(element, OverlayElementBounds.GpsAlertTitleSize), color, opacity: alpha,
-			outlineColor: outline, outlineWidthScale: element.OutlineWidth);
-		DrawOutlined(canvas, detail, textX, box.Top + 87, TextFont(element, OverlayElementBounds.GpsAlertDetailSize), TextColorOf(element), opacity: alpha,
-			outlineColor: outline, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, title, textX, box.Top + OverlayElementBounds.GpsAlertTitleBaseline,
+			TextFont(element, OverlayElementBounds.GpsAlertTitleSize), color, opacity: alpha, outlineColor: outline, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, detail, textX, box.Top + OverlayElementBounds.GpsAlertDetailBaseline,
+			TextFont(element, OverlayElementBounds.GpsAlertDetailSize), TextColorOf(element), opacity: alpha, outlineColor: outline,
+			outlineWidthScale: element.OutlineWidth);
 	}
 
 	/// <summary>The notice up at `t`: a loss while it lasts, otherwise the newest - a correction right after the signal came back is the news.</summary>
@@ -100,31 +137,32 @@ public sealed partial class OverlayRenderer
 		return best;
 	}
 
-	private static (SKColor Color, string Title, string Detail) GpsNoticeText(GpsAlertEvent notice, double t)
+	/// <summary>The notice's color and lines at `recordingSeconds` - a loss counts in recording time, like its Since.</summary>
+	private static (SKColor Color, string Title, string Detail) GpsNoticeText(GpsAlertEvent notice, double recordingSeconds)
 	{
 		return notice.Notice switch
 		{
-			GpsNotice.Searching => (GpsSearchingColor, "SEARCHING FOR GPS", $"NO POSITION YET  ·  {Clock(t - notice.Since)}"),
-			GpsNotice.Lost => (GpsLostColor, "GPS SIGNAL LOST", $"LAST POSITION HELD  ·  {Clock(t - notice.Since)}"),
-			GpsNotice.Found => (GpsBackColor, "GPS FIX ACQUIRED", $"AFTER {Seconds(notice.Lasted)}"),
-			GpsNotice.Back => (GpsBackColor, "GPS SIGNAL BACK", $"AFTER {Seconds(notice.Lasted)}"),
-			_ => (GpsCorrectedColor, "GPS CORRECTED", notice.What switch
+			GpsNotice.Searching => (GpsSearchingColor, GpsSearchingTitle, Format(GpsSearchingDetail, Clock(recordingSeconds - notice.Since))),
+			GpsNotice.Lost => (GpsLostColor, GpsLostTitle, Format(GpsLostDetail, Clock(recordingSeconds - notice.Since))),
+			GpsNotice.Found => (GpsBackColor, GpsFoundTitle, Format(GpsAfterDetail, notice.Lasted.ToString("0.0", CultureInfo.InvariantCulture))),
+			GpsNotice.Back => (GpsBackColor, GpsBackTitle, Format(GpsAfterDetail, notice.Lasted.ToString("0.0", CultureInfo.InvariantCulture))),
+			_ => (GpsCorrectedColor, GpsCorrectedTitle, notice.What switch
 			{
-				GpsCorrection.Position => "POSITION JUMP REMOVED",
-				GpsCorrection.Speed => "SPEED SPIKE REMOVED",
-				_ => OverlayElementBounds.GpsAlertLongestDetail
+				GpsCorrection.Position => GpsPositionDetail,
+				GpsCorrection.Speed => GpsSpeedDetail,
+				_ => GpsPositionAndSpeedDetail
 			})
 		};
+
+		static string Format(string format, string value)
+		{
+			return string.Format(CultureInfo.InvariantCulture, format, value);
+		}
 
 		static string Clock(double seconds)
 		{
 			var span = TimeSpan.FromSeconds(Math.Max(0, Math.Floor(seconds)));
 			return $"{(int)span.TotalMinutes}:{span.Seconds:00}";
-		}
-
-		static string Seconds(double seconds)
-		{
-			return seconds.ToString("0.0", CultureInfo.InvariantCulture) + " S";
 		}
 	}
 
@@ -141,7 +179,7 @@ public sealed partial class OverlayRenderer
 				_gpsAlertPaint.Style = SKPaintStyle.Stroke;
 				_gpsAlertPaint.StrokeWidth = 4.5f * unit;
 				var dot = new SKPoint(center.X, center.Y + 12 * unit);
-				foreach (float r in new[] { 10f, 19f })
+				foreach (float r in GpsSearchingArcRadii)
 				{
 					var arc = new SKRect(dot.X - r * unit, dot.Y - r * unit, dot.X + r * unit, dot.Y + r * unit);
 					canvas.DrawArc(arc, 225, 90, false, _gpsAlertPaint);
@@ -165,7 +203,7 @@ public sealed partial class OverlayRenderer
 				_gpsAlertPaint.Style = SKPaintStyle.Stroke;
 				_gpsAlertPaint.StrokeWidth = 4 * unit;
 				canvas.DrawCircle(center, 10 * unit, _gpsAlertPaint);
-				foreach ((float dx, float dy) in new[] { (0f, -1f), (0f, 1f), (-1f, 0f), (1f, 0f) })
+				foreach ((float dx, float dy) in GpsTargetTicks)
 					canvas.DrawLine(center.X + dx * 14 * unit, center.Y + dy * 14 * unit, center.X + dx * 20 * unit, center.Y + dy * 20 * unit, _gpsAlertPaint);
 				_gpsAlertPaint.Style = SKPaintStyle.Fill;
 				canvas.DrawCircle(center, 3.5f * unit, _gpsAlertPaint);
@@ -174,14 +212,14 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>
-	///     Every notice over the frames: each stretch without a fix (searching before a file's first one - the recording's start
-	///     or after a stop - lost otherwise) and its end ("back"), and each stretch of corrected readings. Never across a gap
-	///     between files.
+	///     Every notice over the frames: each stretch without a fix of at least GpsLossMinSeconds (searching before a file's
+	///     first one - the recording's start or after a stop - lost otherwise) and its end ("back"), and each run of corrected
+	///     readings - those closer together than a notice stays up are one notice. Never across a gap between files.
 	/// </summary>
-	private static GpsAlerts FindGpsAlerts(IReadOnlyList<DerivedFrame> frames)
+	internal static GpsAlerts FindGpsAlerts(IReadOnlyList<DerivedFrame> frames)
 	{
 		List<GpsAlertEvent> events = [];
-		int lossStart = -1, correctedStart = -1;
+		int lossStart = -1, correctedStart = -1, lastCorrected = -1;
 		bool hadFix = false;
 		GpsCorrection what = GpsCorrection.None;
 		for (int i = 0; i <= frames.Count; i++)
@@ -191,23 +229,45 @@ public sealed partial class OverlayRenderer
 
 			if (lossStart >= 0 && (raw is null || raw.HasGpsFix || newFile))
 			{
-				double start = frames[lossStart].Raw.SampleTimeSeconds, end = raw?.SampleTimeSeconds ?? frames[^1].Raw.SampleTimeSeconds;
-				events.Add(new GpsAlertEvent(hadFix ? GpsNotice.Lost : GpsNotice.Searching, start, end, start, 0, GpsCorrection.None));
-				if (raw is { HasGpsFix: true } && !newFile)
-					events.Add(new GpsAlertEvent(hadFix ? GpsNotice.Back : GpsNotice.Found, end, end + GpsBackSeconds, end, end - start, GpsCorrection.None));
+				TelemetryFrame first = frames[lossStart].Raw, until = raw ?? frames[^1].Raw;
+				double lasted = until.RecordingTimeSeconds - first.RecordingTimeSeconds;
+				if (lasted >= GpsLossMinSeconds)
+				{
+					events.Add(new GpsAlertEvent(hadFix ? GpsNotice.Lost : GpsNotice.Searching, first.SampleTimeSeconds, until.SampleTimeSeconds,
+						first.RecordingTimeSeconds, 0, GpsCorrection.None));
+					if (raw is { HasGpsFix: true } && !newFile)
+						events.Add(new GpsAlertEvent(hadFix ? GpsNotice.Back : GpsNotice.Found, raw.SampleTimeSeconds, raw.SampleTimeSeconds + GpsBackSeconds,
+							0, lasted, GpsCorrection.None));
+				}
+
 				lossStart = -1;
 			}
 
 			if (correctedStart >= 0 && (raw is null || raw.GpsCorrected == GpsCorrection.None || newFile))
 			{
-				double start = frames[correctedStart].Raw.SampleTimeSeconds, last = frames[i - 1].Raw.SampleTimeSeconds;
-				events.Add(new GpsAlertEvent(GpsNotice.Corrected, start, last + GpsCorrectedSeconds, start, 0, what));
+				double start = frames[correctedStart].Raw.SampleTimeSeconds, end = frames[i - 1].Raw.SampleTimeSeconds + GpsCorrectedSeconds;
+				// Merged only with the notice still up and nothing else since, so a loss in between keeps its place.
+				if (lastCorrected >= 0 && lastCorrected == events.Count - 1 && start <= events[lastCorrected].End)
+				{
+					events[lastCorrected] = events[lastCorrected] with { End = end, What = events[lastCorrected].What | what };
+				}
+				else
+				{
+					events.Add(new GpsAlertEvent(GpsNotice.Corrected, start, end, 0, 0, what));
+					lastCorrected = events.Count - 1;
+				}
+
 				correctedStart = -1;
 				what = GpsCorrection.None;
 			}
 
 			if (raw is null) break;
-			if (newFile) hadFix = false;
+
+			if (newFile)
+			{
+				hadFix = false;
+				lastCorrected = -1;
+			}
 
 			if (!raw.HasGpsFix && lossStart < 0) lossStart = i;
 			if (raw.HasGpsFix) hadFix = true;

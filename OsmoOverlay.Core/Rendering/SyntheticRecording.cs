@@ -62,7 +62,7 @@ public static class SyntheticRecording
 
 	private static List<string> Paths()
 	{
-		return [.. Files.Select((_, i) => Path.Combine(VersionFolder, $"OSMO_TEST_{i + 1:0000}.MP4"))];
+		return [.. Files.Select((_, i) => Path.Combine(VersionFolder, $"TestRecording_{i + 1:00}.mp4"))];
 	}
 
 	public static double FileSeconds(int file)

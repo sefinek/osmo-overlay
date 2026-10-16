@@ -1,6 +1,7 @@
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
+using static OsmoOverlay.Core.Overlay.OverlayRenderer;
 
 namespace OsmoOverlay.Tests.Overlay;
 
@@ -10,24 +11,33 @@ public sealed class GpsAlertTests
 {
 	private const double Hz = 30;
 
-	/// <summary>10 s at Hz: no fix from 4 s to 5 s, the readings at 6 s corrected.</summary>
-	private static List<DerivedFrame> Frames()
+	/// <summary>`seconds` at Hz with a fix everywhere, then shaped by `shape`.</summary>
+	private static List<DerivedFrame> Frames(double seconds, Func<TelemetryFrame, TelemetryFrame> shape)
 	{
 		return
 		[
-			.. Enumerable.Range(0, (int)(10 * Hz)).Select(i =>
+			.. Enumerable.Range(0, (int)(seconds * Hz)).Select(i =>
 			{
 				double t = i / Hz;
-				var raw = new TelemetryFrame(i, t, 50, 20, 200, null, 0, 1, 0, HasGpsFix: t is < 4 or >= 5,
-					GpsCorrected: t is >= 6 and < 6.2 ? GpsCorrection.Position : GpsCorrection.None);
+				TelemetryFrame raw = shape(new TelemetryFrame(i, t, 50, 20, 200, null, 0, 1, 0));
 				return new DerivedFrame(raw, 20, 0, 0, t, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0);
 			})
 		];
 	}
 
+	/// <summary>10 s: no fix from 4 s to 5.5 s, the readings at 6 s corrected.</summary>
+	private static List<DerivedFrame> LossAndCorrection()
+	{
+		return Frames(10, f => f with
+		{
+			HasGpsFix = f.SampleTimeSeconds is < 4 or >= 5.5,
+			GpsCorrected = f.SampleTimeSeconds is >= 6 and < 6.2 ? GpsCorrection.Position : GpsCorrection.None
+		});
+	}
+
 	private static int DrawnPixels(double seconds)
 	{
-		List<DerivedFrame> frames = Frames();
+		List<DerivedFrame> frames = LossAndCorrection();
 		var alert = new GpsAlertElement { X = 1920, Y = 400 };
 		using var renderer = new OverlayRenderer(3840, 2160, 200, [alert], frames, 20, false);
 		byte[] pixels = new byte[renderer.FrameBufferSize()];
@@ -54,6 +64,72 @@ public sealed class GpsAlertTests
 	{
 		Assert.AreEqual(0, DrawnPixels(2));
 		Assert.AreEqual(0, DrawnPixels(9.9));
+	}
+
+	[TestMethod]
+	public void ShortDropout_SaysNothing()
+	{
+		List<DerivedFrame> frames = Frames(10, f => f with { HasGpsFix = f.SampleTimeSeconds is < 4 or >= 4 + GpsLossMinSeconds / 2 });
+
+		Assert.AreEqual(0, FindGpsAlerts(frames).Events.Count);
+	}
+
+	[TestMethod]
+	public void Back_CountsTheLossInRecordingTime_ThroughACut()
+	{
+		// 4 s of the recording cut out in the middle of a loss: 1 s of it in the output, 5 s in the recording.
+		List<DerivedFrame> frames = Frames(10, f => f with
+		{
+			HasGpsFix = f.SampleTimeSeconds is < 4 or >= 5,
+			SourceTimeSeconds = f.SampleTimeSeconds < 4.5 ? f.SampleTimeSeconds : f.SampleTimeSeconds + 4
+		});
+
+		List<GpsAlertEvent> events = FindGpsAlerts(frames).Events;
+
+		Assert.AreEqual(2, events.Count);
+		Assert.AreEqual(GpsNotice.Lost, events[0].Notice);
+		Assert.AreEqual(4, events[0].Since, 1e-9);
+		Assert.AreEqual(GpsNotice.Back, events[1].Notice);
+		Assert.AreEqual(5, events[1].Start, 1e-9);
+		Assert.AreEqual(5, events[1].Lasted, 1e-9);
+	}
+
+	[TestMethod]
+	public void EachFile_SearchesForItsFirstFix_AndALossBeforeAStopIsNotBack()
+	{
+		// File 1: no fix until 2 s, lost from 4.5 s to its end at 6 s. File 2, after a stop: no fix until 8 s.
+		List<DerivedFrame> frames = Frames(10, f => f with
+		{
+			HasGpsFix = f.SampleTimeSeconds is >= 2 and < 4.5 or >= 8,
+			StartsAfterGap = f.FrameNumber == (int)(6 * Hz)
+		});
+
+		GpsNotice[] notices = [.. FindGpsAlerts(frames).Events.Select(e => e.Notice)];
+
+		CollectionAssert.AreEqual(new[] { GpsNotice.Searching, GpsNotice.Found, GpsNotice.Lost, GpsNotice.Searching, GpsNotice.Found }, notices);
+	}
+
+	[TestMethod]
+	public void CorrectionsCloseTogether_AreOneNotice()
+	{
+		List<DerivedFrame> frames = Frames(12, f => f with
+		{
+			GpsCorrected = f.SampleTimeSeconds switch
+			{
+				>= 3 and < 3.1 => GpsCorrection.Position,
+				>= 4 and < 4.1 => GpsCorrection.Speed,
+				>= 9 and < 9.1 => GpsCorrection.Position,
+				_ => GpsCorrection.None
+			}
+		});
+
+		List<GpsAlertEvent> events = FindGpsAlerts(frames).Events;
+
+		Assert.AreEqual(2, events.Count);
+		Assert.AreEqual(GpsCorrection.Position | GpsCorrection.Speed, events[0].What);
+		Assert.AreEqual(3, events[0].Start, 1e-9);
+		Assert.IsTrue(events[0].End > 7, "stays up from the last correction of the run");
+		Assert.AreEqual(GpsCorrection.Position, events[1].What);
 	}
 
 	[TestMethod]

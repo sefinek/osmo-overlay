@@ -1325,8 +1325,6 @@
 										<Border Name="MapCreditSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.MapCredit_Hint}" />
-												<TextBlock Name="MapCreditLockedHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
-												           Text="{x:Static local:Strings.MapCredit_Locked}" />
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Content}" Classes="settingsGroupTitle" />
@@ -1334,6 +1332,8 @@
 														         PlaceholderText="{x:Static local:Strings.MapCredit_NoMap}" />
 													</StackPanel>
 												</Border>
+												<TextBlock Name="MapCreditLockedHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
+												           Text="{x:Static local:Strings.MapCredit_Locked}" />
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />

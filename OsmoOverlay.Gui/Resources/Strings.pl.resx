@@ -3765,6 +3765,6 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Alert GPS</value>
   </data>
   <data name="GpsAlert_Hint" xml:space="preserve">
-    <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Teksty są po angielsku, jak domyślne podpisy innych widżetów. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
+    <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału na co najmniej sekundę (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Teksty są po angielsku, jak domyślne podpisy innych widżetów. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
   </data>
 </root>

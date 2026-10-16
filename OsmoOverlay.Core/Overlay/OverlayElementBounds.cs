@@ -311,31 +311,35 @@ public static class OverlayElementBounds
 		return line;
 	}
 
+	// The GPS alert's panel: its height, the icon's size and the gaps, its two lines' sizes and baselines. Its width is fixed
+	// per font - wide enough for every text it can show, so it doesn't change width as the notice changes.
+	public const float GpsAlertHeight = 108;
+	public const float GpsAlertIcon = 64;
+	public const float GpsAlertGap = 22;
+	public const float GpsAlertTitleSize = 36;
+	public const float GpsAlertDetailSize = 27;
+	public const float GpsAlertTitleBaseline = 48;
+	public const float GpsAlertDetailBaseline = 87;
+
+	/// <summary>The GPS alert's panel around its anchor (top center), whatever it says.</summary>
+	public static SKRect GpsAlertBox(string? fontFamily)
+	{
+		float text = 0;
+		foreach (string title in OverlayRenderer.GpsAlertTitles)
+			text = Math.Max(text, LineExtent(title, GpsAlertTitleSize, fontFamily).Width);
+		foreach (string detail in OverlayRenderer.GpsAlertDetails)
+			text = Math.Max(text, LineExtent(detail, GpsAlertDetailSize, fontFamily).Width);
+
+		float width = GpsAlertGap * 2 + GpsAlertIcon + GpsAlertGap + text;
+		return new SKRect(-width / 2, 0, width / 2, GpsAlertHeight);
+	}
+
 	/// <summary>
 	///     A single line of DrawOutlined text with its baseline at local (0, 0): horizontal extent from
 	///     measuring the actual text, vertical extent from the font's ascent/descent (see GetBounds' doc).
 	///     Padded a little on every edge for DrawOutlined's drop-shadow offset + stroke width, which both
 	///     draw slightly outside the glyph outline itself.
 	/// </summary>
-	// The GPS alert's panel: its height, the icon's size and the gaps, and its two lines' sizes. Its width is fixed per font -
-	// wide enough for its longest text, so it doesn't change width as the notice changes.
-	public const float GpsAlertHeight = 108;
-	public const float GpsAlertIcon = 64;
-	public const float GpsAlertGap = 22;
-	public const float GpsAlertTitleSize = 36;
-	public const float GpsAlertDetailSize = 27;
-	public const string GpsAlertLongestTitle = "SEARCHING FOR GPS";
-	public const string GpsAlertLongestDetail = "POSITION AND SPEED SPIKE REMOVED";
-
-	/// <summary>The GPS alert's panel around its anchor (top center), whatever it says.</summary>
-	public static SKRect GpsAlertBox(string? fontFamily)
-	{
-		float text = Math.Max(LineExtent(GpsAlertLongestTitle, GpsAlertTitleSize, fontFamily).Width,
-			LineExtent(GpsAlertLongestDetail, GpsAlertDetailSize, fontFamily).Width);
-		float width = GpsAlertGap * 2 + GpsAlertIcon + GpsAlertGap + text;
-		return new SKRect(-width / 2, 0, width / 2, GpsAlertHeight);
-	}
-
 	private static SKRect MeasureLine(string text, float fontSize, string? family)
 	{
 		(float ascent, float descent, float width) = LineExtent(text, fontSize, family);

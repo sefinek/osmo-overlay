@@ -92,7 +92,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new SpeedGaugeElement { X = speedCx, Y = speedCy },
 			new RollGaugeElement { X = speedCx, Y = rollCy },
 			new MapWidgetElement { X = mapCx, Y = mapCy },
-			new MapAttributionElement { X = mapCreditInset, Y = mapCreditY, Scale = 0.9f },
+			new MapAttributionElement { X = mapCreditInset, Y = mapCreditY, Scale = 0.8f },
 			new GMeterElement { X = gMeterCx, Y = gMeterCy },
 			// The opening of the bottom center, one layer: the watermark for the first seconds, fading out, and the progress bar
 			// fading in where it was as soon as it's gone (both counted from the route overview card's end when it's on).
