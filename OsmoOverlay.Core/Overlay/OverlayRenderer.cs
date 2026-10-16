@@ -623,11 +623,10 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	private MapCredit? CreditOf(IReadOnlyList<MapWidgetElement> maps)
 	{
-		string[] texts = [.. maps.Select(m => MapSources.Attribution(m.MapProviderId)).OfType<string>().Distinct()];
-		if (texts.Length == 0) return null;
+		if (MapSources.Credit(maps.Select(m => m.MapProviderId)) is not { } text) return null;
 
 		bool required = maps.Any(m => MapSources.CreditRule(m.MapProviderId) == MapCreditRule.WhileMapVisible);
-		return new MapCredit(string.Join("  |  ", texts), required);
+		return new MapCredit(text, required);
 	}
 
 	/// <summary>
@@ -750,8 +749,8 @@ public sealed partial class OverlayRenderer : IDisposable
 				DrawWatermarkWidget(canvas, watermark);
 				break;
 			case MapAttributionElement mapCredit:
-				DrawOutlined(canvas, MapCreditText(), 0, 0, TextFont(mapCredit, OverlayElementBounds.CreditFontSize), TextColorOf(mapCredit),
-					opacity: MapCreditOpacity, outlineColor: OutlineColorOf(mapCredit), outlineWidthScale: mapCredit.OutlineWidth * 0.6f);
+				DrawCredit(canvas, MapCreditText(), 0, 0, TextFont(mapCredit, OverlayElementBounds.CreditFontSize), TextColorOf(mapCredit),
+					MapCreditOpacity, OutlineColorOf(mapCredit), mapCredit.OutlineWidth * 0.6f);
 				break;
 			case GMeterElement gMeter:
 				DrawGMeter(canvas, frame, gMeter);
@@ -878,6 +877,21 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		_outlineFillPaint.Color = color.WithAlpha((byte)(color.Alpha * opacity));
 		canvas.DrawText(text, x, y, align, font, _outlineFillPaint);
+	}
+
+	/// <summary>
+	///     A map credit split at its own line breaks, its last line on the baseline at (x, y) and the rest above it - a credit
+	///     of several lines grows away from the frame's edge it sits at, never past it.
+	/// </summary>
+	private void DrawCredit(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color,
+		float opacity = 1f, SKColor? outlineColor = null, float outlineWidthScale = 1f)
+	{
+		string[] lines = text.Split('\n');
+		for (int i = 0; i < lines.Length; i++)
+		{
+			DrawOutlined(canvas, lines[i], x, y - (lines.Length - 1 - i) * font.Spacing, font, color,
+				opacity: opacity, outlineColor: outlineColor, outlineWidthScale: outlineWidthScale);
+		}
 	}
 
 	/// <summary>The fill of `element`'s panel: its PanelColor at its PanelOpacity. One shared paint, recolored per widget like the text paints.</summary>

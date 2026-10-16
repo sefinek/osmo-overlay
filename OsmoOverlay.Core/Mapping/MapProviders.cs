@@ -100,10 +100,10 @@ public static class MapProviders
 	/// <summary>Where a key of each group is made - the picker links it next to the key field.</summary>
 	public static readonly IReadOnlyDictionary<string, string> KeyPages = new Dictionary<string, string>
 	{
-		[EsriKeyGroup] = "https://location.arcgis.com/",
-		[MapTilerKeyGroup] = "https://cloud.maptiler.com/account/keys/",
-		[ThunderforestKeyGroup] = "https://manage.thunderforest.com/",
-		[CartoKeyGroup] = "https://carto.com/basemaps/apikey/"
+		[EsriKeyGroup] = "https://location.arcgis.com",
+		[MapTilerKeyGroup] = "https://cloud.maptiler.com/account/keys",
+		[ThunderforestKeyGroup] = "https://manage.thunderforest.com",
+		[CartoKeyGroup] = "https://carto.com/basemaps/apikey"
 	};
 
 	public static readonly MapRegion Poland = new(CoreStrings.Map_RegionPoland, 49.0, 14.07, 54.91, 24.16);
@@ -111,7 +111,7 @@ public static class MapProviders
 	// "Ortofotomapa jest dostępna bezpłatnie do pobrania i możliwa do dowolnego wykorzystania" - no rule for the credit's
 	// duration; the service metadata names the source.
 	private static readonly MapTerms GugikTerms = new(MapUse.Allowed, MapUse.Allowed, MapCreditRule.Briefly,
-		"https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto/", Region: Poland);
+		"https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto", Region: Poland);
 
 	// 2016 is CC BY 4.0 ("you may stitch multiple requests to fit your needs"); the credit "must be clearly visible wherever
 	// the imagery is displayed". 10 m a pixel: a blur at a close-up map's zoom.
@@ -127,17 +127,17 @@ public static class MapProviders
 	// limited to non-commercial use"; the credit "is required to be shown on screen while the map is displayed"; only a
 	// "temporary personal cache".
 	private static readonly MapTerms MapTilerTerms = new(MapUse.PaidPlanOnly, MapUse.Conditional, MapCreditRule.WhileMapVisible,
-		"https://www.maptiler.com/terms/cloud/", 7, Note: CoreStrings.Map_NoteMapTilerVideo);
+		"https://www.maptiler.com/terms/cloud", 7, Note: CoreStrings.Map_NoteMapTilerVideo);
 
 	// "Commercial use is permitted and encouraged"; map images are CC-BY-SA 4.0; tiles "may be cached in-browser and
 	// on-device"; nothing about video.
 	private static readonly MapTerms ThunderforestTerms = new(MapUse.Allowed, MapUse.NotStated, MapCreditRule.WhileMapVisible,
-		"https://www.thunderforest.com/terms/");
+		"https://www.thunderforest.com/terms");
 
 	// Commercial use within the free tier's limit, each customer with their own key; the credit "visible on the map itself",
 	// not hidden or faded; a client-side cache of at most 30 days.
 	private static readonly MapTerms CartoTerms = new(MapUse.Allowed, MapUse.NotStated, MapCreditRule.WhileMapVisible,
-		"https://carto.com/legal/basemap-terms/", 30, Note: CoreStrings.Map_NoteCarto);
+		"https://carto.com/legal/basemap-terms", 30, Note: CoreStrings.Map_NoteCarto);
 
 	// ArcGIS Location Platform: commercial use on the free tier (2M basemap tiles a month); a film with Esri basemaps
 	// is fine for an Esri customer who credits Esri and its imagery's sources (arcgis.esri.de, "Dos and Don'ts"); Data may
@@ -158,7 +158,7 @@ public static class MapProviders
 	public static readonly IReadOnlyList<MapProvider> BuiltIn =
 	[
 		new(EsriImageryId, "Esri World Imagery", "https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token={api_key}",
-			"Powered by Esri | Esri, Maxar, Earthstar Geographics, and the GIS User Community", EsriTerms, EsriKeyGroup),
+			"Powered by Esri | Esri, Vantor, Earthstar Geographics, and the GIS User Community", EsriTerms, EsriKeyGroup),
 		new(MapTilerSatelliteId, "MapTiler Satellite", "https://api.maptiler.com/maps/satellite/256/{z}/{x}/{y}.jpg?key={api_key}",
 			$"© MapTiler {OsmCredit}", MapTilerTerms, MapTilerKeyGroup),
 		new("maptiler-hybrid", "MapTiler Hybrid", "https://api.maptiler.com/maps/hybrid/256/{z}/{x}/{y}.jpg?key={api_key}",
@@ -168,10 +168,10 @@ public static class MapProviders
 			"&LAYER=ORTOFOTOMAPA&STYLE=default&FORMAT=image/jpeg&tileMatrixSet=EPSG:3857&tileMatrix=EPSG:3857:{z}&tileRow={y}&tileCol={x}",
 			"Orthophoto © Główny Urząd Geodezji i Kartografii", GugikTerms),
 		new(EoxId, CoreStrings.Map_EoxName, "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg",
-			"EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)", EoxTerms),
+			"EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH\n(Contains modified Copernicus Sentinel data 2016 & 2017)", EoxTerms),
 		new(EsriStreetsId, CoreStrings.Map_EsriStreetsName,
 			"https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/navigation/static/tile/{hz}/{hy}/{hx}?token={api_key}",
-			"Powered by Esri | Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community", EsriTerms, EsriKeyGroup),
+			"Powered by Esri | Esri, TomTom, Garmin, FAO, NOAA, USGS,\n© OpenStreetMap contributors, and the GIS User Community", EsriTerms, EsriKeyGroup),
 		new(MapTilerStreetsId, "MapTiler Streets", "https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key={api_key}",
 			$"© MapTiler {OsmCredit}", MapTilerTerms, MapTilerKeyGroup),
 		new("maptiler-topo", "MapTiler Topo", "https://api.maptiler.com/maps/topo-v2/256/{z}/{x}/{y}.png?key={api_key}",
@@ -196,10 +196,10 @@ public static class MapProviders
 			$"{OsmCredit}, © CARTO", CartoTerms, CartoKeyGroup),
 		new(EsriPublicId, CoreStrings.Map_EsriPublicName,
 			"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-			"Esri, Maxar, Earthstar Geographics, and the GIS User Community", EsriPublicTerms),
+			"Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community", EsriPublicTerms),
 		new(EsriStreetsPublicId, CoreStrings.Map_EsriStreetsPublicName,
 			"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-			"Esri, HERE, Garmin, USGS, © OpenStreetMap contributors, and the GIS User Community", EsriStreetsPublicTerms)
+			"Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI,\nEsri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC,\n© OpenStreetMap contributors, and the GIS User Community", EsriStreetsPublicTerms)
 	];
 
 	/// <summary>
@@ -317,12 +317,19 @@ public sealed record MapSources(
 		if (LabelsUrlTemplate(providerId, routeIntro) is not null)
 		{
 			return id == MapProviders.EsriPublicId
-				? "Esri, Maxar, Earthstar Geographics, HERE, Garmin, and the GIS User Community"
-				: "Powered by Esri | Esri, Maxar, Earthstar Geographics, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community";
+				? "Esri, Vantor, Earthstar Geographics, HERE, Garmin,\n© OpenStreetMap contributors, and the GIS User Community"
+				: "Powered by Esri | Esri, Vantor, Earthstar Geographics, TomTom, Garmin,\nFAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community";
 		}
 
 		string? text = id == MapProviders.CustomId ? CustomAttribution : MapProviders.Get(id).Attribution;
 		return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+	}
+
+	/// <summary>The credit line of several maps shown at once: each provider's once, one per line - null with none to credit.</summary>
+	public string? Credit(IEnumerable<string?> providerIds)
+	{
+		string[] texts = [.. providerIds.Select(id => Attribution(id)).OfType<string>().Distinct()];
+		return texts.Length == 0 ? null : string.Join("\n", texts);
 	}
 
 	/// <summary>How long the credit must stay: the provider's terms, or the user's own word for a custom server.</summary>

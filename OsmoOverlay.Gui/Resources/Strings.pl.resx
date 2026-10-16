@@ -1593,6 +1593,9 @@ Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajd
   <data name="MapCredit_Hint" xml:space="preserve">
     <value>Treść podpisu jest dobierana do aktualnie wyświetlanej mapy. Możesz zmienić jego położenie i wygląd.</value>
   </data>
+  <data name="MapCredit_NoMap" xml:space="preserve">
+    <value>Brak widocznej mapy, więc podpis się nie pojawi.</value>
+  </data>
   <data name="MapCredit_Locked" xml:space="preserve">
     <value>Dostawca mapy wymaga, aby podpis był widoczny przez cały czas jej wyświetlania. Aplikacja pokazuje go automatycznie, dlatego nie można ustawić czasu jego pojawienia się ani ukrycia.</value>
   </data>

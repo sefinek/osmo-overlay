@@ -51,6 +51,19 @@ public static class OverlayElementBounds
 	public const float MinElementScale = 0.4f;
 	public const float MaxElementScale = 2.5f;
 
+	// The map credit has to stay readable.
+	public const float MinMapCreditScale = 0.75f;
+
+	public static float MinScale(OverlayElement element)
+	{
+		return element is MapAttributionElement ? MinMapCreditScale : MinElementScale;
+	}
+
+	public static float ClampScale(OverlayElement element, float scale)
+	{
+		return float.IsFinite(scale) ? Math.Clamp(scale, MinScale(element), MaxElementScale) : 1f;
+	}
+
 	public const float ProgressBarWidth = 760f;
 	public const float ProgressBarHeight = 60f;
 
@@ -196,7 +209,7 @@ public static class OverlayElementBounds
 				: SKRect.Union(MeasureLine(OverlayTimeFormatting.FormatElapsed(SampleElapsedSeconds), DateFontSize, fontFamily),
 					OffsetY(MeasureLine(label.ToUpperInvariant(), LabelFontSize, fontFamily), -CaptionAboveOffset)),
 			OverlayElementType.CameraModelText => MeasureLine(cameraModel ?? SampleCameraModel, DateFontSize, fontFamily),
-			OverlayElementType.MapAttribution => MeasureLine(text ?? SampleMapCredit, CreditFontSize, fontFamily),
+			OverlayElementType.MapAttribution => MeasureCredit(text ?? SampleMapCredit, fontFamily),
 			OverlayElementType.GpsAlert => GpsAlertBox(fontFamily),
 			OverlayElementType.Watermark => SKRect.Union(
 				OffsetY(Centered(MeasureLine(WatermarkTitle, WatermarkTitleFontSize, fontFamily)), -WatermarkLineGap),
@@ -272,6 +285,18 @@ public static class OverlayElementBounds
 		SKFont font = GetFont(family, fontSize);
 		font.GetFontMetrics(out SKFontMetrics metrics);
 		return (metrics.Ascent, metrics.Descent, font.MeasureText(text));
+	}
+
+	/// <summary>Mirrors OverlayRenderer.DrawCredit: the credit's lines going up from the baseline at y=0, the last one on it.</summary>
+	private static SKRect MeasureCredit(string text, string? family)
+	{
+		SKFont font = GetFont(family, CreditFontSize);
+		string[] lines = text.Split('\n');
+		SKRect bounds = MeasureLine(lines[^1], CreditFontSize, family);
+		for (int i = 0; i < lines.Length - 1; i++)
+			bounds = SKRect.Union(bounds, OffsetY(MeasureLine(lines[i], CreditFontSize, family), -(lines.Length - 1 - i) * font.Spacing));
+
+		return bounds;
 	}
 
 	private static SKRect OffsetY(SKRect rect, float dy)

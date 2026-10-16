@@ -219,6 +219,19 @@ public sealed class MapSourcesTests
 	}
 
 	[TestMethod]
+	public void EveryBuiltInCredit_BreaksItsLongLinesByHand()
+	{
+		// The credit is drawn line by line, never wrapped - a longer line runs across the frame (OverlayRenderer.DrawCredit).
+		var sources = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = "key" });
+		IEnumerable<string> credits = MapProviders.BuiltIn.Select(p => p.Attribution)
+			.Append(new MapSources().Attribution(MapProviders.EsriPublicId)!)
+			.Append(sources.Attribution(MapProviders.EsriImageryId)!);
+
+		foreach (string line in credits.SelectMany(c => c.Split('\n')))
+			Assert.IsLessThanOrEqualTo(85, line.Length, line);
+	}
+
+	[TestMethod]
 	public void EveryBuiltInProvider_HasItsTermsAndACredit()
 	{
 		foreach (MapProvider provider in MapProviders.BuiltIn)

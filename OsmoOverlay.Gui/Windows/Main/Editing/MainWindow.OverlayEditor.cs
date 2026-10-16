@@ -817,7 +817,7 @@ public partial class MainWindow
 				MapCreditStyle.Populate(x);
 				MapCreditTiming.Populate(x);
 				MapCreditShadow.Populate(x);
-				UpdateMapCreditLock();
+				UpdateMapCreditPanel();
 				break;
 			}
 
@@ -935,9 +935,7 @@ public partial class MainWindow
 			return element with
 			{
 				FontFamily = style.FontFamily,
-				Scale = style.Scale is { } scale
-					? Math.Clamp(scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale)
-					: element.Scale,
+				Scale = style.Scale is { } scale ? OverlayElementBounds.ClampScale(element, scale) : element.Scale,
 				TextColor = style.TextColor,
 				OutlineColor = style.OutlineColor,
 				OutlineWidth = style.OutlineWidth ?? element.OutlineWidth

@@ -256,9 +256,7 @@ public static class OverlayPresetStore
 
 		List<OverlayElement> elements =
 		[
-			.. preset.Elements.Select(e => e.Scale is >= OverlayElementBounds.MinElementScale and <= OverlayElementBounds.MaxElementScale
-				? e
-				: e with { Scale = float.IsFinite(e.Scale) ? Math.Clamp(e.Scale, OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale) : 1f })
+			.. preset.Elements.Select(e => OverlayElementBounds.ClampScale(e, e.Scale) is var scale && scale == e.Scale ? e : e with { Scale = scale })
 		];
 
 		var layers = preset.Layers?.Where(l => l is not null && !string.IsNullOrEmpty(l.Id)).ToList();

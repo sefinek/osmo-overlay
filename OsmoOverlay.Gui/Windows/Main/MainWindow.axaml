@@ -1329,6 +1329,13 @@
 												           Text="{x:Static local:Strings.MapCredit_Locked}" />
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Content}" Classes="settingsGroupTitle" />
+														<TextBox Name="MapCreditTextBox" Focusable="False" IsHitTestVisible="False" TextWrapping="Wrap"
+														         PlaceholderText="{x:Static local:Strings.MapCredit_NoMap}" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="MapCreditStyle" />
 													</StackPanel>

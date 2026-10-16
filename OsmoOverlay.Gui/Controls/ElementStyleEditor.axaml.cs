@@ -61,6 +61,7 @@ public partial class ElementStyleEditor : UserControl
 	{
 		_populating = true;
 		FontCombo.SelectedItem = FontOptions.FirstOrDefault(o => o.Family == element.FontFamily) ?? FontOptions[0];
+		ScaleBox.Minimum = (decimal)OverlayElementBounds.MinScale(element);
 		ScaleBox.Value = (decimal)element.Scale;
 		TextColorBox.Text = element.TextColor ?? OverlayRenderer.DefaultTextColorHex;
 		OutlineColorBox.Text = element.OutlineColor ?? OverlayRenderer.DefaultOutlineColorHex;

@@ -252,7 +252,7 @@ public partial class MainWindow
 		OverlayElement el = elements[index];
 		(float anchorX, float anchorY) = FullResAnchor(el);
 		double distance = Point.Distance(pos, new Point(anchorX, anchorY));
-		float newScale = (float)Math.Clamp(_resizeStartScale * (distance / _resizeStartDistance), OverlayElementBounds.MinElementScale, OverlayElementBounds.MaxElementScale);
+		float newScale = OverlayElementBounds.ClampScale(el, (float)(_resizeStartScale * (distance / _resizeStartDistance)));
 
 		elements[index] = el with { Scale = newScale };
 		ReplaceActiveElements(elements, null, "resize:" + id);

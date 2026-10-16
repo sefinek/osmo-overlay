@@ -1593,6 +1593,9 @@ If you cancel, the app will not remind you about this version again. You can fin
   <data name="MapCredit_Hint" xml:space="preserve">
     <value>The attribution text matches the map currently displayed. You can change its position and appearance.</value>
   </data>
+  <data name="MapCredit_NoMap" xml:space="preserve">
+    <value>No map is visible, so the attribution won't appear.</value>
+  </data>
   <data name="MapCredit_Locked" xml:space="preserve">
     <value>The map provider requires attribution to remain visible while the map is displayed. The app shows it automatically, so you cannot set when it appears or disappears.</value>
   </data>

@@ -343,7 +343,7 @@ public partial class MainWindow
 		}
 
 		UpdateElement(id, el => el is MapWidgetElement m ? m with { MapProviderId = style ? null : providerId } : el);
-		UpdateMapCreditLock();
+		UpdateMapCreditPanel();
 	}
 
 	/// <summary>The active preset's visible Map widget's own provider - null when it follows the default style.</summary>
@@ -367,18 +367,20 @@ public partial class MainWindow
 	/// <summary>
 	///     The credit widget's own timing counts only while every visible map's terms allow a brief credit; otherwise the
 	///     renderer shows it the whole time a map is (OverlayRenderer.MapCreditAt), so its timing is locked with a line saying
-	///     why. The default provider's pick depends on where the loaded route runs, as the renderer's does.
+	///     why. Its text, shown read-only, is the visible maps' credit, as the renderer joins it (MapSources.Credit).
+	///     The default provider's pick depends on where the loaded route runs, as the renderer's does.
 	/// </summary>
-	private void UpdateMapCreditLock()
+	private void UpdateMapCreditPanel()
 	{
 		MapSources sources = MapSources.From(OverlaySettingsStore.Load()) with
 		{
 			RouteBounds = _summary?.TelemetryFrames is { } frames ? MapBounds.Of(frames) : null
 		};
-		bool locked = ActiveElements.OfType<MapWidgetElement>()
-			.Any(m => m.Visible && sources.CreditRule(m.MapProviderId) == MapCreditRule.WhileMapVisible);
+		List<MapWidgetElement> maps = [.. ActiveElements.OfType<MapWidgetElement>().Where(m => m.Visible)];
+		bool locked = maps.Any(m => sources.CreditRule(m.MapProviderId) == MapCreditRule.WhileMapVisible);
 		MapCreditLockedHint.IsVisible = locked;
 		MapCreditTiming.IsEnabled = !locked;
+		MapCreditTextBox.Text = sources.Credit(maps.Select(m => m.MapProviderId));
 	}
 
 	/// <summary>The shared map settings can change under an open widget panel (in Settings) - it shows them again.</summary>

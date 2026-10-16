@@ -248,7 +248,7 @@ public sealed partial class OverlayRenderer
 
 		// On the map, the whole time the card is: what every provider's terms ask for at the least.
 		if (MapSources.Attribution(RouteIntro.MapProviderId, routeIntro: true) is { } credit)
-			DrawOutlined(canvas, credit, mapRect.Left + 24f, mapRect.Bottom - 24f, _smallFont, White);
+			DrawCredit(canvas, credit, mapRect.Left + 24f, mapRect.Bottom - 24f, _smallFont, White);
 	}
 
 	/// <summary>

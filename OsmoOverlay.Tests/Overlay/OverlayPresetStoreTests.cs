@@ -39,4 +39,16 @@ public sealed class OverlayPresetStoreTests
 			File.Delete(file);
 		}
 	}
+
+	[TestMethod]
+	public void Sanitize_KeepsTheMapCreditLegible()
+	{
+		OverlayPreset preset = OverlayPresetStore.Sanitize(new OverlayPreset("p", "Small", [
+			new MapAttributionElement { Id = "credit", X = 0, Y = 0, Scale = 0.4f },
+			new TextElement { Id = "text", X = 0, Y = 0, Scale = 0.4f }
+		]));
+
+		Assert.AreEqual(OverlayElementBounds.MinMapCreditScale, preset.Elements.Single(e => e.Id == "credit").Scale);
+		Assert.AreEqual(0.4f, preset.Elements.Single(e => e.Id == "text").Scale);
+	}
 }
