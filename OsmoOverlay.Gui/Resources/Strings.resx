@@ -3761,4 +3761,10 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   <data name="Summary_LogGpsAnomalies" xml:space="preserve">
     <value>Fixed {0} GPS anomaly (a position or speed jump no vehicle could make)|Fixed {0} GPS anomalies (position or speed jumps no vehicle could make)</value>
   </data>
+  <data name="Main_GpsAlert" xml:space="preserve">
+    <value>GPS alert</value>
+  </data>
+  <data name="GpsAlert_Hint" xml:space="preserve">
+    <value>Shows up only when something happens with the GPS: searching for a first signal, the signal lost (for how long) and back, and a wrong position or speed reading that was corrected. It goes away right after. Its texts are in English, like the other widgets' default labels. To see it in the preview, scrub to a GPS problem - the timeline marks it in yellow or orange.</value>
+  </data>
 </root>

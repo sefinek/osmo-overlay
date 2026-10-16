@@ -228,6 +228,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	public void Dispose()
 	{
+		_gpsAlertPaint.Dispose();
 		_hudTypeface.Dispose();
 		_dateFont.Dispose();
 		_labelFont.Dispose();
@@ -311,6 +312,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_observedMaxSpeedKmh = observedMaxSpeedKmh;
 		_tripStats = tripStats;
 		_firstReachingSeconds.Clear();
+		_gpsAlerts = null;
 		TrailSpeedPercentileKmh = trailSpeedPercentileKmh;
 		_trailSpeedScaleKmh = Math.Max(trailSpeedPercentileKmh, 5);
 		ClearProfiles();
@@ -341,6 +343,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_totalDurationSeconds = allFrames.Count > 0 ? allFrames[^1].Raw.SampleTimeSeconds - allFrames[0].Raw.SampleTimeSeconds : 0;
 		_tripStats = TripStats.Compute(allFrames);
 		_firstReachingSeconds.Clear();
+		_gpsAlerts = null;
 		TrailSpeedPercentileKmh = ComputeTrailSpeedPercentile(allFrames);
 		_trailSpeedScaleKmh = Math.Max(TrailSpeedPercentileKmh, 5);
 		_gMeterDeltas = GMeterDeltas.Compute(allFrames);
@@ -747,6 +750,9 @@ public sealed partial class OverlayRenderer : IDisposable
 				break;
 			case WatermarkElement watermark:
 				DrawWatermarkWidget(canvas, watermark);
+				break;
+			case GpsAlertElement gpsAlert:
+				DrawGpsAlert(canvas, frame, gpsAlert);
 				break;
 			case MapAttributionElement mapCredit:
 				DrawCredit(canvas, MapCreditText(), 0, 0, TextFont(mapCredit, OverlayElementBounds.CreditFontSize), TextColorOf(mapCredit),

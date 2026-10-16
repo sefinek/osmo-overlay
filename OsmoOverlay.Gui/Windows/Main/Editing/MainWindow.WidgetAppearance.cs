@@ -117,6 +117,7 @@ public partial class MainWindow
 			CompassElement compass => compass with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
 			TripProgressBarElement bar => bar with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
 			ProfileChartElement chart => chart with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
+			GpsAlertElement gpsAlert => gpsAlert with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
 			_ => element
 		};
 	}

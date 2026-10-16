@@ -1390,6 +1390,43 @@
 											</StackPanel>
 										</Border>
 									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="GpsAlertListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.GpsAlert}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Main_GpsAlert}" />
+										</Border>
+										<Border Name="GpsAlertSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.GpsAlert_Hint}" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="GpsAlertStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Panel}" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="GpsAlertPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="GpsAlertShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="GpsAlertTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="SpeedListItem" Classes="overlayListItem"

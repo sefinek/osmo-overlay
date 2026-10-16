@@ -3761,4 +3761,10 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
   <data name="Summary_LogGpsAnomalies" xml:space="preserve">
     <value>Poprawiono {0} anomalię GPS (skok pozycji lub prędkości niemożliwy dla pojazdu)|Poprawiono {0} anomalie GPS (skoki pozycji lub prędkości niemożliwe dla pojazdu)|Poprawiono {0} anomalii GPS (skoków pozycji lub prędkości niemożliwych dla pojazdu)</value>
   </data>
+  <data name="Main_GpsAlert" xml:space="preserve">
+    <value>Alert GPS</value>
+  </data>
+  <data name="GpsAlert_Hint" xml:space="preserve">
+    <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Teksty są po angielsku, jak domyślne podpisy innych widżetów. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
+  </data>
 </root>

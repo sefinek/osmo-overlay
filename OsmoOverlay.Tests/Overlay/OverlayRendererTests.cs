@@ -171,6 +171,9 @@ public sealed class OverlayRendererTests
 					continue;
 				}
 
+				// Drawn only while the GPS has something to say, which this route never does - GpsAlertTests draws it on one that does.
+				if (shown is GpsAlertElement) continue;
+
 				// The watermark is drawn only with Settings' switch on.
 				Assert.IsTrue(RenderLayout([shown], shown is WatermarkElement).Any(b => b != 0), $"{element.Type} drew nothing");
 			}

@@ -120,7 +120,7 @@ public partial class MainWindow : Window
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
 			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
 			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
-			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming
+			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming
 		];
 		foreach (ElementTimingEditor timing in timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
@@ -129,7 +129,7 @@ public partial class MainWindow : Window
 			DateTimeShadow, UtcTimeShadow, CameraInfoShadow, CompassShadow, MapShadow,
 			SpeedShadow, RollShadow, PitchShadow, SunShadow, GMeterShadow, ElapsedTimeShadow,
 			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
-			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow
+			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow
 		];
 		foreach (ElementShadowEditor shadow in _shadowEditors)
 		{
@@ -142,7 +142,7 @@ public partial class MainWindow : Window
 		ElementPanelEditor[] panelEditors =
 		[
 			SunPanelFill, RollPanelFill, PitchPanelFill, GMeterPanelFill, SpeedPanelFill,
-			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill
+			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill, GpsAlertPanelFill
 		];
 		foreach (ElementPanelEditor panel in panelEditors)
 		{
@@ -161,7 +161,7 @@ public partial class MainWindow : Window
 		[
 			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, RollStyle, PitchStyle, SunStyle,
 			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
-			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle
+			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle
 		];
 		foreach (ElementStyleEditor style in styleEditors)
 		{

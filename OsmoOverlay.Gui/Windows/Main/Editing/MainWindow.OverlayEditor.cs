@@ -225,6 +225,7 @@ public partial class MainWindow
 			OverlayElementType.Image => ImageListItem,
 			OverlayElementType.MapAttribution => MapCreditListItem,
 			OverlayElementType.Watermark => WatermarkListItem,
+			OverlayElementType.GpsAlert => GpsAlertListItem,
 			_ => null
 		};
 	}
@@ -818,6 +819,16 @@ public partial class MainWindow
 				MapCreditTiming.Populate(x);
 				MapCreditShadow.Populate(x);
 				UpdateMapCreditPanel();
+				break;
+			}
+
+			case OverlayElementType.GpsAlert:
+			{
+				var x = (GpsAlertElement)el;
+				GpsAlertStyle.Populate(x);
+				GpsAlertPanelFill.Populate(x);
+				GpsAlertShadow.Populate(x);
+				GpsAlertTiming.Populate(x);
 				break;
 			}
 

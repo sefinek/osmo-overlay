@@ -68,6 +68,7 @@ public partial class MainWindow
 			OverlayElementType.Image => ImageSettingsPanel,
 			OverlayElementType.MapAttribution => MapCreditSettingsPanel,
 			OverlayElementType.Watermark => WatermarkSettingsPanel,
+			OverlayElementType.GpsAlert => GpsAlertSettingsPanel,
 			_ => null
 		};
 	}
