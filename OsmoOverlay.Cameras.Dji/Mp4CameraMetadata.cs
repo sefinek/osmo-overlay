@@ -1,7 +1,7 @@
-using OsmoOverlay.Core.Localization;
 using System.Buffers.Binary;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Cameras.Dji;

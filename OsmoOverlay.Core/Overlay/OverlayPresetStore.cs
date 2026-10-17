@@ -1,5 +1,5 @@
-using OsmoOverlay.Core.Localization;
 using System.Text.Json;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Overlay;

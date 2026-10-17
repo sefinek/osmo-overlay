@@ -1,7 +1,7 @@
-using OsmoOverlay.Core.Localization;
 using System.Diagnostics;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Dependencies;

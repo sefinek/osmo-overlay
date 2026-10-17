@@ -1,5 +1,5 @@
-using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Cameras;
+using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Core.Overlay;
 

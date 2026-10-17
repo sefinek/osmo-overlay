@@ -53,7 +53,7 @@ public sealed class CameraTiltTests
 	public void EndOfAGpsLoss_IsNoAcceleration()
 	{
 		// A held position reads 0 km/h through a GPS loss; the real speed is back the moment the fix is.
-		var drive = Drive(5, 0, 0, -1, t => t < 2 ? 0 : 35, _ => 0);
+		(List<TelemetryFrame> Frames, double[] Speeds, double[] Headings) drive = Drive(5, 0, 0, -1, t => t < 2 ? 0 : 35, _ => 0);
 		for (int i = 0; i < drive.Frames.Count; i++)
 			drive.Frames[i] = drive.Frames[i] with { HasGpsFix = drive.Frames[i].SampleTimeSeconds >= 2 };
 

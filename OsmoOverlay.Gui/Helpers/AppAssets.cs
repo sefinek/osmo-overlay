@@ -23,6 +23,7 @@ public static class AppAssets
 					_icon = Load("OsmoOverlay.ico", path => new WindowIcon(path));
 					_iconLoaded = true;
 				}
+
 				return _icon;
 			}
 		}
@@ -37,6 +38,7 @@ public static class AppAssets
 				image = Load(path, assetPath => new Bitmap(assetPath));
 				Images.Add(path, image);
 			}
+
 			return image;
 		}
 	}

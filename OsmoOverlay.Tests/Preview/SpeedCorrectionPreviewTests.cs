@@ -34,7 +34,7 @@ public sealed class SpeedCorrectionPreviewTests
 	public async Task CancelledCorrection_DoesNotChangeSpeed()
 	{
 		DerivedFrame[] frames = [Frame(0, 40), Frame(1, 40)];
-		using var compositor = CreateCompositor(frames);
+		using OverlayCompositor compositor = CreateCompositor(frames);
 		using var cancellation = new CancellationTokenSource();
 		cancellation.Cancel();
 
@@ -48,7 +48,7 @@ public sealed class SpeedCorrectionPreviewTests
 	public async Task ConcurrentCorrections_KeepTheLatestPercentage()
 	{
 		DerivedFrame[] frames = [.. Enumerable.Range(0, 10000).Select(i => Frame(i, 40))];
-		using var compositor = CreateCompositor(frames);
+		using OverlayCompositor compositor = CreateCompositor(frames);
 
 		Task first = compositor.SetSpeedCorrectionAsync(50);
 		Task latest = compositor.SetSpeedCorrectionAsync(25);
@@ -61,7 +61,7 @@ public sealed class SpeedCorrectionPreviewTests
 	public async Task Correction_PreservesTrailPercentileBelowTheFloor_AndOriginalFrames()
 	{
 		DerivedFrame[] frames = [Frame(0, 4), Frame(1, 4)];
-		using var compositor = CreateCompositor(frames);
+		using OverlayCompositor compositor = CreateCompositor(frames);
 
 		await compositor.SetSpeedCorrectionAsync(50);
 		Assert.AreEqual(6.0, compositor.Renderer.TrailSpeedPercentileKmh, 1e-9);
@@ -74,7 +74,7 @@ public sealed class SpeedCorrectionPreviewTests
 	public async Task RestoringCurrentPercentage_SupersedesAPendingCorrection()
 	{
 		DerivedFrame[] frames = [.. Enumerable.Range(0, 10000).Select(i => Frame(i, 40))];
-		using var compositor = CreateCompositor(frames);
+		using OverlayCompositor compositor = CreateCompositor(frames);
 
 		Task first = compositor.SetSpeedCorrectionAsync(50);
 		Task latest = compositor.SetSpeedCorrectionAsync(0);
@@ -87,7 +87,7 @@ public sealed class SpeedCorrectionPreviewTests
 	public async Task ChangingTimeline_DuringCorrection_PreservesCuts()
 	{
 		DerivedFrame[] frames = [.. Enumerable.Range(0, 10000).Select(i => Frame(i, i < 5000 ? 40 : 80))];
-		using var compositor = CreateCompositor(frames);
+		using OverlayCompositor compositor = CreateCompositor(frames);
 		var timeline = new OutputTimeline(RenderPlan.Resolve(0, 10000, [new TimeRange(5000, 10000)], null, 1, 10000), 1);
 
 		Task correction = compositor.SetSpeedCorrectionAsync(25);

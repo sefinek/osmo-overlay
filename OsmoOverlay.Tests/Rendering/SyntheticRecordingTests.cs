@@ -1,7 +1,9 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Tests.Rendering;
@@ -193,7 +195,7 @@ public sealed class SyntheticRecordingTests
 	{
 		ICameraFormat camera = CameraFormats.Find("synthetic")!;
 
-		Assert.AreEqual(new OsmoOverlay.Core.Reframe.Direction(0.1, 0.9, -0.2), camera.Gravity(new TelemetryFrame(0, 0, 0, 0, 0, null, 0.1, 0.9, -0.2)));
+		Assert.AreEqual(new Direction(0.1, 0.9, -0.2), camera.Gravity(new TelemetryFrame(0, 0, 0, 0, 0, null, 0.1, 0.9, -0.2)));
 	}
 
 	[TestMethod]
@@ -227,6 +229,6 @@ public sealed class SyntheticRecordingTests
 		List<string> args = SyntheticRecording.Arguments(plan, 0, "out.mp4", "hevc_nvenc");
 
 		string sound = args.Single(a => a.StartsWith("aevalsrc", StringComparison.Ordinal));
-		StringAssert.Contains(sound, $":d={(plan.Frames / Fps + plan.SoundOverrunSeconds).ToString("0.######", System.Globalization.CultureInfo.InvariantCulture)}");
+		StringAssert.Contains(sound, $":d={(plan.Frames / Fps + plan.SoundOverrunSeconds).ToString("0.######", CultureInfo.InvariantCulture)}");
 	}
 }

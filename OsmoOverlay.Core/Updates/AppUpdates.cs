@@ -1,10 +1,10 @@
-using OsmoOverlay.Core.Localization;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using Microsoft.Win32;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Updates;

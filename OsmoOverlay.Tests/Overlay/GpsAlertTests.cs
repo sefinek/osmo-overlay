@@ -1,4 +1,3 @@
-using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using static OsmoOverlay.Core.Overlay.OverlayRenderer;
@@ -162,7 +161,7 @@ public sealed class GpsAlertTests
 	[TestMethod]
 	public void OwnText_TakesThePlaceOfTheBuiltIn_LineByLine()
 	{
-		var texts = new GpsAlertTexts().With(GpsAlertMessage.Lost, new GpsAlertText("Sygnał zgubiony", null));
+		GpsAlertTexts texts = new GpsAlertTexts().With(GpsAlertMessage.Lost, new GpsAlertText("Sygnał zgubiony"));
 
 		(string[] titles, string[] details) = GpsAlertLines(texts);
 
@@ -182,7 +181,7 @@ public sealed class GpsAlertTests
 	[TestMethod]
 	public void Panel_FitsALongerOwnText()
 	{
-		var texts = new GpsAlertTexts().With(GpsAlertMessage.Searching, new GpsAlertText(new string('W', 40), null));
+		GpsAlertTexts texts = new GpsAlertTexts().With(GpsAlertMessage.Searching, new GpsAlertText(new string('W', 40)));
 
 		Assert.IsTrue(OverlayElementBounds.GpsAlertBox(null, texts).Width > OverlayElementBounds.GpsAlertBox(null, null).Width);
 	}
@@ -191,6 +190,6 @@ public sealed class GpsAlertTests
 	public void NeedsAFix_SomewhereInTheRecording()
 	{
 		Assert.IsTrue(OverlayDataRequirements.IsSupported(OverlayElementType.GpsAlert, new OverlayAvailability(true, false, false, false, false)));
-		Assert.IsFalse(OverlayDataRequirements.IsSupported(OverlayElementType.GpsAlert, new OverlayAvailability(false, true, true, true, true)));
+		Assert.IsFalse(OverlayDataRequirements.IsSupported(OverlayElementType.GpsAlert, new OverlayAvailability(false, true, true)));
 	}
 }

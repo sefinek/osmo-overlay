@@ -62,7 +62,7 @@ public partial class MainWindow
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
-			Task<string> encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
+			var encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
 			Task speedsRead = Task.Run(() => RecordingSpeeds(summary));
 
 			AppendLog(
@@ -200,7 +200,7 @@ public partial class MainWindow
 		if (_gpsFindings is { } cached && ReferenceEquals(cached.Summary, summary)) return (cached.Anomalies, cached.LossRanges);
 		if (!_availability.GpsFix || summary.TelemetryFrames is not { Count: > 0 } frames) return ([], []);
 
-		var found = await Task.Run(() => (Anomalies: TelemetryProcessor.FindGpsAnomalies(frames), LossRanges: TelemetryProcessor.FindGpsLossRanges(frames)));
+		(List<GpsAnomaly> Anomalies, List<(double Start, double End)> LossRanges) found = await Task.Run(() => (Anomalies: TelemetryProcessor.FindGpsAnomalies(frames), LossRanges: TelemetryProcessor.FindGpsLossRanges(frames)));
 		_gpsFindings = (summary, found.Anomalies, found.LossRanges);
 		return found;
 	}

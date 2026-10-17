@@ -49,7 +49,7 @@ public sealed class LiveChart : Control
 		if (bounds.Width < 2 || bounds.Height < 2) return;
 
 		double plotHeight = Math.Max(1, bounds.Height - PlotTop);
-		var grid = new Pen(Palette.Stroke, 1);
+		var grid = new Pen(Palette.Stroke);
 		for (int i = 1; i < 4; i++)
 		{
 			double y = Math.Round(PlotTop + plotHeight * i / 4) + 0.5;

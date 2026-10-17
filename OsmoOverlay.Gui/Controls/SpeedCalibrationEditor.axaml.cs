@@ -87,7 +87,7 @@ public partial class SpeedCalibrationEditor : UserControl
 	private void UpdateCalculation()
 	{
 		UseRecordingButton.IsEnabled = _recordingCruisingSpeedKmh is { } recorded &&
-			ShownSpeedBox.Value != (decimal)Math.Round(recorded, 2);
+		                               ShownSpeedBox.Value != (decimal)Math.Round(recorded, 2);
 		_calculatedPercent = RealSpeedBox.Value is { } real && ShownSpeedBox.Value is { } shown
 			? SpeedCalibration.PercentFor((double)real, (double)shown, 0)
 			: null;

@@ -112,26 +112,26 @@ public partial class DeveloperWindow : Window
 				var benchmark = new BenchmarkWindow();
 				var source = new VideoInfo("hevc", "Main 10", 3840, 2160, "60000/1001", "yuv420p10le", "bt709", "bt709", "bt709", "tv", 73_000_000);
 				benchmark.ShowSample(new BenchmarkResult(
-					new BenchmarkSystem("Microsoft Windows 10.0.26200", "Intel(R) Core(TM) i9-14900HX", 32, 32L << 30,
-						["NVIDIA GeForce RTX 4070 Laptop GPU (32.0.15.7714)"], "9.0.2", "1.0.0"),
-					new BenchmarkLoad(0.31, 0.64), source, source,
-					new BenchmarkStat(142, 139, 147, 3), new BenchmarkStat(118, 112, 121, 3),
-					new FrameTimes(16.4, 19.8), new FrameTimes(4.4, 5.1), 1920, 1080, new FrameTimes(4.4, 5.6), new FrameTimes(2.0, 2.4),
-					new BenchmarkStat(59, 57, 60, 2), new BenchmarkStat(36, 35, 37, 2),
+						new BenchmarkSystem("Microsoft Windows 10.0.26200", "Intel(R) Core(TM) i9-14900HX", 32, 32L << 30,
+							["NVIDIA GeForce RTX 4070 Laptop GPU (32.0.15.7714)"], "9.0.2", "1.0.0"),
+						new BenchmarkLoad(0.31, 0.64), source, source,
+						new BenchmarkStat(142, 139, 147, 3), new BenchmarkStat(118, 112, 121, 3),
+						new FrameTimes(16.4, 19.8), new FrameTimes(4.4, 5.1), 1920, 1080, new FrameTimes(4.4, 5.6), new FrameTimes(2.0, 2.4),
+						new BenchmarkStat(59, 57, 60, 2), new BenchmarkStat(36, 35, 37, 2),
+						[
+							new EncoderSpeed("hevc_nvenc", "p1", new BenchmarkStat(121, 118, 124, 2), false),
+							new EncoderSpeed("hevc_nvenc", "p4", new BenchmarkStat(114, 99, 120, 2), false),
+							new EncoderSpeed("hevc_nvenc", "p7", new BenchmarkStat(46, 45, 47, 2), false),
+							new EncoderSpeed("libx265", null, new BenchmarkStat(5, 5, 5, 2), false)
+						],
+						new BenchmarkStat(31.5, 30.9, 32.0, 2), new BenchmarkStat(26.0, 25.1, 26.4, 2), TimeSpan.FromSeconds(212),
+						new SourceSpeeds(source, new BenchmarkStat(131, 124, 138, 3), new BenchmarkStat(41, 40, 43, 3), new BenchmarkStat(29.2, 28.4, 30.1, 2),
+							new BenchmarkStat(24.1, 23.8, 24.5, 2))),
 					[
-						new EncoderSpeed("hevc_nvenc", "p1", new BenchmarkStat(121, 118, 124, 2), false),
-						new EncoderSpeed("hevc_nvenc", "p4", new BenchmarkStat(114, 99, 120, 2), false),
-						new EncoderSpeed("hevc_nvenc", "p7", new BenchmarkStat(46, 45, 47, 2), false),
-						new EncoderSpeed("libx265", null, new BenchmarkStat(5, 5, 5, 2), false)
-					],
-					new BenchmarkStat(31.5, 30.9, 32.0, 2), new BenchmarkStat(26.0, 25.1, 26.4, 2), TimeSpan.FromSeconds(212),
-					new SourceSpeeds(source, new BenchmarkStat(131, 124, 138, 3), new BenchmarkStat(41, 40, 43, 3), new BenchmarkStat(29.2, 28.4, 30.1, 2),
-						new BenchmarkStat(24.1, 23.8, 24.5, 2))),
-				[
-					(Strings.Benchmark_PreviewInWindow, SamplePreview(Strings.Benchmark_TestRecording, Strings.Benchmark_ModeTestWindow, 1120, 630, 0, 2)),
-					(string.Format(Strings.Benchmark_PreviewInApp, "DJI_20261004123456_0001_D.MP4"),
-						SamplePreview("DJI_20261004123456_0001_D.MP4", Strings.PreviewBenchmark_ModeWindow, 1664, 936, 3, 1))
-				], 54_000);
+						(Strings.Benchmark_PreviewInWindow, SamplePreview(Strings.Benchmark_TestRecording, Strings.Benchmark_ModeTestWindow, 1120, 630, 0, 2)),
+						(string.Format(Strings.Benchmark_PreviewInApp, "DJI_20261004123456_0001_D.MP4"),
+							SamplePreview("DJI_20261004123456_0001_D.MP4", Strings.PreviewBenchmark_ModeWindow, 1664, 936, 3, 1))
+					], 54_000);
 				await benchmark.ShowDialog(this);
 				break;
 			default:

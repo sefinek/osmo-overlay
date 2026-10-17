@@ -1,7 +1,7 @@
-using OsmoOverlay.Core.Localization;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Preview;
 
 namespace OsmoOverlay.Core.Dependencies;

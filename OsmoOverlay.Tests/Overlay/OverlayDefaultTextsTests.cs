@@ -35,7 +35,7 @@ public sealed class OverlayDefaultTextsTests
 	[TestMethod]
 	public void UsersOwnText_IsKeptInEveryLanguage()
 	{
-		var texts = new GpsAlertTexts().With(GpsAlertMessage.Lost, new GpsAlertText("Lost it", "Held"));
+		GpsAlertTexts texts = new GpsAlertTexts().With(GpsAlertMessage.Lost, new GpsAlertText("Lost it", "Held"));
 
 		Assert.AreEqual("LOST IT", In("pl", () => OverlayRenderer.GpsAlertLines(texts).Titles[(int)GpsAlertMessage.Lost]));
 	}

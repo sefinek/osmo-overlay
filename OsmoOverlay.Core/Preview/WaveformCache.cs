@@ -1,6 +1,6 @@
-using OsmoOverlay.Core.Localization;
 using System.Security.Cryptography;
 using System.Text;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Preview;

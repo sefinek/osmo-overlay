@@ -15,7 +15,7 @@ public sealed class RouteIntroTimingTests
 				new SunPosition(120, 30), 0, 0, 1, 0, 0))
 		];
 		RouteIntroSettings routeIntro = intro ? RouteIntroSettings.Disabled with { Enabled = true, DurationSeconds = 5 } : RouteIntroSettings.Disabled;
-		return new OverlayRenderer(640, 360, 200, [], frames, 20, true, routeIntro: routeIntro);
+		return new OverlayRenderer(640, 360, 200, [], frames, 20, routeIntro: routeIntro);
 	}
 
 	[TestMethod]

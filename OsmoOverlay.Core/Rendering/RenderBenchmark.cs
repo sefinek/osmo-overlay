@@ -424,7 +424,9 @@ public static class RenderBenchmark
 	{
 		return result.Recording is { } recording
 			? settings.HardwareDecoding ? recording.HardwareDecode : recording.SoftwareDecode
-			: settings.HardwareDecoding ? result.HardwareDecode : result.SoftwareDecode;
+			: settings.HardwareDecoding
+				? result.HardwareDecode
+				: result.SoftwareDecode;
 	}
 
 	/// <summary>The short render the way Settings decode - the loaded recording's when it was tested, else the test recording's.</summary>
@@ -432,7 +434,9 @@ public static class RenderBenchmark
 	{
 		return result.Recording is { } recording
 			? settings.HardwareDecoding ? recording.HardwareRender : recording.SoftwareRender
-			: settings.HardwareDecoding ? result.HardwareRender : result.SoftwareRender;
+			: settings.HardwareDecoding
+				? result.HardwareRender
+				: result.SoftwareRender;
 	}
 
 	/// <summary>The encoder a render uses: NVENC at the chosen preset, or the CPU one where there's no NVENC.</summary>

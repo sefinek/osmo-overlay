@@ -32,7 +32,7 @@ public sealed class CutCaptionTests
 	public void Plan_NoCaptionAtACutWithNothingToJoin()
 	{
 		var cuts = new List<TimeRange> { new(0, 3, null, new CutCaption("at the start")), new(17, 20, null, new CutCaption("at the end")) };
-		RenderPlan plan = RenderPlan.Resolve(null, null, cuts, null, Fps, (long)(20 * Fps));
+		var plan = RenderPlan.Resolve(null, null, cuts, null, Fps, (long)(20 * Fps));
 
 		Assert.AreEqual(1, plan.Pieces.Count);
 		Assert.IsNull(plan.Pieces[0].CaptionIn);
@@ -42,7 +42,7 @@ public sealed class CutCaptionTests
 	[TestMethod]
 	public void OutputTimeline_PlacesCaptionsWhereTheLaterPartStarts()
 	{
-		var timeline = new OutputTimeline(PlanWithCaptions(new CutCaption("first", 2), new CutCaption("second", 3)), Fps);
+		var timeline = new OutputTimeline(PlanWithCaptions(new CutCaption("first", 2), new CutCaption("second")), Fps);
 
 		// Kept: 0-5, 8-12, 15-20 - the joins are at 5 s and 9 s of the output.
 		IReadOnlyList<CutCaptionAt> captions = timeline.Captions;
@@ -63,10 +63,10 @@ public sealed class CutCaptionTests
 			return RenderPlan.Resolve(null, null, cuts, null, Fps, (long)(20 * Fps));
 		}
 
-		var dip = new OutputTimeline(Plan(new CutTransition(CutTransitionKind.FadeBlack, 1)), Fps);
+		var dip = new OutputTimeline(Plan(new CutTransition(CutTransitionKind.FadeBlack)), Fps);
 		Assert.AreEqual(4.5, dip.Captions[0].StartSeconds, 1e-9, "a dip starts fading the earlier part out half its length before the join");
 
-		var cross = new OutputTimeline(Plan(new CutTransition(CutTransitionKind.Crossfade, 1)), Fps);
+		var cross = new OutputTimeline(Plan(new CutTransition(CutTransitionKind.Crossfade)), Fps);
 		Assert.AreEqual(4.0, cross.Captions[0].StartSeconds, 1e-9, "an overlap starts where the later part comes in, a full length before the join");
 		Assert.AreEqual(6.0, cross.Captions[0].EndSeconds, 1e-9);
 
@@ -120,7 +120,7 @@ public sealed class CutCaptionTests
 		try
 		{
 			var project = new OverlayProject([@"C:\clip.mp4"], null,
-				[new FrameRange(10, 20, new CutTransition(CutTransitionKind.Crossfade, 1), new CutCaption("a unit\nwas here", 4))], null, 0, null, null);
+				[new FrameRange(10, 20, new CutTransition(CutTransitionKind.Crossfade), new CutCaption("a unit\nwas here", 4))], null, 0, null, null);
 			project.Save(path);
 
 			CutCaption? back = OverlayProject.Load(path).Cuts[0].Caption;

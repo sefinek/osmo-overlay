@@ -1,7 +1,7 @@
-using OsmoOverlay.Core.Localization;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Updates;
 using SkiaSharp;

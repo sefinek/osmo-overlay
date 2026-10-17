@@ -100,8 +100,8 @@ public partial class WelcomeWindow
 				data.Write(buffer, 0, read);
 			}
 
-			using SKData imageData = SKData.CreateCopy(data.ToArray());
-			using SKCodec? codec = SKCodec.Create(imageData);
+			using var imageData = SKData.CreateCopy(data.ToArray());
+			using var codec = SKCodec.Create(imageData);
 			if (codec is null || codec.Info.Width != 256 || codec.Info.Height != 256) return InvalidMapResponse();
 			using var bitmap = new SKBitmap(codec.Info);
 			if (codec.GetPixels(bitmap.Info, bitmap.GetPixels()) != SKCodecResult.Success) return InvalidMapResponse();

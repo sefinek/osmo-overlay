@@ -468,8 +468,11 @@ public sealed partial class OverlayRenderer
 		{
 			double? extreme = null;
 			foreach (DerivedFrame frame in _allFrames)
+			{
 				if (frame.Raw.HasGpsFix)
 					extreme = extreme is { } e ? pick(e, frame.Raw.AltitudeMeters) : frame.Raw.AltitudeMeters;
+			}
+
 			return extreme is { } meters ? Joined(FormatAltitude(meters, units)) : "--";
 		}
 	}
@@ -501,8 +504,11 @@ public sealed partial class OverlayRenderer
 		bool[] riding = TripStats.Riding(_allFrames);
 		double? max = null;
 		for (int i = 0; i < _allFrames.Count; i++)
+		{
 			if (riding[i])
 				max = Math.Max(max ?? double.MinValue, value(_allFrames[i]));
+		}
+
 		return max;
 	}
 

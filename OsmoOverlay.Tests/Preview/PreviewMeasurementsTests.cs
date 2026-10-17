@@ -59,6 +59,7 @@ public sealed class PreviewMeasurementsTests
 			clock.Advance(i);
 			measurements.RecordStage(PreviewStage.Decode, started);
 		}
+
 		measurements.RecordDrop(PreviewDrop.Decode, 7);
 		measurements.RecordDrop(PreviewDrop.Overlay, 2);
 		measurements.RecordDrop(PreviewDrop.Display);

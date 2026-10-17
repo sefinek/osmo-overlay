@@ -1,13 +1,35 @@
 namespace OsmoOverlay.Core.Preview;
 
-public enum PreviewStage { Decode, Overlay, Draw }
-public enum PreviewDrop { Decode, Overlay, Display }
+public enum PreviewStage
+{
+	Decode,
+	Overlay,
+	Draw
+}
+
+public enum PreviewDrop
+{
+	Decode,
+	Overlay,
+	Display
+}
 
 public sealed record PreviewTiming(int Count, double MedianMs, double P95Ms);
 
-public sealed record PreviewMeasurementResult(double Seconds, int PresentedFrames, double ExpectedFps,
-	PreviewTiming Intervals, double LongestGapMs, int Stalls, int DecodeSkipped, int OverlayDropped, int DisplayDropped,
-	PreviewTiming Decode, PreviewTiming Overlay, PreviewTiming Draw, double? DisplayRefreshHz)
+public sealed record PreviewMeasurementResult(
+	double Seconds,
+	int PresentedFrames,
+	double ExpectedFps,
+	PreviewTiming Intervals,
+	double LongestGapMs,
+	int Stalls,
+	int DecodeSkipped,
+	int OverlayDropped,
+	int DisplayDropped,
+	PreviewTiming Decode,
+	PreviewTiming Overlay,
+	PreviewTiming Draw,
+	double? DisplayRefreshHz)
 {
 	public double PresentedFps => PresentedFrames / Math.Max(Seconds, 0.001);
 }

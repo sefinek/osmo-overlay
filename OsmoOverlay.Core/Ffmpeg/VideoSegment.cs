@@ -1,4 +1,5 @@
 using OsmoOverlay.Core.Localization;
+
 namespace OsmoOverlay.Core.Ffmpeg;
 
 /// <summary>

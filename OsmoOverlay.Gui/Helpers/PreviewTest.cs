@@ -7,8 +7,18 @@ using OsmoOverlay.Core.Preview;
 namespace OsmoOverlay.Gui;
 
 /// <summary>What the preview test's report says about the playback around its measurements.</summary>
-public sealed record PreviewReportContext(string Source, string Mode, string Display, PixelSize? Decoded, double ShownWidth, double ShownHeight,
-	double Scaling, double Rate, string? Decoder, bool Overlay, bool Shadows);
+public sealed record PreviewReportContext(
+	string Source,
+	string Mode,
+	string Display,
+	PixelSize? Decoded,
+	double ShownWidth,
+	double ShownHeight,
+	double Scaling,
+	double Rate,
+	string? Decoder,
+	bool Overlay,
+	bool Shadows);
 
 /// <summary>One measured playback: the measurements, where it played, and the computer's load meanwhile.</summary>
 public sealed record PreviewRun(PreviewMeasurementResult Result, PreviewReportContext Context, IReadOnlyList<BenchmarkLoad> Loads, long PeakMemory);

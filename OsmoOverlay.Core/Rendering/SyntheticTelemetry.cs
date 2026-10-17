@@ -223,7 +223,7 @@ internal static class SyntheticTelemetry
 
 		static double[] Integrate(double from, double to)
 		{
-			var table = new double[(int)Math.Ceiling((to - from) / DistanceStep) + 2];
+			double[] table = new double[(int)Math.Ceiling((to - from) / DistanceStep) + 2];
 			for (int i = 1; i < table.Length; i++)
 				table[i] = table[i - 1] + Speed(from + (i - 0.5) * DistanceStep) * DistanceStep;
 			return table;

@@ -190,7 +190,7 @@ internal sealed class OverlayCompositor : IDisposable
 				trailSpeedPercentile = _initialTrailSpeedPercentileKmh * factor;
 			}
 
-			var prepared = await Task.Run(() =>
+			(IReadOnlyList<DerivedFrame> RecordingFrames, IReadOnlyList<DerivedFrame> Frames, TripStats Stats, double MaxSpeed) prepared = await Task.Run(() =>
 			{
 				IReadOnlyList<DerivedFrame> recordingFrames = _initialRecordingFrames;
 				if (factor != 1)
@@ -202,11 +202,13 @@ internal sealed class OverlayCompositor : IDisposable
 						DerivedFrame frame = _initialRecordingFrames[i];
 						corrected[i] = frame with { SpeedKmh = frame.SpeedKmh * factor };
 					}
+
 					recordingFrames = corrected;
 				}
+
 				ct.ThrowIfCancellationRequested();
 				IReadOnlyList<DerivedFrame> frames = MapToOutput(timeline, recordingFrames);
-				TripStats stats = TripStats.Compute(frames);
+				var stats = TripStats.Compute(frames);
 				ct.ThrowIfCancellationRequested();
 				return (RecordingFrames: recordingFrames, Frames: frames, Stats: stats, MaxSpeed: frames.Max(frame => frame.SpeedKmh));
 			}, ct);

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -498,7 +499,7 @@ public partial class BenchmarkWindow : Window
 		using (ILockedFramebuffer buffer = bitmap.Lock())
 		{
 			for (int row = 0; row < frame.Height; row++)
-				System.Runtime.InteropServices.Marshal.Copy(frame.Bgra, row * frame.Width * 4, buffer.Address + row * buffer.RowBytes, frame.Width * 4);
+				Marshal.Copy(frame.Bgra, row * frame.Width * 4, buffer.Address + row * buffer.RowBytes, frame.Width * 4);
 		}
 
 		(LiveFrame.Source as IDisposable)?.Dispose();

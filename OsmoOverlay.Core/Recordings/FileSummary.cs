@@ -164,7 +164,7 @@ public static class FileSummaryReader
 		long saveStart = stopwatch.ElapsedMilliseconds;
 		bool saved = FileSummaryCache.Save(inputPaths, summary);
 		AppLogger.Info($"Summary: cache lookup {cacheMs} ms, probe {probeMs} ms, extraction {extractMs} ms, processing {processMs} ms, " +
-				$"cache save {stopwatch.ElapsedMilliseconds - saveStart} ms, {stopwatch.ElapsedMilliseconds} ms in all ({inputPaths.Count} file(s))");
+		               $"cache save {stopwatch.ElapsedMilliseconds - saveStart} ms, {stopwatch.ElapsedMilliseconds} ms in all ({inputPaths.Count} file(s))");
 		onCacheEvent?.Invoke(new FileSummaryCacheEvent(
 			saved ? FileSummaryCacheEventKind.Saved : FileSummaryCacheEventKind.SaveFailed, CurrentCacheFormatVersion));
 		return (summary, null);

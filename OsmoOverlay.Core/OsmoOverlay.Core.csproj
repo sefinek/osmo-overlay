@@ -22,6 +22,8 @@
                       StronglyTypedNamespace="OsmoOverlay.Core.Localization"
                       StronglyTypedClassName="CoreStrings"
                       StronglyTypedFileName="$(IntermediateOutputPath)CoreStrings.g.cs" />
+    <Compile Include="$(IntermediateOutputPath)CoreStrings.g.cs"
+             Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)CoreStrings.g.cs')" />
   </ItemGroup>
 
   <ItemGroup>

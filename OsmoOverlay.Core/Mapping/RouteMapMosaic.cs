@@ -1,5 +1,5 @@
-using OsmoOverlay.Core.Localization;
 using System.Diagnostics;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using SkiaSharp;
 

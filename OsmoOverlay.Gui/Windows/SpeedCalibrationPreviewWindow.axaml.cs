@@ -81,7 +81,10 @@ public partial class SpeedCalibrationPreviewWindow : Window
 			PreviewVideo.ShowStill(frame);
 			ShowPosition(frame.Position);
 		};
-		PreviewVideo.PlaybackFrameShown += (position, _) => { if (!_closed) ShowPosition(position); };
+		PreviewVideo.PlaybackFrameShown += (position, _) =>
+		{
+			if (!_closed) ShowPosition(position);
+		};
 		_player.PlaybackStarted += () =>
 		{
 			PreviewVideo.StartPlayback(_player.Frames);
@@ -120,10 +123,14 @@ public partial class SpeedCalibrationPreviewWindow : Window
 					case Key.End: SeekTo(TimeSpan.FromSeconds(Timeline.Maximum)); break;
 					default: return;
 				}
+
 				e.Handled = true;
 			}
 		};
-		Opened += async (_, _) => { if (!string.IsNullOrEmpty(_path)) await LoadRecordingAsync(); };
+		Opened += async (_, _) =>
+		{
+			if (!string.IsNullOrEmpty(_path)) await LoadRecordingAsync();
+		};
 		_correctionTimer.Tick += async (_, _) =>
 		{
 			_correctionTimer.Stop();
@@ -169,7 +176,14 @@ public partial class SpeedCalibrationPreviewWindow : Window
 					_ => Strings.Calibration_LoadSave
 				};
 				AppLogger.Notify(message);
-				Dispatcher.UIThread.Post(() => { if (!_closed && _loading) { _loadStage = message; ShowLoadingStatus(); } });
+				Dispatcher.UIThread.Post(() =>
+				{
+					if (!_closed && _loading)
+					{
+						_loadStage = message;
+						ShowLoadingStatus();
+					}
+				});
 			}), ct);
 			if (_closed) return;
 			if (summary is null) throw new InvalidOperationException(problem);
@@ -185,7 +199,8 @@ public partial class SpeedCalibrationPreviewWindow : Window
 			(IReadOnlyList<DerivedFrame> frames, double cruising, List<Peak> peaks) = await Task.Run(() =>
 			{
 				IReadOnlyList<DerivedFrame> processed = !settings.SmoothGpsMotion && summary.DerivedFrames is { Count: > 0 } derived
-					? derived : TelemetryProcessor.Process(raw, summary.CameraFormat, settings.SmoothGpsMotion, 0);
+					? derived
+					: TelemetryProcessor.Process(raw, summary.CameraFormat, settings.SmoothGpsMotion);
 				ct.ThrowIfCancellationRequested();
 				double estimatedCruising = SpeedCalibration.CruisingSpeedKmh(processed);
 				List<Peak> topSpeeds = KeyMoments.FindTop(processed, PeakKind.TopSpeed, summary.Video.Fps, summary.TotalFrameCount, 3);
@@ -369,5 +384,10 @@ public partial class SpeedCalibrationPreviewWindow : Window
 	private void OnPreviousClick(object? sender, RoutedEventArgs e) => SeekTo(_position - TimeSpan.FromSeconds(1 / _fps));
 	private void OnNextClick(object? sender, RoutedEventArgs e) => SeekTo(_position + TimeSpan.FromSeconds(1 / _fps));
 	private void OnCancelClick(object? sender, RoutedEventArgs e) => Close();
-	private void OnUseClick(object? sender, RoutedEventArgs e) { Accepted = true; Close(); }
+
+	private void OnUseClick(object? sender, RoutedEventArgs e)
+	{
+		Accepted = true;
+		Close();
+	}
 }

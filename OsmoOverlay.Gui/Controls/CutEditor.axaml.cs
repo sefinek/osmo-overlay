@@ -354,7 +354,7 @@ public partial class CutEditor : UserControl
 			CutTransition? transition = kind is { } k
 				? new CutTransition(k, lengthBox.Value is { } seconds ? (double)seconds : CutTransition.DefaultLengthSeconds)
 				: null;
-			CutCaption? caption = CutCaption.Of(captionBox.Text, captionLengthBox.Value is { } captionSeconds ? (double)captionSeconds : CutCaption.DefaultSeconds);
+			var caption = CutCaption.Of(captionBox.Text, captionLengthBox.Value is { } captionSeconds ? (double)captionSeconds : CutCaption.DefaultSeconds);
 			parsed.Add(new FrameRange(start, end, transition, caption));
 		}
 

@@ -57,7 +57,7 @@ public static partial class SecretProtector
 			return Encoding.UTF8.GetString(plain);
 		}
 		catch (Exception ex) when (ex is CryptographicException or FormatException or IOException or UnauthorizedAccessException
-		                               or PlatformNotSupportedException)
+			                           or PlatformNotSupportedException)
 		{
 			AppLogger.Warn(ex, "A stored secret could not be read on this account or computer - it is treated as not set.");
 			return null;
@@ -148,13 +148,13 @@ public static partial class SecretProtector
 
 	private static byte[] ProtectWindows(byte[] plain)
 	{
-		return Dpapi(plain, static (ref DataBlob input, ref DataBlob entropy, out DataBlob output) =>
+		return Dpapi(plain, static (ref input, ref entropy, out output) =>
 			CryptProtectData(ref input, 0, ref entropy, 0, 0, CryptProtectUiForbidden, out output));
 	}
 
 	private static byte[] UnprotectWindows(byte[] data)
 	{
-		return Dpapi(data, static (ref DataBlob input, ref DataBlob entropy, out DataBlob output) =>
+		return Dpapi(data, static (ref input, ref entropy, out output) =>
 			CryptUnprotectData(ref input, 0, ref entropy, 0, 0, CryptProtectUiForbidden, out output));
 	}
 

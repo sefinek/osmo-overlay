@@ -128,7 +128,7 @@ public sealed partial class OverlayRenderer
 
 		SKRect box = look.Box;
 		const float radius = OverlayElementBounds.GpsAlertHeight / 2;
-		var message = (int)MessageOf(notice);
+		int message = (int)MessageOf(notice);
 		string title = look.Titles[message];
 		string detail = look.Details[message];
 		if (detail.Contains(GpsTimeToken, StringComparison.Ordinal))
@@ -287,8 +287,10 @@ public sealed partial class OverlayRenderer
 					events.Add(new GpsAlertEvent(hadFix ? GpsNotice.Lost : GpsNotice.Searching, first.SampleTimeSeconds, until.SampleTimeSeconds,
 						first.RecordingTimeSeconds, 0, GpsCorrection.None));
 					if (raw is { HasGpsFix: true } && !newFile)
+					{
 						events.Add(new GpsAlertEvent(hadFix ? GpsNotice.Back : GpsNotice.Found, raw.SampleTimeSeconds, raw.SampleTimeSeconds + GpsBackSeconds,
 							0, lasted, GpsCorrection.None));
+					}
 				}
 
 				lossStart = -1;

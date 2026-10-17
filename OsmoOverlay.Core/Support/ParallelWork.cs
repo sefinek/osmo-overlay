@@ -10,7 +10,7 @@ internal static class ParallelWork
 	/// </summary>
 	public static TResult[] Map<TItem, TResult>(IReadOnlyList<TItem> items, Func<TItem, int, TResult> work)
 	{
-		TResult[] results = new TResult[items.Count];
+		var results = new TResult[items.Count];
 		if (items.Count == 1)
 		{
 			results[0] = work(items[0], 0);

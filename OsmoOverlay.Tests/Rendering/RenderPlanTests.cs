@@ -99,7 +99,7 @@ public sealed class RenderPlanTests
 		Assert.IsFalse(Resolve().StartsLate, "the whole recording");
 		Assert.IsFalse(Resolve(null, 100).StartsLate, "an end trimmed");
 		Assert.IsFalse(Resolve(null, null, null, new TimeRange(65, 70)).StartsLate, "a cut further in keeps the start");
-		Assert.IsTrue(Resolve(60, null).StartsLate, "a range from later");
+		Assert.IsTrue(Resolve(60).StartsLate, "a range from later");
 		Assert.IsTrue(Resolve(null, null, null, new TimeRange(0, 30)).StartsLate, "the start cut off");
 	}
 

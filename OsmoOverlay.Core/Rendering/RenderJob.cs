@@ -206,7 +206,7 @@ public static class RenderJob
 			bool hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
 			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
-			RouteIntroSettings routeIntro = RouteIntroSettings.ForRecording(settings, hasGpsFix, camera, plan.StartsLate);
+			var routeIntro = RouteIntroSettings.ForRecording(settings, hasGpsFix, camera, plan.StartsLate);
 			using var renderer = new OverlayRenderer(output.Width, output.Height,
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), routeIntro)

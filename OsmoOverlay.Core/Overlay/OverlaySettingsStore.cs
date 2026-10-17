@@ -1,7 +1,7 @@
-using OsmoOverlay.Core.Localization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
 namespace OsmoOverlay.Core.Overlay;

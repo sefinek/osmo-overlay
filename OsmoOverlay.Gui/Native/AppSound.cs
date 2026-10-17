@@ -48,7 +48,7 @@ internal static class AppSound
 				_output.Start();
 			}
 			catch (Exception ex) when (ex is IOException or InvalidDataException or DllNotFoundException
-				or EntryPointNotFoundException or BadImageFormatException or TypeInitializationException)
+				                           or EntryPointNotFoundException or BadImageFormatException or TypeInitializationException)
 			{
 				_unavailable = true;
 			}
@@ -79,23 +79,23 @@ internal static class AppSound
 			_ => throw new ArgumentOutOfRangeException(nameof(sound))
 		};
 		using Stream stream = typeof(AppSound).Assembly.GetManifestResourceStream($"OsmoOverlay.Gui.Sounds.{name}.wav")
-			?? throw new InvalidDataException($"Missing UI sound: {name}");
+		                      ?? throw new InvalidDataException($"Missing UI sound: {name}");
 		Span<byte> header = stackalloc byte[44];
 		stream.ReadExactly(header);
 		if (!header[..4].SequenceEqual("RIFF"u8) || !header[8..16].SequenceEqual("WAVEfmt "u8)
-			|| BinaryPrimitives.ReadInt32LittleEndian(header[16..]) != 16
-			|| BinaryPrimitives.ReadInt16LittleEndian(header[20..]) != 1
-			|| BinaryPrimitives.ReadInt16LittleEndian(header[22..]) != 2
-			|| BinaryPrimitives.ReadInt32LittleEndian(header[24..]) != 48000
-			|| BinaryPrimitives.ReadInt16LittleEndian(header[34..]) != 16
-			|| !header[36..40].SequenceEqual("data"u8))
+		                                         || BinaryPrimitives.ReadInt32LittleEndian(header[16..]) != 16
+		                                         || BinaryPrimitives.ReadInt16LittleEndian(header[20..]) != 1
+		                                         || BinaryPrimitives.ReadInt16LittleEndian(header[22..]) != 2
+		                                         || BinaryPrimitives.ReadInt32LittleEndian(header[24..]) != 48000
+		                                         || BinaryPrimitives.ReadInt16LittleEndian(header[34..]) != 16
+		                                         || !header[36..40].SequenceEqual("data"u8))
 			throw new InvalidDataException($"Invalid UI sound format: {name}");
 
 		int bytes = BinaryPrimitives.ReadInt32LittleEndian(header[40..]);
 		if (bytes <= 0 || bytes % 4 != 0 || bytes != stream.Length - 44)
 			throw new InvalidDataException($"Invalid UI sound length: {name}");
 
-		var samples = new float[bytes / 2];
+		float[] samples = new float[bytes / 2];
 		using var reader = new BinaryReader(stream);
 		for (int i = 0; i < samples.Length; i++) samples[i] = reader.ReadInt16() / 32768f;
 		return samples;

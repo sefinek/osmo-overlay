@@ -247,6 +247,7 @@ public sealed class VideoView : Control
 				_source?.Measurements?.RecordDrop(PreviewDrop.Display);
 				PlaybackFrameSource.Release(frame);
 			}
+
 			_pendingFrame = null;
 			_pendingStill?.Dispose();
 			_pendingStill = null;
