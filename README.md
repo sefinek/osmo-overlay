@@ -29,6 +29,64 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Automatic updates** - the app checks for new versions by itself, and on Windows (when installed with the installer) updates with one click.
 - **Windows, Linux and macOS** - x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable, Linux and macOS are experimental.
 
+## Download
+Every release comes in two variants for each platform:
+
+| Variant               | .NET runtime                                                                          | Size    |
+|:----------------------|:--------------------------------------------------------------------------------------|:--------|
+| `self-contained`      | Included - nothing else to install                                                    | Larger  |
+| `framework-dependent` | [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) required | Smaller |
+
+Pick the archive for your system:
+
+| System        | CPU                  | Installer                                                                                                          | `self-contained`                                                                                                               | `framework-dependent`                                                                                                               |
+|:--------------|:---------------------|:-------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------|
+| Windows 10/11 | Intel / AMD (x64)    | [Download](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-win-x64-setup.exe)   | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-win-x64-self-contained.zip)           | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-win-x64-framework-dependent.zip)           |
+| Windows 11    | ARM64 (Snapdragon)   | [Download](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-win-arm64-setup.exe) | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-win-arm64-self-contained.zip)         | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-win-arm64-framework-dependent.zip)         |
+| Linux         | Intel / AMD (x64)    | -                                                                                                                  | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-linux-x64-self-contained.tar.gz)   | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-linux-x64-framework-dependent.tar.gz)   |
+| Linux         | ARM64 (Raspberry Pi) | -                                                                                                                  | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-linux-arm64-self-contained.tar.gz) | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-linux-arm64-framework-dependent.tar.gz) |
+| macOS         | Intel (x64)          | -                                                                                                                  | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-osx-x64-self-contained.tar.gz)     | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-osx-x64-framework-dependent.tar.gz)     |
+| macOS         | Apple Silicon (M1+)  | -                                                                                                                  | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-osx-arm64-self-contained.tar.gz)   | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.3.0/OsmoOverlay-0.3.0-osx-arm64-framework-dependent.tar.gz)   |
+
+All files are also listed on the [latest release page](https://github.com/sefinek/osmo-overlay/releases/latest). Not sure which CPU you have? On Windows see *Settings* → *System* → *About* → *System type*; on Linux and macOS run `uname -m` (`x86_64` = x64, `arm64`/`aarch64` = ARM64).
+
+Each package contains both the app (`OsmoOverlay`) and the command-line renderer (`OsmoOverlay.Cli`). Checksums are in `OsmoOverlay-<version>-SHA256SUMS.txt`.
+
+### Hardware
+The first-run guide checks your computer against these values for 4K renders from an Osmo Action:
+
+| Component       | Minimum                                  | Recommended                                                                               |
+|:----------------|:-----------------------------------------|:------------------------------------------------------------------------------------------|
+| System          | 64-bit                                   | 64-bit                                                                                    |
+| RAM             | 8 GB                                     | 16 GB or more                                                                             |
+| CPU             | 4 threads                                | 8 threads or more                                                                         |
+| Video encoder   | CPU (x264/x265) - works, but much slower | Graphics card: NVIDIA NVENC, AMD AMF or Intel Quick Sync (the latter two on Windows only) |
+| Video decoding  | CPU                                      | GPU decoding of 10-bit HEVC (D3D11VA on Windows, VideoToolbox on macOS, VAAPI on Linux)   |
+| Free disk space | 20 GB                                    | About 66 GB per hour of 4K footage (a render needs twice its size while it's made)        |
+
+The built-in performance test (*Tools*) measures what your computer can actually do and suggests settings.
+
+### Windows
+The easiest way is the installer: `OsmoOverlay-<version>-win-x64-setup.exe` (or `win-arm64`). It installs for your account into `%LocalAppData%\Programs\OsmoOverlay`, without administrator rights, and adds desktop and Start menu shortcuts and an uninstaller. It's based on the `self-contained` variant, so nothing else is needed. An installed copy checks for new versions on startup and can update itself (also from *Settings* → *About*): it downloads the new installer, verifies it, replaces the old version and starts again.
+
+Alternatively, extract the zip and run `OsmoOverlay.exe`.
+
+The builds aren't code-signed yet, so SmartScreen may warn on first launch - choose *More info* → *Run anyway*.
+
+### Linux
+```sh
+tar -xzf OsmoOverlay-<version>-linux-x64-self-contained.tar.gz
+./OsmoOverlay-<version>-linux-x64-self-contained/OsmoOverlay
+```
+To add OsmoOverlay (with its icon) to your application menu, run `./install-desktop-entry.sh` from the extracted folder - `--remove` takes it out again. Run it again if you move the folder.
+
+### macOS
+Extract the archive and move `OsmoOverlay.app` to *Applications*. The app isn't signed or notarized yet, so macOS blocks the first launch - right-click it and choose *Open*, or remove the quarantine flag:
+```sh
+xattr -dr com.apple.quarantine /Applications/OsmoOverlay.app
+```
+The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
+
 ## Supported cameras
 The DJI Osmo Action 6 and Action 5 Pro are supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for these two.
 
@@ -53,48 +111,6 @@ Adding anything to the picture means it has to be encoded again - no program can
 - The camera has no GPS module of its own, only an accelerometer. To get the route, map, speed and distance, record with the DJI GPS Bluetooth Remote Controller paired with the camera, or use your phone's GPS through DJI Mimo (though that one can behave oddly). Before you start recording, wait until the remote gets a satellite fix. Without GPS data, the widgets that need it are disabled.
 - GPS data and the camera's serial number are stored directly in the MP4 file. Be careful who you share it with.
 - The same resolution doesn't mean the same quality - codec, color depth and bitrate matter too.
-
-## Download
-Every release comes in two variants for each platform:
-
-| Variant               | .NET runtime                                                                          | Size    |
-|:----------------------|:--------------------------------------------------------------------------------------|:--------|
-| `self-contained`      | Included - nothing else to install                                                    | Larger  |
-| `framework-dependent` | [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) required | Smaller |
-
-Pick the archive for your system:
-
-| System                | Package                                              |
-|:----------------------|:-----------------------------------------------------|
-| Windows (Intel/AMD)   | `OsmoOverlay-<version>-win-x64-<variant>.zip`        |
-| Windows (ARM)         | `OsmoOverlay-<version>-win-arm64-<variant>.zip`      |
-| Linux (Intel/AMD)     | `OsmoOverlay-<version>-linux-x64-<variant>.tar.gz`   |
-| Linux (ARM)           | `OsmoOverlay-<version>-linux-arm64-<variant>.tar.gz` |
-| macOS (Intel)         | `OsmoOverlay-<version>-osx-x64-<variant>.tar.gz`     |
-| macOS (Apple Silicon) | `OsmoOverlay-<version>-osx-arm64-<variant>.tar.gz`   |
-
-Each package contains both the app (`OsmoOverlay`) and the command-line renderer (`OsmoOverlay.Cli`). Checksums are in `OsmoOverlay-<version>-SHA256SUMS.txt`.
-
-### Windows
-The easiest way is the installer: `OsmoOverlay-<version>-win-x64-setup.exe` (or `win-arm64`). It installs for your account into `%LocalAppData%\Programs\OsmoOverlay`, without administrator rights, and adds desktop and Start menu shortcuts and an uninstaller. It's based on the `self-contained` variant, so nothing else is needed. An installed copy checks for new versions on startup and can update itself (also from *Settings* → *About*): it downloads the new installer, verifies it, replaces the old version and starts again.
-
-Alternatively, extract the zip and run `OsmoOverlay.exe`.
-
-The builds aren't code-signed yet, so SmartScreen may warn on first launch - choose *More info* → *Run anyway*.
-
-### Linux
-```sh
-tar -xzf OsmoOverlay-<version>-linux-x64-self-contained.tar.gz
-./OsmoOverlay-<version>-linux-x64-self-contained/OsmoOverlay
-```
-To add OsmoOverlay (with its icon) to your application menu, run `./install-desktop-entry.sh` from the extracted folder - `--remove` takes it out again. Run it again if you move the folder.
-
-### macOS
-Extract the archive and move `OsmoOverlay.app` to *Applications*. The app isn't signed or notarized yet, so macOS blocks the first launch - right-click it and choose *Open*, or remove the quarantine flag:
-```sh
-xattr -dr com.apple.quarantine /Applications/OsmoOverlay.app
-```
-The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
 
 ## Requirements
 **FFmpeg 9** is required - both the `ffmpeg`/`ffprobe` commands and its shared libraries (used by the live preview). If it's missing, the app offers to install it on first launch:
