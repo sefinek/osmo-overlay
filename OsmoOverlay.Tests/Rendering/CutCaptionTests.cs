@@ -119,7 +119,7 @@ public sealed class CutCaptionTests
 		string path = Path.Combine(Path.GetTempPath(), $"caption-{Guid.NewGuid():N}.ovproj");
 		try
 		{
-			var project = new OverlayProject([@"C:\clip.mp4"], null,
+			var project = new OverlayProject([Path.Combine(Path.GetTempPath(), "clip.mp4")], null,
 				[new FrameRange(10, 20, new CutTransition(CutTransitionKind.Crossfade), new CutCaption("a unit\nwas here", 4))], null, 0, null, null);
 			project.Save(path);
 
