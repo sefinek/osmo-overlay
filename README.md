@@ -5,7 +5,7 @@ If you find this repository useful, I would greatly appreciate it if you could g
 Using OsmoOverlay in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
 Pull requests are welcome too - bug fixes, new widgets, support for other cameras, anything that makes the app better.
 
-![](.github/OsmoOverlay_ru8MsYzI.jpg)
+![](.github/OsmoOverlay_I0MRYO1Z.jpg)
 
 ## Features
 - **Encoded like the original** - export settings are taken from the source, so the video matches the camera original 1:1 (codec, 10-bit color, bitrate, keyframes, timecode). Burning in an overlay always means encoding the picture once more, but at the camera's own settings the difference is practically invisible.
