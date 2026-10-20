@@ -176,14 +176,14 @@
 								<StackPanel>
 									<StackPanel Classes="rowDetails">
 										<TextBlock Text="{x:Static local:Strings.Settings_License}" Classes="cardTitle" />
-										<TextBlock Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" />
+										<TextBlock Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" Classes="rowText" />
 									</StackPanel>
 									<StackPanel Classes="rowDetails">
 										<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictionsTitle}" Classes="rowTitle" />
-										<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictions}" />
+										<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictions}" Classes="rowText" />
 									</StackPanel>
 									<TextBlock Text="{x:Static local:Strings.License_OrganizationExceptions}" Classes="rowText" />
-									<TextBlock Text="{x:Static local:Strings.License_CommercialContact}" />
+									<TextBlock Text="{x:Static local:Strings.License_CommercialContact}" Classes="rowText" />
 									<StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
 										<Button Content="{x:Static local:Strings.License_ContactByEmail}"
 										        Tag="mailto:contact@sefinek.net" Click="OnLinkButtonClick" />

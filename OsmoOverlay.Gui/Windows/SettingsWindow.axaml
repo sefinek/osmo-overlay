@@ -130,6 +130,10 @@
 			<Setter Property="LineHeight" Value="21" />
 			<Setter Property="TextWrapping" Value="Wrap" />
 		</Style>
+		<Style Selector="Border.licenseCard TextBlock.rowHint">
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="Margin" Value="0" />
+		</Style>
 		<Style Selector="Grid.settingRow > ComboBox, Grid.settingRow > NumericUpDown">
 			<Setter Property="Width" Value="230" />
 			<Setter Property="VerticalAlignment" Value="Center" />
@@ -689,16 +693,14 @@
 					<TextBlock Text="{x:Static local:Strings.Settings_License}" Classes="sectionLabel licenseTitle" />
 					<Border Classes="settingsCard licenseCard" Padding="18">
 						<StackPanel Spacing="12">
-							<TextBlock Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" TextWrapping="Wrap" />
+							<TextBlock Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" Classes="rowHint" />
 							<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictionsTitle}" Classes="rowTitle" />
-							<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictions}" TextWrapping="Wrap" />
-							<TextBlock Text="{x:Static local:Strings.License_OrganizationExceptions}" Classes="rowHint" Margin="0"
-							           Foreground="{StaticResource TextSecondaryBrush}" />
-							<TextBlock Text="{x:Static local:Strings.License_CommercialContact}" TextWrapping="Wrap" />
+							<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictions}" Classes="rowHint" />
+							<TextBlock Text="{x:Static local:Strings.License_OrganizationExceptions}" Classes="rowHint" />
+							<TextBlock Text="{x:Static local:Strings.License_CommercialContact}" Classes="rowHint" />
 							<TextBlock Text="contact@sefinek.net" Classes="link" HorizontalAlignment="Left"
 							           Tag="mailto:contact@sefinek.net" PointerPressed="OnLinkClick" />
-							<TextBlock Text="{x:Static local:Strings.License_ThirdPartyTerms}" Classes="rowHint" Margin="0"
-							           Foreground="{StaticResource TextSecondaryBrush}" />
+							<TextBlock Text="{x:Static local:Strings.License_ThirdPartyTerms}" Classes="rowHint" />
 							<TextBlock Text="{x:Static local:Strings.Settings_ReadTheLicense}" Classes="link" HorizontalAlignment="Left"
 							           Tag="https://github.com/sefinek/osmo-overlay/blob/main/LICENSE" PointerPressed="OnLinkClick" />
 						</StackPanel>

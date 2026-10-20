@@ -696,10 +696,10 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Zainstaluj</value>
   </data>
   <data name="DependencyPrompt_InstallManually" xml:space="preserve">
-    <value>OsmoOverlay potrzebuje poniższych narzędzi, ale nie znaleziono obsługiwanego menedżera pakietów. Zainstaluj je ręcznie i uruchom aplikację ponownie.</value>
+    <value>Nie znaleziono obsługiwanego menedżera pakietów. Zainstaluj wymagane narzędzia ręcznie i uruchom ponownie aplikację. Narzędzia opcjonalne możesz pominąć.</value>
   </data>
   <data name="DependencyPrompt_InstallNow" xml:space="preserve">
-    <value>Do działania OsmoOverlay potrzebne są poniższe narzędzia. Zainstalować je teraz?</value>
+    <value>OsmoOverlay korzysta z poniższych narzędzi. Zainstalować zaznaczone narzędzia?</value>
   </data>
   <data name="DependencyPrompt_MissingDependencies" xml:space="preserve">
     <value>Brakujące zależności</value>
@@ -3035,7 +3035,7 @@ Szczegóły: {0}</value>
     <value>Nagrania 360° w formacie .insv są wyświetlane jako standardowy kadr z regulowanym kierunkiem i polem widzenia. Obsługę przetestowano na X4. Aplikacja nie odczytuje jeszcze danych GPS z tych plików.</value>
   </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
-    <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamery DJI Osmo Action lub Insta360. Kilka szybkich kroków przed pierwszym renderem: wspierane kamery, narzędzia, kalibracja prędkości i miejsce zapisu filmów.</value>
+
   </data>
   <data name="Welcome_CheckDecoder" xml:space="preserve">
     <value>Sprzętowe dekodowanie</value>
@@ -3050,7 +3050,7 @@ Szczegóły: {0}</value>
     <value>Miejsce na dysku</value>
   </data>
   <data name="Welcome_CheckDiskProblem" xml:space="preserve">
-    <value>Mniej niż 20 GB - dłuższy render 4K się nie zmieści.</value>
+    <value>Mniej niż 20 GB wolnego miejsca - może go zabraknąć przy dłuższym renderowaniu w 4K.</value>
   </data>
   <data name="Welcome_CheckDiskValue" xml:space="preserve">
     <value>{0} wolne w {1}</value>
@@ -3071,7 +3071,7 @@ Szczegóły: {0}</value>
     <value>Pamięć RAM</value>
   </data>
   <data name="Welcome_CheckMemoryProblem" xml:space="preserve">
-    <value>Minimum to 8 GB - render 4K może się nie zmieścić w pamięci.</value>
+    <value>Mniej niż 8 GB RAM - przy renderowaniu w 4K może zabraknąć pamięci.</value>
   </data>
   <data name="Welcome_CheckMemoryWarning" xml:space="preserve">
     <value>Do renderów 4K zalecane jest 16 GB.</value>
@@ -3122,10 +3122,10 @@ Szczegóły: {0}</value>
     <value>Domyślne ustawienia pierwszego renderu. Każde z nich możesz później zmienić.</value>
   </data>
   <data name="Welcome_EverythingHereCanBeChanged" xml:space="preserve">
-    <value>Wszystko to możesz później zmienić w Ustawieniach, skąd da się też ponownie otworzyć ten przewodnik. Enter przechodzi do następnego kroku, Esc zamyka przewodnik.</value>
+    <value>Wybrane ustawienia możesz później zmienić. Przewodnik otworzysz ponownie w Ustawieniach. Enter przechodzi do następnego kroku, Esc zamyka przewodnik.</value>
   </data>
   <data name="Welcome_FfmpegNeeded" xml:space="preserve">
-    <value>FFmpeg jest potrzebny do podglądu i każdego renderu. Zainstaluj go tutaj albo później w Ustawienia &gt; O programie.</value>
+    <value>FFmpeg jest potrzebny do podglądu i każdego renderu. Zainstaluj go tutaj albo później w Ustawieniach &gt; O programie.</value>
   </data>
   <data name="Welcome_Finish" xml:space="preserve">
     <value>Zakończ</value>
@@ -3137,7 +3137,7 @@ Szczegóły: {0}</value>
     <value>Krótkie sprawdzenie, czy ten komputer poradzi sobie z renderami 4K z Osmo Action: system, procesor, pamięć, kodowanie i dekodowanie na karcie graficznej oraz miejsce na dysku.</value>
   </data>
   <data name="Welcome_HardwareOk" xml:space="preserve">
-    <value>Ten komputer poradzi sobie z renderami 4K.</value>
+    <value>Ten komputer spełnia zalecenia sprzętowe do renderowania w 4K.</value>
   </data>
   <data name="Welcome_HardwareProblem" xml:space="preserve">
     <value>Ten komputer może nie poradzić sobie z renderami 4K - szczegóły wyżej.</value>
@@ -3152,7 +3152,7 @@ Szczegóły: {0}</value>
     <value>Instalowanie...</value>
   </data>
   <data name="Welcome_InstallingHint" xml:space="preserve">
-    <value>Instalowanie {0}. Może to potrwać około minuty. Postęp jest widoczny w logu okna głównego.</value>
+    <value>Instalowanie {0}. Postęp jest widoczny w logu okna głównego.</value>
   </data>
   <data name="Welcome_InstallingTool" xml:space="preserve">
     <value>Instalowanie {0}...</value>
@@ -3170,15 +3170,15 @@ Szczegóły: {0}</value>
     <value>Opcjonalny</value>
   </data>
   <data name="Welcome_OptionalToolsLater" xml:space="preserve">
-    <value>Opcjonalne narzędzia można też zainstalować później w Ustawienia &gt; O programie.</value>
+    <value>Opcjonalne narzędzia możesz też zainstalować później w Ustawieniach &gt; O programie.</value>
   </data>
   <data name="Welcome_OsmoOverlayIsMadeByOne" xml:space="preserve">
-    <value>OsmoOverlay to projekt rozwijany w wolnym czasie przez jedną osobę i udostępniany bezpłatnie do użytku niekomercyjnego. Jeśli jest dla Ciebie przydatny, rozważ wsparcie autora, dodanie gwiazdki repozytorium na GitHubie lub polecenie projektu znajomym. Dzięki!
+    <value>OsmoOverlay to projekt rozwijany w wolnym czasie przez jedną osobę i udostępniany bezpłatnie do użytku niekomercyjnego. Jeśli jest dla ciebie przydatny, rozważ wsparcie autora, dodanie gwiazdki repozytorium na GitHubie lub polecenie projektu znajomym. Dzięki!
 
-Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie zapłaty za ten program, najprawdopodobniej próbuje Cię oszukać.</value>
+Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie zapłaty za ten program, najprawdopodobniej próbuje cię oszukać.</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
-    <value>OsmoOverlay odczytuje telemetrię, którą kamera zapisuje w każdym nagraniu - bez dodatkowych plików.</value>
+    <value>OsmoOverlay odczytuje telemetrię zapisaną w plikach obsługiwanych kamer. Nie potrzebujesz osobnych plików z danymi.</value>
   </data>
   <data name="Welcome_OsmoOverlayRendersWithFFmpegExifTool" xml:space="preserve">
     <value>OsmoOverlay używa FFmpeg do renderowania. Opcjonalny ExifTool służy do awaryjnego odczytu telemetrii, gdy wbudowany dekoder nie potrafi odczytać danych z nagrania.</value>
@@ -3252,7 +3252,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Bez klucza: tylko do podglądu i testów - w publikowanym filmie nie wolno.</value>
   </data>
   <data name="Welcome_MapRuleWithKey" xml:space="preserve">
-    <value>Darmowy klucz Esri pozwala korzystać z map w filmach, także komercyjnych. Program automatycznie doda wymagany podpis Esri.</value>
+    <value>Darmowy klucz Esri pozwala korzystać z tych map w filmach. Program automatycznie doda wymagany podpis Esri.</value>
   </data>
   <data name="Welcome_MapPreviewFailed" xml:space="preserve">
     <value>Nie udało się wczytać podglądu - sprawdź połączenie albo klucz.</value>
@@ -3261,7 +3261,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Wczytywanie podglądu...</value>
   </data>
   <data name="Welcome_MapStreetsHint" xml:space="preserve">
-    <value>Ulice i nazwy jak w Google Maps</value>
+    <value>Mapa ulic z nazwami miejsc</value>
   </data>
   <data name="Welcome_MapStreets" xml:space="preserve">
     <value>Ulice</value>
@@ -3285,7 +3285,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Pokazuj znak wodny OsmoOverlay</value>
   </data>
   <data name="Welcome_SmoothGpsHint" xml:space="preserve">
-    <value>GPS zapisuje tylko kilka pozycji na sekundę, dlatego ślad w kompasie i mapa mogą poruszać się skokowo. Wygładzanie zapewnia płynny ruch między kolejnymi pozycjami.</value>
+    <value>Pozycja GPS jest aktualizowana rzadziej niż klatki nagrania, dlatego ślad w kompasie i mapa mogą poruszać się skokowo. Wygładzanie zapewnia płynny ruch między kolejnymi pozycjami.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
     <value>Jeśli podczas jazdy ze stałą prędkością GPS regularnie wskazuje za mało, możesz zwiększyć odczyty na nakładce o wybrany procent. Oblicz korektę z dwóch porównywanych odczytów lub wpisz ją ręcznie. Jeśli nie potrzebujesz kalibracji, pozostaw 0%.</value>
@@ -3324,7 +3324,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Znak wodny</value>
   </data>
   <data name="Welcome_SupportedCameras" xml:space="preserve">
-    <value>Wspierane kamery</value>
+    <value>Obsługiwane kamery</value>
   </data>
   <data name="Welcome_SupportOnKoFi" xml:space="preserve">
     <value>Wesprzyj na Ko-fi</value>
@@ -3336,7 +3336,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od Ciebie
     <value>Zostanie zapisane:</value>
   </data>
   <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
-    <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo mogą nie zawierać telemetrii. Aby korzystać z prędkości, trasy i mapy, nagrywaj z pilotem DJI GPS Bluetooth Remote lub GPS telefonu przez DJI Mimo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik ustali pozycję.</value>
+    <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo mogą nie zawierać telemetrii. W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Wersja {0}</value>

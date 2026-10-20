@@ -696,10 +696,10 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>Install</value>
   </data>
   <data name="DependencyPrompt_InstallManually" xml:space="preserve">
-    <value>OsmoOverlay needs the tools below, but no supported package manager was found. Install them manually, then restart the app.</value>
+    <value>No supported package manager was found. Install the required tools manually, then restart the app. You can skip optional tools.</value>
   </data>
   <data name="DependencyPrompt_InstallNow" xml:space="preserve">
-    <value>OsmoOverlay needs the tools below to work. Install them now?</value>
+    <value>OsmoOverlay uses the tools below. Install the selected tools?</value>
   </data>
   <data name="DependencyPrompt_MissingDependencies" xml:space="preserve">
     <value>Missing dependencies</value>
@@ -3035,7 +3035,7 @@ Details: {0}</value>
     <value>360° recordings in .insv format are displayed as a standard frame with adjustable viewing direction and field of view. Support has been tested on the X4. The app does not yet read GPS data from these files.</value>
   </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
-    <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera. A few quick steps before your first render: supported cameras, tools, speed calibration and where videos are saved.</value>
+    <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera. This guide introduces the supported cameras and helps you set up tools, adjust speed correction and choose where to save videos.</value>
   </data>
   <data name="Welcome_CheckDecoder" xml:space="preserve">
     <value>Hardware decoding</value>
@@ -3050,7 +3050,7 @@ Details: {0}</value>
     <value>Disk space</value>
   </data>
   <data name="Welcome_CheckDiskProblem" xml:space="preserve">
-    <value>Less than 20 GB - a longer 4K render won't fit.</value>
+    <value>Less than 20 GB free - longer 4K renders may run out of disk space.</value>
   </data>
   <data name="Welcome_CheckDiskValue" xml:space="preserve">
     <value>{0} free in {1}</value>
@@ -3071,7 +3071,7 @@ Details: {0}</value>
     <value>Memory</value>
   </data>
   <data name="Welcome_CheckMemoryProblem" xml:space="preserve">
-    <value>8 GB is the minimum - a 4K render may not fit in memory.</value>
+    <value>Less than 8 GB of RAM - 4K rendering may run out of memory.</value>
   </data>
   <data name="Welcome_CheckMemoryWarning" xml:space="preserve">
     <value>16 GB is recommended for 4K renders.</value>
@@ -3122,7 +3122,7 @@ Details: {0}</value>
     <value>Defaults for the first render. You can change any of them later.</value>
   </data>
   <data name="Welcome_EverythingHereCanBeChanged" xml:space="preserve">
-    <value>Everything here can be changed later in Settings, and this guide can be opened again from there. Enter goes to the next step, Esc closes the guide.</value>
+    <value>You can change your chosen settings later. Open this guide again from Settings. Enter goes to the next step, Esc closes the guide.</value>
   </data>
   <data name="Welcome_FfmpegNeeded" xml:space="preserve">
     <value>FFmpeg is needed for the preview and every render. Install it here, or later from Settings &gt; About.</value>
@@ -3137,7 +3137,7 @@ Details: {0}</value>
     <value>A quick check of whether this computer can handle 4K renders from an Osmo Action: the system, processor, memory, encoding and decoding on the graphics card, and disk space.</value>
   </data>
   <data name="Welcome_HardwareOk" xml:space="preserve">
-    <value>This computer can handle 4K renders.</value>
+    <value>This computer meets the hardware recommendations for 4K rendering.</value>
   </data>
   <data name="Welcome_HardwareProblem" xml:space="preserve">
     <value>This computer may not handle 4K renders - see above.</value>
@@ -3152,7 +3152,7 @@ Details: {0}</value>
     <value>Installing...</value>
   </data>
   <data name="Welcome_InstallingHint" xml:space="preserve">
-    <value>Installing {0}. This may take about a minute. Progress is shown in the main window log.</value>
+    <value>Installing {0}. Progress is shown in the main window log.</value>
   </data>
   <data name="Welcome_InstallingTool" xml:space="preserve">
     <value>Installing {0}...</value>
@@ -3178,7 +3178,7 @@ Details: {0}</value>
 Note: OsmoOverlay is provided free of charge. If someone asks you to pay for this program, they are most likely trying to scam you.</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
-    <value>OsmoOverlay reads the telemetry your camera saves inside every recording - no extra files needed.</value>
+    <value>OsmoOverlay reads telemetry stored in files from supported cameras. You do not need separate data files.</value>
   </data>
   <data name="Welcome_OsmoOverlayRendersWithFFmpegExifTool" xml:space="preserve">
     <value>OsmoOverlay uses FFmpeg for rendering. The optional ExifTool provides a fallback for reading telemetry when the built-in decoder cannot read the recording data.</value>
@@ -3252,7 +3252,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Without a key: for previews and testing only - not allowed in a published film.</value>
   </data>
   <data name="Welcome_MapRuleWithKey" xml:space="preserve">
-    <value>A free Esri key lets you use these maps in videos, including commercial ones. The app automatically adds the required Esri attribution.</value>
+    <value>A free Esri key lets you use these maps in videos. The app automatically adds the required Esri attribution.</value>
   </data>
   <data name="Welcome_MapPreviewFailed" xml:space="preserve">
     <value>Couldn't load the preview - check the connection or the key.</value>
@@ -3261,7 +3261,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Loading the preview...</value>
   </data>
   <data name="Welcome_MapStreetsHint" xml:space="preserve">
-    <value>Streets and names like Google Maps</value>
+    <value>Street map with place names</value>
   </data>
   <data name="Welcome_MapStreets" xml:space="preserve">
     <value>Streets</value>
@@ -3285,7 +3285,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Show the OsmoOverlay watermark</value>
   </data>
   <data name="Welcome_SmoothGpsHint" xml:space="preserve">
-    <value>GPS records only a few positions per second, so the compass trail and map may move in jumps. Smoothing provides continuous movement between consecutive positions.</value>
+    <value>GPS positions update less often than video frames, so the compass trail and map may move in jumps. Smoothing provides continuous movement between consecutive positions.</value>
   </data>
   <data name="Welcome_SpeedFromACameraS" xml:space="preserve">
     <value>If GPS consistently reads too low while driving at a steady speed, you can increase speeds on the overlay by a chosen percentage. Calculate the correction from two readings or enter it manually. If you do not need calibration, leave it at 0%.</value>
@@ -3336,7 +3336,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>This is what will be saved:</value>
   </data>
   <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
-    <value>Select the original files from the memory card. Recordings exported from DJI Mimo may no longer contain telemetry. For speed, route and map widgets, record with the DJI GPS Bluetooth Remote or your phone&apos;s GPS through DJI Mimo. Wait for the receiver to acquire a position before recording.</value>
+    <value>Select the original files from the memory card. Recordings exported from DJI Mimo may no longer contain telemetry. For DJI cameras, record with the DJI GPS Bluetooth Remote Controller or use your phone&apos;s GPS through the DJI Mimo app. The latter option can be less convenient and does not seem to work correctly. Wait for the GPS receiver to acquire a position before you start recording.</value>
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Version {0}</value>
