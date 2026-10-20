@@ -137,10 +137,15 @@ dotnet run --project OsmoOverlay.Build -- --help         # options: platforms, v
 Packages for all platforms can be built on any system (Windows, Linux or macOS).
 
 ## License
-OsmoOverlay is free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+OsmoOverlay is **source available**, free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE). It is not open source under the [Open Source Definition](https://opensource.org/osd), which requires allowing commercial use.
 
-- You can use, modify and share it (including modified versions) for any non-commercial purpose.
-- The videos you make with it are yours: you can monetize them and publish them as sponsored content, and you can use the app itself for paid editing work for clients.
-- You can't sell the app or a modified version of it, or include it in a paid product or service.
+- You can use and modify the software for any purpose permitted by the license, including non-commercial projects.
+- You can share the software, including modified versions, under the license's distribution terms. Recipients must receive the license text or its URL and all applicable `Required Notice:` lines.
+- The license also expressly permits use by the organizations listed in its **Noncommercial Organizations** section, including charities, educational institutions and government institutions, regardless of their funding or obligations resulting from that funding.
+- Outside the purposes permitted by the license, commercial use is not licensed. This includes using OsmoOverlay to create monetized videos, sponsored content or paid client work, or to operate a paid rendering or editing service. No additional commercial-use permission is granted for video production or other output.
 
-The second point is an additional permission from the licensor on top of the license: using OsmoOverlay to create videos and other output, and using that output for any purpose, including commercial ones, is permitted. See [LICENSE](LICENSE) for the full terms.
+For commercial use beyond what this license permits, contact the author at [contact@sefinek.net](mailto:contact@sefinek.net) and agree on separate terms before starting that use.
+
+The license covers the software; it does not transfer ownership of your footage to the developer. Third-party libraries, tools, map imagery and other content retain their own licenses and terms. A map provider's permission for commercial use does not override OsmoOverlay's license.
+
+This is a summary, not a replacement for the [full license](LICENSE).

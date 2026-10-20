@@ -316,26 +316,26 @@ public partial class WelcomeWindow : Window
 
 		row.Children.Add(new Border
 		{
-			Width = 28,
-			Height = 28,
-			CornerRadius = new CornerRadius(14),
+			Width = 32,
+			Height = 32,
+			CornerRadius = new CornerRadius(16),
 			Background = Palette.Tint(color, 0.15),
 			Child = new IconView
 			{
 				Data = found ? Icons.Check : Icons.Warning,
 				Foreground = color,
-				Width = 14,
-				Height = 14,
+				Width = 18,
+				Height = 18,
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center
 			}
 		});
 
-		StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center };
-		name.Children.Add(new TextBlock { Text = tool.DisplayName, FontWeight = FontWeight.SemiBold });
+		StackPanel name = new() { VerticalAlignment = VerticalAlignment.Center, Classes = { "rowDetails" } };
+		name.Children.Add(new TextBlock { Text = tool.DisplayName, Classes = { "rowTitle" } });
 		name.Children.Add(new TextBlock
 		{
-			Text = tool.IsOptional ? Strings.Welcome_Optional : Strings.Welcome_Required, FontSize = 12, Foreground = Palette.TextMuted
+			Text = tool.IsOptional ? Strings.Welcome_Optional : Strings.Welcome_Required, Classes = { "rowText" }
 		});
 		Grid.SetColumn(name, 1);
 		row.Children.Add(name);
@@ -354,13 +354,13 @@ public partial class WelcomeWindow : Window
 		{
 			TextBlock text = new()
 			{
-				Text = found ? Strings.Welcome_Found : Strings.Summary_TelemetryNotFound, FontSize = 12, FontWeight = FontWeight.SemiBold,
+				Text = found ? Strings.Welcome_Found : Strings.Summary_TelemetryNotFound, Classes = { "statusText" }, MaxWidth = 160,
 				Foreground = color
 			};
 			if (found) status = text;
 			side = new Border
 			{
-				Padding = new Thickness(10, 3),
+				Padding = new Thickness(10, 4),
 				CornerRadius = new CornerRadius(10),
 				VerticalAlignment = VerticalAlignment.Center,
 				Background = Palette.Tint(color, 0.15),
@@ -371,7 +371,7 @@ public partial class WelcomeWindow : Window
 		Grid.SetColumn(side, 2);
 		row.Children.Add(side);
 
-		Border card = new() { Padding = new Thickness(12, 10), Child = row };
+		Border card = new() { Child = row };
 		card.Classes.Add("card");
 		return card;
 	}
@@ -431,7 +431,8 @@ public partial class WelcomeWindow : Window
 		AppLogger.Info($"Hardware check: {report}, overall {report.Overall}");
 		BenchmarkSystem system = report.System;
 		HardwareRows.Children.Clear();
-		AddHardwareRow(Strings.Welcome_CheckSystem, report.SystemStatus, system.Os, Strings.Welcome_CheckSystemProblem);
+		AddHardwareRow(Strings.Welcome_CheckSystem, report.SystemStatus,
+			$"{system.Os}\n{Strings.Welcome_CheckSystemSupport}", Strings.Welcome_CheckSystemProblem);
 		AddHardwareRow(Strings.Welcome_CheckProcessor, report.ProcessorStatus,
 			$"{system.Cpu ?? Strings.Benchmark_Unknown}, {Plural.Format(Strings.Benchmark_Threads, system.Threads)}",
 			report.ProcessorStatus == CheckStatus.Problem ? Strings.Welcome_CheckProcessorProblem : Strings.Welcome_CheckProcessorWarning);
@@ -479,24 +480,24 @@ public partial class WelcomeWindow : Window
 		Grid row = new() { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 12 };
 		row.Children.Add(new Border
 		{
-			Width = 24,
-			Height = 24,
-			CornerRadius = new CornerRadius(12),
+			Width = 32,
+			Height = 32,
+			CornerRadius = new CornerRadius(16),
 			Background = Palette.Tint(color, 0.15),
 			VerticalAlignment = VerticalAlignment.Center,
 			Child = new IconView
 			{
 				Data = status == CheckStatus.Ok ? Icons.Check : Icons.Warning,
 				Foreground = color,
-				Width = 12,
-				Height = 12,
+				Width = 18,
+				Height = 18,
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center
 			}
 		});
 
-		StackPanel text = new() { VerticalAlignment = VerticalAlignment.Center };
-		text.Children.Add(new TextBlock { Text = name, FontWeight = FontWeight.SemiBold, FontSize = 13 });
+		StackPanel text = new() { VerticalAlignment = VerticalAlignment.Center, Classes = { "rowDetails" } };
+		text.Children.Add(new TextBlock { Text = name, Classes = { "rowTitle" } });
 		text.Children.Add(new TextBlock { Text = value, Classes = { "rowText" } });
 		if (note is not null && status is CheckStatus.Warning or CheckStatus.Problem)
 			text.Children.Add(new TextBlock { Text = note, Classes = { "rowText" }, Foreground = color });
@@ -505,7 +506,7 @@ public partial class WelcomeWindow : Window
 
 		Border pill = new()
 		{
-			Padding = new Thickness(10, 3),
+			Padding = new Thickness(10, 4),
 			CornerRadius = new CornerRadius(10),
 			VerticalAlignment = VerticalAlignment.Center,
 			Background = Palette.Tint(color, 0.15),
@@ -518,15 +519,15 @@ public partial class WelcomeWindow : Window
 					CheckStatus.Problem => Strings.Welcome_CheckProblem,
 					_ => Strings.Welcome_CheckUnknown
 				},
-				FontSize = 12,
-				FontWeight = FontWeight.SemiBold,
+				Classes = { "statusText" },
+				MaxWidth = 160,
 				Foreground = color
 			}
 		};
 		Grid.SetColumn(pill, 2);
 		row.Children.Add(pill);
 
-		Border card = new() { Padding = new Thickness(12, 8), Child = row };
+		Border card = new() { Child = row };
 		card.Classes.Add("card");
 		HardwareRows.Children.Add(card);
 	}
@@ -652,11 +653,11 @@ public partial class WelcomeWindow : Window
 		{
 			SummaryGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-			TextBlock label = new() { Text = rows[i].Label, FontSize = 13, Foreground = Palette.TextMuted };
+			TextBlock label = new() { Text = rows[i].Label, Classes = { "rowText" } };
 			Grid.SetRow(label, i);
 			SummaryGrid.Children.Add(label);
 
-			TextBlock value = new() { Text = rows[i].Value, FontSize = 13, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
+			TextBlock value = new() { Text = rows[i].Value, FontWeight = FontWeight.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
 			ToolTip.SetTip(value, rows[i].Value);
 			Grid.SetRow(value, i);
 			Grid.SetColumn(value, 1);

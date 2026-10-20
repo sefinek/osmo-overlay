@@ -304,6 +304,42 @@
 		<Style Selector="TextBlock.infoLabel">
 			<Setter Property="Opacity" Value="0.55" />
 		</Style>
+		<Style Selector="Window.contentDialog">
+			<Setter Property="SizeToContent" Value="WidthAndHeight" />
+			<Setter Property="MinWidth" Value="480" />
+			<Setter Property="FontSize" Value="14" />
+		</Style>
+		<Style Selector="Window.contentDialog Grid.dialogLayout">
+			<Setter Property="MaxWidth" Value="1000" />
+			<Setter Property="Margin" Value="20" />
+		</Style>
+		<Style Selector="Window.contentDialog StackPanel.dialogBody">
+			<Setter Property="MaxWidth" Value="760" />
+			<Setter Property="Spacing" Value="16" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Window.contentDialog TextBlock.dialogTitle">
+			<Setter Property="FontSize" Value="16" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="Window.contentDialog TextBlock.dialogMessage, Window.contentDialog SelectableTextBlock.dialogMessage">
+			<Setter Property="FontSize" Value="14" />
+			<Setter Property="LineHeight" Value="21" />
+			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
+		<Style Selector="Window.contentDialog WrapPanel.dialogActions">
+			<Setter Property="ItemSpacing" Value="10" />
+			<Setter Property="LineSpacing" Value="8" />
+			<Setter Property="ItemsAlignment" Value="End" />
+		</Style>
+		<Style Selector="Window.contentDialog Button">
+			<Setter Property="MinHeight" Value="34" />
+			<Setter Property="Padding" Value="14,6" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
 		<Style Selector="TextBlock.link">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
 			<Setter Property="Cursor" Value="Hand" />

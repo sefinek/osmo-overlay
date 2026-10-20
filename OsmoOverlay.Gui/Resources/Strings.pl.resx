@@ -952,6 +952,24 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
   <data name="Layers_SpeedChart" xml:space="preserve">
     <value>Wykres prędkości</value>
   </data>
+  <data name="License_CommercialContact" xml:space="preserve">
+    <value>Jeśli planujesz użycie komercyjne wykraczające poza obecną licencję, skontaktuj się z autorem i uzgodnij odrębne warunki przed rozpoczęciem takiego użycia.</value>
+  </data>
+  <data name="License_CommercialRestrictions" xml:space="preserve">
+    <value>Poza zastosowaniami wyraźnie dozwolonymi w licencji nie wolno używać programu do celów komercyjnych, w tym do tworzenia monetyzowanych filmów, materiałów sponsorowanych, płatnego montażu dla klientów ani świadczenia płatnych usług renderowania.</value>
+  </data>
+  <data name="License_CommercialRestrictionsTitle" xml:space="preserve">
+    <value>Ograniczenia komercyjne</value>
+  </data>
+  <data name="License_ContactByEmail" xml:space="preserve">
+    <value>Kontakt przez e-mail</value>
+  </data>
+  <data name="License_OrganizationExceptions" xml:space="preserve">
+    <value>Licencja przewiduje wyjątki m.in. dla organizacji charytatywnych, instytucji edukacyjnych i instytucji administracji publicznej, niezależnie od źródła finansowania i wynikających z niego zobowiązań. Pełny zakres uprawnień określa tekst licencji.</value>
+  </data>
+  <data name="License_ThirdPartyTerms" xml:space="preserve">
+    <value>Biblioteki, narzędzia i mapy mają własne warunki użycia. Zgoda dostawcy map na użytek komercyjny nie zmienia ograniczeń OsmoOverlay.</value>
+  </data>
   <data name="Main_360ViewWhereTheFlat" xml:space="preserve">
     <value>Kadr nagrania 360°: kierunek patrzenia, pochylenie, przechył i pole widzenia. Zmienisz je przyciskiem z globusem nad podglądem.</value>
   </data>
@@ -2166,7 +2184,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Sprawdź, co jest szybsze na tym komputerze</value>
   </data>
   <data name="Settings_FreeForNonCommercialUse" xml:space="preserve">
-    <value>Darmowy do użytku niekomercyjnego na licencji PolyForm Noncommercial License 1.0.0. Filmy, które w nim tworzysz, należą do ciebie - możesz na nich zarabiać.</value>
+    <value>OsmoOverlay jest bezpłatny do użytku niekomercyjnego na licencji PolyForm Noncommercial License 1.0.0. Możesz używać programu, modyfikować go i udostępniać zgodnie z jej warunkami.</value>
   </data>
   <data name="Settings_FullScreenPreview" xml:space="preserve">
     <value>Podgląd pełnoekranowy</value>
@@ -2594,7 +2612,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Summary_NoGpsMessage" xml:space="preserve">
     <value>To nagranie nie zawiera pozycji GPS. Widżety korzystające z tych danych, m.in. prędkościomierz, mapa, kompas i statystyki trasy, są niedostępne. Nadal możesz używać pozostałych widżetów obsługiwanych przez kamerę.
 
-W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote lub korzystaj z GPS telefonu przez DJI Mimo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik ustali pozycję.</value>
+W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
   </data>
   <data name="Summary_NoGpsTitle" xml:space="preserve">
     <value>Brak danych GPS</value>
@@ -3016,11 +3034,8 @@ Szczegóły: {0}</value>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>Nagrania 360° w formacie .insv są wyświetlane jako standardowy kadr z regulowanym kierunkiem i polem widzenia. Obsługę przetestowano na X4. Aplikacja nie odczytuje jeszcze danych GPS z tych plików.</value>
   </data>
-  <data name="Welcome_AFewQuickStepsGet" xml:space="preserve">
-    <value>Kilka szybkich kroków przed pierwszym renderem: wspierane kamery, narzędzia, kalibracja prędkości i miejsce zapisu filmów.</value>
-  </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
-    <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamery DJI Osmo Action lub Insta360.</value>
+    <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamery DJI Osmo Action lub Insta360. Kilka szybkich kroków przed pierwszym renderem: wspierane kamery, narzędzia, kalibracja prędkości i miejsce zapisu filmów.</value>
   </data>
   <data name="Welcome_CheckDecoder" xml:space="preserve">
     <value>Sprzętowe dekodowanie</value>
@@ -3084,6 +3099,9 @@ Szczegóły: {0}</value>
   </data>
   <data name="Welcome_CheckSystemProblem" xml:space="preserve">
     <value>OsmoOverlay wymaga systemu 64-bitowego.</value>
+  </data>
+  <data name="Welcome_CheckSystemSupport" xml:space="preserve">
+    <value>Wersja dla Windows jest regularnie testowana. Wsparcie dla Linuxa i macOS jest eksperymentalne.</value>
   </data>
   <data name="Welcome_CheckUnknown" xml:space="preserve">
     <value>Nieznane</value>
