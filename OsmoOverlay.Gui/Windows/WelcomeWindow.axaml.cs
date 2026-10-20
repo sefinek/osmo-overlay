@@ -452,17 +452,18 @@ public partial class WelcomeWindow : Window
 			false => Strings.Welcome_CheckDecoderWarning
 		}, null);
 		AddHardwareRow(Strings.Welcome_CheckDisk, report.DiskStatus,
-			report.FreeBytes is { } free ? string.Format(Strings.Welcome_CheckDiskValue, FormatHelper.FormatBytes(free), report.OutputFolder) : report.OutputFolder,
+			report.FreeBytes is { } free
+				? string.Format(Strings.Welcome_CheckDiskValue, FormatHelper.FormatBytes(free), report.OutputFolder)
+				: $"{report.OutputFolder}\n{Strings.Welcome_OutputDiskUnknown}",
 			report.DiskStatus == CheckStatus.Problem
 				? Strings.Welcome_CheckDiskProblem
 				: string.Format(Strings.Welcome_CheckDiskWarning, FormatHelper.FormatBytes(HardwareReport.HourOf4KBytes)));
 
-		bool needsFfmpeg = report.Encoder is null || report.HardwareDecode is null;
 		HardwareHint.Text = report.Overall switch
 		{
 			CheckStatus.Problem => Strings.Welcome_HardwareProblem,
 			CheckStatus.Warning => Strings.Welcome_HardwareWarning,
-			_ when needsFfmpeg => Strings.Welcome_HardwareUnknown,
+			_ when !report.IsComplete => Strings.Welcome_HardwareUnknown,
 			_ => Strings.Welcome_HardwareOk
 		};
 	}

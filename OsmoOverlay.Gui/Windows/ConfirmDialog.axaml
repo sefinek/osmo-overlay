@@ -3,7 +3,7 @@
         xmlns:local="using:OsmoOverlay.Gui"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="160"
+        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="200"
         x:Class="OsmoOverlay.Gui.ConfirmDialog"
         Classes="contentDialog" CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -22,8 +22,8 @@
 		</Panel>
 		<StackPanel Grid.Column="1" Classes="dialogBody">
 			<StackPanel Spacing="2">
-				<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-					<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" VerticalAlignment="Center">
+				<Grid ColumnDefinitions="Auto,*">
+					<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" Margin="0,0,10,0" VerticalAlignment="Center">
 						<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
 						                HorizontalAlignment="Center" VerticalAlignment="Center" />
 					</Border>

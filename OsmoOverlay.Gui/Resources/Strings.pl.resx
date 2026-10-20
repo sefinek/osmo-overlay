@@ -3034,8 +3034,11 @@ Szczegóły: {0}</value>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>Nagrania 360° w formacie .insv są wyświetlane jako standardowy kadr z regulowanym kierunkiem i polem widzenia. Obsługę przetestowano na X4. Aplikacja nie odczytuje jeszcze danych GPS z tych plików.</value>
   </data>
+  <data name="Welcome_Insta360" xml:space="preserve">
+    <value>Insta360 (obsługa eksperymentalna)</value>
+  </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
-
+    <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamery DJI Osmo Action lub Insta360. Przewodnik przedstawia obsługiwane kamery i pomaga skonfigurować narzędzia, korektę prędkości oraz miejsce zapisu filmów.</value>
   </data>
   <data name="Welcome_CheckDecoder" xml:space="preserve">
     <value>Sprzętowe dekodowanie</value>
@@ -3077,7 +3080,7 @@ Szczegóły: {0}</value>
     <value>Do renderów 4K zalecane jest 16 GB.</value>
   </data>
   <data name="Welcome_CheckNeedsFfmpeg" xml:space="preserve">
-    <value>Wymaga FFmpeg - zainstaluj go w poprzednim kroku.</value>
+    <value>Nie udało się wykonać sprawdzenia. Sprawdź instalację FFmpeg.</value>
   </data>
   <data name="Welcome_CheckOk" xml:space="preserve">
     <value>OK</value>
@@ -3143,10 +3146,10 @@ Szczegóły: {0}</value>
     <value>Ten komputer może nie poradzić sobie z renderami 4K - szczegóły wyżej.</value>
   </data>
   <data name="Welcome_HardwareUnknown" xml:space="preserve">
-    <value>Część sprawdzeń wymaga FFmpeg - zainstaluj go w poprzednim kroku.</value>
+    <value>Nie udało się wykonać wszystkich sprawdzeń. Szczegóły znajdziesz powyżej.</value>
   </data>
   <data name="Welcome_HardwareWarning" xml:space="preserve">
-    <value>Renderowanie jest możliwe, ale może być wolniejsze z powodów opisanych powyżej.</value>
+    <value>Wykryto ograniczenia mogące utrudnić renderowanie. Szczegóły znajdziesz powyżej.</value>
   </data>
   <data name="Welcome_Installing" xml:space="preserve">
     <value>Instalowanie...</value>

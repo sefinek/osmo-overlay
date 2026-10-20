@@ -71,6 +71,8 @@ public sealed record HardwareReport(
 		_ => CheckStatus.Ok
 	};
 
+	public bool IsComplete => Encoder is not null && HardwareDecode.HasValue && FreeBytes.HasValue;
+
 	/// <summary>The worst of every check that could be made.</summary>
 	public CheckStatus Overall =>
 		new[] { SystemStatus, MemoryStatus, ProcessorStatus, EncoderStatus, DecoderStatus, DiskStatus }

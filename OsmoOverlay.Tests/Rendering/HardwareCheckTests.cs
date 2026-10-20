@@ -19,6 +19,18 @@ public sealed class HardwareCheckTests
 	}
 
 	[TestMethod]
+	[DataRow("hevc_nvenc", true, 500L, true)]
+	[DataRow("libx265", false, 10L, true)]
+	[DataRow(null, true, 500L, false)]
+	[DataRow("hevc_nvenc", null, 500L, false)]
+	[DataRow("hevc_nvenc", true, null, false)]
+	[DataRow(null, null, null, false)]
+	public void Completeness_IsIndependentOfWhetherTheHardwareMeetsRecommendations(string? encoder, bool? decode, long? freeGb, bool expected)
+	{
+		Assert.AreEqual(expected, Report(encoder: encoder, decode: decode, freeGb: freeGb).IsComplete);
+	}
+
+	[TestMethod]
 	[DataRow(4.0, CheckStatus.Problem)]
 	[DataRow(7.4, CheckStatus.Problem)]
 	[DataRow(8.0, CheckStatus.Warning)]

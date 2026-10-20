@@ -3034,6 +3034,9 @@ Details: {0}</value>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>360° recordings in .insv format are displayed as a standard frame with adjustable viewing direction and field of view. Support has been tested on the X4. The app does not yet read GPS data from these files.</value>
   </data>
+  <data name="Welcome_Insta360" xml:space="preserve">
+    <value>Insta360 (experimental support)</value>
+  </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
     <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action or Insta360 camera. This guide introduces the supported cameras and helps you set up tools, adjust speed correction and choose where to save videos.</value>
   </data>
@@ -3077,7 +3080,7 @@ Details: {0}</value>
     <value>16 GB is recommended for 4K renders.</value>
   </data>
   <data name="Welcome_CheckNeedsFfmpeg" xml:space="preserve">
-    <value>Needs FFmpeg - install it in the previous step.</value>
+    <value>Could not complete this check. Check your FFmpeg installation.</value>
   </data>
   <data name="Welcome_CheckOk" xml:space="preserve">
     <value>OK</value>
@@ -3143,10 +3146,10 @@ Details: {0}</value>
     <value>This computer may not handle 4K renders - see above.</value>
   </data>
   <data name="Welcome_HardwareUnknown" xml:space="preserve">
-    <value>Some checks need FFmpeg - install it in the previous step.</value>
+    <value>Some checks could not be completed. See above for details.</value>
   </data>
   <data name="Welcome_HardwareWarning" xml:space="preserve">
-    <value>Rendering is possible, but may be slower for the reasons listed above.</value>
+    <value>Some limitations may affect rendering. See above for details.</value>
   </data>
   <data name="Welcome_Installing" xml:space="preserve">
     <value>Installing...</value>
