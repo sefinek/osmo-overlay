@@ -90,6 +90,8 @@ The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/
 ## Supported cameras
 The DJI Osmo Action 6 and Action 5 Pro are supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for these two.
 
+Insta360 support is experimental and has been tested on the X4. The app displays 360° `.insv` recordings as a standard frame with adjustable viewing direction and field of view. It does not yet read GPS data from these files.
+
 ## Important information
 Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit H.264 at a lower bitrate, which reduces its quality.
 
