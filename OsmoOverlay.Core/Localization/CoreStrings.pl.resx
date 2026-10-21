@@ -163,7 +163,7 @@
     <value>Ortofotomapa GUGiK (tylko Polska)</value>
   </data>
   <data name="Map_NoteLowDetail" xml:space="preserve">
-    <value>Zdjęcia satelitarne 10 m na piksel: przy zbliżeniu mapy widać tylko rozmyte plamy, nadają się do karty przeglądu trasy.</value>
+    <value>Zdjęcia satelitarne o rozdzielczości 10 m na piksel: przy zbliżeniu mapy widać tylko rozmyte plamy. Nadają się do karty przeglądu trasy.</value>
   </data>
   <data name="Map_NoteMapTilerVideo" xml:space="preserve">
     <value>Wideo dozwolone w serwisach internetowych (YouTube, Vimeo) dla kanałów do 100 tys. subskrybentów. Darmowy plan tylko do użytku niekomercyjnego.</value>
@@ -262,10 +262,10 @@
     <value>Pobieranie kafelków mapy</value>
   </data>
   <data name="Preview_MapFailed" xml:space="preserve">
-    <value>Podgląd mapy nie powiódł się</value>
+    <value>Nie udało się przygotować podglądu mapy</value>
   </data>
   <data name="Preview_OverviewFailed" xml:space="preserve">
-    <value>Mapa przeglądu trasy nie powiodła się</value>
+    <value>Nie udało się przygotować mapy przeglądu trasy</value>
   </data>
   <data name="Preview_PlaybackStopped" xml:space="preserve">
     <value>Odtwarzanie zatrzymane: {0}</value>

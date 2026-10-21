@@ -139,7 +139,7 @@
     <value>{0} was not found - it comes with the FFmpeg {1} shared build</value>
   </data>
   <data name="Libav_WrongVersion" xml:space="preserve">
-    <value>libavcodec {0} was found, {1} is needed</value>
+    <value>libavcodec {0} was found, but {1} is required</value>
   </data>
   <data name="Map_AllTilesFailed" xml:space="preserve">
     <value>Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map</value>
@@ -262,10 +262,10 @@
     <value>Fetching map tiles</value>
   </data>
   <data name="Preview_MapFailed" xml:space="preserve">
-    <value>Map preview failed</value>
+    <value>Could not prepare the map preview</value>
   </data>
   <data name="Preview_OverviewFailed" xml:space="preserve">
-    <value>Route overview map failed</value>
+    <value>Could not prepare the route overview map</value>
   </data>
   <data name="Preview_PlaybackStopped" xml:space="preserve">
     <value>Playback stopped: {0}</value>

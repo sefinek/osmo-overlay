@@ -201,7 +201,7 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Twoje ustawienia są już najszybsze na tym komputerze.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
-    <value>Wszystkie etapy test zmierzy na nagraniu testowym, a dekodowanie i krótki render powtórzy na {0}-sekundowej próbce twojego nagrania ({1}). Tylko na nim porówna dekodowanie na GPU i CPU. Podgląd w aplikacji odtworzy twoje nagranie.</value>
+    <value>Test zmierzy wszystkie etapy na nagraniu testowym, a dekodowanie i krótki render powtórzy na {0}-sekundowej próbce twojego nagrania ({1}). Tylko na nim porówna dekodowanie na GPU i CPU. Podgląd w aplikacji odtworzy twoje nagranie.</value>
   </data>
   <data name="Benchmark_OnSynthetic" xml:space="preserve">
     <value>Nie wczytano nagrania, więc wszystkie pomiary odbędą się na nagraniu testowym. Dekoduje się ono na CPU łatwiej niż nagranie z kamery, dlatego porównanie dekodowania na GPU i CPU zostanie pominięte. Nagranie testowe zostanie też wczytane do podglądu w aplikacji. Żeby porównać dekodowanie, wczytaj swoje nagranie przed testem.</value>
@@ -1157,7 +1157,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Pełny zakres skali (G)</value>
   </data>
   <data name="Main_FullScreenPreviewF11On" xml:space="preserve">
-    <value>Podgląd na pełnym ekranie (F11) - na monitorze wybranym w Ustawienia &gt; Zachowanie. Esc go zamyka.</value>
+    <value>Podgląd na pełnym ekranie (F11) - na monitorze wybranym w sekcji Ustawienia &gt; Zachowanie. Esc go zamyka.</value>
   </data>
   <data name="Main_GetSummary" xml:space="preserve">
     <value>Pobierz podsumowanie</value>
@@ -2256,7 +2256,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Monitor</value>
   </data>
   <data name="Settings_MonitorFirstOther" xml:space="preserve">
-    <value>Pierwszy ekran inny niż okna głównego (domyślnie)</value>
+    <value>Pierwszy ekran inny niż ten z oknem głównym (domyślnie)</value>
   </data>
   <data name="Settings_MonitorSameAsMain" xml:space="preserve">
     <value>Ten sam ekran co okno główne (domyślnie)</value>
@@ -3056,7 +3056,7 @@ Szczegóły: {0}</value>
     <value>Mniej niż 20 GB wolnego miejsca - może go zabraknąć przy dłuższym renderowaniu w 4K.</value>
   </data>
   <data name="Welcome_CheckDiskValue" xml:space="preserve">
-    <value>{0} wolne w {1}</value>
+    <value>{0} wolnego miejsca w {1}</value>
   </data>
   <data name="Welcome_CheckDiskWarning" xml:space="preserve">
     <value>Godzina nagrania 4K zajmuje około {0}. Podczas zapisu gotowego filmu może być potrzebne drugie tyle wolnego miejsca.</value>
@@ -3423,7 +3423,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Nie udało się odczytać wolnego miejsca na tym dysku.</value>
   </data>
   <data name="Welcome_OutputDiskLow" xml:space="preserve">
-    <value>Mało miejsca na dłuższe rendery. Godzina filmu 4K może potrzebować około {0}, łącznie z miejscem na czas zapisu. Dokładne zapotrzebowanie zależy od nagrania i ustawień renderu.</value>
+    <value>Mało miejsca na dłuższe rendery. Renderowanie godziny filmu 4K może wymagać około {0}, łącznie z miejscem na czas zapisu. Dokładne zapotrzebowanie zależy od nagrania i ustawień renderu.</value>
   </data>
   <data name="Welcome_ConnectionTitle" xml:space="preserve">
     <value>Połączenie z mapami</value>
@@ -3735,7 +3735,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Nie wybrano żadnego nagrania, więc do głównego okna zostanie wczytane nagranie testowe. Zostanie tam także po teście - możesz je obejrzeć, wyrenderować albo zamienić na własne pliki.</value>
   </data>
   <data name="Benchmark_RecordingNotTested" xml:space="preserve">
-    <value>Wszystkie etapy test zmierzy na nagraniu testowym. Twojego nagrania ({0}) nie zmierzy, więc pominie porównanie dekodowania na GPU i CPU. Podgląd w aplikacji i tak odtworzy twoje nagranie.</value>
+    <value>Test zmierzy wszystkie etapy na nagraniu testowym. Twoje nagranie ({0}) nie będzie testowane, więc porównanie dekodowania na GPU i CPU zostanie pominięte. Podgląd w aplikacji nadal odtworzy twoje nagranie.</value>
   </data>
   <data name="Benchmark_TestYourRecording" xml:space="preserve">
     <value>Testuj też moje nagranie</value>
@@ -3744,7 +3744,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>{0} (twoje nagranie)</value>
   </data>
   <data name="Benchmark_AdvicePreviewQuality" xml:space="preserve">
-    <value>Podgląd w aplikacji dekodował obraz {0}x{1}, a wyświetlał go w rozmiarze {2}x{3} px, i nie nadążał. Ustawić jakość podglądu na Auto? Będzie dobierana do rozmiaru podglądu na ekranie.</value>
+    <value>Podgląd w aplikacji dekodował obraz {0}x{1}, a wyświetlał go w rozmiarze {2}x{3} px i nie nadążał. Ustawić jakość podglądu na Auto? Będzie dobierana do rozmiaru podglądu na ekranie.</value>
   </data>
   <data name="Benchmark_ChartVideo" xml:space="preserve">
     <value>Wideo na karcie graficznej (%)</value>
@@ -3819,7 +3819,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału na co najmniej sekundę (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
   </data>
   <data name="GpsAlert_TimingHint" xml:space="preserve">
-    <value>Moment pojawienia się i zniknięcia alertu zależy od GPS-a (np. utraty sygnału lub poprawy dokładności odczytu). Nie ma potrzeby zmieniania tych ustawień w widgecie.</value>
+    <value>Moment pojawienia się i zniknięcia alertu zależy od GPS-a (np. utraty sygnału lub poprawy dokładności odczytu). Nie ma potrzeby zmieniania tych ustawień w widżecie.</value>
   </data>
   <data name="GpsAlert_Message" xml:space="preserve">
     <value>Komunikat</value>

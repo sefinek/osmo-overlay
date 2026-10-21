@@ -1340,7 +1340,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Pixel format</value>
   </data>
   <data name="Main_PlaybackSpeedJSlowerK" xml:space="preserve">
-    <value>Playback speed - J slows down, K pauses, L plays and speeds up. The sound keeps its pitch.</value>
+    <value>Playback speed - J slows down, K pauses, L plays or speeds up. The sound keeps its pitch.</value>
   </data>
   <data name="Main_PlaySpace" xml:space="preserve">
     <value>Play (Space)</value>
@@ -2256,7 +2256,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Monitor</value>
   </data>
   <data name="Settings_MonitorFirstOther" xml:space="preserve">
-    <value>First screen other than the main window's (default)</value>
+    <value>First screen other than the one with the main window (default)</value>
   </data>
   <data name="Settings_MonitorSameAsMain" xml:space="preserve">
     <value>Same screen as the main window (default)</value>
@@ -3231,7 +3231,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
 6. Privileges: turn on Basemaps only (2/2) - nothing else - Next.
 7. Settings: the latest expiration date (a year from today), leave the referrer URLs empty - Next.
 8. Give it a name, e.g. OsmoOverlay - Next.
-9. Keep generating the key selected, click Next and copy the key right away - it's shown only once. Paste it here.</value>
+9. Leave key generation enabled, click Next and copy the key right away - it's shown only once. Paste it here.</value>
   </data>
   <data name="EsriKeyGuide_Title" xml:space="preserve">
     <value>How to get a free Esri key</value>
@@ -3816,10 +3816,10 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>GPS alert</value>
   </data>
   <data name="GpsAlert_Hint" xml:space="preserve">
-    <value>Shows up only when something happens with the GPS: searching for a first signal, the signal lost for at least a second (for how long) and back, and a wrong position or speed reading that was corrected. It goes away right after. To see it in the preview, scrub to a GPS problem - the timeline marks it in yellow or orange.</value>
+    <value>Appears when searching for the first GPS signal, when the signal is lost for at least a second (showing how long), when it returns, or after an incorrect position or speed reading is corrected. It disappears shortly afterward. To see it in the preview, scrub to a GPS issue marked in yellow or orange on the timeline.</value>
   </data>
   <data name="GpsAlert_TimingHint" xml:space="preserve">
-    <value>The timing of when the alert appears and disappears depends on the GPS (e.g., signal loss or improved reading accuracy). There's no need to change these settings in the widget.</value>
+    <value>When the alert appears and disappears depends on GPS data (e.g. signal loss or improved reading accuracy). There's no need to change these settings in the widget.</value>
   </data>
   <data name="GpsAlert_Message" xml:space="preserve">
     <value>Message</value>

@@ -15,7 +15,7 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **20 widgets** - including a speedometer, map, compass with route, roll and pitch, G-meter, elevation and speed charts, trip statistics, altitude, distance, date and time, and your own text or logo. Metric or imperial units.
 - **Route card** - an optional summary at the start of the video: the whole route on a map, distance, speeds, elevation gain and ride time.
 - **Satellite or standard map** - several built-in map sources or your own tile server.
-- **Drag-and-drop editor** - position, size, fonts, colors, appear and disappear animations. Presets can be exported and shared.
+- **Drag-and-drop editor** - position, size, fonts, colors, entrance and exit animations. Presets can be exported and shared.
 - **Live preview** - with sound, playback speed control, looping, a timeline with thumbnails and saving a frame as a full-resolution PNG.
 - **Cutting** - remove parts of a recording right in the app. Distance, stats and the route only count what's left.
 - **Recording settings check** - shows whether the footage was recorded with the settings recommended for your camera.
@@ -27,7 +27,7 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
   - **Color tag fix** - Vegas Pro can leave out the color space tag (Rec.709) when exporting to MP4, so some players show wrong colors. Highly recommended after rendering in Vegas Pro.
   - **Compare videos** - resolution, codec, color tags, bitrate and telemetry of up to 6 files side by side.
 - **Automatic updates** - the app checks for new versions by itself, and on Windows (when installed with the installer) updates with one click.
-- **Windows, Linux and macOS** - x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable, Linux and macOS are experimental.
+- **Windows, Linux and macOS** - x64 and ARM, with a GUI and a command-line version. Only the Windows version is regularly tested and considered stable; Linux and macOS are experimental.
 
 ## Download
 Every release comes in two variants for each platform:
