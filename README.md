@@ -81,10 +81,11 @@ tar -xzf OsmoOverlay-<version>-linux-x64-self-contained.tar.gz
 To add OsmoOverlay (with its icon) to your application menu, run `./install-desktop-entry.sh` from the extracted folder - `--remove` takes it out again. Run it again if you move the folder.
 
 ### macOS
-Extract the archive and move `OsmoOverlay.app` to *Applications*. The app isn't signed or notarized yet, so macOS blocks the first launch - right-click it and choose *Open*, or remove the quarantine flag:
+Extract the archive and move `OsmoOverlay.app` to *Applications*. The app isn't signed or notarized yet, so macOS blocks the first launch, usually with "OsmoOverlay is damaged and can't be opened". The app isn't damaged - remove the quarantine flag macOS puts on downloaded files:
 ```sh
 xattr -dr com.apple.quarantine /Applications/OsmoOverlay.app
 ```
+If you only see a warning about an unidentified developer, right-clicking the app and choosing *Open* works too.
 The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
 
 ## Supported cameras

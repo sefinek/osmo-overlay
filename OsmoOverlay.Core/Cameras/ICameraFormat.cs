@@ -45,6 +45,16 @@ public interface ICameraFormat
 	/// </summary>
 	Direction? Gravity(TelemetryFrame frame);
 
+	/// <summary>
+	///     The same direction as Gravity, from the orientation the camera reports itself (TelemetryFrame.Orientation) rather
+	///     than from its accelerometer - gravity without the camera's own acceleration in it. Null when this camera reports no
+	///     orientation, or none for this frame (OrientationTilt).
+	/// </summary>
+	Direction? OrientationGravity(TelemetryFrame frame)
+	{
+		return null;
+	}
+
 	/// <summary>A line for the log saying what the telemetry was read from and what it holds.</summary>
 	string DescribeTelemetry(IReadOnlyList<TelemetryFrame> frames);
 

@@ -74,6 +74,7 @@
 					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Common_CompareVideos}" />
 					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
 						<Button Content="{x:Static local:Strings.Tools_Compare}" Click="OnCompareVideosClick" />
+						<Button Content="{x:Static local:Strings.Tools_ComparePlayback}" Click="OnComparePlaybackClick" />
 					</StackPanel>
 					<TextBlock Classes="hint"
 					           Text="{x:Static local:Strings.Tools_PickUpTo6Files}" />

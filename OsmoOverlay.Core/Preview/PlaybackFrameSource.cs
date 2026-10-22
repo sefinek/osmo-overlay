@@ -6,7 +6,7 @@ namespace OsmoOverlay.Core.Preview;
 ///     nothing between playbacks. One render thread takes frames; the preview attaches and detaches playbacks from
 ///     the UI thread.
 /// </summary>
-public sealed class PlaybackFrameSource
+public sealed class PlaybackFrameSource : IPlayedFrames
 {
 	private volatile PlaybackSession? _session;
 	private PreviewMeasurements? _measurements;

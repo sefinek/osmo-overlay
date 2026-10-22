@@ -145,6 +145,11 @@ public partial class ToolsWindow : Window
 		new CompareVideosWindow().Show(this);
 	}
 
+	private void OnComparePlaybackClick(object? sender, RoutedEventArgs e)
+	{
+		new ComparePlaybackWindow().Show(this);
+	}
+
 	private async void OnSelectColorTagFileClick(object? sender, RoutedEventArgs e)
 	{
 		TopLevel? topLevel = GetTopLevel(this);

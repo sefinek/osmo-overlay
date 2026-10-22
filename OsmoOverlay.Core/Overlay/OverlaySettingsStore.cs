@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core.Overlay;
 
@@ -32,6 +33,8 @@ public sealed record OverlaySettings(
 	bool SmoothGpsMotion = true,
 	// Percent added to every speed the camera's GPS gives, for a receiver that reads low (TelemetryProcessor.Process).
 	double SpeedCorrectionPercent = 0,
+	// Where roll, pitch and the G-meter take the camera's orientation from (OrientationTilt) - the accelerometer unless chosen.
+	OrientationSource OrientationSource = OrientationSource.Accelerometer,
 	// The first-run welcome window was shown (Settings can open it again).
 	bool WelcomeShown = false,
 	// Where a render goes by default; null = next to the source (RenderOptions.DefaultOutputPath).
@@ -85,6 +88,9 @@ public sealed record OverlaySettings(
 	// (DJI's djmd track) holds the GPS route and the camera serial number, which a video meant for sharing shouldn't
 	// carry unless asked to.
 	bool PreserveCameraMetadata = false,
+	// The program's name, version and links are written into a render's metadata (ExportMarker). On: it says which release made
+	// the file, which is what comparing two renders of one recording needs.
+	bool TagExportedVideo = true,
 	// What PreserveCameraMetadata keeps, see CameraMetadataSelection. Serial number off by default even
 	// when the rest is kept - it identifies the physical camera and nothing in the app needs it.
 	bool MetadataKeepTelemetry = true,

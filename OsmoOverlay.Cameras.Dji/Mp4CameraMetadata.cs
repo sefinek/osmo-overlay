@@ -101,9 +101,10 @@ internal static class Mp4CameraMetadata
 		if (sourceUdta is not null)
 		{
 			// The camera's udta (thumbnails, camera name, shooting settings) replaces ffmpeg's, which only
-			// holds its own encoder tag.
+			// holds its own encoder tag and the render's comment (ExportMarker) - that one is kept.
+			Mp4Box udta = Mp4Comment.Carry(moov.Child("udta"), sourceUdta);
 			moov.Children!.RemoveAll(c => c.Type == "udta");
-			moov.Children.Add(sourceUdta);
+			moov.Children.Add(udta);
 		}
 
 		moov.WriteTo(output);

@@ -177,7 +177,7 @@ public static class RenderJob
 				fps, segments.TotalFrameCount());
 			// The overlay describes the video as rendered: telemetry moved onto the output's own timeline.
 			var outputTimeline = new OutputTimeline(plan, fps);
-			List<DerivedFrame> derived = outputTimeline.MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps, settings.SpeedCorrectionPercent));
+			List<DerivedFrame> derived = outputTimeline.MapFrames(TelemetryProcessor.Process(rawFrames, camera, smoothGps, settings.SpeedCorrectionPercent, settings.OrientationSource));
 			double startAltitude = derived[0].Raw.AltitudeMeters;
 			double maxSpeedKmh = TelemetryProcessor.Summarize(derived).MaxSpeedKmh;
 
@@ -258,7 +258,10 @@ public static class RenderJob
 			var metadataSelection = new CameraMetadataSelection(settings.MetadataKeepTelemetry && keepTracks,
 				settings.MetadataKeepDebugTrack && keepTracks, settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
 			bool preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !options.GreenScreen;
-			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata);
+			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata) with
+			{
+				Comment = settings.TagExportedVideo ? ExportMarker.Comment(OrientationTilt.Effective(rawFrames, camera, settings.OrientationSource)) : null
+			};
 			// Only a file this render wrote may be deleted if it fails - never one that was already there and
 			// wasn't meant to be overwritten.
 			bool outputIsOurs = options.Overwrite || !File.Exists(options.OutputPath);

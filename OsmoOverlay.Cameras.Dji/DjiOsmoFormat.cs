@@ -78,6 +78,18 @@ public sealed class DjiOsmoFormat : ICameraFormat
 		return new Direction(-frame.AccelY, -frame.AccelZ, -frame.AccelX);
 	}
 
+	/// <summary>
+	///     The orientation quaternion (w, x, y, z) as a rotation matrix R: the accelerometer reads -(R20, R21, R22) in its own
+	///     axes (fitted on an Osmo Action 6 ride, 8.7 deg median with the vehicle's acceleration in it, and confirmed on a
+	///     tilt-test recording by hand: 1.2 deg median while still, tilts up to 88 deg matching the picture), so with Gravity's (-AccelY, -AccelZ, -AccelX) the gravity direction is (R21, R22, R20).
+	/// </summary>
+	public Direction? OrientationGravity(TelemetryFrame frame)
+	{
+		if (frame.Orientation is not { } q) return null;
+
+		return new Direction(2.0 * (q.Y * q.Z + q.X * q.W), 1.0 - 2.0 * (q.X * q.X + q.Y * q.Y), 2.0 * (q.X * q.Z - q.Y * q.W));
+	}
+
 	public string DescribeTelemetry(IReadOnlyList<TelemetryFrame> frames)
 	{
 		int withCameraSettings = frames.Count(f => f.Iso is not null);

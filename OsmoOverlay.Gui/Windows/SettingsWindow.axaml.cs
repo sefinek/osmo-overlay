@@ -10,6 +10,7 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
+using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Updates;
 using OsmoOverlay.Gui.Native;
 
@@ -74,6 +75,12 @@ public partial class SettingsWindow : Window
 		new(Plural.Format(Strings.Settings_CacheCleanupAfter, 90), 90)
 	];
 
+	private static readonly List<ChoiceOption<OrientationSource>> OrientationSourceOptions =
+	[
+		new(Strings.Settings_OrientationAccelerometer, OrientationSource.Accelerometer),
+		new(Strings.Settings_OrientationQuaternion, OrientationSource.Quaternion)
+	];
+
 	private static readonly List<ChoiceOption<string?>> LanguageOptions =
 	[
 		new(string.Format(Strings.Settings_LanguageSystem, UiLanguages.NativeName(UiLanguages.Resolve(null))), null),
@@ -101,6 +108,7 @@ public partial class SettingsWindow : Window
 		BitrateCombo.ItemsSource = BitrateOptions;
 		OutputResolutionCombo.ItemsSource = OutputResolutionOptions;
 		OutputCodecCombo.ItemsSource = OutputCodecOptions;
+		OrientationSourceCombo.ItemsSource = OrientationSourceOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
 		LanguageCombo.ItemsSource = LanguageOptions;
 		ThemeCombo.ItemsSource = AppThemes.Options;
@@ -130,6 +138,7 @@ public partial class SettingsWindow : Window
 	{
 		ShowWatermarkCheck.IsChecked = settings.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = settings.SmoothGpsMotion;
+		OrientationSourceCombo.SelectedItem = OrientationSourceOptions.FirstOrDefault(o => o.Value == settings.OrientationSource) ?? OrientationSourceOptions[0];
 		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
 		LoadRouteIntro(settings);
 		LoadExportSettings(settings);
@@ -142,6 +151,7 @@ public partial class SettingsWindow : Window
 		{
 			ShowWatermark = ShowWatermarkCheck.IsChecked == true,
 			SmoothGpsMotion = SmoothGpsMotionCheck.IsChecked == true,
+			OrientationSource = (OrientationSourceCombo.SelectedItem as ChoiceOption<OrientationSource>)?.Value ?? OrientationSource.Accelerometer,
 			SpeedCorrectionPercent = SpeedEditor.Percent
 		};
 	}
@@ -180,6 +190,7 @@ public partial class SettingsWindow : Window
 		MetadataDebugCheck.IsChecked = settings.MetadataKeepDebugTrack;
 		MetadataThumbnailsCheck.IsChecked = settings.MetadataKeepThumbnails;
 		PreserveCameraMetadataCheck.IsChecked = settings.PreserveCameraMetadata;
+		TagExportedVideoCheck.IsChecked = settings.TagExportedVideo;
 		UpdateMetadataOptionsEnabled();
 		string theme = AppThemes.Normalize(settings.AppTheme);
 		ThemeCombo.SelectedItem = AppThemes.Options.First(o => o.Value == theme);
@@ -273,6 +284,7 @@ public partial class SettingsWindow : Window
 			HardwareDecoding = HardwareDecodingCheck.IsChecked == true,
 			FastStart = FastStartCheck.IsChecked == true,
 			PreserveCameraMetadata = PreserveCameraMetadataCheck.IsChecked == true,
+			TagExportedVideo = TagExportedVideoCheck.IsChecked == true,
 			MetadataKeepTelemetry = MetadataTelemetryCheck.IsChecked == true,
 			MetadataKeepSerialNumber = MetadataSerialCheck.IsChecked == true,
 			MetadataKeepDebugTrack = MetadataDebugCheck.IsChecked == true,

@@ -122,7 +122,7 @@ public sealed class PreviewPlayer : IDisposable
 		OverlaySettings settings = settingsOverride ?? OverlaySettingsStore.Load();
 		ICameraFormat? camera = summary.CameraFormat;
 		IReadOnlyList<DerivedFrame> recordingFrames = processedFrames ?? await Task.Run(() =>
-			TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent));
+			TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource));
 		if (generation != _openGeneration) return;
 		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);

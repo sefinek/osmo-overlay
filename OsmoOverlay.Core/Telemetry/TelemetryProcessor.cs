@@ -38,8 +38,9 @@ public static class TelemetryProcessor
 	///     Added to every shown speed (DerivedFrame.SpeedKmh) for a GPS that reads low - a scale, since a receiver's error grows
 	///     with speed and standing still must stay 0. Tilt, heading and distance keep the measured values.
 	/// </param>
+	/// <param name="orientationSource">Where roll, pitch and the G-meter's accelerations come from (OrientationTilt).</param>
 	public static List<DerivedFrame> Process(IReadOnlyList<TelemetryFrame> frames, ICameraFormat? camera, bool smoothGps = false,
-		double speedCorrectionPercent = 0)
+		double speedCorrectionPercent = 0, OrientationSource orientationSource = OrientationSource.Accelerometer)
 	{
 		double speedFactor = SpeedCalibration.Factor(speedCorrectionPercent);
 		frames = GpsOutliers.Repair(frames);
@@ -124,7 +125,7 @@ public static class TelemetryProcessor
 				sun, localEast, localNorth, smoothedGForce, lateral, longitudinal, current.StartsAfterGap));
 		}
 
-		return result;
+		return orientationSource == OrientationSource.Accelerometer ? result : [.. OrientationTilt.Apply(result, camera, orientationSource)];
 	}
 
 	/// <summary>Every frame's gravity in the camera's own space - null when the camera doesn't know its axes.</summary>

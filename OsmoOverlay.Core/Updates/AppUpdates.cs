@@ -26,6 +26,9 @@ public static class AppUpdates
 	public const string RepositoryUrl = "https://github.com/sefinek/osmo-overlay";
 	public const string ReleasesUrl = RepositoryUrl + "/releases";
 
+	// Must match AppPublisherURL in OsmoOverlay.Build/Installer/OsmoOverlay.iss.
+	public const string WebsiteUrl = "https://sefinek.net";
+
 	// Must match AppGuid in OsmoOverlay.Build/Installer/OsmoOverlay.iss.
 	private const string InstallerGuid = "285212C3-78F8-4A92-AE19-52D33596D266";
 

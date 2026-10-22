@@ -457,6 +457,58 @@ Zamknąć OsmoOverlay?</value>
   <data name="Common_Working" xml:space="preserve">
     <value>Przetwarzanie...</value>
   </data>
+  <data name="ComparePlay_Title" xml:space="preserve">
+    <value>Odtwarzanie obok siebie</value>
+  </data>
+  <data name="ComparePlay_Hint" xml:space="preserve">
+    <value>Dodaj wyeksportowane filmy. Odtwarzają się wszystkie naraz na wspólnym zegarze, bez dźwięku, więc różnice widać w tych samych klatkach.</value>
+  </data>
+  <data name="ComparePlay_Add" xml:space="preserve">
+    <value>Dodaj filmy...</value>
+  </data>
+  <data name="ComparePlay_Empty" xml:space="preserve">
+    <value>Dodaj co najmniej dwa wyeksportowane filmy, żeby zobaczyć je obok siebie.</value>
+  </data>
+  <data name="ComparePlay_Opening" xml:space="preserve">
+    <value>Otwieranie...</value>
+  </data>
+  <data name="ComparePlay_Marker" xml:space="preserve">
+    <value>OsmoOverlay {0}, telemetria {1}, przechył z: {2}</value>
+  </data>
+  <data name="ComparePlay_NoMarker" xml:space="preserve">
+    <value>Brak znacznika OsmoOverlay w pliku</value>
+  </data>
+  <data name="ComparePlay_TiltAccelerometer" xml:space="preserve">
+    <value>akcelerometru</value>
+  </data>
+  <data name="ComparePlay_TiltOrientation" xml:space="preserve">
+    <value>orientacji z kamery</value>
+  </data>
+  <data name="ComparePlay_Info" xml:space="preserve">
+    <value>{0}x{1}, {2} kl./s</value>
+  </data>
+  <data name="ComparePlay_OpenFailedTitle" xml:space="preserve">
+    <value>Nie można otworzyć filmu</value>
+  </data>
+  <data name="ComparePlay_OpenFailed" xml:space="preserve">
+    <value>Nie udało się otworzyć:
+{0}</value>
+  </data>
+  <data name="ComparePlay_TileError" xml:space="preserve">
+    <value>Błąd odtwarzania: {0}</value>
+  </data>
+  <data name="ComparePlay_Remove" xml:space="preserve">
+    <value>Usuń z porównania</value>
+  </data>
+  <data name="ComparePlay_Loop" xml:space="preserve">
+    <value>Zapętl odtwarzanie</value>
+  </data>
+  <data name="ComparePlay_Speed" xml:space="preserve">
+    <value>Prędkość odtwarzania</value>
+  </data>
+  <data name="Tools_ComparePlayback" xml:space="preserve">
+    <value>Odtwarzaj obok siebie...</value>
+  </data>
   <data name="Compare_AltitudeRange" xml:space="preserve">
     <value>Zakres wysokości</value>
   </data>
@@ -2288,6 +2340,24 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Settings_OutputBitrate" xml:space="preserve">
     <value>Bitrate wyjściowy</value>
   </data>
+  <data name="Settings_OrientationSource" xml:space="preserve">
+    <value>Źródło orientacji kamery</value>
+  </data>
+  <data name="Settings_OrientationSourceHint" xml:space="preserve">
+    <value>Skąd widgety przechyłu, pochylenia i G-metera biorą położenie kamery. Orientacja zgłaszana przez kamerę (DJI) nie myli obrotu kamery z przeciążeniem i nie potrzebuje GPS. Nagranie bez niej zawsze używa akcelerometru.</value>
+  </data>
+  <data name="Settings_OrientationAccelerometer" xml:space="preserve">
+    <value>Akcelerometr</value>
+  </data>
+  <data name="Settings_OrientationQuaternion" xml:space="preserve">
+    <value>Orientacja z kamery</value>
+  </data>
+  <data name="Settings_TagExportedVideo" xml:space="preserve">
+    <value>Znacznik OsmoOverlay w pliku</value>
+  </data>
+  <data name="Settings_TagExportedVideoHint" xml:space="preserve">
+    <value>Zapisuje w metadanych wyeksportowanego pliku nazwę programu, jego wersję, wersję logiki telemetrii, źródło przechyłu i linki do projektu. Przydaje się do porównywania wydań; wyłącz, jeśli plik nie ma tego zdradzać.</value>
+  </data>
   <data name="Settings_OutputCodec" xml:space="preserve">
     <value>Kodek</value>
   </data>
@@ -2940,7 +3010,7 @@ Obecne znaczniki:
     <value>Wybierz wyrenderowany plik MP4 do sprawdzenia</value>
   </data>
   <data name="Tools_PickUpTo6Files" xml:space="preserve">
-    <value>Wybierz do 6 plików, aby zobaczyć obok siebie ich rozdzielczość, kodek, znaczniki kolorów, bitrate i telemetrię.</value>
+    <value>Wybierz do 6 plików, aby zobaczyć obok siebie ich rozdzielczość, kodek, znaczniki kolorów, bitrate i telemetrię albo odtworzyć je razem w jednym oknie.</value>
   </data>
   <data name="Tools_PickVideoToStrip" xml:space="preserve">
     <value>Wybierz film, z którego usunąć metadane</value>

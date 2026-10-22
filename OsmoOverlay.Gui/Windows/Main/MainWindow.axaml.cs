@@ -468,6 +468,7 @@ public partial class MainWindow : Window
 		// so a change reopens the preview.
 		bool needsPreviewReopen = updated.SmoothGpsMotion != _smoothGpsMotion ||
 		                          Math.Abs(updated.SpeedCorrectionPercent - before.SpeedCorrectionPercent) > 1e-9 ||
+		                          updated.OrientationSource != before.OrientationSource ||
 		                          RouteIntroSettings.From(updated) != RouteIntroSettings.From(saved);
 		_smoothGpsMotion = updated.SmoothGpsMotion;
 

@@ -280,6 +280,9 @@ public static class FfmpegPipeline
 			args.AddRange(["-metadata", "creation_time=" + firstFrameUtc.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ", CultureInfo.InvariantCulture)]);
 		}
 
+		if (encode.Comment is { } comment)
+			args.AddRange(["-metadata", "comment=" + comment]);
+
 		if (!greenScreen && source.StartSource.Video.Timecode is { } timecode &&
 		    SmpteTimecode.AddFrames(timecode, source.LocalStartFrame, num / (double)den) is { } startTimecode)
 			args.AddRange(["-timecode", startTimecode]);
@@ -819,6 +822,7 @@ public static class FfmpegPipeline
 
 /// <summary>
 ///     Export options on top of the source-matched defaults (see OverlaySettings): NVENC preset,
-///     hardware decoding, bitrate relative to the source, and ffmpeg-side fast start.
+///     hardware decoding, bitrate relative to the source, and ffmpeg-side fast start. Comment is what the file says about
+///     the program that made it (ExportMarker), null for nothing.
 /// </summary>
-public sealed record RenderEncodeSettings(string NvencPreset, bool HardwareDecoding, double BitrateMultiplier, bool FfmpegFastStart);
+public sealed record RenderEncodeSettings(string NvencPreset, bool HardwareDecoding, double BitrateMultiplier, bool FfmpegFastStart, string? Comment = null);

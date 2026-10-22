@@ -457,6 +457,58 @@ Close OsmoOverlay?</value>
   <data name="Common_Working" xml:space="preserve">
     <value>Working...</value>
   </data>
+  <data name="ComparePlay_Title" xml:space="preserve">
+    <value>Play side by side</value>
+  </data>
+  <data name="ComparePlay_Hint" xml:space="preserve">
+    <value>Add exported videos. They all play at once on one clock, without sound, so differences show in the very same frames.</value>
+  </data>
+  <data name="ComparePlay_Add" xml:space="preserve">
+    <value>Add videos...</value>
+  </data>
+  <data name="ComparePlay_Empty" xml:space="preserve">
+    <value>Add at least two exported videos to see them side by side.</value>
+  </data>
+  <data name="ComparePlay_Opening" xml:space="preserve">
+    <value>Opening...</value>
+  </data>
+  <data name="ComparePlay_Marker" xml:space="preserve">
+    <value>OsmoOverlay {0}, telemetry {1}, tilt from: {2}</value>
+  </data>
+  <data name="ComparePlay_NoMarker" xml:space="preserve">
+    <value>No OsmoOverlay tag in the file</value>
+  </data>
+  <data name="ComparePlay_TiltAccelerometer" xml:space="preserve">
+    <value>accelerometer</value>
+  </data>
+  <data name="ComparePlay_TiltOrientation" xml:space="preserve">
+    <value>camera orientation</value>
+  </data>
+  <data name="ComparePlay_Info" xml:space="preserve">
+    <value>{0}x{1}, {2} fps</value>
+  </data>
+  <data name="ComparePlay_OpenFailedTitle" xml:space="preserve">
+    <value>Can't open the video</value>
+  </data>
+  <data name="ComparePlay_OpenFailed" xml:space="preserve">
+    <value>Couldn't open:
+{0}</value>
+  </data>
+  <data name="ComparePlay_TileError" xml:space="preserve">
+    <value>Playback error: {0}</value>
+  </data>
+  <data name="ComparePlay_Remove" xml:space="preserve">
+    <value>Remove from the comparison</value>
+  </data>
+  <data name="ComparePlay_Loop" xml:space="preserve">
+    <value>Loop playback</value>
+  </data>
+  <data name="ComparePlay_Speed" xml:space="preserve">
+    <value>Playback speed</value>
+  </data>
+  <data name="Tools_ComparePlayback" xml:space="preserve">
+    <value>Play side by side...</value>
+  </data>
   <data name="Compare_AltitudeRange" xml:space="preserve">
     <value>Altitude range</value>
   </data>
@@ -2288,6 +2340,24 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_OutputBitrate" xml:space="preserve">
     <value>Output bitrate</value>
   </data>
+  <data name="Settings_OrientationSource" xml:space="preserve">
+    <value>Camera orientation source</value>
+  </data>
+  <data name="Settings_OrientationSourceHint" xml:space="preserve">
+    <value>Where the roll, pitch and G-meter widgets get the camera's position from. The orientation the camera reports (DJI) doesn't mistake turning the camera for a force and needs no GPS. A recording without it always uses the accelerometer.</value>
+  </data>
+  <data name="Settings_OrientationAccelerometer" xml:space="preserve">
+    <value>Accelerometer</value>
+  </data>
+  <data name="Settings_OrientationQuaternion" xml:space="preserve">
+    <value>Camera orientation</value>
+  </data>
+  <data name="Settings_TagExportedVideo" xml:space="preserve">
+    <value>OsmoOverlay tag in the file</value>
+  </data>
+  <data name="Settings_TagExportedVideoHint" xml:space="preserve">
+    <value>Writes the program's name, its version, the version of the telemetry logic, the tilt source and links to the project into the exported file's metadata. Useful for comparing releases; turn it off if the file shouldn't say so.</value>
+  </data>
   <data name="Settings_OutputCodec" xml:space="preserve">
     <value>Codec</value>
   </data>
@@ -2940,7 +3010,7 @@ Current tags:
     <value>Select a rendered MP4 to check</value>
   </data>
   <data name="Tools_PickUpTo6Files" xml:space="preserve">
-    <value>Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side.</value>
+    <value>Pick up to 6 files to see their resolution, codec, color tags, bitrate and telemetry side by side, or play them together in one window.</value>
   </data>
   <data name="Tools_PickVideoToStrip" xml:space="preserve">
     <value>Select a video to remove metadata from</value>

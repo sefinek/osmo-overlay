@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="680"
+        x:Class="OsmoOverlay.Gui.ComparePlaybackWindow"
+        Width="1100" Height="680" CanResize="True"
+        WindowStartupLocation="CenterOwner"
+        WindowState="Maximized"
+        Background="{StaticResource WindowBackgroundBrush}"
+        FontSize="15"
+        Icon="{x:Static local:AppAssets.Icon}"
+        Title="{x:Static local:Strings.ComparePlay_Title}">
+
+	<Window.Styles>
+		<Style Selector="Button.transport">
+			<Setter Property="Focusable" Value="False" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.transport.active">
+			<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+			<Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+		</Style>
+		<Style Selector="Button.transport.active /template/ ContentPresenter">
+			<Setter Property="Background" Value="{StaticResource AccentSubtleBrush}" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="Opacity" Value="0.6" />
+			<Setter Property="FontSize" Value="13" />
+		</Style>
+	</Window.Styles>
+
+	<DockPanel Margin="20">
+		<StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,12" HorizontalAlignment="Center">
+			<TextBlock Classes="hint" TextAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="760"
+			           Text="{x:Static local:Strings.ComparePlay_Hint}" />
+			<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,6,0,0">
+				<Button Name="AddButton" Content="{x:Static local:Strings.ComparePlay_Add}" Click="OnAddClick" />
+				<Button Name="ClearButton" Content="{x:Static local:Strings.Common_ClearAll}" Click="OnClearClick" />
+			</StackPanel>
+		</StackPanel>
+
+		<Grid DockPanel.Dock="Bottom" Margin="0,12,0,0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+			<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
+				<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToStartHome}">
+					<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />
+				</Button>
+				<Button Classes="transport" Click="OnPreviousFrameClick" ToolTip.Tip="{x:Static local:Strings.Main_PreviousFrameLeft}">
+					<local:IconView Data="{StaticResource IconFramePrevious}" Width="14" Height="14" />
+				</Button>
+				<Button Classes="transport" Click="OnPlayPauseClick" ToolTip.Tip="{x:Static local:Strings.Main_PlaySpace}">
+					<local:IconView Name="PlayPauseIcon" Data="{StaticResource IconPlay}" Width="14" Height="14" />
+				</Button>
+				<Button Classes="transport" Click="OnNextFrameClick" ToolTip.Tip="{x:Static local:Strings.Main_NextFrameRight}">
+					<local:IconView Data="{StaticResource IconFrameNext}" Width="14" Height="14" />
+				</Button>
+				<Button Classes="transport" Click="OnGoToEndClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToEndEnd}">
+					<local:IconView Data="{StaticResource IconSkipEnd}" Width="14" Height="14" />
+				</Button>
+				<Button Name="LoopButton" Classes="transport" Click="OnLoopClick" ToolTip.Tip="{x:Static local:Strings.ComparePlay_Loop}">
+					<local:IconView Data="{StaticResource IconLoop}" Width="14" Height="14" />
+				</Button>
+				<ComboBox Name="SpeedCombo" Width="74" FontSize="12" Padding="8,4" VerticalAlignment="Center" Margin="4,0,0,0"
+				          SelectionChanged="OnSpeedChanged" ToolTip.Tip="{x:Static local:Strings.ComparePlay_Speed}" />
+			</StackPanel>
+			<local:PreviewTimeline Grid.Column="1" Name="Timeline" Minimum="0" Maximum="1" IsEnabled="False"
+			                       VerticalAlignment="Center" ValueChanged="OnTimelineValueChanged" />
+			<TextBlock Grid.Column="2" Name="TimeText" Margin="0" FontSize="13" FontFeatures="+tnum" TextAlignment="Right"
+			           VerticalAlignment="Center" Text="00:00.00 / 00:00.00" />
+		</Grid>
+
+		<Panel>
+			<TextBlock Name="EmptyText" Classes="hint" FontSize="14" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="480"
+			           HorizontalAlignment="Center" VerticalAlignment="Center"
+			           Text="{x:Static local:Strings.ComparePlay_Empty}" />
+			<TextBlock Name="OpeningText" Classes="hint" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+			           IsVisible="False" Text="{x:Static local:Strings.ComparePlay_Opening}" />
+			<Grid Name="TilesGrid" ColumnSpacing="10" RowSpacing="10" />
+		</Panel>
+	</DockPanel>
+</Window>

@@ -41,7 +41,7 @@ public sealed class VideoView : Control
 	}
 
 	/// <summary>From here on until playback stops, frames come from the source on the render thread.</summary>
-	public void StartPlayback(PlaybackFrameSource source)
+	public void StartPlayback(IPlayedFrames source)
 	{
 		Send(source);
 	}
@@ -108,7 +108,7 @@ public sealed class VideoView : Control
 		// only add GPU work next to the decoder's.
 		private static readonly SKSamplingOptions Sampling = new(SKFilterMode.Linear, SKMipmapMode.None);
 
-		private PlaybackFrameSource? _source;
+		private IPlayedFrames? _source;
 		// The newest frame or still waiting for OnRender to upload it - a newer one replaces it unshown.
 		private ComposedPreviewFrame? _pendingFrame;
 		private SKImage? _pendingStill;
@@ -125,7 +125,7 @@ public sealed class VideoView : Control
 					_pendingStill = still;
 					Invalidate();
 					break;
-				case PlaybackFrameSource source:
+				case IPlayedFrames source:
 					_source = source;
 					_shownAt.Clear();
 					RegisterForNextAnimationFrameUpdate();

@@ -224,6 +224,14 @@
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="SmoothGpsMotionCheck" />
 							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OrientationSource}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OrientationSourceHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="OrientationSourceCombo" />
+							</Grid>
 						</StackPanel>
 					</Border>
 
@@ -335,6 +343,14 @@
 									</StackPanel>
 								</Expander>
 							</StackPanel>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_TagExportedVideo}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TagExportedVideoHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="TagExportedVideoCheck" />
+							</Grid>
 						</StackPanel>
 					</Border>
 				</StackPanel>
