@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>OsmoOverlay.Cameras.GoPro</AssemblyName>
+    <RootNamespace>OsmoOverlay.Cameras.GoPro</RootNamespace>
+
+    <AssemblyTitle>OsmoOverlay GoPro</AssemblyTitle>
+    <Description>GoPro support for OsmoOverlay: GPMF telemetry read from the MP4's sample table (motion sensors, the camera's own gravity vector, GPS where the camera has it) and the camera's axes.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -14,6 +14,7 @@
     <InternalsVisibleTo Include="OsmoOverlay.Tests" />
     <InternalsVisibleTo Include="OsmoOverlay.Cameras.Dji" />
     <InternalsVisibleTo Include="OsmoOverlay.Cameras.Insta360" />
+    <InternalsVisibleTo Include="OsmoOverlay.Cameras.GoPro" />
   </ItemGroup>
 
   <ItemGroup>

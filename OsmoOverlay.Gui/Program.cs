@@ -1,5 +1,6 @@
 using Avalonia;
 using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Cameras.GoPro;
 using OsmoOverlay.Cameras.Insta360;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Localization;
@@ -21,7 +22,7 @@ internal class Program
 		StartupKeys.Capture();
 		AppLogger.Verbose = settings.DebugMode || StartupKeys.ShiftHeld;
 		UiLanguages.Apply(settings.UiLanguage);
-		CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
+		CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format());
 		UiScale.Initialize();
 		BuildAvaloniaApp()
 			.StartWithClassicDesktopLifetime(args);

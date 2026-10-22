@@ -45,6 +45,24 @@
   <data name="Dji_TrackDiffers" xml:space="preserve">
     <value>Camera '{0}' track differs between segments (timescale/sample description) - not copied</value>
   </data>
+  <data name="ExternalTrack_NoMatch" xml:space="preserve">
+    <value>Could not match {0} to the recording by how both moved: the camera's clock is not within the track, and the shaking of the camera does not follow the track's speed clearly enough. Give the track's offset from the camera's clock.</value>
+  </data>
+  <data name="ExternalTrack_NoStartTime" xml:space="preserve">
+    <value>The recording has no start time, so the track's offset from the camera's clock cannot be applied.</value>
+  </data>
+  <data name="GoPro_NotTested" xml:space="preserve">
+    <value>The {0} has not been tested. OsmoOverlay reads GoPro telemetry on the HERO12 Black. Another model may still be readable, but some widgets, such as tilt and the G-meter, may be unavailable or show incorrect values.</value>
+  </data>
+  <data name="GoPro_SourceNoGps" xml:space="preserve">
+    <value>Telemetry source: GoPro GPMF (accelerometer, gravity vector, exposure) - this recording has no GPS</value>
+  </data>
+  <data name="GoPro_SourceWithGps" xml:space="preserve">
+    <value>Telemetry source: GoPro GPMF (accelerometer, gravity vector, exposure, GPS)</value>
+  </data>
+  <data name="GoPro_ThisCamera" xml:space="preserve">
+    <value>This GoPro camera</value>
+  </data>
   <data name="Insta360_Source" xml:space="preserve">
     <value>Telemetry source: Insta360 trailer (accelerometer averaged per frame, exposure)</value>
   </data>

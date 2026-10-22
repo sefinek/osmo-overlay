@@ -1,6 +1,6 @@
-using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Tests.Cameras.Dji;
+namespace OsmoOverlay.Tests.Telemetry;
 
 [TestClass]
 public sealed class GpsForwardFillTests

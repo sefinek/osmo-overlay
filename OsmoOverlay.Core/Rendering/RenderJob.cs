@@ -11,6 +11,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Core;
 
@@ -33,7 +34,9 @@ public sealed record RenderOptions(
 	double? RangeEndSeconds = null,
 	IReadOnlyList<TimeRange>? CutOuts = null,
 	// Where the flat picture of a 360 recording looks - the default (leveled, straight ahead) when null; ignored for a flat video.
-	ReframeView? Reframe = null)
+	ReframeView? Reframe = null,
+	// A track from another device put onto the telemetry the render extracts (ignored with TelemetryFrames, which the caller already has the track in).
+	ExternalTrackSource? ExternalTrack = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -163,7 +166,9 @@ public static class RenderJob
 			{
 				Report(RenderPhase.ExtractingTelemetry, CoreStrings.Render_Extracting);
 				TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
-				rawFrames = extraction.Frames;
+				rawFrames = options.ExternalTrack is { } externalTrack
+					? externalTrack.Apply(extraction.Frames, first.Source.Video.Fps, first.Source.ContainerCreationTimeUtc)
+					: extraction.Frames;
 				cameraModel ??= extraction.CameraModel;
 				if (rawFrames.Count == 0)
 					return new RenderResult(false, CoreStrings.Render_NoSamples, sw.Elapsed);

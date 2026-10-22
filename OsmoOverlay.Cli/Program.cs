@@ -1,4 +1,5 @@
 using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Cameras.GoPro;
 using OsmoOverlay.Cameras.Insta360;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
@@ -7,6 +8,7 @@ using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
+using OsmoOverlay.Core.Telemetry.External;
 
 UiLanguages.Apply(UiLanguages.English);
 
@@ -17,9 +19,9 @@ AppDomain.CurrentDomain.UnhandledException += (_, e) =>
 foreach (string line in AppBanner.BuildLines("CLI"))
 	AppLogger.Info(line);
 
-CameraFormats.Register(new DjiOsmoFormat(), new Insta360Format());
+CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format());
 
-string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder"];
+string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder", "--track", "--track-offset"];
 string[] flags = ["--no-level"];
 const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--encoder <name>]\n" +
                      "  inputs are the camera's own recordings (DJI Osmo Action .MP4)\n" +
@@ -29,6 +31,10 @@ const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.m
                      "         leveled by the camera's accelerometer unless --no-level\n" +
                      "  --encoder picks ffmpeg's video encoder (hevc_nvenc, hevc_amf, hevc_qsv, libx265, or h264_* / libx264 for H.264 output)\n" +
                      "         instead of the first one that works here; one that doesn't write the output's codec is ignored\n" +
+                     "  --track puts a FIT or GPX track from another device (a bike computer, a watch) on the telemetry: its position, altitude and\n" +
+                     "         speed, which a camera without GPS (GoPro HERO12) lacks. Where the track lies on the recording is found from the camera's clock\n" +
+                     "         when it agrees with the track's, else from how both moved; --track-offset <seconds> gives it (how far the track's clock\n" +
+                     "         is ahead of the camera's, -416 when the camera showed 14:27:45 at the track's 14:20:49) and is used as it is\n" +
                      "       OsmoOverlay.Cli --install-dependencies [ffmpeg] [exiftool]\n" +
                      "  installs the listed tools (default: ffmpeg) through the system's package manager, if they're missing";
 
@@ -50,6 +56,8 @@ List<TimeRange> cutOuts = [];
 ReframeView? view = null;
 bool level = true;
 string? encoder = null;
+string? trackPath = null;
+double? trackOffset = null;
 
 int i = 0;
 while (i < args.Length && !options.Contains(args[i]) && !flags.Contains(args[i]))
@@ -115,10 +123,29 @@ for (; i < args.Length; i++)
 		case "--encoder":
 			encoder = value;
 			break;
+		case "--track":
+			trackPath = value;
+			break;
+		case "--track-offset" when double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double parsedOffset) &&
+		                           double.IsFinite(parsedOffset):
+			trackOffset = parsedOffset;
+			break;
 		default:
 			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'");
 			return 1;
 	}
+}
+
+if (trackOffset is not null && trackPath is null)
+{
+	Console.Error.WriteLine("Error: --track-offset needs --track");
+	return 1;
+}
+
+if (trackPath is not null && !File.Exists(trackPath))
+{
+	Console.Error.WriteLine($"Error: track file not found: {trackPath}");
+	return 1;
 }
 
 if (string.IsNullOrEmpty(outputPath))
@@ -149,7 +176,8 @@ Console.CancelKeyPress += (_, e) =>
 };
 
 RenderResult result = await RenderJob.RunAsync(
-	new RenderOptions(inputPaths, outputPath, frameLimit, encoder, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level }), progress,
+	new RenderOptions(inputPaths, outputPath, frameLimit, encoder, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level },
+		ExternalTrack: trackPath is null ? null : new ExternalTrackSource(trackPath, trackOffset)), progress,
 	cts.Token);
 Console.WriteLine();
 

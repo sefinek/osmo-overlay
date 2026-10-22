@@ -367,32 +367,11 @@ internal static class Mp4CameraMetadata
 			ulong[] chunkOffsets = Mp4Fields.ReadChunkOffsets(stbl.Child("stco") ?? stbl.Child("co64")!);
 			tracks.Add(new SourceTrack(path, format, trak, stsd, Mp4Fields.MediaTiming(trak.Find("mdia", "mdhd")!).Timescale,
 				Mp4Fields.ReadStts(stbl.Child("stts")!), sizes,
-				SampleOffsets(Mp4Fields.ReadStsc(stbl.Child("stsc")!), chunkOffsets, sizes),
+				Mp4Fields.SampleOffsets(Mp4Fields.ReadStsc(stbl.Child("stsc")!), chunkOffsets, sizes),
 				Mp4Fields.ReadSyncSamples(stbl.Child("stss"))));
 		}
 
 		return tracks;
-	}
-
-	/// <summary>Absolute file offset of every sample, from the chunk table (stco/co64 + stsc + stsz).</summary>
-	private static ulong[] SampleOffsets(List<(uint FirstChunk, uint SamplesPerChunk)> stsc, ulong[] chunkOffsets, uint[] sizes)
-	{
-		ulong[] offsets = new ulong[sizes.Length];
-		int sample = 0;
-		for (int chunk = 0; chunk < chunkOffsets.Length && sample < sizes.Length; chunk++)
-		{
-			int entry = stsc.FindLastIndex(e => e.FirstChunk <= chunk + 1);
-			uint perChunk = entry >= 0 ? stsc[entry].SamplesPerChunk : 1;
-			ulong offset = chunkOffsets[chunk];
-			for (int i = 0; i < perChunk && sample < sizes.Length; i++, sample++)
-			{
-				offsets[sample] = offset;
-				offset += sizes[sample];
-			}
-		}
-
-		if (sample < sizes.Length) throw new InvalidDataException("Camera metadata track's chunk table covers fewer samples than its size table.");
-		return offsets;
 	}
 
 	/// <summary>

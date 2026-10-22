@@ -1,9 +1,9 @@
-namespace OsmoOverlay.Cameras.Dji;
+namespace OsmoOverlay.Core.Telemetry;
 
 /// <summary>
 ///     A dropped GPS fix (tunnel, indoors) must not be treated as (0,0): carry the last known fix
-///     forward instead, so distance/speed/heading derived from it don't spike. Shared by both the
-///     native djmd decoder and the exiftool fallback so the two pipelines can't drift apart.
+///     forward instead, so distance/speed/heading derived from it don't spike. Shared by every camera format's extraction
+///     (DJI's native decoder and its exiftool fallback, GoPro's) so they can't drift apart.
 /// </summary>
 internal sealed class GpsForwardFill
 {

@@ -152,7 +152,7 @@ public static class TelemetryExtraction
 	///     (0,0)" policy the camera format applies going forward. HasGpsFix stays false on those frames, so
 	///     FindGpsLossRanges still reports them. No-op for a recording with no fix at all - false then.
 	/// </summary>
-	private static bool BackfillBeforeFirstFix(List<TelemetryFrame> frames)
+	internal static bool BackfillBeforeFirstFix(List<TelemetryFrame> frames)
 	{
 		int firstFixIndex = frames.FindIndex(f => !IsNullIsland(f));
 		if (firstFixIndex < 0) return false;

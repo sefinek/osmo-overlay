@@ -45,6 +45,24 @@
   <data name="Dji_TrackDiffers" xml:space="preserve">
     <value>Ścieżka kamery '{0}' różni się między segmentami (timescale/opis próbek) - nie skopiowano</value>
   </data>
+  <data name="ExternalTrack_NoMatch" xml:space="preserve">
+    <value>Nie udało się dopasować {0} do nagrania na podstawie ruchu: zegar kamery nie mieści się w czasie trasy, a drgania kamery nie podążają dość wyraźnie za prędkością z trasy. Podaj przesunięcie trasy względem zegara kamery.</value>
+  </data>
+  <data name="ExternalTrack_NoStartTime" xml:space="preserve">
+    <value>Nagranie nie ma czasu rozpoczęcia, więc nie można zastosować przesunięcia trasy względem zegara kamery.</value>
+  </data>
+  <data name="GoPro_NotTested" xml:space="preserve">
+    <value>Model {0} nie był testowany. OsmoOverlay odczytuje telemetrię GoPro na modelu HERO12 Black. Inny model może działać, ale niektóre widżety, np. przechył i miernik G, mogą być niedostępne lub wskazywać błędne wartości.</value>
+  </data>
+  <data name="GoPro_SourceNoGps" xml:space="preserve">
+    <value>Źródło telemetrii: GoPro GPMF (akcelerometr, wektor grawitacji, ekspozycja) - to nagranie nie ma GPS</value>
+  </data>
+  <data name="GoPro_SourceWithGps" xml:space="preserve">
+    <value>Źródło telemetrii: GoPro GPMF (akcelerometr, wektor grawitacji, ekspozycja, GPS)</value>
+  </data>
+  <data name="GoPro_ThisCamera" xml:space="preserve">
+    <value>Ta kamera GoPro</value>
+  </data>
   <data name="Insta360_Source" xml:space="preserve">
     <value>Źródło telemetrii: blok danych na końcu pliku Insta360 (akcelerometr uśredniony na klatkę, ekspozycja)</value>
   </data>
