@@ -29,7 +29,12 @@ public sealed record TelemetryFrame(
 	// to the previous file on the timeline but not in time, so speed, distance and the route don't run across it.
 	bool StartsAfterGap = false,
 	// What GpsOutliers filled in on this frame - an implausible position or receiver speed (the GPS alert widget says so).
-	GpsCorrection GpsCorrected = GpsCorrection.None)
+	GpsCorrection GpsCorrected = GpsCorrection.None,
+	// The camera's orientation where its format reports one (DJI). Kept beside the accelerometer, not instead of it:
+	// nothing in Core takes a direction from it yet.
+	TelemetryOrientation? Orientation = null,
+	// The device's own microsecond clock for this sample (DJI: time since power-up) - not UTC, and not the video's timeline.
+	long? DeviceTimeMicroseconds = null)
 {
 	public double GForce => Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
 

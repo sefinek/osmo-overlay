@@ -20,20 +20,23 @@ namespace OsmoOverlay.Cameras.Dji;
 ///     different camera/firmware lays the stream out differently.
 ///     Wire format, one top-level field-3 message per sample:
 ///     f3
-///     ├── f1 (message)              - sample header (not used: see note on SampleTimeSeconds below)
+///     ├── f1 (message)              - sample header: f1 (varint) frame number, omitted for 0; f2 (varint) device clock,
+///     │                               microseconds since power-up (DeviceTimeMicroseconds; not SampleTimeSeconds, see below)
 ///     ├── f2 (message)              - camera settings
 ///     │   ├── f3 (message) → f1 (float)   - ISO
 ///     │   ├── f4 (message) → f1 (bytes: two raw varints [numerator, denominator]) - shutter speed
 ///     │   ├── f6 (message) → f1 (varint)  - color temperature, Kelvin
-///     │   └── f10 (message)               - accelerometer: f2/f3/f4 (float) = X/Y/Z
+///     │   ├── f9 (message)                - orientation quaternion: f1..f4 (float) = w/x/y/z (TelemetryOrientation)
+///     │   └── f10 (message)               - accelerometer: f2/f3/f4 (float) = X/Y/Z, in g
 ///     └── f4 (message)              - GPS data
 ///     ├── f1 (message) → f4 (string)  - device name, DJI's internal model code, e.g. "DJI AC006" (see DjiModels)
 ///     ├── f2 (message)              - GPS fix
 ///     │   ├── f1 (message)
-///     │   │   ├── f1 (varint)  - GPS fix type (0 = no fix)
+///     │   │   ├── f1 (varint)  - coordinate unit (0 = radians, 1 = degrees; see DjiGpsFix)
 ///     │   │   ├── f2 (double)  - latitude
 ///     │   │   └── f3 (double)  - longitude
 ///     │   ├── f2 (varint)  - altitude in mm
+///     │   ├── f3 (varint)  - GPS status (0 normal, 1 invalid, 2 RTK; omitted for 0)
 ///     │   └── f6 (message) → f1 (string) - timestamp "yyyy-MM-dd HH:mm:ss"
 ///     └── f3 (message) - 2D velocity: f1/f2 (float) = vx/vy (m/s)
 ///     SampleTimeSeconds is deliberately NOT derived from any raw per-sample clock field: exiftool's
@@ -141,7 +144,9 @@ internal static class DjiMetaTelemetryParser
 				r.Iso,
 				r.ShutterSeconds,
 				r.ColorTemperatureKelvin,
-				hasFix));
+				hasFix,
+				Orientation: r.Orientation,
+				DeviceTimeMicroseconds: r.DeviceTimeMicroseconds));
 		}
 
 		string? cameraModel = records.Select(r => r.DeviceName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
@@ -166,6 +171,7 @@ internal static class DjiMetaTelemetryParser
 		float? iso = null;
 		double? shutterSeconds = null;
 		int? colorTemperatureKelvin = null;
+		TelemetryOrientation? orientation = null;
 
 		// Single pass over f2's/gpsMsg's own fields instead of one GetSubmessage rescan per field -
 		// this runs once per telemetry sample (tens of thousands per recording).
@@ -199,6 +205,11 @@ internal static class DjiMetaTelemetryParser
 						ulong? ct = GetVarintField(bytes, 1);
 						if (ct is not null) colorTemperatureKelvin = (int)ct.Value;
 						break;
+					case 9:
+						orientation = TelemetryOrientation.TryCreate(
+							GetFloatField(bytes, 1) ?? double.NaN, GetFloatField(bytes, 2) ?? double.NaN,
+							GetFloatField(bytes, 3) ?? double.NaN, GetFloatField(bytes, 4) ?? double.NaN);
+						break;
 					case 10:
 						accelX = GetFloatField(bytes, 2) ?? 0;
 						accelY = GetFloatField(bytes, 3) ?? 0;
@@ -226,16 +237,12 @@ internal static class DjiMetaTelemetryParser
 						break;
 					case 2:
 						ReadOnlyMemory<byte>? coordsMsg = GetSubmessage(bytes, 1);
-						ulong? fixType = coordsMsg is not null ? GetVarintField(coordsMsg.Value, 1) : null;
-						if (coordsMsg is not null && fixType is not (null or 0))
+						if (coordsMsg is not null
+						    && DjiGpsFix.Position(GetVarintField(coordsMsg.Value, 1), GetVarintField(bytes, 3),
+							    GetDoubleField(coordsMsg.Value, 2), GetDoubleField(coordsMsg.Value, 3)) is var (latVal, lonVal))
 						{
-							double? latVal = GetDoubleField(coordsMsg.Value, 2);
-							double? lonVal = GetDoubleField(coordsMsg.Value, 3);
-							if (latVal is not null && lonVal is not null && !(latVal == 0.0 && lonVal == 0.0))
-							{
-								lat = latVal;
-								lon = lonVal;
-							}
+							lat = latVal;
+							lon = lonVal;
 						}
 
 						ulong? altMm = GetVarintField(bytes, 2);
@@ -260,8 +267,12 @@ internal static class DjiMetaTelemetryParser
 			}
 		}
 
+		long? deviceTime = GetSubmessage(sample, 1) is { } header && GetVarintField(header, 2) is { } micros and <= long.MaxValue
+			? (long)micros
+			: null;
+
 		return new RawRecord(lat, lon, altitudeMeters, gpsTimestamp, accelX, accelY, accelZ, speedMs, deviceName,
-			iso, shutterSeconds, colorTemperatureKelvin);
+			iso, shutterSeconds, colorTemperatureKelvin, orientation, deviceTime);
 	}
 
 	private static ulong ReadVarint(ReadOnlySpan<byte> data, ref int pos)
@@ -387,5 +398,7 @@ internal static class DjiMetaTelemetryParser
 		string? DeviceName,
 		float? Iso,
 		double? ShutterSeconds,
-		int? ColorTemperatureKelvin);
+		int? ColorTemperatureKelvin,
+		TelemetryOrientation? Orientation,
+		long? DeviceTimeMicroseconds);
 }
