@@ -339,18 +339,28 @@ public sealed class ComparePlayer : IDisposable
 		{
 			await Task.WhenAll(_tiles.Select((tile, i) => Task.Run(() =>
 			{
+				VideoFrame? frame;
 				try
 				{
-					if (tile.Video.GetFrame(TimeSpan.FromSeconds(seconds), accuracy, ct) is not { } frame) return;
-
-					var still = new ComposedPreviewFrame(TimeSpan.FromSeconds(PreviewFrames.IndexAt(seconds, tile.Fps) / tile.Fps), frame.Bgra,
-						frame.Width, frame.Height);
-					if (!ct.IsCancellationRequested) StillReady?.Invoke(i, still);
-					tile.Video.Recycle(frame);
+					frame = tile.Video.GetFrame(TimeSpan.FromSeconds(seconds), accuracy, ct);
 				}
 				catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
 				{
 					Fail(i, ex.Message);
+					return;
+				}
+
+				if (frame is null) return;
+
+				try
+				{
+					var still = new ComposedPreviewFrame(TimeSpan.FromSeconds(PreviewFrames.IndexAt(seconds, tile.Fps) / tile.Fps), frame.Bgra,
+						frame.Width, frame.Height);
+					if (!ct.IsCancellationRequested) StillReady?.Invoke(i, still);
+				}
+				finally
+				{
+					tile.Video.Recycle(frame);
 				}
 			}, ct)));
 		}

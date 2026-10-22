@@ -160,7 +160,15 @@ public partial class ComparePlaybackWindow : Window
 		player.Loop = _loop;
 		player.Rate = _rate;
 		VideoView[] views = BuildTiles(player);
-		player.StillReady += (index, frame) => views[index].ShowStill(frame);
+		// The frame is lent for the call, from a decoder's thread - copied here, shown on the UI thread, which a view needs.
+		player.StillReady += (index, frame) =>
+		{
+			var copy = new ComposedPreviewFrame(frame.Position, frame.Bgra.ToArray(), frame.Width, frame.Height);
+			Dispatcher.UIThread.Post(() =>
+			{
+				if (_player == player) views[index].ShowStill(copy);
+			});
+		};
 		player.PlaybackStarted += () => Dispatcher.UIThread.Post(() =>
 		{
 			if (_player != player) return;
