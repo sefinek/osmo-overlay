@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -12,6 +14,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
+using SkiaSharp;
 
 namespace OsmoOverlay.Gui;
 
@@ -24,20 +27,33 @@ public partial class ComparePlaybackWindow : Window
 {
 	private const int MaxFiles = 6;
 
-	// The widest a picture is decoded: tiles show it smaller, and four 4K decoders at full size would only slow each other down.
-	private const int TileDecodeWidth = 960;
+	// The widest a picture is decoded: Full HD is what the zoom has to look into (measured on three tiles, 960 to 1920 px cost the
+	// same - the decoder is the limit), and a 4K picture would only cost four times the memory for a view that is rarely that large.
+	private const int TileDecodeWidth = 1920;
 
 	private static readonly double[] Rates = [0.25, 0.5, 1, 2];
 
+	private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
+
+	private const double WheelZoomStep = 1.2;
+
+	// A notch of the wheel moves the view by this fraction of what is in view.
+	private const double WheelPanStep = 0.1;
+	private const double KeyZoomStep = 1.25;
+
 	private readonly List<string> _paths = [];
+	private readonly List<TileZoomView> _zoomViews = [];
 	private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(40) };
 	private ComparePlayer? _player;
 	private int _generation;
 	private bool _suppressTimeline;
-	private bool _scrubbing;
 	private bool _resumeAfterScrub;
 	private bool _loop;
 	private double _rate = 1;
+	private (TimeSpan Position, SeekAccuracy Accuracy)? _pendingSeek;
+	private bool _seekRunning;
+	private CompareZoom _zoom = CompareZoom.Whole;
+	private (TileZoomView View, Point At)? _pan;
 
 	public ComparePlaybackWindow()
 	{
@@ -48,6 +64,7 @@ public partial class ComparePlaybackWindow : Window
 		Timeline.ScrubEnded += OnScrubEnded;
 		_timer.Tick += (_, _) => UpdatePosition();
 		KeyDown += OnWindowKeyDown;
+		ApplyZoom();
 		Closed += (_, _) =>
 		{
 			_generation++;
@@ -119,6 +136,8 @@ public partial class ComparePlaybackWindow : Window
 		_timer.Stop();
 		DisposePlayer();
 		TilesGrid.Children.Clear();
+		_zoomViews.Clear();
+		_pan = null;
 		TilesGrid.RowDefinitions.Clear();
 		TilesGrid.ColumnDefinitions.Clear();
 		TransportPanel.IsEnabled = false;
@@ -160,13 +179,14 @@ public partial class ComparePlaybackWindow : Window
 		player.Loop = _loop;
 		player.Rate = _rate;
 		VideoView[] views = BuildTiles(player);
-		// The frame is lent for the call, from a decoder's thread - copied here, shown on the UI thread, which a view needs.
+		// The frame is lent for the call, from a decoder's thread - copied once here, shown on the UI thread, which a view needs.
 		player.StillReady += (index, frame) =>
 		{
-			var copy = new ComposedPreviewFrame(frame.Position, frame.Bgra.ToArray(), frame.Width, frame.Height);
+			SKImage still = VideoView.CopyStill(frame);
 			Dispatcher.UIThread.Post(() =>
 			{
-				if (_player == player) views[index].ShowStill(copy);
+				if (_player == player) views[index].ShowStill(still);
+				else still.Dispose();
 			});
 		};
 		player.PlaybackStarted += () => Dispatcher.UIThread.Post(() =>
@@ -198,7 +218,13 @@ public partial class ComparePlaybackWindow : Window
 		for (int c = 0; c < CompareLayout.Columns(count); c++) TilesGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 		for (int r = 0; r < CompareLayout.Rows(count); r++) TilesGrid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
 
-		bool markersDiffer = player.Tiles.Select(t => t.Marker).Distinct().Count() > 1;
+		ExportMarkerInfo[] markers = [.. player.Tiles.Select(t => t.Marker).OfType<ExportMarkerInfo>()];
+		bool[] differs =
+		[
+			markers.Select(m => m.Version).Distinct().Count() > 1,
+			markers.Select(m => m.TelemetryVersion).Distinct().Count() > 1,
+			markers.Select(m => m.Orientation).Distinct().Count() > 1
+		];
 		var views = new VideoView[count];
 		for (int i = 0; i < count; i++)
 		{
@@ -206,7 +232,7 @@ public partial class ComparePlaybackWindow : Window
 			var view = new VideoView { Width = tile.Width, Height = tile.Height };
 			views[i] = view;
 
-			Border tileControl = BuildTile(tile, view, markersDiffer, player, i);
+			Border tileControl = BuildTile(tile, view, differs, player, i);
 			Grid.SetColumn(tileControl, i % CompareLayout.Columns(count));
 			Grid.SetRow(tileControl, i / CompareLayout.Columns(count));
 			TilesGrid.Children.Add(tileControl);
@@ -215,7 +241,7 @@ public partial class ComparePlaybackWindow : Window
 		return views;
 	}
 
-	private Border BuildTile(CompareTile tile, VideoView view, bool markersDiffer, ComparePlayer player, int index)
+	private Border BuildTile(CompareTile tile, VideoView view, bool[] differs, ComparePlayer player, int index)
 	{
 		var remove = new Button
 		{
@@ -240,17 +266,19 @@ public partial class ComparePlaybackWindow : Window
 		header.Children.Add(remove);
 		header.Children.Add(name);
 
-		var marker = new TextBlock
-		{
-			Text = MarkerText(tile.Marker),
-			FontSize = 12,
-			Foreground = tile.Marker is null ? Palette.TextMuted : markersDiffer ? Palette.Warning : Palette.TextPrimary,
-			TextWrapping = TextWrapping.Wrap
-		};
+		var marker = new TextBlock { FontSize = 12, Foreground = Palette.TextPrimary, TextWrapping = TextWrapping.Wrap };
+		AddMarkerText(marker, tile.Marker, differs);
 		var info = new TextBlock
 		{
 			Text = string.Format(Strings.ComparePlay_Info, tile.Source.Video.Width, tile.Source.Video.Height,
 				tile.Fps.ToString("0.###", CultureInfo.InvariantCulture)),
+			FontSize = 12,
+			Foreground = Palette.TextMuted
+		};
+		var size = new TextBlock
+		{
+			Text = string.Format(Strings.ComparePlay_Size, tile.FileSizeBytes.ToString("N0", CultureInfo.CurrentCulture),
+				FormatHelper.FormatBytes(tile.FileSizeBytes)),
 			FontSize = 12,
 			Foreground = Palette.TextMuted
 		};
@@ -266,8 +294,19 @@ public partial class ComparePlaybackWindow : Window
 			});
 		};
 
-		var footer = new StackPanel { Margin = new Thickness(10, 6, 10, 8), Spacing = 2, Children = { marker, info, error } };
-		var picture = new Viewbox { Stretch = Stretch.Uniform, Child = view, Margin = new Thickness(4, 4, 4, 0) };
+		var footer = new StackPanel { Margin = new Thickness(10, 6, 10, 8), Spacing = 2, Children = { marker, info, size, error } };
+		var scale = new ScaleTransform();
+		var shift = new TranslateTransform();
+		var zoomed = new Viewbox { Stretch = Stretch.Uniform, Child = view, RenderTransform = new TransformGroup { Children = { scale, shift } } };
+		var picture = new Panel { Background = Brushes.Transparent, ClipToBounds = true, Margin = new Thickness(4, 4, 4, 0), Children = { zoomed } };
+		var zoomView = new TileZoomView(picture, scale, shift, tile.Width / (double)tile.Height);
+		_zoomViews.Add(zoomView);
+		picture.SizeChanged += (_, _) => ApplyZoom();
+		picture.PointerWheelChanged += (_, e) => OnPictureWheel(zoomView, e);
+		picture.PointerPressed += (_, e) => OnPicturePressed(zoomView, e);
+		picture.PointerMoved += (_, e) => OnPictureMoved(zoomView, e);
+		picture.PointerReleased += (_, e) => OnPictureReleased(zoomView, e);
+		picture.DoubleTapped += (_, _) => SetZoom(CompareZoom.Whole);
 		var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto") };
 		Grid.SetRow(header, 0);
 		Grid.SetRow(picture, 1);
@@ -287,12 +326,42 @@ public partial class ComparePlaybackWindow : Window
 		};
 	}
 
-	private static string MarkerText(ExportMarkerInfo? marker)
+	[GeneratedRegex(@"(\{\d\})")]
+	private static partial Regex MarkerPlaceholder();
+
+	/// <summary>
+	///     What the file says about the program that rendered it. A part that differs between the videos is picked out in the
+	///     accent color - a difference is what the comparison is for, not a fault, so no status color.
+	/// </summary>
+	private static void AddMarkerText(TextBlock block, ExportMarkerInfo? marker, bool[] differs)
 	{
-		return marker is null
-			? Strings.ComparePlay_NoMarker
-			: string.Format(Strings.ComparePlay_Marker, marker.Version, marker.TelemetryVersion,
-				marker.Orientation == OrientationSource.Quaternion ? Strings.ComparePlay_TiltOrientation : Strings.ComparePlay_TiltAccelerometer);
+		if (marker is null)
+		{
+			block.Inlines!.Add(new Run(Strings.ComparePlay_NoMarker) { Foreground = Palette.TextMuted });
+			return;
+		}
+
+		string[] values =
+		[
+			marker.Version,
+			marker.TelemetryVersion.ToString(CultureInfo.InvariantCulture),
+			marker.Orientation == OrientationSource.Quaternion ? Strings.ComparePlay_TiltOrientation : Strings.ComparePlay_TiltAccelerometer
+		];
+		foreach (string part in MarkerPlaceholder().Split(Strings.ComparePlay_Marker))
+		{
+			if (part.Length == 3 && part[0] == '{' && part[2] == '}' && char.IsAsciiDigit(part[1]) && part[1] - '0' is var index && index < values.Length)
+			{
+				block.Inlines!.Add(differs[index]
+					? new Run(values[index]) { Foreground = Palette.Accent, FontWeight = FontWeight.SemiBold }
+					: new Run(values[index]));
+			}
+			else if (part.Length > 0)
+			{
+				block.Inlines!.Add(new Run(part));
+			}
+		}
+
+		if (differs.Any(d => d)) ToolTip.SetTip(block, Strings.ComparePlay_Differs);
 	}
 
 	private void DisposePlayer()
@@ -327,13 +396,19 @@ public partial class ComparePlaybackWindow : Window
 
 	private async void OnGoToStartClick(object? sender, RoutedEventArgs e)
 	{
-		if (_player is { } player) await RunAsync(() => player.SeekAsync(TimeSpan.Zero, SeekAccuracy.Exact));
-		UpdatePosition();
+		await GoToAsync(false);
 	}
 
 	private async void OnGoToEndClick(object? sender, RoutedEventArgs e)
 	{
-		if (_player is { } player) await RunAsync(() => player.SeekAsync(player.Duration, SeekAccuracy.Exact));
+		await GoToAsync(true);
+	}
+
+	private async Task GoToAsync(bool end)
+	{
+		if (_player is not { } player) return;
+
+		await RunAsync(() => player.SeekAsync(end ? player.Duration : TimeSpan.Zero, SeekAccuracy.Exact));
 		UpdatePosition();
 	}
 
@@ -378,21 +453,45 @@ public partial class ComparePlaybackWindow : Window
 
 		var position = TimeSpan.FromSeconds(e.NewValue);
 		UpdateTimeText(position, player.Duration);
-		// Keyframes while dragging keep up with the pointer; the exact frame follows on release.
-		_ = RunAsync(() => player.SeekAsync(position, _scrubbing ? SeekAccuracy.Keyframe : SeekAccuracy.Exact));
+		// Exact even while dragging: a render's keyframes are a second apart, so keyframes would show the picture jump by seconds,
+		// and the videos are compared frame for frame. One seek runs at a time and the newest position wins (RequestSeek).
+		RequestSeek(position, SeekAccuracy.Exact);
+	}
+
+	/// <summary>One seek at a time, the newest position the pointer reached: the ones in between would only be decoded to be replaced.</summary>
+	private void RequestSeek(TimeSpan position, SeekAccuracy accuracy)
+	{
+		_pendingSeek = (position, accuracy);
+		if (!_seekRunning) _ = RunAsync(DrainSeeksAsync);
+	}
+
+	private async Task DrainSeeksAsync()
+	{
+		_seekRunning = true;
+		try
+		{
+			while (_pendingSeek is { } next && _player is { } player)
+			{
+				_pendingSeek = null;
+				await player.SeekAsync(next.Position, next.Accuracy);
+			}
+		}
+		finally
+		{
+			_seekRunning = false;
+		}
 	}
 
 	/// <summary>A drag of the playhead: playback pauses until it ends, then goes on from where it was dropped.</summary>
 	private void OnScrubStarted()
 	{
-		_scrubbing = true;
 		_resumeAfterScrub = _player is { IsPlaying: true };
 		if (_resumeAfterScrub) _ = RunAsync(TogglePlayAsync);
 	}
 
 	private void OnScrubEnded()
 	{
-		_scrubbing = false;
+		_pendingSeek = null;
 		bool resume = _resumeAfterScrub;
 		_resumeAfterScrub = false;
 		if (_player is not { } player) return;
@@ -425,13 +524,130 @@ public partial class ComparePlaybackWindow : Window
 				break;
 			case Key.Home:
 				e.Handled = true;
-				OnGoToStartClick(null, new RoutedEventArgs());
+				await GoToAsync(false);
 				break;
 			case Key.End:
 				e.Handled = true;
-				OnGoToEndClick(null, new RoutedEventArgs());
+				await GoToAsync(true);
+				break;
+			case Key.OemPlus or Key.Add:
+				e.Handled = true;
+				ZoomBy(KeyZoomStep);
+				break;
+			case Key.OemMinus or Key.Subtract:
+				e.Handled = true;
+				ZoomBy(1 / KeyZoomStep);
+				break;
+			case Key.D0 or Key.NumPad0:
+				e.Handled = true;
+				SetZoom(CompareZoom.Whole);
 				break;
 		}
+	}
+
+	private void OnZoomInClick(object? sender, RoutedEventArgs e)
+	{
+		ZoomBy(KeyZoomStep);
+	}
+
+	private void OnZoomOutClick(object? sender, RoutedEventArgs e)
+	{
+		ZoomBy(1 / KeyZoomStep);
+	}
+
+	private void OnZoomResetClick(object? sender, RoutedEventArgs e)
+	{
+		SetZoom(CompareZoom.Whole);
+	}
+
+	/// <summary>Zoomed into or out of the middle of the pictures.</summary>
+	private void ZoomBy(double factor)
+	{
+		SetZoom(_zoom.ZoomAt(factor, 0.5, 0.5));
+	}
+
+	private void SetZoom(CompareZoom zoom)
+	{
+		_zoom = zoom;
+		ApplyZoom();
+	}
+
+	/// <summary>Every tile looks at the same part of its picture: the same scale, and the shift in that picture's own pixels.</summary>
+	private void ApplyZoom()
+	{
+		bool zoomed = _zoom.Scale > CompareZoom.MinScale;
+		foreach (TileZoomView view in _zoomViews)
+		{
+			view.Picture.Cursor = zoomed ? MoveCursor : null;
+			Size picture = view.PictureSize();
+			view.Scale.ScaleX = _zoom.Scale;
+			view.Scale.ScaleY = _zoom.Scale;
+			view.Shift.X = -(_zoom.CenterX - 0.5) * picture.Width * _zoom.Scale;
+			view.Shift.Y = -(_zoom.CenterY - 0.5) * picture.Height * _zoom.Scale;
+		}
+
+		ZoomText.Text = string.Format(Strings.ComparePlay_Zoom, _zoom.Scale.ToString("0.#", CultureInfo.InvariantCulture));
+		ZoomResetButton.IsEnabled = zoomed;
+		ZoomOutButton.IsEnabled = zoomed;
+		ZoomInButton.IsEnabled = _zoom.Scale < CompareZoom.MaxScale;
+	}
+
+	/// <summary>
+	///     On every tile at once: the wheel zooms, keeping the point under the pointer where it is; with Shift it moves the view across,
+	///     with Alt down and up (a sideways touchpad swipe moves it across too). Dragging moves it as well.
+	/// </summary>
+	private void OnPictureWheel(TileZoomView view, PointerWheelEventArgs e)
+	{
+		Size picture = view.PictureSize();
+		if (picture.Width <= 0 || picture.Height <= 0) return;
+
+		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+		{
+			SetZoom(_zoom.Pan(e.Delta.Y * WheelPanStep, 0));
+		}
+		else if (e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+		{
+			SetZoom(_zoom.Pan(0, e.Delta.Y * WheelPanStep));
+		}
+		else if (Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y))
+		{
+			SetZoom(_zoom.Pan(e.Delta.X * WheelPanStep, 0));
+		}
+		else
+		{
+			Point at = view.FractionOf(e.GetPosition(view.Picture));
+			SetZoom(_zoom.ZoomAt(Math.Pow(WheelZoomStep, e.Delta.Y), at.X, at.Y));
+		}
+
+		e.Handled = true;
+	}
+
+	private void OnPicturePressed(TileZoomView view, PointerPressedEventArgs e)
+	{
+		PointerPointProperties pressed = e.GetCurrentPoint(view.Picture).Properties;
+		if (!pressed.IsLeftButtonPressed && !pressed.IsMiddleButtonPressed) return;
+
+		_pan = (view, e.GetPosition(view.Picture));
+		e.Pointer.Capture(view.Picture);
+	}
+
+	/// <summary>A drag in one tile moves them all - with the left button or the wheel pressed.</summary>
+	private void OnPictureMoved(TileZoomView view, PointerEventArgs e)
+	{
+		if (_pan is not { } pan || pan.View != view) return;
+
+		Size picture = view.PictureSize();
+		Point at = e.GetPosition(view.Picture);
+		if (picture.Width > 0 && picture.Height > 0) SetZoom(_zoom.Pan((at.X - pan.At.X) / picture.Width, (at.Y - pan.At.Y) / picture.Height));
+		_pan = (view, at);
+	}
+
+	private void OnPictureReleased(TileZoomView view, PointerReleasedEventArgs e)
+	{
+		if (_pan?.View != view) return;
+
+		_pan = null;
+		e.Pointer.Capture(null);
 	}
 
 	private void UpdatePosition()
@@ -471,5 +687,24 @@ public partial class ComparePlaybackWindow : Window
 		{
 			AppLogger.Error(ex, "Playback comparison failed.");
 		}
+	}
+}
+
+/// <summary>A tile's picture area and the transform that zooms it - the picture is drawn aspect-correct inside the area.</summary>
+internal sealed record TileZoomView(Panel Picture, ScaleTransform Scale, TranslateTransform Shift, double Aspect)
+{
+	/// <summary>The picture's size in the area: as wide as fits at its aspect ratio.</summary>
+	public Size PictureSize()
+	{
+		double width = Math.Min(Picture.Bounds.Width, Picture.Bounds.Height * Aspect);
+		return new Size(width, width / Aspect);
+	}
+
+	/// <summary>A point of the area as fractions of the picture (0 to 1 across and down), whose corner is where the picture starts in the area.</summary>
+	public Point FractionOf(Point point)
+	{
+		Size picture = PictureSize();
+		return new Point((point.X - (Picture.Bounds.Width - picture.Width) / 2) / picture.Width,
+			(point.Y - (Picture.Bounds.Height - picture.Height) / 2) / picture.Height);
 	}
 }

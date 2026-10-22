@@ -133,25 +133,26 @@ public sealed class ComparePlayer : IDisposable
 			_operation.Release();
 		}
 
-		await ShowStillsAsync(_clock.Position, SeekAccuracy.Exact);
+		await ShowStillsAsync(_clock.Position, SeekAccuracy.Exact, _seek.Token);
 	}
 
 	/// <summary>
 	///     Moves every tile to a position. Playing carries on from there; paused shows the frames at a standstill. A newer
-	///     seek takes over from one still decoding.
+	///     seek takes over from one still decoding, and one that was superseded before its turn does nothing at all.
 	/// </summary>
 	public async Task SeekAsync(TimeSpan position, SeekAccuracy accuracy)
 	{
 		double seconds = Math.Clamp(position.TotalSeconds, 0, Duration.TotalSeconds);
-		CancellationTokenSource previous = _seek;
-		_seek = new CancellationTokenSource();
+		var mine = new CancellationTokenSource();
+		CancellationToken ct = mine.Token;
+		CancellationTokenSource previous = Interlocked.Exchange(ref _seek, mine);
 		await previous.CancelAsync();
 
 		bool resume;
 		await _operation.WaitAsync();
 		try
 		{
-			if (_disposed) return;
+			if (_disposed || ct.IsCancellationRequested) return;
 
 			resume = _playing;
 			if (resume) await StopLockedAsync();
@@ -163,7 +164,7 @@ public sealed class ComparePlayer : IDisposable
 			_operation.Release();
 		}
 
-		if (!resume) await ShowStillsAsync(seconds, accuracy);
+		if (!resume) await ShowStillsAsync(seconds, accuracy, ct);
 	}
 
 	/// <summary>One frame forward or back, paused - the frame step of the first tile (the others follow its time).</summary>
@@ -209,7 +210,7 @@ public sealed class ComparePlayer : IDisposable
 		int generation = ++_generation;
 
 		// Every tile's first frame before the clock moves: they start on the same frame whatever each decoder's start-up costs.
-		LibavVideoSource.PlaybackStream?[] streams = new LibavVideoSource.PlaybackStream?[_tiles.Count];
+		var streams = new LibavVideoSource.PlaybackStream?[_tiles.Count];
 		VideoFrame?[] first = await Task.WhenAll(_tiles.Select((tile, i) => Task.Run(() =>
 		{
 			tile.Frames.Clear();
@@ -327,14 +328,13 @@ public sealed class ComparePlayer : IDisposable
 
 		if (loop) return;
 
-		await ShowStillsAsync(Duration.TotalSeconds, SeekAccuracy.Exact);
+		await ShowStillsAsync(Duration.TotalSeconds, SeekAccuracy.Exact, _seek.Token);
 		Ended?.Invoke();
 	}
 
 	/// <summary>Every tile's picture at a position, decoded together - latest seek wins.</summary>
-	private async Task ShowStillsAsync(double seconds, SeekAccuracy accuracy)
+	private async Task ShowStillsAsync(double seconds, SeekAccuracy accuracy, CancellationToken ct)
 	{
-		CancellationToken ct = _seek.Token;
 		try
 		{
 			await Task.WhenAll(_tiles.Select((tile, i) => Task.Run(() =>

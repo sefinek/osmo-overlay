@@ -457,14 +457,32 @@ Zamknąć OsmoOverlay?</value>
   <data name="Common_Working" xml:space="preserve">
     <value>Przetwarzanie...</value>
   </data>
+  <data name="ComparePlay_Size" xml:space="preserve">
+    <value>Rozmiar: {0} B ({1})</value>
+  </data>
   <data name="ComparePlay_Title" xml:space="preserve">
     <value>Odtwarzanie obok siebie</value>
   </data>
-  <data name="ComparePlay_Hint" xml:space="preserve">
-    <value>Dodaj wyeksportowane filmy. Odtwarzają się wszystkie naraz na wspólnym zegarze, bez dźwięku, więc różnice widać w tych samych klatkach.</value>
-  </data>
   <data name="ComparePlay_Add" xml:space="preserve">
     <value>Dodaj filmy...</value>
+  </data>
+  <data name="ComparePlay_Differs" xml:space="preserve">
+    <value>Wyróżnione części różnią się między filmami</value>
+  </data>
+  <data name="ComparePlay_Zoom" xml:space="preserve">
+    <value>{0}x</value>
+  </data>
+  <data name="ComparePlay_ZoomIn" xml:space="preserve">
+    <value>Powiększ (+)</value>
+  </data>
+  <data name="ComparePlay_ZoomLabel" xml:space="preserve">
+    <value>Powiększenie: kółko myszy. Przesuwanie: przeciąganie albo kółko z Shiftem (w poziomie) lub Altem (w pionie). Dwuklik: cały obraz.</value>
+  </data>
+  <data name="ComparePlay_ZoomOut" xml:space="preserve">
+    <value>Pomniejsz (-)</value>
+  </data>
+  <data name="ComparePlay_ZoomReset" xml:space="preserve">
+    <value>Cały obraz</value>
   </data>
   <data name="ComparePlay_Empty" xml:space="preserve">
     <value>Dodaj co najmniej dwa wyeksportowane filmy, żeby zobaczyć je obok siebie.</value>

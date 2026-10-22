@@ -36,14 +36,24 @@
 	</Window.Styles>
 
 	<DockPanel Margin="20">
-		<StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,12" HorizontalAlignment="Center">
-			<TextBlock Classes="hint" TextAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="760"
-			           Text="{x:Static local:Strings.ComparePlay_Hint}" />
-			<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,6,0,0">
+		<Grid DockPanel.Dock="Top" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto">
+			<StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
 				<Button Name="AddButton" Content="{x:Static local:Strings.ComparePlay_Add}" Click="OnAddClick" />
 				<Button Name="ClearButton" Content="{x:Static local:Strings.Common_ClearAll}" Click="OnClearClick" />
 			</StackPanel>
-		</StackPanel>
+			<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<Button Name="ZoomOutButton" Classes="transport" Click="OnZoomOutClick" ToolTip.Tip="{x:Static local:Strings.ComparePlay_ZoomOut}">
+					<local:IconView Data="{StaticResource IconMinus}" Width="14" Height="14" />
+				</Button>
+				<TextBlock Name="ZoomText" Width="52" TextAlignment="Center" VerticalAlignment="Center" FontSize="13" FontFeatures="+tnum"
+				           ToolTip.Tip="{x:Static local:Strings.ComparePlay_ZoomLabel}" />
+				<Button Name="ZoomInButton" Classes="transport" Click="OnZoomInClick" ToolTip.Tip="{x:Static local:Strings.ComparePlay_ZoomIn}">
+					<local:IconView Data="{StaticResource IconPlus}" Width="14" Height="14" />
+				</Button>
+				<Button Name="ZoomResetButton" Margin="6,0,0,0" Content="{x:Static local:Strings.ComparePlay_ZoomReset}" Click="OnZoomResetClick"
+				        IsEnabled="False" />
+			</StackPanel>
+		</Grid>
 
 		<Grid DockPanel.Dock="Bottom" Margin="0,12,0,0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
 			<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">

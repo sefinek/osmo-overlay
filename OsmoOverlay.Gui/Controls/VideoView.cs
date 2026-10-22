@@ -36,8 +36,20 @@ public sealed class VideoView : Control
 	/// <summary>Copies the still (FrameReady's buffer is only lent for the callback) and shows it next.</summary>
 	public void ShowStill(ComposedPreviewFrame frame)
 	{
+		Send(CopyStill(frame));
+	}
+
+	/// <summary>Shows a still made by CopyStill - which can be done on any thread, this on the UI thread. The view owns the image from here.</summary>
+	public void ShowStill(SKImage still)
+	{
+		Send(still);
+	}
+
+	/// <summary>A frame's picture copied out of its buffer - safe on any thread, for a frame that is only lent.</summary>
+	public static SKImage CopyStill(ComposedPreviewFrame frame)
+	{
 		var info = new SKImageInfo(frame.Width, frame.Height, SKColorType.Bgra8888, SKAlphaType.Opaque);
-		Send(SKImage.FromPixelCopy(info, frame.Bgra, info.RowBytes));
+		return SKImage.FromPixelCopy(info, frame.Bgra, info.RowBytes);
 	}
 
 	/// <summary>From here on until playback stops, frames come from the source on the render thread.</summary>

@@ -457,14 +457,32 @@ Close OsmoOverlay?</value>
   <data name="Common_Working" xml:space="preserve">
     <value>Working...</value>
   </data>
+  <data name="ComparePlay_Size" xml:space="preserve">
+    <value>Size: {0} B ({1})</value>
+  </data>
   <data name="ComparePlay_Title" xml:space="preserve">
     <value>Play side by side</value>
   </data>
-  <data name="ComparePlay_Hint" xml:space="preserve">
-    <value>Add exported videos. They all play at once on one clock, without sound, so differences show in the very same frames.</value>
-  </data>
   <data name="ComparePlay_Add" xml:space="preserve">
     <value>Add videos...</value>
+  </data>
+  <data name="ComparePlay_Differs" xml:space="preserve">
+    <value>Highlighted parts differ between the videos</value>
+  </data>
+  <data name="ComparePlay_Zoom" xml:space="preserve">
+    <value>{0}x</value>
+  </data>
+  <data name="ComparePlay_ZoomIn" xml:space="preserve">
+    <value>Zoom in (+)</value>
+  </data>
+  <data name="ComparePlay_ZoomLabel" xml:space="preserve">
+    <value>Zoom: mouse wheel. Moving: dragging, or the wheel with Shift (sideways) or Alt (up and down). Double click: the whole picture.</value>
+  </data>
+  <data name="ComparePlay_ZoomOut" xml:space="preserve">
+    <value>Zoom out (-)</value>
+  </data>
+  <data name="ComparePlay_ZoomReset" xml:space="preserve">
+    <value>Whole picture</value>
   </data>
   <data name="ComparePlay_Empty" xml:space="preserve">
     <value>Add at least two exported videos to see them side by side.</value>

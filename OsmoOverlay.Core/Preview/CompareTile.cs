@@ -1,4 +1,3 @@
-using System.Globalization;
 using OsmoOverlay.Core.Ffmpeg;
 
 namespace OsmoOverlay.Core.Preview;
@@ -10,13 +9,13 @@ namespace OsmoOverlay.Core.Preview;
 /// </summary>
 public sealed class CompareTile : IDisposable
 {
-	private CompareTile(string path, SourceInfo source, double fps, long frameCount, int width, int height, FrameBufferPool pool,
+	private CompareTile(string path, SourceInfo source, long fileSizeBytes, double fps, int width, int height, FrameBufferPool pool,
 		LibavVideoSource video, CompareFrameFeed frames, ExportMarkerInfo? marker)
 	{
 		Path = path;
 		Source = source;
+		FileSizeBytes = fileSizeBytes;
 		Fps = fps;
-		FrameCount = frameCount;
 		Width = width;
 		Height = height;
 		Pool = pool;
@@ -30,9 +29,10 @@ public sealed class CompareTile : IDisposable
 	/// <summary>The file as ffprobe describes it (its size, frame rate and codec).</summary>
 	public SourceInfo Source { get; }
 
-	public double Fps { get; }
+	/// <summary>The file's exact size in bytes.</summary>
+	public long FileSizeBytes { get; }
 
-	public long FrameCount { get; }
+	public double Fps { get; }
 
 	/// <summary>The size frames are decoded at - the file's own, or narrower to fit its tile.</summary>
 	public int Width { get; }
@@ -48,9 +48,6 @@ public sealed class CompareTile : IDisposable
 	public string? Error { get; internal set; }
 
 	public TimeSpan Duration => Video.Duration;
-
-	/// <summary>Where the picture is decoded: "software" or the hardware decoder - known once a frame was decoded.</summary>
-	public string Decoder => Video.DecoderDescription;
 
 	internal FrameBufferPool Pool { get; }
 
@@ -71,7 +68,7 @@ public sealed class CompareTile : IDisposable
 		var video = new LibavVideoSource([new PlaybackSegment(path, source.DurationSeconds, frameCount)], fps, width, height, pool, null);
 		try
 		{
-			return new CompareTile(path, source, fps, frameCount, width, height, pool, video, new CompareFrameFeed(clockSeconds), ExportMarker.Read(path));
+			return new CompareTile(path, source, new FileInfo(path).Length, fps, width, height, pool, video, new CompareFrameFeed(clockSeconds), ExportMarker.Read(path));
 		}
 		catch
 		{
@@ -85,10 +82,5 @@ public sealed class CompareTile : IDisposable
 		Frames.SetPlaying(false);
 		Frames.Clear();
 		Video.Dispose();
-	}
-
-	public override string ToString()
-	{
-		return string.Create(CultureInfo.InvariantCulture, $"{System.IO.Path.GetFileName(Path)} {Width}x{Height}@{Fps:0.###}");
 	}
 }
