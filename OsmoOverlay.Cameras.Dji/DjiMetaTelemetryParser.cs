@@ -21,7 +21,7 @@ namespace OsmoOverlay.Cameras.Dji;
 ///     Wire format, one top-level field-3 message per sample:
 ///     f3
 ///     ├── f1 (message)              - sample header: f1 (varint) frame number, omitted for 0; f2 (varint) device clock,
-///     │                               microseconds since power-up (DeviceTimeMicroseconds; not SampleTimeSeconds, see below)
+///     │                               microseconds since power-up (not read: see note on SampleTimeSeconds below)
 ///     ├── f2 (message)              - camera settings
 ///     │   ├── f3 (message) → f1 (float)   - ISO
 ///     │   ├── f4 (message) → f1 (bytes: two raw varints [numerator, denominator]) - shutter speed
@@ -145,8 +145,7 @@ internal static class DjiMetaTelemetryParser
 				r.ShutterSeconds,
 				r.ColorTemperatureKelvin,
 				hasFix,
-				Orientation: r.Orientation,
-				DeviceTimeMicroseconds: r.DeviceTimeMicroseconds));
+				Orientation: r.Orientation));
 		}
 
 		string? cameraModel = records.Select(r => r.DeviceName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
@@ -267,12 +266,8 @@ internal static class DjiMetaTelemetryParser
 			}
 		}
 
-		long? deviceTime = GetSubmessage(sample, 1) is { } header && GetVarintField(header, 2) is { } micros and <= long.MaxValue
-			? (long)micros
-			: null;
-
 		return new RawRecord(lat, lon, altitudeMeters, gpsTimestamp, accelX, accelY, accelZ, speedMs, deviceName,
-			iso, shutterSeconds, colorTemperatureKelvin, orientation, deviceTime);
+			iso, shutterSeconds, colorTemperatureKelvin, orientation);
 	}
 
 	private static ulong ReadVarint(ReadOnlySpan<byte> data, ref int pos)
@@ -399,6 +394,5 @@ internal static class DjiMetaTelemetryParser
 		float? Iso,
 		double? ShutterSeconds,
 		int? ColorTemperatureKelvin,
-		TelemetryOrientation? Orientation,
-		long? DeviceTimeMicroseconds);
+		TelemetryOrientation? Orientation);
 }

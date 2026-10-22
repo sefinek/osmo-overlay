@@ -114,26 +114,24 @@ public sealed class DjiMetaTelemetryParserTests
 	}
 
 	[TestMethod]
-	public void Parse_ReadsOrientationAndDeviceClock()
+	public void Parse_ReadsOrientation()
 	{
 		TelemetryExtractionResult result = DjiMetaTelemetryParser.Parse(DjmdSample.Stream(
-			new DjmdSample { Quaternion = (1f, 0f, 0f, 0f), DeviceTimeMicroseconds = 5_020_001 }), Fps);
+			new DjmdSample { Quaternion = (1f, 0f, 0f, 0f) }), Fps);
 
 		Assert.AreEqual(new TelemetryOrientation(1, 0, 0, 0), result.Frames[0].Orientation);
-		Assert.AreEqual(5_020_001L, result.Frames[0].DeviceTimeMicroseconds);
 	}
 
 	[TestMethod]
 	public void Parse_MissingOrInvalidOrientation_IsNull()
 	{
 		TelemetryExtractionResult result = DjiMetaTelemetryParser.Parse(DjmdSample.Stream(
-			new DjmdSample { Quaternion = null, DeviceTimeMicroseconds = null },
+			new DjmdSample { Quaternion = null },
 			new DjmdSample { Quaternion = (0f, 0f, 0f, 0f) },
 			new DjmdSample { Quaternion = (float.NaN, 0f, 0f, 1f) },
 			new DjmdSample { Quaternion = (2f, 0f, 0f, 0f) }), Fps);
 
 		Assert.IsTrue(result.Frames.All(f => f.Orientation is null));
-		Assert.IsNull(result.Frames[0].DeviceTimeMicroseconds);
 		Assert.IsTrue(result.Frames.Skip(1).All(f => f.HasGpsFix), "a bad quaternion does not touch the rest of the sample");
 	}
 

@@ -85,7 +85,6 @@ internal sealed record DjmdSample
 	/// <summary>How a recording made without GPS looks: the receiver message holds the status and nothing else.</summary>
 	public bool StatusOnly { get; init; }
 	public (float W, float X, float Y, float Z)? Quaternion { get; init; } = (0.5f, 0.5f, 0.5f, 0.5f);
-	public ulong? DeviceTimeMicroseconds { get; init; } = 5_000_000;
 	public double Lat { get; init; } = 50.061;
 	public double Lon { get; init; } = 19.938;
 	public long AltitudeMm { get; init; } = 219_500;
@@ -117,10 +116,7 @@ internal sealed record DjmdSample
 		if (DeviceName is not null) gps.Message(1, new Proto().String(4, DeviceName));
 		gps.Message(2, fix).Message(3, new Proto().Float(1, Vx).Float(2, Vy));
 
-		Proto header = new Proto().Varint(1, 7);
-		if (DeviceTimeMicroseconds is { } micros) header.Varint(2, micros);
-
-		return new Proto().Message(1, header).Message(2, camera).Message(4, gps);
+		return new Proto().Message(1, new Proto().Varint(1, 7)).Message(2, camera).Message(4, gps);
 	}
 
 	/// <summary>A whole djmd stream: one top-level field-3 message per sample.</summary>
