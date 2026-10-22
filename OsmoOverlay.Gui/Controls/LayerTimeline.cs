@@ -14,7 +14,8 @@ namespace OsmoOverlay.Gui;
 ///     the way out as stored (null: none, see ElementAnimation). StartLocked: its start isn't its own to drag (a progress bar
 ///     waiting for a speed) - its edge doesn't grab and its body doesn't move it in time; EndLocked the same for the end
 ///     (a progress bar leaving after the finish). TimingFixed: the widget times itself (the GPS alert), so nothing about its
-///     timing is dragged - no edge, no fade handle, no move in time (a drop onto another layer still works).
+///     timing is dragged - no edge, no fade handle, no move in time (a drop onto another layer still works). A locked clip
+///     shows it (a padlock at the locked edge, a dashed outline when all of its timing is) and says why in LockHint, its tooltip.
 /// </summary>
 public sealed record LayerClip(
 	string Id,
@@ -28,8 +29,11 @@ public sealed record LayerClip(
 	bool Available,
 	bool StartLocked = false,
 	bool EndLocked = false,
-	bool TimingFixed = false)
+	bool TimingFixed = false,
+	string? LockHint = null)
 {
+	public bool AnyLocked => StartLocked || EndLocked || TimingFixed;
+
 	public OverlayAnimationType ResolvedOut => ElementAnimation.OutType(OutAnimation);
 	public double ResolvedOutSeconds => ElementAnimation.OutDuration(OutAnimationDurationSeconds);
 }
@@ -79,6 +83,7 @@ public sealed class LayerTimeline : Control
 	public const int DefaultVisibleTracks = 4;
 
 	private const double ClipInset = 3;
+	private const double LockIconSize = 11;
 	private const double EdgeGrabPixels = 5;
 	private const double FadeHandleSize = 7;
 	private const double SnapPixels = 6;
@@ -97,6 +102,9 @@ public sealed class LayerTimeline : Control
 	private static readonly IBrush SelectedClipBrush = Palette.Tint(Palette.Accent, 0.62);
 	private static readonly IBrush UnavailableClipBrush = Palette.Tint(Palette.TextMuted, 0.22);
 	private static readonly IPen ClipBorder = new Pen(Palette.Accent);
+	private static readonly IPen LockedClipBorder = new Pen(Palette.Accent, 1, new DashStyle([3, 2], 0));
+	private static readonly IBrush LockIconBrush = Palette.TextPrimary;
+	private static readonly Geometry LockIcon = Icons.Lock;
 	private static readonly IPen SelectedClipBorder = new Pen(Palette.TextPrimary, 1.5);
 	private static readonly IBrush FadeShade = Palette.Tint(Palette.SurfaceSunken, 0.55);
 	private static readonly IPen FadeLine = new Pen(Palette.TextPrimary);
@@ -446,7 +454,7 @@ public sealed class LayerTimeline : Control
 		if (clip.Animation != OverlayAnimationType.None) DrawFade(context, new Point(x1, bottom), new Point(X(fadeIn), top), new Point(x1, top));
 		if (clip.ResolvedOut != OverlayAnimationType.None) DrawFade(context, new Point(x2, bottom), new Point(X(fadeOut), top), new Point(x2, top));
 
-		context.DrawRectangle(null, selected ? SelectedClipBorder : ClipBorder, rect.Deflate(0.5), 3, 3);
+		context.DrawRectangle(null, selected ? SelectedClipBorder : clip.TimingFixed ? LockedClipBorder : ClipBorder, rect.Deflate(0.5), 3, 3);
 
 		if (CanEdit(clip, track) && !clip.TimingFixed)
 		{
@@ -457,8 +465,26 @@ public sealed class LayerTimeline : Control
 
 		// The label stays in view while the clip's start is scrolled off to the left.
 		double textX = Math.Max(x1, HeaderWidth) + 6;
+		bool lockAtStart = clip.TimingFixed || clip.StartLocked, lockAtEnd = clip.EndLocked && !clip.TimingFixed;
 		using (context.PushClip(rect.Deflate(1)))
-			DrawText(context, clip.Label, new Point(textX, top + (bottom - top - 14) / 2), clip.Available ? TextBrush : MutedTextBrush, x2 - textX);
+		{
+			if (lockAtStart)
+			{
+				DrawLock(context, textX, top, bottom);
+				textX += LockIconSize + 4;
+			}
+
+			double textRight = x2 - 6 - (lockAtEnd ? LockIconSize + 4 : 0);
+			DrawText(context, clip.Label, new Point(textX, top + (bottom - top - 14) / 2), clip.Available ? TextBrush : MutedTextBrush, textRight - textX);
+			if (lockAtEnd) DrawLock(context, x2 - 6 - LockIconSize, top, bottom);
+		}
+	}
+
+	private static void DrawLock(DrawingContext context, double x, double top, double bottom)
+	{
+		double scale = LockIconSize / 16;
+		var placed = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(x, top + (bottom - top - LockIconSize) / 2);
+		using (context.PushTransform(placed)) context.DrawGeometry(LockIconBrush, null, LockIcon);
 	}
 
 	/// <summary>The part the widget is still fading through shaded, with the ramp drawn from `from` (invisible) to `to` (full).</summary>
@@ -548,7 +574,7 @@ public sealed class LayerTimeline : Control
 	{
 		base.OnPointerWheelChanged(e);
 		// The plain wheel scrolls the list of layers (the ScrollViewer around this); Ctrl+wheel zooms the time axis like the
-		// wheel over the video/audio tracks above, Shift+wheel scrolls it sideways.
+		// wheel over the video/audio tracks above, Shift+wheel scrubs the playhead fast.
 		if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) && !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
 
 		double x = Math.Max(e.GetPosition(this).X - HeaderWidth, 0);
@@ -621,10 +647,13 @@ public sealed class LayerTimeline : Control
 				Zone.Start or Zone.End => ResizeCursor,
 				Zone.FadeIn or Zone.FadeOut or Zone.Switch => HandCursor,
 				// A clip that can't move (locked layer, read-only preset, no data) is still clicked to select it.
+				// A clip whose time is locked doesn't move in time, so no move cursor (it still goes to another layer by a drag).
+				Zone.Body when hoveredClip is { AnyLocked: true } => HandCursor,
 				Zone.Body => hoveredClip is not null && CanEdit(hoveredClip, hoveredTrack) ? MoveCursor : HandCursor,
 				Zone.Header => Editable ? MoveCursor : null,
 				_ => null
 			};
+			ToolTip.SetTip(this, hovered == Zone.Body ? hoveredClip?.LockHint : null);
 			return;
 		}
 

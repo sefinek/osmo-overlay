@@ -75,7 +75,8 @@ public partial class WelcomeWindow : Window
 		_defaultMapProvider = settings.DefaultMapProvider;
 		ShowMapStyle();
 
-		ProjectAssociationCheck.IsVisible = ProjectFileAssociation.IsSupported;
+		ProjectAssociationCheck.IsEnabled = ProjectFileAssociation.IsSupported;
+		ProjectAssociationCheck.Classes.Set("muted", !ProjectFileAssociation.IsSupported);
 		ProjectAssociationCheck.IsChecked = ProjectFileAssociation.IsSupported && ProjectFileAssociation.IsRegistered();
 
 		ShowTools();
@@ -432,7 +433,7 @@ public partial class WelcomeWindow : Window
 		BenchmarkSystem system = report.System;
 		HardwareRows.Children.Clear();
 		AddHardwareRow(Strings.Welcome_CheckSystem, report.SystemStatus,
-			$"{system.Os}\n{Strings.Welcome_CheckSystemSupport}", Strings.Welcome_CheckSystemProblem);
+			$"{system.Os}\n{Strings.Welcome_CheckSystemSupport}", report.SystemStatus == CheckStatus.Problem ? Strings.Welcome_CheckSystemProblem : null);
 		AddHardwareRow(Strings.Welcome_CheckProcessor, report.ProcessorStatus,
 			$"{system.Cpu ?? Strings.Benchmark_Unknown}, {Plural.Format(Strings.Benchmark_Threads, system.Threads)}",
 			report.ProcessorStatus == CheckStatus.Problem ? Strings.Welcome_CheckProcessorProblem : Strings.Welcome_CheckProcessorWarning);

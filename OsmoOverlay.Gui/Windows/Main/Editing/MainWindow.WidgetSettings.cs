@@ -429,15 +429,30 @@ public partial class MainWindow
 	/// </summary>
 	private void UpdateMapCreditPanel()
 	{
-		MapSources sources = MapSources.From(OverlaySettingsStore.Load()) with
-		{
-			RouteBounds = _summary?.TelemetryFrames is { } frames ? MapBounds.Of(frames) : null
-		};
+		MapSources sources = MapSourcesForRoute();
 		List<MapWidgetElement> maps = [.. ActiveElements.OfType<MapWidgetElement>().Where(m => m.Visible)];
-		bool locked = maps.Any(m => sources.CreditRule(m.MapProviderId) == MapCreditRule.WhileMapVisible);
+		bool locked = MapCreditTimingLocked(sources);
 		MapCreditLockedHint.IsVisible = locked;
 		MapCreditTiming.IsEnabled = !locked;
 		MapCreditTextBox.Text = sources.Credit(maps.Select(m => m.MapProviderId));
+	}
+
+	// Read from disk and the route's bounds worked out once - the layer list asks on every timing drag. Forgotten when the shared
+	// map settings or the recording change.
+	private MapSources? _mapSourcesForRoute;
+
+	private MapSources MapSourcesForRoute()
+	{
+		return _mapSourcesForRoute ??= MapSources.From(OverlaySettingsStore.Load()) with
+		{
+			RouteBounds = _summary?.TelemetryFrames is { } frames ? MapBounds.Of(frames) : null
+		};
+	}
+
+	/// <summary>Whether a visible map's terms keep the credit on screen the whole time - its own timing then counts for nothing.</summary>
+	private bool MapCreditTimingLocked(MapSources sources)
+	{
+		return ActiveElements.OfType<MapWidgetElement>().Any(m => m.Visible && sources.CreditRule(m.MapProviderId) == MapCreditRule.WhileMapVisible);
 	}
 
 	/// <summary>The shared map settings can change under an open widget panel (in Settings) - it shows them again.</summary>
@@ -449,6 +464,7 @@ public partial class MainWindow
 
 	private void OnMapSourcesShared()
 	{
+		_mapSourcesForRoute = null;
 		_previewPlayer.SetMapSources(MapSources.From(OverlaySettingsStore.Load()));
 	}
 

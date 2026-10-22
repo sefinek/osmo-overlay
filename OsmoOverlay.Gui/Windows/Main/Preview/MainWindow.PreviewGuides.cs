@@ -100,6 +100,16 @@ public partial class MainWindow
 		GridModeMarginButton.Classes.Set("active", _gridMode == PreviewGridMode.Margin);
 		GridModeBothButton.Classes.Set("active", _gridMode == PreviewGridMode.Both);
 		ToggleGridButton.Classes.Set("active", _gridMode != PreviewGridMode.Off);
+
+		// The icon is a miniature of the lines on the preview, so the button says what's drawn without opening its menu.
+		(GridIcon.Data, string mode) = _gridMode switch
+		{
+			PreviewGridMode.Thirds => (Icons.GridThirds, Strings.Main_RuleOfThirds),
+			PreviewGridMode.Margin => (Icons.GridMargin, Strings.Main_SafeMargin),
+			PreviewGridMode.Both => (Icons.GridBoth, Strings.Main_ThirdsMargin),
+			_ => (Icons.GridOff, Strings.Main_Off)
+		};
+		ToolTip.SetTip(ToggleGridButton, $"{Strings.Main_GridGuides}: {mode}");
 	}
 
 	/// <summary>

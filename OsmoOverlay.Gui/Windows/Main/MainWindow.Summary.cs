@@ -166,6 +166,7 @@ public partial class MainWindow
 			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
 
 			_summary = summary;
+			_mapSourcesForRoute = null;
 			_detectedEncoder = encoder;
 
 			PopulateInputInfo(summary);

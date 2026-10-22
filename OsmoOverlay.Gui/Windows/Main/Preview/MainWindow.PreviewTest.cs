@@ -24,7 +24,7 @@ public partial class MainWindow
 		Action<PreviewLive> live, Action cancel, CancellationToken ct)
 	{
 		if (_previewTestRunning || _phase == UiPhase.Rendering) return new AppPreviewOutcome(null, null, Strings.Benchmark_SkippedBusy);
-		if (_summary is null && _inputPaths.Count == 0 && _phase == UiPhase.Idle)
+		if (_inputPaths.Count == 0 && _phase == UiPhase.Idle)
 			await LoadInputsAsync(testRecording.InputPaths);
 
 		if (_summary is null || _phase != UiPhase.SummaryReady || _previewFrameSize is null)

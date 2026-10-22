@@ -31,7 +31,7 @@ public sealed record TimelineFile(double StartSeconds, double EndSeconds, string
 ///     tracks on one seconds-to-pixels mapping - the parts cut out of the render (red, hatched, the stripes slowly
 ///     moving), the In/Out selection about to be cut (bracketed), GPS signal loss (amber, under the ruler) and the
 ///     playhead. Value is the playhead in recording seconds, like a Slider: a click or drag anywhere scrubs.
-///     Zoom: the wheel zooms around the pointer, Shift+wheel scrolls, a double-click on the ruler fits the whole
+///     Zoom: the wheel zooms around the pointer, Shift+wheel scrubs fast, a sideways wheel scrolls, a double-click on the ruler fits the whole
 ///     recording; while playing, the view pages along with the playhead. ViewChanged reports the visible stretch
 ///     for the scrollbar under it.
 /// </summary>
@@ -53,6 +53,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double MinMajorTickPixels = 90;
 	private const double MaxPixelsPerFrame = 24;
 	private const double WheelSeekSeconds = 5;
+	private const double FastWheelSeekSeconds = 20;
 	private static readonly TimeSpan WheelScrubIdle = TimeSpan.FromMilliseconds(200);
 	private DispatcherTimer? _wheelScrubTimer;
 	private const double WheelZoomStep = 1.25;
@@ -365,7 +366,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		double middle = Bounds.Height / 2;
 		double trackWidth = Math.Max(0, Bounds.Width - 2 * Inset);
 		var track = new Rect(Inset, middle - CompactTrackHeight / 2, trackWidth, CompactTrackHeight);
-		using DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
+		DrawingContext.PushedState opacity = context.PushOpacity(IsEffectivelyEnabled ? 1 : 0.45);
 
 		context.DrawRectangle(Palette.StrokeStrong, null, track, CompactTrackHeight / 2, CompactTrackHeight / 2);
 		// The part already played, up to the thumb - under the cuts and the selection, which stay readable on top.
@@ -392,7 +393,9 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			DrawSelection(context, selection, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2);
 		DrawMoments(context, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2 - 4);
 
-		context.DrawEllipse(PlayedBrush, null, new Point(X(Value), middle), CompactThumbRadius, CompactThumbRadius);
+		// Disabled, the thumb is drawn solid outside the dimmed layer: at the layer's opacity the track showed through it.
+		opacity.Dispose();
+		context.DrawEllipse(IsEffectivelyEnabled ? PlayedBrush : Palette.StrokeStrong, null, new Point(X(Value), middle), CompactThumbRadius, CompactThumbRadius);
 	}
 
 	private void RenderExpanded(DrawingContext context)
@@ -851,21 +854,24 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
 	{
 		base.OnPointerWheelChanged(e);
-		if (Wheel(e.GetPosition(this).X, e.Delta, e.KeyModifiers) || SeekByWheel(e.Delta.Y)) e.Handled = true;
+		if (Wheel(e.GetPosition(this).X, e.Delta, e.KeyModifiers) || SeekByWheel(e.Delta, e.KeyModifiers)) e.Handled = true;
 	}
 
 	/// <summary>
-	///     Wheel zoom around `x` (this control's coordinates), Shift+wheel or a sideways wheel scrolls - also for the layer
+	///     Wheel zoom around `x` (this control's coordinates), Shift+wheel scrubs the playhead fast, a sideways wheel scrolls - also for the layer
 	///     tracks under it (LayerTimeline), which share this view. False when there's nothing to zoom.
 	/// </summary>
 	public bool Wheel(double x, Vector delta, KeyModifiers modifiers)
 	{
 		if (!_expanded || Duration <= 0) return false;
 
-		if (modifiers.HasFlag(KeyModifiers.Shift) || Math.Abs(delta.X) > Math.Abs(delta.Y))
+		if (modifiers.HasFlag(KeyModifiers.Shift))
 		{
-			double step = Math.Abs(delta.X) > Math.Abs(delta.Y) ? delta.X : delta.Y;
-			SetView(_zoom, ViewStart - step * ViewLength * 0.1);
+			SeekByWheel(delta, modifiers);
+		}
+		else if (Math.Abs(delta.X) > Math.Abs(delta.Y))
+		{
+			SetView(_zoom, ViewStart - delta.X * ViewLength * 0.1);
 		}
 		else
 		{
@@ -881,11 +887,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>
 	///     The compact timeline has no zoom, so the wheel steps the playhead: up forward, down back. A burst of ticks is one
 	///     scrub (ScrubStarted ... ScrubEnded after a pause): playback stops for it, so its frames don't pull the playhead
-	///     back between the ticks.
+	///     back between the ticks. With Shift a tick is a bigger step (fast scrubbing); some platforms report Shift+wheel as a sideways wheel.
 	/// </summary>
-	private bool SeekByWheel(double deltaY)
+	private bool SeekByWheel(Vector delta, KeyModifiers modifiers)
 	{
-		if (_expanded || !IsEnabled || deltaY == 0) return false;
+		bool fast = modifiers.HasFlag(KeyModifiers.Shift);
+		double deltaY = delta.Y != 0 || !fast ? delta.Y : delta.X;
+		if (!IsEnabled || deltaY == 0 || (_expanded && !fast)) return false;
 
 		if (_wheelScrubTimer is null)
 		{
@@ -901,7 +909,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		_wheelScrubTimer.Stop();
 		_wheelScrubTimer.Start();
 
-		Value = Math.Clamp(Value + Math.Sign(deltaY) * WheelSeekSeconds, Minimum, Maximum);
+		Value = Math.Clamp(Value + Math.Sign(deltaY) * (fast ? FastWheelSeekSeconds : WheelSeekSeconds), Minimum, Maximum);
 		return true;
 	}
 

@@ -20,6 +20,37 @@ public partial class MainWindow
 
 	private static readonly FilePickerFileType ProjectFileType = new(Strings.Project_FileType) { Patterns = [$"*{OverlayProject.Extension}"] };
 
+	private async void OnNewProjectClick(object? sender, RoutedEventArgs e)
+	{
+		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering || _previewTestRunning) return;
+
+		bool hasWork = _inputPaths.Count > 0 || _projectPath is not null;
+		if (hasWork && !await ConfirmDialog.AskAsync(this, Strings.Project_NewTitle, Strings.Project_NewMessage, Strings.Main_NewProject, DialogKind.Warning)) return;
+
+		StartNewProject();
+	}
+
+	/// <summary>
+	///     An empty session: no recordings, output, cuts, key moments or 360 view, and no project file - the one that was open
+	///     is left as it was on disk. What isn't the project's (settings, presets, the interface) stays.
+	/// </summary>
+	private void StartNewProject()
+	{
+		ClosePreview();
+		ResetReframe();
+		ClearCuts();
+		ClearMoments();
+		ReleaseTimelineTracks();
+		_inputPaths.Clear();
+		RefreshInputFilesList();
+		OutputPathBox.Text = "";
+		SetPhase(UiPhase.Idle);
+		ActionButton.IsEnabled = false;
+		_projectPath = null;
+		Title = BaseTitle;
+		ResetHistory();
+	}
+
 	private async void OnOpenProjectClick(object? sender, RoutedEventArgs e)
 	{
 		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering) return;

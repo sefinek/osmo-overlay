@@ -15,6 +15,12 @@ internal static class Icons
 	public static Geometry Exclamation => Get("IconExclamation");
 	public static Geometry Info => Get("IconInfo");
 	public static Geometry Cut => Get("IconCut");
+	public static Geometry CutMade => Get("IconCutMade");
+	public static Geometry Lock => Get("IconLock");
+	public static Geometry GridThirds => Get("IconGrid");
+	public static Geometry GridMargin => Get("IconGridMargin");
+	public static Geometry GridBoth => Get("IconGridBoth");
+	public static Geometry GridOff => Get("IconGridOff");
 	public static Geometry Flag => Get("IconFlag");
 	public static Geometry Volume => Get("IconVolume");
 	public static Geometry VolumeMuted => Get("IconVolumeMuted");

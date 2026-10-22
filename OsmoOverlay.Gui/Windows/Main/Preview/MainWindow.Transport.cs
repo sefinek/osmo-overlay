@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Preview;
 
@@ -19,9 +20,78 @@ public partial class MainWindow
 		// release too, which is when a button clicks.
 		AddHandler(KeyDownEvent, OnPreviewSpaceKeyDown, RoutingStrategies.Tunnel);
 		AddHandler(KeyUpEvent, OnPreviewSpaceKeyUp, RoutingStrategies.Tunnel);
+		AddHandler(KeyDownEvent, OnPreviewFastSeekKeyDown, RoutingStrategies.Tunnel);
 		// Bubble: a focused list or number box keeps its own arrow/Home/End handling.
 		KeyDown += OnPreviewShortcutKeyDown;
 		KeyDown += OnEditShortcutKeyDown;
+		WireHoldToScrub(PreviousFrameButton, -1);
+		WireHoldToScrub(NextFrameButton, 1);
+	}
+
+	// Fast scrubbing - Shift+Left/Right and a held step button - moves by this much a step; a held key repeats at the system's rate,
+	// a held button at HoldScrubInterval (about the same), so both run at the same speed.
+	private const double FastSeekSeconds = 0.5;
+	private static readonly TimeSpan HoldScrubDelay = TimeSpan.FromMilliseconds(400);
+	private static readonly TimeSpan HoldScrubInterval = TimeSpan.FromMilliseconds(33);
+	private DispatcherTimer? _holdScrubTimer;
+	private int _holdScrubDirection;
+	private bool _holdScrubRunning;
+	private bool _holdScrubSwallowsClick;
+
+	/// <summary>A click on the button steps one frame; holding it past a delay scrubs on in `direction` until it's released (and that release isn't a step too).</summary>
+	private void WireHoldToScrub(Button button, int direction)
+	{
+		button.AddHandler(PointerPressedEvent, (_, e) =>
+		{
+			if (!e.GetCurrentPoint(button).Properties.IsLeftButtonPressed) return;
+
+			_holdScrubSwallowsClick = false;
+			_holdScrubDirection = direction;
+			_holdScrubRunning = false;
+			_holdScrubTimer ??= CreateHoldScrubTimer();
+			_holdScrubTimer.Interval = HoldScrubDelay;
+			_holdScrubTimer.Start();
+		}, RoutingStrategies.Tunnel);
+		button.AddHandler(PointerReleasedEvent, (_, _) => StopHoldScrub(), RoutingStrategies.Tunnel);
+		button.PointerCaptureLost += (_, _) => StopHoldScrub();
+	}
+
+	private DispatcherTimer CreateHoldScrubTimer()
+	{
+		var timer = new DispatcherTimer();
+		timer.Tick += (_, _) =>
+		{
+			if (_summary is null || !TransportPanel.IsEnabled)
+			{
+				StopHoldScrub();
+				return;
+			}
+
+			if (!_holdScrubRunning)
+			{
+				_holdScrubRunning = true;
+				_holdScrubSwallowsClick = true;
+				timer.Interval = HoldScrubInterval;
+			}
+
+			StepFast(_holdScrubDirection);
+			bool atEdge = _holdScrubDirection < 0 ? PreviewTimeline.Value <= PreviewTimeline.Minimum : PreviewTimeline.Value >= PreviewTimeline.Maximum;
+			if (atEdge) StopHoldScrub();
+		};
+		return timer;
+	}
+
+	private void StopHoldScrub()
+	{
+		_holdScrubTimer?.Stop();
+		_holdScrubRunning = false;
+	}
+
+	private void StepFast(int direction)
+	{
+		if (_summary is null) return;
+
+		StepFrames(direction * Math.Max(1, (int)Math.Round(FastSeekSeconds * _summary.Video.Fps)));
 	}
 
 	private bool _spaceTookPlayback;
@@ -34,6 +104,16 @@ public partial class MainWindow
 
 		TogglePlayback();
 		_spaceTookPlayback = true;
+		e.Handled = true;
+	}
+
+	// Tunnel too: Shift+arrow would otherwise reach the focused control first, which moves the focus (or the selection) with it.
+	private void OnPreviewFastSeekKeyDown(object? sender, KeyEventArgs e)
+	{
+		if (e.KeyModifiers != KeyModifiers.Shift || e.Key is not (Key.Left or Key.Right) || !PreviewShortcutsActive) return;
+		if (FocusManager?.GetFocusedElement() is ComboBox or ComboBoxItem or Slider or ListBoxItem) return;
+
+		StepFast(e.Key == Key.Left ? -1 : 1);
 		e.Handled = true;
 	}
 
@@ -89,12 +169,20 @@ public partial class MainWindow
 
 	private void OnPreviousFrameClick(object? sender, RoutedEventArgs e)
 	{
-		StepFrames(-1);
+		if (!ClickEndsHoldScrub()) StepFrames(-1);
 	}
 
 	private void OnNextFrameClick(object? sender, RoutedEventArgs e)
 	{
-		StepFrames(1);
+		if (!ClickEndsHoldScrub()) StepFrames(1);
+	}
+
+	/// <summary>True for the click a held button ends with - the scrub was its action.</summary>
+	private bool ClickEndsHoldScrub()
+	{
+		bool swallowed = _holdScrubSwallowsClick;
+		_holdScrubSwallowsClick = false;
+		return swallowed;
 	}
 
 	private void OnGoToEndClick(object? sender, RoutedEventArgs e)

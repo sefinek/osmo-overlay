@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Localization;
@@ -104,10 +105,15 @@ public partial class MainWindow
 		UpdateCutsButton();
 	}
 
-	/// <summary>Lit while the editor is open or while anything is cut, so a closed editor can't hide an active cut.</summary>
+	/// <summary>
+	///     Lit while the editor is open or while anything is cut, so a closed editor can't hide an active cut. The icon is the
+	///     scissors with their blades closed once something is cut: that's the recording's state, not the editor's.
+	/// </summary>
 	private void UpdateCutsButton()
 	{
 		ToggleCutsButton.Classes.Set("active", CutsColumnScroll.IsVisible || HasCuts);
+		CutsIcon.Data = HasCuts ? Icons.CutMade : Icons.Cut;
+		ToolTip.SetTip(ToggleCutsButton, HasCuts ? string.Format(Strings.Main_CutPartsOutOfTheMade, _cuts.Count) : Strings.Main_CutPartsOutOfThe);
 	}
 
 	/// <summary>The editor's buttons and the preview's I/O/X keys, at the frame on screen.</summary>

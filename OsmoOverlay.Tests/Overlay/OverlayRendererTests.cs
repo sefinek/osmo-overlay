@@ -275,6 +275,21 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
+	public void TripProgressBar_ArrivingTooCloseToTheEnd_StaysToTheEnd()
+	{
+		List<DerivedFrame> frames = Route(300, 0);
+		var bar = new TripProgressBarElement { X = 320, Y = 330, ShowFromSpeedKmh = null };
+		double total = frames[^1].CumulativeDistanceMeters;
+		double arrived = frames.First(f => total - f.CumulativeDistanceMeters <= bar.TripArrivedToleranceMeters).Raw.SampleTimeSeconds;
+		using var renderer = new OverlayRenderer(Width, Height, frames[0].Raw.AltitudeMeters, [], frames,
+			TelemetryProcessor.Summarize(frames).MaxSpeedKmh, false) { OutputDurationSeconds = arrived + 2 };
+
+		Assert.IsNull(renderer.ArrivalHideSeconds(bar), "5 s after the finish is past the end");
+		Assert.IsNull(renderer.AsShown(bar).DisappearAtSeconds);
+		Assert.AreEqual(arrived + 1, renderer.ArrivalHideSeconds(bar with { HideAfterArrivalSeconds = 1 }));
+	}
+
+	[TestMethod]
 	public void ProfileChart_MovesWithTheRide()
 	{
 		List<DerivedFrame> frames = Route(300, 0);

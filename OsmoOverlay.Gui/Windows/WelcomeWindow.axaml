@@ -496,9 +496,9 @@
 			</ScrollViewer>
 
 			<Border Grid.Row="1" Padding="24,10" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
-				<Grid Classes="wizardFooter" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
+				<Grid Classes="wizardFooter" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="10">
 					<Button Grid.Column="0" Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Classes="ghost" Click="OnSkipClick" />
-					<Button Grid.Column="2" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
+					<Button Grid.Column="1" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
 					<Button Grid.Column="3" Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
 					<Button Grid.Column="4" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
 					        Click="OnOpenRecordingClick" />

@@ -1566,14 +1566,17 @@ Each category lists its three highest values. You can jump to a value or save it
 
 Open the download page?
 
-If you cancel, the app will not remind you about this version again. You can find the update in Settings &gt; About.</value>
+Cancel asks again on the next start. "Skip this update" stops the reminders about this version - you can still find it in Settings &gt; About.</value>
+  </data>
+  <data name="Main_SkipUpdate" xml:space="preserve">
+    <value>Skip this update</value>
   </data>
   <data name="Main_UpdateAvailableInstall" xml:space="preserve">
     <value>OsmoOverlay {0} is available. You are currently using version {1}.
 
 Install the update now? The app will download the installer, close for installation and then restart.
 
-If you cancel, the app will not remind you about this version again. You can find the update in Settings &gt; About.</value>
+Cancel asks again on the next start. "Skip this update" stops the reminders about this version - you can still find it in Settings &gt; About.</value>
   </data>
   <data name="Main_UpdateAvailableTitle" xml:space="preserve">
     <value>Update available</value>
@@ -2184,7 +2187,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Find out what's faster on this computer</value>
   </data>
   <data name="Settings_FreeForNonCommercialUse" xml:space="preserve">
-    <value>OsmoOverlay is free for non-commercial use under the PolyForm Noncommercial License 1.0.0. You may use, modify and share the app under its terms.</value>
+    <value>OsmoOverlay is available free of charge for non-commercial use under the PolyForm Noncommercial License 1.0.0. Use, modification and sharing of the app are subject to the terms of this license.</value>
   </data>
   <data name="Settings_FullScreenPreview" xml:space="preserve">
     <value>Full screen preview</value>
@@ -3104,7 +3107,7 @@ Details: {0}</value>
     <value>OsmoOverlay needs a 64-bit system.</value>
   </data>
   <data name="Welcome_CheckSystemSupport" xml:space="preserve">
-    <value>The Windows version is regularly tested. Linux and macOS support is experimental.</value>
+    <value>The app is tested regularly on Windows and occasionally on Linux. It has not yet been tested on macOS.</value>
   </data>
   <data name="Welcome_CheckUnknown" xml:space="preserve">
     <value>Unknown</value>
@@ -3720,7 +3723,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>Next: the preview in the app</value>
   </data>
   <data name="Benchmark_AppPreviewAskMessage" xml:space="preserve">
-    <value>The last part of the test takes about 25 seconds. The recording will play in the main window's preview with its sound, at the volume set in the app. The test window and the windows it was opened from will be minimized meanwhile. Don't switch windows or move the mouse over the preview, as that would skew the measurement. To stop the test, restore its window from the taskbar and click Stop. After the measurement everything goes back to where it was.</value>
+    <value>The last part of the test takes about 25 seconds. The recording will play in the main window's preview with its sound, at the volume set in the app. The test window and the windows it was opened from will be moved off the screen meanwhile. Don't switch windows or move the mouse over the preview, as that would skew the measurement. To stop the test, press Esc. After the measurement everything goes back to where it was.</value>
   </data>
   <data name="Benchmark_AppPreviewStart" xml:space="preserve">
     <value>Start</value>
@@ -3865,5 +3868,35 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="Log_DebugModeOff" xml:space="preserve">
     <value>Debug mode is off.</value>
+  </data>
+  <data name="Timeline_LockedGpsAlert" xml:space="preserve">
+    <value>Timed by the app: the GPS alert is up only while the GPS has something to report, so its time can't be changed.</value>
+  </data>
+  <data name="Timeline_LockedMapCredit" xml:space="preserve">
+    <value>Timed by the app: the credit stays on screen as long as a map does (the map provider's terms), so its time can't be changed.</value>
+  </data>
+  <data name="Timeline_LockedStart" xml:space="preserve">
+    <value>The start can't be dragged: the bar appears when the ride first reaches the set speed.</value>
+  </data>
+  <data name="Timeline_LockedEnd" xml:space="preserve">
+    <value>The end can't be dragged: the bar leaves the set time after the ride reaches the finish.</value>
+  </data>
+  <data name="Main_RemoveInput" xml:space="preserve">
+    <value>Remove the selected file from the list (the file on disk stays)</value>
+  </data>
+  <data name="Main_NewProject" xml:space="preserve">
+    <value>New project</value>
+  </data>
+  <data name="Main_NewProjectHint" xml:space="preserve">
+    <value>Start an empty session (the project file on disk stays as it is)</value>
+  </data>
+  <data name="Project_NewTitle" xml:space="preserve">
+    <value>New project</value>
+  </data>
+  <data name="Project_NewMessage" xml:space="preserve">
+    <value>Start a new, empty project? The recordings, cuts and key moments now in the window are cleared and anything not saved is lost. The project file on disk stays as it is.</value>
+  </data>
+  <data name="Main_CutPartsOutOfTheMade" xml:space="preserve">
+    <value>Cut parts out of the render (cuts made: {0})</value>
   </data>
 </root>

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -61,6 +62,8 @@ public partial class BenchmarkWindow : Window
 	private BenchmarkStage? _liveStage;
 	private Phase _phase;
 	private bool _opened;
+	private bool _hiddenForPreview;
+	private static readonly PixelPoint OffScreen = new(-32000, -32000);
 
 	public BenchmarkWindow()
 	{
@@ -140,7 +143,9 @@ public partial class BenchmarkWindow : Window
 		base.OnPropertyChanged(change);
 		if (change.Property != ClientSizeProperty || !_opened || change.OldValue is not Size before || change.NewValue is not Size after ||
 		    CurrentScreen() is not { } screen)
+		{
 			return;
+		}
 
 		PixelRect area = screen.WorkingArea;
 		int grown = (int)Math.Round((after.Height - before.Height) * DesktopScaling);
@@ -152,6 +157,18 @@ public partial class BenchmarkWindow : Window
 	private Screen? CurrentScreen()
 	{
 		return Screens.ScreenFromWindow(this) ?? Screens.Primary;
+	}
+
+	protected override void OnKeyDown(KeyEventArgs e)
+	{
+		if (_hiddenForPreview && e.Key == Key.Escape)
+		{
+			_cts?.Cancel();
+			e.Handled = true;
+			return;
+		}
+
+		base.OnKeyDown(e);
 	}
 
 	protected override void OnClosing(WindowClosingEventArgs e)
@@ -215,8 +232,9 @@ public partial class BenchmarkWindow : Window
 
 			EnterPhase(Phase.Render);
 			FpsChart.Reference = null;
+			var input = new BenchmarkInput(testRecording, TestsRecording ? _request.RecordingPath : null, _request.Layout, _request.PreviewWidth);
 			BenchmarkResult result = await Task.Run(() => RenderBenchmark.RunAsync(
-				new BenchmarkInput(testRecording, TestsRecording ? _request.RecordingPath : null, _request.Layout, _request.PreviewWidth),
+				input,
 				progress => Dispatcher.UIThread.Post(() => ShowProgress(progress)),
 				reading => Dispatcher.UIThread.Post(() => ShowLive(reading)), cts.Token));
 
@@ -336,20 +354,23 @@ public partial class BenchmarkWindow : Window
 		}
 
 		cts.Token.ThrowIfCancellationRequested();
-		List<Window> minimized = [];
+		// Minimizing an owned modal window took the main window along; these are only moved out of sight, the main window is left alone.
+		List<(Window Window, PixelPoint Position)> hidden = [];
 		for (Window? window = this; window?.Owner is Window owner; window = owner)
-			minimized.Add(window);
-		foreach (Window window in minimized) window.WindowState = WindowState.Minimized;
+			hidden.Add((window, window.Position));
+		bool fullscreen = FullscreenCheck.IsChecked == true;
+		foreach ((Window window, _) in hidden) window.Position = OffScreen;
+		_hiddenForPreview = true;
 
 		AppPreviewOutcome outcome;
 		try
 		{
-			outcome = await _appPreview!(testRecording, FullscreenCheck.IsChecked == true, text => StatusText.Text = text, AddPreviewLive, cts.Cancel,
-				cts.Token);
+			outcome = await _appPreview!(testRecording, fullscreen, text => StatusText.Text = text, AddPreviewLive, cts.Cancel, cts.Token);
 		}
 		finally
 		{
-			for (int i = minimized.Count - 1; i >= 0; i--) minimized[i].WindowState = WindowState.Normal;
+			_hiddenForPreview = false;
+			for (int i = hidden.Count - 1; i >= 0; i--) hidden[i].Window.Position = hidden[i].Position;
 			Activate();
 		}
 

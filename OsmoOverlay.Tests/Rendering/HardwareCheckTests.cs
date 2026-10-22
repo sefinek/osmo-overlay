@@ -6,16 +6,28 @@ namespace OsmoOverlay.Tests.Rendering;
 public sealed class HardwareCheckTests
 {
 	private static HardwareReport Report(int threads = 32, long memoryBytes = 32L << 30, string[]? gpus = null, string? encoder = "hevc_nvenc", bool? decode = true,
-		long? freeGb = 500, bool is64Bit = true)
+		long? freeGb = 500, bool is64Bit = true, bool isWindows = true)
 	{
 		return new HardwareReport(new BenchmarkSystem("Windows", "CPU", threads, memoryBytes, gpus ?? ["RTX"], "9.0", "1.0.0"), is64Bit, encoder, null, decode,
-			"d3d11va", "C:\\Videos", freeGb is { } gb ? gb << 30 : null);
+			"d3d11va", "C:\\Videos", freeGb is { } gb ? gb << 30 : null) { IsWindows = isWindows };
 	}
 
 	[TestMethod]
 	public void AStrongLaptop_IsOk()
 	{
 		Assert.AreEqual(CheckStatus.Ok, Report().Overall);
+	}
+
+	[TestMethod]
+	[DataRow(true, true, CheckStatus.Ok)]
+	[DataRow(true, false, CheckStatus.Warning)]
+	[DataRow(false, true, CheckStatus.Problem)]
+	[DataRow(false, false, CheckStatus.Problem)]
+	public void SystemStatus_AccountsForPlatformTestingAndArchitecture(bool is64Bit, bool isWindows, CheckStatus expected)
+	{
+		HardwareReport report = Report(is64Bit: is64Bit, isWindows: isWindows);
+		Assert.AreEqual(expected, report.SystemStatus);
+		Assert.AreEqual(expected, report.Overall);
 	}
 
 	[TestMethod]

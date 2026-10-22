@@ -13,6 +13,13 @@ public enum DialogArt
 	NoGps
 }
 
+public enum DialogChoice
+{
+	Cancel,
+	Confirm,
+	Skip
+}
+
 public enum DialogKind
 {
 	Neutral,
@@ -35,6 +42,8 @@ public partial class ConfirmDialog : Window
 	private readonly Action? _onSecondary;
 	private readonly string? _workingText;
 	private readonly UiSound _sound = UiSound.Question;
+	private bool _extraClosesDialog;
+	private DialogChoice _choice = DialogChoice.Cancel;
 
 	public ConfirmDialog()
 	{
@@ -101,6 +110,23 @@ public partial class ConfirmDialog : Window
 	{
 		return new ConfirmDialog(title, message, confirmText ?? Strings.ConfirmDialog_Confirm, kind, false, windowTitle, onConfirm, workingText,
 			null, null, null, null).ShowDialog<bool>(owner);
+	}
+
+	/// <summary>
+	///     Like AskAsync with a third button that closes the dialog too: Cancel and the window's X are both
+	///     <see cref="DialogChoice.Cancel" />, so a caller can tell "not now" from an explicit "never".
+	/// </summary>
+	public static async Task<DialogChoice> AskOrSkipAsync(Window owner, string title, string message, string confirmText, string skipText,
+		DialogKind kind = DialogKind.Neutral)
+	{
+		var dialog = new ConfirmDialog(title, message, confirmText, kind, false, null, null, null, null, null, null, null)
+		{
+			_extraClosesDialog = true
+		};
+		dialog.ExtraButton.Content = skipText;
+		dialog.ExtraButton.IsVisible = true;
+		await dialog.ShowDialog<bool>(owner);
+		return dialog._choice;
 	}
 
 	/// <summary>
@@ -187,6 +213,13 @@ public partial class ConfirmDialog : Window
 
 	private void OnExtraClick(object? sender, RoutedEventArgs e)
 	{
+		if (_extraClosesDialog)
+		{
+			_choice = DialogChoice.Skip;
+			Close(false);
+			return;
+		}
+
 		_onExtra?.Invoke();
 	}
 
@@ -200,6 +233,7 @@ public partial class ConfirmDialog : Window
 			await _onConfirm();
 		}
 
+		_choice = DialogChoice.Confirm;
 		Close(true);
 	}
 }

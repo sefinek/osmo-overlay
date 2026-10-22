@@ -538,7 +538,7 @@
 					<TextBlock Text="{x:Static local:Strings.Settings_Projects}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
-							<StackPanel Name="ProjectFilesGroup" IsVisible="False">
+							<StackPanel Name="ProjectFilesGroup">
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 									<StackPanel>
 										<TextBlock Text="{x:Static local:Strings.Settings_ProjectFiles}" Classes="rowTitle" />
@@ -694,8 +694,10 @@
 					<Border Classes="settingsCard licenseCard" Padding="18">
 						<StackPanel Spacing="12">
 							<TextBlock Text="{x:Static local:Strings.Settings_FreeForNonCommercialUse}" Classes="rowHint" />
-							<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictionsTitle}" Classes="rowTitle" />
-							<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictions}" Classes="rowHint" />
+							<StackPanel Spacing="4">
+								<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictionsTitle}" Classes="rowTitle" />
+								<TextBlock Text="{x:Static local:Strings.License_CommercialRestrictions}" Classes="rowHint" />
+							</StackPanel>
 							<TextBlock Text="{x:Static local:Strings.License_OrganizationExceptions}" Classes="rowHint" />
 							<TextBlock Text="{x:Static local:Strings.License_CommercialContact}" Classes="rowHint" />
 							<TextBlock Text="contact@sefinek.net" Classes="link" HorizontalAlignment="Left"

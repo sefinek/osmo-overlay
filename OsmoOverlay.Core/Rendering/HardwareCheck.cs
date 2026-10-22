@@ -51,7 +51,9 @@ public sealed record HardwareReport(
 		_ => CheckStatus.Ok
 	};
 
-	public CheckStatus SystemStatus => Is64Bit ? CheckStatus.Ok : CheckStatus.Problem;
+	public bool IsWindows { get; init; } = OperatingSystem.IsWindows();
+
+	public CheckStatus SystemStatus => !Is64Bit ? CheckStatus.Problem : IsWindows ? CheckStatus.Ok : CheckStatus.Warning;
 
 	public CheckStatus EncoderStatus => Encoder is null ? CheckStatus.Unknown : FfmpegPipeline.IsGpuEncoder(Encoder) ? CheckStatus.Ok : CheckStatus.Warning;
 

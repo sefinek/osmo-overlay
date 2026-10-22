@@ -109,12 +109,13 @@ public partial class MainWindow
 		NewLayerButton.IsEnabled = !IsActivePresetDefault;
 
 		List<(OverlayElement Element, string Name)> widgets = VisibleWidgetNames();
+		bool creditLocked = widgets.Any(w => w.Element is MapAttributionElement) && MapCreditTimingLocked(MapSourcesForRoute());
 		bool anySolo = ActiveLayers.Any(l => l.Solo);
 		LayerTracks.Tracks =
 		[
 			.. ActiveLayers.Select((layer, i) => new LayerTrack(layer.Id, layer.Name ?? string.Format(Strings.Layers_DefaultName, i + 1),
 			[
-				.. widgets.Where(w => OverlayLayers.Key(w.Element) == layer.Id).Select(w => ClipFor(w.Element, w.Name))
+				.. widgets.Where(w => OverlayLayers.Key(w.Element) == layer.Id).Select(w => ClipFor(w.Element, w.Name, creditLocked))
 			], layer.Muted, layer.Solo, layer.Locked, layer.Muted || (anySolo && !layer.Solo)))
 		];
 	}
@@ -123,14 +124,21 @@ public partial class MainWindow
 	///     A widget's clip, timed as the recording shows it (OverlayRenderer.AsShown): a speed-gated bar from when the speed is
 	///     first reached (never: at the end), the opening after the route overview card, coming in as it goes out.
 	/// </summary>
-	private LayerClip ClipFor(OverlayElement element, string name)
+	private LayerClip ClipFor(OverlayElement element, string name, bool creditLocked)
 	{
 		OverlayElement shown = _previewPlayer.AsShown(element);
 		double? appear = shown.AppearAtSeconds is { } start && !double.IsFinite(start) ? LayerTracks.OutputDurationSeconds : shown.AppearAtSeconds;
 		appear = ElementAnimation.VisibleFrom(appear, RouteIntroEnd);
+		bool startLocked = _previewPlayer.SpeedGateSeconds(element) is not null, endLocked = _previewPlayer.ArrivalHideSeconds(element) is not null;
+		bool fixedTiming = element is GpsAlertElement || (element is MapAttributionElement && creditLocked);
+		string? hint = element is GpsAlertElement ? Strings.Timeline_LockedGpsAlert
+			: fixedTiming ? Strings.Timeline_LockedMapCredit
+			: startLocked && endLocked ? Strings.Timeline_LockedStart + Environment.NewLine + Strings.Timeline_LockedEnd
+			: startLocked ? Strings.Timeline_LockedStart
+			: endLocked ? Strings.Timeline_LockedEnd
+			: null;
 		return new LayerClip(element.Id, ClipLabel(element, name), appear, shown.DisappearAtSeconds, shown.AnimationType, shown.AnimationDurationSeconds,
-			shown.OutAnimationType, shown.OutAnimationDurationSeconds, IsTypeSupported(element.Type), _previewPlayer.SpeedGateSeconds(element) is not null,
-			_previewPlayer.ArrivalHideSeconds(element) is not null, element is GpsAlertElement);
+			shown.OutAnimationType, shown.OutAnimationDurationSeconds, IsTypeSupported(element.Type), startLocked, endLocked, fixedTiming, hint);
 	}
 
 	/// <summary>Where the route overview card ends on the output timeline - 0 without one. A clip starts no earlier (ElementAnimation.VisibleFrom).</summary>

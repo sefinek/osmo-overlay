@@ -1566,14 +1566,17 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
 
 Otworzyć stronę pobierania?
 
-Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajdziesz w sekcji Ustawienia &gt; O programie.</value>
+Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. Wybierz „Pomiń aktualizację”, jeśli nie chcesz więcej przypomnień o tej wersji - nadal znajdziesz ją w sekcji Ustawienia &gt; O programie.</value>
+  </data>
+  <data name="Main_SkipUpdate" xml:space="preserve">
+    <value>Pomiń aktualizację</value>
   </data>
   <data name="Main_UpdateAvailableInstall" xml:space="preserve">
     <value>Dostępna jest wersja {0} OsmoOverlay. Obecnie używasz wersji {1}.
 
 Zainstalować aktualizację teraz? Aplikacja pobierze instalator, zamknie się na czas instalacji, a następnie uruchomi ponownie.
 
-Po anulowaniu aplikacja nie przypomni ponownie o tej wersji. Aktualizację znajdziesz w sekcji Ustawienia &gt; O programie.</value>
+Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. Wybierz „Pomiń aktualizację”, jeśli nie chcesz więcej przypomnień o tej wersji - nadal znajdziesz ją w sekcji Ustawienia &gt; O programie.</value>
   </data>
   <data name="Main_UpdateAvailableTitle" xml:space="preserve">
     <value>Dostępna aktualizacja</value>
@@ -1808,16 +1811,16 @@ Ostatnia zmiana: {1:g}</value>
     <value>Pełna rozdzielczość</value>
   </data>
   <data name="Preview_QualityHigh" xml:space="preserve">
-    <value>Wysoka</value>
+    <value>Wysokie</value>
   </data>
   <data name="Preview_QualityLow" xml:space="preserve">
-    <value>Niska</value>
+    <value>Niskie</value>
   </data>
   <data name="Preview_QualityMedium" xml:space="preserve">
-    <value>Średnia</value>
+    <value>Średnie</value>
   </data>
   <data name="Preview_QualityVeryHigh" xml:space="preserve">
-    <value>Bardzo wysoka</value>
+    <value>Bardzo wysokie</value>
   </data>
   <data name="Preview_Unavailable" xml:space="preserve">
     <value>Podgląd niedostępny: {0}</value>
@@ -2184,7 +2187,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Sprawdź, co jest szybsze na tym komputerze</value>
   </data>
   <data name="Settings_FreeForNonCommercialUse" xml:space="preserve">
-    <value>OsmoOverlay jest bezpłatny do użytku niekomercyjnego na licencji PolyForm Noncommercial License 1.0.0. Możesz używać programu, modyfikować go i udostępniać zgodnie z jej warunkami.</value>
+    <value>OsmoOverlay jest dostępny bezpłatnie do użytku niekomercyjnego na licencji PolyForm Noncommercial License 1.0.0. Korzystanie z programu, jego modyfikowanie i udostępnianie podlegają warunkom tej licencji.</value>
   </data>
   <data name="Settings_FullScreenPreview" xml:space="preserve">
     <value>Podgląd pełnoekranowy</value>
@@ -3104,7 +3107,7 @@ Szczegóły: {0}</value>
     <value>OsmoOverlay wymaga systemu 64-bitowego.</value>
   </data>
   <data name="Welcome_CheckSystemSupport" xml:space="preserve">
-    <value>Wersja dla Windows jest regularnie testowana. Wsparcie dla Linuxa i macOS jest eksperymentalne.</value>
+    <value>Program jest regularnie testowany na Windowsie, a sporadycznie również na Linuksie. Na macOS nie był dotąd testowany.</value>
   </data>
   <data name="Welcome_CheckUnknown" xml:space="preserve">
     <value>Nieznane</value>
@@ -3720,7 +3723,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Teraz podgląd w aplikacji</value>
   </data>
   <data name="Benchmark_AppPreviewAskMessage" xml:space="preserve">
-    <value>Ostatnia część testu potrwa ok. 25 sekund. Nagranie zostanie odtworzone w podglądzie głównego okna razem z dźwiękiem, z głośnością ustawioną w aplikacji. Okno testu oraz okna, z których je otwarto, zostaną na ten czas zminimalizowane. Nie przełączaj okien i nie ruszaj myszą nad podglądem, bo zaburzy to pomiar. Żeby przerwać test, przywróć jego okno z paska zadań i kliknij Przerwij. Po pomiarze wszystko wróci na swoje miejsce.</value>
+    <value>Ostatnia część testu potrwa ok. 25 sekund. Nagranie zostanie odtworzone w podglądzie głównego okna razem z dźwiękiem, z głośnością ustawioną w aplikacji. Okno testu oraz okna, z których je otwarto, znikną na ten czas z ekranu. Nie przełączaj okien i nie ruszaj myszą nad podglądem, bo zaburzy to pomiar. Żeby przerwać test, naciśnij Esc. Po pomiarze wszystko wróci na swoje miejsce.</value>
   </data>
   <data name="Benchmark_AppPreviewStart" xml:space="preserve">
     <value>Rozpocznij</value>
@@ -3865,5 +3868,35 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   </data>
   <data name="Log_DebugModeOff" xml:space="preserve">
     <value>Tryb debugowania wyłączony.</value>
+  </data>
+  <data name="Timeline_LockedGpsAlert" xml:space="preserve">
+    <value>Czas ustala aplikacja: alert GPS jest widoczny tylko wtedy, gdy GPS ma coś do zgłoszenia, więc nie da się go zmienić.</value>
+  </data>
+  <data name="Timeline_LockedMapCredit" xml:space="preserve">
+    <value>Czas ustala aplikacja: podpis źródła map jest widoczny, dopóki widać mapę (wymóg dostawcy map), więc nie da się go zmienić.</value>
+  </data>
+  <data name="Timeline_LockedStart" xml:space="preserve">
+    <value>Początku nie można przeciągnąć: pasek pojawia się, gdy jazda po raz pierwszy osiągnie ustaloną prędkość.</value>
+  </data>
+  <data name="Timeline_LockedEnd" xml:space="preserve">
+    <value>Końca nie można przeciągnąć: pasek znika po ustalonym czasie od dotarcia do mety.</value>
+  </data>
+  <data name="Main_RemoveInput" xml:space="preserve">
+    <value>Usuń zaznaczony plik z listy (plik na dysku zostaje)</value>
+  </data>
+  <data name="Main_NewProject" xml:space="preserve">
+    <value>Nowy projekt</value>
+  </data>
+  <data name="Main_NewProjectHint" xml:space="preserve">
+    <value>Zacznij od pustej sesji (plik projektu na dysku zostaje bez zmian)</value>
+  </data>
+  <data name="Project_NewTitle" xml:space="preserve">
+    <value>Nowy projekt</value>
+  </data>
+  <data name="Project_NewMessage" xml:space="preserve">
+    <value>Zacząć nowy, pusty projekt? Nagrania, cięcia i kluczowe momenty z okna zostaną wyczyszczone, a niezapisane zmiany przepadną. Plik projektu na dysku zostanie bez zmian.</value>
+  </data>
+  <data name="Main_CutPartsOutOfTheMade" xml:space="preserve">
+    <value>Wytnij fragmenty z renderu (wykonane cięcia: {0})</value>
   </data>
 </root>

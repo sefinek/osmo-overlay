@@ -570,12 +570,16 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>
 	///     When a trip progress bar set to leave after the finish (HideAfterArrivalSeconds) goes - that takes the place of its own
-	///     disappear time, like the speed gate does for the appear time. Null for any other widget, with the option off, or a
-	///     ride that never arrives.
+	///     disappear time, like the speed gate does for the appear time. Null for any other widget, with the option off, a
+	///     ride that never arrives, or one that arrives too close to the end: the video is over before the bar would go, so
+	///     it stays - a time past the end drew its clip beyond the recording and started a fade-out nobody would see finished.
 	/// </summary>
 	public double? ArrivalHideSeconds(OverlayElement element)
 	{
-		return element is TripProgressBarElement { HideAfterArrivalSeconds: { } after } bar && ArrivalSeconds(bar) is { } arrived ? arrived + after : null;
+		if (element is not TripProgressBarElement { HideAfterArrivalSeconds: { } after } bar || ArrivalSeconds(bar) is not { } arrived) return null;
+
+		double hideAt = arrived + after;
+		return hideAt < OutputDurationSeconds ? hideAt : null;
 	}
 
 	private OverlayElement AsShownFromStart(OverlayElement element)

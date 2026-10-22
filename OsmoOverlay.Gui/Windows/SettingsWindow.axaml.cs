@@ -203,7 +203,8 @@ public partial class SettingsWindow : Window
 		DisableShadowsCheck.IsChecked = settings.DisableShadows;
 		ConfirmCloseWhileRenderingCheck.IsChecked = settings.ConfirmCloseWhileRendering;
 		DebugModeCheck.IsChecked = settings.DebugMode;
-		ProjectFilesGroup.IsVisible = ProjectFileAssociation.IsSupported;
+		ProjectFilesGroup.IsEnabled = ProjectFileAssociation.IsSupported;
+		ProjectFilesGroup.Classes.Set("muted", !ProjectFileAssociation.IsSupported);
 		ShowProjectAssociation();
 	}
 

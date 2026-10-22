@@ -296,15 +296,12 @@ public partial class MainWindow : Window
 		if (settings.SkippedAppUpdate == release.Version.ToString()) return;
 
 		bool canInstall = AppUpdates.CanUpdateInPlace(release);
-		bool accepted = await ConfirmDialog.AskAsync(this, Strings.Main_UpdateAvailableTitle,
+		DialogChoice choice = await ConfirmDialog.AskOrSkipAsync(this, Strings.Main_UpdateAvailableTitle,
 			string.Format(canInstall ? Strings.Main_UpdateAvailableInstall : Strings.Main_UpdateAvailableDownload,
 				release.Version, AppUpdates.CurrentVersion),
-			canInstall ? Strings.Main_Update : Strings.Main_OpenGitHub, DialogKind.Info);
-		if (!accepted)
-		{
-			OverlaySettingsStore.Save(settings with { SkippedAppUpdate = release.Version.ToString() });
-			return;
-		}
+			canInstall ? Strings.Main_Update : Strings.Main_OpenGitHub, Strings.Main_SkipUpdate, DialogKind.Info);
+		if (choice == DialogChoice.Skip) OverlaySettingsStore.Save(settings with { SkippedAppUpdate = release.Version.ToString() });
+		if (choice != DialogChoice.Confirm) return;
 
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
 		bool updating = await AppUpdateFlow.UpdateAsync(this, release, () => _phase == UiPhase.Rendering, status => AppendLog(status),

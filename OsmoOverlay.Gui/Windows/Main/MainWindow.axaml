@@ -246,6 +246,7 @@
 		</Style>
 		<Style Selector="TextBlock.overlayListItemText">
 			<Setter Property="FontSize" Value="13" />
+			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
 		<Style Selector="Border.addedWidgetRow">
 			<Setter Property="Background" Value="{StaticResource ControlBrush}" />
@@ -419,7 +420,10 @@
 										<Button Grid.Column="2" Classes="iconButton" Click="OnMoveInputDownClick" ToolTip.Tip="{x:Static local:Strings.Main_MoveDown}">
 											<local:IconView Data="{StaticResource IconArrowDown}" Width="14" Height="14" />
 										</Button>
-										<Button Grid.Column="3" Content="{x:Static local:Strings.Main_Remove}" Click="OnRemoveInputClick" />
+										<Button Grid.Column="3" Classes="iconButton" Click="OnRemoveInputClick" ToolTip.Tip="{x:Static local:Strings.Main_RemoveInput}"
+										        AutomationProperties.Name="{x:Static local:Strings.Main_RemoveInput}">
+											<local:IconView Data="{StaticResource IconTrash}" Width="14" Height="14" />
+										</Button>
 									</Grid>
 								</StackPanel>
 
@@ -431,12 +435,17 @@
 									</Grid>
 								</StackPanel>
 
-								<Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-									<Button Grid.Column="0" Content="{x:Static local:Strings.Main_OpenProject}" Click="OnOpenProjectClick"
+								<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+									<Button Grid.Column="0" Content="{x:Static local:Strings.Main_NewProject}" Click="OnNewProjectClick" ToolTip.Tip="{x:Static local:Strings.Main_NewProjectHint}"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-									<Button Grid.Column="1" Content="{x:Static local:Strings.Main_Save}" Click="OnSaveProjectClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveTheProjectCtrlS}"
+									<Button Grid.Column="1" Content="{x:Static local:Strings.Main_OpenProject}" Click="OnOpenProjectClick"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-									<Button Grid.Column="2" Content="{x:Static local:Strings.Main_SaveAs}" Click="OnSaveProjectAsClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveAsANewFile}"
+								</Grid>
+
+								<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+									<Button Grid.Column="0" Content="{x:Static local:Strings.Main_Save}" Click="OnSaveProjectClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveTheProjectCtrlS}"
+									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+									<Button Grid.Column="1" Content="{x:Static local:Strings.Main_SaveAs}" Click="OnSaveProjectAsClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveAsANewFile}"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 								</Grid>
 
@@ -793,7 +802,7 @@
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
 							<Button Name="ToggleGridButton" Classes="previewToolButton active"
 							        ToolTip.Tip="{x:Static local:Strings.Main_GridGuides}">
-								<local:IconView Data="{StaticResource IconGrid}" Width="14" Height="14" />
+								<local:IconView Name="GridIcon" Data="{StaticResource IconGrid}" Width="14" Height="14" />
 								<Button.Flyout>
 									<Flyout Placement="Bottom">
 										<StackPanel Spacing="4" Width="150">
@@ -844,7 +853,7 @@
 							</Button>
 							<Button Name="ToggleCutsButton" Classes="previewToolButton" Click="OnToggleCutsPanelClick"
 							        ToolTip.Tip="{x:Static local:Strings.Main_CutPartsOutOfThe}">
-								<local:IconView Data="{StaticResource IconCut}" Width="14" Height="14" />
+								<local:IconView Name="CutsIcon" Data="{StaticResource IconCut}" Width="14" Height="14" />
 							</Button>
 							<Button Name="ToggleMomentsButton" Classes="previewToolButton" Click="OnToggleMomentsPanelClick"
 							        ToolTip.Tip="{x:Static local:Strings.Main_KeyMomentsFlagsOnThe}">
@@ -941,13 +950,13 @@
 							<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToStartHome}">
 								<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />
 							</Button>
-							<Button Classes="transport" Click="OnPreviousFrameClick" ToolTip.Tip="{x:Static local:Strings.Main_PreviousFrameLeft}">
+							<Button Name="PreviousFrameButton" Classes="transport" Click="OnPreviousFrameClick" ToolTip.Tip="{x:Static local:Strings.Main_PreviousFrameLeft}">
 								<local:IconView Data="{StaticResource IconFramePrevious}" Width="14" Height="14" />
 							</Button>
 							<Button Name="PlayPauseButton" Classes="transport" Click="OnPlayPauseClick" ToolTip.Tip="{x:Static local:Strings.Main_PlaySpace}">
 								<local:IconView Name="PlayPauseIcon" Data="{StaticResource IconPlay}" Width="14" Height="14" />
 							</Button>
-							<Button Classes="transport" Click="OnNextFrameClick" ToolTip.Tip="{x:Static local:Strings.Main_NextFrameRight}">
+							<Button Name="NextFrameButton" Classes="transport" Click="OnNextFrameClick" ToolTip.Tip="{x:Static local:Strings.Main_NextFrameRight}">
 								<local:IconView Data="{StaticResource IconFrameNext}" Width="14" Height="14" />
 							</Button>
 							<Button Classes="transport" Click="OnGoToEndClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToEndEnd}">
