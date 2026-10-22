@@ -52,7 +52,12 @@ public partial class MainWindow
 			_holdScrubTimer.Interval = HoldScrubDelay;
 			_holdScrubTimer.Start();
 		}, RoutingStrategies.Tunnel);
-		button.AddHandler(PointerReleasedEvent, (_, _) => StopHoldScrub(), RoutingStrategies.Tunnel);
+		button.AddHandler(PointerReleasedEvent, (_, _) =>
+		{
+			StopHoldScrub();
+			// The Click of this release comes right after in the same route; a release off the button has none, and the flag must not outlive it.
+			Dispatcher.UIThread.Post(() => _holdScrubSwallowsClick = false, DispatcherPriority.Input);
+		}, RoutingStrategies.Tunnel);
 		button.PointerCaptureLost += (_, _) => StopHoldScrub();
 	}
 

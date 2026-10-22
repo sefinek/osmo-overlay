@@ -7,16 +7,8 @@ using SkiaSharp;
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
-///     Core: renderer state (fonts, cached paints), construction/disposal, and the per-frame RenderInto()
-///     dispatch that switches on each visible OverlayElement's type. The actual per-widget drawing
-///     code lives in sibling partial-class files grouped by widget family: OverlayRenderer.Position.cs
-///     (Compass + MapWidget + the shared route trail), OverlayRenderer.Gauges.cs (SpeedGauge +
-///     RollGauge + PitchGauge + SunWidget + GMeter + TripProgressBar), OverlayRenderer.TextWidgets.cs
-///     (DateTimeText/UtcTimeText + ElapsedTimeText + CameraModelText + Text + Elevation/Gradient/Distance +
-///     TripStat + CameraInfo), OverlayRenderer.Charts.cs (ProfileChart), OverlayRenderer.Image.cs (Image),
-///     OverlayRenderer.Watermark.cs (the "Made with OsmoOverlay" watermark + map
-///     attribution slide), and OverlayRenderer.RouteIntro.cs (the optional fullscreen route-overview
-///     card shown at the start of the render).
+///     Renderer state (fonts, cached paints), construction/disposal, and the per-frame dispatch over each visible
+///     OverlayElement's type. Per-widget drawing lives in the sibling OverlayRenderer.*.cs partials, one per widget family.
 /// </summary>
 public sealed partial class OverlayRenderer : IDisposable
 {
@@ -53,9 +45,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private double _totalDistanceMeters;
 	private double _totalDurationSeconds;
 	private TripStats _tripStats = TripStats.Compute([]);
-	// A panel's fill when a widget doesn't set its own: black at 55% - much lower and the panels read as barely-there on
-	// bright footage (sky, water, sand), their footprint (which matches the GUI's selection/hit box, see OverlayElementBounds)
-	// looking like mostly-empty padding.
+	// A panel's fill when a widget doesn't set its own: lower than this and panels barely show on bright footage.
 	public const float PanelOpacityDefault = 0.55f;
 	// Far wider than any widget draws around its anchor - only bounds what MeasureElement records.
 	private static readonly SKRect MeasureArea = new(-100_000, -100_000, 100_000, 100_000);
@@ -73,9 +63,7 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKFont _valueFont;
 	private readonly SKFont _watermarkSubtitleFont;
 	private readonly SKFont _watermarkTitleFont;
-	// Route intro's stat list gets its own, larger sizes rather than reusing _labelFont/_dateFont -
-	// those are shared by every other widget (Compass, TextWidgets, ...), so bumping them up would
-	// resize the whole HUD, not just this one card.
+	// The route intro's own sizes: _labelFont/_dateFont are shared by the other widgets.
 	private readonly SKFont _routeIntroLabelFont;
 	private readonly SKFont _routeIntroValueFont;
 
@@ -360,13 +348,10 @@ public sealed partial class OverlayRenderer : IDisposable
 	}
 
 	/// <summary>
-	///     Draws straight into `destination` (BGRA, at least FrameBufferSize bytes) instead of a fresh native
-	///     bitmap copied out afterwards - at 4K that's two ~33 MB allocations per frame saved, which lets
-	///     RenderJob recycle a handful of buffers for the whole render.
-	///     Always drawn premultiplied: Skia only has fast raster paths for a premultiplied target - measured
-	///     at 4K, blitting an image into an unpremultiplied bitmap took ~30 ms vs ~2.4 ms, and every other
-	///     primitive was ~10x slower too. `premultiplied: false` (what ffmpeg's bgra input expects) converts
-	///     afterwards, which is far cheaper since almost every overlay pixel is fully transparent or opaque.
+	///     Draws straight into `destination` (BGRA, at least FrameBufferSize bytes) instead of a fresh bitmap copied out
+	///     afterwards, so RenderJob can recycle a few buffers for the whole render.
+	///     Always drawn premultiplied: Skia has fast raster paths only for a premultiplied target. `premultiplied: false`
+	///     (what ffmpeg's bgra input expects) converts afterwards, which is cheap as nearly every pixel is transparent or opaque.
 	/// </summary>
 	public void RenderInto(DerivedFrame frame, byte[] destination, int? outputWidth = null, int? outputHeight = null,
 		bool premultiplied = false)
