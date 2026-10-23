@@ -118,7 +118,7 @@ public partial class SettingsWindow : Window
 		// The preview's own switch has nothing to change while every shadow is off.
 		DisableShadowsCheck.IsCheckedChanged += (_, _) => PreviewShadowsCheck.IsEnabled = DisableShadowsCheck.IsChecked != true;
 		CacheCleanupCombo.ItemsSource = CacheCleanupOptions;
-		_pages = [RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
+		_pages = [PresetsPanel, RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
 		RouteIntroMapSource.SelectionChanged += provider => _routeIntroProvider = provider;
 
 		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
@@ -136,6 +136,7 @@ public partial class SettingsWindow : Window
 	/// <summary>Fills every page from the settings. RecordingCruisingSpeedKmh has to be set before.</summary>
 	public void Load(OverlaySettings settings)
 	{
+		LoadConfigPresets();
 		ShowWatermarkCheck.IsChecked = settings.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = settings.SmoothGpsMotion;
 		OrientationSourceCombo.SelectedItem = OrientationSourceOptions.FirstOrDefault(o => o.Value == settings.OrientationSource) ?? OrientationSourceOptions[0];
@@ -405,6 +406,8 @@ public partial class SettingsWindow : Window
 	// The category pages in CategoryList's order - null while InitializeComponent runs (see OnCategoryChanged).
 	private readonly ScrollViewer[]? _pages;
 
+	private bool _switchingCategory;
+
 	/// <summary>
 	///     Each category is its own ScrollViewer stacked in the same Grid cell (see SettingsWindow.axaml)
 	///     - switching category just swaps which one is visible instead of reparenting content.
@@ -414,9 +417,16 @@ public partial class SettingsWindow : Window
 	/// </summary>
 	private void OnCategoryChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (_pages is null) return;
+		if (_pages is null || _switchingCategory) return;
 
-		for (int i = 0; i < _pages.Length; i++) _pages[i].IsVisible = i == CategoryList.SelectedIndex;
+		// The sidebar is two lists (the preset's pages, then the program's) with one selection between them.
+		_switchingCategory = true;
+		if (ReferenceEquals(sender, ProgramCategoryList)) CategoryList.SelectedIndex = -1;
+		else if (CategoryList.SelectedIndex >= 0) ProgramCategoryList.SelectedIndex = -1;
+		_switchingCategory = false;
+
+		int selected = CategoryList.SelectedIndex >= 0 ? CategoryList.SelectedIndex : CategoryList.ItemCount + ProgramCategoryList.SelectedIndex;
+		for (int i = 0; i < _pages.Length; i++) _pages[i].IsVisible = i == selected;
 
 		if (AboutPanel.IsVisible && !_updatesShown)
 		{

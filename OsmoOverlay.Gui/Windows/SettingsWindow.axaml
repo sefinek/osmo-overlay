@@ -71,13 +71,20 @@
 	</Window.Resources>
 
 	<Window.Styles>
-		<Style Selector="ListBox#CategoryList">
+		<Style Selector="ListBox.category">
 			<Setter Property="Background" Value="Transparent" />
 			<Setter Property="BorderThickness" Value="0" />
 			<Setter Property="Padding" Value="0" />
 		</Style>
-		<Style Selector="ListBox#CategoryList ListBoxItem:selected local|IconView">
+		<Style Selector="ListBox.category ListBoxItem:selected local|IconView">
 			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+		</Style>
+
+		<Style Selector="TextBlock.sidebarGroup">
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="Margin" Value="10,0,0,6" />
 		</Style>
 
 		<Style Selector="TextBlock.pageTitle">
@@ -154,49 +161,120 @@
 			<DockPanel Margin="12,18,12,14">
 				<TextBlock DockPanel.Dock="Top" Text="{x:Static local:Strings.Common_Settings}" FontSize="18" FontWeight="Bold" Margin="10,0,0,14" />
 				<TextBlock DockPanel.Dock="Bottom" Name="SidebarVersionText" Classes="hint" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center" />
-				<ListBox Name="CategoryList" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
-					<ListBoxItem Theme="{StaticResource SidebarItem}">
+				<ScrollViewer VerticalScrollBarVisibility="Auto">
+					<StackPanel>
+						<TextBlock Name="PresetGroupHeader" Classes="sidebarGroup" TextTrimming="CharacterEllipsis" />
+						<ListBox Name="CategoryList" Classes="category" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<StackPanel Orientation="Horizontal" Spacing="12">
+							<local:IconView Data="{StaticResource IconSliders}" Width="16" Height="16" />
+							<TextBlock Text="{x:Static local:Strings.Settings_Presets}" />
+						</StackPanel>
+					</ListBoxItem>
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconDisplay}" Width="16" Height="16" />
 							<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconStopwatch}" Width="16" Height="16" />
 							<TextBlock Text="{x:Static local:Strings.Common_Speed}" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconFlag}" Width="16" Height="16" />
 							<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						</ListBox>
+						<TextBlock Classes="sidebarGroup" Margin="10,18,0,6" Text="{x:Static local:Strings.Settings_GroupProgram}" />
+						<ListBox Name="ProgramCategoryList" Classes="category" SelectionChanged="OnCategoryChanged">
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconEye}" Width="16" Height="16" />
 							<TextBlock Text="{x:Static local:Strings.Settings_Interface}" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconGear}" Width="16" Height="16" />
 							<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" />
 						</StackPanel>
 					</ListBoxItem>
-					<ListBoxItem Theme="{StaticResource SidebarItem}">
+						<ListBoxItem Theme="{StaticResource SidebarItem}">
 						<StackPanel Orientation="Horizontal" Spacing="12">
 							<local:IconView Data="{StaticResource IconInfo}" Width="16" Height="16" />
 							<TextBlock Text="{x:Static local:Strings.Settings_About}" />
 						</StackPanel>
 					</ListBoxItem>
-				</ListBox>
+						</ListBox>
+					</StackPanel>
+				</ScrollViewer>
 			</DockPanel>
 		</Border>
 
 		<Grid Grid.Column="1">
-			<ScrollViewer Name="RenderingPanel" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer Name="PresetsPanel" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="28,22,28,28" Spacing="14">
+					<StackPanel>
+						<TextBlock Text="{x:Static local:Strings.Settings_Presets}" Classes="pageTitle" />
+						<TextBlock Classes="pageSubtitle" Text="{x:Static local:Strings.ConfigPresets_Subtitle}" />
+					</StackPanel>
+
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.ConfigPresets_Active}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.ConfigPresets_ActiveHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="ConfigPresetCombo" SelectionChanged="OnConfigPresetChanged" />
+							</Grid>
+							<Border Classes="divider" />
+							<WrapPanel Margin="16,13,16,5">
+								<WrapPanel.Styles>
+									<Style Selector="Button">
+										<Setter Property="Margin" Value="0,0,8,8" />
+									</Style>
+								</WrapPanel.Styles>
+								<Button Content="{x:Static local:Strings.ConfigPresets_New}" ToolTip.Tip="{x:Static local:Strings.ConfigPresets_NewTip}" Click="OnNewConfigPresetClick" />
+								<Button Content="{x:Static local:Strings.ConfigPresets_Duplicate}" ToolTip.Tip="{x:Static local:Strings.ConfigPresets_DuplicateTip}" Click="OnDuplicateConfigPresetClick" />
+								<Button Content="{x:Static local:Strings.ConfigPresets_Import}" ToolTip.Tip="{x:Static local:Strings.ConfigPresets_ImportTip}" Click="OnImportConfigPresetClick" />
+								<Button Content="{x:Static local:Strings.ConfigPresets_Export}" ToolTip.Tip="{x:Static local:Strings.ConfigPresets_ExportTip}" Click="OnExportConfigPresetClick" />
+								<Button Name="DeleteConfigPresetButton" Content="{x:Static local:Strings.Main_Delete}" Click="OnDeleteConfigPresetClick" />
+							</WrapPanel>
+						</StackPanel>
+					</Border>
+
+					<TextBlock Name="ThisPresetLabel" Text="{x:Static local:Strings.ConfigPresets_ThisPreset}" Classes="sectionLabel" />
+					<Border Name="ThisPresetCard" Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.ConfigPresets_Name}" Classes="rowTitle" />
+								</StackPanel>
+								<TextBox Grid.Column="1" Name="ConfigPresetNameBox" Width="230" MaxLength="60" VerticalAlignment="Center"
+								         LostFocus="OnConfigPresetNameLostFocus" KeyDown="OnConfigPresetNameKeyDown" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.ConfigPresets_Layout}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.ConfigPresets_LayoutHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="ConfigLayoutCombo" SelectionChanged="OnConfigLayoutChanged" />
+							</Grid>
+						</StackPanel>
+					</Border>
+
+					<TextBlock Classes="rowHint" Margin="4,0,0,0" Text="{x:Static local:Strings.ConfigPresets_Covers}" />
+				</StackPanel>
+			</ScrollViewer>
+
+			<ScrollViewer Name="RenderingPanel" IsVisible="False" VerticalScrollBarVisibility="Auto">
 				<StackPanel Margin="28,22,28,28" Spacing="14">
 					<StackPanel>
 						<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" Classes="pageTitle" />

@@ -31,6 +31,9 @@ public sealed record OverlayProject(
 	public List<KeyMoment> Moments { get; init; } = [];
 	public ExternalTrackSource? ExternalTrack { get; init; }
 
+	/// <summary>The settings preset (ConfigPreset) the project was made with - absent in projects saved before they existed, or when its preset has since been deleted.</summary>
+	public string? ConfigPresetId { get; init; }
+
 	/// <summary>The sound's level over the recording (VolumeLine) - absent in projects saved before it existed.</summary>
 	public List<VolumePoint> Volume { get; init; } = [];
 

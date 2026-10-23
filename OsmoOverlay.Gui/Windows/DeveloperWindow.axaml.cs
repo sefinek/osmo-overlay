@@ -5,6 +5,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Gui.Native;
 using OsmoOverlay.Gui.Windows;
@@ -47,6 +48,10 @@ public partial class DeveloperWindow : Window
 			case "ask-working":
 				result = await ConfirmDialog.AskAsync(this, SampleTitle, "Confirm runs a 2 s task while the dialog stays open.", "Start",
 					DialogKind.Info, onConfirm: () => Task.Delay(2000), workingText: "Working...");
+				break;
+			case "config-preset-picker":
+				List<ConfigPreset> samples = ConfigPresetStore.Load().Presets;
+				result = await ConfigPresetPickerWindow.PickAsync(this, SampleMessage, samples, samples[0].Id);
 				break;
 			case "show":
 				await ConfirmDialog.ShowAsync(this, SampleTitle, SampleMessage, kind: Enum.Parse<DialogKind>(argument));

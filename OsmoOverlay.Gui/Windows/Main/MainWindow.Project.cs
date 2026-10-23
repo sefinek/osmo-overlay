@@ -18,6 +18,8 @@ public partial class MainWindow
 
 	private string? _projectPath;
 
+	private DateTime? _savedAtTitle;
+
 	private static readonly FilePickerFileType ProjectFileType = new(Strings.Project_FileType) { Patterns = [$"*{OverlayProject.Extension}"] };
 
 	private async void OnNewProjectClick(object? sender, RoutedEventArgs e)
@@ -28,6 +30,7 @@ public partial class MainWindow
 		if (hasWork && !await ConfirmDialog.AskAsync(this, Strings.Project_NewTitle, Strings.Project_NewMessage, Strings.Main_NewProject, DialogKind.Warning)) return;
 
 		StartNewProject();
+		await ChooseConfigPresetAsync(Strings.ConfigPresets_PickNew);
 	}
 
 	/// <summary>
@@ -49,7 +52,8 @@ public partial class MainWindow
 		SetPhase(UiPhase.Idle);
 		ActionButton.IsEnabled = false;
 		_projectPath = null;
-		Title = BaseTitle;
+		_savedAtTitle = null;
+		UpdateTitle();
 		ResetHistory();
 	}
 
@@ -152,7 +156,8 @@ public partial class MainWindow
 		{
 			Moments = loaded ? [.. _moments] : [],
 			Volume = loaded ? [.. _volumeLine] : [],
-			ExternalTrack = _externalTrack
+			ExternalTrack = _externalTrack,
+			ConfigPresetId = OverlaySettingsStore.Load().ActiveConfigPresetId
 		};
 	}
 
@@ -171,6 +176,7 @@ public partial class MainWindow
 		}
 
 		ClosePreview();
+		await ApplyProjectConfigPresetAsync(project);
 		_cameraSummary = null;
 		_externalTrackApplied = false;
 		_externalTrack = project.ExternalTrack;
@@ -276,6 +282,58 @@ public partial class MainWindow
 		SwitchToPreset(added.Id);
 	}
 
+	/// <summary>
+	///     The project's settings preset is made the active one, before the recordings load so they open with its values. A project
+	///     with none (or whose preset is gone) asks, when there is a choice.
+	/// </summary>
+	private async Task ApplyProjectConfigPresetAsync(OverlayProject project)
+	{
+		(List<ConfigPreset> presets, string activeId) = ConfigPresetStore.Load();
+		if (presets.Count < 2) return;
+
+		if (presets.FirstOrDefault(p => p.Id == project.ConfigPresetId) is { } own)
+		{
+			if (own.Id != activeId) AdoptSettings(ConfigPresetStore.Activate(own));
+			return;
+		}
+
+		await ChooseConfigPresetAsync(Strings.ConfigPresets_PickProject);
+	}
+
+	/// <summary>Asks which settings preset to work with (nothing to ask with a single one); dismissing keeps the current.</summary>
+	private async Task ChooseConfigPresetAsync(string message)
+	{
+		(List<ConfigPreset> presets, string activeId) = ConfigPresetStore.Load();
+		if (presets.Count < 2) return;
+
+		string? chosen = await ConfigPresetPickerWindow.PickAsync(this, message, presets, activeId);
+		if (chosen is null || chosen == activeId || presets.FirstOrDefault(p => p.Id == chosen) is not { } preset) return;
+
+		AdoptSettings(ConfigPresetStore.Activate(preset));
+	}
+
+	/// <summary>What the window keeps from settings.json for itself, brought up to date after a preset switch: watermark, GPS smoothing and the overlay layout.</summary>
+	private void AdoptSettings(OverlaySettings settings)
+	{
+		_smoothGpsMotion = settings.SmoothGpsMotion;
+		if (settings.ShowWatermark != _showWatermark)
+		{
+			_showWatermark = settings.ShowWatermark;
+			_previewPlayer.SetShowWatermark(_showWatermark);
+		}
+
+		AdoptLayout(settings);
+		UpdateTitle();
+	}
+
+	/// <summary>A settings preset opens with its own overlay layout - the window's list is kept in step with the one settings.json names.</summary>
+	private void AdoptLayout(OverlaySettings settings)
+	{
+		if (settings.ActivePresetId is not { } layoutId || layoutId == _activePresetId || _overlayPresets.All(p => p.Id != layoutId)) return;
+
+		SwitchToPreset(layoutId);
+	}
+
 	private void SwitchToPreset(string id)
 	{
 		_activePresetId = id;
@@ -285,12 +343,29 @@ public partial class MainWindow
 		SaveOverlayPresets();
 	}
 
+	/// <summary>
+	///     The window's title: the project's name (when it has a file) and the program, then the settings preset once a recording is
+	///     loaded - and only while there is more than one, as a single preset has nothing to tell apart. A save adds when it happened.
+	/// </summary>
+	private void UpdateTitle()
+	{
+		string title = _projectPath is { } path ? $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}" : BaseTitle;
+		if (_phase is UiPhase.SummaryReady or UiPhase.Rendering)
+		{
+			(List<ConfigPreset> presets, string activeId) = ConfigPresetStore.Load();
+			if (presets.Count > 1 && presets.FirstOrDefault(p => p.Id == activeId) is { } active) title += $" | {active.Name}";
+		}
+
+		if (_savedAtTitle is { } at) title += $" ({string.Format(Strings.Project_SavedAtTitle, at.ToString("T"))})";
+		Title = title;
+	}
+
 	/// <param name="savedAt">When it was saved - the title says so, which is how a save shows with the log out of sight.</param>
 	private void SetProjectPath(string path, DateTime? savedAt = null)
 	{
 		_projectPath = path;
-		string title = $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}";
-		Title = savedAt is { } at ? $"{title} ({string.Format(Strings.Project_SavedAtTitle, at.ToString("T"))})" : title;
+		_savedAtTitle = savedAt;
+		UpdateTitle();
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		if (settings.LastProject != path) OverlaySettingsStore.Save(settings with { LastProject = path });
 	}

@@ -462,6 +462,9 @@ public partial class MainWindow : Window
 		if (updated != saved) OverlaySettingsStore.Save(updated);
 		SetDebugMode(updated.DebugMode);
 
+		AdoptLayout(updated);
+		UpdateTitle();
+
 		// Export options only matter at render time (RenderJob reads them from settings.json itself) and the Interface
 		// ones apply at startup or live (the time format), so they never reopen the preview.
 		bool needsRestart = Math.Abs(updated.InterfaceScale - saved.InterfaceScale) > 0.001 ||
@@ -486,7 +489,7 @@ public partial class MainWindow : Window
 		bool needsPreviewReopen = updated.SmoothGpsMotion != _smoothGpsMotion ||
 		                          Math.Abs(updated.SpeedCorrectionPercent - before.SpeedCorrectionPercent) > 1e-9 ||
 		                          updated.OrientationSource != before.OrientationSource ||
-		                          RouteIntroSettings.From(updated) != RouteIntroSettings.From(saved);
+		                          RouteIntroSettings.From(updated) != RouteIntroSettings.From(before);
 		_smoothGpsMotion = updated.SmoothGpsMotion;
 
 		if (_summary is { } loaded)
@@ -507,7 +510,7 @@ public partial class MainWindow : Window
 		{
 			// Another output codec or depth needs its encoder picked again (H.264 isn't HEVC's, 10-bit NVENC isn't on every GPU).
 			VideoInfo output = OutputVideo.For(summary.Video, updated);
-			VideoInfo previous = OutputVideo.For(summary.Video, saved);
+			VideoInfo previous = OutputVideo.For(summary.Video, before);
 			if (output.CodecName != previous.CodecName || output.PixFmt != previous.PixFmt)
 				_detectedEncoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
 			PopulateOutputInfo(summary, _detectedEncoder);
@@ -624,6 +627,7 @@ public partial class MainWindow : Window
 	{
 		UiPhase previous = _phase;
 		_phase = phase;
+		UpdateTitle();
 
 		// The log while there's no recording on the timeline or a render runs; a freshly loaded summary brings back
 		// the user's choice. After a render the log stays, showing how it went.

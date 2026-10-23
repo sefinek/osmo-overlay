@@ -152,7 +152,9 @@ public sealed record OverlaySettings(
 	// No widget's shadow anywhere - preview, snapshot and render - whatever the widgets' own shadow settings, which are kept.
 	bool DisableShadows = false,
 	// The log panel shows everything the file log gets, not just what the app surfaces; holding Shift at startup turns it on for that run.
-	bool DebugMode = false)
+	bool DebugMode = false,
+	// The settings preset (ConfigPreset) whose values the fields it covers hold now; null until the first one is made.
+	string? ActiveConfigPresetId = null)
 {
 	/// <summary>Whether the preview draws the widgets' shadows: on in the preview and not turned off everywhere.</summary>
 	[JsonIgnore]
@@ -241,7 +243,10 @@ public static class OverlaySettingsStore
 		{
 			// Best-effort cache: a failed write should not break the editing flow.
 			AppLogger.Warn(ex, CoreStrings.Settings_WriteFailed);
+			return;
 		}
+
+		ConfigPresetStore.Sync(settings);
 	}
 
 	/// <summary>
