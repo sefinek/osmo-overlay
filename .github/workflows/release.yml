@@ -27,6 +27,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Stamp the build
+        shell: bash
+        run: echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
       - name: Read the version
         id: version
         shell: bash

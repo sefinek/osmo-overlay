@@ -16,6 +16,7 @@ using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Updates;
 using OsmoOverlay.Gui.Native;
+using OsmoOverlay.Gui.Windows;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
 
 namespace OsmoOverlay.Gui;
@@ -184,6 +185,7 @@ public partial class MainWindow : Window
 		SpeedMaxBox.Increment = (decimal)OverlayRenderer.SpeedGaugeMaxStep;
 
 		WireCuts();
+		WireVolumeLine();
 		WireMoments();
 		WirePreviewTimeline();
 		WireAudio();
@@ -544,7 +546,7 @@ public partial class MainWindow : Window
 			? OverlayLayers.Drawn(ActiveElements, ActiveLayers)
 			: OverlayPreset.CreateDefault(OverlayPresetStore.DefaultPresetId, Strings.Benchmark_Title).Elements;
 		var request = new BenchmarkRequest(_summary?.InputPaths[0], layout, _openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
-		await new BenchmarkWindow(request, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering, RunAppPreviewTestAsync).ShowDialog(owner);
+		await new Windows.BenchmarkWindow(request, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering, RunAppPreviewTestAsync).ShowDialog(owner);
 
 		OverlaySettings after = OverlaySettingsStore.Load();
 		if (after.PreviewDrawsShadows != shadows) _previewPlayer.SetShadows(after.PreviewDrawsShadows, !after.DisableShadows);

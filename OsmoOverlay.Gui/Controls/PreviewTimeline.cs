@@ -105,6 +105,20 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen SelectedCutBorder = new Pen(Palette.Danger, 2);
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
+	private static readonly Cursor VolumeLineCursor = new(StandardCursorType.SizeNorthSouth);
+	private static readonly Cursor VolumePointCursor = new(StandardCursorType.SizeAll);
+	// The volume line on the audio track: room above and below it, how near the pointer grabs it or a point, and the dB a dragged point catches 0 from.
+	private const double VolumePad = 6;
+	private const double VolumeGrabPixels = 7;
+	private const double VolumePointRadius = 4;
+	private const double VolumeSnapDb = 1;
+	private const double VolumeFadeHandleSize = 7;
+	// What VolumeHitAt returns for the handles at the audio track's top corners (a dot is its index, the line -1).
+	private const int HitFadeIn = -2;
+	private const int HitFadeOut = -3;
+	private static readonly IPen VolumeLinePen = new Pen(Palette.TextPrimary, 1.5);
+	private static readonly IPen VolumeRestPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.5), 1, new DashStyle([4, 3], 0));
+	private static readonly IPen VolumePointPen = new Pen(Palette.Accent, 1.5);
 
 	private readonly Dictionary<int, CachedThumbnail> _thumbnailBitmaps = [];
 	private long _thumbnailUse;
@@ -136,6 +150,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	// A cut edge being dragged is drawn here until the release applies it (CutResized).
 	private TimeRange? _dragPreview;
 	private int? _selectedCut;
+	private IReadOnlyList<VolumePoint> _volume = [];
+	private IReadOnlyList<VolumePoint> _volumeDragStart = [];
+	private int _dragPoint;
+	private double _dragDb;
+	private double _dragTime;
+	private (Point At, string Text)? _volumeLabel;
+	private static readonly IBrush VolumeHandleBrush = Palette.TextPrimary;
 	private bool _expanded;
 	// The tracks' static part (ruler, filmstrip, waveform, GPS loss) drawn once into a bitmap and redrawn only when
 	// the view or the generated content changes. Playback moves the playhead every frame; repainting the thumbnails
@@ -171,6 +192,20 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	/// <summary>A click: the index of the cut under it in Cuts, or null outside every cut.</summary>
 	public event Action<int?>? CutClicked;
+
+	/// <summary>The volume line was edited (VolumeLine, recording seconds): its points - `final` on release, not while dragging.</summary>
+	public event Action<IReadOnlyList<VolumePoint>, bool>? VolumeEdited;
+
+	/// <summary>The sound's level over the recording, drawn as a line on the audio track and edited there when the recording has sound.</summary>
+	public IReadOnlyList<VolumePoint> Volume
+	{
+		get => _volume;
+		set
+		{
+			_volume = value;
+			InvalidateVisual();
+		}
+	}
 
 	/// <summary>The cut drawn as selected (Delete removes it) - an index into Cuts.</summary>
 	public int? SelectedCut
@@ -427,6 +462,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		DrawFiles(context, videoTop, bottom);
 		DrawCuts(context, videoTop, bottom);
 		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
+		DrawVolume(context, width);
 		DrawMoments(context, 0, bottom);
 
 		if (_hoverX is { } hover) context.DrawLine(HoverPen, new Point(hover, 0), new Point(hover, bottom));
@@ -696,6 +732,172 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	private double AudioTop => RulerHeight + TrackGap + VideoTrackHeight + TrackGap;
+
+	private bool VolumeEditable => _expanded && _waveform is not null && Duration > 0;
+
+	private double VolumeY(double db)
+	{
+		double height = AudioTrackHeight - 2 * VolumePad;
+		return AudioTop + VolumePad + (VolumeLine.MaxDb - db) / (VolumeLine.MaxDb - VolumeLine.SilentDb) * height;
+	}
+
+	private double VolumeDbAt(double y)
+	{
+		double height = AudioTrackHeight - 2 * VolumePad;
+		return Math.Clamp(VolumeLine.MaxDb - (y - AudioTop - VolumePad) / height * (VolumeLine.MaxDb - VolumeLine.SilentDb), VolumeLine.SilentDb, VolumeLine.MaxDb);
+	}
+
+	private static string DbText(double db)
+	{
+		return db <= VolumeLine.SilentDb ? Strings.Timeline_VolumeOff : db.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " dB";
+	}
+
+	/// <summary>The recording's own level as a dashed line; once edited, the line itself with a dot per point, and the level under the pointer while it's dragged.</summary>
+	private void DrawVolume(DrawingContext context, double width)
+	{
+		if (!VolumeEditable) return;
+
+		double left = Math.Max(0, X(0)), right = Math.Min(width, X(Duration));
+		if (right <= left) return;
+
+		using (context.PushClip(new Rect(left, AudioTop, right - left, AudioTrackHeight)))
+		{
+			if (_volume.Count == 0)
+			{
+				double y = VolumeY(0);
+				context.DrawLine(VolumeRestPen, new Point(left, y), new Point(right, y));
+			}
+			else
+			{
+				var line = new StreamGeometry();
+				using (StreamGeometryContext stream = line.Open())
+				{
+					stream.BeginFigure(new Point(left, VolumeY(VolumeLine.DbAt(_volume, TimeAt(left)))), false);
+					foreach (VolumePoint point in _volume)
+					{
+						double x = X(point.Seconds);
+						if (x > left && x < right) stream.LineTo(new Point(x, VolumeY(point.Db)));
+					}
+
+					stream.LineTo(new Point(right, VolumeY(VolumeLine.DbAt(_volume, TimeAt(right)))));
+					stream.EndFigure(false);
+				}
+
+				context.DrawGeometry(null, VolumeLinePen, line);
+				foreach (VolumePoint point in _volume)
+					context.DrawEllipse(Palette.TextPrimary, VolumePointPen, new Point(X(point.Seconds), VolumeY(point.Db)), VolumePointRadius, VolumePointRadius);
+			}
+		}
+
+		foreach (double x in new[] { X(VolumeLine.FadeInSeconds(_volume)), X(Duration - VolumeLine.FadeOutSeconds(_volume, Duration)) })
+		{
+			if (x >= left - VolumeFadeHandleSize && x <= right + VolumeFadeHandleSize)
+				context.FillRectangle(VolumeHandleBrush, new Rect(x - VolumeFadeHandleSize / 2, AudioTop, VolumeFadeHandleSize, VolumeFadeHandleSize / 1.4));
+		}
+
+		if (_volumeLabel is not { } label) return;
+
+		var text = new FormattedText(label.Text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelTypeface, 11, Palette.TextPrimary);
+		var chip = new Rect(Math.Clamp(label.At.X + 10, 0, Math.Max(0, width - text.Width - 10)), Math.Max(0, label.At.Y - 24), text.Width + 8, text.Height + 2);
+		context.DrawRectangle(Palette.SurfaceSunken, VolumePointPen, chip, 3, 3);
+		context.DrawText(text, new Point(chip.X + 4, chip.Y + 1));
+	}
+
+	/// <summary>What the volume line has under a point: the index of a dot, -1 for the line between them (or the rest level), null for neither.</summary>
+	private int? VolumeHitAt(Point point)
+	{
+		if (!VolumeEditable || point.Y < AudioTop || point.Y > AudioTop + AudioTrackHeight || point.X < X(0) || point.X > X(Duration)) return null;
+
+		if (point.Y <= AudioTop + VolumeFadeHandleSize)
+		{
+			if (Math.Abs(point.X - X(VolumeLine.FadeInSeconds(_volume))) <= VolumeFadeHandleSize) return HitFadeIn;
+			if (Math.Abs(point.X - X(Duration - VolumeLine.FadeOutSeconds(_volume, Duration))) <= VolumeFadeHandleSize) return HitFadeOut;
+		}
+
+		int nearest = -1;
+		double best = VolumeGrabPixels;
+		for (int i = 0; i < _volume.Count; i++)
+		{
+			double distance = Math.Sqrt(Math.Pow(X(_volume[i].Seconds) - point.X, 2) + Math.Pow(VolumeY(_volume[i].Db) - point.Y, 2));
+			if (distance > best) continue;
+
+			best = distance;
+			nearest = i;
+		}
+
+		if (nearest >= 0) return nearest;
+
+		return Math.Abs(VolumeY(VolumeLine.DbAt(_volume, TimeAt(point.X))) - point.Y) <= VolumeGrabPixels ? -1 : null;
+	}
+
+	private void SetVolume(IReadOnlyList<VolumePoint> volume, bool final)
+	{
+		_volume = volume;
+		InvalidateVisual();
+		VolumeEdited?.Invoke(volume, final);
+	}
+
+	/// <summary>A dot dragged moves it in time and level, the line dragged moves the two dots either side of the pointer; a double-click adds a dot or takes one away.</summary>
+	private void BeginVolumeDrag(int hit, Point at, int clickCount)
+	{
+		if (hit is HitFadeIn or HitFadeOut)
+		{
+			_volumeDragStart = _volume;
+			_drag = hit == HitFadeIn ? DragMode.VolumeFadeIn : DragMode.VolumeFadeOut;
+			return;
+		}
+
+		if (clickCount > 1)
+		{
+			SetVolume(hit >= 0 ? VolumeLine.Remove(_volume, hit, Duration) : VolumeLine.Add(_volume, ValueAt(at.X), Duration), true);
+			return;
+		}
+
+		_volumeDragStart = _volume;
+		_dragPoint = hit;
+		_dragDb = VolumeDbAt(at.Y);
+		_dragTime = ValueAt(at.X);
+		_drag = hit >= 0 ? DragMode.VolumePoint : DragMode.VolumeLine;
+	}
+
+	private static string FadeText(bool fadeIn, double seconds)
+	{
+		return string.Format(fadeIn ? Strings.Timeline_VolumeFadeIn : Strings.Timeline_VolumeFadeOut, seconds.ToString("0.0#", CultureInfo.InvariantCulture));
+	}
+
+	private void DragVolume(Point at)
+	{
+		if (_drag is DragMode.VolumeFadeIn or DragMode.VolumeFadeOut)
+		{
+			double time = Snap(ValueAt(at.X));
+			bool fadeIn = _drag == DragMode.VolumeFadeIn;
+			double length = Math.Round((fadeIn ? time : Duration - time) * _fps) / _fps;
+			SetVolume(fadeIn ? VolumeLine.WithFadeIn(_volumeDragStart, length, Duration) : VolumeLine.WithFadeOut(_volumeDragStart, length, Duration), false);
+			_volumeLabel = (at, FadeText(fadeIn, fadeIn ? VolumeLine.FadeInSeconds(_volume) : VolumeLine.FadeOutSeconds(_volume, Duration)));
+		}
+		else if (_drag == DragMode.VolumePoint)
+		{
+			double db = VolumeDbAt(at.Y);
+			if (Math.Abs(db) < VolumeSnapDb) db = 0;
+
+			SetVolume(VolumeLine.Move(_volumeDragStart, _dragPoint, Snap(ValueAt(at.X)), db, Duration), false);
+			_volumeLabel = (at, DbText(db));
+		}
+		else
+		{
+			SetVolume(VolumeLine.Shift(_volumeDragStart, _dragTime, VolumeDbAt(at.Y) - _dragDb, Duration), false);
+			_volumeLabel = (at, DbText(VolumeLine.DbAt(_volume, _dragTime)));
+		}
+	}
+
+	private void ShowVolumeMenu()
+	{
+		var reset = new MenuItem { Header = Strings.Timeline_VolumeReset };
+		reset.Click += (_, _) => SetVolume([], true);
+		new ContextMenu { ItemsSource = new[] { reset } }.Open(this);
+	}
+
 	/// <summary>A BGRA pixel of this color at this alpha (0-1), premultiplied.</summary>
 	private static int Premultiplied(Color color, double alpha)
 	{
@@ -929,6 +1131,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	{
 		base.OnPointerPressed(e);
 		PointerPoint point = e.GetCurrentPoint(this);
+		if (point.Properties.IsRightButtonPressed && _volume.Count > 0 && VolumeHitAt(point.Position) is not null)
+		{
+			e.Handled = true;
+			ShowVolumeMenu();
+			return;
+		}
+
 		if (!point.Properties.IsLeftButtonPressed || Duration <= 0) return;
 
 		double x = point.Position.X;
@@ -944,6 +1153,13 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		if (EdgeAt(x) is { } edge)
 		{
 			(_drag, _dragCut) = edge;
+			return;
+		}
+
+		if (!e.KeyModifiers.HasFlag(KeyModifiers.Shift) && VolumeHitAt(point.Position) is { } volumeHit)
+		{
+			BeginVolumeDrag(volumeHit, point.Position, e.ClickCount);
+			if (_drag == DragMode.None) e.Pointer.Capture(null);
 			return;
 		}
 
@@ -964,10 +1180,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	protected override void OnPointerMoved(PointerEventArgs e)
 	{
 		base.OnPointerMoved(e);
-		double x = e.GetPosition(this).X;
+		Point position = e.GetPosition(this);
+		double x = position.X;
 		double time = Snap(ValueAt(x));
 		switch (_drag)
 		{
+			case DragMode.VolumePoint or DragMode.VolumeLine or DragMode.VolumeFadeIn or DragMode.VolumeFadeOut:
+				DragVolume(position);
+				break;
 			case DragMode.Scrub:
 				Value = ValueAt(x);
 				break;
@@ -986,8 +1206,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 				InvalidateVisual();
 				break;
 			default:
-				Cursor = EdgeAt(x) is null ? HandCursor : ResizeCursor;
-				UpdateTip(TipAt(e.GetPosition(this)));
+				Cursor = EdgeAt(x) is not null ? ResizeCursor : VolumeHitAt(position) is { } hover ? hover >= 0 ? VolumePointCursor : hover == -1 ? VolumeLineCursor : ResizeCursor : HandCursor;
+				UpdateTip(TipAt(position));
 				break;
 		}
 
@@ -1030,6 +1250,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		{
 			_scrubbing = false;
 			ScrubEnded?.Invoke();
+		}
+		else if (drag is DragMode.VolumePoint or DragMode.VolumeLine or DragMode.VolumeFadeIn or DragMode.VolumeFadeOut)
+		{
+			_volumeLabel = null;
+			SetVolume(commit ? _volume : _volumeDragStart, true);
 		}
 		else if (drag is DragMode.CutStart or DragMode.CutEnd && _dragPreview is { } resized)
 		{
@@ -1076,6 +1301,12 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>What the pointer is over: a key moment, or a stretch without a GPS fix (its line under the track) - null for neither.</summary>
 	private string? TipAt(Point point)
 	{
+		if (VolumeHitAt(point) is (HitFadeIn or HitFadeOut) and var fade)
+			return FadeText(fade == HitFadeIn, fade == HitFadeIn ? VolumeLine.FadeInSeconds(_volume) : VolumeLine.FadeOutSeconds(_volume, Duration));
+
+		if (VolumeHitAt(point) is { } volumeHit)
+			return string.Format(Strings.Timeline_VolumeTip, DbText(volumeHit >= 0 ? _volume[volumeHit].Db : VolumeLine.DbAt(_volume, TimeAt(point.X))));
+
 		if (MomentAt(point.X) is { } moment)
 			return $"{(string.IsNullOrWhiteSpace(moment.Name) ? Strings.Timeline_KeyMoment : moment.Name)}  -  {TimeText.Format(moment.Seconds)}";
 
@@ -1230,6 +1461,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		SelectionStart,
 		SelectionEnd,
 		CutStart,
-		CutEnd
+		CutEnd,
+		VolumePoint,
+		VolumeLine,
+		VolumeFadeIn,
+		VolumeFadeOut
 	}
 }

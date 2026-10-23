@@ -38,7 +38,9 @@ public sealed record RenderOptions(
 	// A track from another device put onto the telemetry the render extracts (ignored with TelemetryFrames, which the caller already has the track in).
 	ExternalTrackSource? ExternalTrack = null,
 	// A render without the sound track; null = Settings' choice.
-	bool? NoAudio = null)
+	bool? NoAudio = null,
+	// The sound's level over the recording (VolumeLine); null or empty = the recording's own.
+	IReadOnlyList<VolumePoint>? Volume = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -284,7 +286,7 @@ public static class RenderJob
 				: new LibavVideoSource(PlaybackSegment.Of(segments), fps,
 					output.Width, output.Height, reframer);
 			using Process ffmpeg = FfmpegPipeline.StartRender(noAudio ? [.. segments.Select(s => s with { Source = s.Source with { Audio = null } })] : segments, options.OutputPath, encoder, output, options.Overwrite, encode,
-				plan, options.GreenScreen, pictures is not null);
+				plan, options.GreenScreen, pictures is not null, options.Volume);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// Disposing the Process doesn't terminate it: every path out of the try below must leave ffmpeg dead,

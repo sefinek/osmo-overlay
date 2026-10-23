@@ -14,7 +14,7 @@ public static class AppBanner
 		return
 		[
 			"==================================================",
-			$"     OsmoOverlay | {appLabel} v{appVersion} | Core v{coreVersion}",
+			$"     OsmoOverlay | {appLabel} v{appVersion} | Core v{coreVersion} | build {BuildInfo.Describe()}",
 			" Telemetry HUD burner for DJI Osmo Action footage",
 			$" {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}, .NET {Environment.Version}",
 			"=================================================="

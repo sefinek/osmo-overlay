@@ -31,6 +31,9 @@ public sealed record OverlayProject(
 	public List<KeyMoment> Moments { get; init; } = [];
 	public ExternalTrackSource? ExternalTrack { get; init; }
 
+	/// <summary>The sound's level over the recording (VolumeLine) - absent in projects saved before it existed.</summary>
+	public List<VolumePoint> Volume { get; init; } = [];
+
 	private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
 	public void Save(string path)

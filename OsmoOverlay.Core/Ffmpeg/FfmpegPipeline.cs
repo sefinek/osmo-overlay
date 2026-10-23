@@ -179,7 +179,7 @@ public static class FfmpegPipeline
 
 	/// <param name="output">The stream written (OutputVideo.For) - the source's own unless Settings picked another size, codec or depth.</param>
 	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, VideoInfo output, bool overwrite,
-		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false)
+		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false, IReadOnlyList<VolumePoint>? volume = null)
 	{
 		SourceInfo info = segments[0].Source;
 		(int num, int den) = ParseFrameRate(info.Video.FrameRate);
@@ -234,18 +234,29 @@ public static class FfmpegPipeline
 		string range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
 		bool h264 = IsH264Encoder(encoder);
 
-		args.AddRange(["-filter_complex", FilterGraph(source.MainVideo, source.InputCount, info.Video, output, greenScreen, composedPicture)]);
+		string graph = FilterGraph(source.MainVideo, source.InputCount, info.Video, output, greenScreen, composedPicture);
+		string? audioMap = source.AudioMap;
+		bool encodeAudio = source.EncodeAudio;
+		if (audioMap is not null && volume is { Count: > 0 })
+		{
+			string expression = VolumeLine.FfmpegExpression(VolumeLine.ForOutput(volume, plan, num / (double)den));
+			graph += $";{(audioMap.StartsWith('[') ? audioMap : $"[{audioMap}]")}volume=volume='{expression}':eval=frame:precision=float[vola]";
+			audioMap = "[vola]";
+			encodeAudio = true;
+		}
+
+		args.AddRange(["-filter_complex", graph]);
 
 		args.AddRange(["-map", "[v]"]);
 		// No corresponding "0:a" input to map when greenScreen replaced input 0 with a silent color
 		// source - this export is a compositing asset, not a finished clip, so dropping audio here
 		// (rather than muxing it in from a source the user would then have to strip back out) is fine.
-		if (source.AudioMap is not null)
+		if (audioMap is not null)
 		{
-			args.AddRange(["-map", source.AudioMap]);
-			// Pieces joined by the concat filter are decoded audio - it can't be stream-copied across the
+			args.AddRange(["-map", audioMap]);
+			// Pieces joined by the concat filter, or a volume line, are decoded audio - it can't be stream-copied across the
 			// joins, so it's re-encoded at the source's own AAC bitrate. A single piece stays a lossless copy.
-			if (!source.EncodeAudio)
+			if (!encodeAudio)
 			{
 				args.AddRange(["-c:a", "copy"]);
 			}

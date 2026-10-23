@@ -123,8 +123,7 @@ public partial class SettingsWindow : Window
 		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
 		AppVersionText.Text = SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
 
-		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
-		CoreVersionText.Text = string.Format(Strings.Settings_CoreVersion, coreVersion);
+		CoreVersionText.Text = string.Format(Strings.Settings_BuildDate, BuildInfo.Describe());
 		DependencyStatusRows.ShowChecking(DependencyStatusGrid, RequiredTools.All);
 
 		DateTime? configLastUpdatedUtc = OverlaySettingsStore.GetLastUpdatedUtc();

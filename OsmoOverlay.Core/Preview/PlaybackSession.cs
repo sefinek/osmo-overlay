@@ -50,6 +50,8 @@ internal sealed class PlaybackSession
 	private readonly LibavVideoSource _video;
 	private readonly LibavAudioSource? _audioSource;
 	private readonly AudioOutput? _audioOutput;
+	private readonly Func<IReadOnlyList<VolumePoint>> _volume;
+	private float[] _gained = [];
 	private readonly OverlayCompositor _compositor;
 	private readonly FrameBufferPool _pool;
 	private readonly PlaybackPlan _plan;
@@ -84,8 +86,9 @@ internal sealed class PlaybackSession
 	private double _lateMax;
 
 	public PlaybackSession(LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput, OverlayCompositor compositor,
-		FrameBufferPool pool, PlaybackPlan plan, double rate, PlaybackFrameSource frames)
+		FrameBufferPool pool, PlaybackPlan plan, double rate, PlaybackFrameSource frames, Func<IReadOnlyList<VolumePoint>>? volume = null)
 	{
+		_volume = volume ?? (() => []);
 		_video = video;
 		_audioSource = audioSource;
 		_audioOutput = audioOutput;
@@ -480,6 +483,7 @@ internal sealed class PlaybackSession
 		foreach (PlaybackStretch stretch in stretches)
 		{
 			source.Seek(stretch.Start.TotalSeconds);
+			double position = stretch.Start.TotalSeconds;
 			while (true)
 			{
 				if (ct.IsCancellationRequested) return false;
@@ -492,6 +496,8 @@ internal sealed class PlaybackSession
 				ReadOnlySpan<float> samples = source.Read(stretch.End.TotalSeconds);
 				if (samples.IsEmpty) break;
 
+				samples = ApplyVolume(samples, position, source.SampleRate, source.Channels);
+				position += (double)samples.Length / source.Channels / source.SampleRate;
 				if (tempo is not null) samples = tempo.Process(samples);
 				output.Push(samples);
 				_clock.AddPushed(samples.Length / source.Channels);
@@ -499,6 +505,30 @@ internal sealed class PlaybackSession
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	///     The samples (starting at `position`, recording seconds) at the volume line's level, which runs straight in dB across
+	///     the chunk - a copy, the decoder's buffer is its own. The line as it is now: an edit reaches the sound a queue later.
+	/// </summary>
+	private ReadOnlySpan<float> ApplyVolume(ReadOnlySpan<float> samples, double position, int sampleRate, int channels)
+	{
+		IReadOnlyList<VolumePoint> line = _volume();
+		if (line.Count == 0) return samples;
+
+		int frames = samples.Length / channels;
+		double end = position + (double)frames / sampleRate;
+		double db0 = VolumeLine.DbAt(line, position), db1 = VolumeLine.DbAt(line, end);
+		if (Math.Abs(db0) < 1e-3 && Math.Abs(db1) < 1e-3) return samples;
+
+		if (_gained.Length < samples.Length) _gained = new float[samples.Length];
+		for (int i = 0; i < frames; i++)
+		{
+			float gain = (float)VolumeLine.Gain(db0 + (db1 - db0) * i / frames);
+			for (int c = 0; c < channels; c++) _gained[i * channels + c] = samples[i * channels + c] * gain;
+		}
+
+		return _gained.AsSpan(0, samples.Length);
 	}
 
 	private readonly record struct DecodedFrame(VideoFrame Frame, TimeSpan Position, double PlayTime, bool StartsStretch);

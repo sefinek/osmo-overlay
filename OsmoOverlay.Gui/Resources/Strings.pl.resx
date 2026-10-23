@@ -2211,8 +2211,8 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Settings_CopiesWhatTheCameraRecorded" xml:space="preserve">
     <value>Kopiuje metadane kamery do pliku wyjściowego, aby mogły je nadal odczytywać DJI Mimo, ExifTool i OsmoOverlay. Poniżej wybierz dane, które chcesz zachować.</value>
   </data>
-  <data name="Settings_CoreVersion" xml:space="preserve">
-    <value>Core v{0}</value>
+  <data name="Settings_BuildDate" xml:space="preserve">
+    <value>Kompilacja {0}</value>
   </data>
   <data name="Settings_CoverImageCameraModelShooting" xml:space="preserve">
     <value>Okładka, model kamery, ustawienia nagrywania i oryginalna nazwa pliku z kamery.</value>
@@ -3899,6 +3899,21 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   </data>
   <data name="Timeline_RouteIntroTip" xml:space="preserve">
     <value>Wstęp z trasą trwa do {0}. Plansza zasłania początek nagrania, a widżety pojawiają się, gdy plansza zanika. Znak wodny jest widoczny w rogu planszy; czas jego wyświetlania jako osobnego widżetu jest liczony od końca wstępu.</value>
+  </data>
+  <data name="Timeline_VolumeTip" xml:space="preserve">
+    <value>Głośność: {0}. Przeciągnij linię w górę lub w dół, aby ją zmienić; dwuklik dodaje punkt, dwuklik na punkcie go usuwa.</value>
+  </data>
+  <data name="Timeline_VolumeOff" xml:space="preserve">
+    <value>wyciszone</value>
+  </data>
+  <data name="Timeline_VolumeReset" xml:space="preserve">
+    <value>Zresetuj głośność</value>
+  </data>
+  <data name="Timeline_VolumeFadeIn" xml:space="preserve">
+    <value>Dźwięk narasta przez {0} s</value>
+  </data>
+  <data name="Timeline_VolumeFadeOut" xml:space="preserve">
+    <value>Dźwięk cichnie przez {0} s</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
     <value>Przy włączonym wstępie z trasą znak wodny jako osobny widżet pojawia się po jego zakończeniu. Pola czasu uwzględniają to przesunięcie. Podczas wstępu znak wodny jest widoczny w rogu planszy.</value>

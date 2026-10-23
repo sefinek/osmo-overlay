@@ -8,7 +8,7 @@ namespace OsmoOverlay.Gui;
 /// <summary>
 ///     Undo/redo (Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z) and copy/cut/paste/duplicate of a widget (Ctrl+C/X/V/D, Delete) - in the
 ///     preview and anywhere but a text box, which keeps its own. The history covers what the user edits: the active
-///     preset's layout, the cuts and the 360 view (EditSnapshot). The three places those change report to it
+///     preset's layout, the cuts, the volume line and the 360 view (EditSnapshot). The three places those change report to it
 ///     (ReplaceActiveElements, ApplyCuts, ApplyReframe); Preset-level operations (switching, new, delete, reset) and loading
 ///     a recording or project start a new history.
 /// </summary>
@@ -23,7 +23,7 @@ public partial class MainWindow
 
 	private EditSnapshot CaptureState()
 	{
-		return new EditSnapshot(_activePresetId, ActiveElements, ActivePreset?.Layers, [.. _cuts], _reframe);
+		return new EditSnapshot(_activePresetId, ActiveElements, ActivePreset?.Layers, [.. _cuts], _reframe, [.. _volumeLine]);
 	}
 
 	private bool HistoryReady => !_applyingHistory && _overlayPresetsLoaded && _summary is not null;
@@ -81,6 +81,8 @@ public partial class MainWindow
 			};
 			_cuts = [.. snapshot.Cuts];
 			ApplyCuts();
+			_volumeLine = [.. snapshot.Volume];
+			ShowVolumeLine();
 			ApplyReframe(snapshot.Reframe);
 			if (Is360) ScheduleThumbnailReload();
 

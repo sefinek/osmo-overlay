@@ -18,7 +18,7 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 
-namespace OsmoOverlay.Gui;
+namespace OsmoOverlay.Gui.Windows;
 
 /// <summary>What the test runs with: the loaded recording (null = none), the layout a render would draw and the preview's width cap.</summary>
 public sealed record BenchmarkRequest(string? RecordingPath, IReadOnlyList<OverlayElement> Layout, int PreviewWidth);
@@ -197,7 +197,7 @@ public partial class BenchmarkWindow : Window
 		StartButton.Content = Strings.Benchmark_Stop;
 		FullscreenCheck.IsEnabled = false;
 		RecordingCheck.IsEnabled = false;
-		Progress.IsVisible = true;
+		IsVisible = true;
 		Progress.IsIndeterminate = true;
 		ResultsPanel.IsVisible = false;
 		CopyReportButton.IsEnabled = false;
@@ -218,7 +218,7 @@ public partial class BenchmarkWindow : Window
 		{
 			EnterPhase(Phase.Prepare);
 			ShowScreenText(Strings.Benchmark_LivePreparing);
-			IReadOnlyList<string> paths = await Task.Run(() => SyntheticRecording.EnsureAsync(share => Dispatcher.UIThread.Post(() =>
+			IReadOnlyList<string> paths = await Task.Run<IReadOnlyList<string>>(() => SyntheticRecording.EnsureAsync(share => Dispatcher.UIThread.Post(() =>
 			{
 				Progress.IsIndeterminate = false;
 				Progress.Maximum = 1;
@@ -273,7 +273,7 @@ public partial class BenchmarkWindow : Window
 			StartButton.Content = Strings.Benchmark_Start;
 			FullscreenCheck.IsEnabled = true;
 			RecordingCheck.IsEnabled = true;
-			Progress.IsVisible = false;
+			IsVisible = false;
 			LivePanel.IsVisible = false;
 			ClearLiveFrame();
 		}

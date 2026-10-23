@@ -54,7 +54,7 @@ public partial class MainWindow
 		List<TimeRange>? cutOuts = CutOutsForRender();
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
-			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe);
+			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe, Volume: [.. _volumeLine]);
 
 		AppendLog(greenScreen ? Strings.Render_ModeGreenScreen : Strings.Render_ModeNormal);
 		if (range is { } shown) AppendLog(string.Format(Strings.Render_LogRange, DescribeSelection(shown)));

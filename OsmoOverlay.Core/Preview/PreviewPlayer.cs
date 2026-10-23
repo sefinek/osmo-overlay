@@ -60,6 +60,8 @@ public sealed class PreviewPlayer : IDisposable
 	private OutputTimeline? _outputTimeline;
 	private bool _showOverlay = true;
 	private float _audioGain;
+	// The volume line (VolumeLine) - read by the playback's sound feed, so it applies right away, also mid-playback.
+	private IReadOnlyList<VolumePoint> _volume = [];
 	// A 360 recording's view (SetReframe) - the default one until set.
 	private ReframeView _reframe = new();
 
@@ -269,6 +271,12 @@ public sealed class PreviewPlayer : IDisposable
 		_recording?.AudioOutput?.SetGain(_audioGain);
 	}
 
+	/// <summary>The sound's level over the recording (VolumeLine); the sound already queued for the device plays as it was.</summary>
+	public void SetVolumeLine(IReadOnlyList<VolumePoint> volume)
+	{
+		Volatile.Write(ref _volume, volume);
+	}
+
 	/// <summary>The audio track and the playback device, or (null, null) - the preview then plays without sound.</summary>
 	private static (LibavAudioSource?, AudioOutput?) OpenAudio(IReadOnlyList<PlaybackSegment> segments)
 	{
@@ -311,7 +319,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		var plan = PlaybackPlan.For(_outputTimeline, fromPosition, recording.Video.Duration, Loop, LoopRange);
 		var session = new PlaybackSession(recording.Video, recording.AudioSource, recording.AudioOutput, recording.Compositor,
-			recording.Pool, plan, PlaybackRate, Frames);
+			recording.Pool, plan, PlaybackRate, Frames, () => Volatile.Read(ref _volume));
 		_session = session;
 		Frames.Attach(session);
 		_ = StartWhenFreeAsync(session, _sessionsStopped);

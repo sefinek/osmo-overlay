@@ -2211,8 +2211,8 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_CopiesWhatTheCameraRecorded" xml:space="preserve">
     <value>Copies camera metadata to the output file so DJI Mimo, ExifTool and OsmoOverlay can still read it. Select the data you want to keep below.</value>
   </data>
-  <data name="Settings_CoreVersion" xml:space="preserve">
-    <value>Core v{0}</value>
+  <data name="Settings_BuildDate" xml:space="preserve">
+    <value>Build {0}</value>
   </data>
   <data name="Settings_CoverImageCameraModelShooting" xml:space="preserve">
     <value>Cover image, camera model, shooting settings and the file's original name on the camera.</value>
@@ -3899,6 +3899,21 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="Timeline_RouteIntroTip" xml:space="preserve">
     <value>Route intro until {0}. The card covers the start of the recording and the widgets appear as it fades out. The watermark is in the card's corner, and as a widget it counts its times from the card's end.</value>
+  </data>
+  <data name="Timeline_VolumeTip" xml:space="preserve">
+    <value>Volume {0}. Drag the line up or down to change it; double-click adds a point, double-click on a point removes it.</value>
+  </data>
+  <data name="Timeline_VolumeOff" xml:space="preserve">
+    <value>off</value>
+  </data>
+  <data name="Timeline_VolumeReset" xml:space="preserve">
+    <value>Reset volume</value>
+  </data>
+  <data name="Timeline_VolumeFadeIn" xml:space="preserve">
+    <value>Sound fades in over {0} s</value>
+  </data>
+  <data name="Timeline_VolumeFadeOut" xml:space="preserve">
+    <value>Sound fades out over {0} s</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
     <value>The route intro is on, so the watermark only appears after the intro ends. The time fields show when it is really visible. On the card itself the watermark is in its corner.</value>

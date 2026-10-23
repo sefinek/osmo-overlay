@@ -40,6 +40,7 @@ public partial class MainWindow
 		ClosePreview();
 		ResetReframe();
 		ClearCuts();
+		SetVolumeLine([]);
 		ClearMoments();
 		ReleaseTimelineTracks();
 		_inputPaths.Clear();
@@ -150,6 +151,7 @@ public partial class MainWindow
 			preset)
 		{
 			Moments = loaded ? [.. _moments] : [],
+			Volume = loaded ? [.. _volumeLine] : [],
 			ExternalTrack = _externalTrack
 		};
 	}
@@ -213,6 +215,8 @@ public partial class MainWindow
 				ApplyCuts();
 			}
 		}
+
+		SetVolumeLine(project.Volume ?? []);
 
 		List<KeyMoment> moments = KeyMoments.Normalize(project.Moments, SourceFrames);
 		if (moments.Count > 0)

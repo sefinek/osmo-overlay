@@ -34,6 +34,7 @@ public partial class MainWindow
 		_availability = new OverlayAvailability(false, false, false, false, false);
 		// Cuts, thumbnails and the waveform belong to the recording they were made for.
 		ClearCuts();
+		SetVolumeLine([]);
 		ClearMoments();
 		ReleaseTimelineTracks();
 		ClearLogPanels();
