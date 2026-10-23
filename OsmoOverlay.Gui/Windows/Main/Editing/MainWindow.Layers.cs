@@ -59,6 +59,7 @@ public partial class MainWindow
 		var margin = new Thickness(0, 0, Math.Max(0, LayerScroll.Bounds.Width - LayerScroll.Viewport.Width), 0);
 		if (ExpandedTimelineFrame.Margin == margin) return;
 
+		MusicTracks.Margin = margin;
 		ExpandedTimelineFrame.Margin = margin;
 		TimelineScrollBar.Margin = margin;
 	}
@@ -82,6 +83,7 @@ public partial class MainWindow
 
 	private void RefreshLayers()
 	{
+		RefreshMusicView();
 		if (_summary is null || ActivePreset is null)
 		{
 			LayerTracks.Tracks = [];

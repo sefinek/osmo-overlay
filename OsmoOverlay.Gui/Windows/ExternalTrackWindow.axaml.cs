@@ -55,7 +55,7 @@ public partial class ExternalTrackWindow : Window
 
 	private async void OnBrowseClick(object? sender, RoutedEventArgs e)
 	{
-		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenRememberedAsync("gps-track", new FilePickerOpenOptions
 		{
 			Title = Strings.Track_Title,
 			FileTypeFilter = [new FilePickerFileType(Strings.Track_FileType) { Patterns = ["*.fit", "*.FIT", "*.gpx", "*.GPX"] }]

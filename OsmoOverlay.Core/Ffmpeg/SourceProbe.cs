@@ -151,6 +151,22 @@ public static partial class SourceProbe
 		return new SourceInfo(video, audio, duration, containerCreationTimeUtc, camera);
 	}
 
+	/// <summary>A music file's length in seconds; throws when ffprobe can't read it or it has no sound.</summary>
+	public static double ProbeAudioDuration(string path)
+	{
+		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
+			"-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_type:format=duration", "-of", "json", path);
+		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
+		if (exitCode != 0) throw new InvalidOperationException($"ffprobe exited with an error ({exitCode}): {stderr}");
+
+		JsonNode root = JsonNode.Parse(stdout) ?? throw new InvalidOperationException("Empty ffprobe output.");
+		if (root["streams"]?.AsArray().Count is null or 0) throw new InvalidOperationException($"No audio stream found in {path}.");
+
+		return double.TryParse(root["format"]?["duration"]?.GetValue<string>(), NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds) && seconds > 0
+			? seconds
+			: throw new InvalidOperationException($"The length of {path} is unknown.");
+	}
+
 	/// <summary>The flat picture reframed from the lenses - its size, and the lenses' bitrate per pixel kept at that size.</summary>
 	private static VideoInfo Reframed(VideoInfo lenses, DualFisheye fisheye, JsonNode? secondStream)
 	{

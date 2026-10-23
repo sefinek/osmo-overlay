@@ -40,7 +40,9 @@ public sealed record RenderOptions(
 	// A render without the sound track; null = Settings' choice.
 	bool? NoAudio = null,
 	// The sound's level over the recording (VolumeLine); null or empty = the recording's own.
-	IReadOnlyList<VolumePoint>? Volume = null)
+	IReadOnlyList<VolumePoint>? Volume = null,
+	// Music over the sound, on the output's timeline (MusicTrack); null or empty = none.
+	IReadOnlyList<MusicClip>? Music = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -285,7 +287,8 @@ public static class RenderJob
 				: new LibavVideoSource(PlaybackSegment.Of(segments), fps,
 					output.Width, output.Height, reframer);
 			using Process ffmpeg = FfmpegPipeline.StartRender(noAudio ? [.. segments.Select(s => s with { Source = s.Source with { Audio = null } })] : segments, options.OutputPath, encoder, output, options.Overwrite, encode,
-				plan, options.GreenScreen, pictures is not null, options.Volume);
+				plan, options.GreenScreen, pictures is not null, options.Volume,
+				options.Music is { Count: > 0 } ? MusicTrack.Normalize(options.Music, plan.TotalFrames / fps) : null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// Disposing the Process doesn't terminate it: every path out of the try below must leave ffmpeg dead,

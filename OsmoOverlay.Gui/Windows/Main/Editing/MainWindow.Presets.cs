@@ -102,7 +102,7 @@ public partial class MainWindow
 
 		OverlayPreset preset = _overlayPresets.First(p => p.Id == _activePresetId);
 
-		IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		IStorageFile? file = await topLevel.StorageProvider.SaveRememberedAsync("layout-export", new FilePickerSaveOptions
 		{
 			Title = Strings.Presets_ExportTitle,
 			SuggestedFileName = preset.Name,
@@ -122,7 +122,7 @@ public partial class MainWindow
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("layout-import", new FilePickerOpenOptions
 		{
 			Title = Strings.Presets_ImportTitle,
 			AllowMultiple = false,

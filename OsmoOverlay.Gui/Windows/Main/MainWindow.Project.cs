@@ -44,6 +44,7 @@ public partial class MainWindow
 		ResetReframe();
 		ClearCuts();
 		SetVolumeLine([]);
+		ResetMusic();
 		ClearMoments();
 		ReleaseTimelineTracks();
 		_inputPaths.Clear();
@@ -61,7 +62,7 @@ public partial class MainWindow
 	{
 		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering) return;
 
-		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenRememberedAsync("project-open", new FilePickerOpenOptions
 		{
 			Title = Strings.Main_OpenProject,
 			AllowMultiple = false,
@@ -104,7 +105,7 @@ public partial class MainWindow
 				? Path.GetFileNameWithoutExtension(_inputPaths[0])
 				: "project";
 
-		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		IStorageFile? file = await StorageProvider.SaveRememberedAsync("project-save", new FilePickerSaveOptions
 		{
 			Title = Strings.Project_SaveTitle,
 			SuggestedFileName = suggested,
@@ -156,6 +157,7 @@ public partial class MainWindow
 		{
 			Moments = loaded ? [.. _moments] : [],
 			Volume = loaded ? [.. _volumeLine] : [],
+			Music = loaded ? [.. _music] : [],
 			ExternalTrack = _externalTrack,
 			SettingsPresetId = OverlaySettingsStore.Load().ActiveSettingsPresetId
 		};
@@ -223,6 +225,11 @@ public partial class MainWindow
 		}
 
 		SetVolumeLine(project.Volume ?? []);
+
+		List<MusicClip> music = MusicTrack.Normalize(project.Music ?? [], OutputSeconds);
+		List<string> missingMusic = [.. music.Where(c => !File.Exists(c.Path)).Select(c => Path.GetFileName(c.Path)).Distinct()];
+		if (missingMusic.Count > 0) AppLogger.Warn(string.Format(Strings.Project_MusicMissing, string.Join(", ", missingMusic)));
+		SetMusic(music.Where(c => File.Exists(c.Path)));
 
 		List<KeyMoment> moments = KeyMoments.Normalize(project.Moments, SourceFrames);
 		if (moments.Count > 0)

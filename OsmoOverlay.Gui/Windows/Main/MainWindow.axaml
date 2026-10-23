@@ -1075,6 +1075,11 @@
 
 								<TextBlock Text="{x:Static local:Strings.Main_PaletteDragOntoPreview}" Classes="sectionLabel" Margin="0,6,0,0" />
 								<StackPanel Spacing="6">
+									<Border Name="MusicListItem" Classes="overlayListItem" ToolTip.Tip="{x:Static local:Strings.Music_PaletteTip}"
+									        PointerPressed="OnMusicItemPointerPressed" PointerMoved="OnMusicItemPointerMoved"
+									        PointerReleased="OnMusicItemPointerEnded" PointerCaptureLost="OnMusicItemPointerEnded">
+										<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_Music}" />
+									</Border>
 									<Grid ColumnDefinitions="*,Auto,Auto">
 										<Border Grid.Column="0" Name="DateTimeListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.DateTimeText}"
@@ -2272,8 +2277,9 @@
 
 		<local:PanelSplitter Name="BottomSplitter" Grid.Row="1" ToolTip.Tip="{x:Static local:Strings.Main_ResizeCards}" />
 
-		<Border Grid.Row="2" Classes="card" Name="TimelineCard" IsVisible="False">
-			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,*,Auto" RowSpacing="2">
+		<Border Grid.Row="2" Classes="card" Name="TimelineCard" IsVisible="False" DragDrop.AllowDrop="True"
+		        DragDrop.DragOver="OnMusicDragOver" DragDrop.Drop="OnMusicDrop">
+			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="2">
 				<StackPanel Grid.Row="0" Grid.Column="0" Background="{StaticResource ControlBrush}">
 					<Border Height="{x:Static local:PreviewTimeline.RulerHeight}">
 						<StackPanel Orientation="Horizontal" Margin="10,0,0,0" Spacing="8" VerticalAlignment="Center">
@@ -2298,11 +2304,12 @@
 					<local:PreviewTimeline Name="ExpandedTimeline" Expanded="True" Minimum="0" Maximum="1" IsEnabled="False"
 					                       ValueChanged="OnExpandedTimelineValueChanged" />
 				</Border>
-				<ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Name="LayerScroll"
+				<local:MusicTimeline Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Name="MusicTracks" IsVisible="False" />
+				<ScrollViewer Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Name="LayerScroll"
 				              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
 					<local:LayerTimeline Name="LayerTracks" />
 				</ScrollViewer>
-				<ScrollBar Grid.Row="2" Grid.Column="1" Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False"
+				<ScrollBar Grid.Row="3" Grid.Column="1" Name="TimelineScrollBar" Orientation="Horizontal" AllowAutoHide="False"
 				           IsVisible="False" Scroll="OnTimelineScroll" />
 			</Grid>
 		</Border>

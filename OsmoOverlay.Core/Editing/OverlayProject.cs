@@ -37,6 +37,9 @@ public sealed record OverlayProject(
 	/// <summary>The sound's level over the recording (VolumeLine) - absent in projects saved before it existed.</summary>
 	public List<VolumePoint> Volume { get; init; } = [];
 
+	/// <summary>The music on the timeline (MusicClip) - absent in projects saved before it existed.</summary>
+	public List<MusicClip> Music { get; init; } = [];
+
 	private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
 	public void Save(string path)
@@ -53,7 +56,7 @@ public sealed record OverlayProject(
 			throw new InvalidDataException(CoreStrings.Project_Newer);
 		if (project.InputPaths is null || project.Cuts is null)
 			throw new InvalidDataException(CoreStrings.Project_Incomplete);
-		if (project.InputPaths.Append(project.OutputPath).Append(project.ExternalTrack?.Path).Any(p => !string.IsNullOrWhiteSpace(p) && !OverlayPresetStore.IsLocalFilePath(p)))
+		if (project.InputPaths.Append(project.OutputPath).Append(project.ExternalTrack?.Path).Concat((project.Music ?? []).Select(c => c.Path)).Any(p => !string.IsNullOrWhiteSpace(p) && !OverlayPresetStore.IsLocalFilePath(p)))
 			throw new InvalidDataException(CoreStrings.Project_NotLocal);
 		project.ExternalTrack?.Validate();
 

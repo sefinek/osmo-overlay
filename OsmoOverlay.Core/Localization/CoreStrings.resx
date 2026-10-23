@@ -270,6 +270,9 @@
   <data name="Preview_AudioTrackFailed" xml:space="preserve">
     <value>Preview audio unavailable - the audio track couldn't be opened</value>
   </data>
+  <data name="Preview_MusicFailed" xml:space="preserve">
+    <value>Preview can't play the music file {0}</value>
+  </data>
   <data name="Preview_CloseFailed" xml:space="preserve">
     <value>Closing the preview failed</value>
   </data>

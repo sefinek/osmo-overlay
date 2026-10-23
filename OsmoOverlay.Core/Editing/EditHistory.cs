@@ -4,7 +4,7 @@ using OsmoOverlay.Core.Reframe;
 namespace OsmoOverlay.Core;
 
 /// <summary>
-///     What Undo and Redo move between: the active preset's layout, the cuts, the volume line and the 360 view. Elements and layers are
+///     What Undo and Redo move between: the active preset's layout, the cuts, the volume line, the music and the 360 view. Elements and layers are
 ///     immutable records in lists the GUI only ever replaces (copy-on-write), so a snapshot just keeps the references.
 /// </summary>
 public sealed class EditSnapshot(
@@ -13,7 +13,8 @@ public sealed class EditSnapshot(
 	IReadOnlyList<OverlayLayer>? layers,
 	IReadOnlyList<FrameRange> cuts,
 	ReframeView reframe,
-	IReadOnlyList<VolumePoint>? volume = null)
+	IReadOnlyList<VolumePoint>? volume = null,
+	IReadOnlyList<MusicClip>? music = null)
 {
 	public string? PresetId { get; } = presetId;
 	public IReadOnlyList<OverlayElement> Elements { get; } = elements;
@@ -21,11 +22,12 @@ public sealed class EditSnapshot(
 	public IReadOnlyList<FrameRange> Cuts { get; } = cuts;
 	public ReframeView Reframe { get; } = reframe;
 	public IReadOnlyList<VolumePoint> Volume { get; } = volume ?? [];
+	public IReadOnlyList<MusicClip> Music { get; } = music ?? [];
 
 	public bool SameAs(EditSnapshot other)
 	{
 		return PresetId == other.PresetId && Reframe == other.Reframe &&
-		       Cuts.SequenceEqual(other.Cuts) && Volume.SequenceEqual(other.Volume) && Elements.SequenceEqual(other.Elements) &&
+		       Cuts.SequenceEqual(other.Cuts) && Volume.SequenceEqual(other.Volume) && Music.SequenceEqual(other.Music) && Elements.SequenceEqual(other.Elements) &&
 		       (Layers is null ? other.Layers is null : other.Layers is not null && Layers.SequenceEqual(other.Layers));
 	}
 }

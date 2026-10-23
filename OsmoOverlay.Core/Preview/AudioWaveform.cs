@@ -58,7 +58,8 @@ public sealed class AudioWaveform : IDisposable
 	public event Action? Updated;
 
 	/// <summary>Null when the recording has no audio track. Blocking - reads the cache, or opens the first file.</summary>
-	public static AudioWaveform? Start(IReadOnlyList<PlaybackSegment> segments)
+	/// <param name="probeStreams">For a file that doesn't declare its streams in the header (music), see LibavStreamDecoder.Open.</param>
+	public static AudioWaveform? Start(IReadOnlyList<PlaybackSegment> segments, bool probeStreams = false)
 	{
 		if (WaveformCache.TryLoad(segments) is { } cached)
 		{
@@ -66,7 +67,7 @@ public sealed class AudioWaveform : IDisposable
 			return new AudioWaveform(segments, cached.Peaks, cached.Loudest);
 		}
 
-		var source = LibavAudioSource.TryOpen(segments);
+		var source = LibavAudioSource.TryOpen(segments, probeStreams: probeStreams);
 		return source is null ? null : new AudioWaveform(source, segments, segments.Sum(s => s.DurationSeconds));
 	}
 

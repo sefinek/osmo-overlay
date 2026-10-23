@@ -55,6 +55,40 @@ public sealed class OverlayProjectTests
 	}
 
 	[TestMethod]
+	public void SaveAndLoad_KeepsTheMusic()
+	{
+		MusicClip clip = new(Path.GetFullPath("song.mp3"), 4.5, 1, 20, 180, -6, 1, 2, true, -12);
+		string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{OverlayProject.Extension}");
+		new OverlayProject([Path.GetFullPath("a.mp4")], null, [], null, 0, null, null) { Music = [clip] }.Save(path);
+
+		try
+		{
+			CollectionAssert.AreEqual(new[] { clip }, OverlayProject.Load(path).Music);
+		}
+		finally
+		{
+			File.Delete(path);
+		}
+	}
+
+	[TestMethod]
+	[DataRow("\\\\host\\share\\song.mp3")]
+	[DataRow("relative.mp3")]
+	public void Load_RejectsMusicOffLocalDrives(string musicPath)
+	{
+		string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{OverlayProject.Extension}");
+		new OverlayProject([Path.GetFullPath("a.mp4")], null, [], null, 0, null, null) { Music = [new MusicClip(musicPath, 0, 0, 10, 10)] }.Save(path);
+		try
+		{
+			Assert.ThrowsExactly<InvalidDataException>(() => OverlayProject.Load(path));
+		}
+		finally
+		{
+			File.Delete(path);
+		}
+	}
+
+	[TestMethod]
 	public void Load_RejectsNewerFormat()
 	{
 		string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{OverlayProject.Extension}");

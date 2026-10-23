@@ -45,13 +45,15 @@ internal sealed unsafe class LibavStreamDecoder : IDisposable
 	public string? Hardware { get; }
 
 	/// <summary>Null when the file has no stream of that type - or no `ordinal`-th one (1 = the second, a 360 file's other lens).</summary>
-	public static LibavStreamDecoder? Open(string path, AVMediaType type, bool useHardware, int ordinal = 0)
+	public static LibavStreamDecoder? Open(string path, AVMediaType type, bool useHardware, int ordinal = 0, bool probeStreams = false)
 	{
 		AVFormatContext* format = null;
 		AVCodecContext* codec = null;
 		try
 		{
 			Check(ffmpeg.avformat_open_input(&format, path, null, null), $"open {path}");
+			// A camera's MP4 declares its streams in the header; other files (a music file) only tell once some of it is read.
+			if (probeStreams) Check(ffmpeg.avformat_find_stream_info(format, null), $"read the streams of {path}");
 
 			AVCodec* decoder = null;
 			int wanted = ordinal == 0 ? -1 : NthStream(format, type, ordinal);

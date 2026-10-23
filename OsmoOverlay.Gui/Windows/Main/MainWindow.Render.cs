@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry.External;
@@ -52,9 +53,12 @@ public partial class MainWindow
 		// As the preview shows it - muted and unsoloed layers left out.
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? OverlayLayers.Drawn(ActiveElements, ActiveLayers) : null;
 		List<TimeRange>? cutOuts = CutOutsForRender();
+		foreach (MusicClip missing in _music.Where(c => !File.Exists(c.Path)))
+			AppLogger.Warn(string.Format(Strings.Render_MusicMissing, missing.Path));
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
-			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe, Volume: [.. _volumeLine]);
+			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe, Volume: [.. _volumeLine],
+			Music: [.. _music.Where(c => File.Exists(c.Path))]);
 
 		AppendLog(greenScreen ? Strings.Render_ModeGreenScreen : Strings.Render_ModeNormal);
 		if (range is { } shown) AppendLog(string.Format(Strings.Render_LogRange, DescribeSelection(shown)));

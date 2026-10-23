@@ -575,7 +575,8 @@ public sealed class LayerTimeline : Control
 		base.OnPointerWheelChanged(e);
 		// The plain wheel scrolls the list of layers (the ScrollViewer around this); Ctrl+wheel zooms the time axis like the
 		// wheel over the video/audio tracks above, Shift+wheel scrubs the playhead fast.
-		if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) && !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
+		bool sideways = Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y);
+		if (!sideways && !e.KeyModifiers.HasFlag(KeyModifiers.Control) && !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
 
 		double x = Math.Max(e.GetPosition(this).X - HeaderWidth, 0);
 		if (_source?.Wheel(x, e.Delta, e.KeyModifiers & ~KeyModifiers.Control) == true) e.Handled = true;

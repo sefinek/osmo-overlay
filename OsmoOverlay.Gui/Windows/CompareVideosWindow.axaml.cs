@@ -60,7 +60,7 @@ public partial class CompareVideosWindow : Window
 			return;
 		}
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("compare-videos", new FilePickerOpenOptions
 		{
 			Title = Strings.Compare_PickVideos,
 			AllowMultiple = true,
@@ -151,7 +151,7 @@ public partial class CompareVideosWindow : Window
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null || _paths.Count == 0) return;
 
-		IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		IStorageFile? file = await topLevel.StorageProvider.SaveRememberedAsync("compare-save", new FilePickerSaveOptions
 		{
 			Title = Strings.Compare_SaveTitle,
 			SuggestedFileName = $"video-comparison-{DateTime.Now:yyyyMMdd-HHmmss}",

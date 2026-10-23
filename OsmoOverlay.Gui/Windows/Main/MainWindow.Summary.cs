@@ -35,6 +35,7 @@ public partial class MainWindow
 		// Cuts, thumbnails and the waveform belong to the recording they were made for.
 		ClearCuts();
 		SetVolumeLine([]);
+		ResetMusic();
 		ClearMoments();
 		ReleaseTimelineTracks();
 		ClearLogPanels();

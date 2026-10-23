@@ -4281,4 +4281,82 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Widget_ImageLumaDescription" xml:space="preserve">
     <value>Average image brightness recorded in GoPro telemetry (YAVG), from 0 (black) to 255 (white). It is not calculated from video pixels and does not measure illuminance in lux.</value>
   </data>
+  <data name="Main_Music" xml:space="preserve">
+    <value>MUSIC</value>
+  </data>
+  <data name="Music_EmptyHint" xml:space="preserve">
+    <value>Right-click to add music</value>
+  </data>
+  <data name="Music_Add" xml:space="preserve">
+    <value>Add music...</value>
+  </data>
+  <data name="Music_AddTip" xml:space="preserve">
+    <value>Add music at the playhead</value>
+  </data>
+  <data name="Music_Edit" xml:space="preserve">
+    <value>Clip settings...</value>
+  </data>
+  <data name="Music_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="Music_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Music_PickTitle" xml:space="preserve">
+    <value>Choose a music file</value>
+  </data>
+  <data name="Music_FileType" xml:space="preserve">
+    <value>Audio files</value>
+  </data>
+  <data name="Music_CantUseTitle" xml:space="preserve">
+    <value>Can't use this file</value>
+  </data>
+  <data name="Music_CantUse" xml:space="preserve">
+    <value>{0} can't be used as music: {1}</value>
+  </data>
+  <data name="Music_Level" xml:space="preserve">
+    <value>Level (dB)</value>
+  </data>
+  <data name="Music_FadeIn" xml:space="preserve">
+    <value>Fade in (s)</value>
+  </data>
+  <data name="Music_FadeOut" xml:space="preserve">
+    <value>Fade out (s)</value>
+  </data>
+  <data name="Music_Duck" xml:space="preserve">
+    <value>Lower the recording's sound (dB)</value>
+  </data>
+  <data name="Music_DuckTip" xml:space="preserve">
+    <value>How much the recording's own sound is lowered while this clip plays. 0 leaves it as it is.</value>
+  </data>
+  <data name="Music_Loop" xml:space="preserve">
+    <value>Repeat the file to fill the clip</value>
+  </data>
+  <data name="Music_Start" xml:space="preserve">
+    <value>Start on the timeline (s)</value>
+  </data>
+  <data name="Music_Length" xml:space="preserve">
+    <value>Length (s)</value>
+  </data>
+  <data name="Music_In" xml:space="preserve">
+    <value>Start in the file (s)</value>
+  </data>
+  <data name="Music_NoPreviewSound" xml:space="preserve">
+    <value>The recording has no sound, so the preview stays silent - the render will include the music.</value>
+  </data>
+  <data name="Music_Added" xml:space="preserve">
+    <value>Music added: {0}</value>
+  </data>
+  <data name="Project_MusicMissing" xml:space="preserve">
+    <value>Music files not found, left out: {0}</value>
+  </data>
+  <data name="Render_MusicMissing" xml:space="preserve">
+    <value>Music file not found: {0}</value>
+  </data>
+  <data name="Widget_Music" xml:space="preserve">
+    <value>Music</value>
+  </data>
+  <data name="Music_PaletteTip" xml:space="preserve">
+    <value>Drag onto the timeline to add music</value>
+  </data>
 </root>

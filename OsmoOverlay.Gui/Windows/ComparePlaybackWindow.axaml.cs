@@ -81,7 +81,7 @@ public partial class ComparePlaybackWindow : Window
 			return;
 		}
 
-		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenRememberedAsync("compare-videos", new FilePickerOpenOptions
 		{
 			Title = Strings.Compare_PickVideos,
 			AllowMultiple = true,

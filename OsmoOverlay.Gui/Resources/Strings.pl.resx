@@ -4281,4 +4281,82 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="Widget_ImageLumaDescription" xml:space="preserve">
     <value>Średnia jasność obrazu zapisana w telemetrii GoPro, od 0 (czerń) do 255 (biel). Widżet korzysta z gotowego odczytu z kamery. Nie jest to pomiar natężenia oświetlenia w luksach.</value>
   </data>
+  <data name="Main_Music" xml:space="preserve">
+    <value>MUZYKA</value>
+  </data>
+  <data name="Music_EmptyHint" xml:space="preserve">
+    <value>Kliknij prawym, aby dodać muzykę</value>
+  </data>
+  <data name="Music_Add" xml:space="preserve">
+    <value>Dodaj muzykę...</value>
+  </data>
+  <data name="Music_AddTip" xml:space="preserve">
+    <value>Dodaj muzykę w miejscu kursora</value>
+  </data>
+  <data name="Music_Edit" xml:space="preserve">
+    <value>Ustawienia klipu...</value>
+  </data>
+  <data name="Music_Duplicate" xml:space="preserve">
+    <value>Duplikuj</value>
+  </data>
+  <data name="Music_Remove" xml:space="preserve">
+    <value>Usuń</value>
+  </data>
+  <data name="Music_PickTitle" xml:space="preserve">
+    <value>Wybierz plik z muzyką</value>
+  </data>
+  <data name="Music_FileType" xml:space="preserve">
+    <value>Pliki audio</value>
+  </data>
+  <data name="Music_CantUseTitle" xml:space="preserve">
+    <value>Nie można użyć tego pliku</value>
+  </data>
+  <data name="Music_CantUse" xml:space="preserve">
+    <value>Plik {0} nie nadaje się jako muzyka: {1}</value>
+  </data>
+  <data name="Music_Level" xml:space="preserve">
+    <value>Głośność (dB)</value>
+  </data>
+  <data name="Music_FadeIn" xml:space="preserve">
+    <value>Narastanie (s)</value>
+  </data>
+  <data name="Music_FadeOut" xml:space="preserve">
+    <value>Wyciszanie (s)</value>
+  </data>
+  <data name="Music_Duck" xml:space="preserve">
+    <value>Ściszenie dźwięku nagrania (dB)</value>
+  </data>
+  <data name="Music_DuckTip" xml:space="preserve">
+    <value>O ile ściszyć dźwięk nagrania, gdy gra ten klip. 0 zostawia go bez zmian.</value>
+  </data>
+  <data name="Music_Loop" xml:space="preserve">
+    <value>Zapętl plik, aby wypełnić klip</value>
+  </data>
+  <data name="Music_Start" xml:space="preserve">
+    <value>Początek na osi (s)</value>
+  </data>
+  <data name="Music_Length" xml:space="preserve">
+    <value>Długość (s)</value>
+  </data>
+  <data name="Music_In" xml:space="preserve">
+    <value>Początek w pliku (s)</value>
+  </data>
+  <data name="Music_NoPreviewSound" xml:space="preserve">
+    <value>Nagranie nie ma dźwięku, więc podgląd milczy - w renderze muzyka będzie.</value>
+  </data>
+  <data name="Music_Added" xml:space="preserve">
+    <value>Dodano muzykę: {0}</value>
+  </data>
+  <data name="Project_MusicMissing" xml:space="preserve">
+    <value>Nie znaleziono plików z muzyką, pominięto: {0}</value>
+  </data>
+  <data name="Render_MusicMissing" xml:space="preserve">
+    <value>Nie znaleziono pliku z muzyką: {0}</value>
+  </data>
+  <data name="Widget_Music" xml:space="preserve">
+    <value>Muzyka</value>
+  </data>
+  <data name="Music_PaletteTip" xml:space="preserve">
+    <value>Przeciągnij na oś czasu, aby dodać muzykę</value>
+  </data>
 </root>

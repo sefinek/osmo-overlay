@@ -158,7 +158,7 @@ public partial class MainWindow
 	{
 		if (_editingElementId is not { } id || GetTopLevel(this) is not { } topLevel) return;
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("widget-image", new FilePickerOpenOptions
 		{
 			Title = Strings.Widget_ChooseImage,
 			AllowMultiple = false,

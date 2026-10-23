@@ -62,6 +62,8 @@ public sealed class PreviewPlayer : IDisposable
 	private float _audioGain;
 	// The volume line (VolumeLine) - read by the playback's sound feed, so it applies right away, also mid-playback.
 	private IReadOnlyList<VolumePoint> _volume = [];
+	// The music (MusicTrack) - read by the playback's sound feed like the volume line.
+	private IReadOnlyList<MusicClip> _music = [];
 	// A 360 recording's view (SetReframe) - the default one until set.
 	private ReframeView _reframe = new();
 
@@ -277,6 +279,12 @@ public sealed class PreviewPlayer : IDisposable
 		Volatile.Write(ref _volume, volume);
 	}
 
+	/// <summary>The music on the output's timeline (MusicTrack); heard in the preview only with a recording that has sound.</summary>
+	public void SetMusic(IReadOnlyList<MusicClip> music)
+	{
+		Volatile.Write(ref _music, music);
+	}
+
 	/// <summary>The audio track and the playback device, or (null, null) - the preview then plays without sound.</summary>
 	private static (LibavAudioSource?, AudioOutput?) OpenAudio(IReadOnlyList<PlaybackSegment> segments)
 	{
@@ -319,7 +327,10 @@ public sealed class PreviewPlayer : IDisposable
 
 		var plan = PlaybackPlan.For(_outputTimeline, fromPosition, recording.Video.Duration, Loop, LoopRange);
 		var session = new PlaybackSession(recording.Video, recording.AudioSource, recording.AudioOutput, recording.Compositor,
-			recording.Pool, plan, PlaybackRate, Frames, () => Volatile.Read(ref _volume));
+			recording.Pool, plan, PlaybackRate, Frames, () => Volatile.Read(ref _volume),
+			recording.AudioSource is { } audio
+				? new MusicMixer(() => Volatile.Read(ref _music), s => _outputTimeline is { } timeline ? timeline.ToOutputSeconds(s) : s, audio.SampleRate, audio.Channels)
+				: null);
 		_session = session;
 		Frames.Attach(session);
 		_ = StartWhenFreeAsync(session, _sessionsStopped);

@@ -270,6 +270,9 @@
   <data name="Preview_AudioTrackFailed" xml:space="preserve">
     <value>Dźwięk podglądu niedostępny - nie udało się otworzyć ścieżki dźwiękowej</value>
   </data>
+  <data name="Preview_MusicFailed" xml:space="preserve">
+    <value>Podgląd nie może odtworzyć pliku z muzyką {0}</value>
+  </data>
   <data name="Preview_CloseFailed" xml:space="preserve">
     <value>Nie udało się zamknąć podglądu</value>
   </data>

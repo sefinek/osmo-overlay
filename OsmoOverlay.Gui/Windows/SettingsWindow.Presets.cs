@@ -88,7 +88,7 @@ public partial class SettingsWindow
 		OverlaySettingsStore.Save(Apply(OverlaySettingsStore.Load()));
 		SettingsPreset active = SettingsPresetStore.Load().Presets.First(p => p.Id == _activeSettingsPresetId);
 
-		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		IStorageFile? file = await StorageProvider.SaveRememberedAsync("settings-export", new FilePickerSaveOptions
 		{
 			Title = Strings.SettingsPresets_ExportTitle,
 			SuggestedFileName = active.Name,
@@ -103,7 +103,7 @@ public partial class SettingsWindow
 
 	private async void OnImportSettingsPresetClick(object? sender, RoutedEventArgs e)
 	{
-		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenRememberedAsync("settings-import", new FilePickerOpenOptions
 		{
 			Title = Strings.SettingsPresets_ImportTitle,
 			AllowMultiple = false,

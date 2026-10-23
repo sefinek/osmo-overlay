@@ -165,7 +165,7 @@ public partial class ToolsWindow : Window
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("tools-rendered", new FilePickerOpenOptions
 		{
 			Title = Strings.Tools_PickRenderedMp4,
 			AllowMultiple = false,
@@ -264,7 +264,7 @@ public partial class ToolsWindow : Window
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("tools-strip", new FilePickerOpenOptions
 		{
 			Title = Strings.Tools_PickVideoToStrip,
 			AllowMultiple = false,
@@ -338,7 +338,7 @@ public partial class ToolsWindow : Window
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("tools-audio", new FilePickerOpenOptions
 		{
 			Title = Strings.Tools_PickCameraAudio,
 			AllowMultiple = true,

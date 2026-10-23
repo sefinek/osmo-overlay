@@ -179,7 +179,8 @@ public static class FfmpegPipeline
 
 	/// <param name="output">The stream written (OutputVideo.For) - the source's own unless Settings picked another size, codec or depth.</param>
 	public static Process StartRender(IReadOnlyList<VideoSegment> segments, string outputPath, string encoder, VideoInfo output, bool overwrite,
-		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false, IReadOnlyList<VolumePoint>? volume = null)
+		RenderEncodeSettings encode, RenderPlan plan, bool greenScreen = false, bool composedPicture = false, IReadOnlyList<VolumePoint>? volume = null,
+		IReadOnlyList<MusicClip>? music = null)
 	{
 		SourceInfo info = segments[0].Source;
 		(int num, int den) = ParseFrameRate(info.Video.FrameRate);
@@ -228,6 +229,13 @@ public static class FfmpegPipeline
 			"-i", "pipe:0"
 		]);
 
+		bool withMusic = music is { Count: > 0 } && !greenScreen;
+		int firstMusicInput = source.InputCount + 1;
+		if (withMusic)
+		{
+			foreach (MusicClip clip in music!) args.AddRange(["-i", clip.Path]);
+		}
+
 		string primaries = info.Video.ColorPrimaries ?? "bt709";
 		string transfer = info.Video.ColorTransfer ?? "bt709";
 		string colorspace = info.Video.ColorSpace ?? "bt709";
@@ -242,6 +250,13 @@ public static class FfmpegPipeline
 			string expression = VolumeLine.FfmpegExpression(VolumeLine.ForOutput(volume, plan, num / (double)den));
 			graph += $";{(audioMap.StartsWith('[') ? audioMap : $"[{audioMap}]")}volume=volume='{expression}':eval=frame:precision=float[vola]";
 			audioMap = "[vola]";
+			encodeAudio = true;
+		}
+
+		if (withMusic)
+		{
+			graph += ";" + MusicTrack.FfmpegGraph(music!, firstMusicInput, audioMap);
+			audioMap = "[mus]";
 			encodeAudio = true;
 		}
 
@@ -274,7 +289,7 @@ public static class FfmpegPipeline
 		// (overlay's shortest=1).
 		if (greenScreen)
 			args.AddRange(["-frames:v", plan.TotalFrames.ToString(CultureInfo.InvariantCulture)]);
-		if (plan.IsPartial)
+		if (plan.IsPartial || withMusic)
 			args.AddRange(["-t", (plan.TotalFrames * den / (double)num).ToString("R", CultureInfo.InvariantCulture)]);
 
 		AddVideoEncoderArgs(args, output, encoder, encode, num, den);

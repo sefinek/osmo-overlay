@@ -52,6 +52,7 @@ internal sealed class PlaybackSession
 	private readonly AudioOutput? _audioOutput;
 	private readonly Func<IReadOnlyList<VolumePoint>> _volume;
 	private float[] _gained = [];
+	private readonly MusicMixer? _music;
 	private readonly OverlayCompositor _compositor;
 	private readonly FrameBufferPool _pool;
 	private readonly PlaybackPlan _plan;
@@ -86,9 +87,11 @@ internal sealed class PlaybackSession
 	private double _lateMax;
 
 	public PlaybackSession(LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput, OverlayCompositor compositor,
-		FrameBufferPool pool, PlaybackPlan plan, double rate, PlaybackFrameSource frames, Func<IReadOnlyList<VolumePoint>>? volume = null)
+		FrameBufferPool pool, PlaybackPlan plan, double rate, PlaybackFrameSource frames, Func<IReadOnlyList<VolumePoint>>? volume = null,
+		MusicMixer? music = null)
 	{
 		_volume = volume ?? (() => []);
+		_music = music;
 		_video = video;
 		_audioSource = audioSource;
 		_audioOutput = audioOutput;
@@ -138,6 +141,7 @@ internal sealed class PlaybackSession
 		while (_decoded.Reader.TryRead(out DecodedFrame decoded)) _pool.Return(decoded.Frame.Bgra);
 		while (_composed.Reader.TryRead(out PlaybackFrame composed)) _pool.Return(composed.Composed.Bgra);
 		_audioOutput?.Stop();
+		_music?.Dispose();
 		_stop.Dispose();
 	}
 
@@ -497,6 +501,7 @@ internal sealed class PlaybackSession
 				if (samples.IsEmpty) break;
 
 				samples = ApplyVolume(samples, position, source.SampleRate, source.Channels);
+				if (_music is not null) samples = _music.Mix(samples, position);
 				position += (double)samples.Length / source.Channels / source.SampleRate;
 				if (tempo is not null) samples = tempo.Process(samples);
 				output.Push(samples);

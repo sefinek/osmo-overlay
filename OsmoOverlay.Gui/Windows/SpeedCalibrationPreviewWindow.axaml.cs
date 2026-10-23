@@ -42,7 +42,7 @@ public partial class SpeedCalibrationPreviewWindow : Window
 
 	public static async Task ShowForEditorAsync(Window owner, SpeedCalibrationEditor editor)
 	{
-		IReadOnlyList<IStorageFile> files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await owner.StorageProvider.OpenRememberedAsync("recordings", new FilePickerOpenOptions
 		{
 			Title = Strings.Main_PickRecordings,
 			AllowMultiple = false,

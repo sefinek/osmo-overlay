@@ -187,6 +187,7 @@ public partial class MainWindow : Window
 		WireCuts();
 		WirePanelLayout();
 		WireVolumeLine();
+		WireMusic();
 		WireMoments();
 		WirePreviewTimeline();
 		WireAudio();
@@ -328,7 +329,7 @@ public partial class MainWindow : Window
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
-		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("recordings", new FilePickerOpenOptions
 		{
 			Title = Strings.Main_PickRecordings,
 			AllowMultiple = true,
@@ -576,7 +577,7 @@ public partial class MainWindow : Window
 		TopLevel? topLevel = GetTopLevel(this);
 		if (topLevel is null) return;
 
-		IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		IStorageFile? file = await topLevel.StorageProvider.SaveRememberedAsync("output", new FilePickerSaveOptions
 		{
 			Title = Strings.Main_SaveAsTitle,
 			SuggestedFileName = string.IsNullOrWhiteSpace(OutputPathBox.Text)
