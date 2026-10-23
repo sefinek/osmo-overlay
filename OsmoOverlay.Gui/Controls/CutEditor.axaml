@@ -3,11 +3,20 @@
              xmlns:local="using:OsmoOverlay.Gui"
              x:Class="OsmoOverlay.Gui.CutEditor">
 
+	<UserControl.Styles>
+		<Style Selector="Border.cutCard">
+			<Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="8" />
+			<Setter Property="Padding" Value="10" />
+		</Style>
+	</UserControl.Styles>
+
 	<StackPanel Spacing="14">
 		<TextBlock Name="SummaryText" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
 
 		<StackPanel Spacing="6">
-			<TextBlock Text="{x:Static local:Strings.Cut_SelectAPartAtThe}" Classes="infoLabel" Margin="0" />
 			<Grid ColumnDefinitions="*,*" ColumnSpacing="6">
 				<Button Grid.Column="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnMarkInClick"
 				        ToolTip.Tip="{x:Static local:Strings.Cut_TheSelectionStartsWithThe}">
@@ -36,7 +45,9 @@
 
 		<StackPanel Name="CutListPanel" Spacing="6" IsVisible="False">
 			<TextBlock Text="{x:Static local:Strings.Cut_CutOut}" Classes="infoLabel" Margin="0" />
-			<StackPanel Name="CutRows" Spacing="6" />
+			<StackPanel Name="CutRows" Spacing="8" />
+			<TextBlock Name="OverlapNote" Classes="hint" TextWrapping="Wrap" IsVisible="False"
+			           Text="{x:Static local:Strings.Cut_OverlapNote}" />
 		</StackPanel>
 
 		<TextBlock Name="ErrorText" Classes="hint" Opacity="1" Foreground="{StaticResource DangerBrush}" IsVisible="False" />

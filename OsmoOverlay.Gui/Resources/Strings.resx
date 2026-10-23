@@ -627,7 +627,7 @@ Close OsmoOverlay?</value>
     <value>OK</value>
   </data>
   <data name="Cut_CutOut" xml:space="preserve">
-    <value>Cut out</value>
+    <value>Removed sections</value>
   </data>
   <data name="Cut_CutOutSelectionX" xml:space="preserve">
     <value>Cut out selection (X)</value>
@@ -654,11 +654,7 @@ Close OsmoOverlay?</value>
     <value>Mark end (O)</value>
   </data>
   <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
-    <value>Select a section to remove with I and O, then cut it out with X. Repeat for any other sections. The rest of the recording will be rendered. You can enter times as 1:30 or 1:30.250. Click a cut's number to jump to it.
-
-Between the remaining sections, you can add a fade through black or white without changing the video's length, or a crossfade that shortens it by the transition's duration. The preview does not show crossfades: it plays the end of the earlier section and skips the overlapping start of the next one. Transitions affect video and audio; the overlay remains unchanged.
-
-Removed sections are excluded from the preview, render, and telemetry. The route intro starts at the first remaining frame, and distance, elapsed time, and statistics cover only the remaining footage.</value>
+    <value>Enter times as 1:30 or 1:30.250; a cut's number jumps to it in the recording. Removed sections disappear from the preview, render and telemetry - the route intro, distance and statistics count only what remains.</value>
   </data>
   <data name="Cut_MarkStartI" xml:space="preserve">
     <value>Mark start (I)</value>
@@ -670,7 +666,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>{0}: "{1}" isn't a time - use e.g. 1:30 or 1:30.250.</value>
   </data>
   <data name="Cut_NothingSelected" xml:space="preserve">
-    <value>Nothing selected yet.</value>
+    <value>Select a section with I and O.</value>
   </data>
   <data name="Cut_CaptionPlaceholder" xml:space="preserve">
     <value>Text at the cut (optional)</value>
@@ -679,7 +675,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>The text appears in the middle of the picture at the cut and disappears after the time set next to it. Use it to explain what was cut out.</value>
   </data>
   <data name="Cut_OverlapNote" xml:space="preserve">
-    <value>The preview does not show the crossfade. It plays the end of the earlier section and skips the overlapping start of the next one. The rendered video includes the crossfade and is shorter by the transition duration.</value>
+    <value>The preview does not show crossfades, wipes or pushes: it plays the end of the earlier section and skips the start of the next. The rendered video includes the transition and is shorter by its length.</value>
   </data>
   <data name="Cut_RemovesEverything" xml:space="preserve">
     <value>The cuts remove the whole recording - nothing would be left to render.</value>
@@ -689,9 +685,6 @@ Removed sections are excluded from the preview, render, and telemetry. The route
   </data>
   <data name="Cut_RouteOnTheMapAcross" xml:space="preserve">
     <value>Route on the map at a cut</value>
-  </data>
-  <data name="Cut_SelectAPartAtThe" xml:space="preserve">
-    <value>Start a selection at the frame on screen</value>
   </data>
   <data name="Cut_Selected" xml:space="preserve">
     <value>Selected: {0}</value>

@@ -6,6 +6,7 @@ obj/
 TestResults/
 artifacts/
 todo
+CHANGELOG.md
 
 # Camera recordings - they carry GPS tracks and camera serial numbers
 *.[mM][pP]4

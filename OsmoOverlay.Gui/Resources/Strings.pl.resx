@@ -627,7 +627,7 @@ Zamknąć OsmoOverlay?</value>
     <value>OK</value>
   </data>
   <data name="Cut_CutOut" xml:space="preserve">
-    <value>Wytnij</value>
+    <value>Wycięte fragmenty</value>
   </data>
   <data name="Cut_CutOutSelectionX" xml:space="preserve">
     <value>Wytnij zaznaczenie (X)</value>
@@ -654,11 +654,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Oznacz koniec (O)</value>
   </data>
   <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
-    <value>Zaznacz fragment do usunięcia klawiszami I i O, a następnie wytnij go klawiszem X. Powtórz dla kolejnych fragmentów. Reszta nagrania trafi do renderu. Czas możesz wpisywać jako 1:30 lub 1:30.250. Kliknij numer cięcia, aby przejść do jego miejsca w nagraniu.
-
-Między zachowanymi fragmentami możesz dodać przejście przez czerń lub biel bez zmiany długości filmu. Przenikanie, przetarcie i wypchnięcie nakładają fragmenty na siebie, skracając film o czas przejścia. Podgląd pomija te efekty: odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. W renderze przejścia obejmują obraz i dźwięk; nakładka pozostaje bez zmian.
-
-Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z trasą zaczyna się od pierwszej zachowanej klatki, a dystans, czas i statystyki obejmują tylko zachowaną część nagrania.</value>
+    <value>Czas wpisuj jako 1:30 lub 1:30.250, a numer cięcia przenosi do jego miejsca w nagraniu. Wycięte fragmenty znikają z podglądu, renderu i telemetrii - wstęp z trasą, dystans i statystyki liczą się tylko z tego, co zostało.</value>
   </data>
   <data name="Cut_MarkStartI" xml:space="preserve">
     <value>Oznacz początek (I)</value>
@@ -670,7 +666,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>{0}: „{1}” to nie jest czas - użyj np. 1:30 lub 1:30.250.</value>
   </data>
   <data name="Cut_NothingSelected" xml:space="preserve">
-    <value>Jeszcze nic nie zaznaczono.</value>
+    <value>Zaznacz fragment klawiszami I i O.</value>
   </data>
   <data name="Cut_CaptionPlaceholder" xml:space="preserve">
     <value>Tekst przy cięciu (opcjonalnie)</value>
@@ -679,7 +675,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Tekst pojawi się na środku obrazu w miejscu cięcia i zniknie po czasie podanym obok. Możesz w nim wyjaśnić, co zostało wycięte.</value>
   </data>
   <data name="Cut_OverlapNote" xml:space="preserve">
-    <value>Podgląd nie pokazuje tego przejścia: odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. Wyrenderowany film zawiera przejście i jest krótszy o czas jego trwania.</value>
+    <value>Podgląd nie pokazuje przenikania, przetarcia ani wypchnięcia: odtwarza koniec wcześniejszego fragmentu i pomija początek kolejnego. Wyrenderowany film zawiera przejście i jest krótszy o czas jego trwania.</value>
   </data>
   <data name="Cut_RemovesEverything" xml:space="preserve">
     <value>Cięcia usuwają całe nagranie - nie zostałoby nic do wyrenderowania.</value>
@@ -689,9 +685,6 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
   </data>
   <data name="Cut_RouteOnTheMapAcross" xml:space="preserve">
     <value>Trasa na mapie w miejscu cięcia</value>
-  </data>
-  <data name="Cut_SelectAPartAtThe" xml:space="preserve">
-    <value>Zaznacz fragment od klatki widocznej na ekranie</value>
   </data>
   <data name="Cut_Selected" xml:space="preserve">
     <value>Zaznaczono: {0}</value>

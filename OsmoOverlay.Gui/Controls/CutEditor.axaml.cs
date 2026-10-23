@@ -76,6 +76,7 @@ public partial class CutEditor : UserControl
 		CutRows.Children.Clear();
 		foreach (FrameRange cut in cuts) AddRow(cut);
 		CutListPanel.IsVisible = _rows.Count > 0;
+		RefreshOverlapNote();
 		ShowError(null);
 		_populating = false;
 	}
@@ -210,13 +211,6 @@ public partial class CutEditor : UserControl
 		}
 
 		var unit = (TextBlock)transitionCells[2];
-		var overlapNote = new TextBlock
-		{
-			Text = Strings.Cut_OverlapNote,
-			Classes = { "hint" },
-			TextWrapping = TextWrapping.Wrap,
-			IsVisible = false
-		};
 		var route = new ComboBox
 		{
 			ItemsSource = RouteJoinOptions.Labels,
@@ -229,21 +223,23 @@ public partial class CutEditor : UserControl
 			Spacing = 4,
 			Children = { new TextBlock { Text = Strings.Cut_RouteOnTheMapAcross, Classes = { "hint" } }, route }
 		};
-		var row = new StackPanel { Spacing = 4, Children = { times, transition, captionRow, routeRow, overlapNote } };
+		var row = new Border
+		{
+			Classes = { "cutCard" },
+			Child = new StackPanel { Spacing = 6, Children = { times, transition, captionRow, routeRow } }
+		};
 		var entry = new CutRow(from, to, kind, length, caption, captionLength, route);
 
 		void RefreshTransitionRow()
 		{
 			// Only between two kept parts is there anything to fade (a cut from the very start or to the very end has no join).
-			bool joins = ReadFrame(from.Text, "", out long start) is null && ReadFrame(to.Text, "", out long end) is null &&
-			             start > 0 && end < _totalFrames;
+			bool joins = Joins(from.Text, to.Text);
 			transition.IsVisible = joins;
 			captionRow.IsVisible = joins;
 			routeRow.IsVisible = joins;
 			captionCells[1].IsVisible = captionCells[2].IsVisible = !string.IsNullOrWhiteSpace(caption.Text);
 			length.IsVisible = unit.IsVisible = kind.SelectedIndex > 0;
-			overlapNote.IsVisible = joins && TransitionKinds[Math.Max(0, kind.SelectedIndex)].Kind is { } selected &&
-			                        new CutTransition(selected).Overlaps;
+			RefreshOverlapNote();
 		}
 
 		RefreshTransitionRow();
@@ -283,15 +279,27 @@ public partial class CutEditor : UserControl
 			CutRows.Children.Remove(row);
 			RenumberRows();
 			CutListPanel.IsVisible = _rows.Count > 0;
+			RefreshOverlapNote();
 			OnEdited(true);
 		};
+	}
+
+	private bool Joins(string? from, string? to)
+	{
+		return ReadFrame(from, "", out long start) is null && ReadFrame(to, "", out long end) is null && start > 0 && end < _totalFrames;
+	}
+
+	private void RefreshOverlapNote()
+	{
+		OverlapNote.IsVisible = _rows.Any(r => Joins(r.From.Text, r.To.Text) &&
+		                                       TransitionKinds[Math.Max(0, r.Kind.SelectedIndex)].Kind is { } k && new CutTransition(k).Overlaps);
 	}
 
 	private void RenumberRows()
 	{
 		for (int i = 0; i < CutRows.Children.Count; i++)
 		{
-			if (CutRows.Children[i] is StackPanel { Children: [Grid { Children: [Button number, ..] }, ..] })
+			if (CutRows.Children[i] is Border { Child: StackPanel { Children: [Grid { Children: [Button number, ..] }, ..] } })
 				number.Content = (i + 1).ToString();
 		}
 	}
