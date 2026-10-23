@@ -1,8 +1,15 @@
 namespace OsmoOverlay.Core.Telemetry.External;
 
 /// <summary>One fix of a track recorded by another device (a bike computer, a watch): UTC time, position, altitude and speed where it has them.</summary>
-public sealed record ExternalTrackPoint(DateTime Utc, double Latitude, double Longitude, double? AltitudeMeters = null, double? SpeedMs = null, bool StartsAfterGap = false,
-	double? TemperatureCelsius = null, double? DistanceMeters = null);
+public sealed record ExternalTrackPoint(
+	DateTime Utc,
+	double Latitude,
+	double Longitude,
+	double? AltitudeMeters = null,
+	double? SpeedMs = null,
+	bool StartsAfterGap = false,
+	double? TemperatureCelsius = null,
+	double? DistanceMeters = null);
 
 public sealed record ExternalBatteryReading(DateTime Utc, double Percent);
 
@@ -18,8 +25,14 @@ public enum ExternalTrackState
 }
 
 /// <summary>Where the track puts the camera at a moment - null Speed when the track has none and its fixes can't tell.</summary>
-public readonly record struct ExternalTrackSample(ExternalTrackState State, double Latitude, double Longitude, double? AltitudeMeters, double? SpeedMs,
-	double? TemperatureCelsius = null, double? DistanceMeters = null);
+public readonly record struct ExternalTrackSample(
+	ExternalTrackState State,
+	double Latitude,
+	double Longitude,
+	double? AltitudeMeters,
+	double? SpeedMs,
+	double? TemperatureCelsius = null,
+	double? DistanceMeters = null);
 
 /// <summary>
 ///     A track on its own UTC clock. Gaps and timer pauses preserve elapsed time and do not imply a standstill,
@@ -64,6 +77,7 @@ public sealed class ExternalTrack
 			if (Batteries[middle].Utc <= utc) low = middle + 1;
 			else high = middle;
 		}
+
 		return low > 0 ? Batteries[low - 1].Percent : null;
 	}
 
@@ -124,13 +138,14 @@ public sealed class ExternalTrack
 				if (other > index ? Connected(point, adjacent) : Connected(adjacent, point)) speed = Displacement(point, adjacent) / seconds;
 			}
 		}
+
 		return new ExternalTrackSample(ExternalTrackState.Fix, point.Latitude, point.Longitude, point.AltitudeMeters, speed, point.TemperatureCelsius, point.DistanceMeters);
 	}
 
 	private static double? Interpolate(double? from, double? to, double fraction) => from is { } a && to is { } b ? a + (b - a) * fraction : null;
 
 	private bool Connected(ExternalTrackPoint from, ExternalTrackPoint to) => !to.StartsAfterGap &&
-		(to.Utc - from.Utc).TotalSeconds <= GapSeconds && !Pauses.Any(p => p.FromUtc < to.Utc && p.ToUtc > from.Utc);
+	                                                                          (to.Utc - from.Utc).TotalSeconds <= GapSeconds && !Pauses.Any(p => p.FromUtc < to.Utc && p.ToUtc > from.Utc);
 
 	private static double Displacement(ExternalTrackPoint a, ExternalTrackPoint b)
 	{

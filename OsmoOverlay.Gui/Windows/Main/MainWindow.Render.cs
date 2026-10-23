@@ -145,6 +145,7 @@ public partial class MainWindow
 				if (sync.Second is { } second) parts.AddRange(["--track-anchor", second.ToArgument()]);
 			}
 		}
+
 		foreach (TimeRange cut in cutOuts)
 		{
 			parts.AddRange([

@@ -218,7 +218,7 @@ public partial class BenchmarkWindow : Window
 		{
 			EnterPhase(Phase.Prepare);
 			ShowScreenText(Strings.Benchmark_LivePreparing);
-			IReadOnlyList<string> paths = await Task.Run<IReadOnlyList<string>>(() => SyntheticRecording.EnsureAsync(share => Dispatcher.UIThread.Post(() =>
+			IReadOnlyList<string> paths = await Task.Run(() => SyntheticRecording.EnsureAsync(share => Dispatcher.UIThread.Post(() =>
 			{
 				Progress.IsIndeterminate = false;
 				Progress.Maximum = 1;

@@ -73,7 +73,7 @@ public sealed partial class OverlayRenderer
 	private SKImage? _routeIntroCard;
 	private RouteIntroCardKey? _routeIntroCardKey;
 
-	private readonly record struct RouteIntroCardKey(int Width, int Height, RouteIntroSettings Settings, RouteMapMosaic? Mosaic, RouteJoin RouteAcrossCuts);
+	private readonly record struct RouteIntroCardKey(int Width, int Height, RouteIntroSettings Settings, RouteMapMosaic? Mosaic);
 
 	/// <summary>See PrepareMapAsync (OverlayRenderer.Position.cs) - same shape, independent mosaic/key.</summary>
 	public async Task PrepareRouteIntroMapAsync(Action<int, int>? onTileProgress = null, CancellationToken ct = default)
@@ -160,7 +160,7 @@ public sealed partial class OverlayRenderer
 	/// <summary>Draws the cached card (see _routeIntroCard) at `alpha`, building it first if the key changed. `canvas` must be the frame canvas with only DrawFrame's output-size scale applied.</summary>
 	private void DrawRouteIntroCard(SKCanvas canvas, int outW, int outH, float alpha)
 	{
-		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic, RouteAcrossCuts);
+		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic);
 		if (_routeIntroCard is null || _routeIntroCardKey != key)
 		{
 			_routeIntroCard?.Dispose();
@@ -233,9 +233,10 @@ public sealed partial class OverlayRenderer
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
 			// Drawn once per card (see DrawRouteIntroCard), so it's built right here and dropped again.
-			using var route = new RouteGeometry(RouteAcrossCuts, RouteIntro.ColorBySpeed, _trailSpeedScaleKmh);
+			using var route = new RouteGeometry(RouteIntro.ColorBySpeed, _trailSpeedScaleKmh);
+			RouteJoin?[] joins = RouteIntroJoins();
 			for (int i = 0; i < pixels.Count; i++)
-				route.Add(pixels[i], _allFrames[i].SpeedKmh, _allFrames[i].StartsAfterCut);
+				route.Add(pixels[i], _allFrames[i].SpeedKmh, joins[i]);
 
 			var toCard = SKMatrix.CreateScaleTranslation(fitScale, fitScale, destRect.Left, destRect.Top);
 			DrawRoute(canvas, route, toCard, TrailColor, 6);
@@ -288,16 +289,31 @@ public sealed partial class OverlayRenderer
 		DrawRouteEndCaption(canvas, mapRect, finish, finishLabel, route, taken);
 	}
 
+	/// <summary>How the route reaches each frame from the one before: a cut's own join, or the card's GPS loss join at the first fix after a loss - null where it carries on.</summary>
+	private RouteJoin?[] RouteIntroJoins()
+	{
+		var joins = new RouteJoin?[_allFrames.Count];
+		var loss = default(GpsLossTracker);
+		for (int i = 0; i < joins.Length; i++)
+		{
+			bool resumes = loss.Resumes(_allFrames[i]);
+			joins[i] = _allFrames[i].JoinBefore ?? (resumes ? RouteIntro.GpsLossJoin : null);
+		}
+
+		return joins;
+	}
+
 	/// <summary>
 	///     The drawn route in the card's coordinates, thinned to points a few pixels apart - enough to tell what a caption
-	///     would cover. Only fixed positions; a NaN point breaks it where the route has a gap (a cut drawn as RouteJoin.Gap).
+	///     would cover. Only fixed positions; a NaN point breaks it where the route has a gap (a cut whose Join is RouteJoin.Gap).
 	/// </summary>
 	private List<SKPoint> RouteOnCard(List<SKPoint> pixels, SKMatrix toCard)
 	{
 		List<SKPoint> route = [];
+		RouteJoin?[] joins = RouteIntroJoins();
 		for (int i = 0; i < pixels.Count; i++)
 		{
-			if (_allFrames[i].StartsAfterCut && RouteAcrossCuts == RouteJoin.Gap && route.Count > 0) route.Add(new SKPoint(float.NaN, float.NaN));
+			if (joins[i] == RouteJoin.Gap && route.Count > 0) route.Add(new SKPoint(float.NaN, float.NaN));
 			if (!_allFrames[i].Raw.HasGpsFix) continue;
 
 			SKPoint point = toCard.MapPoint(pixels[i]);

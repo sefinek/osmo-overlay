@@ -13,10 +13,11 @@ internal sealed class GoProDiagnostics
 			double start = clockStart is { } clock && stream.StampMicroseconds is { } stamp ? (stamp - clock) / 1e6 : packet.StartSeconds;
 			_blocks.Add((start, start + packet.DurationSeconds, stream));
 		}
+
 		_blocks.Sort((a, b) => a.Start.CompareTo(b.Start));
 		for (int i = 0; i + 1 < _blocks.Count; i++)
 		{
-			var block = _blocks[i];
+			(double Start, double End, GpmfStream Stream) block = _blocks[i];
 			double duration = block.End - block.Start;
 			double measured = _blocks[i + 1].Start - block.Start;
 			// Keep sensor timing between adjacent blocks without stretching samples across a missing packet.

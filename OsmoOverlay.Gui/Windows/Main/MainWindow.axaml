@@ -386,9 +386,9 @@
 		</Style>
 	</Window.Styles>
 
-	<Grid Name="RootGrid" Margin="14" RowDefinitions="*,230" RowSpacing="10">
+	<Grid Name="RootGrid" Margin="14" RowDefinitions="*,10,230">
 
-		<Grid Grid.Row="0" ColumnDefinitions="550,*,260" ColumnSpacing="10">
+		<Grid Name="TopGrid" Grid.Row="0" ColumnDefinitions="550,10,*,10,260">
 
 			<Grid Grid.Column="0">
 				<ScrollViewer Name="SourceColumnScroll" HorizontalScrollBarVisibility="Disabled">
@@ -793,7 +793,10 @@
 				</ScrollViewer>
 			</Grid>
 
-			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
+			<local:PanelSplitter Name="SourceSplitter" Grid.Column="1" Vertical="True" ToolTip.Tip="{x:Static local:Strings.Main_ResizeCards}" />
+			<local:PanelSplitter Name="OverlaySplitter" Grid.Column="3" Vertical="True" ToolTip.Tip="{x:Static local:Strings.Main_ResizeCards}" />
+
+			<Border Grid.Column="2" Classes="card" Name="PreviewCard">
 				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
 					<Grid Grid.Row="0" Height="32" ColumnDefinitions="Auto,*,Auto">
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
@@ -1015,7 +1018,7 @@
 				</Grid>
 			</Border>
 
-			<Border Grid.Column="2" Classes="card" Name="OverlayCard">
+			<Border Grid.Column="4" Classes="card" Name="OverlayCard">
 				<Grid RowDefinitions="Auto,Auto,*">
 					<StackPanel Grid.Row="0" Classes="cardTitle">
 						<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Common_Overlay}" />
@@ -2267,8 +2270,10 @@
 			</Border>
 		</Grid>
 
-		<Border Grid.Row="1" Classes="card" Name="TimelineCard" IsVisible="False">
-			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
+		<local:PanelSplitter Name="BottomSplitter" Grid.Row="1" ToolTip.Tip="{x:Static local:Strings.Main_ResizeCards}" />
+
+		<Border Grid.Row="2" Classes="card" Name="TimelineCard" IsVisible="False">
+			<Grid Name="TimelineTracksGrid" ColumnDefinitions="150,*" RowDefinitions="Auto,*,Auto" RowSpacing="2">
 				<StackPanel Grid.Row="0" Grid.Column="0" Background="{StaticResource ControlBrush}">
 					<Border Height="{x:Static local:PreviewTimeline.RulerHeight}">
 						<StackPanel Orientation="Horizontal" Margin="10,0,0,0" Spacing="8" VerticalAlignment="Center">
@@ -2302,7 +2307,7 @@
 			</Grid>
 		</Border>
 
-		<Border Grid.Row="1" Classes="card" Name="LogCard">
+		<Border Grid.Row="2" Classes="card" Name="LogCard">
 			<Border Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6" Padding="10">
 				<ScrollViewer Name="LogScroll">
 					<SelectableTextBlock Name="LogBox" TextWrapping="Wrap"
@@ -2311,6 +2316,6 @@
 			</Border>
 		</Border>
 
-		<Border Name="SaveCursorShield" Grid.Row="0" Grid.RowSpan="2" Background="Transparent" Cursor="Wait" IsVisible="False" />
+		<Border Name="SaveCursorShield" Grid.Row="0" Grid.RowSpan="3" Background="Transparent" Cursor="Wait" IsVisible="False" />
 	</Grid>
 </Window>

@@ -9,9 +9,19 @@ namespace OsmoOverlay.Core.Overlay;
 ///     (OverlayRenderer.DrawTimeText) without a GPS clock. CameraAxes: the camera format knows its accelerometer's axes
 ///     (ICameraFormat.Gravity). CameraSettings: ISO and color temperature are recorded.
 /// </summary>
-public readonly record struct OverlayAvailability(bool GpsFix, bool GpsTimestamp, bool ContainerTime, bool CameraAxes = true, bool CameraSettings = true,
-	bool AmbientTemperature = false, bool ImuTemperature = false, bool DeviceDistance = false, bool DeviceBattery = false,
-	bool AudioLevel = false, bool WindProcessing = false, bool ImageLuma = false)
+public readonly record struct OverlayAvailability(
+	bool GpsFix,
+	bool GpsTimestamp,
+	bool ContainerTime,
+	bool CameraAxes = true,
+	bool CameraSettings = true,
+	bool AmbientTemperature = false,
+	bool ImuTemperature = false,
+	bool DeviceDistance = false,
+	bool DeviceBattery = false,
+	bool AudioLevel = false,
+	bool WindProcessing = false,
+	bool ImageLuma = false)
 {
 	public static OverlayAvailability Of(IReadOnlyList<TelemetryFrame> frames, bool containerTime, ICameraFormat? camera)
 	{

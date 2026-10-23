@@ -40,9 +40,9 @@ public sealed class TrackSynchronizationTests
 	{
 		TrackSynchronization[] invalid =
 		[
-			new(new(-1, T0)), new(new(double.NaN, T0)), new(new(0, DateTime.SpecifyKind(T0, DateTimeKind.Unspecified))),
-			new(new(10, T0), new(10, T0.AddSeconds(1))), new(new(10, T0), new(20, T0)),
-			new(new(10, T0), new(20, T0.AddSeconds(-1)))
+			new(new TrackSyncAnchor(-1, T0)), new(new TrackSyncAnchor(double.NaN, T0)), new(new TrackSyncAnchor(0, DateTime.SpecifyKind(T0, DateTimeKind.Unspecified))),
+			new(new TrackSyncAnchor(10, T0), new TrackSyncAnchor(10, T0.AddSeconds(1))), new(new TrackSyncAnchor(10, T0), new TrackSyncAnchor(20, T0)),
+			new(new TrackSyncAnchor(10, T0), new TrackSyncAnchor(20, T0.AddSeconds(-1)))
 		];
 		foreach (TrackSynchronization sync in invalid) Assert.ThrowsExactly<InvalidDataException>(sync.Validate);
 	}

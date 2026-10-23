@@ -487,6 +487,8 @@ public abstract record TrailOverlayElement : OverlayElement
 	public float TrailWidth { get; init; } = 4.5f;
 	// False draws the dial/map without the route - just the marker.
 	public bool TrailVisible { get; init; } = true;
+	// How the route crosses a stretch where the GPS had no fix, from where it was lost to where it came back (RouteJoin, as for a cut).
+	public RouteJoin GpsLossJoin { get; init; } = RouteJoins.Default;
 	public bool TrailUseArrow { get; init; } = true;
 	// The marker's size relative to the built-in one; MarkerColor null is the accent color.
 	public float MarkerScale { get; init; } = 1f;

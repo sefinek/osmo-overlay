@@ -1,4 +1,5 @@
 using System.Text;
+using System.Xml;
 using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Tests.Telemetry.External;
@@ -24,13 +25,13 @@ public sealed class ExternalTrackTests
 	public void Gpx_PointsOfEverySegment()
 	{
 		using MemoryStream gpx = Gpx("""
-			<trk><trkseg>
-			<trkpt lat="53.1546640" lon="18.9002020"><ele>87.4</ele><time>2026-10-21T14:20:49Z</time><extensions><gpxtpx:TrackPointExtension><gpxtpx:atemp>24</gpxtpx:atemp></gpxtpx:TrackPointExtension></extensions></trkpt>
-			<trkpt lat="53.1546740" lon="18.9002220"><ele>87.6</ele><time>2026-10-21T14:20:50Z</time></trkpt>
-			</trkseg><trkseg>
-			<trkpt lat="53.1548760" lon="18.9008230"><time>2026-10-21T16:21:56+02:00</time></trkpt>
-			</trkseg></trk>
-			""");
+		                             <trk><trkseg>
+		                             <trkpt lat="53.1546640" lon="18.9002020"><ele>87.4</ele><time>2026-10-21T14:20:49Z</time><extensions><gpxtpx:TrackPointExtension><gpxtpx:atemp>24</gpxtpx:atemp></gpxtpx:TrackPointExtension></extensions></trkpt>
+		                             <trkpt lat="53.1546740" lon="18.9002220"><ele>87.6</ele><time>2026-10-21T14:20:50Z</time></trkpt>
+		                             </trkseg><trkseg>
+		                             <trkpt lat="53.1548760" lon="18.9008230"><time>2026-10-21T16:21:56+02:00</time></trkpt>
+		                             </trkseg></trk>
+		                             """);
 
 		ExternalTrack track = GpxReader.Read(gpx);
 
@@ -48,14 +49,14 @@ public sealed class ExternalTrackTests
 	public void Gpx_APointWithoutATimeOrWithABadPositionIsLeftOut()
 	{
 		using MemoryStream gpx = Gpx("""
-			<trk><trkseg>
-			<trkpt lat="53.1" lon="18.9"><time>2026-10-21T14:20:49Z</time></trkpt>
-			<trkpt lat="53.2" lon="18.9"><ele>80</ele></trkpt>
-			<trkpt lat="x" lon="18.9"><time>2026-10-21T14:20:50Z</time></trkpt>
-			<trkpt lat="53.3" lon="18.9"/>
-			<trkpt lat="53.4" lon="18.9"><time>2026-10-21T14:20:51Z</time></trkpt>
-			</trkseg></trk>
-			""");
+		                             <trk><trkseg>
+		                             <trkpt lat="53.1" lon="18.9"><time>2026-10-21T14:20:49Z</time></trkpt>
+		                             <trkpt lat="53.2" lon="18.9"><ele>80</ele></trkpt>
+		                             <trkpt lat="x" lon="18.9"><time>2026-10-21T14:20:50Z</time></trkpt>
+		                             <trkpt lat="53.3" lon="18.9"/>
+		                             <trkpt lat="53.4" lon="18.9"><time>2026-10-21T14:20:51Z</time></trkpt>
+		                             </trkseg></trk>
+		                             """);
 
 		Assert.AreEqual(2, GpxReader.Read(gpx).Points.Count);
 	}
@@ -65,7 +66,7 @@ public sealed class ExternalTrackTests
 	{
 		var gpx = new MemoryStream("""<?xml version="1.0"?><!DOCTYPE gpx [<!ENTITY x SYSTEM "file:///c:/windows/win.ini">]><gpx/>"""u8.ToArray());
 
-		Assert.ThrowsExactly<System.Xml.XmlException>(() => GpxReader.Read(gpx));
+		Assert.ThrowsExactly<XmlException>(() => GpxReader.Read(gpx));
 	}
 
 	[TestMethod]
@@ -98,7 +99,7 @@ public sealed class ExternalTrackTests
 	{
 		Assert.ThrowsExactly<InvalidDataException>(() => new ExternalTrack(Walk(T0, 1, 1)));
 
-		var shuffled = Walk(T0, 5, 1).Reverse().Append(new ExternalTrackPoint(T0, 0, 0));
+		IEnumerable<ExternalTrackPoint> shuffled = Walk(T0, 5, 1).Reverse().Append(new ExternalTrackPoint(T0, 0, 0));
 		ExternalTrack track = new(shuffled);
 		Assert.AreEqual(5, track.Points.Count, "(0, 0) is no fix");
 		Assert.AreEqual(T0, track.StartUtc);
@@ -171,14 +172,14 @@ public sealed class ExternalTrackTests
 	public void Gpx_DoesNotInterpolateBetweenSeparateTrackSegments()
 	{
 		using MemoryStream gpx = Gpx("""
-			<trk><trkseg>
-			<trkpt lat="50" lon="20"><time>2026-01-01T12:00:00Z</time></trkpt>
-			<trkpt lat="50.00001" lon="20"><time>2026-01-01T12:00:01Z</time></trkpt>
-			</trkseg><trkseg>
-			<trkpt lat="50.00002" lon="20"><time>2026-01-01T12:00:02Z</time></trkpt>
-			<trkpt lat="50.00003" lon="20"><time>2026-01-01T12:00:03Z</time></trkpt>
-			</trkseg></trk>
-			""");
+		                             <trk><trkseg>
+		                             <trkpt lat="50" lon="20"><time>2026-01-01T12:00:00Z</time></trkpt>
+		                             <trkpt lat="50.00001" lon="20"><time>2026-01-01T12:00:01Z</time></trkpt>
+		                             </trkseg><trkseg>
+		                             <trkpt lat="50.00002" lon="20"><time>2026-01-01T12:00:02Z</time></trkpt>
+		                             <trkpt lat="50.00003" lon="20"><time>2026-01-01T12:00:03Z</time></trkpt>
+		                             </trkseg></trk>
+		                             """);
 		ExternalTrack track = GpxReader.Read(gpx);
 		int cursor = 0;
 		Assert.AreEqual(ExternalTrackState.Lost, track.At(new DateTime(2026, 1, 1, 12, 0, 1, DateTimeKind.Utc).AddSeconds(0.5), ref cursor)!.Value.State);
@@ -188,7 +189,7 @@ public sealed class ExternalTrackTests
 	[TestMethod]
 	public void BatteryAt_DoesNotUseAFutureReadingBeforeTheFirstMeasurement()
 	{
-		var track = new ExternalTrack(Walk(T0, 5, 1), batteries: [new(T0.AddSeconds(2), 43)]);
+		var track = new ExternalTrack(Walk(T0, 5, 1), batteries: [new ExternalBatteryReading(T0.AddSeconds(2), 43)]);
 		Assert.IsNull(track.BatteryAt(T0));
 		Assert.IsNull(track.BatteryAt(T0.AddSeconds(1.99)));
 		Assert.AreEqual(43, track.BatteryAt(T0.AddSeconds(2)));
@@ -200,10 +201,10 @@ public sealed class ExternalTrackTests
 	{
 		var track = new ExternalTrack(
 		[
-			new(T0, 50, 20, TemperatureCelsius: -4, DistanceMeters: 100),
-			new(T0.AddSeconds(1), 50.00001, 20, TemperatureCelsius: -2, DistanceMeters: 102),
-			new(T0.AddSeconds(31), 50.00002, 20, TemperatureCelsius: 20, DistanceMeters: 200),
-			new(T0.AddSeconds(32), 50.00003, 20, TemperatureCelsius: 20, DistanceMeters: 0)
+			new ExternalTrackPoint(T0, 50, 20, TemperatureCelsius: -4, DistanceMeters: 100),
+			new ExternalTrackPoint(T0.AddSeconds(1), 50.00001, 20, TemperatureCelsius: -2, DistanceMeters: 102),
+			new ExternalTrackPoint(T0.AddSeconds(31), 50.00002, 20, TemperatureCelsius: 20, DistanceMeters: 200),
+			new ExternalTrackPoint(T0.AddSeconds(32), 50.00003, 20, TemperatureCelsius: 20, DistanceMeters: 0)
 		]);
 		int cursor = 0;
 		ExternalTrackSample half = track.At(T0.AddSeconds(0.5), ref cursor)!.Value;

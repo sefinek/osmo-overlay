@@ -1,3 +1,4 @@
+using System.Globalization;
 using OsmoOverlay.Cameras.Dji;
 using OsmoOverlay.Cameras.GoPro;
 using OsmoOverlay.Cameras.Insta360;
@@ -136,7 +137,7 @@ for (; i < args.Length; i++)
 		case "--track":
 			trackPath = value;
 			break;
-		case "--track-offset" when double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double parsedOffset) &&
+		case "--track-offset" when double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsedOffset) &&
 		                           double.IsFinite(parsedOffset):
 			trackOffset = parsedOffset;
 			break;
@@ -155,10 +156,19 @@ if ((trackOffset is not null || trackAnchors.Count > 0) && trackPath is null)
 	return 1;
 }
 
-ExternalTrackSource? trackSource = trackPath is null ? null : new ExternalTrackSource(trackPath, trackOffset,
-	trackAnchors.Count > 0 ? new TrackSynchronization(trackAnchors[0], trackAnchors.Count > 1 ? trackAnchors[1] : null) : null);
-try { trackSource?.Validate(); }
-catch (InvalidDataException ex) { Console.Error.WriteLine($"Error: {ex.Message}"); return 1; }
+ExternalTrackSource? trackSource = trackPath is null
+	? null
+	: new ExternalTrackSource(trackPath, trackOffset,
+		trackAnchors.Count > 0 ? new TrackSynchronization(trackAnchors[0], trackAnchors.Count > 1 ? trackAnchors[1] : null) : null);
+try
+{
+	trackSource?.Validate();
+}
+catch (InvalidDataException ex)
+{
+	Console.Error.WriteLine($"Error: {ex.Message}");
+	return 1;
+}
 
 if (trackPath is not null && !File.Exists(trackPath))
 {

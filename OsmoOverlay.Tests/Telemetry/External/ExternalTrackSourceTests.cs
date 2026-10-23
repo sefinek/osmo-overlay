@@ -52,13 +52,16 @@ public sealed class ExternalTrackSourceTests
 		string directory = Directory.CreateTempSubdirectory().FullName;
 		try
 		{
-			var source = new ExternalTrackSource(WriteTrack(directory), Synchronization: new(new(5, TrackStart.AddSeconds(15))));
+			var source = new ExternalTrackSource(WriteTrack(directory), Synchronization: new TrackSynchronization(new TrackSyncAnchor(5, TrackStart.AddSeconds(15))));
 			IReadOnlyList<TelemetryFrame> frames = source.Apply(Frames(), Fps, null);
 			Assert.AreEqual(TrackStart.AddSeconds(10), frames[0].GpsTimestamp);
 			Assert.AreEqual(TrackStart.AddSeconds(15), frames[125].GpsTimestamp);
 			Assert.IsTrue(frames[0].HasGpsFix);
 		}
-		finally { Directory.Delete(directory, true); }
+		finally
+		{
+			Directory.Delete(directory, true);
+		}
 	}
 
 	[TestMethod]
@@ -67,10 +70,13 @@ public sealed class ExternalTrackSourceTests
 		string directory = Directory.CreateTempSubdirectory().FullName;
 		try
 		{
-			var source = new ExternalTrackSource(WriteTrack(directory), Synchronization: new(new(0, TrackStart.AddMinutes(5))));
+			var source = new ExternalTrackSource(WriteTrack(directory), Synchronization: new TrackSynchronization(new TrackSyncAnchor(0, TrackStart.AddMinutes(5))));
 			Assert.ThrowsExactly<InvalidOperationException>(() => source.Apply(Frames(), Fps, null));
 		}
-		finally { Directory.Delete(directory, true); }
+		finally
+		{
+			Directory.Delete(directory, true);
+		}
 	}
 
 	[TestMethod]
@@ -111,7 +117,7 @@ public sealed class ExternalTrackSourceTests
 		{
 			var source = new ExternalTrackSource(WriteTrack(directory));
 
-			var error = Assert.ThrowsExactly<InvalidOperationException>(() => source.Apply(Frames(), Fps, TrackStart.AddMinutes(7)));
+			InvalidOperationException error = Assert.ThrowsExactly<InvalidOperationException>(() => source.Apply(Frames(), Fps, TrackStart.AddMinutes(7)));
 
 			Assert.IsTrue(error.Message.Contains("ride.fit"));
 		}

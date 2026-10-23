@@ -236,9 +236,12 @@ public sealed class ComparePlayer : IDisposable
 
 		_playing = true;
 		_clock.Start(start);
-		_workers = [.. _tiles.Select((tile, i) => streams[i] is { } stream
-			? Task.Factory.StartNew(() => Decode(i, stream, ct), ct, TaskCreationOptions.LongRunning, TaskScheduler.Default)
-			: Task.CompletedTask)];
+		_workers =
+		[
+			.. _tiles.Select((tile, i) => streams[i] is { } stream
+				? Task.Factory.StartNew(() => Decode(i, stream, ct), ct, TaskCreationOptions.LongRunning, TaskScheduler.Default)
+				: Task.CompletedTask)
+		];
 		_ = Task.Run(() => WatchEndAsync(generation, ct), ct);
 		PlaybackStarted?.Invoke();
 	}

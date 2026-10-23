@@ -33,23 +33,21 @@ internal sealed class RouteGeometry : IDisposable
 
 	/// <param name="speedScaleKmh">The speed a route colored by speed reaches full red at.</param>
 	/// <param name="minStep">In the route's own units - 0 keeps every point.</param>
-	public RouteGeometry(RouteJoin join, bool colorBySpeed, double speedScaleKmh, float minStep = 0)
+	public RouteGeometry(bool colorBySpeed, double speedScaleKmh, float minStep = 0)
 	{
-		Join = join;
 		MinStep = minStep;
 		_speedScaleKmh = speedScaleKmh;
 		if (colorBySpeed) _buckets = new Segment?[SpeedColorScale.Buckets];
 	}
 
-	public RouteJoin Join { get; }
 	public float MinStep { get; }
 	public bool ColorBySpeed => _buckets is not null;
 
 	/// <summary>Points handed to Add so far, the left-out ones included.</summary>
 	public int Count { get; private set; }
 
-	/// <param name="afterCut">The point is the first after a part cut out of the render - joined per Join.</param>
-	public void Add(SKPoint point, double speedKmh, bool afterCut)
+	/// <param name="joinBefore">How the route reaches this point from the last one - null when it simply carries on, else it is the first after a cut or a stretch without a fix.</param>
+	public void Add(SKPoint point, double speedKmh, RouteJoin? joinBefore = null)
 	{
 		Count++;
 		if (Count == 1)
@@ -59,7 +57,7 @@ internal sealed class RouteGeometry : IDisposable
 			return;
 		}
 
-		if (!afterCut)
+		if (joinBefore is not { } join)
 		{
 			float dx = point.X - _previous.X;
 			float dy = point.Y - _previous.Y;
@@ -75,13 +73,13 @@ internal sealed class RouteGeometry : IDisposable
 
 		if (_skipped is { } last) AddTravelled(last.Point, last.SpeedKmh);
 
-		if (Join == RouteJoin.Straight)
+		if (join == RouteJoin.Straight)
 		{
 			AddTravelled(point, speedKmh);
 			return;
 		}
 
-		if (Join == RouteJoin.Dashed)
+		if (join == RouteJoin.Dashed)
 		{
 			_dashed ??= new Segment();
 			_dashed.MoveTo(_previous);

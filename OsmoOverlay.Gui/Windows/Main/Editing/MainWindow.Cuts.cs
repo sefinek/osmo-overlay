@@ -46,12 +46,6 @@ public partial class MainWindow
 			ApplyCuts(false);
 		};
 		CutsEditor.CutRequested += ApplyCutAction;
-		CutsEditor.ShowRouteJoin(OverlaySettingsStore.Load().RouteAcrossCuts);
-		CutsEditor.RouteJoinChanged += join =>
-		{
-			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { RouteAcrossCuts = join });
-			_previewPlayer.SetRouteAcrossCuts(join);
-		};
 		foreach (PreviewTimeline timeline in Timelines)
 		{
 			timeline.SelectionDragged += OnTimelineSelectionDragged;

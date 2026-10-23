@@ -7,6 +7,7 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Gui.Native;
+using OsmoOverlay.Gui.Windows;
 
 namespace OsmoOverlay.Gui;
 
@@ -112,7 +113,7 @@ public partial class DeveloperWindow : Window
 				await new ExternalTrackWindow().ShowDialog(this);
 				break;
 			case "benchmark":
-				var benchmark = new Windows.BenchmarkWindow();
+				var benchmark = new BenchmarkWindow();
 				var source = new VideoInfo("hevc", "Main 10", 3840, 2160, "60000/1001", "yuv420p10le", "bt709", "bt709", "bt709", "tv", 73_000_000);
 				benchmark.ShowSample(new BenchmarkResult(
 						new BenchmarkSystem("Microsoft Windows 10.0.26200", "Intel(R) Core(TM) i9-14900HX", 32, 32L << 30,

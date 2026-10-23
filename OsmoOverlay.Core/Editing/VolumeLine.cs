@@ -31,9 +31,9 @@ public static class VolumeLine
 	{
 		List<VolumePoint> normalized = [];
 		foreach (VolumePoint point in points
-					 .Where(p => double.IsFinite(p.Seconds) && double.IsFinite(p.Db))
-					 .Select(p => new VolumePoint(Math.Clamp(p.Seconds, 0, Math.Max(0, durationSeconds)), Math.Clamp(p.Db, SilentDb, MaxDb)))
-					 .OrderBy(p => p.Seconds))
+			         .Where(p => double.IsFinite(p.Seconds) && double.IsFinite(p.Db))
+			         .Select(p => new VolumePoint(Math.Clamp(p.Seconds, 0, Math.Max(0, durationSeconds)), Math.Clamp(p.Db, SilentDb, MaxDb)))
+			         .OrderBy(p => p.Seconds))
 		{
 			if (normalized.Count > 0 && point.Seconds - normalized[^1].Seconds < MinGapSeconds / 2) normalized[^1] = point;
 			else normalized.Add(point);

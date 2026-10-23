@@ -110,6 +110,7 @@ public partial class SettingsWindow : Window
 		OutputCodecCombo.ItemsSource = OutputCodecOptions;
 		OrientationSourceCombo.ItemsSource = OrientationSourceOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
+		RouteIntroGpsLossCombo.ItemsSource = RouteJoinOptions.Labels;
 		LanguageCombo.ItemsSource = LanguageOptions;
 		ThemeCombo.ItemsSource = AppThemes.Options;
 		TimeFormatCombo.ItemsSource = PreviewTimeFormats.Options;
@@ -168,6 +169,7 @@ public partial class SettingsWindow : Window
 		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
 		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
 		RouteIntroColorBySpeedCheck.IsChecked = routeIntro.ColorBySpeed;
+		RouteIntroGpsLossCombo.SelectedIndex = RouteJoinOptions.IndexOf(routeIntro.GpsLossJoin);
 		RouteIntroStartFinishCheck.IsChecked = routeIntro.ShowStartFinish;
 		RouteIntroEndLabels.IsEnabled = routeIntro.ShowStartFinish;
 		RouteIntroStartLabelBox.Text = routeIntro.StartLabel ?? RouteIntroSettings.DefaultStartLabel;
@@ -327,7 +329,8 @@ public partial class SettingsWindow : Window
 		OwnEndLabel(RouteIntroStartLabelBox.Text, RouteIntroSettings.DefaultStartLabel),
 		OwnEndLabel(RouteIntroFinishLabelBox.Text, RouteIntroSettings.DefaultFinishLabel),
 		RouteIntroLabels.From(_routeIntroStatRows.ToDictionary(r => r.Key.ToString(), r => r.Value.Label.Text ?? "")),
-		RouteIntroWhenTrimmedCheck.IsChecked == true);
+		RouteIntroWhenTrimmedCheck.IsChecked == true,
+		RouteJoinOptions.At(RouteIntroGpsLossCombo.SelectedIndex) ?? RouteJoins.Default);
 
 	/// <summary>
 	///     A start/finish caption as typed - the box shows the built-in one, and left as that it stays the built-in (null), so it

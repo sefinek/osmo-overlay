@@ -483,7 +483,7 @@ public sealed class LayerTimeline : Control
 	private static void DrawLock(DrawingContext context, double x, double top, double bottom)
 	{
 		double scale = LockIconSize / 16;
-		var placed = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(x, top + (bottom - top - LockIconSize) / 2);
+		Matrix placed = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(x, top + (bottom - top - LockIconSize) / 2);
 		using (context.PushTransform(placed)) context.DrawGeometry(LockIconBrush, null, LockIcon);
 	}
 

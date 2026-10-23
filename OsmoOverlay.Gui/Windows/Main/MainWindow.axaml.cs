@@ -185,6 +185,7 @@ public partial class MainWindow : Window
 		SpeedMaxBox.Increment = (decimal)OverlayRenderer.SpeedGaugeMaxStep;
 
 		WireCuts();
+		WirePanelLayout();
 		WireVolumeLine();
 		WireMoments();
 		WirePreviewTimeline();
@@ -267,8 +268,14 @@ public partial class MainWindow : Window
 		if (startup.SecondScreenEnabled) OpenSecondScreen();
 		ApplyAutoSave(startup.AutoSaveMinutes);
 
-		if (openRecording) await AddInputFilesAsync();
-		else if (StartupProject is { } project) await OpenProjectAsync(project);
+		if (openRecording)
+		{
+			await AddInputFilesAsync();
+		}
+		else if (StartupProject is { } project)
+		{
+			await OpenProjectAsync(project);
+		}
 		else if (startup is { ReopenLastProject: true, LastProject: { } last })
 		{
 			if (File.Exists(last))
@@ -335,10 +342,13 @@ public partial class MainWindow : Window
 		if (files.Count == 0) return;
 
 		// The same file twice would get stitched (and rendered) twice.
-		List<string> added = [.. files.Select(f => f.Path.LocalPath)
-			.Where(p => !_inputPaths.Contains(p, StringComparer.OrdinalIgnoreCase))
-			.Distinct(StringComparer.OrdinalIgnoreCase)
-			.OrderBy(p => p, StringComparer.OrdinalIgnoreCase)];
+		List<string> added =
+		[
+			.. files.Select(f => f.Path.LocalPath)
+				.Where(p => !_inputPaths.Contains(p, StringComparer.OrdinalIgnoreCase))
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+		];
 		if (added.Count == 0) return;
 		bool wasEmpty = _inputPaths.Count == 0;
 		ClearExternalTrack();
@@ -546,7 +556,7 @@ public partial class MainWindow : Window
 			? OverlayLayers.Drawn(ActiveElements, ActiveLayers)
 			: OverlayPreset.CreateDefault(OverlayPresetStore.DefaultPresetId, Strings.Benchmark_Title).Elements;
 		var request = new BenchmarkRequest(_summary?.InputPaths[0], layout, _openedPreviewMaxWidth > 0 ? _openedPreviewMaxWidth : 1920);
-		await new Windows.BenchmarkWindow(request, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering, RunAppPreviewTestAsync).ShowDialog(owner);
+		await new BenchmarkWindow(request, _summary?.TotalFrameCount ?? 0, () => _phase == UiPhase.Rendering, RunAppPreviewTestAsync).ShowDialog(owner);
 
 		OverlaySettings after = OverlaySettingsStore.Load();
 		if (after.PreviewDrawsShadows != shadows) _previewPlayer.SetShadows(after.PreviewDrawsShadows, !after.DisableShadows);

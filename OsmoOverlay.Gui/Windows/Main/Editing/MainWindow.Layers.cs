@@ -23,7 +23,10 @@ public partial class MainWindow
 	/// <summary>Sizes the layer list to show this many tracks before it scrolls (Settings' "Layer rows").</summary>
 	private void ApplyLayerRows(int rows)
 	{
-		LayerScroll.MaxHeight = Math.Clamp(rows, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks) * LayerTimeline.RowHeight;
+		// A timeline dragged to a height of its own shows as many layers as fit.
+		LayerScroll.MaxHeight = BottomExpanded && OverlaySettingsStore.Load().TimelineHeight is not null
+			? double.PositiveInfinity
+			: Math.Clamp(rows, LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks) * LayerTimeline.RowHeight;
 	}
 
 	private void WireLayers()

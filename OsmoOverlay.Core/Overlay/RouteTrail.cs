@@ -3,8 +3,8 @@ using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core.Overlay;
 
-/// <summary>A point of the drawn route. AfterCut: the first point after a part cut out of the render - the route joins it per RouteJoin.</summary>
-internal readonly record struct TrailPoint(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut);
+/// <summary>A point of the drawn route. AfterCut: the first point after a part cut out of the render - the route joins it per CutJoin. AfterGpsLoss: the first fix after a loss of at least GpsLossMinSeconds - joined per the widget's GpsLossJoin.</summary>
+internal readonly record struct TrailPoint(double East, double North, double Lat, double Lon, double SpeedKmh, bool AfterCut, bool AfterGpsLoss = false, RouteJoin CutJoin = RouteJoins.Default);
 
 /// <summary>
 ///     The route travelled up to the frame drawn, shared by the Compass and Map trails: points at least MinStepMeters apart
@@ -19,6 +19,7 @@ internal sealed class RouteTrail
 
 	private readonly List<TrailPoint> _points = [];
 	private int _frameIndex = -1;
+	private GpsLossTracker _loss;
 
 	public int Count => _points.Count;
 	public TrailPoint this[int index] => _points[index];
@@ -44,13 +45,16 @@ internal sealed class RouteTrail
 	{
 		_points.Clear();
 		_frameIndex = -1;
+		_loss = default;
 	}
 
 	private void Append(DerivedFrame frame)
 	{
 		double east = frame.LocalEastMeters, north = frame.LocalNorthMeters;
-		// The first point after a cut is always kept, however close - it's where the route resumes.
-		if (!frame.StartsAfterCut && _points.Count > 0)
+		bool afterGpsLoss = _loss.Resumes(frame) && !frame.StartsAfterCut;
+
+		// The first point after a cut or a GPS loss is always kept, however close - it's where the route resumes.
+		if (!frame.StartsAfterCut && !afterGpsLoss && _points.Count > 0)
 		{
 			TrailPoint last = _points[^1];
 			double dx = east - last.East, dy = north - last.North;
@@ -69,6 +73,6 @@ internal sealed class RouteTrail
 			MaxNorth = Math.Max(MaxNorth, north);
 		}
 
-		_points.Add(new TrailPoint(east, north, frame.Raw.Latitude, frame.Raw.Longitude, frame.SpeedKmh, frame.StartsAfterCut));
+		_points.Add(new TrailPoint(east, north, frame.Raw.Latitude, frame.Raw.Longitude, frame.SpeedKmh, frame.StartsAfterCut, afterGpsLoss, frame.CutJoin ?? RouteJoins.Default));
 	}
 }

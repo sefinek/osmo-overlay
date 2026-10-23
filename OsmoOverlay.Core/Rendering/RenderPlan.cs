@@ -1,16 +1,17 @@
 using OsmoOverlay.Core.Localization;
+using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Core;
 
 /// <summary>
 ///     A stretch of the recording in seconds, e.g. a part to cut out - Transition is what a cut does where it joins the parts around
-///     it, Caption the text shown there.
+///     it, Caption the text shown there, Join how the route crosses it.
 /// </summary>
-public sealed record TimeRange(double StartSeconds, double EndSeconds, CutTransition? Transition = null, CutCaption? Caption = null);
+public sealed record TimeRange(double StartSeconds, double EndSeconds, CutTransition? Transition = null, CutCaption? Caption = null, RouteJoin? Join = null);
 
 /// <summary>
 ///     Frames [SourceStartFrame, SourceStartFrame + FrameCount) of the recording, on the combined timeline of all segments.
-///     TransitionIn/TransitionOut are those of the cuts this piece follows and precedes, CaptionIn the text of the one it follows. A fade through a color happens
+///     TransitionIn/TransitionOut are those of the cuts this piece follows and precedes, CaptionIn the text and JoinIn the route's join of the one it follows. A fade through a color happens
 ///     within the piece's own frames; an overlapping transition (CutTransition.Overlaps) instead shows this piece's first
 ///     OverlapIn frames together with the previous piece's last ones, so those frames take no time of their own in the output.
 /// </summary>
@@ -20,7 +21,8 @@ public sealed record RenderPiece(
 	CutTransition? TransitionIn = null,
 	CutTransition? TransitionOut = null,
 	int OverlapIn = 0,
-	CutCaption? CaptionIn = null)
+	CutCaption? CaptionIn = null,
+	RouteJoin? JoinIn = null)
 {
 	public long SourceEndFrame => SourceStartFrame + FrameCount;
 }
@@ -62,6 +64,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 		long cursor = start;
 		CutTransition? joinTransition = null;
 		CutCaption? joinCaption = null;
+		RouteJoin? joinRoute = null;
 
 		// The cut just passed joins the piece before it to this one.
 		void AddPiece(long from, long count)
@@ -74,14 +77,16 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 			}
 
 			if (joinCaption is not null && pieces.Count > 0) piece = piece with { CaptionIn = joinCaption };
+			if (joinRoute is not null && pieces.Count > 0) piece = piece with { JoinIn = joinRoute };
 
 			joinTransition = null;
 			joinCaption = null;
+			joinRoute = null;
 			pieces.Add(piece);
 		}
 
-		foreach ((long cutStart, long cutEnd, CutTransition? transition, CutCaption? caption) in (cutOuts ?? [])
-		         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds), c.Transition, c.Caption))
+		foreach ((long cutStart, long cutEnd, CutTransition? transition, CutCaption? caption, RouteJoin? route) in (cutOuts ?? [])
+		         .Select(c => (Start: ToFrame(c.StartSeconds), End: ToFrame(c.EndSeconds), c.Transition, c.Caption, c.Join))
 		         .Where(c => c.End > c.Start)
 		         .OrderBy(c => c.Start))
 		{
@@ -92,6 +97,7 @@ public sealed record RenderPlan(IReadOnlyList<RenderPiece> Pieces, bool IsPartia
 				AddPiece(cursor, cutStart - cursor);
 				joinTransition = transition;
 				joinCaption = caption;
+				joinRoute = route;
 			}
 
 			cursor = Math.Max(cursor, cutEnd);

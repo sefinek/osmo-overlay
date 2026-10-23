@@ -644,8 +644,8 @@ Close OsmoOverlay?</value>
   <data name="Cut_FromPastEnd" xml:space="preserve">
     <value>{0}: From is beyond the end of the recording ({1}).</value>
   </data>
-  <data name="Cut_GoToBefore" xml:space="preserve">
-    <value>Go to 3 seconds before this cut</value>
+  <data name="Cut_GoToBeforeTheCut" xml:space="preserve">
+    <value>Go to the last frame before this cut</value>
   </data>
   <data name="Cut_KeepAfterAll" xml:space="preserve">
     <value>Keep this part after all</value>
@@ -687,17 +687,8 @@ Removed sections are excluded from the preview, render, and telemetry. The route
   <data name="Cut_RemoveTheSelectedPartFrom" xml:space="preserve">
     <value>Remove the selected part from the render (X or Delete)</value>
   </data>
-  <data name="Cut_RouteDashed" xml:space="preserve">
-    <value>Dashed line across the cut</value>
-  </data>
-  <data name="Cut_RouteGap" xml:space="preserve">
-    <value>Gap - the route resumes after the cut</value>
-  </data>
   <data name="Cut_RouteOnTheMapAcross" xml:space="preserve">
     <value>Route on the map at a cut</value>
-  </data>
-  <data name="Cut_RouteStraight" xml:space="preserve">
-    <value>Straight line, as if nothing was cut</value>
   </data>
   <data name="Cut_SelectAPartAtThe" xml:space="preserve">
     <value>Start a selection at the frame on screen</value>
@@ -712,7 +703,7 @@ Removed sections are excluded from the preview, render, and telemetry. The route
     <value>The selection starts with the frame on screen (I)</value>
   </data>
   <data name="Cut_TheTelemetryEitherSideOf" xml:space="preserve">
-    <value>After a section is removed, the adjacent route points may be far apart. Connecting them with a straight line would create a shortcut across the omitted section. This applies to the trail in the compass, map and route intro.</value>
+    <value>After a section is removed, the adjacent route points may be far apart. A straight line between them would show a shortcut instead of the omitted stretch. This choice applies to this cut only - the trail in the compass, the map and the route intro.</value>
   </data>
   <data name="Cut_To" xml:space="preserve">
     <value>To</value>
@@ -3914,6 +3905,24 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="Timeline_VolumeFadeOut" xml:space="preserve">
     <value>Sound fades out over {0} s</value>
+  </data>
+  <data name="Main_ResizeCards" xml:space="preserve">
+    <value>Drag to resize the cards, double-click to restore their size</value>
+  </data>
+  <data name="TrailStyle_GpsLoss" xml:space="preserve">
+    <value>When the GPS signal is lost</value>
+  </data>
+  <data name="TrailStyle_GpsLossHint" xml:space="preserve">
+    <value>How the route joins where the signal vanished to where it came back - for a loss of a second or more.</value>
+  </data>
+  <data name="Route_JoinDashed" xml:space="preserve">
+    <value>Dashed line</value>
+  </data>
+  <data name="Route_JoinStraight" xml:space="preserve">
+    <value>Straight line</value>
+  </data>
+  <data name="Route_JoinGap" xml:space="preserve">
+    <value>Gap in the route</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
     <value>The route intro is on, so the watermark only appears after the intro ends. The time fields show when it is really visible. On the card itself the watermark is in its corner.</value>

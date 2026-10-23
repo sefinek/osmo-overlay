@@ -1,4 +1,5 @@
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Tests;
@@ -101,6 +102,16 @@ public sealed class OutputTimelineTests
 
 		int[] marked = mapped.Select((f, i) => (f, i)).Where(x => x.f.StartsAfterCut).Select(x => x.i).ToArray();
 		CollectionAssert.AreEqual(new[] { 100, 200 }, marked, "the first frames at 30 s and 45 s - not the start of the output");
+	}
+
+	[TestMethod]
+	public void MapFrames_GivesEachCutsOwnRouteJoinToTheFrameAfterIt()
+	{
+		List<DerivedFrame> mapped = Timeline(new TimeRange(20, 30, Join: RouteJoin.Gap), new TimeRange(40, 45)).MapFrames(Recording());
+
+		Assert.AreEqual(RouteJoin.Gap, mapped[100].JoinBefore);
+		Assert.AreEqual(RouteJoins.Default, mapped[200].JoinBefore, "a cut that chose nothing takes the default");
+		Assert.IsNull(mapped[150].JoinBefore, "inside a piece the route carries on");
 	}
 
 	[TestMethod]

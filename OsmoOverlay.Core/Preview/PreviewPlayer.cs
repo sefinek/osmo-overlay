@@ -185,7 +185,7 @@ public sealed class PreviewPlayer : IDisposable
 					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
 					summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, outputTimeline))
 				{
-					RouteAcrossCuts = settings.RouteAcrossCuts, DrawShadows = settings.PreviewDrawsShadows
+					DrawShadows = settings.PreviewDrawsShadows
 				},
 				recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, outputTimeline, showOverlay, pool, settings.SpeedCorrectionPercent)
 			{
@@ -573,12 +573,6 @@ public sealed class PreviewPlayer : IDisposable
 
 		recording.Compositor.SnapshotShadows = snapshot;
 		PublishStill(recording, recording.Compositor.Change(r => r.DrawShadows = preview));
-	}
-
-	/// <summary>How the drawn routes cross a cut - applies to the frame on screen right away.</summary>
-	public void SetRouteAcrossCuts(RouteJoin join)
-	{
-		if (_recording is { } recording) PublishStill(recording, recording.Compositor.Change(r => r.RouteAcrossCuts = join));
 	}
 
 	/// <summary>Shows the plain video (false) or the video with the overlay - on the frame on screen right away.</summary>

@@ -26,7 +26,7 @@ internal sealed class GoProGps
 
 	public static GoProGps Build(IReadOnlyList<GpmfPacket> packets, double? clockStart)
 	{
-		GpmfSeries series = GpmfSeries.Build(packets, "GPS9", clockStart);
+		var series = GpmfSeries.Build(packets, "GPS9", clockStart);
 		bool nine = series.Count > 0 && series.Axes >= 9;
 		if (!nine) series = GpmfSeries.Build(packets, "GPS5", clockStart);
 		if (series.Count == 0 || series.Axes < 5) return new GoProGps([], []);
@@ -46,7 +46,9 @@ internal sealed class GoProGps
 
 				DateTime? utc = nine
 					? DaysEpoch.AddDays(row[5]).AddSeconds(row[6])
-					: GpmfReader.ParseGpsUtc(span.Stream.GpsUtc) is { } start ? start.AddSeconds(k * span.StepSeconds) : null;
+					: GpmfReader.ParseGpsUtc(span.Stream.GpsUtc) is { } start
+						? start.AddSeconds(k * span.StepSeconds)
+						: null;
 				times.Add(series.Times[index]);
 				samples.Add((row[0], row[1], row[2], row[3], utc, usable));
 			}

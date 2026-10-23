@@ -1,14 +1,16 @@
+using OsmoOverlay.Core.Overlay;
+
 namespace OsmoOverlay.Core;
 
-/// <summary>Frames [Start, End) of the recording, on the combined timeline of all segments.</summary>
-public readonly record struct FrameRange(long Start, long End, CutTransition? Transition = null, CutCaption? Caption = null)
+/// <summary>Frames [Start, End) of the recording, on the combined timeline of all segments. Join: how the route crosses this cut - null is RouteJoins.Default.</summary>
+public readonly record struct FrameRange(long Start, long End, CutTransition? Transition = null, CutCaption? Caption = null, RouteJoin? Join = null)
 {
 	public long Length => End - Start;
 
 	/// <summary>Exact frame times - RenderPlan.Resolve rounds them straight back to these frames.</summary>
 	public TimeRange ToTimeRange(double fps)
 	{
-		return new TimeRange(Start / fps, End / fps, Transition, Caption);
+		return new TimeRange(Start / fps, End / fps, Transition, Caption, Join);
 	}
 }
 
@@ -30,10 +32,10 @@ public static class CutList
 		{
 			if (merged.Count > 0 && cut.Start <= merged[^1].End)
 			{
-				// The join is at the merged cut's end, so the cut that reaches it decides the transition and the caption (an unset one keeps the other's).
+				// The join is at the merged cut's end, so the cut that reaches it decides the transition, the caption and the route (an unset one keeps the other's).
 				FrameRange last = merged[^1];
 				merged[^1] = cut.End > last.End
-					? last with { End = cut.End, Transition = cut.Transition ?? last.Transition, Caption = cut.Caption ?? last.Caption }
+					? last with { End = cut.End, Transition = cut.Transition ?? last.Transition, Caption = cut.Caption ?? last.Caption, Join = cut.Join ?? last.Join }
 					: last;
 			}
 			else

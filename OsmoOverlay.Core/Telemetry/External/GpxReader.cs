@@ -57,6 +57,7 @@ public static class GpxReader
 					temperature = double.TryParse(point.ReadElementContentAsString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double celsius) && double.IsFinite(celsius) && celsius >= -273.15 ? celsius : null;
 					continue;
 				}
+
 				if (point.NodeType != XmlNodeType.Element || point.Depth != 1)
 				{
 					point.Read();

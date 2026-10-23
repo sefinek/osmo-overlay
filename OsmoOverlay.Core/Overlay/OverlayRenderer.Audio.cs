@@ -24,6 +24,7 @@ public sealed partial class OverlayRenderer
 			_markerFillPaint.Color = AccentColorOf(element);
 			canvas.DrawRect(0, 26, AudioMeterFraction(rms) * AudioMeterWidth, 24, _markerFillPaint);
 		}
+
 		_markerFillPaint.Color = OutlineColorOf(element).WithAlpha(150);
 		foreach (int tick in AudioMeterTicksDbfs)
 			canvas.DrawRect(AudioMeterFraction(tick) * AudioMeterWidth - 1, 26, 2, 24, _markerFillPaint);

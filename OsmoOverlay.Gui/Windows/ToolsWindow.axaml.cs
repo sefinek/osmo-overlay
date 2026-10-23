@@ -29,7 +29,17 @@ public partial class ToolsWindow : Window
 	protected override void OnOpened(EventArgs e)
 	{
 		base.OnOpened(e);
+		FitToScreen();
 		ShowTestRecording();
+	}
+
+	/// <summary>The window as tall as set, but no taller than its screen's work area - at a high display scale 680 units is more than a laptop screen has.</summary>
+	private void FitToScreen()
+	{
+		if (Screens.ScreenFromWindow(this) is not { } screen) return;
+
+		double available = screen.WorkingArea.Height / screen.Scaling * 0.92;
+		if (Height > available) Height = Math.Max(MinHeight, available);
 	}
 
 	/// <summary>Opens the performance test over the given window - MainWindow's, which knows the loaded recording.</summary>

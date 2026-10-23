@@ -1,4 +1,5 @@
 using OsmoOverlay.Core.Cameras;
+using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Cameras.GoPro;
@@ -30,7 +31,7 @@ internal static class GoProTelemetryParser
 
 		string? model = packets.SelectMany(p => p.Devices).Select(d => d.Name).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
 		double? clockStart = FrameClockStart(packets);
-		GpmfSeries accel = GpmfSeries.Build(packets, "ACCL", clockStart);
+		var accel = GpmfSeries.Build(packets, "ACCL", clockStart);
 		if (accel.Count == 0 || accel.Axes != 3) throw new InvalidDataException("The GoPro telemetry has no three-axis accelerometer samples.");
 
 		int frames = (int)(frameCount ?? (long)Math.Round(packets.Sum(p => p.DurationSeconds) * fps));
@@ -38,10 +39,10 @@ internal static class GoProTelemetryParser
 
 		double[] accelerations = accel.Resample(frames, fps, true);
 		(int Axis, double Sign)[] channels = ImuAxes(accel.Spans.Select(b => b.Stream.InputOrientation).FirstOrDefault(o => o is not null));
-		GpmfSeries gravity = GpmfSeries.Build(packets, "GRAV", clockStart);
+		var gravity = GpmfSeries.Build(packets, "GRAV", clockStart);
 		double[] gravities = gravity.Axes == 3 ? gravity.Resample(frames, fps, false) : [];
 		(double[] iso, double[] shutter, double[] whiteBalance) = (Optional("ISOE"), Optional("SHUT"), Optional("WBAL"));
-		GoProGps gps = GoProGps.Build(packets, clockStart);
+		var gps = GoProGps.Build(packets, clockStart);
 		var audio = new GoProDiagnostics(packets, "AALP", 2, clockStart);
 		var wind = new GoProDiagnostics(packets, "WNDM", 2, clockStart);
 		var luma = new GoProDiagnostics(packets, "YAVG", 1, clockStart);
@@ -55,7 +56,8 @@ internal static class GoProTelemetryParser
 			GpmfSpan temperatureBlock = accel.Spans[temperatureSpan];
 			double? temperature = f / fps >= temperatureBlock.StartSeconds - 1 / fps &&
 			                      f / fps < temperatureBlock.StartSeconds + temperatureBlock.Stream.Count * temperatureBlock.StepSeconds
-				? temperatureBlock.Stream.TemperatureCelsius : null;
+				? temperatureBlock.Stream.TemperatureCelsius
+				: null;
 			double[] g = new double[3];
 			for (int channel = 0; channel < 3; channel++)
 				g[channels[channel].Axis] = channels[channel].Sign * accelerations[f * accel.Axes + channel] / StandardGravity;
@@ -71,7 +73,7 @@ internal static class GoProTelemetryParser
 				shutter.Length > f ? shutter[f] : null,
 				whiteBalance.Length > f ? (int)Math.Round(whiteBalance[f]) : null,
 				hasFix,
-				Orientation: gravities.Length > 0 ? GoProTilt.Orientation(new(gravities[f * 3], gravities[f * 3 + 1], gravities[f * 3 + 2])) : null,
+				Orientation: gravities.Length > 0 ? GoProTilt.Orientation(new Direction(gravities[f * 3], gravities[f * 3 + 1], gravities[f * 3 + 2])) : null,
 				ImuTemperatureCelsius: temperature,
 				AudioRmsDbfs: AudioLevel(audio.At(f / fps, 0)),
 				AudioPeakDbfs: AudioLevel(audio.At(f / fps, 1)),
@@ -84,7 +86,7 @@ internal static class GoProTelemetryParser
 
 		double[] Optional(string key)
 		{
-			GpmfSeries series = GpmfSeries.Build(packets, key, clockStart);
+			var series = GpmfSeries.Build(packets, key, clockStart);
 			return series is { Count: > 0, Axes: 1 } ? series.Resample(frames, fps, false) : [];
 		}
 	}
@@ -122,7 +124,7 @@ internal static class GoProTelemetryParser
 	{
 		if (orientation is not { Length: 3 }) return null;
 
-		(int, double)[] axes = new (int, double)[3];
+		var axes = new (int, double)[3];
 		bool[] used = new bool[3];
 		for (int i = 0; i < 3; i++)
 		{

@@ -30,15 +30,16 @@ public sealed partial class OverlayRenderer
 
 	private static readonly string[] CardinalNames = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
+	private const int RouteSlots = 2 * 3;
 	private readonly RouteTrail _trail = new();
 	// GetTrailPixels' projection of _trail into _trailPixelsMosaic's pixel space.
 	private readonly List<SKPoint> _trailPixels = [];
 	private RouteMapMosaic? _trailPixelsMosaic;
 
 	// The trail's drawn routes, extended as the trail grows (SyncRoute) - the compass's in local meters, the map's in
-	// its mosaic's pixels. Indexed [colorBySpeed ? 1 : 0]: every Compass/MapWidget instance picks that on its own.
-	private readonly RouteGeometry?[] _compassRoutes = new RouteGeometry?[2];
-	private readonly RouteGeometry?[] _mapRoutes = new RouteGeometry?[2];
+	// its mosaic's pixels. Indexed by RouteSlot (color by speed, GPS loss join): every Compass/MapWidget instance picks those on its own.
+	private readonly RouteGeometry?[] _compassRoutes = new RouteGeometry?[RouteSlots];
+	private readonly RouteGeometry?[] _mapRoutes = new RouteGeometry?[RouteSlots];
 
 	/// <summary>
 	///     Fetches every map tile the route needs and stitches them into one in-memory mosaic, so
@@ -198,8 +199,32 @@ public sealed partial class OverlayRenderer
 		// North up: local meters (y growing north) onto the dial (y growing down).
 		var toDial = SKMatrix.CreateScaleTranslation((float)scale, (float)-scale, (float)(-centerEast * scale),
 			(float)(centerNorth * scale));
-		if (element.TrailVisible) DrawTrailRoute(canvas, _compassRoutes, null, toDial, element);
+		if (element.TrailVisible)
+		{
+			DrawTrailRoute(canvas, _compassRoutes, null, toDial, element);
+			if (!frame.StartsAfterCut)
+			{
+				TrailPoint last = _trail[^1];
+				DrawTrailTail(canvas, toDial.MapPoint((float)last.East, (float)last.North), toDial.MapPoint((float)east, (float)north), frame.SpeedKmh, element);
+			}
+		}
 		return new SKPoint((float)((east - centerEast) * scale), (float)(-(north - centerNorth) * scale));
+	}
+
+	/// <summary>
+	///     The part of the route between its last point (kept at least RouteTrail's step from the one before) and where the vehicle is now - both in the
+	///     canvas's units - so the line runs up to the marker instead of ending behind it and growing in jumps. Colored like the route.
+	/// </summary>
+	private void DrawTrailTail(SKCanvas canvas, SKPoint from, SKPoint to, double speedKmh, TrailOverlayElement element)
+	{
+		if (from == to) return;
+
+		SKColor color = ResolveTrailColor(element.TrailColor);
+		if (element.TrailColorBySpeed) color = SpeedColorScale.Colors(color)[SpeedColorScale.Bucket(speedKmh / _trailSpeedScaleKmh)];
+
+		_routeStrokePaint.Color = color;
+		_routeStrokePaint.StrokeWidth = element.TrailWidth;
+		canvas.DrawLine(from, to, _routeStrokePaint);
 	}
 
 	private static double DistanceSq(double x1, double y1, double x2, double y2)
@@ -213,37 +238,37 @@ public sealed partial class OverlayRenderer
 		TrailOverlayElement element)
 	{
 		float devicePixelsPerUnit = RouteGeometry.UniformScale(canvas.TotalMatrix) * RouteGeometry.UniformScale(toCanvas);
-		RouteGeometry route = SyncRoute(routes, pixels, element.TrailColorBySpeed, 0.5 / devicePixelsPerUnit);
+		RouteGeometry route = SyncRoute(routes, pixels, element.TrailColorBySpeed, element.GpsLossJoin, 0.5 / devicePixelsPerUnit);
 		DrawRoute(canvas, route, toCanvas, ResolveTrailColor(element.TrailColor), element.TrailWidth);
 	}
 
 	/// <summary>
 	///     Extends the cached route by the trail points added since it was last drawn. The trail is always the same
 	///     deterministic function of the frames up to the current one (see RouteTrail), so a longer trail only
-	///     ever extends a shorter one - only a shorter trail (a seek backwards), another RouteAcrossCuts or another
+	///     ever extends a shorter one - only a shorter trail (a seek backwards), or another
 	///     level of detail starts it over. A new map mosaic drops the map's routes in GetTrailPixels.
 	///     `wantedStep` (half a device pixel, in the route's units) becomes a power of two the route keeps while
 	///     the wanted step stays within [step, 4 * step) - the dial's and the dynamic map zoom's scale drift a little
 	///     every frame, and rebuilding the route each time it crossed a boundary would cost more than it saves.
 	/// </summary>
-	private RouteGeometry SyncRoute(RouteGeometry?[] routes, List<SKPoint>? pixels, bool colorBySpeed, double wantedStep)
+	private RouteGeometry SyncRoute(RouteGeometry?[] routes, List<SKPoint>? pixels, bool colorBySpeed, RouteJoin gpsLossJoin, double wantedStep)
 	{
-		ref RouteGeometry? route = ref routes[colorBySpeed ? 1 : 0];
+		ref RouteGeometry? route = ref routes[(colorBySpeed ? 3 : 0) + (int)gpsLossJoin];
 		float step = route?.MinStep ?? 0;
 		if (!(wantedStep >= step && wantedStep < step * 4) && double.IsFinite(wantedStep) && wantedStep > 0)
 			step = (float)Math.Pow(2, Math.Floor(Math.Log2(wantedStep)));
 
-		if (route is not null && (route.Join != RouteAcrossCuts || route.Count > _trail.Count || route.MinStep != step))
+		if (route is not null && (route.Count > _trail.Count || route.MinStep != step))
 		{
 			route.Dispose();
 			route = null;
 		}
 
-		route ??= new RouteGeometry(RouteAcrossCuts, colorBySpeed, _trailSpeedScaleKmh, step);
+		route ??= new RouteGeometry(colorBySpeed, _trailSpeedScaleKmh, step);
 		for (int i = route.Count; i < _trail.Count; i++)
 		{
 			TrailPoint p = _trail[i];
-			route.Add(pixels?[i] ?? new SKPoint((float)p.East, (float)p.North), p.SpeedKmh, p.AfterCut);
+			route.Add(pixels?[i] ?? new SKPoint((float)p.East, (float)p.North), p.SpeedKmh, p.AfterCut ? p.CutJoin : p.AfterGpsLoss ? gpsLossJoin : null);
 		}
 
 		return route;
@@ -358,7 +383,11 @@ public sealed partial class OverlayRenderer
 
 			float mapScale = radius / cropRadius;
 			var toWidget = SKMatrix.CreateScaleTranslation(mapScale, mapScale, -center.X * mapScale, -center.Y * mapScale);
-			if (element.TrailVisible) DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
+			if (element.TrailVisible)
+			{
+				DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
+				if (!frame.StartsAfterCut && trailPixels.Count > 0) DrawTrailTail(canvas, toWidget.MapPoint(trailPixels[^1]), toWidget.MapPoint(center), frame.SpeedKmh, element);
+			}
 
 			canvas.Restore();
 

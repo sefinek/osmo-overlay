@@ -160,7 +160,7 @@ public partial class ComparePlaybackWindow : Window
 		{
 			foreach (CompareFailure failure in failures) _paths.Remove(failure.Path);
 			await ConfirmDialog.ShowAsync(this, Strings.ComparePlay_OpenFailedTitle,
-				string.Format(Strings.ComparePlay_OpenFailed, string.Join("\n", failures.Select(f => $"{System.IO.Path.GetFileName(f.Path)}: {f.Reason}"))),
+				string.Format(Strings.ComparePlay_OpenFailed, string.Join("\n", failures.Select(f => $"{Path.GetFileName(f.Path)}: {f.Reason}"))),
 				kind: DialogKind.Warning, windowTitle: Strings.ComparePlay_Title);
 			if (generation != _generation)
 			{
@@ -254,7 +254,7 @@ public partial class ComparePlaybackWindow : Window
 
 		var name = new TextBlock
 		{
-			Text = System.IO.Path.GetFileName(tile.Path),
+			Text = Path.GetFileName(tile.Path),
 			FontSize = 13,
 			FontWeight = FontWeight.SemiBold,
 			TextTrimming = TextTrimming.CharacterEllipsis,

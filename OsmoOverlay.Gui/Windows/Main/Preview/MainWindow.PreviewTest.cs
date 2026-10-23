@@ -75,9 +75,9 @@ public partial class MainWindow
 			if (_secondScreen is { } second) Watch(second);
 
 			// Moving the viewport queues a seek and a layout pass before its compositor can play.
-			await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+			await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, CancellationToken.None);
 			if (secondScreen && !_viewportOnSecondScreen) MoveViewportToSecondScreen();
-			await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+			await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, CancellationToken.None);
 			if (_previewMaxWidth == AutoPreviewWidth && ResolvePreviewMaxWidth(_summary) != _openedPreviewMaxWidth)
 				await ReopenPreviewAsync();
 			ct.ThrowIfCancellationRequested();
@@ -117,7 +117,7 @@ public partial class MainWindow
 				else if (_fullscreenWindow is null) TogglePreviewFullscreen();
 				if (!wasOnSecondScreen && _viewportOnSecondScreen && _secondScreen is { } second) MoveViewportHome(second);
 				if (!hadSecondScreen && _secondScreen is not null) CloseSecondScreen();
-				await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+				await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, CancellationToken.None);
 				if (_openedPreviewMaxWidth != originalWidth) await ReopenPreviewAsync();
 				_previewPlayer.SetLoop(loop, loopRange);
 				ShowPreviewPosition(position);
@@ -162,7 +162,9 @@ public partial class MainWindow
 
 		if (_inputPaths.Count > 0 && !_inputPaths.SequenceEqual(paths) &&
 		    !await ConfirmDialog.AskAsync(this, Strings.Tools_TestRecording, Strings.Tools_ReplaceRecording, Strings.Tools_LoadTestRecording))
+		{
 			return false;
+		}
 
 		await LoadInputsAsync(paths);
 		return true;

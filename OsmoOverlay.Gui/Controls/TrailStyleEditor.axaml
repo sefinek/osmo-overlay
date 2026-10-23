@@ -18,6 +18,10 @@
 			<TextBlock Text="{x:Static local:Strings.TrailStyle_LineThickness}" Classes="infoLabel" Margin="0" />
 			<NumericUpDown Name="WidthBox" Minimum="1" Maximum="12" Increment="0.5" FormatString="0.0"
 			               HorizontalAlignment="Stretch" />
+			<TextBlock Text="{x:Static local:Strings.TrailStyle_GpsLoss}" Classes="infoLabel" Margin="0" />
+			<ComboBox Name="GpsLossCombo" HorizontalAlignment="Stretch" />
+			<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+			           Text="{x:Static local:Strings.TrailStyle_GpsLossHint}" />
 		</StackPanel>
 	</StackPanel>
 </UserControl>

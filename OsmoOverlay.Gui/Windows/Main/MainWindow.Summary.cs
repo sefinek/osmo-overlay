@@ -60,6 +60,7 @@ public partial class MainWindow
 				await ConfirmDialog.ShowAsync(this, Strings.Summary_CantJoinTitle, problem!, kind: DialogKind.Warning);
 				return;
 			}
+
 			_cameraSummary = summary;
 			_externalTrackApplied = false;
 			if (_externalTrack is { } trackSource)
@@ -75,6 +76,7 @@ public partial class MainWindow
 					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, ex.Message, kind: DialogKind.Warning);
 				}
 			}
+
 			RefreshExternalTrack();
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
@@ -262,7 +264,7 @@ public partial class MainWindow
 
 		UpdateSupportIcon(summary);
 
-		var recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
+		RecommendedRecording? recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
 
 		CheckLevel? Check(Func<RecommendedRecording, CheckLevel> judge)
 		{

@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core;
 
 namespace OsmoOverlay.Tests;
@@ -26,6 +27,15 @@ public sealed class CutListTests
 		List<FrameRange> cuts = CutList.Normalize([R(100, 200), R(150, 250), R(250, 300), R(400, 500), R(120, 130)], Total);
 
 		CollectionAssert.AreEqual(new[] { R(100, 300), R(400, 500) }, cuts);
+	}
+
+	[TestMethod]
+	public void Normalize_MergedCutsTakeTheRouteJoinOfTheOneReachingTheJoin()
+	{
+		List<FrameRange> cuts = CutList.Normalize([R(100, 200) with { Join = RouteJoin.Gap }, R(150, 250), R(400, 500) with { Join = RouteJoin.Straight }], Total);
+
+		Assert.AreEqual(RouteJoin.Gap, cuts[0].Join, "the later cut chose nothing - the earlier one's choice stays");
+		Assert.AreEqual(RouteJoin.Straight, cuts[1].Join);
 	}
 
 	[TestMethod]

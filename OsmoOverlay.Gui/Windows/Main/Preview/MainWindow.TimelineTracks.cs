@@ -56,7 +56,7 @@ public partial class MainWindow
 
 		TimelineCard.IsVisible = expanded;
 		LogCard.IsVisible = !expanded;
-		RootGrid.RowDefinitions[1].Height = expanded ? GridLength.Auto : new GridLength(230);
+		ApplyBottomHeight(expanded);
 		ToggleTimelineButton.Classes.Set("active", expanded);
 
 		// The expanded timeline takes over seeking, so the compact one makes room for the status strip.

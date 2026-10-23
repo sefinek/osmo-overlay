@@ -48,7 +48,7 @@ public sealed class GoProTelemetryParserTests
 	[TestMethod]
 	public void Parse_DiagnosticStreamsWithoutSensorTimestampsUsePacketTime()
 	{
-		var frames = GoProTelemetryParser.Parse([
+		List<TelemetryFrame> frames = GoProTelemetryParser.Parse([
 			LevelSecond(0, 1_000_000),
 			LevelSecond(1, 2_000_000, Stream("AALP", 2, [-45, -30]), Stream("WNDM", 2, [0, 3]), Stream("YAVG", 1, [123]))
 		], Fps, 50).Frames;
@@ -67,7 +67,7 @@ public sealed class GoProTelemetryParserTests
 			Stream("AALP", 2, [-43, -33, -49, -41], 1_200_000),
 			Stream("WNDM", 2, [1, 35, 0, 2], 1_200_000),
 			Stream("YAVG", 1, [98, 111], 1_000_000));
-		var frames = GoProTelemetryParser.Parse([packet], Fps, 25).Frames;
+		List<TelemetryFrame> frames = GoProTelemetryParser.Parse([packet], Fps, 25).Frames;
 		Assert.IsNull(frames[4].AudioRmsDbfs, "the first audio sample has not arrived yet");
 		Assert.IsNull(frames[4].WindProcessingActive);
 		Assert.AreEqual(-43, frames[5].AudioRmsDbfs);
@@ -84,7 +84,7 @@ public sealed class GoProTelemetryParserTests
 	[TestMethod]
 	public void Parse_DiagnosticGapsAndMissingStreamsStayUnknown()
 	{
-		var frames = GoProTelemetryParser.Parse([
+		List<TelemetryFrame> frames = GoProTelemetryParser.Parse([
 			LevelSecond(0, 1_000_000, Stream("AALP", 2, [-40, -30], 1_000_000), Stream("YAVG", 1, [100], 1_000_000)),
 			LevelSecond(1, 2_000_000),
 			LevelSecond(2, 3_000_000, Stream("AALP", 2, [-50, -20], 3_000_000))
@@ -100,7 +100,7 @@ public sealed class GoProTelemetryParserTests
 	[TestMethod]
 	public void Parse_DiagnosticSamplesUseTheNextBlockClockWhenItsDurationDiffersFromTheContainer()
 	{
-		var frames = GoProTelemetryParser.Parse([
+		List<TelemetryFrame> frames = GoProTelemetryParser.Parse([
 			LevelSecond(0, 1_000_000, Stream("AALP", 2, [-10, -5, -20, -15], 1_000_000)),
 			LevelSecond(1, 2_000_000, Stream("AALP", 2, [-30, -25], 1_800_000))
 		], Fps, 50).Frames;
@@ -111,10 +111,12 @@ public sealed class GoProTelemetryParserTests
 	[TestMethod]
 	public void Parse_DiagnosticsRejectInvalidRangesAndUnexpectedChannelLayouts()
 	{
-		var frames = GoProTelemetryParser.Parse([LevelSecond(0, 1_000_000,
-			Stream("AALP", 2, [double.NaN, 2, -128, 0], 1_000_000),
-			Stream("WNDM", 2, [2, -1, 0, 100], 1_000_000),
-			Stream("YAVG", 1, [256, 0], 1_000_000))], Fps, 25).Frames;
+		List<TelemetryFrame> frames = GoProTelemetryParser.Parse([
+			LevelSecond(0, 1_000_000,
+				Stream("AALP", 2, [double.NaN, 2, -128, 0], 1_000_000),
+				Stream("WNDM", 2, [2, -1, 0, 100], 1_000_000),
+				Stream("YAVG", 1, [256, 0], 1_000_000))
+		], Fps, 25).Frames;
 		Assert.IsNull(frames[0].AudioRmsDbfs);
 		Assert.IsNull(frames[0].AudioPeakDbfs);
 		Assert.IsNull(frames[0].WindProcessingActive);
@@ -125,7 +127,7 @@ public sealed class GoProTelemetryParserTests
 		Assert.AreEqual(false, frames[20].WindProcessingActive);
 		Assert.AreEqual(100, frames[20].WindProcessingLevel);
 		Assert.AreEqual(0, frames[20].ImageLuma);
-		var wrongAxes = GoProTelemetryParser.Parse([LevelSecond(0, 1_000_000, Stream("AALP", 1, [-40]), Stream("YAVG", 2, [100, 200]))], Fps, 25).Frames;
+		List<TelemetryFrame> wrongAxes = GoProTelemetryParser.Parse([LevelSecond(0, 1_000_000, Stream("AALP", 1, [-40]), Stream("YAVG", 2, [100, 200]))], Fps, 25).Frames;
 		Assert.IsTrue(wrongAxes.All(f => f.AudioRmsDbfs is null && f.ImageLuma is null));
 	}
 
@@ -134,8 +136,10 @@ public sealed class GoProTelemetryParserTests
 	{
 		GpmfStream accel = Stream("ACCL", 3, LevelAccelerometer(), 1_000_000, "ZXY") with { TemperatureCelsius = -3.5 };
 		TelemetryExtractionResult result = GoProTelemetryParser.Parse(
-			[Packet(0, accel), Packet(1, accel with { StampMicroseconds = 2_000_000, TemperatureCelsius = 20 }),
-			 Packet(2, accel with { StampMicroseconds = 3_000_000, TemperatureCelsius = null })], Fps, 75);
+		[
+			Packet(0, accel), Packet(1, accel with { StampMicroseconds = 2_000_000, TemperatureCelsius = 20 }),
+			Packet(2, accel with { StampMicroseconds = 3_000_000, TemperatureCelsius = null })
+		], Fps, 75);
 		Assert.AreEqual(-3.5, result.Frames[0].ImuTemperatureCelsius);
 		Assert.AreEqual(20, result.Frames[25].ImuTemperatureCelsius);
 		Assert.IsNull(result.Frames[50].ImuTemperatureCelsius);

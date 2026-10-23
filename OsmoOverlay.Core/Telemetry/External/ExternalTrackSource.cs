@@ -25,6 +25,7 @@ public sealed record ExternalTrackSource(string Path, double? OffsetSeconds = nu
 			if (recordingStartUtc is not { } start) throw new InvalidOperationException(CoreStrings.ExternalTrack_NoStartTime);
 			return new TrackSynchronization(new TrackSyncAnchor(0, start.AddSeconds(offset)));
 		}
+
 		TrackSyncEstimate estimate = ExternalTrackSync.Estimate(frames, fps, track) ??
 		                             throw new InvalidOperationException(string.Format(CoreStrings.ExternalTrack_NoMatch, System.IO.Path.GetFileName(Path)));
 		AppLogger.Warn(string.Format(CoreStrings.ExternalTrack_MotionEstimate, estimate.Correlation));

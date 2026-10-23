@@ -42,8 +42,8 @@ public sealed class ExternalTrackMergeTests
 	public void Apply_ExternalSensorsFollowTheSameAnchorsWithoutReplacingImuTemperature()
 	{
 		var track = new ExternalTrack(
-			[new(T0, 50, 20, TemperatureCelsius: 20, DistanceMeters: 100), new(T0.AddSeconds(1), 50.00001, 20, TemperatureCelsius: 22, DistanceMeters: 104)],
-			batteries: [new(T0, 43)]);
+			[new ExternalTrackPoint(T0, 50, 20, TemperatureCelsius: 20, DistanceMeters: 100), new ExternalTrackPoint(T0.AddSeconds(1), 50.00001, 20, TemperatureCelsius: 22, DistanceMeters: 104)],
+			batteries: [new ExternalBatteryReading(T0, 43)]);
 		List<TelemetryFrame> camera = [.. Frames(75).Select(f => f with { ImuTemperatureCelsius = 30 })];
 		List<TelemetryFrame> merged = ExternalTrackMerge.Apply(camera, track, T0);
 		Assert.AreEqual(21.04, merged[13].AmbientTemperatureCelsius!.Value, 1e-9);

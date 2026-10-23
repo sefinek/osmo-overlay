@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using OsmoOverlay.Cameras.GoPro;
 using static OsmoOverlay.Tests.Cameras.GoPro.GpmfBuilder;
 
@@ -31,7 +32,7 @@ public sealed class GpmfReaderTests
 			Container("STRM", Text("UNIT", "dBFS"), Item("AALP", 'b', 2, 2, [128, 128, 213, 223])),
 			Container("STRM", Item("WNDM", 'B', 2, 2, [1, 35, 0, 2])),
 			Container("STRM", Item("YAVG", 'B', 1, 2, [98, 255])));
-		var streams = GpmfReader.Read(packet).Single().Streams;
+		IReadOnlyList<GpmfStream> streams = GpmfReader.Read(packet).Single().Streams;
 		CollectionAssert.AreEqual(new[] { -128.0, -128.0, -43.0, -33.0 }, streams.Single(s => s.Key == "AALP").Values);
 		Assert.AreEqual(2, streams.Single(s => s.Key == "AALP").Axes);
 		CollectionAssert.AreEqual(new[] { 1.0, 35.0, 0.0, 2.0 }, streams.Single(s => s.Key == "WNDM").Values);
@@ -172,7 +173,7 @@ public sealed class GpmfReaderTests
 	private static byte[] ScaleBytes(params int[] values)
 	{
 		byte[] bytes = new byte[values.Length * 4];
-		for (int i = 0; i < values.Length; i++) System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(i * 4), values[i]);
+		for (int i = 0; i < values.Length; i++) BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(i * 4), values[i]);
 		return bytes;
 	}
 }

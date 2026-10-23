@@ -644,8 +644,8 @@ Zamknąć OsmoOverlay?</value>
   <data name="Cut_FromPastEnd" xml:space="preserve">
     <value>{0}: czas w polu „Od” wykracza poza koniec nagrania ({1}).</value>
   </data>
-  <data name="Cut_GoToBefore" xml:space="preserve">
-    <value>Przejdź do miejsca 3 sekundy przed tym cięciem</value>
+  <data name="Cut_GoToBeforeTheCut" xml:space="preserve">
+    <value>Przejdź do ostatniej klatki przed tym cięciem</value>
   </data>
   <data name="Cut_KeepAfterAll" xml:space="preserve">
     <value>Jednak zachowaj ten fragment</value>
@@ -687,17 +687,8 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
   <data name="Cut_RemoveTheSelectedPartFrom" xml:space="preserve">
     <value>Usuń zaznaczony fragment z renderu (X lub Delete)</value>
   </data>
-  <data name="Cut_RouteDashed" xml:space="preserve">
-    <value>Linia przerywana przez cięcie</value>
-  </data>
-  <data name="Cut_RouteGap" xml:space="preserve">
-    <value>Przerwa w śladzie trasy</value>
-  </data>
   <data name="Cut_RouteOnTheMapAcross" xml:space="preserve">
     <value>Trasa na mapie w miejscu cięcia</value>
-  </data>
-  <data name="Cut_RouteStraight" xml:space="preserve">
-    <value>Linia prosta między końcami wyciętego fragmentu</value>
   </data>
   <data name="Cut_SelectAPartAtThe" xml:space="preserve">
     <value>Zaznacz fragment od klatki widocznej na ekranie</value>
@@ -712,7 +703,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Zaznaczenie zaczyna się od klatki widocznej na ekranie (I)</value>
   </data>
   <data name="Cut_TheTelemetryEitherSideOf" xml:space="preserve">
-    <value>Po wycięciu fragmentu sąsiadujące punkty trasy mogą być od siebie oddalone. Prosta linia między nimi pokazywałaby skrót zamiast pominiętego odcinka. To ustawienie określa sposób łączenia śladu w kompasie, na mapie i we wstępie z trasą.</value>
+    <value>Po wycięciu fragmentu sąsiednie punkty trasy mogą być od siebie oddalone. Linia prosta między nimi pokazywałaby skrót zamiast pominiętego odcinka. Ten wybór dotyczy tylko tego cięcia: śladu w kompasie, na mapie i we wstępie z trasą.</value>
   </data>
   <data name="Cut_To" xml:space="preserve">
     <value>Do</value>
@@ -3914,6 +3905,24 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   </data>
   <data name="Timeline_VolumeFadeOut" xml:space="preserve">
     <value>Dźwięk cichnie przez {0} s</value>
+  </data>
+  <data name="Main_ResizeCards" xml:space="preserve">
+    <value>Przeciągnij, aby zmienić rozmiar kart; dwuklik przywraca domyślny rozmiar</value>
+  </data>
+  <data name="TrailStyle_GpsLoss" xml:space="preserve">
+    <value>Po utracie sygnału GPS</value>
+  </data>
+  <data name="TrailStyle_GpsLossHint" xml:space="preserve">
+    <value>Jak trasa łączy miejsce, w którym zniknął sygnał, z miejscem, w którym wrócił - dla utraty trwającej co najmniej sekundę.</value>
+  </data>
+  <data name="Route_JoinDashed" xml:space="preserve">
+    <value>Linia przerywana</value>
+  </data>
+  <data name="Route_JoinStraight" xml:space="preserve">
+    <value>Linia prosta</value>
+  </data>
+  <data name="Route_JoinGap" xml:space="preserve">
+    <value>Przerwa w trasie</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
     <value>Przy włączonym wstępie z trasą znak wodny jako osobny widżet pojawia się po jego zakończeniu. Pola czasu uwzględniają to przesunięcie. Podczas wstępu znak wodny jest widoczny w rogu planszy.</value>

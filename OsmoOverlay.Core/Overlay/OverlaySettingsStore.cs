@@ -62,6 +62,8 @@ public sealed record OverlaySettings(
 	UnitSystem RouteIntroUnits = UnitSystem.Metric,
 	// The overview map's route colored by speed like the compass/map widgets' TrailColorBySpeed - off here by default.
 	bool RouteIntroColorBySpeed = false,
+	// How the overview map's route crosses a stretch without a GPS fix (RouteJoin) - a cut has its own choice, made in the cut editor.
+	RouteJoin RouteIntroGpsLossJoin = RouteJoins.Default,
 	// The trip's first and last positions marked on the overview map, captioned with these (null = the built-in caption in
 	// the interface's language, blank = a dot only).
 	bool RouteIntroShowStartFinish = true,
@@ -75,8 +77,6 @@ public sealed record OverlaySettings(
 	string PreviewTimeFormat = "Seconds",
 	// The expanded timeline (filmstrip + waveform) in the log's place under the window, instead of the compact track.
 	bool PreviewTimelineExpanded = false,
-	// How the drawn routes cross a part cut out of the render (see RouteJoin).
-	RouteJoin RouteAcrossCuts = RouteJoin.Gap,
 	// Preview sound: muted until the user turns it up, the volume 0-1 remembered either way.
 	bool PreviewAudioMuted = true,
 	double PreviewAudioVolume = 0.8,
@@ -123,6 +123,12 @@ public sealed record OverlaySettings(
 	WindowPlacement? MainWindowPlacement = null,
 	// How many layer tracks the expanded timeline shows before the list scrolls (the GUI clamps it to its own range).
 	int LayerRowsVisible = 4,
+	// Card sizes the user dragged (the GUI's PanelSplitter): the source column's and the overlay column's width, the log's and the
+	// expanded timeline's height; null = the default.
+	double? SourcePanelWidth = null,
+	double? OverlayPanelWidth = null,
+	double? LogHeight = null,
+	double? TimelineHeight = null,
 	// The monitor the full screen preview opens on - the GUI's MonitorChoice.KeyOf; null = the one the main window is on.
 	string? PreviewMonitor = null,
 	// A window on another monitor showing the log, and the preview while it plays (the GUI's SecondScreenWindow).

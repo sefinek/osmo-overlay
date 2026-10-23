@@ -221,7 +221,6 @@ public static class RenderJob
 				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
 				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), routeIntro)
 			{
-				RouteAcrossCuts = settings.RouteAcrossCuts,
 				OutputDurationSeconds = plan.TotalFrames / fps,
 				CutCaptions = outputTimeline.Captions,
 				DrawShadows = !settings.DisableShadows

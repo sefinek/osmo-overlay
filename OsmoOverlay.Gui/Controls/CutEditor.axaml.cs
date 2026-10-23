@@ -25,9 +25,6 @@ public enum CutAction
 /// </summary>
 public partial class CutEditor : UserControl
 {
-	// A cut's number button seeks this much before the cut, so the picture leading into it shows.
-	private const double SeekLeadInSeconds = 3;
-
 	private readonly List<CutRow> _rows = [];
 	// Applying cuts remaps the preview's telemetry - not on every keystroke of "1:30.250".
 	private readonly DispatcherTimer _applyDelay = new() { Interval = TimeSpan.FromMilliseconds(400) };
@@ -56,34 +53,7 @@ public partial class CutEditor : UserControl
 		(CutTransitionKind.SlideRight, Strings.Cut_TransitionSlideRight)
 	];
 
-	private static readonly (RouteJoin Join, string Label)[] RouteJoins =
-	[
-		(RouteJoin.Gap, Strings.Cut_RouteGap),
-		(RouteJoin.Dashed, Strings.Cut_RouteDashed),
-		(RouteJoin.Straight, Strings.Cut_RouteStraight)
-	];
-
-	private bool _populatingRouteJoin;
-
 	public event Action<List<FrameRange>>? CutsEdited;
-
-	/// <summary>The route-across-cuts setting picked here (saved and applied by MainWindow).</summary>
-	public event Action<RouteJoin>? RouteJoinChanged;
-
-	public void ShowRouteJoin(RouteJoin join)
-	{
-		_populatingRouteJoin = true;
-		RouteJoinCombo.ItemsSource ??= RouteJoins.Select(r => r.Label).ToList();
-		RouteJoinCombo.SelectedIndex = Math.Max(0, Array.FindIndex(RouteJoins, r => r.Join == join));
-		_populatingRouteJoin = false;
-	}
-
-	private void OnRouteJoinChanged(object? sender, SelectionChangedEventArgs e)
-	{
-		if (_populatingRouteJoin || RouteJoinCombo.SelectedIndex < 0) return;
-
-		RouteJoinChanged?.Invoke(RouteJoins[RouteJoinCombo.SelectedIndex].Join);
-	}
 
 	public event Action<CutAction>? CutRequested;
 	public event Action<long>? SeekRequested;
@@ -170,7 +140,7 @@ public partial class CutEditor : UserControl
 			HorizontalContentAlignment = HorizontalAlignment.Center,
 			VerticalContentAlignment = VerticalAlignment.Center
 		};
-		ToolTip.SetTip(number, Strings.Cut_GoToBefore);
+		ToolTip.SetTip(number, Strings.Cut_GoToBeforeTheCut);
 		var from = new TextBox { Text = TimeText.Format(cut.Start / _fps), PlaceholderText = Strings.Cut_From };
 		var to = new TextBox { Text = TimeText.Format(cut.End / _fps), PlaceholderText = Strings.Cut_To };
 		var remove = new Button
@@ -247,8 +217,20 @@ public partial class CutEditor : UserControl
 			TextWrapping = TextWrapping.Wrap,
 			IsVisible = false
 		};
-		var row = new StackPanel { Spacing = 4, Children = { times, transition, captionRow, overlapNote } };
-		var entry = new CutRow(from, to, kind, length, caption, captionLength);
+		var route = new ComboBox
+		{
+			ItemsSource = RouteJoinOptions.Labels,
+			SelectedIndex = RouteJoinOptions.IndexOf(cut.Join),
+			HorizontalAlignment = HorizontalAlignment.Stretch
+		};
+		ToolTip.SetTip(route, Strings.Cut_TheTelemetryEitherSideOf);
+		var routeRow = new StackPanel
+		{
+			Spacing = 4,
+			Children = { new TextBlock { Text = Strings.Cut_RouteOnTheMapAcross, Classes = { "hint" } }, route }
+		};
+		var row = new StackPanel { Spacing = 4, Children = { times, transition, captionRow, routeRow, overlapNote } };
+		var entry = new CutRow(from, to, kind, length, caption, captionLength, route);
 
 		void RefreshTransitionRow()
 		{
@@ -257,6 +239,7 @@ public partial class CutEditor : UserControl
 			             start > 0 && end < _totalFrames;
 			transition.IsVisible = joins;
 			captionRow.IsVisible = joins;
+			routeRow.IsVisible = joins;
 			captionCells[1].IsVisible = captionCells[2].IsVisible = !string.IsNullOrWhiteSpace(caption.Text);
 			length.IsVisible = unit.IsVisible = kind.SelectedIndex > 0;
 			overlapNote.IsVisible = joins && TransitionKinds[Math.Max(0, kind.SelectedIndex)].Kind is { } selected &&
@@ -269,7 +252,7 @@ public partial class CutEditor : UserControl
 
 		number.Click += (_, _) =>
 		{
-			if (ReadFrame(from.Text, "", out long start) is null) SeekRequested?.Invoke(Math.Max(0, start - (long)Math.Round(SeekLeadInSeconds * _fps)));
+			if (ReadFrame(from.Text, "", out long start) is null) SeekRequested?.Invoke(Math.Max(0, start - 1));
 		};
 		from.TextChanged += (_, _) =>
 		{
@@ -287,6 +270,7 @@ public partial class CutEditor : UserControl
 			OnEdited(true);
 		};
 		length.ValueChanged += (_, _) => OnEdited(false);
+		route.SelectionChanged += (_, _) => OnEdited(true);
 		caption.TextChanged += (_, _) =>
 		{
 			RefreshTransitionRow();
@@ -343,7 +327,7 @@ public partial class CutEditor : UserControl
 		List<FrameRange> parsed = [];
 		for (int i = 0; i < _rows.Count; i++)
 		{
-			(TextBox fromBox, TextBox toBox, ComboBox kindBox, NumericUpDown lengthBox, TextBox captionBox, NumericUpDown captionLengthBox) = _rows[i];
+			(TextBox fromBox, TextBox toBox, ComboBox kindBox, NumericUpDown lengthBox, TextBox captionBox, NumericUpDown captionLengthBox, ComboBox routeBox) = _rows[i];
 			string name = string.Format(Strings.Cut_Name, i + 1);
 			if (ReadFrame(fromBox.Text, $"{name}: {Strings.Cut_From}", out long start) is { } fromError) return fromError;
 			if (ReadFrame(toBox.Text, $"{name}: {Strings.Cut_To}", out long end) is { } toError) return toError;
@@ -355,7 +339,7 @@ public partial class CutEditor : UserControl
 				? new CutTransition(k, lengthBox.Value is { } seconds ? (double)seconds : CutTransition.DefaultLengthSeconds)
 				: null;
 			var caption = CutCaption.Of(captionBox.Text, captionLengthBox.Value is { } captionSeconds ? (double)captionSeconds : CutCaption.DefaultSeconds);
-			parsed.Add(new FrameRange(start, end, transition, caption));
+			parsed.Add(new FrameRange(start, end, transition, caption, RouteJoinOptions.At(routeBox.SelectedIndex)));
 		}
 
 		if (CutList.RemovesEverything(parsed, _totalFrames)) return Strings.Cut_RemovesEverything;
@@ -364,7 +348,7 @@ public partial class CutEditor : UserControl
 		return null;
 	}
 
-	private sealed record CutRow(TextBox From, TextBox To, ComboBox Kind, NumericUpDown Length, TextBox Caption, NumericUpDown CaptionLength);
+	private sealed record CutRow(TextBox From, TextBox To, ComboBox Kind, NumericUpDown Length, TextBox Caption, NumericUpDown CaptionLength, ComboBox Route);
 
 	/// <summary>A typed time as the nearest frame, within the recording.</summary>
 	private string? ReadFrame(string? text, string name, out long frame)

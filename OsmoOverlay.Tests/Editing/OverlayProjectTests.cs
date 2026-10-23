@@ -14,7 +14,7 @@ public sealed class OverlayProjectTests
 		var preset = OverlayPreset.CreateDefault("p1", "Mine");
 		var project = new OverlayProject([Path.GetFullPath("a.mp4"), Path.GetFullPath("b.mp4")], Path.GetFullPath("out.mp4"), [new FrameRange(10, 20, new CutTransition(CutTransitionKind.FadeWhite, 0.8))], new ReframeView(10, 5, 0, 90, false), 42, "p1", preset)
 		{
-			ExternalTrack = new ExternalTrackSource(Path.GetFullPath("ride.fit"), Synchronization: new(new(18.5, new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc))))
+			ExternalTrack = new ExternalTrackSource(Path.GetFullPath("ride.fit"), Synchronization: new TrackSynchronization(new TrackSyncAnchor(18.5, new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc))))
 		};
 		string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{OverlayProject.Extension}");
 
@@ -44,8 +44,14 @@ public sealed class OverlayProjectTests
 	{
 		string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{OverlayProject.Extension}");
 		new OverlayProject([Path.GetFullPath("a.mp4")], null, [], null, 0, null, null) { ExternalTrack = new ExternalTrackSource(trackPath) }.Save(path);
-		try { Assert.ThrowsExactly<InvalidDataException>(() => OverlayProject.Load(path)); }
-		finally { File.Delete(path); }
+		try
+		{
+			Assert.ThrowsExactly<InvalidDataException>(() => OverlayProject.Load(path));
+		}
+		finally
+		{
+			File.Delete(path);
+		}
 	}
 
 	[TestMethod]

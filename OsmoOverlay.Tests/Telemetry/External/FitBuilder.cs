@@ -132,7 +132,7 @@ internal sealed class FitBuilder
 		else BinaryPrimitives.WriteUInt16LittleEndian(id, (ushort)message);
 		_data.AddRange(id);
 		_data.Add((byte)fields.Length);
-		foreach ((int number, int size, int type) in fields) _data.AddRange(new byte[] { (byte)number, (byte)size, (byte)type });
+		foreach ((int number, int size, int type) in fields) _data.AddRange(new[] { (byte)number, (byte)size, (byte)type });
 
 		if (developerField)
 		{

@@ -184,7 +184,7 @@ public sealed partial class OverlayRenderer
 
 	internal static (string Value, string Unit) FormatTemperature(double? celsius, UnitSystem units) =>
 		(celsius is { } value && double.IsFinite(value) ? F(units == UnitSystem.Imperial ? value * 1.8 + 32 : value, "0.0") : "--",
-		units == UnitSystem.Imperial ? "°F" : "°C");
+			units == UnitSystem.Imperial ? "°F" : "°C");
 
 	/// <summary>
 	///     Whole metres/feet below a kilometre/mile - a GPS position isn't good to the centimetre. The unit switches on the

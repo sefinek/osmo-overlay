@@ -64,7 +64,7 @@ public static class FitReader
 		if (Crc(file.AsSpan(start, (int)(end - start))) != BinaryPrimitives.ReadUInt16LittleEndian(file.AsSpan((int)end)))
 			throw new InvalidDataException("The FIT file's checksum doesn't match - it is damaged.");
 
-		Definition?[] definitions = new Definition?[16];
+		var definitions = new Definition?[16];
 		uint? lastTimestamp = null;
 		int at = start + headerSize;
 		while (at < end)
@@ -108,12 +108,14 @@ public static class FitReader
 				if (Field(definition, data, BatteryCapacity) is { } capacity && capacity is >= 0 and <= 100) batteries.Add(new ExternalBatteryReading(utc, capacity));
 				continue;
 			}
+
 			if (definition.Message == DeviceInfoMessage)
 			{
 				if (Field(definition, data, DeviceIndex) == 0 && Field(definition, data, DeviceBatteryLevel) is { } level && level is >= 0 and <= 100)
 					batteries.Add(new ExternalBatteryReading(utc, level));
 				continue;
 			}
+
 			if (definition.Message == EventMessage)
 			{
 				if (Field(definition, data, EventNumber) == TimerEvent && Field(definition, data, EventType) is { } type) timer.Add((utc, (byte)type));
@@ -202,10 +204,14 @@ public static class FitReader
 			1 => type.Signed ? (sbyte)bytes[0] : bytes[0],
 			2 => big
 				? type.Signed ? BinaryPrimitives.ReadInt16BigEndian(bytes) : BinaryPrimitives.ReadUInt16BigEndian(bytes)
-				: type.Signed ? BinaryPrimitives.ReadInt16LittleEndian(bytes) : BinaryPrimitives.ReadUInt16LittleEndian(bytes),
+				: type.Signed
+					? BinaryPrimitives.ReadInt16LittleEndian(bytes)
+					: BinaryPrimitives.ReadUInt16LittleEndian(bytes),
 			_ => big
 				? type.Signed ? BinaryPrimitives.ReadInt32BigEndian(bytes) : BinaryPrimitives.ReadUInt32BigEndian(bytes)
-				: type.Signed ? BinaryPrimitives.ReadInt32LittleEndian(bytes) : BinaryPrimitives.ReadUInt32LittleEndian(bytes)
+				: type.Signed
+					? BinaryPrimitives.ReadInt32LittleEndian(bytes)
+					: BinaryPrimitives.ReadUInt32LittleEndian(bytes)
 		};
 		return value == type.Invalid ? null : value;
 	}

@@ -20,7 +20,8 @@ public sealed record RouteIntroSettings(
 	string? StartLabel = null,
 	string? FinishLabel = null,
 	RouteIntroLabels? Labels = null,
-	bool ShowWhenTrimmed = false)
+	bool ShowWhenTrimmed = false,
+	RouteJoin GpsLossJoin = RouteJoins.Default)
 {
 	// The start's and finish's captions when the user gave none (null) - "" is a dot without one. Drawn as is, so in capitals.
 	public static string DefaultStartLabel => CoreStrings.Overlay_Start.ToUpperInvariant();
@@ -44,7 +45,7 @@ public sealed record RouteIntroSettings(
 		return new RouteIntroSettings(settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats,
 			settings.RouteIntroUnits, settings.RouteIntroColorBySpeed, settings.RouteIntroMapProvider, settings.RouteIntroShowStartFinish,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel,
-			RouteIntroLabels.From(settings.RouteIntroLabels), settings.RouteIntroWhenTrimmed);
+			RouteIntroLabels.From(settings.RouteIntroLabels), settings.RouteIntroWhenTrimmed, settings.RouteIntroGpsLossJoin);
 	}
 
 	/// <summary>The reverse of From: these values written into the settings.</summary>
@@ -62,7 +63,8 @@ public sealed record RouteIntroSettings(
 			RouteIntroShowStartFinish = ShowStartFinish,
 			RouteIntroStartLabel = StartLabel,
 			RouteIntroFinishLabel = FinishLabel,
-			RouteIntroWhenTrimmed = ShowWhenTrimmed
+			RouteIntroWhenTrimmed = ShowWhenTrimmed,
+			RouteIntroGpsLossJoin = GpsLossJoin
 		};
 	}
 

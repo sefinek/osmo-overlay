@@ -427,6 +427,14 @@
 								</Grid>
 								<Border Classes="divider" />
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<StackPanel Margin="0,0,16,0">
+										<TextBlock Text="{x:Static local:Strings.TrailStyle_GpsLoss}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.TrailStyle_GpsLossHint}" />
+									</StackPanel>
+									<ComboBox Grid.Column="1" Name="RouteIntroGpsLossCombo" MinWidth="180" VerticalAlignment="Center" />
+								</Grid>
+								<Border Classes="divider" />
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 									<StackPanel>
 										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroStartFinish}" Classes="rowTitle" />
 										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroStartFinishHint}" />

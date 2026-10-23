@@ -17,7 +17,9 @@ public partial class ExternalTrackWindow : Window
 	public bool Accepted { get; private set; }
 	public ExternalTrackSource? Source { get; private set; }
 
-	public ExternalTrackWindow() : this(null, null, 0) { }
+	public ExternalTrackWindow() : this(null, null, 0)
+	{
+	}
 
 	public ExternalTrackWindow(FileSummary? summary, ExternalTrackSource? source, double currentSeconds)
 	{
@@ -43,7 +45,11 @@ public partial class ExternalTrackWindow : Window
 				SecondAnchor.Utc = second.TrackUtc;
 			}
 		}
-		Opened += async (_, _) => { if (source is not null) await LoadTrackAsync(source.Path); };
+
+		Opened += async (_, _) =>
+		{
+			if (source is not null) await LoadTrackAsync(source.Path);
+		};
 		Closed += (_, _) => _closed = true;
 	}
 
@@ -85,7 +91,10 @@ public partial class ExternalTrackWindow : Window
 		{
 			Show(ProblemText, ex.Message);
 		}
-		finally { if (!_closed) SetBusy(false); }
+		finally
+		{
+			if (!_closed) SetBusy(false);
+		}
 	}
 
 	private async void OnEstimateClick(object? sender, RoutedEventArgs e)
@@ -96,15 +105,26 @@ public partial class ExternalTrackWindow : Window
 		{
 			TrackSyncEstimate? estimate = await Task.Run(() => ExternalTrackSync.Estimate(frames, _summary.Video.Fps, track));
 			if (_closed) return;
-			if (estimate is null) { Show(ProblemText, Strings.Track_NoEstimate); return; }
+			if (estimate is null)
+			{
+				Show(ProblemText, Strings.Track_NoEstimate);
+				return;
+			}
+
 			FirstAnchor.VideoSeconds = 0;
 			FirstAnchor.Utc = estimate.TrackTimeAtVideoStartUtc;
 			UseSecond.IsChecked = false;
 			Show(ProblemText, "");
 			Show(EstimateInfo, string.Format(Strings.Track_EstimateInfo, estimate.Correlation));
 		}
-		catch (Exception ex) { if (!_closed) Show(ProblemText, ex.Message); }
-		finally { if (!_closed) SetBusy(false); }
+		catch (Exception ex)
+		{
+			if (!_closed) Show(ProblemText, ex.Message);
+		}
+		finally
+		{
+			if (!_closed) SetBusy(false);
+		}
 	}
 
 	private void OnApplyClick(object? sender, RoutedEventArgs e)
@@ -122,7 +142,10 @@ public partial class ExternalTrackWindow : Window
 			Accepted = true;
 			Close();
 		}
-		catch (Exception ex) { Show(ProblemText, ex.Message); }
+		catch (Exception ex)
+		{
+			Show(ProblemText, ex.Message);
+		}
 	}
 
 	/// <summary>A message line is there only while it has something to say - an empty one would leave a gap in the layout.</summary>
@@ -143,5 +166,11 @@ public partial class ExternalTrackWindow : Window
 	}
 
 	private void OnCancelClick(object? sender, RoutedEventArgs e) => Close();
-	private void OnRemoveClick(object? sender, RoutedEventArgs e) { Source = null; Accepted = true; Close(); }
+
+	private void OnRemoveClick(object? sender, RoutedEventArgs e)
+	{
+		Source = null;
+		Accepted = true;
+		Close();
+	}
 }

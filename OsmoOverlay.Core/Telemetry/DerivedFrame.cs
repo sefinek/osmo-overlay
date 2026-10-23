@@ -1,3 +1,5 @@
+using OsmoOverlay.Core.Overlay;
+
 namespace OsmoOverlay.Core.Telemetry;
 
 public sealed record DerivedFrame(
@@ -18,5 +20,10 @@ public sealed record DerivedFrame(
 	double LateralAccelG,
 	double LongitudinalAccelG,
 	// The first frame after a cut (OutputTimeline.MapFrames) or after a gap between files (TelemetryFrame.StartsAfterGap) -
-	// where a drawn route must not simply carry on (RouteJoin).
-	bool StartsAfterCut = false);
+	// where a drawn route must not simply carry on (RouteJoin) - CutJoin is the cut's own choice, null for the default (and for a gap between files).
+	bool StartsAfterCut = false,
+	RouteJoin? CutJoin = null)
+{
+	/// <summary>How the route reaches this frame from the one before - null when it simply carries on.</summary>
+	public RouteJoin? JoinBefore => StartsAfterCut ? CutJoin ?? RouteJoins.Default : null;
+}

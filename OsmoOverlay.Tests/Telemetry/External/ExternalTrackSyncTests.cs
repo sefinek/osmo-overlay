@@ -127,11 +127,11 @@ public sealed class ExternalTrackSyncTests
 	public void TrackSpeed_KeepsRecordedStopsAndBoundaryFixesButLeavesGapsUnknown()
 	{
 		var track = new ExternalTrack(
-			[
-				new ExternalTrackPoint(TrackStart, 53.1, 18.9, null, 3), new ExternalTrackPoint(TrackStart.AddSeconds(1), 53.1001, 18.9, null, 3),
-				new ExternalTrackPoint(TrackStart.AddSeconds(31), 53.10015, 18.9, null, 0), new ExternalTrackPoint(TrackStart.AddSeconds(32), 53.1002, 18.9, null, 3),
-				new ExternalTrackPoint(TrackStart.AddSeconds(62), 53.3, 18.9, null, 3), new ExternalTrackPoint(TrackStart.AddSeconds(63), 53.3001, 18.9, null, 3)
-			]);
+		[
+			new ExternalTrackPoint(TrackStart, 53.1, 18.9, null, 3), new ExternalTrackPoint(TrackStart.AddSeconds(1), 53.1001, 18.9, null, 3),
+			new ExternalTrackPoint(TrackStart.AddSeconds(31), 53.10015, 18.9, null, 0), new ExternalTrackPoint(TrackStart.AddSeconds(32), 53.1002, 18.9, null, 3),
+			new ExternalTrackPoint(TrackStart.AddSeconds(62), 53.3, 18.9, null, 3), new ExternalTrackPoint(TrackStart.AddSeconds(63), 53.3001, 18.9, null, 3)
+		]);
 
 		double[] speed = ExternalTrackSync.TrackSpeed(track, 63);
 

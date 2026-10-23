@@ -29,9 +29,9 @@ public sealed class RouteGeometryTests
 	/// <summary>10-40 along y = 50, then - after a cut - 60-90.</summary>
 	private static RouteGeometry TwoPieces(RouteJoin join, float step = 2, float minStep = 0)
 	{
-		var route = new RouteGeometry(join, false, 50, minStep);
-		for (float x = 10; x <= 40; x += step) route.Add(new SKPoint(x, 50), 20, false);
-		for (float x = 60; x <= 90; x += step) route.Add(new SKPoint(x, 50), 20, x == 60);
+		var route = new RouteGeometry(false, 50, minStep);
+		for (float x = 10; x <= 40; x += step) route.Add(new SKPoint(x, 50), 20);
+		for (float x = 60; x <= 90; x += step) route.Add(new SKPoint(x, 50), 20, x == 60 ? join : null);
 		return route;
 	}
 
@@ -65,9 +65,9 @@ public sealed class RouteGeometryTests
 	[TestMethod]
 	public void Matrix_ScalesThePoints_NotTheWidth()
 	{
-		using var route = new RouteGeometry(RouteJoin.Gap, false, 50);
-		route.Add(new SKPoint(5, 25), 20, false);
-		route.Add(new SKPoint(40, 25), 20, false);
+		using var route = new RouteGeometry(false, 50);
+		route.Add(new SKPoint(5, 25), 20);
+		route.Add(new SKPoint(40, 25), 20);
 		using SKBitmap bitmap = Draw(route, SKMatrix.CreateScale(2, 2));
 
 		Assert.IsTrue(Drawn(bitmap, 70, 50));
@@ -78,8 +78,8 @@ public sealed class RouteGeometryTests
 	[TestMethod]
 	public void LongRoute_SpanningManyChunks_IsDrawnWhole()
 	{
-		using var route = new RouteGeometry(RouteJoin.Gap, true, 50);
-		for (int i = 0; i < 1000; i++) route.Add(new SKPoint(5 + i * 0.09f, 50), i % 60, false);
+		using var route = new RouteGeometry(true, 50);
+		for (int i = 0; i < 1000; i++) route.Add(new SKPoint(5 + i * 0.09f, 50), i % 60);
 		using SKBitmap bitmap = Draw(route, SKMatrix.Identity);
 
 		for (int x = 6; x < 94; x += 4) Assert.IsTrue(Drawn(bitmap, x, 50), $"x = {x}");

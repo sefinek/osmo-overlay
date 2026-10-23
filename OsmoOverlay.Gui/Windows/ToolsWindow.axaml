@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="840" d:DesignHeight="520"
         x:Class="OsmoOverlay.Gui.ToolsWindow"
-        Width="840" SizeToContent="Height" CanResize="False"
+        Width="860" Height="680" MinWidth="640" MinHeight="420"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
         Icon="{x:Static local:AppAssets.Icon}"
@@ -31,7 +31,13 @@
 		</Style>
 	</Window.Styles>
 
-	<StackPanel Margin="20" Spacing="12">
+	<DockPanel>
+	<Border DockPanel.Dock="Bottom" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+	        BorderThickness="0,1,0,0" Padding="20,12">
+		<Button HorizontalAlignment="Right" Content="{x:Static local:Strings.Tools_Close}" Classes="accent" Click="OnCloseClick" />
+	</Border>
+	<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+	<StackPanel Margin="20,20,20,16" Spacing="12">
 		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_VideoAudio}" />
 
 		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
@@ -129,6 +135,7 @@
 			</Grid>
 		</Border>
 
-		<Button HorizontalAlignment="Right" Content="{x:Static local:Strings.Tools_Close}" Classes="accent" Click="OnCloseClick" Margin="0,4,0,0" />
 	</StackPanel>
+	</ScrollViewer>
+	</DockPanel>
 </Window>

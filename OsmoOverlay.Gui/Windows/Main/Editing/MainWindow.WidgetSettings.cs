@@ -366,7 +366,7 @@ public partial class MainWindow
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
 		UpdateElement(id, el => el is TrailOverlayElement t
-			? t with { TrailVisible = style.Visible, TrailColor = style.Color, TrailColorBySpeed = style.BySpeed, TrailWidth = style.Width }
+			? t with { TrailVisible = style.Visible, TrailColor = style.Color, TrailColorBySpeed = style.BySpeed, TrailWidth = style.Width, GpsLossJoin = style.GpsLossJoin }
 			: el);
 	}
 
