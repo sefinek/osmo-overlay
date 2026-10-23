@@ -31,10 +31,39 @@ internal sealed class FitBuilder
 		return this;
 	}
 
-	/// <summary>A record without a timestamp field, for compressed timestamp headers.</summary>
-	public FitBuilder DefineCompressedRecord()
+	public FitBuilder DefineSensorRecord()
 	{
-		Define(CompressedLocal, 20, false, false, (0, 4, 5), (1, 4, 5));
+		Define(RecordLocal, 20, false, false, (253, 4, 6), (0, 4, 5), (1, 4, 5), (78, 4, 6), (73, 4, 6), (5, 4, 6), (13, 1, 1));
+		return this;
+	}
+
+	public FitBuilder SensorRecord(DateTime utc, double lat, double lon, double? distanceMeters, sbyte? temperature)
+	{
+		Record(utc, lat, lon, 80, 2);
+		Number(distanceMeters is { } meters ? (uint)Math.Round(meters * 100) : uint.MaxValue, 4, false);
+		_data.Add(temperature is { } celsius ? unchecked((byte)celsius) : (byte)127);
+		return this;
+	}
+
+	public FitBuilder DefineBattery(bool deviceInfo = false)
+	{
+		if (deviceInfo) Define(3, 23, false, false, (253, 4, 6), (0, 1, 2), (32, 1, 2));
+		else Define(3, 104, false, false, (253, 4, 6), (2, 1, 2));
+		return this;
+	}
+
+	public FitBuilder Battery(DateTime utc, byte percent, byte? deviceIndex = null)
+	{
+		_data.Add(3);
+		Number(Seconds(utc), 4, false);
+		if (deviceIndex is { } index) _data.Add(index);
+		_data.Add(percent);
+		return this;
+	}
+
+	public FitBuilder DefineCompressedRecord(bool withTimestamp = false)
+	{
+		Define(CompressedLocal, 20, false, false, withTimestamp ? [(253, 4, 6), (0, 4, 5), (1, 4, 5)] : [(0, 4, 5), (1, 4, 5)]);
 		return this;
 	}
 

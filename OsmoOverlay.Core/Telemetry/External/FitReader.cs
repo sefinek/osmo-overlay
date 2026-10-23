@@ -4,14 +4,16 @@ namespace OsmoOverlay.Core.Telemetry.External;
 
 /// <summary>
 ///     The records of a Garmin FIT activity file (the format of bike computers and watches): each fix (message 20) with its
-///     time, position, altitude and speed, and the timer's start and stop events (message 21), which say where the device
-///     stood still. Read as the SDK describes it: a header, definition messages naming the fields of the data messages after
+///     time, position, altitude and speed, and the timer's start and stop events (message 21), which mark recording pauses.
+///     Read as the SDK describes it: a header, definition messages naming the fields of the data messages after
 ///     them (little or big endian), compressed timestamp headers, developer fields skipped, several files chained, CRC checked.
 /// </summary>
 public static class FitReader
 {
 	private const int RecordMessage = 20;
 	private const int EventMessage = 21;
+	private const int BatteryMessage = 104;
+	private const int DeviceInfoMessage = 23;
 	private const byte TimerEvent = 0;
 
 	// FIT counts seconds from 1989-12-31 00:00 UTC.
@@ -21,8 +23,9 @@ public static class FitReader
 
 	// The field numbers of the messages this reads.
 	private const int Timestamp = 253;
-	private const int Latitude = 0, Longitude = 1, Altitude = 2, Speed = 6, EnhancedSpeed = 73, EnhancedAltitude = 78;
+	private const int Latitude = 0, Longitude = 1, Altitude = 2, Distance = 5, Speed = 6, Temperature = 13, EnhancedSpeed = 73, EnhancedAltitude = 78;
 	private const int EventNumber = 0, EventType = 1;
+	private const int BatteryCapacity = 2, DeviceIndex = 0, DeviceBatteryLevel = 32;
 
 	public static bool LooksLikeFit(ReadOnlySpan<byte> start)
 	{
@@ -38,12 +41,13 @@ public static class FitReader
 	{
 		List<ExternalTrackPoint> points = [];
 		List<(DateTime Utc, byte Type)> timer = [];
+		List<ExternalBatteryReading> batteries = [];
 		int at = 0;
 		while (at + 12 <= file.Length && LooksLikeFit(file.AsSpan(at)))
-			at = ReadFile(file, at, points, timer);
+			at = ReadFile(file, at, points, timer, batteries);
 
 		if (at == 0) throw new InvalidDataException("Not a FIT file.");
-		return new ExternalTrack(points, Pauses(timer));
+		return new ExternalTrack(points, Pauses(timer), batteries);
 	}
 
 	private sealed record Definition(bool BigEndian, int Message, (int Number, int Size, int BaseType)[] Fields, int DeveloperBytes)
@@ -51,7 +55,7 @@ public static class FitReader
 		public int Size => Fields.Sum(f => f.Size) + DeveloperBytes;
 	}
 
-	private static int ReadFile(byte[] file, int start, List<ExternalTrackPoint> points, List<(DateTime, byte)> timer)
+	private static int ReadFile(byte[] file, int start, List<ExternalTrackPoint> points, List<(DateTime, byte)> timer, List<ExternalBatteryReading> batteries)
 	{
 		int headerSize = file[start];
 		long dataSize = BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(start + 4));
@@ -61,7 +65,7 @@ public static class FitReader
 			throw new InvalidDataException("The FIT file's checksum doesn't match - it is damaged.");
 
 		Definition?[] definitions = new Definition?[16];
-		uint lastTimestamp = 0;
+		uint? lastTimestamp = null;
 		int at = start + headerSize;
 		while (at < end)
 		{
@@ -84,18 +88,32 @@ public static class FitReader
 			}
 
 			Definition definition = definitions[local] ?? throw new InvalidDataException("A FIT data message has no definition.");
-			if (at + definition.Size > end) throw new InvalidDataException("A FIT message runs past the end of the file.");
+			int timestampBytes = compressed is not null ? definition.Fields.Where(f => f.Number == Timestamp).Sum(f => f.Size) : 0;
+			int size = definition.Size - timestampBytes;
+			if (at + size > end) throw new InvalidDataException("A FIT message runs past the end of the file.");
 
-			ReadOnlySpan<byte> data = file.AsSpan(at, definition.Size);
-			at += definition.Size;
+			ReadOnlySpan<byte> data = file.AsSpan(at, size);
+			at += size;
+			if (timestampBytes > 0) definition = definition with { Fields = [.. definition.Fields.Where(f => f.Number != Timestamp)] };
 
 			uint? stamp = null;
-			if (compressed is { } offset) stamp = lastTimestamp = Roll(lastTimestamp, offset);
+			if (compressed is { } offset) stamp = lastTimestamp = Roll(lastTimestamp ?? throw new InvalidDataException("A compressed FIT timestamp has no time reference."), offset);
 			else if (Field(definition, data, Timestamp) is { } full) stamp = lastTimestamp = (uint)full;
 
-			if (definition.Message is not (RecordMessage or EventMessage) || stamp is not { } seconds) continue;
+			if (definition.Message is not (RecordMessage or EventMessage or BatteryMessage or DeviceInfoMessage) || stamp is not { } seconds) continue;
 
 			DateTime utc = Epoch.AddSeconds(seconds);
+			if (definition.Message == BatteryMessage)
+			{
+				if (Field(definition, data, BatteryCapacity) is { } capacity && capacity is >= 0 and <= 100) batteries.Add(new ExternalBatteryReading(utc, capacity));
+				continue;
+			}
+			if (definition.Message == DeviceInfoMessage)
+			{
+				if (Field(definition, data, DeviceIndex) == 0 && Field(definition, data, DeviceBatteryLevel) is { } level && level is >= 0 and <= 100)
+					batteries.Add(new ExternalBatteryReading(utc, level));
+				continue;
+			}
 			if (definition.Message == EventMessage)
 			{
 				if (Field(definition, data, EventNumber) == TimerEvent && Field(definition, data, EventType) is { } type) timer.Add((utc, (byte)type));
@@ -106,7 +124,10 @@ public static class FitReader
 
 			double? altitude = (Field(definition, data, EnhancedAltitude) ?? Field(definition, data, Altitude)) is { } a ? a / 5.0 - 500 : null;
 			double? speed = (Field(definition, data, EnhancedSpeed) ?? Field(definition, data, Speed)) is { } s ? s / 1000.0 : null;
-			points.Add(new ExternalTrackPoint(utc, lat * SemicirclesToDegrees, lon * SemicirclesToDegrees, altitude, speed));
+			double? temperature = Field(definition, data, Temperature);
+			double? distance = Field(definition, data, Distance) is { } d ? d / 100.0 : null;
+			points.Add(new ExternalTrackPoint(utc, lat * SemicirclesToDegrees, lon * SemicirclesToDegrees, altitude, speed,
+				TemperatureCelsius: temperature, DistanceMeters: distance));
 		}
 
 		return (int)end + 2;
@@ -128,6 +149,7 @@ public static class FitReader
 		int developerBytes = 0;
 		if ((header & 0x20) != 0)
 		{
+			if (at >= file.Length) throw new InvalidDataException("A FIT definition runs past the end of the file.");
 			int developers = file[at++];
 			if (at + developers * 3 > file.Length) throw new InvalidDataException("A FIT definition runs past the end of the file.");
 

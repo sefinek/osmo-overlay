@@ -4,6 +4,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
+using OsmoOverlay.Core.Telemetry.External;
 using OsmoOverlay.Gui.Native;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
 
@@ -15,6 +16,7 @@ public partial class MainWindow
 	/// <param name="range">Only this part of the recording (frames, as the selection on the timeline) - the cuts still apply inside it.</param>
 	private async Task RunRenderAsync(bool greenScreen, FrameRange? range = null)
 	{
+		if (_phase != UiPhase.SummaryReady || !CanRenderTelemetry) return;
 		string normalOutputPath = OutputPathBox.Text ?? "";
 
 		if (string.IsNullOrWhiteSpace(normalOutputPath))
@@ -62,7 +64,7 @@ public partial class MainWindow
 		AppendLog(string.Format(Strings.Render_LogPreset, presetName ?? Strings.Render_NoPreset));
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen)
-			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null, rangeStart, rangeEnd)));
+			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null, rangeStart, rangeEnd, _externalTrack)));
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -119,7 +121,7 @@ public partial class MainWindow
 	}
 
 	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts,
-		ReframeView? view, double? rangeStart = null, double? rangeEnd = null)
+		ReframeView? view, double? rangeStart = null, double? rangeEnd = null, ExternalTrackSource? track = null)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
 		parts.AddRange(inputPaths.Select(QuoteArg));
@@ -133,6 +135,16 @@ public partial class MainWindow
 
 		if (rangeStart is { } from) parts.AddRange(["--from", from.ToString("0.###", CultureInfo.InvariantCulture)]);
 		if (rangeEnd is { } to) parts.AddRange(["--to", to.ToString("0.###", CultureInfo.InvariantCulture)]);
+		if (track is not null)
+		{
+			parts.AddRange(["--track", QuoteArg(track.Path)]);
+			if (track.OffsetSeconds is { } offset) parts.AddRange(["--track-offset", offset.ToString("R", CultureInfo.InvariantCulture)]);
+			if (track.Synchronization is { } sync)
+			{
+				parts.AddRange(["--track-anchor", sync.First.ToArgument()]);
+				if (sync.Second is { } second) parts.AddRange(["--track-anchor", second.ToArgument()]);
+			}
+		}
 		foreach (TimeRange cut in cutOuts)
 		{
 			parts.AddRange([

@@ -123,7 +123,7 @@ public partial class MainWindow : Window
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
 			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
 			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
-			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming
+			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming, SensorTiming
 		];
 		foreach (ElementTimingEditor timing in _timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
@@ -132,7 +132,7 @@ public partial class MainWindow : Window
 			DateTimeShadow, UtcTimeShadow, CameraInfoShadow, CompassShadow, MapShadow,
 			SpeedShadow, RollShadow, PitchShadow, SunShadow, GMeterShadow, ElapsedTimeShadow,
 			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
-			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow
+			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow, SensorShadow
 		];
 		foreach (ElementShadowEditor shadow in _shadowEditors)
 		{
@@ -164,7 +164,7 @@ public partial class MainWindow : Window
 		[
 			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, RollStyle, PitchStyle, SunStyle,
 			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
-			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle
+			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle, SensorStyle
 		];
 		foreach (ElementStyleEditor style in styleEditors)
 		{
@@ -332,12 +332,15 @@ public partial class MainWindow : Window
 
 		if (files.Count == 0) return;
 
-		bool wasEmpty = _inputPaths.Count == 0;
 		// The same file twice would get stitched (and rendered) twice.
-		_inputPaths.AddRange(files.Select(f => f.Path.LocalPath)
+		List<string> added = [.. files.Select(f => f.Path.LocalPath)
 			.Where(p => !_inputPaths.Contains(p, StringComparer.OrdinalIgnoreCase))
 			.Distinct(StringComparer.OrdinalIgnoreCase)
-			.OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
+			.OrderBy(p => p, StringComparer.OrdinalIgnoreCase)];
+		if (added.Count == 0) return;
+		bool wasEmpty = _inputPaths.Count == 0;
+		ClearExternalTrack();
+		_inputPaths.AddRange(added);
 		RefreshInputFilesList();
 
 		if (wasEmpty)
@@ -376,6 +379,7 @@ public partial class MainWindow : Window
 	/// </summary>
 	private void ResetAfterInputOrderChange()
 	{
+		ClearExternalTrack();
 		if (_phase != UiPhase.SummaryReady) return;
 
 		ClosePreview();
@@ -388,6 +392,7 @@ public partial class MainWindow : Window
 		if (index < 0) return;
 
 		_inputPaths.RemoveAt(index);
+		ClearExternalTrack();
 		RefreshInputFilesList();
 
 		ClosePreview();
@@ -635,6 +640,7 @@ public partial class MainWindow : Window
 		if (busy)
 			ActionButton.IsEnabled = false;
 		UpdateReframeControls();
+		RefreshExternalTrack();
 	}
 
 	/// <summary>The setting, or the Shift held at startup (that run only).</summary>

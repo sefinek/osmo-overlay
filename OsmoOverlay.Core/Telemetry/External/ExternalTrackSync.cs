@@ -2,25 +2,17 @@ namespace OsmoOverlay.Core.Telemetry.External;
 
 public enum TrackSyncMethod
 {
-	/// <summary>The camera's clock and the track's agree - the recording lies within the track's time.</summary>
-	Clock,
-
 	/// <summary>The camera's clock is elsewhere (a camera never set to the time), so the recording was matched to the track by how both moved.</summary>
 	Motion
 }
 
-/// <summary>`TrackTimeAtVideoStartUtc` is the moment on the track's clock of the recording's first frame (ExternalTrackMerge); Correlation is 1 for Clock.</summary>
+/// <summary>An approximate motion match, requiring visual verification. Correlation is not a probability.</summary>
 public sealed record TrackSyncEstimate(DateTime TrackTimeAtVideoStartUtc, TrackSyncMethod Method, double Correlation);
 
 /// <summary>
-///     Where on the track's clock a recording began. Two devices that both took their time from satellites agree to the second,
-///     but a camera's own clock is only as right as the last time somebody set it: a GoPro off by minutes is common. So:
-///     when the recording lies within the track's time by the camera's clock, that is taken to be right (Clock). Otherwise the
-///     recording is slid along the track until how much the camera shook (the accelerometer's variation, once a second)
-///     follows the track's speed best (Motion) - a ride shakes a camera far more than standing does. That match is accepted only when it
-///     is clear: a correlation of at least MinCorrelation, and the next best match somewhere else well behind. A recording
-///     that doesn't move with the track (a camera turned about on the spot while the bike computer saw a stop) gets
-///     no estimate - the offset then has to be given.
+///     Suggests a video start by correlating accelerometer variation with track speed, excluding gaps and timer pauses.
+///     A strong, distinct match is still a heuristic: camera shake is not a speed sensor. Overlapping clock ranges
+///     do not establish alignment. Manual anchors are independent of the camera's clock.
 /// </summary>
 public static class ExternalTrackSync
 {
@@ -37,22 +29,11 @@ public static class ExternalTrackSync
 
 	private const double DistinctSeconds = 5;
 
-	public static TrackSyncEstimate? Estimate(IReadOnlyList<TelemetryFrame> frames, double fps, DateTime? videoStartUtc, ExternalTrack track)
+	public static TrackSyncEstimate? Estimate(IReadOnlyList<TelemetryFrame> frames, double fps, ExternalTrack track)
 	{
 		if (frames.Count == 0 || fps <= 0) return null;
 
-		double videoSeconds = frames[^1].SampleTimeSeconds + 1 / fps;
-		if (videoStartUtc is { } start && Overlap(start, videoSeconds, track) >= Math.Min(videoSeconds, (track.EndUtc - track.StartUtc).TotalSeconds) / 2)
-			return new TrackSyncEstimate(start, TrackSyncMethod.Clock, 1);
-
-		return ByMotion(frames, fps, videoSeconds, track);
-	}
-
-	private static double Overlap(DateTime start, double seconds, ExternalTrack track)
-	{
-		DateTime from = start > track.StartUtc ? start : track.StartUtc;
-		DateTime to = start.AddSeconds(seconds) < track.EndUtc ? start.AddSeconds(seconds) : track.EndUtc;
-		return Math.Max(0, (to - from).TotalSeconds);
+		return ByMotion(frames, fps, frames[^1].SampleTimeSeconds + 1 / fps, track);
 	}
 
 	private static TrackSyncEstimate? ByMotion(IReadOnlyList<TelemetryFrame> frames, double fps, double videoSeconds, ExternalTrack track)
@@ -117,7 +98,7 @@ public static class ExternalTrackSync
 		for (int i = 0; i < speed.Length; i++)
 		{
 			speed[i] = track.At(track.StartUtc.AddSeconds(i * StepSeconds), ref cursor) is { } sample
-				? sample.State == ExternalTrackState.Lost ? double.NaN : sample.SpeedMs ?? double.NaN
+				? sample.State != ExternalTrackState.Fix ? double.NaN : sample.SpeedMs ?? double.NaN
 				: double.NaN;
 		}
 

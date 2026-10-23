@@ -32,10 +32,28 @@ public sealed class ExternalTrackMergeTests
 		Assert.AreEqual(18.9, frame.Longitude, 1e-9);
 		Assert.AreEqual(81.48, frame.AltitudeMeters, 1e-9);
 		Assert.AreEqual(4, frame.GpsSpeedMs!.Value, 1e-9);
-		Assert.AreEqual(T0.AddSeconds(1), frame.GpsTimestamp, "whole seconds of the track's clock");
+		Assert.AreEqual(T0.AddSeconds(1.48), frame.GpsTimestamp, "the exact track clock follows each video frame");
 		Assert.AreEqual(0.9, frame.AccelZ, "the camera's own readings are kept");
 		Assert.AreEqual(250f, frame.Iso);
 		Assert.AreEqual(37, frame.FrameNumber);
+	}
+
+	[TestMethod]
+	public void Apply_ExternalSensorsFollowTheSameAnchorsWithoutReplacingImuTemperature()
+	{
+		var track = new ExternalTrack(
+			[new(T0, 50, 20, TemperatureCelsius: 20, DistanceMeters: 100), new(T0.AddSeconds(1), 50.00001, 20, TemperatureCelsius: 22, DistanceMeters: 104)],
+			batteries: [new(T0, 43)]);
+		List<TelemetryFrame> camera = [.. Frames(75).Select(f => f with { ImuTemperatureCelsius = 30 })];
+		List<TelemetryFrame> merged = ExternalTrackMerge.Apply(camera, track, T0);
+		Assert.AreEqual(21.04, merged[13].AmbientTemperatureCelsius!.Value, 1e-9);
+		Assert.AreEqual(102.08, merged[13].DeviceDistanceMeters!.Value, 1e-9);
+		Assert.AreEqual(43, merged[13].DeviceBatteryPercent);
+		Assert.AreEqual(30, merged[13].ImuTemperatureCelsius);
+		Assert.IsNull(merged[50].AmbientTemperatureCelsius);
+		Assert.IsNull(merged[50].DeviceDistanceMeters);
+		Assert.IsNull(merged[50].DeviceBatteryPercent);
+		Assert.IsNull(camera[13].AmbientTemperatureCelsius);
 	}
 
 	[TestMethod]
@@ -50,16 +68,17 @@ public sealed class ExternalTrackMergeTests
 	}
 
 	[TestMethod]
-	public void Apply_AStopHoldsTheCameraWithSpeedZeroAndAFix()
+	public void Apply_ATimerPauseHoldsPositionWithoutInventingAFixOrSpeed()
 	{
 		var track = new ExternalTrack([Point(0, 53.1, 2), Point(1, 53.1001, 2), Point(31, 53.10015, 2), Point(32, 53.1002, 2)], [new ExternalTrackPause(T0.AddSeconds(1), T0.AddSeconds(31))]);
 
 		List<TelemetryFrame> merged = ExternalTrackMerge.Apply(Frames(25 * 32), track, T0);
 
 		TelemetryFrame inStop = merged[25 * 15];
-		Assert.IsTrue(inStop.HasGpsFix);
-		Assert.AreEqual(0, inStop.GpsSpeedMs!.Value);
-		Assert.AreEqual(53.1001 + 0.00005 * 14 / 30, inStop.Latitude, 1e-7, "over the stop it goes from where it stopped to where it started again");
+		Assert.IsFalse(inStop.HasGpsFix);
+		Assert.IsNull(inStop.GpsSpeedMs);
+		Assert.AreEqual(53.1001, inStop.Latitude, 1e-9);
+		Assert.AreEqual(T0.AddSeconds(15), inStop.GpsTimestamp, "a pause does not shorten elapsed time");
 	}
 
 	[TestMethod]

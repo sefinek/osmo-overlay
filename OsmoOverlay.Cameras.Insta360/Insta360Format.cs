@@ -25,6 +25,12 @@ public sealed class Insta360Format : ICameraFormat
 		return CoreStrings.Insta360_SupportNotice;
 	}
 
+	/// <summary>Half: telemetry and the 360 view work, GPS isn't read yet.</summary>
+	public int? SupportPercent(string? cameraModel)
+	{
+		return 50;
+	}
+
 	public CameraRecording? Detect(string path, JsonArray streams)
 	{
 		return Insta360TrailerParser.HasTrailer(path) ? new CameraRecording(this, Lenses: DetectLenses(streams)) : null;

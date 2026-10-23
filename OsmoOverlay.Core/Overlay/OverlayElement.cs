@@ -41,7 +41,14 @@ public enum OverlayElementType
 	Image,
 	MapAttribution,
 	Watermark,
-	GpsAlert
+	GpsAlert,
+	AmbientTemperature,
+	ImuTemperature,
+	DeviceDistance,
+	DeviceBattery,
+	AudioLevel,
+	WindProcessing,
+	ImageLuma
 }
 
 /// <summary>
@@ -90,6 +97,13 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(MapAttributionElement), (int)OverlayElementType.MapAttribution)]
 [JsonDerivedType(typeof(WatermarkElement), (int)OverlayElementType.Watermark)]
 [JsonDerivedType(typeof(GpsAlertElement), (int)OverlayElementType.GpsAlert)]
+[JsonDerivedType(typeof(AmbientTemperatureElement), (int)OverlayElementType.AmbientTemperature)]
+[JsonDerivedType(typeof(ImuTemperatureElement), (int)OverlayElementType.ImuTemperature)]
+[JsonDerivedType(typeof(DeviceDistanceElement), (int)OverlayElementType.DeviceDistance)]
+[JsonDerivedType(typeof(DeviceBatteryElement), (int)OverlayElementType.DeviceBattery)]
+[JsonDerivedType(typeof(AudioLevelElement), (int)OverlayElementType.AudioLevel)]
+[JsonDerivedType(typeof(WindProcessingElement), (int)OverlayElementType.WindProcessing)]
+[JsonDerivedType(typeof(ImageLumaElement), (int)OverlayElementType.ImageLuma)]
 public abstract record OverlayElement
 {
 	[JsonIgnore] public abstract OverlayElementType Type { get; }
@@ -192,6 +206,47 @@ public sealed record DistanceElement : LabeledStatElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Distance;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+}
+
+public abstract record TemperatureElementBase : LabeledStatElement
+{
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+}
+
+public sealed record AmbientTemperatureElement : TemperatureElementBase
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.AmbientTemperature;
+}
+
+public sealed record ImuTemperatureElement : TemperatureElementBase
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ImuTemperature;
+}
+
+public sealed record DeviceDistanceElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.DeviceDistance;
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+}
+
+public sealed record DeviceBatteryElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.DeviceBattery;
+}
+
+public sealed record AudioLevelElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.AudioLevel;
+}
+
+public sealed record WindProcessingElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.WindProcessing;
+}
+
+public sealed record ImageLumaElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ImageLuma;
 }
 
 /// <summary>No Units - CameraInfo shows ISO/shutter/color-temperature, none of which are metric/imperial.</summary>

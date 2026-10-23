@@ -140,6 +140,8 @@ public partial class MainWindow
 			SetWidgetAvailability(item, type, editable);
 		}
 
+		SortPaletteByAvailability();
+
 		DateTimeFallbackWarningIcon.IsVisible = UsesTimeFallback(OverlayElementType.DateTimeText);
 		UtcTimeFallbackWarningIcon.IsVisible = UsesTimeFallback(OverlayElementType.UtcTimeText);
 		ToolTip.SetTip(DateTimeFallbackWarningIcon, TimeFallbackTip);
@@ -168,6 +170,40 @@ public partial class MainWindow
 		}
 	}
 
+	private StackPanel? _paletteRows;
+	private List<Control>? _paletteRowOrder;
+
+	/// <summary>
+	///     The palette keeps its designed order, except that the widgets this recording has no data for (no GPS, another camera's
+	///     sensors) go to the bottom - in the same relative order - so the ones that can be used are at the top.
+	/// </summary>
+	private void SortPaletteByAvailability()
+	{
+		if (_paletteRows is null)
+		{
+			if (DateTimeListItem.Parent?.Parent is not StackPanel rows) return;
+
+			_paletteRows = rows;
+			_paletteRowOrder = [.. rows.Children];
+		}
+
+		HashSet<Control> unavailable = [];
+		foreach (OverlayElementType type in Enum.GetValues<OverlayElementType>())
+		{
+			if (GetPaletteItem(type) is not { } item || IsTypeSupported(type)) continue;
+
+			Control row = item;
+			while (row.Parent is not null && row.Parent != _paletteRows) row = (Control)row.Parent;
+			if (row.Parent == _paletteRows) unavailable.Add(row);
+		}
+
+		Control[] sorted = [.. _paletteRowOrder!.Where(r => !unavailable.Contains(r)), .. _paletteRowOrder!.Where(unavailable.Contains)];
+		if (_paletteRows.Children.SequenceEqual(sorted)) return;
+
+		_paletteRows.Children.Clear();
+		_paletteRows.Children.AddRange(sorted);
+	}
+
 	// Shown whenever the widget is actually usable but only through the container-time fallback
 	// (see OverlayRenderer.DrawTimeText) - not real GPS-recorded time, so a driving log synced
 	// against this against other GPS-timestamped data could be off by however stale the camera's
@@ -194,6 +230,13 @@ public partial class MainWindow
 			OverlayElementType.RollGauge or OverlayElementType.PitchGauge or OverlayElementType.GMeter =>
 				Strings.Editor_UnavailableAxes,
 			OverlayElementType.CameraInfo => Strings.Editor_UnavailableCameraInfo,
+			OverlayElementType.AmbientTemperature => Strings.Editor_UnavailableAmbientTemperature,
+			OverlayElementType.ImuTemperature => Strings.Editor_UnavailableImuTemperature,
+			OverlayElementType.DeviceDistance => Strings.Editor_UnavailableDeviceDistance,
+			OverlayElementType.DeviceBattery => Strings.Editor_UnavailableDeviceBattery,
+			OverlayElementType.AudioLevel => Strings.Editor_UnavailableAudioLevel,
+			OverlayElementType.WindProcessing => Strings.Editor_UnavailableWindProcessing,
+			OverlayElementType.ImageLuma => Strings.Editor_UnavailableImageLuma,
 			_ => Strings.Editor_UnavailableGps
 		};
 	}
@@ -213,6 +256,13 @@ public partial class MainWindow
 			OverlayElementType.Gradient => GradientListItem,
 			OverlayElementType.Distance => DistanceListItem,
 			OverlayElementType.CameraInfo => CameraInfoListItem,
+			OverlayElementType.AmbientTemperature => AmbientTemperatureListItem,
+			OverlayElementType.ImuTemperature => ImuTemperatureListItem,
+			OverlayElementType.DeviceDistance => DeviceDistanceListItem,
+			OverlayElementType.DeviceBattery => DeviceBatteryListItem,
+			OverlayElementType.AudioLevel => AudioLevelListItem,
+			OverlayElementType.WindProcessing => WindProcessingListItem,
+			OverlayElementType.ImageLuma => ImageLumaListItem,
 			OverlayElementType.Compass => CompassListItem,
 			OverlayElementType.SunWidget => SunListItem,
 			OverlayElementType.RollGauge => RollListItem,
@@ -463,6 +513,8 @@ public partial class MainWindow
 		{
 			ElevationElement e => e with { Units = units },
 			DistanceElement e => e with { Units = units },
+			TemperatureElementBase e => e with { Units = units },
+			DeviceDistanceElement e => e with { Units = units },
 			TripProgressBarElement e => e with { Units = units },
 			ProfileChartElement e => e with { Units = units },
 			TripStatElement e => e with { Units = units },
@@ -709,6 +761,38 @@ public partial class MainWindow
 				CameraInfoStyle.Populate(x);
 				CameraInfoTiming.Populate(x);
 				CameraInfoShadow.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.AmbientTemperature:
+			case OverlayElementType.ImuTemperature:
+			case OverlayElementType.DeviceDistance:
+			case OverlayElementType.DeviceBattery:
+			case OverlayElementType.AudioLevel:
+			case OverlayElementType.WindProcessing:
+			case OverlayElementType.ImageLuma:
+			{
+				var x = (LabeledStatElement)el;
+				SensorLabelBox.Text = x.Label;
+				SensorLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
+				SensorUnitsPanel.IsVisible = el is TemperatureElementBase or DeviceDistanceElement;
+				SensorMetricRadio.Content = el is TemperatureElementBase ? "°C" : Strings.Common_Metric;
+				SensorImperialRadio.Content = el is TemperatureElementBase ? "°F" : Strings.Common_Imperial;
+				UnitSystem units = el switch { TemperatureElementBase t => t.Units, DeviceDistanceElement d => d.Units, _ => UnitSystem.Metric };
+				SetUnitsRadio(SensorMetricRadio, SensorImperialRadio, units);
+				SensorDescription.Text = el switch
+				{
+					AmbientTemperatureElement => Strings.Widget_AmbientTemperatureDescription,
+					ImuTemperatureElement => Strings.Widget_ImuTemperatureDescription,
+					DeviceDistanceElement => Strings.Widget_DeviceDistanceDescription,
+					AudioLevelElement => Strings.Widget_AudioLevelDescription,
+					WindProcessingElement => Strings.Widget_WindProcessingDescription,
+					ImageLumaElement => Strings.Widget_ImageLumaDescription,
+					_ => Strings.Widget_DeviceBatteryDescription
+				};
+				SensorStyle.Populate(x);
+				SensorTiming.Populate(x);
+				SensorShadow.Populate(x);
 				break;
 			}
 

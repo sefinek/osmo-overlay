@@ -47,6 +47,33 @@ public sealed class ExternalTrackSourceTests
 	}
 
 	[TestMethod]
+	public void Apply_AnAnchorWorksWithoutTheRecordingsStartTime()
+	{
+		string directory = Directory.CreateTempSubdirectory().FullName;
+		try
+		{
+			var source = new ExternalTrackSource(WriteTrack(directory), Synchronization: new(new(5, TrackStart.AddSeconds(15))));
+			IReadOnlyList<TelemetryFrame> frames = source.Apply(Frames(), Fps, null);
+			Assert.AreEqual(TrackStart.AddSeconds(10), frames[0].GpsTimestamp);
+			Assert.AreEqual(TrackStart.AddSeconds(15), frames[125].GpsTimestamp);
+			Assert.IsTrue(frames[0].HasGpsFix);
+		}
+		finally { Directory.Delete(directory, true); }
+	}
+
+	[TestMethod]
+	public void Apply_RejectsAnAlignmentOutsideTheTrack()
+	{
+		string directory = Directory.CreateTempSubdirectory().FullName;
+		try
+		{
+			var source = new ExternalTrackSource(WriteTrack(directory), Synchronization: new(new(0, TrackStart.AddMinutes(5))));
+			Assert.ThrowsExactly<InvalidOperationException>(() => source.Apply(Frames(), Fps, null));
+		}
+		finally { Directory.Delete(directory, true); }
+	}
+
+	[TestMethod]
 	public void Apply_AnOffsetNeedsTheRecordingsStartTime()
 	{
 		string directory = Directory.CreateTempSubdirectory().FullName;
@@ -63,14 +90,12 @@ public sealed class ExternalTrackSourceTests
 	}
 
 	[TestMethod]
-	public void Apply_WithoutAnOffsetTheCamerasClockWithinTheTrackIsUsed()
+	public void Apply_OverlappingCameraClockWithoutMatchingMotionDoesNotProveAlignment()
 	{
 		string directory = Directory.CreateTempSubdirectory().FullName;
 		try
 		{
-			IReadOnlyList<TelemetryFrame> frames = new ExternalTrackSource(WriteTrack(directory)).Apply(Frames(), Fps, TrackStart.AddSeconds(5));
-
-			Assert.AreEqual(53.1 + 5 * 5 * 9e-6, frames[0].Latitude, 1e-6);
+			Assert.ThrowsExactly<InvalidOperationException>(() => new ExternalTrackSource(WriteTrack(directory)).Apply(Frames(), Fps, TrackStart.AddSeconds(5)));
 		}
 		finally
 		{

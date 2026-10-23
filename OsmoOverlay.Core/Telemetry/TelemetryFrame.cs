@@ -32,7 +32,16 @@ public sealed record TelemetryFrame(
 	GpsCorrection GpsCorrected = GpsCorrection.None,
 	// The camera's orientation where its format reports one (DJI). Kept beside the accelerometer, not instead of it:
 	// nothing in Core takes a direction from it yet.
-	TelemetryOrientation? Orientation = null)
+	TelemetryOrientation? Orientation = null,
+	double? AmbientTemperatureCelsius = null,
+	double? ImuTemperatureCelsius = null,
+	double? DeviceDistanceMeters = null,
+	double? DeviceBatteryPercent = null,
+	double? AudioRmsDbfs = null,
+	double? AudioPeakDbfs = null,
+	bool? WindProcessingActive = null,
+	double? WindProcessingLevel = null,
+	double? ImageLuma = null)
 {
 	public double GForce => Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
 

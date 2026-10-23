@@ -13,7 +13,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Audio_VerificationFailed" xml:space="preserve">
-    <value>Weryfikacja nie powiodła się: skonwertowany dźwięk nie dekoduje się do tych samych próbek co źródło.</value>
+    <value>Weryfikacja nie powiodła się: po dekodowaniu skonwertowany dźwięk daje inne próbki niż plik źródłowy.</value>
   </data>
   <data name="Cache_DeleteFailed" xml:space="preserve">
     <value>Nie udało się usunąć nieaktualnej analizy {0}</value>
@@ -46,13 +46,13 @@
     <value>Ścieżka kamery '{0}' różni się między segmentami (timescale/opis próbek) - nie skopiowano</value>
   </data>
   <data name="ExternalTrack_NoMatch" xml:space="preserve">
-    <value>Nie udało się dopasować {0} do nagrania na podstawie ruchu: zegar kamery nie mieści się w czasie trasy, a drgania kamery nie podążają dość wyraźnie za prędkością z trasy. Podaj przesunięcie trasy względem zegara kamery.</value>
+    <value>Nie udało się dopasować {0} do nagrania na podstawie ruchu. Wskaż punkt synchronizacji: czas wybranego zdarzenia w filmie i odpowiadający mu czas GPS (--track-anchor w CLI).</value>
   </data>
   <data name="ExternalTrack_NoStartTime" xml:space="preserve">
     <value>Nagranie nie ma czasu rozpoczęcia, więc nie można zastosować przesunięcia trasy względem zegara kamery.</value>
   </data>
   <data name="GoPro_NotTested" xml:space="preserve">
-    <value>Model {0} nie był testowany. OsmoOverlay odczytuje telemetrię GoPro na modelu HERO12 Black. Inny model może działać, ale niektóre widżety, np. przechył i miernik G, mogą być niedostępne lub wskazywać błędne wartości.</value>
+    <value>Model {0} nie był testowany. Odczyt telemetrii GoPro przetestowano na HERO12 Black. Inne modele mogą działać, ale niektóre widżety, np. przechył i miernik G, mogą być niedostępne lub wskazywać błędne wartości.</value>
   </data>
   <data name="GoPro_SourceNoGps" xml:space="preserve">
     <value>Źródło telemetrii: GoPro GPMF (akcelerometr, wektor grawitacji, ekspozycja) - to nagranie nie ma GPS</value>
@@ -133,22 +133,22 @@
     <value>{0} zostanie zaktualizowany do {1} po zamknięciu OsmoOverlay</value>
   </data>
   <data name="Join_DifferentCamera" xml:space="preserve">
-    <value>Plik {0} pochodzi z kamery {1}, a plik {2} z kamery {3}. Aby połączyć nagrania, wybierz pliki z tej samej kamery.</value>
+    <value>Pliki pochodzą z różnych kamer: {0} ({1}) i {2} ({3}). Aby połączyć nagrania, wybierz pliki z tej samej kamery.</value>
   </data>
   <data name="Join_DifferentFormat" xml:space="preserve">
     <value>Plik {0} ({1}) ma inne parametry niż plik {2} ({3}). Łączone nagrania muszą mieć taką samą rozdzielczość, liczbę klatek na sekundę i format pikseli.</value>
   </data>
   <data name="Join_DifferentLens" xml:space="preserve">
-    <value>{0} i {1} nie zostały nagrane w tym samym trybie obiektywu (360 lub płaski).</value>
+    <value>Pliki {0} i {1} nagrano w różnych trybach: 360° i standardowym.</value>
   </data>
   <data name="Join_UnknownCamera" xml:space="preserve">
-    <value>kamery, której telemetrii aplikacja nie odczytuje</value>
+    <value>kamera z nieobsługiwaną telemetrią</value>
   </data>
   <data name="Libav_CantDecodeAudio" xml:space="preserve">
-    <value>Podgląd nie może dekodować dźwięku: {0}</value>
+    <value>Nie udało się zdekodować dźwięku w podglądzie: {0}</value>
   </data>
   <data name="Libav_CantDecodeVideo" xml:space="preserve">
-    <value>Podgląd nie może dekodować wideo: {0}</value>
+    <value>Nie udało się zdekodować obrazu w podglądzie: {0}</value>
   </data>
   <data name="Libav_LoadFailed" xml:space="preserve">
     <value>nie udało się wczytać bibliotek FFmpeg: {0}</value>
@@ -223,13 +223,13 @@
     <value>Najniższy punkt</value>
   </data>
   <data name="Peak_MaxLean" xml:space="preserve">
-    <value>Najgłębszy przechył</value>
+    <value>Największy przechył</value>
   </data>
   <data name="Peak_SteepestClimb" xml:space="preserve">
-    <value>Najbardziej stromy podjazd</value>
+    <value>Najstromszy podjazd</value>
   </data>
   <data name="Peak_SteepestDescent" xml:space="preserve">
-    <value>Najbardziej stromy zjazd</value>
+    <value>Najstromszy zjazd</value>
   </data>
   <data name="Peak_StrongestG" xml:space="preserve">
     <value>Największe przeciążenie</value>
@@ -262,7 +262,7 @@
     <value>Dźwięk podglądu niedostępny - brak urządzenia odtwarzającego: {0}</value>
   </data>
   <data name="Preview_AudioSdlFailed" xml:space="preserve">
-    <value>Dźwięk podglądu niedostępny - SDL nie uruchomił dźwięku: {0}</value>
+    <value>Dźwięk podglądu niedostępny - nie udało się uruchomić odtwarzania przez SDL: {0}</value>
   </data>
   <data name="Preview_AudioStopped" xml:space="preserve">
     <value>Dźwięk podglądu zatrzymany</value>
@@ -274,7 +274,7 @@
     <value>Nie udało się zamknąć podglądu</value>
   </data>
   <data name="Preview_FetchingOverview" xml:space="preserve">
-    <value>Pobieranie mapy przeglądu trasy</value>
+    <value>Pobieranie mapy do wstępu z trasą</value>
   </data>
   <data name="Preview_FetchingTiles" xml:space="preserve">
     <value>Pobieranie kafelków mapy</value>
@@ -283,7 +283,7 @@
     <value>Nie udało się przygotować podglądu mapy</value>
   </data>
   <data name="Preview_OverviewFailed" xml:space="preserve">
-    <value>Nie udało się przygotować mapy przeglądu trasy</value>
+    <value>Nie udało się przygotować mapy do wstępu z trasą</value>
   </data>
   <data name="Preview_PlaybackStopped" xml:space="preserve">
     <value>Odtwarzanie zatrzymane: {0}</value>
@@ -352,10 +352,10 @@
     <value>Nie udało się przenieść indeksu na początek pliku. Film został zapisany poprawnie.</value>
   </data>
   <data name="Render_FetchingOverview" xml:space="preserve">
-    <value>Pobieranie mapy przeglądu trasy...</value>
+    <value>Pobieranie mapy do wstępu z trasą...</value>
   </data>
   <data name="Render_FetchingOverviewProgress" xml:space="preserve">
-    <value>Pobieranie mapy przeglądu trasy: {0}/{1}</value>
+    <value>Pobieranie mapy do wstępu z trasą: {0}/{1}</value>
   </data>
   <data name="Render_FetchingTiles" xml:space="preserve">
     <value>Pobieranie kafelków mapy dla trasy...</value>
@@ -402,7 +402,7 @@
     <value>miniatury/informacje</value>
   </data>
   <data name="Render_Probing" xml:space="preserve">
-    <value>Badanie plików źródłowych (ffprobe)...</value>
+    <value>Odczytywanie informacji o plikach źródłowych (ffprobe)...</value>
   </data>
   <data name="Render_Realtime" xml:space="preserve">
     <value>({0:0.00}x czasu rzeczywistego)</value>
@@ -426,7 +426,7 @@
     <value>Używam wcześniej wyodrębnionych próbek telemetrii ({0})</value>
   </data>
   <data name="Settings_Unreadable" xml:space="preserve">
-    <value>Plik ustawień jest uszkodzony lub nieczytelny - używam domyślnych</value>
+    <value>Plik ustawień jest uszkodzony lub nieczytelny - używam ustawień domyślnych</value>
   </data>
   <data name="Settings_WriteFailed" xml:space="preserve">
     <value>Nie udało się zapisać pliku ustawień</value>
@@ -596,4 +596,22 @@
   <data name="Overlay_Watermark" xml:space="preserve">
     <value>Stworzono w OsmoOverlay</value>
   </data>
+  <data name="ExternalTrack_InvalidAnchors" xml:space="preserve">
+    <value>Podaj poprawne punkty synchronizacji: nieujemny czas filmu i czas GPS w UTC. Drugi punkt musi być późniejszy od pierwszego na obu osiach czasu.</value>
+  </data>
+  <data name="ExternalTrack_MotionEstimate" xml:space="preserve">
+    <value>Dopasowanie GPS na podstawie ruchu jest przybliżone (korelacja {0:0.00}). Sprawdź je w podglądzie nagrania lub podaj własne punkty synchronizacji.</value>
+  </data>
+  <data name="ExternalTrack_NoOverlap" xml:space="preserve">
+    <value>Po tym dopasowaniu trasa GPS nie obejmuje żadnego fragmentu nagrania.</value>
+  </data>
+  <data name="Overlay_AmbientTemperature" xml:space="preserve"><value>Temperatura z trasy</value></data>
+  <data name="Overlay_ImuTemperature" xml:space="preserve"><value>Temperatura czujnika ruchu</value></data>
+  <data name="Overlay_DeviceDistance" xml:space="preserve"><value>Dystans licznika</value></data>
+  <data name="Overlay_DeviceBattery" xml:space="preserve"><value>Bateria urządzenia GPS</value></data>
+  <data name="Overlay_AudioLevel" xml:space="preserve"><value>Poziom dźwięku</value></data>
+  <data name="Overlay_WindProcessing" xml:space="preserve"><value>Redukcja szumu wiatru</value></data>
+  <data name="Overlay_ImageLuma" xml:space="preserve"><value>Jasność obrazu</value></data>
+  <data name="Overlay_Active" xml:space="preserve"><value>Włączona</value></data>
+  <data name="Overlay_Inactive" xml:space="preserve"><value>Wyłączona</value></data>
 </root>

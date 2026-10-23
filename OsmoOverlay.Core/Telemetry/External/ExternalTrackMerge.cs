@@ -5,41 +5,50 @@ namespace OsmoOverlay.Core.Telemetry.External;
 ///     better one beside it. Where the track covers a frame its position, altitude and speed replace the camera's and the
 ///     frame's time becomes the track's clock; the rest of the frame (the camera's motion, exposure) is untouched.
 ///     `trackTimeAtVideoStartUtc` is the moment on the track's clock of the recording's first frame.
-///     A stop in the track (ExternalTrackState.Paused) holds the camera where it was, speed 0, as it did; a lost signal
-///     leaves the frame without a fix (HasGpsFix false, the last position held), like any camera's. Frames the track
-///     doesn't reach keep what the camera had.
+///     Timer pauses and gaps leave the frame without a fix or speed, holding the last known position.
+///     The mapped UTC clock continues across gaps and outside the track; outside it the camera's own GPS is retained.
 /// </summary>
 public static class ExternalTrackMerge
 {
 	public static List<TelemetryFrame> Apply(IReadOnlyList<TelemetryFrame> frames, ExternalTrack track, DateTime trackTimeAtVideoStartUtc)
+		=> Apply(frames, track, new TrackSynchronization(new TrackSyncAnchor(0, trackTimeAtVideoStartUtc)));
+
+	public static List<TelemetryFrame> Apply(IReadOnlyList<TelemetryFrame> frames, ExternalTrack track, TrackSynchronization synchronization)
 	{
+		synchronization.Validate();
 		var result = new List<TelemetryFrame>(frames.Count);
 		var fill = new GpsForwardFill();
 		int cursor = 0;
 		foreach (TelemetryFrame frame in frames)
 		{
-			DateTime utc = trackTimeAtVideoStartUtc.AddSeconds(frame.SampleTimeSeconds);
-			DateTime? wholeSecond = new DateTime(utc.Ticks - utc.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc);
-			if (track.At(utc, ref cursor) is not { } sample)
+			DateTime utc = synchronization.At(frame.SampleTimeSeconds);
+			ExternalTrackSample? reading = track.At(utc, ref cursor);
+			TelemetryFrame merged = frame with
 			{
-				result.Add(HoldWhereThereIsNoPosition(frame, fill));
+				AmbientTemperatureCelsius = reading?.TemperatureCelsius,
+				DeviceDistanceMeters = reading?.DistanceMeters,
+				DeviceBatteryPercent = track.BatteryAt(utc)
+			};
+			if (reading is not { } sample)
+			{
+				result.Add(HoldWhereThereIsNoPosition(merged, fill) with { GpsTimestamp = utc });
 				continue;
 			}
 
-			if (sample.State == ExternalTrackState.Lost)
+			if (sample.State != ExternalTrackState.Fix)
 			{
 				(double lat, double lon, double altitude, _) = fill.Apply(null, null, null);
-				result.Add(frame with
+				result.Add(merged with
 				{
-					Latitude = lat, Longitude = lon, AltitudeMeters = altitude, HasGpsFix = false, GpsSpeedMs = null, GpsTimestamp = wholeSecond
+					Latitude = lat, Longitude = lon, AltitudeMeters = altitude, HasGpsFix = false, GpsSpeedMs = null, GpsTimestamp = utc
 				});
 				continue;
 			}
 
 			(double latitude, double longitude, double altitudeMeters, _) = fill.Apply(sample.Latitude, sample.Longitude, sample.AltitudeMeters);
-			result.Add(frame with
+			result.Add(merged with
 			{
-				Latitude = latitude, Longitude = longitude, AltitudeMeters = altitudeMeters, HasGpsFix = true, GpsSpeedMs = sample.SpeedMs, GpsTimestamp = wholeSecond
+				Latitude = latitude, Longitude = longitude, AltitudeMeters = altitudeMeters, HasGpsFix = true, GpsSpeedMs = sample.SpeedMs, GpsTimestamp = utc
 			});
 		}
 

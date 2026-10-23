@@ -46,7 +46,7 @@
     <value>Camera '{0}' track differs between segments (timescale/sample description) - not copied</value>
   </data>
   <data name="ExternalTrack_NoMatch" xml:space="preserve">
-    <value>Could not match {0} to the recording by how both moved: the camera's clock is not within the track, and the shaking of the camera does not follow the track's speed clearly enough. Give the track's offset from the camera's clock.</value>
+    <value>Could not align {0} to the recording by motion. Provide a matching video/GPS time point (--track-anchor in the CLI).</value>
   </data>
   <data name="ExternalTrack_NoStartTime" xml:space="preserve">
     <value>The recording has no start time, so the track's offset from the camera's clock cannot be applied.</value>
@@ -596,4 +596,22 @@
   <data name="Overlay_Watermark" xml:space="preserve">
     <value>Made with OsmoOverlay</value>
   </data>
+  <data name="ExternalTrack_InvalidAnchors" xml:space="preserve">
+    <value>Enter valid synchronization points: nonnegative video time and GPS time in UTC. The second point must follow the first on both timelines.</value>
+  </data>
+  <data name="ExternalTrack_MotionEstimate" xml:space="preserve">
+    <value>GPS alignment based on motion is approximate (correlation {0:0.00}). Verify it against the picture or provide synchronization points.</value>
+  </data>
+  <data name="ExternalTrack_NoOverlap" xml:space="preserve">
+    <value>The aligned GPS track does not cover any part of the recording.</value>
+  </data>
+  <data name="Overlay_AmbientTemperature" xml:space="preserve"><value>Track temperature</value></data>
+  <data name="Overlay_ImuTemperature" xml:space="preserve"><value>Motion sensor temperature</value></data>
+  <data name="Overlay_DeviceDistance" xml:space="preserve"><value>Device distance</value></data>
+  <data name="Overlay_DeviceBattery" xml:space="preserve"><value>Device battery</value></data>
+  <data name="Overlay_AudioLevel" xml:space="preserve"><value>Audio level</value></data>
+  <data name="Overlay_WindProcessing" xml:space="preserve"><value>Wind noise reduction</value></data>
+  <data name="Overlay_ImageLuma" xml:space="preserve"><value>Image brightness</value></data>
+  <data name="Overlay_Active" xml:space="preserve"><value>On</value></data>
+  <data name="Overlay_Inactive" xml:space="preserve"><value>Off</value></data>
 </root>

@@ -428,6 +428,13 @@
 								</StackPanel>
 
 								<StackPanel Spacing="4">
+									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+										<TextBlock Name="ExternalTrackStatus" Text="{x:Static local:Strings.Track_None}" Classes="infoLabel" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+										<Button Grid.Column="1" Name="ExternalTrackButton" Content="{x:Static local:Strings.Track_Title}" Click="OnExternalTrackClick" IsEnabled="False" />
+									</Grid>
+								</StackPanel>
+
+								<StackPanel Spacing="4">
 									<TextBlock Text="{x:Static local:Strings.Main_OutputFile}" Classes="infoLabel" Margin="0" />
 									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
 										<TextBox Grid.Column="0" Name="OutputPathBox" />
@@ -502,7 +509,10 @@
 											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
 										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Camera}" />
-										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="InfoCamera" />
+										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10">
+											<TextBlock Classes="infoValue" Name="InfoCamera" VerticalAlignment="Center" />
+											<local:IconView Classes="checkIcon" Name="InfoSupportIcon" VerticalAlignment="Center" />
+										</StackPanel>
 										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_Telemetry}" />
 										<Border Grid.Row="0" Grid.Column="4" Classes="pill" Name="TelemetryPill"
 										        HorizontalAlignment="Left">
@@ -2083,6 +2093,83 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="DistanceTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<StackPanel Spacing="4">
+											<Border Name="AmbientTemperatureListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.AmbientTemperature}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_AmbientTemperature}" />
+											</Border>
+											<Border Name="ImuTemperatureListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.ImuTemperature}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_ImuTemperature}" />
+											</Border>
+											<Border Name="DeviceDistanceListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.DeviceDistance}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_DeviceDistance}" />
+											</Border>
+											<Border Name="DeviceBatteryListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.DeviceBattery}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_DeviceBattery}" />
+											</Border>
+											<Border Name="AudioLevelListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.AudioLevel}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_AudioLevel}" />
+											</Border>
+											<Border Name="WindProcessingListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.WindProcessing}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_WindProcessing}" />
+											</Border>
+											<Border Name="ImageLumaListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.ImageLuma}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_ImageLuma}" />
+											</Border>
+										</StackPanel>
+										<Border Name="SensorSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Name="SensorDescription" TextWrapping="Wrap" Classes="infoLabel" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SensorLabelBox" LostFocus="OnSensorLabelChanged" />
+														<StackPanel Name="SensorUnitsPanel" Spacing="8">
+															<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
+															<StackPanel Orientation="Horizontal" Spacing="12">
+																<RadioButton Name="SensorMetricRadio" GroupName="SensorUnits" Click="OnSensorUnitsChanged" />
+																<RadioButton Name="SensorImperialRadio" GroupName="SensorUnits" Click="OnSensorUnitsChanged" />
+															</StackPanel>
+														</StackPanel>
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="SensorStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="SensorShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="SensorTiming" />
 													</StackPanel>
 												</Border>
 											</StackPanel>

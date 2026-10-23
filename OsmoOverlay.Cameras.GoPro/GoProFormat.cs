@@ -30,6 +30,12 @@ public sealed class GoProFormat : ICameraFormat
 			: string.Format(CoreStrings.GoPro_NotTested, cameraModel ?? CoreStrings.GoPro_ThisCamera);
 	}
 
+	/// <summary>The HERO12 Black: everything but a sideways lean's sign and GPS (this model has none), which need more recordings.</summary>
+	public int? SupportPercent(string? cameraModel)
+	{
+		return cameraModel is not null && TestedModels.Contains(cameraModel, StringComparer.OrdinalIgnoreCase) ? 90 : null;
+	}
+
 	public CameraRecording? Detect(string path, JsonArray streams)
 	{
 		JsonNode? gpmd = streams.FirstOrDefault(s => s?["codec_type"]?.GetValue<string>() == "data" && s["codec_tag_string"]?.GetValue<string>() == GoProTrack.SampleFormat);

@@ -8,6 +8,33 @@ public sealed class FitReaderTests
 	private static readonly DateTime T0 = new(2026, 10, 21, 14, 20, 49, DateTimeKind.Utc);
 
 	[TestMethod]
+	public void Read_RecordedTemperatureDistanceAndTimedBattery()
+	{
+		ExternalTrack track = FitReader.Read(new FitBuilder().DefineSensorRecord().DefineBattery()
+			.SensorRecord(T0, 50, 20, 123.45, -7).Battery(T0, 43)
+			.SensorRecord(T0.AddSeconds(1), 50.00001, 20, 125.67, null)
+			.SensorRecord(T0.AddSeconds(2), 50.00002, 20, null, -6).Battery(T0.AddSeconds(2), 42).ToArray());
+		Assert.AreEqual(-7, track.Points[0].TemperatureCelsius);
+		Assert.AreEqual(123.45, track.Points[0].DistanceMeters);
+		Assert.IsNull(track.Points[1].TemperatureCelsius);
+		Assert.IsNull(track.Points[2].DistanceMeters);
+		Assert.AreEqual(43, track.BatteryAt(T0.AddSeconds(1.5)));
+		Assert.AreEqual(42, track.BatteryAt(T0.AddSeconds(2)));
+		Assert.IsNull(track.BatteryAt(T0.AddSeconds(-1)));
+		Assert.IsNull(track.BatteryAt(T0.AddSeconds(3)));
+	}
+
+	[TestMethod]
+	public void Read_DeviceInfoBatteryUsesOnlyTheRecordingDevice()
+	{
+		ExternalTrack track = FitReader.Read(new FitBuilder().DefineSensorRecord().DefineBattery(true)
+			.SensorRecord(T0, 50, 20, 0, 20).Battery(T0, 43, 0).Battery(T0, 99, 1)
+			.SensorRecord(T0.AddSeconds(1), 50.00001, 20, 2, 20).Battery(T0.AddSeconds(1), 255, 0).ToArray());
+		Assert.AreEqual(1, track.Batteries.Count);
+		Assert.AreEqual(43, track.BatteryAt(T0.AddSeconds(1)));
+	}
+
+	[TestMethod]
 	public void Read_FixesWithPositionAltitudeAndSpeed()
 	{
 		byte[] file = new FitBuilder().DefineRecord()
@@ -42,10 +69,12 @@ public sealed class FitReaderTests
 	}
 
 	[TestMethod]
-	public void Read_CompressedTimestampsRollOverTheirFiveBits()
+	[DataRow(false)]
+	[DataRow(true)]
+	public void Read_CompressedTimestampsRollOverTheirFiveBits(bool timestampInDefinition)
 	{
 		DateTime start = T0.AddSeconds(30 - FitBuilder.Seconds(T0) % 32);
-		byte[] file = new FitBuilder().DefineRecord().DefineCompressedRecord()
+		byte[] file = new FitBuilder().DefineRecord().DefineCompressedRecord(timestampInDefinition)
 			.Record(start, 53.1, 18.9, 80, 2)
 			.CompressedRecord((int)((FitBuilder.Seconds(start) + 1) % 32), 53.1001, 18.9)
 			.CompressedRecord((int)((FitBuilder.Seconds(start) + 3) % 32), 53.1002, 18.9)

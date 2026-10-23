@@ -1,12 +1,15 @@
 namespace OsmoOverlay.Core.Telemetry.External;
 
 /// <summary>One fix of a track recorded by another device (a bike computer, a watch): UTC time, position, altitude and speed where it has them.</summary>
-public sealed record ExternalTrackPoint(DateTime Utc, double Latitude, double Longitude, double? AltitudeMeters = null, double? SpeedMs = null);
+public sealed record ExternalTrackPoint(DateTime Utc, double Latitude, double Longitude, double? AltitudeMeters = null, double? SpeedMs = null, bool StartsAfterGap = false,
+	double? TemperatureCelsius = null, double? DistanceMeters = null);
 
-/// <summary>A stretch of time the other device's timer was stopped (FIT's timer events), so it wrote no fixes.</summary>
+public sealed record ExternalBatteryReading(DateTime Utc, double Percent);
+
+/// <summary>A stretch of time the other device's timer was stopped, without implying that the device stood still.</summary>
 public readonly record struct ExternalTrackPause(DateTime FromUtc, DateTime ToUtc);
 
-/// <summary>What the track says about a moment: a fix, the device standing still on a stop, or a loss of signal.</summary>
+/// <summary>A recorded fix, a timer pause or an unexplained gap. Only a fix supplies position and speed.</summary>
 public enum ExternalTrackState
 {
 	Fix,
@@ -15,14 +18,12 @@ public enum ExternalTrackState
 }
 
 /// <summary>Where the track puts the camera at a moment - null Speed when the track has none and its fixes can't tell.</summary>
-public readonly record struct ExternalTrackSample(ExternalTrackState State, double Latitude, double Longitude, double? AltitudeMeters, double? SpeedMs);
+public readonly record struct ExternalTrackSample(ExternalTrackState State, double Latitude, double Longitude, double? AltitudeMeters, double? SpeedMs,
+	double? TemperatureCelsius = null, double? DistanceMeters = null);
 
 /// <summary>
-///     A track from another device, on its own clock (UTC): its fixes in time order, and where its timer was stopped.
-///     Between two fixes further apart than a normal interval (GapSeconds) the device wrote nothing: when its timer was
-///     stopped there (a FIT's events) or it had hardly moved (under StandingMetersPerSecond), it stood still - a pause, which
-///     a bike computer makes at every red light - and the camera with it; otherwise the signal was lost, and nothing
-///     is known of where the camera was.
+///     A track on its own UTC clock. Gaps and timer pauses preserve elapsed time and do not imply a standstill,
+///     even when their endpoints are close. Actual fixes on either boundary remain usable.
 /// </summary>
 public sealed class ExternalTrack
 {
@@ -31,10 +32,7 @@ public sealed class ExternalTrack
 
 	private const double MinGapSeconds = 3;
 
-	/// <summary>Over a gap, a device that moved slower than this on average stood still.</summary>
-	private const double StandingMetersPerSecond = 1.0;
-
-	public ExternalTrack(IEnumerable<ExternalTrackPoint> points, IEnumerable<ExternalTrackPause>? pauses = null)
+	public ExternalTrack(IEnumerable<ExternalTrackPoint> points, IEnumerable<ExternalTrackPause>? pauses = null, IEnumerable<ExternalBatteryReading>? batteries = null)
 	{
 		var sorted = new List<ExternalTrackPoint>();
 		foreach (ExternalTrackPoint point in points.OrderBy(p => p.Utc))
@@ -47,12 +45,27 @@ public sealed class ExternalTrack
 
 		Points = sorted;
 		Pauses = [.. (pauses ?? []).OrderBy(p => p.FromUtc)];
+		Batteries = [.. (batteries ?? []).Where(b => double.IsFinite(b.Percent) && b.Percent is >= 0 and <= 100).OrderBy(b => b.Utc)];
 		double[] intervals = [.. sorted.Zip(sorted.Skip(1), (a, b) => (b.Utc - a.Utc).TotalSeconds).Order()];
 		GapSeconds = Math.Max(MinGapSeconds, GapIntervals * intervals[intervals.Length / 2]);
 	}
 
 	public IReadOnlyList<ExternalTrackPoint> Points { get; }
 	public IReadOnlyList<ExternalTrackPause> Pauses { get; }
+	public IReadOnlyList<ExternalBatteryReading> Batteries { get; }
+
+	public double? BatteryAt(DateTime utc)
+	{
+		if (utc < StartUtc || utc > EndUtc) return null;
+		int low = 0, high = Batteries.Count;
+		while (low < high)
+		{
+			int middle = low + (high - low) / 2;
+			if (Batteries[middle].Utc <= utc) low = middle + 1;
+			else high = middle;
+		}
+		return low > 0 ? Batteries[low - 1].Percent : null;
+	}
 
 	/// <summary>The time between two fixes from which the device is taken to have written nothing.</summary>
 	public double GapSeconds { get; }
@@ -80,41 +93,47 @@ public sealed class ExternalTrack
 
 		ExternalTrackPoint from = Points[cursor];
 		ExternalTrackPoint to = Points[cursor + 1];
+		if (utc == from.Utc) return FixAt(cursor);
+		if (utc == to.Utc) return FixAt(cursor + 1);
 		double span = (to.Utc - from.Utc).TotalSeconds;
+		bool paused = Pauses.Any(p => p.FromUtc < utc && utc < p.ToUtc);
+		if (!Connected(from, to))
+			return new ExternalTrackSample(paused ? ExternalTrackState.Paused : ExternalTrackState.Lost, from.Latitude, from.Longitude, from.AltitudeMeters, null);
 		double fraction = Math.Clamp((utc - from.Utc).TotalSeconds / span, 0, 1);
 		double latitude = from.Latitude + (to.Latitude - from.Latitude) * fraction;
 		double longitude = from.Longitude + (to.Longitude - from.Longitude) * fraction;
 		double? altitude = from.AltitudeMeters is { } a0 && to.AltitudeMeters is { } a1 ? a0 + (a1 - a0) * fraction : from.AltitudeMeters ?? to.AltitudeMeters;
 
-		if (span <= GapSeconds)
-		{
-			double? speed = from.SpeedMs is { } s0 && to.SpeedMs is { } s1 ? s0 + (s1 - s0) * fraction : Displacement(from, to) / span;
-			return new ExternalTrackSample(ExternalTrackState.Fix, latitude, longitude, altitude, speed);
-		}
-
-		return IsStanding(from, to, span)
-			? new ExternalTrackSample(ExternalTrackState.Paused, latitude, longitude, altitude, 0)
-			: new ExternalTrackSample(ExternalTrackState.Lost, latitude, longitude, altitude, null);
+		double? speed = from.SpeedMs is { } s0 && to.SpeedMs is { } s1 ? s0 + (s1 - s0) * fraction : Displacement(from, to) / span;
+		double? temperature = Interpolate(from.TemperatureCelsius, to.TemperatureCelsius, fraction);
+		double? distance = to.DistanceMeters >= from.DistanceMeters ? Interpolate(from.DistanceMeters, to.DistanceMeters, fraction) : null;
+		return new ExternalTrackSample(ExternalTrackState.Fix, latitude, longitude, altitude, speed, temperature, distance);
 	}
 
-	private bool IsStanding(ExternalTrackPoint from, ExternalTrackPoint to, double spanSeconds)
+	private ExternalTrackSample FixAt(int index)
 	{
-		double paused = Pauses.Sum(p => Math.Max(0, (Min(p.ToUtc, to.Utc) - Max(p.FromUtc, from.Utc)).TotalSeconds));
-		return paused >= spanSeconds / 2 || Displacement(from, to) / spanSeconds < StandingMetersPerSecond;
+		ExternalTrackPoint point = Points[index];
+		double? speed = point.SpeedMs;
+		if (speed is null)
+		{
+			int other = index + 1 < Points.Count && Connected(point, Points[index + 1]) ? index + 1 : index - 1;
+			if (other >= 0)
+			{
+				ExternalTrackPoint adjacent = Points[other];
+				double seconds = Math.Abs((point.Utc - adjacent.Utc).TotalSeconds);
+				if (other > index ? Connected(point, adjacent) : Connected(adjacent, point)) speed = Displacement(point, adjacent) / seconds;
+			}
+		}
+		return new ExternalTrackSample(ExternalTrackState.Fix, point.Latitude, point.Longitude, point.AltitudeMeters, speed, point.TemperatureCelsius, point.DistanceMeters);
 	}
+
+	private static double? Interpolate(double? from, double? to, double fraction) => from is { } a && to is { } b ? a + (b - a) * fraction : null;
+
+	private bool Connected(ExternalTrackPoint from, ExternalTrackPoint to) => !to.StartsAfterGap &&
+		(to.Utc - from.Utc).TotalSeconds <= GapSeconds && !Pauses.Any(p => p.FromUtc < to.Utc && p.ToUtc > from.Utc);
 
 	private static double Displacement(ExternalTrackPoint a, ExternalTrackPoint b)
 	{
 		return TelemetryMath.HaversineMeters(a.Latitude, a.Longitude, b.Latitude, b.Longitude);
-	}
-
-	private static DateTime Min(DateTime a, DateTime b)
-	{
-		return a < b ? a : b;
-	}
-
-	private static DateTime Max(DateTime a, DateTime b)
-	{
-		return a > b ? a : b;
 	}
 }

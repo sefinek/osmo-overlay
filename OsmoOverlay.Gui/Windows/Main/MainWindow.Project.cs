@@ -36,6 +36,7 @@ public partial class MainWindow
 	/// </summary>
 	private void StartNewProject()
 	{
+		ClearExternalTrack();
 		ClosePreview();
 		ResetReframe();
 		ClearCuts();
@@ -148,7 +149,8 @@ public partial class MainWindow
 			preset?.Id,
 			preset)
 		{
-			Moments = loaded ? [.. _moments] : []
+			Moments = loaded ? [.. _moments] : [],
+			ExternalTrack = _externalTrack
 		};
 	}
 
@@ -167,6 +169,10 @@ public partial class MainWindow
 		}
 
 		ClosePreview();
+		_cameraSummary = null;
+		_externalTrackApplied = false;
+		_externalTrack = project.ExternalTrack;
+		RefreshExternalTrack();
 		_inputPaths.Clear();
 		_inputPaths.AddRange(project.InputPaths);
 		RefreshInputFilesList();

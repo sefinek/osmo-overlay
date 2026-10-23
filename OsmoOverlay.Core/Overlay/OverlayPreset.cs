@@ -112,7 +112,14 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },
 			new TripStatElement { X = m - 1, Y = tripStatY, Visible = false },
 			new TextElement { X = width / 2f, Y = dateY, Visible = false },
-			new ImageElement { X = width / 2f, Y = m, Visible = false }
+			new ImageElement { X = width / 2f, Y = m, Visible = false },
+			new AmbientTemperatureElement { X = 1200, Y = 500, Visible = false },
+			new ImuTemperatureElement { X = 2200, Y = 500, Visible = false },
+			new DeviceDistanceElement { X = 1200, Y = 800, Visible = false },
+			new DeviceBatteryElement { X = 2200, Y = 800, Visible = false },
+			new AudioLevelElement { X = 1200, Y = 1100, Visible = false },
+			new WindProcessingElement { X = 2200, Y = 1100, Visible = false },
+			new ImageLumaElement { X = 1200, Y = 1400, Visible = false }
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid, so a

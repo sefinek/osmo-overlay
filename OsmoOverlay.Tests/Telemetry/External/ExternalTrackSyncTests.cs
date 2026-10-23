@@ -52,13 +52,13 @@ public sealed class ExternalTrackSyncTests
 	}
 
 	[TestMethod]
-	public void Estimate_TheCamerasClockWithinTheTrackIsTaken()
+	public void Estimate_OverlappingCameraClockDoesNotOverrideMotion()
 	{
-		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(Camera(0, 60), Fps, TrackStart.AddSeconds(20), Track());
+		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(Camera(30, 70), Fps, Track());
 
 		Assert.IsNotNull(estimate);
-		Assert.AreEqual(TrackSyncMethod.Clock, estimate.Method);
-		Assert.AreEqual(TrackStart.AddSeconds(20), estimate.TrackTimeAtVideoStartUtc);
+		Assert.AreEqual(TrackSyncMethod.Motion, estimate.Method);
+		Assert.AreEqual(30, (estimate.TrackTimeAtVideoStartUtc - TrackStart).TotalSeconds, 1.0);
 	}
 
 	[TestMethod]
@@ -67,7 +67,7 @@ public sealed class ExternalTrackSyncTests
 		// The camera's clock says 14:27:45, seven minutes after the track ended, and the recording is really 30 s in.
 		List<TelemetryFrame> frames = Camera(30, 70);
 
-		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(frames, Fps, TrackStart.AddMinutes(7), Track());
+		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(frames, Fps, Track());
 
 		Assert.IsNotNull(estimate);
 		Assert.AreEqual(TrackSyncMethod.Motion, estimate.Method);
@@ -81,7 +81,7 @@ public sealed class ExternalTrackSyncTests
 		// The track starts 20 s into the recording.
 		List<TelemetryFrame> frames = Camera(-20, 90);
 
-		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(frames, Fps, null, Track());
+		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(frames, Fps, Track());
 
 		Assert.IsNotNull(estimate);
 		Assert.AreEqual(-20, (estimate.TrackTimeAtVideoStartUtc - TrackStart).TotalSeconds, 1.0);
@@ -93,7 +93,7 @@ public sealed class ExternalTrackSyncTests
 		var random = new Random(7);
 		List<TelemetryFrame> frames = [.. Enumerable.Range(0, (int)(80 * Fps)).Select(f => new TelemetryFrame(f, f / Fps, 0, 0, 0, null, 0, 0, 1 + 0.05 * random.NextDouble()))];
 
-		Assert.IsNull(ExternalTrackSync.Estimate(frames, Fps, TrackStart.AddMinutes(7), Track()));
+		Assert.IsNull(ExternalTrackSync.Estimate(frames, Fps, Track()));
 	}
 
 	[TestMethod]
@@ -101,14 +101,14 @@ public sealed class ExternalTrackSyncTests
 	{
 		List<TelemetryFrame> still = [.. Enumerable.Range(0, (int)(80 * Fps)).Select(f => new TelemetryFrame(f, f / Fps, 0, 0, 0, null, 0, 0, 1))];
 
-		Assert.IsNull(ExternalTrackSync.Estimate(still, Fps, TrackStart.AddMinutes(7), Track()));
-		Assert.IsNull(ExternalTrackSync.Estimate([], Fps, null, Track()));
+		Assert.IsNull(ExternalTrackSync.Estimate(still, Fps, Track()));
+		Assert.IsNull(ExternalTrackSync.Estimate([], Fps, Track()));
 	}
 
 	[TestMethod]
 	public void Estimate_ARecordingTooShortOnTheTrackGetsNoEstimate()
 	{
-		Assert.IsNull(ExternalTrackSync.Estimate(Camera(0, 10), Fps, TrackStart.AddMinutes(7), Track()));
+		Assert.IsNull(ExternalTrackSync.Estimate(Camera(0, 10), Fps, Track()));
 	}
 
 	[TestMethod]
@@ -124,7 +124,7 @@ public sealed class ExternalTrackSyncTests
 	}
 
 	[TestMethod]
-	public void TrackSpeed_IsZeroOnAStopAndUnknownWhereTheSignalWasLost()
+	public void TrackSpeed_KeepsRecordedStopsAndBoundaryFixesButLeavesGapsUnknown()
 	{
 		var track = new ExternalTrack(
 			[
@@ -135,7 +135,8 @@ public sealed class ExternalTrackSyncTests
 
 		double[] speed = ExternalTrackSync.TrackSpeed(track, 63);
 
-		Assert.AreEqual(0, speed[2 * 15], "standing");
+		Assert.AreEqual(0, speed[2 * 31], "recorded stop");
+		Assert.IsTrue(double.IsNaN(speed[2 * 15]), "a nearby position after a gap does not prove a standstill");
 		Assert.AreEqual(3, speed[2 * 32], 0.5);
 		Assert.IsTrue(double.IsNaN(speed[2 * 45]), "lost");
 	}

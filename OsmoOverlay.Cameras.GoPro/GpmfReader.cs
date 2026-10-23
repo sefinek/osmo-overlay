@@ -16,7 +16,8 @@ internal sealed record GpmfStream(
 	string? InputOrientation,
 	string? GpsUtc,
 	int? GpsFix,
-	double? GpsPrecision)
+	double? GpsPrecision,
+	double? TemperatureCelsius = null)
 {
 	public int Count => Axes == 0 ? 0 : Values.Length / Axes;
 }
@@ -74,7 +75,7 @@ internal static class GpmfReader
 		string? complexType = null, orientation = null, utc = null;
 		ulong? stamp = null;
 		int? fix = null;
-		double? precision = null;
+		double? precision = null, temperature = null;
 
 		foreach (Item item in Items(data))
 		{
@@ -89,6 +90,7 @@ internal static class GpmfReader
 					case "GPSU": utc = Text(last.Data); break;
 					case "GPSF" when Numbers(last, []).Values is [var f, ..]: fix = (int)f; break;
 					case "GPSP" when Numbers(last, []).Values is [var p, ..]: precision = p / 100.0; break;
+					case "TMPC" when Numbers(last, []).Values is [var celsius, ..] && double.IsFinite(celsius) && celsius >= -273.15: temperature = celsius; break;
 				}
 			}
 
@@ -99,7 +101,7 @@ internal static class GpmfReader
 		if (!any || last.Type == 0 || last.Type == 'c' || last.Type == 'U') return null;
 
 		(double[] values, int axes) = last.Type == '?' ? Complex(last, complexType, scale) : Numbers(last, scale);
-		return axes == 0 ? null : new GpmfStream(last.Key, axes, values, stamp, orientation, utc, fix, precision);
+		return axes == 0 ? null : new GpmfStream(last.Key, axes, values, stamp, orientation, utc, fix, precision, temperature);
 	}
 
 	private static (double[] Values, int Axes) Numbers(Item item, double[] scale)

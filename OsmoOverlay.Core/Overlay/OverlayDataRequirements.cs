@@ -9,12 +9,21 @@ namespace OsmoOverlay.Core.Overlay;
 ///     (OverlayRenderer.DrawTimeText) without a GPS clock. CameraAxes: the camera format knows its accelerometer's axes
 ///     (ICameraFormat.Gravity). CameraSettings: ISO and color temperature are recorded.
 /// </summary>
-public readonly record struct OverlayAvailability(bool GpsFix, bool GpsTimestamp, bool ContainerTime, bool CameraAxes = true, bool CameraSettings = true)
+public readonly record struct OverlayAvailability(bool GpsFix, bool GpsTimestamp, bool ContainerTime, bool CameraAxes = true, bool CameraSettings = true,
+	bool AmbientTemperature = false, bool ImuTemperature = false, bool DeviceDistance = false, bool DeviceBattery = false,
+	bool AudioLevel = false, bool WindProcessing = false, bool ImageLuma = false)
 {
 	public static OverlayAvailability Of(IReadOnlyList<TelemetryFrame> frames, bool containerTime, ICameraFormat? camera)
 	{
 		return new OverlayAvailability(TelemetryProcessor.HasAnyGpsFix(frames), TelemetryProcessor.HasAnyGpsTimestamp(frames), containerTime,
-			frames.Count > 0 && camera?.Gravity(frames[0]) is not null, frames.Any(f => f.Iso is not null));
+			frames.Count > 0 && camera?.Gravity(frames[0]) is not null, frames.Any(f => f.Iso is not null),
+			frames.Any(f => f.AmbientTemperatureCelsius is { } t && double.IsFinite(t)),
+			frames.Any(f => f.ImuTemperatureCelsius is { } t && double.IsFinite(t)),
+			frames.Any(f => f.DeviceDistanceMeters is { } d && double.IsFinite(d)),
+			frames.Any(f => f.DeviceBatteryPercent is { } b && double.IsFinite(b)),
+			frames.Any(f => f.AudioRmsDbfs is >= -128 and <= 0 || f.AudioPeakDbfs is >= -128 and <= 0),
+			frames.Any(f => f.WindProcessingActive is not null || f.WindProcessingLevel is >= 0 and <= 100),
+			frames.Any(f => f.ImageLuma is >= 0 and <= 255));
 	}
 
 	public IReadOnlyList<OverlayElement> Apply(IReadOnlyList<OverlayElement> layout)
@@ -48,6 +57,13 @@ public static class OverlayDataRequirements
 			// From the accelerometer's axes - GPS only refines the tilt (CameraTilt), so no GPS needed.
 			OverlayElementType.RollGauge or OverlayElementType.PitchGauge or OverlayElementType.GMeter => data.CameraAxes,
 			OverlayElementType.CameraInfo => data.CameraSettings,
+			OverlayElementType.AmbientTemperature => data.AmbientTemperature,
+			OverlayElementType.ImuTemperature => data.ImuTemperature,
+			OverlayElementType.DeviceDistance => data.DeviceDistance,
+			OverlayElementType.DeviceBattery => data.DeviceBattery,
+			OverlayElementType.AudioLevel => data.AudioLevel,
+			OverlayElementType.WindProcessing => data.WindProcessing,
+			OverlayElementType.ImageLuma => data.ImageLuma,
 			// Text and Image need no data.
 			_ => true
 		};

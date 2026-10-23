@@ -10,7 +10,7 @@
     <ApplicationIcon>Assets\OsmoOverlay.ico</ApplicationIcon>
 
     <AssemblyTitle>OsmoOverlay</AssemblyTitle>
-    <Description>Telemetry HUD overlay renderer for DJI Osmo Action and Insta360 footage.</Description>
+    <Description>Telemetry HUD overlay renderer for DJI Osmo Action, GoPro and Insta360 footage.</Description>
   </PropertyGroup>
 
   <ItemGroup>

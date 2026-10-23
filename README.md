@@ -1,5 +1,5 @@
 # Osmo Overlay ✨
-Add a modern telemetry HUD (speed, map, route, tilt and more) to your DJI Osmo footage, straight from the data your camera already records - encoded just like the camera original, so the quality stays as close to it as a render can get.
+Add a modern telemetry HUD (speed, map, route, tilt and more) to DJI Osmo, GoPro and Insta360 footage, using camera telemetry and optional external GPS tracks - encoded just like the camera original, so the quality stays as close to it as a render can get.
 
 If you find this repository useful, I would greatly appreciate it if you could give it a **star** ⭐. Thank you!
 Using OsmoOverlay in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
@@ -12,7 +12,8 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Rendered on your computer, not your phone** - unlike the overlay in DJI Mimo: no drop to 8-bit H.264 at a lower bitrate, audio untouched, no long wait with the phone unlocked and the app open, no phone as hot as an oven.
 - **Joins split recordings** - the camera splits long recordings into files of about 25 minutes, and OsmoOverlay joins them into one video without breaking the route.
 - **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance.
-- **20 widgets** - including a speedometer, map, compass with route, roll and pitch, G-meter, elevation and speed charts, trip statistics, altitude, distance, date and time, and your own text or logo. Metric or imperial units.
+- **External GPS tracks** - add FIT or GPX from a bike computer or watch. Match an event in the video to its GPS time, with an optional second point to correct clock drift. No camera date is needed; alignment is saved in your project.
+- **27 widgets** - including a speedometer, map, compass with route, roll and pitch, G-meter, elevation and speed charts, trip statistics, altitude, distance, date and time, track temperature, motion sensor temperature, device distance and battery, audio levels, wind noise reduction, image brightness, and your own text or logo. Metric or imperial units.
 - **Route card** - an optional summary at the start of the video: the whole route on a map, distance, speeds, elevation gain and ride time.
 - **Satellite or standard map** - several built-in map sources or your own tile server.
 - **Drag-and-drop editor** - position, size, fonts, colors, entrance and exit animations. Presets can be exported and shared.
@@ -93,6 +94,25 @@ The DJI Osmo Action 6 and Action 5 Pro are supported. I don't have other DJI cam
 
 Insta360 support is experimental and has been tested on the X4. The app displays 360° `.insv` recordings as a standard frame with adjustable viewing direction and field of view. It does not yet read GPS data from these files.
 
+GoPro support has been checked on HERO12 Black MP4 and LRV recordings: accelerometer, gravity, ISO, shutter speed and white balance. Pitch was checked against the picture; roll still needs a controlled sideways tilt test. HERO12 footage needs an external track for GPS widgets. GPS5/GPS9 parsing is covered by synthetic tests but still needs verification on recordings from GPS-equipped models. GoPro MAX 360 recordings are not supported.
+
+## Adding an external GPS track
+Analyze the recording, position the preview at a recognizable event and open **GPS track** in the Source card. Choose the original FIT or GPX file and match the video time to the GPS date and time (UTC). The point picker lists recorded GPS timestamps and, for FIT, speed. A second matching point later in the recording corrects a gradually increasing time difference. Save the project to keep the file reference and alignment.
+
+Motion-based alignment is an approximate suggestion: check it against the video before applying it. The camera's file date can be wrong even when it falls within the track's date range. Timer pauses and GPS gaps remain on the real elapsed timeline with no fix or speed; a stopped timer does not establish that the camera stood still. Align separate recordings after stopping the camera individually.
+
+FIT is preferable when it contains measured speed and timer events. GPX works too; speed is derived from consecutive positions. Temperature is imported from both formats when present; FIT also supplies the device's original distance counter and battery level. Each has its own optional widget, disabled when its data is absent. The device distance includes any route before the video and parts cut out. GoPro's motion sensor temperature is a separate reading from the camera, not the GPS track. Both temperature widgets support Celsius and Fahrenheit. Original tracks contain location data and should be shared carefully.
+
+GoPro's optional diagnostic widgets read the GPMF telemetry embedded in the recording: RMS/peak audio levels in dBFS (AALP), wind noise reduction state and a 0-100 meter (WNDM), and average image brightness on a 0-255 scale (YAVG). They do not analyze audio samples or video pixels. The audio bar spans -60 to 0 dBFS, with full readings shown as numbers; dBFS is a digital signal level, not sound pressure. The wind meter is neither wind speed nor reduction effectiveness. Missing diagnostic samples stay unknown, and recordings without these fields, including native DJI/Insta360 telemetry, disable the corresponding widgets.
+
+The CLI accepts the same alignment, using video time before cuts:
+
+```sh
+OsmoOverlay.Cli recording.MP4 --track ride.fit --track-anchor 18.5=2026-01-01T12:00:00Z -o result.mp4
+```
+
+Repeat `--track-anchor` once with a later video/GPS time to correct drift. `--track-offset -416` instead applies a known offset to the camera's creation time. Without anchors or an offset, the CLI attempts approximate motion alignment and reports a warning to verify it visually.
+
 ## Important information
 Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit H.264 at a lower bitrate, which reduces its quality.
 
@@ -111,7 +131,7 @@ Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit 
 Adding anything to the picture means it has to be encoded again - no program can avoid that. What OsmoOverlay avoids is everything on top of it: the render keeps the source's codec, 10-bit color, bitrate, keyframe interval and HEVC level, so it looks practically the same as the original, while DJI Mimo drops to 8-bit H.264.
 
 ## Good to know
-- The camera has no GPS module of its own, only an accelerometer. To get the route, map, speed and distance, record with the DJI GPS Bluetooth Remote Controller paired with the camera, or use your phone's GPS through DJI Mimo (though that one can behave oddly). Before you start recording, wait until the remote gets a satellite fix. Without GPS data, the widgets that need it are disabled.
+- DJI Osmo Action cameras need a GPS source: a paired DJI GPS Bluetooth Remote Controller, your phone through DJI Mimo, or an external FIT/GPX track. Before recording with the remote, wait for a satellite fix. Without GPS data, the widgets that need it are disabled.
 - GPS data and the camera's serial number are stored directly in the MP4 file. Be careful who you share it with.
 - The same resolution doesn't mean the same quality - codec, color depth and bitrate matter too.
 

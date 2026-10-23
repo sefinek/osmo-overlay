@@ -29,6 +29,12 @@ public sealed class DjiOsmoFormat : ICameraFormat
 			: string.Format(CoreStrings.Dji_NotSupported, cameraModel ?? CoreStrings.Dji_ThisCamera);
 	}
 
+	/// <summary>The Action 6 is fully supported; the Action 5 Pro was checked on fewer recordings (no original to compare against).</summary>
+	public int? SupportPercent(string? cameraModel)
+	{
+		return cameraModel switch { DjiModels.OsmoAction6 => 100, DjiModels.OsmoAction5Pro => 90, _ => null };
+	}
+
 	public CameraRecording? Detect(string path, JsonArray streams)
 	{
 		JsonNode? djmd = streams.FirstOrDefault(s => s?["codec_type"]?.GetValue<string>() == "data" && s["codec_tag_string"]?.GetValue<string>() == "djmd");

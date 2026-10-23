@@ -52,6 +52,8 @@ public partial class MainWindow
 			OverlayElementType.Gradient => GradientSettingsPanel,
 			OverlayElementType.Distance => DistanceSettingsPanel,
 			OverlayElementType.CameraInfo => CameraInfoSettingsPanel,
+			OverlayElementType.AmbientTemperature or OverlayElementType.ImuTemperature or OverlayElementType.DeviceDistance or OverlayElementType.DeviceBattery
+				or OverlayElementType.AudioLevel or OverlayElementType.WindProcessing or OverlayElementType.ImageLuma => SensorSettingsPanel,
 			OverlayElementType.Compass => CompassSettingsPanel,
 			OverlayElementType.SunWidget => SunSettingsPanel,
 			OverlayElementType.RollGauge => RollSettingsPanel,

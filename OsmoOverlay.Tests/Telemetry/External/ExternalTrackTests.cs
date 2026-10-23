@@ -37,6 +37,8 @@ public sealed class ExternalTrackTests
 		Assert.AreEqual(3, track.Points.Count);
 		Assert.AreEqual(53.154664, track.Points[0].Latitude, 1e-9);
 		Assert.AreEqual(87.4, track.Points[0].AltitudeMeters!.Value, 1e-9);
+		Assert.AreEqual(24, track.Points[0].TemperatureCelsius);
+		Assert.IsNull(track.Points[1].TemperatureCelsius);
 		Assert.IsNull(track.Points[0].SpeedMs);
 		Assert.IsNull(track.Points[2].AltitudeMeters);
 		Assert.AreEqual(new DateTime(2026, 10, 21, 14, 21, 56, DateTimeKind.Utc), track.Points[2].Utc, "a time with an offset is brought to UTC");
@@ -142,7 +144,7 @@ public sealed class ExternalTrackTests
 	}
 
 	[TestMethod]
-	public void At_AGapWhereTheTimerWasStoppedIsAStop()
+	public void At_ATimerPauseDoesNotProveAStandstill()
 	{
 		var track = new ExternalTrack(Walk(T0, 5, 4).Concat(Walk(T0.AddSeconds(35), 5, 4, 53.1 + 5 * 4 * 9e-6)), [new ExternalTrackPause(T0.AddSeconds(5), T0.AddSeconds(35))]);
 		int cursor = 0;
@@ -150,20 +152,92 @@ public sealed class ExternalTrackTests
 		ExternalTrackSample inGap = track.At(T0.AddSeconds(20), ref cursor)!.Value;
 
 		Assert.AreEqual(ExternalTrackState.Paused, inGap.State);
-		Assert.AreEqual(0, inGap.SpeedMs!.Value);
+		Assert.IsNull(inGap.SpeedMs);
 	}
 
 	[TestMethod]
-	public void At_AGapOverWhichTheDeviceHardlyMovedIsAStop_FarIsALostSignal()
+	public void At_AGapHasUnknownMotionEvenWhenItsEndpointsAreClose()
 	{
-		// 31 s over 12 m: 0.4 m/s - standing. Over 310 m: 10 m/s - the signal was lost.
 		var standing = new ExternalTrack(Walk(T0, 5, 1).Concat([new ExternalTrackPoint(T0.AddSeconds(35), 53.1 + 16 * 9e-6, 18.9)]));
 		var lost = new ExternalTrack(Walk(T0, 5, 1).Concat([new ExternalTrackPoint(T0.AddSeconds(35), 53.1 + 350 * 9e-6, 18.9)]));
 		int cursor = 0;
 
-		Assert.AreEqual(ExternalTrackState.Paused, standing.At(T0.AddSeconds(20), ref cursor)!.Value.State);
+		Assert.AreEqual(ExternalTrackState.Lost, standing.At(T0.AddSeconds(20), ref cursor)!.Value.State);
 		cursor = 0;
 		Assert.AreEqual(ExternalTrackState.Lost, lost.At(T0.AddSeconds(20), ref cursor)!.Value.State);
+	}
+
+	[TestMethod]
+	public void Gpx_DoesNotInterpolateBetweenSeparateTrackSegments()
+	{
+		using MemoryStream gpx = Gpx("""
+			<trk><trkseg>
+			<trkpt lat="50" lon="20"><time>2026-01-01T12:00:00Z</time></trkpt>
+			<trkpt lat="50.00001" lon="20"><time>2026-01-01T12:00:01Z</time></trkpt>
+			</trkseg><trkseg>
+			<trkpt lat="50.00002" lon="20"><time>2026-01-01T12:00:02Z</time></trkpt>
+			<trkpt lat="50.00003" lon="20"><time>2026-01-01T12:00:03Z</time></trkpt>
+			</trkseg></trk>
+			""");
+		ExternalTrack track = GpxReader.Read(gpx);
+		int cursor = 0;
+		Assert.AreEqual(ExternalTrackState.Lost, track.At(new DateTime(2026, 1, 1, 12, 0, 1, DateTimeKind.Utc).AddSeconds(0.5), ref cursor)!.Value.State);
+		Assert.AreEqual(ExternalTrackState.Fix, track.At(new DateTime(2026, 1, 1, 12, 0, 2, DateTimeKind.Utc), ref cursor)!.Value.State);
+	}
+
+	[TestMethod]
+	public void BatteryAt_DoesNotUseAFutureReadingBeforeTheFirstMeasurement()
+	{
+		var track = new ExternalTrack(Walk(T0, 5, 1), batteries: [new(T0.AddSeconds(2), 43)]);
+		Assert.IsNull(track.BatteryAt(T0));
+		Assert.IsNull(track.BatteryAt(T0.AddSeconds(1.99)));
+		Assert.AreEqual(43, track.BatteryAt(T0.AddSeconds(2)));
+		Assert.AreEqual(43, track.BatteryAt(T0.AddSeconds(4)));
+	}
+
+	[TestMethod]
+	public void At_SensorValuesInterpolateOnlyAcrossContinuousData()
+	{
+		var track = new ExternalTrack(
+		[
+			new(T0, 50, 20, TemperatureCelsius: -4, DistanceMeters: 100),
+			new(T0.AddSeconds(1), 50.00001, 20, TemperatureCelsius: -2, DistanceMeters: 102),
+			new(T0.AddSeconds(31), 50.00002, 20, TemperatureCelsius: 20, DistanceMeters: 200),
+			new(T0.AddSeconds(32), 50.00003, 20, TemperatureCelsius: 20, DistanceMeters: 0)
+		]);
+		int cursor = 0;
+		ExternalTrackSample half = track.At(T0.AddSeconds(0.5), ref cursor)!.Value;
+		Assert.AreEqual(-3, half.TemperatureCelsius);
+		Assert.AreEqual(101, half.DistanceMeters);
+		ExternalTrackSample gap = track.At(T0.AddSeconds(15), ref cursor)!.Value;
+		Assert.IsNull(gap.TemperatureCelsius);
+		Assert.IsNull(gap.DistanceMeters);
+		Assert.IsNull(track.At(T0.AddSeconds(31.5), ref cursor)!.Value.DistanceMeters, "counter reset is not interpolated");
+	}
+
+	[TestMethod]
+	public void At_ActualFixesOnBothSidesOfAGapRemainValid()
+	{
+		var points = Walk(T0, 5, 2, reportedSpeed: 2).Concat(Walk(T0.AddSeconds(35), 5, 2, 53.2, 2)).ToList();
+		var track = new ExternalTrack(points, [new ExternalTrackPause(T0.AddSeconds(5), T0.AddSeconds(35))]);
+		int cursor = 0;
+		foreach (ExternalTrackPoint point in points)
+		{
+			ExternalTrackSample sample = track.At(point.Utc, ref cursor)!.Value;
+			Assert.AreEqual(ExternalTrackState.Fix, sample.State);
+			Assert.AreEqual(point.Latitude, sample.Latitude);
+			Assert.AreEqual(2, sample.SpeedMs);
+		}
+	}
+
+	[TestMethod]
+	public void At_APauseBetweenNearbyFixesDoesNotGetInterpolated()
+	{
+		var track = new ExternalTrack(Walk(T0, 5, 2), [new ExternalTrackPause(T0, T0.AddSeconds(2))]);
+		int cursor = 0;
+		ExternalTrackSample sample = track.At(T0.AddSeconds(0.5), ref cursor)!.Value;
+		Assert.AreEqual(ExternalTrackState.Paused, sample.State);
+		Assert.IsNull(sample.SpeedMs);
 	}
 
 	[TestMethod]

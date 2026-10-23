@@ -25,6 +25,29 @@ public sealed class GpmfReaderTests
 	}
 
 	[TestMethod]
+	public void Read_DiagnosticChannelsRetainSignedAudioAndSeparateWindStateFromMeter()
+	{
+		byte[] packet = Container("DEVC",
+			Container("STRM", Text("UNIT", "dBFS"), Item("AALP", 'b', 2, 2, [128, 128, 213, 223])),
+			Container("STRM", Item("WNDM", 'B', 2, 2, [1, 35, 0, 2])),
+			Container("STRM", Item("YAVG", 'B', 1, 2, [98, 255])));
+		var streams = GpmfReader.Read(packet).Single().Streams;
+		CollectionAssert.AreEqual(new[] { -128.0, -128.0, -43.0, -33.0 }, streams.Single(s => s.Key == "AALP").Values);
+		Assert.AreEqual(2, streams.Single(s => s.Key == "AALP").Axes);
+		CollectionAssert.AreEqual(new[] { 1.0, 35.0, 0.0, 2.0 }, streams.Single(s => s.Key == "WNDM").Values);
+		CollectionAssert.AreEqual(new[] { 98.0, 255.0 }, streams.Single(s => s.Key == "YAVG").Values);
+	}
+
+	[TestMethod]
+	public void Read_ImuTemperatureIsIndependentOfAccelerationScale()
+	{
+		byte[] packet = Container("DEVC", Container("STRM", Shorts("SCAL", 1, 417), Floats("TMPC", 1, -3.5f), Shorts("ACCL", 3, 417, 0, 0)));
+		GpmfStream stream = GpmfReader.Read(packet).Single().Streams.Single();
+		Assert.AreEqual(-3.5, stream.TemperatureCelsius);
+		Assert.AreEqual(1, stream.Values[0]);
+	}
+
+	[TestMethod]
 	public void Read_ScaleOneForEachAxis()
 	{
 		byte[] packet = Container("DEVC", Container("STRM", Shorts("SCAL", 1, 10, 100, 1000), Shorts("XYZ_", 3, 10, 10, 10)));
@@ -127,6 +150,23 @@ public sealed class GpmfReaderTests
 		Assert.AreEqual(new DateTime(2026, 10, 21, 14, 20, 49, DateTimeKind.Utc), GpmfReader.ParseGpsUtc("261021142049"));
 		Assert.IsNull(GpmfReader.ParseGpsUtc("tomorrow"));
 		Assert.IsNull(GpmfReader.ParseGpsUtc(null));
+	}
+
+	[TestMethod]
+	public void Read_DamagedBytesNeverThrow()
+	{
+		byte[] packet = Container("DEVC", Text("DVNM", "cam"),
+			Container("STRM", Longs("STMP", 1), Text("ORIN", "ZXY"), Shorts("SCAL", 1, 417), Shorts("ACCL", 3, 1, 2, 3, 4, 5, 6)),
+			Container("STRM", Text("TYPE", "lllllllSS"), Structures("GPS9", "lllllllSS", [1, 2, 3, 4, 5, 6, 7, 8, 9])));
+		var random = new Random(11);
+
+		for (int n = 0; n < 5000; n++)
+		{
+			byte[] damaged = (byte[])packet.Clone();
+			for (int k = random.Next(1, 5); k > 0; k--) damaged[random.Next(damaged.Length)] = (byte)random.Next(256);
+
+			GpmfReader.Read(damaged[..random.Next(damaged.Length + 1)]);
+		}
 	}
 
 	private static byte[] ScaleBytes(params int[] values)

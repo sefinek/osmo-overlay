@@ -1,33 +1,39 @@
 using OsmoOverlay.Cameras.Dji;
+using OsmoOverlay.Core;
 
 namespace OsmoOverlay.Gui;
 
 /// <summary>
-///     Reference "known-good" specs for a camera model, used only for the pass/fail hints (checkmarks)
-///     shown next to video/audio fields in the INPUT card - purely a visual hint, never blocks
-///     anything. Add more entries to ByCameraModel as reference footage for other cameras becomes
-///     available; a model with no entry here simply shows no checkmarks at all.
+///     The recommended recording settings (RecommendedRecording) per camera model, used only for the checkmarks shown next to
+///     the video and audio fields in the INPUT card - purely a visual hint, never blocks anything. Add an entry when reference
+///     footage for another model is available; a model with none simply shows no marks at all.
 /// </summary>
-public sealed record RecommendedSettings(
-	int Width,
-	int Height,
-	double Fps,
-	long MinVideoBitrate,
-	long MinAudioBitrate)
+public static class RecommendedSettings
 {
-	private static readonly RecommendedSettings DjiOsmo4K60 = new(
-		3840,
-		2160,
-		59.94,
-		70_000_000,
-		256_000);
+	/// <summary>4K at 50 (or 59.94) frames a second in HEVC - for the Osmo Action 5 Pro and 6.</summary>
+	private static readonly RecommendedRecording DjiOsmo4K = new(3840, 2160, 50, 59.94, 70_000_000, 256_000);
 
-	private static readonly Dictionary<string, RecommendedSettings> ByCameraModel =
-		new(StringComparer.OrdinalIgnoreCase) { [DjiModels.OsmoAction5Pro] = DjiOsmo4K60, [DjiModels.OsmoAction6] = DjiOsmo4K60 };
+	/// <summary>
+	///     4K at 50 (or 59.94) in HEVC, Bit Rate: High. 10-bit isn't recommended: GoPro lists it for 4K at 60/30/24 and doesn't confirm
+	///     4K/50, so 8-bit HEVC is as good. The bitrate floor is below the measured High bitrates (about 75 Mbps at 4K/24, 90 at 30, 120 at 60 - iXBT's
+	///     test; 4K/50 isn't published) so Standard shows a warning; the audio floor is under the ~192 kbps AAC measured there. Full range is
+	///     what a HERO12 Black writes (yuvj420p, Rec.709 - one recording).
+	/// </summary>
+	private static readonly RecommendedRecording GoPro4K = new(3840, 2160, 50, 59.94, 60_000_000, 128_000, true, false);
 
-	public static RecommendedSettings? ForCameraModel(string? cameraModel)
+	private const string GoProHero12Black = "HERO12 Black";
+
+	private static readonly Dictionary<string, RecommendedRecording> ByCameraModel =
+		new(StringComparer.OrdinalIgnoreCase)
+		{
+			[DjiModels.OsmoAction5Pro] = DjiOsmo4K,
+			[DjiModels.OsmoAction6] = DjiOsmo4K,
+			[GoProHero12Black] = GoPro4K
+		};
+
+	public static RecommendedRecording? ForCameraModel(string? cameraModel)
 	{
-		return cameraModel is not null && ByCameraModel.TryGetValue(cameraModel, out RecommendedSettings? settings)
+		return cameraModel is not null && ByCameraModel.TryGetValue(cameraModel, out RecommendedRecording? settings)
 			? settings
 			: null;
 	}

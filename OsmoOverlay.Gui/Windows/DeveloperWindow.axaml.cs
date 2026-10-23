@@ -108,6 +108,9 @@ public partial class DeveloperWindow : Window
 			case "dependencies":
 				await new DependencyPromptWindow(RequiredTools.All).ShowDialog(this);
 				break;
+			case "external-track":
+				await new ExternalTrackWindow().ShowDialog(this);
+				break;
 			case "benchmark":
 				var benchmark = new BenchmarkWindow();
 				var source = new VideoInfo("hevc", "Main 10", 3840, 2160, "60000/1001", "yuv420p10le", "bt709", "bt709", "bt709", "tv", 73_000_000);

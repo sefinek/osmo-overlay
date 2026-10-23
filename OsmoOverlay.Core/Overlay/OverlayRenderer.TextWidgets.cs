@@ -115,6 +115,13 @@ public sealed partial class OverlayRenderer
 			ElevationElement => CoreStrings.Overlay_Elevation,
 			GradientElement => CoreStrings.Overlay_Gradient,
 			DistanceElement => CoreStrings.Overlay_TotalDistance,
+			AmbientTemperatureElement => CoreStrings.Overlay_AmbientTemperature,
+			ImuTemperatureElement => CoreStrings.Overlay_ImuTemperature,
+			DeviceDistanceElement => CoreStrings.Overlay_DeviceDistance,
+			DeviceBatteryElement => CoreStrings.Overlay_DeviceBattery,
+			AudioLevelElement => CoreStrings.Overlay_AudioLevel,
+			WindProcessingElement => CoreStrings.Overlay_WindProcessing,
+			ImageLumaElement => CoreStrings.Overlay_ImageLuma,
 			CameraInfoElement => CoreStrings.Overlay_Camera,
 			TripStatElement stat => DefaultTripStatLabel(stat.Stat),
 			ProfileChartElement chart => DefaultProfileLabel(chart.Series),
@@ -152,6 +159,32 @@ public sealed partial class OverlayRenderer
 		(string distanceValue, string distanceUnit) = FormatDistance(frame.CumulativeDistanceMeters, element.Units);
 		DrawStat(canvas, element, element.Label ?? DefaultLabel(element), distanceValue, distanceUnit);
 	}
+
+	private void DrawSensorStat(SKCanvas canvas, DerivedFrame frame, LabeledStatElement element)
+	{
+		(string value, string unit) = element switch
+		{
+			AmbientTemperatureElement t => FormatTemperature(frame.Raw.AmbientTemperatureCelsius, t.Units),
+			ImuTemperatureElement t => FormatTemperature(frame.Raw.ImuTemperatureCelsius, t.Units),
+			DeviceDistanceElement d => frame.Raw.DeviceDistanceMeters is { } meters && double.IsFinite(meters) ? FormatDistance(meters, d.Units) : ("--", d.Units == UnitSystem.Imperial ? "FT" : "M"),
+			DeviceBatteryElement => (frame.Raw.DeviceBatteryPercent is { } percent && double.IsFinite(percent) ? F(percent, "0") : "--", "%"),
+			WindProcessingElement => (frame.Raw.WindProcessingLevel is >= 0 and <= 100 and { } wind ? F(wind, "0") : "--", "/100"),
+			ImageLumaElement => (frame.Raw.ImageLuma is >= 0 and <= 255 and { } luma ? F(luma, "0") : "--", "/255"),
+			_ => ("--", "")
+		};
+		DrawStat(canvas, element, element.Label ?? DefaultLabel(element), value, unit);
+		if (element is WindProcessingElement)
+		{
+			string state = frame.Raw.WindProcessingActive switch { true => CoreStrings.Overlay_Active, false => CoreStrings.Overlay_Inactive, _ => "--" };
+			SKColor stateColor = frame.Raw.WindProcessingActive == true ? AccentColorOf(element) : TextColorOf(element).WithAlpha(170);
+			DrawOutlined(canvas, state.ToUpperInvariant(), 0, 150, TextFont(element, OverlayElementBounds.SmallFontSize), stateColor,
+				outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
+		}
+	}
+
+	internal static (string Value, string Unit) FormatTemperature(double? celsius, UnitSystem units) =>
+		(celsius is { } value && double.IsFinite(value) ? F(units == UnitSystem.Imperial ? value * 1.8 + 32 : value, "0.0") : "--",
+		units == UnitSystem.Imperial ? "°F" : "°C");
 
 	/// <summary>
 	///     Whole metres/feet below a kilometre/mile - a GPS position isn't good to the centimetre. The unit switches on the

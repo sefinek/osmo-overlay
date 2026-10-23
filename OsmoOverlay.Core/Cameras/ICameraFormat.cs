@@ -68,6 +68,15 @@ public interface ICameraFormat
 		return null;
 	}
 
+	/// <summary>
+	///     How much of what the app does it supports for this camera, in percent (100: everything, 50: half - e.g. no GPS read yet) - the
+	///     author's estimate, shown beside the camera's name. Null for a model nobody has tried (no figure shown).
+	/// </summary>
+	int? SupportPercent(string? cameraModel)
+	{
+		return null;
+	}
+
 	/// <summary>Whether CopyMetadata has anything to carry over into a render.</summary>
 	bool HasMetadataToCopy => false;
 

@@ -765,6 +765,12 @@ public sealed partial class OverlayRenderer : IDisposable
 			case DistanceElement distance:
 				DrawDistance(canvas, frame, distance);
 				break;
+			case TemperatureElementBase or DeviceDistanceElement or DeviceBatteryElement or WindProcessingElement or ImageLumaElement:
+				DrawSensorStat(canvas, frame, (LabeledStatElement)element);
+				break;
+			case AudioLevelElement audio:
+				DrawAudioLevel(canvas, frame, audio);
+				break;
 			case CompassElement compass:
 				DrawCompass(canvas, frame, compass);
 				break;

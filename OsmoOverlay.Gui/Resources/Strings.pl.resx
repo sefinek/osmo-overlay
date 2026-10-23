@@ -22,7 +22,7 @@
     <value>Nieoczekiwany błąd: {0}</value>
   </data>
   <data name="Appearance_AlreadyEverywhere" xml:space="preserve">
-    <value>{0}: wszystkie widżety już to mają.</value>
+    <value>{0}: wszystkie widżety mają już te ustawienia.</value>
   </data>
   <data name="Appearance_Applied" xml:space="preserve">
     <value>{1}: zastosowano do {0} widżetu.|{1}: zastosowano do {0} widżetów.|{1}: zastosowano do {0} widżetów.</value>
@@ -73,7 +73,7 @@
     <value>Zapisano kopię zapasową: {0}</value>
   </data>
   <data name="Benchmark_AdviceHardwareDecode" xml:space="preserve">
-    <value>Na tym komputerze dekodowanie na GPU wypada o {0}% szybciej. Włączyć je?</value>
+    <value>Na tym komputerze dekodowanie na GPU jest o {0}% szybsze. Włączyć je?</value>
   </data>
   <data name="Benchmark_AdvicePreviewShadowsOff" xml:space="preserve">
     <value>Rysowanie cieni spowalnia podgląd. Bez nich nakładka jest rysowana {0}x szybciej. Wyłączyć cienie w podglądzie? W renderze pozostaną włączone.</value>
@@ -97,10 +97,10 @@
     <value>Zastosuj</value>
   </data>
   <data name="Benchmark_BottleneckOnly" xml:space="preserve">
-    <value>{0}: {1} kl./s. Render nie będzie szybszy niż ten etap.</value>
+    <value>{0}: {1} kl./s. Ten etap ogranicza prędkość renderowania.</value>
   </data>
   <data name="Benchmark_BottleneckWithRender" xml:space="preserve">
-    <value>{0}: {1} kl./s. Krótki render osiągnął {2} kl./s, czyli {3}% tej prędkości. W pełnym renderze poszczególne etapy współdzielą zasoby CPU i GPU, co obniża wydajność.</value>
+    <value>{0}: {1} kl./s. Krótki render osiągnął {2} kl./s, czyli {3}% tej prędkości. Podczas renderowania poszczególne etapy korzystają z tych samych zasobów CPU i GPU, co obniża wydajność.</value>
   </data>
   <data name="Benchmark_ColumnNotes" xml:space="preserve">
     <value>Uwagi</value>
@@ -157,18 +157,18 @@
     <value>Karta graficzna</value>
   </data>
   <data name="Benchmark_Graph" xml:space="preserve">
-    <value>ffmpeg w całości (dekodowanie, nakładanie, kodowanie)</value>
+    <value>Cały proces FFmpeg (dekodowanie, nakładanie, kodowanie)</value>
   </data>
   <data name="Benchmark_InUse" xml:space="preserve">
     <value>używane teraz</value>
   </data>
   <data name="Benchmark_Intro" xml:space="preserve">
-    <value>Test porównuje dekodowanie na GPU i CPU, rysowanie nakładki z cieniami i bez oraz przesył klatek i kodowanie w FFmpeg. Sprawdza też cały proces FFmpeg, wykonuje krótki render i mierzy płynność podglądu: w tym oknie i w odtwarzaczu aplikacji. Wszystko widać na żywo. Na koniec wskazuje najwolniejszy etap i proponuje szybsze ustawienia.
+    <value>Test porównuje dekodowanie na GPU i CPU oraz rysowanie nakładki z cieniami i bez. Mierzy też przesyłanie klatek, kodowanie i cały proces FFmpeg. Następnie wykonuje krótki render i sprawdza płynność podglądu w tym oknie oraz w oknie głównym aplikacji. Na koniec wskazuje najwolniejszy etap i proponuje szybsze ustawienia.
 
-Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują medianę i zakres pomiarów. Test trwa 3-4 minuty. Na ten czas zamknij gry i inne programy mocno obciążające CPU lub GPU.</value>
+Każdy wariant jest mierzony wielokrotnie, na zmianę z pozostałymi. Wyniki pokazują medianę i zakres pomiarów. Test trwa 3-4 minuty. Na ten czas zamknij gry i inne programy mocno obciążające CPU lub GPU.</value>
   </data>
   <data name="Benchmark_LimitedByDecoding" xml:space="preserve">
-    <value>co najmniej tyle - czekało na dekodowanie</value>
+    <value>enkoder czekał na dekodowanie - może pracować szybciej</value>
   </data>
   <data name="Benchmark_Load" xml:space="preserve">
     <value>Obciążenie przed testem</value>
@@ -189,7 +189,7 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Kodowanie</value>
   </data>
   <data name="Benchmark_NameGraph" xml:space="preserve">
-    <value>ffmpeg w całości (dekodowanie, nakładanie i kodowanie naraz)</value>
+    <value>Cały proces FFmpeg (dekodowanie, nakładanie, kodowanie)</value>
   </data>
   <data name="Benchmark_NameOverlay" xml:space="preserve">
     <value>Rysowanie nakładki</value>
@@ -198,7 +198,7 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Przesył klatek do ffmpeg</value>
   </data>
   <data name="Benchmark_NoAdvice" xml:space="preserve">
-    <value>Twoje ustawienia są już najszybsze na tym komputerze.</value>
+    <value>Test nie wskazał szybszych ustawień.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
     <value>Test zmierzy wszystkie etapy na nagraniu testowym, a dekodowanie i krótki render powtórzy na {0}-sekundowej próbce twojego nagrania ({1}). Tylko na nim porówna dekodowanie na GPU i CPU. Podgląd w aplikacji odtworzy twoje nagranie.</value>
@@ -246,7 +246,7 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Wyniki</value>
   </data>
   <data name="Benchmark_SampleComesOutHigh" xml:space="preserve">
-    <value>zawyżone - nagranie testowe dekoduje się łatwiej niż nagranie z kamery</value>
+    <value>wynik zawyżony względem nagrań z kamery - nagranie testowe jest łatwiejsze do dekodowania</value>
   </data>
   <data name="Benchmark_SampleRoute" xml:space="preserve">
     <value>trasa nagrania testowego</value>
@@ -261,7 +261,7 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Kodowanie...</value>
   </data>
   <data name="Benchmark_StageGraph" xml:space="preserve">
-    <value>ffmpeg w całości...</value>
+    <value>Cały proces FFmpeg...</value>
   </data>
   <data name="Benchmark_StageOverlay" xml:space="preserve">
     <value>Rysowanie nakładki...</value>
@@ -339,10 +339,10 @@ Porównywane warianty są mierzone wielokrotnie, na zmianę. Wyniki pokazują me
     <value>Odczyt GPS jest równy prędkości odniesienia lub wyższy. Pozostaw korektę 0%.</value>
   </data>
   <data name="Calibration_Off" xml:space="preserve">
-    <value>Korekta wyłączona. Nakładka pokazuje prędkość z GPS bez zwiększania odczytu.</value>
+    <value>Korekta wyłączona. Nakładka pokazuje prędkość z GPS bez korekty.</value>
   </data>
   <data name="Calibration_Raised" xml:space="preserve">
-    <value>Korekta zwiększa prędkości na nakładce o {0:0.0}%. Odczyt GPS 46 km/h będzie pokazany jako {1:0.0} km/h. Dystans, trasa i przechył pozostają bez zmian.</value>
+    <value>Korekta zwiększa wskazania prędkości na nakładce o {0:0.0}%. Odczyt GPS 46 km/h będzie pokazany jako {1:0.0} km/h. Dystans, trasa i przechył pozostają bez zmian.</value>
   </data>
   <data name="Calibration_Result" xml:space="preserve">
     <value>Obliczona korekta: {0:0.0}%. Odczyt GPS {1:0.##} km/h po korekcie: {2:0.##} km/h.</value>
@@ -476,7 +476,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Powiększ (+)</value>
   </data>
   <data name="ComparePlay_ZoomLabel" xml:space="preserve">
-    <value>Powiększenie: kółko myszy. Przesuwanie: przeciąganie albo kółko z Shiftem (w poziomie) lub Altem (w pionie). Dwuklik: cały obraz.</value>
+    <value>Powiększanie: kółko myszy. Przesuwanie: przeciągnij obraz lub użyj kółka z Shiftem (w poziomie) albo Altem (w pionie). Dwuklik dopasowuje cały obraz do okna.</value>
   </data>
   <data name="ComparePlay_ZoomOut" xml:space="preserve">
     <value>Pomniejsz (-)</value>
@@ -555,7 +555,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Charakterystyka przenoszenia</value>
   </data>
   <data name="Compare_Copied" xml:space="preserve">
-    <value>Skopiowano do schowka porównanie {0} pliku jako Markdown|Skopiowano do schowka porównanie {0} plików jako Markdown|Skopiowano do schowka porównanie {0} plików jako Markdown</value>
+    <value>Skopiowano porównanie {0} pliku do schowka (Markdown)|Skopiowano porównanie {0} plików do schowka (Markdown)|Skopiowano porównanie {0} plików do schowka (Markdown)</value>
   </data>
   <data name="Compare_Error" xml:space="preserve">
     <value>Błąd</value>
@@ -597,7 +597,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Bitrate wideo</value>
   </data>
   <data name="CompareVideos_AddVideoS" xml:space="preserve">
-    <value>Dodaj film(y)...</value>
+    <value>Dodaj filmy...</value>
   </data>
   <data name="CompareVideos_CopyAsMarkdown" xml:space="preserve">
     <value>Kopiuj jako Markdown</value>
@@ -606,7 +606,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Brak różnic między dodanymi plikami.</value>
   </data>
   <data name="CompareVideos_NoFilesAddedYetClick" xml:space="preserve">
-    <value>Nie dodano jeszcze plików - kliknij „Dodaj film(y)...”, aby zacząć.</value>
+    <value>Nie dodano jeszcze plików. Kliknij „Dodaj filmy...”, aby je wybrać.</value>
   </data>
   <data name="CompareVideos_PickUpTo6Files" xml:space="preserve">
     <value>Wybierz do 6 plików, aby zobaczyć obok siebie ich rozdzielczość, kodek, znaczniki kolorów, bitrate i telemetrię. Wartości różniące się między plikami są wyróżnione.</value>
@@ -633,7 +633,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Wytnij zaznaczenie (X)</value>
   </data>
   <data name="Cut_DropTheSelectionWithoutCutting" xml:space="preserve">
-    <value>Odrzuć zaznaczenie bez wycinania</value>
+    <value>Usuń zaznaczenie bez wycinania</value>
   </data>
   <data name="Cut_FieldEmpty" xml:space="preserve">
     <value>{0}: pole jest puste.</value>
@@ -642,7 +642,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Od</value>
   </data>
   <data name="Cut_FromPastEnd" xml:space="preserve">
-    <value>{0}: wartość Od wykracza poza koniec nagrania ({1}).</value>
+    <value>{0}: czas w polu „Od” wykracza poza koniec nagrania ({1}).</value>
   </data>
   <data name="Cut_GoToBefore" xml:space="preserve">
     <value>Przejdź do miejsca 3 sekundy przed tym cięciem</value>
@@ -654,9 +654,9 @@ Zamknąć OsmoOverlay?</value>
     <value>Oznacz koniec (O)</value>
   </data>
   <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
-    <value>Zaznacz fragment do usunięcia klawiszami I i O, a następnie wytnij go klawiszem X. Powtórz dla kolejnych fragmentów. Reszta nagrania trafi do renderu. Czasy możesz wpisywać jako 1:30 lub 1:30.250. Kliknięcie numeru cięcia przenosi do niego.
+    <value>Zaznacz fragment do usunięcia klawiszami I i O, a następnie wytnij go klawiszem X. Powtórz dla kolejnych fragmentów. Reszta nagrania trafi do renderu. Czas możesz wpisywać jako 1:30 lub 1:30.250. Kliknij numer cięcia, aby przejść do jego miejsca w nagraniu.
 
-Między zachowanymi fragmentami możesz dodać przejście przez czerń lub biel bez zmiany długości filmu albo przenikanie, które skraca film o długość przejścia. Podgląd nie pokazuje przenikania: odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. Przejścia obejmują obraz i dźwięk; nakładka pozostaje bez zmian.
+Między zachowanymi fragmentami możesz dodać przejście przez czerń lub biel bez zmiany długości filmu. Przenikanie, przetarcie i wypchnięcie nakładają fragmenty na siebie, skracając film o czas przejścia. Podgląd pomija te efekty: odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. W renderze przejścia obejmują obraz i dźwięk; nakładka pozostaje bez zmian.
 
 Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z trasą zaczyna się od pierwszej zachowanej klatki, a dystans, czas i statystyki obejmują tylko zachowaną część nagrania.</value>
   </data>
@@ -679,7 +679,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Tekst pojawi się na środku obrazu w miejscu cięcia i zniknie po czasie podanym obok. Możesz w nim wyjaśnić, co zostało wycięte.</value>
   </data>
   <data name="Cut_OverlapNote" xml:space="preserve">
-    <value>Podgląd nie pokazuje przenikania. Odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. Wyrenderowany film zawiera przenikanie i jest krótszy o czas trwania przejścia.</value>
+    <value>Podgląd nie pokazuje tego przejścia: odtwarza koniec wcześniejszego fragmentu i pomija nakładający się początek kolejnego. Wyrenderowany film zawiera przejście i jest krótszy o czas jego trwania.</value>
   </data>
   <data name="Cut_RemovesEverything" xml:space="preserve">
     <value>Cięcia usuwają całe nagranie - nie zostałoby nic do wyrenderowania.</value>
@@ -691,13 +691,13 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Linia przerywana przez cięcie</value>
   </data>
   <data name="Cut_RouteGap" xml:space="preserve">
-    <value>Przerwa - trasa wraca za cięciem</value>
+    <value>Przerwa w śladzie trasy</value>
   </data>
   <data name="Cut_RouteOnTheMapAcross" xml:space="preserve">
     <value>Trasa na mapie w miejscu cięcia</value>
   </data>
   <data name="Cut_RouteStraight" xml:space="preserve">
-    <value>Linia prosta, jakby nic nie wycięto</value>
+    <value>Linia prosta między końcami wyciętego fragmentu</value>
   </data>
   <data name="Cut_SelectAPartAtThe" xml:space="preserve">
     <value>Zaznacz fragment od klatki widocznej na ekranie</value>
@@ -712,16 +712,16 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Zaznaczenie zaczyna się od klatki widocznej na ekranie (I)</value>
   </data>
   <data name="Cut_TheTelemetryEitherSideOf" xml:space="preserve">
-    <value>Po wycięciu fragmentu sąsiadujące punkty trasy mogą być od siebie oddalone. Połączenie ich prostą linią utworzyłoby skrót przez pominięty odcinek. Dotyczy śladu w kompasie, na mapie i we wstępie z trasą.</value>
+    <value>Po wycięciu fragmentu sąsiadujące punkty trasy mogą być od siebie oddalone. Prosta linia między nimi pokazywałaby skrót zamiast pominiętego odcinka. To ustawienie określa sposób łączenia śladu w kompasie, na mapie i we wstępie z trasą.</value>
   </data>
   <data name="Cut_To" xml:space="preserve">
     <value>Do</value>
   </data>
   <data name="Cut_ToBeforeFrom" xml:space="preserve">
-    <value>{0}: wartość Do musi być późniejsza niż Od.</value>
+    <value>{0}: czas w polu „Do” musi być późniejszy niż w polu „Od”.</value>
   </data>
   <data name="Cut_TransitionCrossfade" xml:space="preserve">
-    <value>Przenikanie (z nałożeniem)</value>
+    <value>Przenikanie (skraca film)</value>
   </data>
   <data name="Cut_TransitionFadeBlack" xml:space="preserve">
     <value>Przejście przez czerń</value>
@@ -733,16 +733,16 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Bez przejścia (twarde cięcie)</value>
   </data>
   <data name="Cut_TransitionSlideLeft" xml:space="preserve">
-    <value>Wypchnięcie w lewo (z nałożeniem)</value>
+    <value>Wypchnięcie w lewo (skraca film)</value>
   </data>
   <data name="Cut_TransitionSlideRight" xml:space="preserve">
-    <value>Wypchnięcie w prawo (z nałożeniem)</value>
+    <value>Wypchnięcie w prawo (skraca film)</value>
   </data>
   <data name="Cut_TransitionWipeLeft" xml:space="preserve">
-    <value>Przetarcie z prawej (z nałożeniem)</value>
+    <value>Przetarcie z prawej (skraca film)</value>
   </data>
   <data name="Cut_TransitionWipeRight" xml:space="preserve">
-    <value>Przetarcie z lewej (z nałożeniem)</value>
+    <value>Przetarcie z lewej (skraca film)</value>
   </data>
   <data name="Cuts_Describe" xml:space="preserve">
     <value>{0} cięcie, usunięto {1}|{0} cięcia, usunięto {1}|{0} cięć, usunięto {1}</value>
@@ -856,16 +856,16 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Niedostępne: ten plik nie zawiera czasu GPS ani czasu rozpoczęcia nagrania.</value>
   </data>
   <data name="Editor_UnavailableSun" xml:space="preserve">
-    <value>Niedostępne: położenie słońca wymaga pozycji i czasu z GPS, a w tym pliku brakuje jednego z nich.</value>
+    <value>Niedostępne: do obliczenia położenia słońca potrzebne są pozycja i czas z GPS. W tym pliku brakuje co najmniej jednej z tych danych.</value>
   </data>
   <data name="ElementPanel_0LeavesJustTheRing" xml:space="preserve">
-    <value>Przy 0 zostaje tylko pierścień i jego zawartość.</value>
+    <value>Krycie 0% ukrywa tło panelu.</value>
   </data>
   <data name="ElementPanel_ApplyToAllPanels" xml:space="preserve">
     <value>Zastosuj do wszystkich paneli</value>
   </data>
   <data name="ElementPanel_GivesEveryWidgetWithA" xml:space="preserve">
-    <value>Nadaje każdemu widżetowi z panelem ten kolor i krycie</value>
+    <value>Ustawia ten kolor i krycie we wszystkich widżetach z panelem</value>
   </data>
   <data name="ElementShadow_ApplyToAllWidgets" xml:space="preserve">
     <value>Zastosuj do wszystkich widżetów</value>
@@ -877,7 +877,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Cienie są wyłączone w Ustawieniach (zakładka Zachowanie).</value>
   </data>
   <data name="ElementShadow_GivesEveryWidgetThisShadow" xml:space="preserve">
-    <value>Nadaje każdemu widżetowi ten cień</value>
+    <value>Stosuje te ustawienia cienia do wszystkich widżetów</value>
   </data>
   <data name="ElementShadow_OffsetX" xml:space="preserve">
     <value>Przesunięcie X</value>
@@ -895,7 +895,7 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Czcionka</value>
   </data>
   <data name="ElementStyle_GivesEveryTextWidgetThis" xml:space="preserve">
-    <value>Nadaje każdemu widżetowi tekstowemu tę czcionkę, kolor tekstu i obrys (rozmiar tekstu i kolor wartości zostają bez zmian)</value>
+    <value>Stosuje tę czcionkę, kolor tekstu i ustawienia obrysu do wszystkich widżetów tekstowych. Rozmiar tekstu i kolor wartości pozostają bez zmian.</value>
   </data>
   <data name="ElementStyle_OutlineColor" xml:space="preserve">
     <value>Kolor obrysu</value>
@@ -967,9 +967,9 @@ Wycięte fragmenty są pomijane w podglądzie, renderze i telemetrii. Wstęp z t
     <value>Dodaje kluczowy moment w klatce widocznej na ekranie (B)</value>
   </data>
   <data name="KeyMoments_AKeyMomentIsA" xml:space="preserve">
-    <value>Kluczowy moment to punkt nagrania z własną nazwą, oznaczony flagą na osi czasu. Strzałkami w górę i w dół przechodzisz między znacznikami, w tym kluczowymi momentami.
+    <value>Kluczowy moment to nazwany punkt nagrania, oznaczony flagą na osi czasu. Strzałkami w górę i w dół przechodzisz między znacznikami, w tym kluczowymi momentami.
 
-Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej wartości lub zapisać ją jako kluczowy moment przyciskiem z flagą. Momenty są zapisywane w projekcie i nie wpływają na render.</value>
+W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Możesz do nich przejść lub zapisać je jako kluczowe momenty przyciskiem z flagą. Momenty są zapisywane w projekcie i nie wpływają na render.</value>
   </data>
   <data name="KeyMoments_GoToMoment" xml:space="preserve">
     <value>Przejdź do tego momentu</value>
@@ -996,7 +996,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Zapisz jako kluczowy moment</value>
   </data>
   <data name="KeyMoments_ThisRecordingHasNoTelemetry" xml:space="preserve">
-    <value>Nagranie nie zawiera telemetrii potrzebnej do wyszukania najwyższych wartości.</value>
+    <value>Nagranie nie zawiera telemetrii potrzebnej do wyszukania skrajnych wartości.</value>
   </data>
   <data name="Layers_DefaultName" xml:space="preserve">
     <value>Warstwa {0}</value>
@@ -1005,7 +1005,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Usuń warstwę</value>
   </data>
   <data name="Layers_DeleteMessage" xml:space="preserve">
-    <value>Czy na pewno chcesz usunąć tę warstwę razem z widżetem, który na niej jest?|Czy na pewno chcesz usunąć tę warstwę razem z {0} widżetami, które na niej są?|Czy na pewno chcesz usunąć tę warstwę razem z {0} widżetami, które na niej są?</value>
+    <value>Usunąć warstwę wraz z jej widżetem?|Usunąć warstwę wraz z {0} widżetami?|Usunąć warstwę wraz z {0} widżetami?</value>
   </data>
   <data name="Layers_ElevationChart" xml:space="preserve">
     <value>Wykres wysokości</value>
@@ -1098,7 +1098,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Nagrania z kamery</value>
   </data>
   <data name="Main_CanTReadThisFile" xml:space="preserve">
-    <value>Nie udało się wczytać obrazka. Sprawdź, czy plik nadal istnieje. Obsługiwane formaty to PNG, JPEG i WebP, a maksymalna długość każdego boku wynosi 8192 px.</value>
+    <value>Nie udało się wczytać obrazu. Sprawdź, czy plik nadal istnieje. Obsługiwane formaty to PNG, JPEG i WebP. Żaden bok obrazu nie może przekraczać 8192 px.</value>
   </data>
   <data name="Main_ChangeFromStart" xml:space="preserve">
     <value>Zmiana od startu</value>
@@ -1128,10 +1128,10 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>TREŚĆ</value>
   </data>
   <data name="Main_CountedUpToTheMoment" xml:space="preserve">
-    <value>Statystyki obejmują nagranie do bieżącej klatki. Czas jazdy jest liczony od prędkości 3 km/h, a średnia prędkość to przebyty dystans podzielony przez ten czas. Zmiany wysokości mniejsze niż 3 m są pomijane przy obliczaniu podjazdów i zjazdów, aby ograniczyć wpływ szumu GPS.</value>
+    <value>Statystyki obejmują nagranie do bieżącej klatki. Czas w ruchu jest naliczany przy prędkości co najmniej 3 km/h. Średnia prędkość to przebyty dystans podzielony przez ten czas. Przy sumowaniu podjazdów i zjazdów zmiana wysokości jest uwzględniana dopiero po osiągnięciu 3 m, aby ograniczyć wpływ szumu GPS.</value>
   </data>
   <data name="Main_CurrentFrameTheNumberOf" xml:space="preserve">
-    <value>Bieżąca klatka - numer klatki pod kursorem</value>
+    <value>Numer klatki widocznej w podglądzie</value>
   </data>
   <data name="Main_CutOutNotInThe" xml:space="preserve">
     <value>Wycięte - poza renderem</value>
@@ -1164,13 +1164,13 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Dystans</value>
   </data>
   <data name="Main_DragAWidgetFromThe" xml:space="preserve">
-    <value>Przeciągnij widżet z listy „Do dodania” na podgląd, aby go dodać. Przeciągnij go, aby zmienić położenie, a po najechaniu użyj zębatki, by otworzyć ustawienia, lub krzyżyka, by go usunąć.</value>
+    <value>Przeciągnij widżet z listy „Do dodania” na podgląd. Na podglądzie możesz zmienić jego położenie, przeciągając go myszą. Po najechaniu na widżet kliknij zębatkę, aby otworzyć ustawienia, lub krzyżyk, aby go usunąć.</value>
   </data>
   <data name="Main_DragToResize" xml:space="preserve">
     <value>Przeciągnij, aby zmienić rozmiar</value>
   </data>
   <data name="Main_DrawnAtItsOwnPixel" xml:space="preserve">
-    <value>Na klatce 4K obrazek ma swój oryginalny rozmiar w pikselach. Przy niższej rozdzielczości jest odpowiednio pomniejszany. Rozmiar zmienisz uchwytem. Projekt odwołuje się do pliku, więc pozostaw go w obecnym miejscu.</value>
+    <value>Na klatce 4K obraz ma oryginalny rozmiar w pikselach. Przy niższej rozdzielczości jest odpowiednio pomniejszany. Rozmiar zmienisz uchwytem na podglądzie. Projekt odwołuje się do pliku obrazu, więc pozostaw go w obecnym miejscu.</value>
   </data>
   <data name="Main_Duplicate" xml:space="preserve">
     <value>Duplikuj</value>
@@ -1194,13 +1194,13 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Czas renderu</value>
   </data>
   <data name="Main_EvenlyWithTheVideoStops" xml:space="preserve">
-    <value>Równo z filmem, razem z postojami</value>
+    <value>Według czasu, z uwzględnieniem postojów</value>
   </data>
   <data name="Main_Export" xml:space="preserve">
     <value>Eksportuj...</value>
   </data>
   <data name="Main_FetchesTilesOverTheNetwork" xml:space="preserve">
-    <value>Przy pierwszym otwarciu lub renderze trasy pobiera kafelki z sieci, a potem przechowuje je w pamięci podręcznej na dysku.</value>
+    <value>Pobiera kafelki mapy z internetu. Zapisuje je w pamięci podręcznej na dysku tylko wtedy, gdy pozwalają na to warunki dostawcy.</value>
   </data>
   <data name="Main_File" xml:space="preserve">
     <value>Plik</value>
@@ -1230,7 +1230,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Podgląd na pełnym ekranie (F11) - na monitorze wybranym w sekcji Ustawienia &gt; Zachowanie. Esc go zamyka.</value>
   </data>
   <data name="Main_GetSummary" xml:space="preserve">
-    <value>Pobierz podsumowanie</value>
+    <value>Analizuj nagranie</value>
   </data>
   <data name="Main_GMeter" xml:space="preserve">
     <value>Miernik G</value>
@@ -1251,16 +1251,16 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Linie pomocnicze</value>
   </data>
   <data name="Main_HowCloseToTheTotal" xml:space="preserve">
-    <value>Dopuszczalny brakujący dystans, przy którym trasa jest uznawana za ukończoną. Dzięki tej tolerancji wahania pozycji GPS nie blokują osiągnięcia końca trasy.</value>
+    <value>Dystans, który może pozostać do końca trasy, aby uznać ją za ukończoną. Ten margines pozwala osiągnąć metę mimo wahań pozycji GPS.</value>
   </data>
   <data name="Main_HowFarOutTheMap" xml:space="preserve">
     <value>Maksymalne oddalenie mapy względem ustawionego poziomu zbliżenia. Wyższa wartość pozwala objąć większy obszar, aby zmieścić cały ślad trasy.</value>
   </data>
   <data name="Main_HowManyGSPut" xml:space="preserve">
-    <value>Wartość przeciążenia, przy której kropka dociera do krawędzi pierścienia. Wybierz niższą dla spokojnej jazdy lub wyższą dla motorsportu.</value>
+    <value>Przeciążenie, przy którym kropka dociera do krawędzi pierścienia. Wybierz niższą wartość dla spokojnej jazdy lub wyższą dla sportów motorowych.</value>
   </data>
   <data name="Main_HowMuchHigherOrLower" xml:space="preserve">
-    <value>O ile wyżej lub niżej niż w miejscu, gdzie zaczyna się film</value>
+    <value>Różnica wysokości względem początku filmu</value>
   </data>
   <data name="Main_Image" xml:space="preserve">
     <value>OBRAZ</value>
@@ -1311,7 +1311,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Otwieranie ostatniego projektu: {0}</value>
   </data>
   <data name="Main_LoopPlaybackQTheIn" xml:space="preserve">
-    <value>Zapętl odtwarzanie (Q) - zaznaczenie In/Out, a bez niego całe nagranie</value>
+    <value>Zapętl odtwarzanie (Q) - zaznaczony fragment lub całe nagranie, jeśli nic nie zaznaczono</value>
   </data>
   <data name="Main_Map" xml:space="preserve">
     <value>Mapa</value>
@@ -1395,10 +1395,10 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>PANEL</value>
   </data>
   <data name="Main_PickADjiOsmoAction" xml:space="preserve">
-    <value>Wybierz nagranie z DJI Osmo Action lub Insta360 i pobierz podsumowanie, aby zobaczyć podgląd nakładki</value>
+    <value>Wybierz nagranie z obsługiwanej kamery i kliknij „Analizuj nagranie”, aby otworzyć podgląd nakładki.</value>
   </data>
   <data name="Main_PickAFileAndGet" xml:space="preserve">
-    <value>Wybierz plik i pobierz podsumowanie, aby edytować widżety</value>
+    <value>Wybierz plik i kliknij „Analizuj nagranie”, aby edytować widżety.</value>
   </data>
   <data name="Main_PickRecordings" xml:space="preserve">
     <value>Wybierz nagrania - zaznacz kilka segmentów jednego nagrania, aby je połączyć</value>
@@ -1422,7 +1422,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Jakość podglądu określa jego ostrość. Niższa jakość przyspiesza dekodowanie i nie wpływa na rozdzielczość eksportowanego filmu.</value>
   </data>
   <data name="Main_PreviewTheResolutionThePreview" xml:space="preserve">
-    <value>Podgląd - rozdzielczość, w jakiej dekodowany jest podgląd (wybór jakości po lewej stronie paska narzędzi; Auto dopasowuje ją do rozmiaru podglądu na ekranie)</value>
+    <value>Rozdzielczość dekodowanego podglądu. Zmienisz ją wyborem jakości po lewej stronie paska narzędzi. Tryb Auto dopasowuje ją do rozmiaru podglądu na ekranie.</value>
   </data>
   <data name="Main_PreviewVolume" xml:space="preserve">
     <value>Głośność podglądu</value>
@@ -1590,7 +1590,7 @@ Każda kategoria pokazuje trzy najwyższe wartości. Możesz przejść do danej 
     <value>Podgląd jest na pełnym ekranie</value>
   </data>
   <data name="Main_TheWholeRecordingSProfile" xml:space="preserve">
-    <value>Wykres wysokości lub prędkości dla całego nagrania. Przebyty odcinek jest wyróżniony, a znacznik wskazuje bieżącą pozycję w filmie.</value>
+    <value>Wykres wysokości lub prędkości zachowanej części nagrania. Przebyty odcinek jest wyróżniony, a znacznik wskazuje bieżącą pozycję w filmie.</value>
   </data>
   <data name="Main_ThirdsMargin" xml:space="preserve">
     <value>Trójpodział + margines</value>
@@ -1881,16 +1881,16 @@ Ostatnia zmiana: {1:g}</value>
     <value>Pełna rozdzielczość</value>
   </data>
   <data name="Preview_QualityHigh" xml:space="preserve">
-    <value>Wysokie</value>
+    <value>Wysoka</value>
   </data>
   <data name="Preview_QualityLow" xml:space="preserve">
-    <value>Niskie</value>
+    <value>Niska</value>
   </data>
   <data name="Preview_QualityMedium" xml:space="preserve">
-    <value>Średnie</value>
+    <value>Średnia</value>
   </data>
   <data name="Preview_QualityVeryHigh" xml:space="preserve">
-    <value>Bardzo wysokie</value>
+    <value>Bardzo wysoka</value>
   </data>
   <data name="Preview_Unavailable" xml:space="preserve">
     <value>Podgląd niedostępny: {0}</value>
@@ -1996,7 +1996,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Wysokie obciążenie komputera</value>
   </data>
   <data name="Render_CheckingLoad" xml:space="preserve">
-    <value>Sprawdzam, czy komputer nie jest zajęty...</value>
+    <value>Sprawdzanie obciążenia komputera...</value>
   </data>
   <data name="Render_CompleteTitle" xml:space="preserve">
     <value>Renderowanie zakończone</value>
@@ -2173,7 +2173,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>{0}x źródła</value>
   </data>
   <data name="Settings_ByDefaultARenderMatches" xml:space="preserve">
-    <value>Domyślnie render odwzorowuje kodowanie źródła 1:1 - bitrate, odstęp klatek kluczowych, poziom HEVC i brak klatek B. Zmienia to dopiero wybór innej wartości niż domyślna.</value>
+    <value>Domyślnie film jest kodowany z takim samym bitrate, odstępem między klatkami kluczowymi i poziomem HEVC jak źródło, bez klatek B. Poniższe ustawienia pozwalają wybrać inne parametry kodowania.</value>
   </data>
   <data name="Settings_CameraDebugTrack" xml:space="preserve">
     <value>Ścieżka diagnostyczna kamery</value>
@@ -2200,10 +2200,10 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Koloruj trasę według prędkości</value>
   </data>
   <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
-    <value>Ostatnia zmiana twojej konfiguracji (ustawień aplikacji): {0}</value>
+    <value>Ostatnia zmiana ustawień aplikacji: {0}</value>
   </data>
   <data name="Settings_ConfigNeverUpdated" xml:space="preserve">
-    <value>Ostatnia zmiana twojej konfiguracji (ustawień aplikacji): nigdy</value>
+    <value>Ustawienia aplikacji nie były jeszcze zmieniane.</value>
   </data>
   <data name="Settings_Configuration" xml:space="preserve">
     <value>Konfiguracja</value>
@@ -2308,16 +2308,16 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Widoczne warstwy</value>
   </data>
   <data name="Settings_LayersTheTimelineUnderThe" xml:space="preserve">
-    <value>Ile warstw pokazuje oś czasu pod podglądem, zanim pojawi się przewijanie.</value>
+    <value>Liczba warstw widocznych pod podglądem bez przewijania osi czasu.</value>
   </data>
   <data name="Settings_License" xml:space="preserve">
     <value>Licencja</value>
   </data>
   <data name="Settings_LoopPlaybackFromStartup" xml:space="preserve">
-    <value>Zapętlaj odtwarzanie od startu</value>
+    <value>Włącz zapętlanie przy uruchomieniu</value>
   </data>
   <data name="Settings_LoopsTheInOutSelection" xml:space="preserve">
-    <value>Zapętla zaznaczenie In/Out albo całe nagranie. Przycisk Pętla (Q) przełącza to w dowolnej chwili.</value>
+    <value>Zapętla zaznaczony fragment lub całe nagranie, jeśli nic nie zaznaczono. Zapętlanie możesz w każdej chwili przełączyć przyciskiem Pętla lub klawiszem Q.</value>
   </data>
   <data name="Settings_MadeWithOsmoOverlayAndThe" xml:space="preserve">
     <value>Wyświetla napis „Stworzono w OsmoOverlay” i link do projektu u dołu filmu przez kilka pierwszych sekund, a następnie stopniowo je wygasza.</value>
@@ -2335,7 +2335,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Ten sam ekran co okno główne (domyślnie)</value>
   </data>
   <data name="Settings_NvencP4" xml:space="preserve">
-    <value>P4 - najszybszy z sensownych</value>
+    <value>P4 - szybkie kodowanie</value>
   </data>
   <data name="Settings_NvencP5" xml:space="preserve">
     <value>P5 - szybszy</value>
@@ -2362,7 +2362,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Źródło orientacji kamery</value>
   </data>
   <data name="Settings_OrientationSourceHint" xml:space="preserve">
-    <value>Skąd widgety przechyłu, pochylenia i G-metera biorą położenie kamery. Orientacja zgłaszana przez kamerę (DJI) nie myli obrotu kamery z przeciążeniem i nie potrzebuje GPS. Nagranie bez niej zawsze używa akcelerometru.</value>
+    <value>Źródło danych o położeniu kamery dla widżetów przechyłu, pochylenia i miernika G. Orientacja zapisana przez kamerę DJI pozwala odróżnić obrót kamery od przeciążenia i nie wymaga GPS. Jeśli nagranie jej nie zawiera, używany jest akcelerometr.</value>
   </data>
   <data name="Settings_OrientationAccelerometer" xml:space="preserve">
     <value>Akcelerometr</value>
@@ -2374,7 +2374,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Znacznik OsmoOverlay w pliku</value>
   </data>
   <data name="Settings_TagExportedVideoHint" xml:space="preserve">
-    <value>Zapisuje w metadanych wyeksportowanego pliku nazwę programu, jego wersję, wersję logiki telemetrii, źródło przechyłu i linki do projektu. Przydaje się do porównywania wydań; wyłącz, jeśli plik nie ma tego zdradzać.</value>
+    <value>Zapisuje w metadanych wyeksportowanego pliku nazwę i wersję programu, wersję obliczeń telemetrii, źródło pomiaru przechyłu i linki do projektu. Ułatwia porównywanie filmów wyrenderowanych w różnych wersjach OsmoOverlay.</value>
   </data>
   <data name="Settings_OutputCodec" xml:space="preserve">
     <value>Kodek</value>
@@ -2458,7 +2458,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Pokazuj planszę z trasą na początku filmu</value>
   </data>
   <data name="Settings_SizePositionScreenAndMaximized" xml:space="preserve">
-    <value>Rozmiar, położenie, ekran i stan maksymalizacji. Po wyłączeniu okno zawsze startuje zmaksymalizowane.</value>
+    <value>Zapamiętuje rozmiar i położenie okna, wybrany ekran oraz to, czy okno było zmaksymalizowane. Po wyłączeniu tej opcji okno zawsze otwiera się zmaksymalizowane.</value>
   </data>
   <data name="Settings_Startup" xml:space="preserve">
     <value>URUCHAMIANIE</value>
@@ -2473,7 +2473,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Telemetria - trasa GPS, prędkość, akcelerometr, ekspozycja</value>
   </data>
   <data name="Settings_TheFirstRunGuideTools" xml:space="preserve">
-    <value>Przewodnik pierwszego uruchomienia: narzędzia, kalibracja prędkości, folder wyjściowy i pliki projektów.</value>
+    <value>Ponownie otwiera przewodnik konfiguracji kamer, narzędzi, map, korekty prędkości, folderu wyjściowego i plików projektów.</value>
   </data>
   <data name="Settings_TheGpsReportsAFew" xml:space="preserve">
     <value>GPS podaje tylko kilka pozycji na sekundę, więc ślad kompasu i mapa poruszają się skokowo. Ta opcja wygładza ruch między kolejnymi pozycjami. Zmiana działa od razu i powoduje ponowne wczytanie otwartego podglądu.</value>
@@ -2500,7 +2500,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Czas przy osi czasu, np. 01:23.456 - w tym formacie pracuje edytor cięć.</value>
   </data>
   <data name="Settings_TimeFormatSecondsHint" xml:space="preserve">
-    <value>Czas przy osi czasu, np. 01:23. Kliknięcie w niego przełącza formaty.</value>
+    <value>Czas przy osi czasu, np. 01:23. Kliknij wskazanie czasu, aby zmienić format.</value>
   </data>
   <data name="Settings_TimeFormatTimecodeHint" xml:space="preserve">
     <value>Wyświetla czas przy osi czasu w formacie godziny:minuty:sekundy:klatki, liczony od 00:00:00:00, np. 00:01:23:12. Przy 29,97 i 59,94 kl./s stosuje numerację drop-frame oznaczoną średnikiem, tak jak edytory wideo.</value>
@@ -2566,13 +2566,13 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Skopiowany bez zmian</value>
   </data>
   <data name="Summary_AudioReencoded" xml:space="preserve">
-    <value>AAC (przekodowany przez cięcia)</value>
+    <value>AAC (ponownie kodowany z powodu cięć)</value>
   </data>
   <data name="Summary_CantJoinTitle" xml:space="preserve">
     <value>Tych plików nie można połączyć</value>
   </data>
   <data name="Summary_DiffersFromSource" xml:space="preserve">
-    <value>Różni się od pliku źródłowego.</value>
+    <value>Parametr różni się od nagrania źródłowego.</value>
   </data>
   <data name="Summary_EstimateTip" xml:space="preserve">
     <value>Szacunek na podstawie ostatniego renderu przy tej samej rozdzielczości i liczbie klatek na sekundę, z enkoderem {0}: {1:0.#} kl./s ({2:0.00}x prędkości odtwarzania). Wynik zależy również od pobierania kafelków mapy, ustawień i materiału źródłowego.</value>
@@ -2635,7 +2635,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Utrata sygnału GPS: {0} przerwa, łącznie {1:0.0} s. Miejsce przerwy oznaczono na bursztynowo pod osią czasu podglądu.|Utrata sygnału GPS: {0} przerwy, łącznie {1:0.0} s. Miejsca przerw oznaczono na bursztynowo pod osią czasu podglądu.|Utrata sygnału GPS: {0} przerw, łącznie {1:0.0} s. Miejsca przerw oznaczono na bursztynowo pod osią czasu podglądu.</value>
   </data>
   <data name="Summary_LogGpsNoLoss" xml:space="preserve">
-    <value>Sygnał GPS: nie wykryto utraty</value>
+    <value>Sygnał GPS: nie wykryto przerw</value>
   </data>
   <data name="Summary_LogGpsClockShift" xml:space="preserve">
     <value>Czas GPS przesunięty o {0} h: kamera zapisała go w złej strefie czasowej, więc dopasowano go do jej zegara</value>
@@ -2644,7 +2644,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Prędkość zmierzona przez odbiornik GPS jest dostępna dla {0}/{1} klatek. Dla pozostałych {2} klatek prędkość obliczono na podstawie zmian pozycji.</value>
   </data>
   <data name="Summary_LogGpsSpeedNone" xml:space="preserve">
-    <value>Prędkość zmierzona przez GPS: niedostępna dla tego pliku - wszystkie klatki używają prędkości wyliczonej</value>
+    <value>Nagranie nie zawiera prędkości zmierzonej przez odbiornik GPS. Prędkość jest obliczana na podstawie zmian pozycji.</value>
   </data>
   <data name="Summary_LogFileMissing" xml:space="preserve">
     <value>Nie znaleziono pliku: {0}</value>
@@ -2668,7 +2668,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Nie znaleziono telemetrii. Nagranie można odtworzyć, ale nie można dodać nakładki z danymi z kamery. Wybierz oryginalny plik z karty pamięci kamery ({0})</value>
   </data>
   <data name="Summary_LogProbing" xml:space="preserve">
-    <value>Badanie plików źródłowych (ffprobe)...</value>
+    <value>Odczytywanie informacji o plikach źródłowych (ffprobe)...</value>
   </data>
   <data name="Summary_LogReadFailed" xml:space="preserve">
     <value>Nie udało się odczytać informacji o pliku: {0}</value>
@@ -2677,7 +2677,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Nagrano: {0} (czas lokalny)</value>
   </data>
   <data name="Summary_LogRecordedAtUnknown" xml:space="preserve">
-    <value>Nagrano: nieznane (brak znacznika czasu GPS w telemetrii)</value>
+    <value>Data nagrania: nieznana (brak czasu GPS w telemetrii)</value>
   </data>
   <data name="Summary_LogTelemetryDetected" xml:space="preserve">
     <value>Wykryto telemetrię ({0}) - surowe próbki: {1}, przeliczone klatki: {2}</value>
@@ -2689,7 +2689,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Nie udało się sprawdzić wyeksportowanego pliku: {0}</value>
   </data>
   <data name="Summary_MatchesSource" xml:space="preserve">
-    <value>Zgodne z plikiem źródłowym.</value>
+    <value>Parametr zgodny z nagraniem źródłowym.</value>
   </data>
   <data name="Summary_MaxSpeedCorrectedTip" xml:space="preserve">
     <value>Tak jak na nakładce: {0:0.##} km/h zmierzone przez GPS + {1:0.0}% korekty prędkości (Ustawienia &gt; Prędkość).</value>
@@ -2717,7 +2717,7 @@ Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z
     <value>Brak danych telemetrycznych</value>
   </data>
   <data name="Summary_OrHigher" xml:space="preserve">
-    <value>{0} lub więcej</value>
+    <value>co najmniej {0}</value>
   </data>
   <data name="Summary_PixelFormatTip" xml:space="preserve">
     <value>Format pikseli: {0}</value>
@@ -2741,10 +2741,10 @@ Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z
     <value>szybki start</value>
   </data>
   <data name="Summary_PlanMatches" xml:space="preserve">
-    <value>Kodowanie odpowiada źródłu 1:1 - rozdzielczość, liczba klatek, kodek/profil/poziom, bitrate, klatki kluczowe i znaczniki kolorów{0}.</value>
+    <value>Parametry kodowania odpowiadają źródłu: rozdzielczość, liczba klatek na sekundę, kodek, profil, poziom, bitrate, odstęp między klatkami kluczowymi i znaczniki kolorów{0}.</value>
   </data>
   <data name="Summary_PlanMatchesExcept" xml:space="preserve">
-    <value>Zgodne ze źródłem poza: {0}{1}.</value>
+    <value>Parametry kodowania odpowiadają źródłu z wyjątkiem: {0}{1}.</value>
   </data>
   <data name="Summary_PlanMetadataKept" xml:space="preserve">
     <value>zachowane metadane kamery</value>
@@ -2755,14 +2755,35 @@ Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z
   <data name="Summary_PlanResolution" xml:space="preserve">
     <value>rozdzielczość {0}x{1}</value>
   </data>
+  <data name="Summary_RecommendedWarning" xml:space="preserve">
+    <value>Zalecana wartość dla tej kamery: {0}.</value>
+  </data>
+  <data name="Summary_FpsEither" xml:space="preserve">
+    <value>{0} lub {1} kl./s</value>
+  </data>
   <data name="Summary_RecommendedColor" xml:space="preserve">
-    <value>bt709 / bt709 / bt709 (zakres tv)</value>
+    <value>Rec.709, zakres ograniczony</value>
+  </data>
+  <data name="Summary_RecommendedColorFullRange" xml:space="preserve">
+    <value>Rec.709, zakres ograniczony lub pełny</value>
   </data>
   <data name="Summary_RecommendedNot" xml:space="preserve">
-    <value>To ustawienie nie jest zalecane dla twojej kamery. Zalecana wartość: {0}.</value>
+    <value>Wartość odbiega od zaleceń. Zalecane: {0}.</value>
   </data>
   <data name="Summary_RecommendedOk" xml:space="preserve">
-    <value>Zalecane ustawienie dla twojej kamery ({0}).</value>
+    <value>Zgodne z zaleceniami: {0}.</value>
+  </data>
+  <data name="Summary_SupportFull" xml:space="preserve">
+    <value>Pełne wsparcie</value>
+  </data>
+  <data name="Summary_SupportPartial" xml:space="preserve">
+    <value>Wsparcie: {0}%</value>
+  </data>
+  <data name="Summary_SupportTip" xml:space="preserve">
+    <value>To szacunkowy zakres, w jakim OsmoOverlay obsługuje tę kamerę. Niektóre funkcje mogą być jeszcze niedopracowane lub niedostępne.</value>
+  </data>
+  <data name="Summary_TelemetryAvailable" xml:space="preserve">
+    <value>Dostępna</value>
   </data>
   <data name="Summary_TelemetryDetected" xml:space="preserve">
     <value>Wykryto</value>
@@ -2771,7 +2792,7 @@ Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z
     <value>Brak pozycji GPS</value>
   </data>
   <data name="Summary_TelemetryNoGpsFixTip" xml:space="preserve">
-    <value>Nagranie nie zawiera pozycji GPS. Odczytano dane z akcelerometru i ustawienia kamery, ale prędkość, dystans, wysokość, mapa, kompas i statystyki trasy są niedostępne.</value>
+    <value>Nagranie zawiera telemetrię, ale nie ma w niej pozycji GPS. Prędkość, dystans, wysokość, mapa, kompas i statystyki trasy są niedostępne.</value>
   </data>
   <data name="Summary_TelemetryNotFound" xml:space="preserve">
     <value>Nie znaleziono</value>
@@ -2939,7 +2960,7 @@ Zaimportuj pliki do edytora i dopasuj je na osi czasu do odpowiadających im nag
     <value>Konwertowanie {0}/{1}...</value>
   </data>
   <data name="Tools_DeletesTheCachedFileAnalysis" xml:space="preserve">
-    <value>Usuwa zapisane analizy wszystkich nagrań, w tym telemetrię i informacje o wideo. Przy kolejnym użyciu przycisku „Pobierz podsumowanie” nagranie zostanie przeanalizowane od nowa.</value>
+    <value>Usuwa zapisane analizy wszystkich nagrań, w tym telemetrię i informacje o wideo. Po kliknięciu „Analizuj nagranie” plik zostanie przeanalizowany od nowa.</value>
   </data>
   <data name="Tools_Fix" xml:space="preserve">
     <value>Napraw</value>
@@ -3031,10 +3052,10 @@ Obecne znaczniki:
     <value>Wybierz do 6 plików, aby zobaczyć obok siebie ich rozdzielczość, kodek, znaczniki kolorów, bitrate i telemetrię albo odtworzyć je razem w jednym oknie.</value>
   </data>
   <data name="Tools_PickVideoToStrip" xml:space="preserve">
-    <value>Wybierz film, z którego usunąć metadane</value>
+    <value>Wybierz film do usunięcia metadanych</value>
   </data>
   <data name="Tools_PresetsSettingsMapTilesLogs" xml:space="preserve">
-    <value>Presety, ustawienia, kafelki map, logi i zapisana analiza plików.</value>
+    <value>Presety, ustawienia, kafelki map, logi i zapisane analizy nagrań.</value>
   </data>
   <data name="Tools_RemoveMetadata" xml:space="preserve">
     <value>Usuń metadane</value>
@@ -3099,10 +3120,10 @@ Szczegóły: {0}</value>
     <value>Kolor śladu</value>
   </data>
   <data name="TrailStyle_TrailColorWhenSlowThrough" xml:space="preserve">
-    <value>Wybrany kolor śladu przy niskiej prędkości, potem żółty i pomarańczowy aż do czerwonego przy prędkości maksymalnej nagrania.</value>
+    <value>Przy niskiej prędkości ślad ma wybrany kolor. Wraz ze wzrostem prędkości przechodzi przez żółty i pomarańczowy do czerwonego przy prędkości maksymalnej nagrania.</value>
   </data>
   <data name="Transport_Looping" xml:space="preserve">
-    <value>Zapętlanie (Q, aby zatrzymać) - zaznaczenie In/Out, a bez niego całe nagranie</value>
+    <value>Zapętlanie włączone (Q, aby wyłączyć) - zaznaczony fragment lub całe nagranie, jeśli nic nie zaznaczono</value>
   </data>
   <data name="Transport_Pause" xml:space="preserve">
     <value>Pauza (spacja)</value>
@@ -3117,7 +3138,7 @@ Szczegóły: {0}</value>
     <value>Dostępne aktualizacje zależności: {0} - zobacz Ustawienia &gt; O programie</value>
   </data>
   <data name="Watermark_Hint" xml:space="preserve">
-    <value>Napis „Stworzono w OsmoOverlay” z adresem projektu. Włączasz go w Ustawieniach, a tu ustawiasz jego miejsce, wygląd i czas. Na karcie przeglądu trasy zostaje w jej prawym dolnym rogu.</value>
+    <value>Napis „Stworzono w OsmoOverlay” z adresem projektu. Włączysz go w ustawieniach aplikacji, a tutaj zmienisz położenie, wygląd i czas wyświetlania. We wstępie z trasą znak wodny jest umieszczony w prawym dolnym rogu planszy.</value>
   </data>
   <data name="Watermark_OffInSettings" xml:space="preserve">
     <value>Znak wodny jest wyłączony w Ustawieniach, więc nie pojawi się na filmie.</value>
@@ -3129,7 +3150,7 @@ Szczegóły: {0}</value>
     <value>Insta360 (obsługa eksperymentalna)</value>
   </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
-    <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamery DJI Osmo Action lub Insta360. Przewodnik przedstawia obsługiwane kamery i pomaga skonfigurować narzędzia, korektę prędkości oraz miejsce zapisu filmów.</value>
+    <value>Nanieś prędkość, kierunek, przechył i inne dane na nagrania z kamer DJI Osmo Action, GoPro i Insta360. Przewodnik przedstawia obsługiwane kamery i pomaga skonfigurować narzędzia, korektę prędkości oraz miejsce zapisu filmów.</value>
   </data>
   <data name="Welcome_CheckDecoder" xml:space="preserve">
     <value>Sprzętowe dekodowanie</value>
@@ -3171,7 +3192,7 @@ Szczegóły: {0}</value>
     <value>Do renderów 4K zalecane jest 16 GB.</value>
   </data>
   <data name="Welcome_CheckNeedsFfmpeg" xml:space="preserve">
-    <value>Nie udało się wykonać sprawdzenia. Sprawdź instalację FFmpeg.</value>
+    <value>Nie udało się wykonać testu. Sprawdź instalację FFmpeg.</value>
   </data>
   <data name="Welcome_CheckOk" xml:space="preserve">
     <value>OK</value>
@@ -3228,7 +3249,7 @@ Szczegóły: {0}</value>
     <value>Znaleziono</value>
   </data>
   <data name="Welcome_HardwareLead" xml:space="preserve">
-    <value>Krótkie sprawdzenie, czy ten komputer poradzi sobie z renderami 4K z Osmo Action: system, procesor, pamięć, kodowanie i dekodowanie na karcie graficznej oraz miejsce na dysku.</value>
+    <value>Sprawdź, czy komputer poradzi sobie z renderowaniem w 4K. Test obejmuje system, procesor, pamięć RAM, kodowanie i dekodowanie na karcie graficznej oraz miejsce na dysku.</value>
   </data>
   <data name="Welcome_HardwareOk" xml:space="preserve">
     <value>Ten komputer spełnia zalecenia sprzętowe do renderowania w 4K.</value>
@@ -3237,7 +3258,7 @@ Szczegóły: {0}</value>
     <value>Ten komputer może nie poradzić sobie z renderami 4K - szczegóły wyżej.</value>
   </data>
   <data name="Welcome_HardwareUnknown" xml:space="preserve">
-    <value>Nie udało się wykonać wszystkich sprawdzeń. Szczegóły znajdziesz powyżej.</value>
+    <value>Nie udało się ukończyć wszystkich testów. Szczegóły znajdziesz powyżej.</value>
   </data>
   <data name="Welcome_HardwareWarning" xml:space="preserve">
     <value>Wykryto ograniczenia mogące utrudnić renderowanie. Szczegóły znajdziesz powyżej.</value>
@@ -3427,7 +3448,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Testowane na Action 6 i Action 5 Pro; inne modele (np. Action 4) też powinny działać. Wybierz pliki .MP4.</value>
   </data>
   <data name="Welcome_ThisIsWhatWillBe" xml:space="preserve">
-    <value>Zostanie zapisane:</value>
+    <value>Ustawienia do zapisania:</value>
   </data>
   <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
     <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo mogą nie zawierać telemetrii. W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
@@ -3490,10 +3511,10 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Ukryj po dojechaniu do mety (s)</value>
   </data>
   <data name="Main_TripProgressHideAfterArrivalHint" xml:space="preserve">
-    <value>Pasek zniknie podaną liczbę sekund po dojechaniu do mety (gdy wjedziesz w margines dojazdu). Zastępuje to ręcznie ustawiony czas zniknięcia, więc to pole jest zablokowane.</value>
+    <value>Pasek zniknie po podanym czasie od dotarcia do mety, z uwzględnieniem marginesu dotarcia. Pole „Znika” pokaże obliczony czas i będzie zablokowane, jeśli pasek ma zniknąć przed końcem filmu.</value>
   </data>
   <data name="Main_TripProgressSpeedGateHint" xml:space="preserve">
-    <value>Pasek pojawi się, gdy prędkość po raz pierwszy osiągnie ustawiony próg. To zdarzenie zastępuje ręcznie ustawiony czas pojawienia się, dlatego pole czasu jest zablokowane.</value>
+    <value>Pasek pojawi się, gdy prędkość po raz pierwszy osiągnie ustawiony próg. Moment pojawienia się jest obliczany automatycznie i wyświetlany w zablokowanym polu „Pojawia się”.</value>
   </data>
   <data name="KeyMoments_MovingOnly" xml:space="preserve">
     <value>Przeciążenie i przechył tylko podczas jazdy</value>
@@ -3868,16 +3889,16 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Wstęp z trasą</value>
   </data>
   <data name="Timeline_RouteIntroTip" xml:space="preserve">
-    <value>Wstęp z trasą do {0}. Karta zasłania początek nagrania, a widżety pojawiają się, gdy się ona rozmywa. Znak wodny jest na karcie w rogu, a jako widżet liczy czas od jej końca.</value>
+    <value>Wstęp z trasą trwa do {0}. Plansza zasłania początek nagrania, a widżety pojawiają się, gdy plansza zanika. Znak wodny jest widoczny w rogu planszy; czas jego wyświetlania jako osobnego widżetu jest liczony od końca wstępu.</value>
   </data>
   <data name="Watermark_AfterRouteIntro" xml:space="preserve">
-    <value>Wstęp z trasą jest włączony, więc znak wodny pojawia się dopiero po jego zakończeniu. Pola czasu pokazują, kiedy widać go naprawdę. Na samej karcie trasy znak wodny jest w jej rogu.</value>
+    <value>Przy włączonym wstępie z trasą znak wodny jako osobny widżet pojawia się po jego zakończeniu. Pola czasu uwzględniają to przesunięcie. Podczas wstępu znak wodny jest widoczny w rogu planszy.</value>
   </data>
   <data name="Layers_FromSpeed" xml:space="preserve">
     <value>{0} (od {1} km/h)</value>
   </data>
   <data name="TripProgress_AfterRouteIntro" xml:space="preserve">
-    <value>Wstęp z trasą jest włączony, więc pasek (jak znak wodny przed nim) pojawia się dopiero po jego zakończeniu. Pola czasu pokazują, kiedy widać go naprawdę. Gdy pasek czeka na prędkość, liczy się tylko ona.</value>
+    <value>Wstęp z trasą przesuwa czas wyświetlania paska o długość wstępu. Pola czasu uwzględniają to przesunięcie. Jeśli włączysz pojawianie się paska od zadanej prędkości, to osiągnięcie tego progu decyduje, kiedy pasek się pojawi.</value>
   </data>
   <data name="Timeline_FileLabel" xml:space="preserve">
     <value>{0}. {1}</value>
@@ -3886,7 +3907,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Plik {0} z {1}: {2}, od {3} do {4}.</value>
   </data>
   <data name="Timeline_FileAfterGap" xml:space="preserve">
-    <value>Nagrany po postoju kamery: prędkość, dystans i trasa nie łączą się z poprzednim plikiem.</value>
+    <value>Nagrywanie wznowiono po przerwie. Prędkość, dystans i trasa nie są liczone przez przerwę między tym plikiem a poprzednim.</value>
   </data>
   <data name="Timeline_GpsAnomalyTip" xml:space="preserve">
     <value>Anomalia GPS: {0} - {1}, {2}. Aplikacja ją poprawiła: wartości w tym miejscu są wyliczone z odczytów przed nią i po niej.</value>
@@ -3907,10 +3928,10 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Alert GPS</value>
   </data>
   <data name="GpsAlert_Hint" xml:space="preserve">
-    <value>Pojawia się tylko wtedy, gdy z GPS-em coś się dzieje: szukanie pierwszego sygnału, utrata sygnału na co najmniej sekundę (jak długo trwa) i jego powrót, a także poprawiony błędny odczyt pozycji lub prędkości. Zaraz potem znika. Żeby zobaczyć widżet w podglądzie, przewiń do miejsca z problemem z GPS - na osi czasu jest oznaczone na żółto lub pomarańczowo.</value>
+    <value>Informuje o szukaniu pierwszego sygnału GPS, utracie sygnału trwającej co najmniej sekundę, jego odzyskaniu oraz korekcie błędnej pozycji lub prędkości. Przez pozostały czas jest ukryty. Aby zobaczyć go w podglądzie, przejdź do jednego ze zdarzeń GPS oznaczonych na osi czasu kolorem żółtym lub pomarańczowym.</value>
   </data>
   <data name="GpsAlert_TimingHint" xml:space="preserve">
-    <value>Moment pojawienia się i zniknięcia alertu zależy od GPS-a (np. utraty sygnału lub poprawy dokładności odczytu). Nie ma potrzeby zmieniania tych ustawień w widżecie.</value>
+    <value>Czas wyświetlania alertu zależy od zdarzeń GPS, takich jak utrata sygnału, jego odzyskanie lub korekta błędnego odczytu. Aplikacja ustala go automatycznie.</value>
   </data>
   <data name="GpsAlert_Message" xml:space="preserve">
     <value>Komunikat</value>
@@ -3922,7 +3943,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Druga linia</value>
   </data>
   <data name="GpsAlert_TextsHint" xml:space="preserve">
-    <value>Puste pole to domyślny tekst w języku aplikacji. {time} w drugiej linii zamienia się na czas: jak długo trwa utrata sygnału albo po ilu sekundach wrócił.</value>
+    <value>Pozostaw pole puste, aby użyć domyślnego tekstu w języku aplikacji. Znacznik {time} w drugiej linii jest zastępowany czasem trwania przerwy w sygnale lub czasem oczekiwania na jego uzyskanie.</value>
   </data>
   <data name="GpsAlert_MessageSearching" xml:space="preserve">
     <value>Szukanie sygnału</value>
@@ -3958,16 +3979,16 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Tryb debugowania wyłączony.</value>
   </data>
   <data name="Timeline_LockedGpsAlert" xml:space="preserve">
-    <value>Czas ustala aplikacja: alert GPS jest widoczny tylko wtedy, gdy GPS ma coś do zgłoszenia, więc nie da się go zmienić.</value>
+    <value>Czas wyświetlania alertu GPS zależy od zdarzeń GPS i jest ustalany automatycznie. Nie można go zmienić ręcznie.</value>
   </data>
   <data name="Timeline_LockedMapCredit" xml:space="preserve">
-    <value>Czas ustala aplikacja: podpis źródła map jest widoczny, dopóki widać mapę (wymóg dostawcy map), więc nie da się go zmienić.</value>
+    <value>Podpis mapy musi być widoczny przez cały czas jej wyświetlania. Aplikacja ustala ten czas automatycznie zgodnie z wymogiem dostawcy.</value>
   </data>
   <data name="Timeline_LockedStart" xml:space="preserve">
-    <value>Początku nie można przeciągnąć: pasek pojawia się, gdy jazda po raz pierwszy osiągnie ustaloną prędkość.</value>
+    <value>Nie można przesunąć początku: pasek pojawia się po pierwszym osiągnięciu ustawionej prędkości.</value>
   </data>
   <data name="Timeline_LockedEnd" xml:space="preserve">
-    <value>Końca nie można przeciągnąć: pasek znika po ustalonym czasie od dotarcia do mety.</value>
+    <value>Nie można przesunąć końca: pasek znika po ustawionym czasie od dotarcia do mety.</value>
   </data>
   <data name="Main_RemoveInput" xml:space="preserve">
     <value>Usuń zaznaczony plik z listy (plik na dysku zostaje)</value>
@@ -3987,4 +4008,50 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   <data name="Main_CutPartsOutOfTheMade" xml:space="preserve">
     <value>Wytnij fragmenty z renderu (wykonane cięcia: {0})</value>
   </data>
+  <data name="Track_Title" xml:space="preserve"><value>Trasa GPS</value></data>
+  <data name="Track_FileSection" xml:space="preserve"><value>Plik trasy</value></data>
+  <data name="Track_Range" xml:space="preserve"><value>Zakres trasy</value></data>
+  <data name="Track_SecondAnchorHint" xml:space="preserve"><value>Koryguje narastającą różnicę między zegarem filmu a zegarem GPS. Wybierz zdarzenie blisko końca nagrania.</value></data>
+  <data name="Track_Help" xml:space="preserve"><value>Wskaż to samo zdarzenie na filmie i w trasie GPS, np. ruszenie lub zatrzymanie. Czas filmu jest liczony od początku całego nagrania, przed cięciami. Do synchronizacji nie jest potrzebna data ani godzina z zegara kamery.</value></data>
+  <data name="Track_FileType" xml:space="preserve"><value>Trasa FIT lub GPX</value></data>
+  <data name="Track_Info" xml:space="preserve"><value>{0} - {1} UTC
+Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value></data>
+  <data name="Track_Estimate" xml:space="preserve"><value>Zaproponuj dopasowanie na podstawie ruchu</value></data>
+  <data name="Track_EstimateInfo" xml:space="preserve"><value>Przybliżone dopasowanie (korelacja {0:0.00}). Sprawdź je na filmie. Drgania kamery mogą być niezależne od prędkości.</value></data>
+  <data name="Track_FirstAnchor" xml:space="preserve"><value>Punkt synchronizacji</value></data>
+  <data name="Track_VideoSeconds" xml:space="preserve"><value>Czas filmu (s)</value></data>
+  <data name="Track_Utc" xml:space="preserve"><value>Czas GPS (UTC)</value></data>
+  <data name="Track_CurrentFrame" xml:space="preserve"><value>Ustaw z podglądu</value></data>
+  <data name="Track_SelectPoint" xml:space="preserve"><value>Wybierz punkt z trasy</value></data>
+  <data name="Track_SecondAnchor" xml:space="preserve"><value>Drugi punkt synchronizacji</value></data>
+  <data name="Track_Gaps" xml:space="preserve"><value>Podczas przerw w zapisie i luk w danych GPS pozycja i prędkość są niedostępne. Zatrzymanie pomiaru czasu w urządzeniu GPS nie oznacza, że pojazd stał w miejscu. Jeśli kamera przerwała nagrywanie, zsynchronizuj każde nagranie osobno.</value></data>
+  <data name="Track_Remove" xml:space="preserve"><value>Odłącz trasę</value></data>
+  <data name="Track_Apply" xml:space="preserve"><value>Zastosuj</value></data>
+  <data name="Track_NoEstimate" xml:space="preserve"><value>Nie udało się dopasować ruchu kamery do zmian prędkości z GPS. Ustaw punkt synchronizacji ręcznie.</value></data>
+  <data name="Track_NoOverlap" xml:space="preserve"><value>Po tym dopasowaniu trasa nie obejmuje żadnego fragmentu filmu.</value></data>
+  <data name="Track_InvalidTime" xml:space="preserve"><value>Podaj czas filmu w sekundach i pełną datę z godziną GPS, np. 2026-01-01T12:00:00Z (UTC).</value></data>
+  <data name="Track_None" xml:space="preserve"><value>Brak zewnętrznej trasy GPS</value></data>
+  <data name="Track_Applied" xml:space="preserve"><value>Zastosowano trasę GPS: {0}</value></data>
+  <data name="Track_Removed" xml:space="preserve"><value>Odłączono zewnętrzną trasę GPS</value></data>
+  <data name="Widget_AmbientTemperature" xml:space="preserve"><value>Temperatura z trasy (FIT/GPX)</value></data>
+  <data name="Widget_ImuTemperature" xml:space="preserve"><value>Temperatura czujnika ruchu</value></data>
+  <data name="Widget_DeviceDistance" xml:space="preserve"><value>Dystans licznika</value></data>
+  <data name="Widget_DeviceBattery" xml:space="preserve"><value>Bateria urządzenia GPS</value></data>
+  <data name="Editor_UnavailableAmbientTemperature" xml:space="preserve"><value>Brak temperatury w danych nagrania. Dołącz trasę FIT lub GPX zawierającą pomiary temperatury.</value></data>
+  <data name="Editor_UnavailableImuTemperature" xml:space="preserve"><value>To nagranie nie zawiera temperatury czujnika ruchu. Odczyt jest dostępny w nagraniach GoPro, które zapisują tę temperaturę w telemetrii.</value></data>
+  <data name="Editor_UnavailableDeviceDistance" xml:space="preserve"><value>Brak dystansu zapisanego przez licznik. Dołącz plik FIT z tym pomiarem.</value></data>
+  <data name="Editor_UnavailableDeviceBattery" xml:space="preserve"><value>Brak poziomu baterii urządzenia GPS. Dołącz plik FIT zawierający te dane.</value></data>
+  <data name="Widget_AmbientTemperatureDescription" xml:space="preserve"><value>Temperatura zapisana przez urządzenie GPS w pliku FIT lub GPX.</value></data>
+  <data name="Widget_ImuTemperatureDescription" xml:space="preserve"><value>Temperatura czujnika ruchu w kamerze, niezależna od temperatury z trasy GPS.</value></data>
+  <data name="Widget_DeviceDistanceDescription" xml:space="preserve"><value>Dystans zapisany przez urządzenie GPS w pliku FIT. Obejmuje także odcinek sprzed początku filmu i fragmenty wycięte z nagrania.</value></data>
+  <data name="Widget_DeviceBatteryDescription" xml:space="preserve"><value>Ostatni zapisany poziom baterii urządzenia GPS z pliku FIT.</value></data>
+  <data name="Widget_AudioLevel" xml:space="preserve"><value>Poziom dźwięku</value></data>
+  <data name="Widget_WindProcessing" xml:space="preserve"><value>Redukcja szumu wiatru</value></data>
+  <data name="Widget_ImageLuma" xml:space="preserve"><value>Jasność obrazu</value></data>
+  <data name="Editor_UnavailableAudioLevel" xml:space="preserve"><value>To nagranie nie zawiera poziomów dźwięku w telemetrii kamery.</value></data>
+  <data name="Editor_UnavailableWindProcessing" xml:space="preserve"><value>To nagranie nie zawiera danych o redukcji szumu wiatru w telemetrii kamery.</value></data>
+  <data name="Editor_UnavailableImageLuma" xml:space="preserve"><value>To nagranie nie zawiera średniej jasności obrazu w telemetrii kamery.</value></data>
+  <data name="Widget_AudioLevelDescription" xml:space="preserve"><value>Poziom skuteczny (RMS) i szczytowy sygnału dźwiękowego, odczytane z telemetrii GoPro. Wartości w dBFS opisują poziom sygnału cyfrowego. Pasek pokazuje zakres od -60 do 0 dBFS, a wartości liczbowe nie są ograniczone do tego zakresu.</value></data>
+  <data name="Widget_WindProcessingDescription" xml:space="preserve"><value>Informuje, czy redukcja szumu wiatru jest włączona, i pokazuje wskaźnik od 0 do 100 zapisany w telemetrii GoPro. Wskaźnik nie określa prędkości wiatru ani skuteczności redukcji w procentach.</value></data>
+  <data name="Widget_ImageLumaDescription" xml:space="preserve"><value>Średnia jasność obrazu zapisana w telemetrii GoPro, od 0 (czerń) do 255 (biel). Widżet korzysta z gotowego odczytu z kamery. Nie jest to pomiar natężenia oświetlenia w luksach.</value></data>
 </root>

@@ -2,6 +2,7 @@ using System.Text.Json;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Core;
 
@@ -28,6 +29,7 @@ public sealed record OverlayProject(
 
 	/// <summary>The key moments the user marked (frames of the combined recording) - absent in projects saved before they existed.</summary>
 	public List<KeyMoment> Moments { get; init; } = [];
+	public ExternalTrackSource? ExternalTrack { get; init; }
 
 	private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -45,8 +47,9 @@ public sealed record OverlayProject(
 			throw new InvalidDataException(CoreStrings.Project_Newer);
 		if (project.InputPaths is null || project.Cuts is null)
 			throw new InvalidDataException(CoreStrings.Project_Incomplete);
-		if (project.InputPaths.Append(project.OutputPath).Any(p => !string.IsNullOrWhiteSpace(p) && !OverlayPresetStore.IsLocalFilePath(p)))
+		if (project.InputPaths.Append(project.OutputPath).Append(project.ExternalTrack?.Path).Any(p => !string.IsNullOrWhiteSpace(p) && !OverlayPresetStore.IsLocalFilePath(p)))
 			throw new InvalidDataException(CoreStrings.Project_NotLocal);
+		project.ExternalTrack?.Validate();
 
 		return project;
 	}

@@ -21,10 +21,10 @@ foreach (string line in AppBanner.BuildLines("CLI"))
 
 CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format());
 
-string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder", "--track", "--track-offset"];
+string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder", "--track", "--track-offset", "--track-anchor"];
 string[] flags = ["--no-level"];
-const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--encoder <name>]\n" +
-                     "  inputs are the camera's own recordings (DJI Osmo Action .MP4)\n" +
+const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--encoder <name>] [--track <file.fit|file.gpx> [--track-offset <seconds> | --track-anchor <video-time>=<UTC> ...]]\n" +
+                     "  inputs are the camera's own recordings (DJI Osmo Action, GoPro or Insta360)\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
                      "  --cut removes that part from the video and the telemetry; repeat it for several cuts. Add @fade or @white (optionally =seconds, e.g. 1:00-1:10@fade=1) to fade through black or white where the cut joins the kept parts, or @cross, @wipeleft, @wiperight, @slideleft, @slideright to blend them (the output gets shorter by that length)\n" +
                      "  --view <yaw>,<pitch>,<roll>[,<fov>] frames a 360 recording's flat picture, in degrees (default 0,0,0,100),\n" +
@@ -32,9 +32,10 @@ const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.m
                      "  --encoder picks ffmpeg's video encoder (hevc_nvenc, hevc_amf, hevc_qsv, libx265, or h264_* / libx264 for H.264 output)\n" +
                      "         instead of the first one that works here; one that doesn't write the output's codec is ignored\n" +
                      "  --track puts a FIT or GPX track from another device (a bike computer, a watch) on the telemetry: its position, altitude and\n" +
-                     "         speed, which a camera without GPS (GoPro HERO12) lacks. Where the track lies on the recording is found from the camera's clock\n" +
-                     "         when it agrees with the track's, else from how both moved; --track-offset <seconds> gives it (how far the track's clock\n" +
-                     "         is ahead of the camera's, -416 when the camera showed 14:27:45 at the track's 14:20:49) and is used as it is\n" +
+                     "         speed. --track-anchor <video-time>=<GPS-UTC> aligns an event, e.g. 18.5=2026-01-01T12:00:00Z. Repeat once to correct clock drift.\n" +
+                     "         Anchors use the combined recording before cuts and work without the camera's date. --track-offset <seconds> instead adds to\n" +
+                     "         the camera's creation time. Without either, motion is used for an approximate alignment that needs visual verification.\n" +
+                     "         Timer pauses and GPS gaps leave position and speed unavailable; they do not shorten the timeline.\n" +
                      "       OsmoOverlay.Cli --install-dependencies [ffmpeg] [exiftool]\n" +
                      "  installs the listed tools (default: ffmpeg) through the system's package manager, if they're missing";
 
@@ -58,6 +59,7 @@ bool level = true;
 string? encoder = null;
 string? trackPath = null;
 double? trackOffset = null;
+List<TrackSyncAnchor> trackAnchors = [];
 
 int i = 0;
 while (i < args.Length && !options.Contains(args[i]) && !flags.Contains(args[i]))
@@ -130,17 +132,25 @@ for (; i < args.Length; i++)
 		                           double.IsFinite(parsedOffset):
 			trackOffset = parsedOffset;
 			break;
+		case "--track-anchor" when TrackSyncAnchor.TryParse(value, out TrackSyncAnchor? anchor) && trackAnchors.Count < 2:
+			trackAnchors.Add(anchor!);
+			break;
 		default:
 			Console.Error.WriteLine($"Error: invalid value for {option}: '{value}'");
 			return 1;
 	}
 }
 
-if (trackOffset is not null && trackPath is null)
+if ((trackOffset is not null || trackAnchors.Count > 0) && trackPath is null)
 {
-	Console.Error.WriteLine("Error: --track-offset needs --track");
+	Console.Error.WriteLine("Error: --track-offset and --track-anchor need --track");
 	return 1;
 }
+
+ExternalTrackSource? trackSource = trackPath is null ? null : new ExternalTrackSource(trackPath, trackOffset,
+	trackAnchors.Count > 0 ? new TrackSynchronization(trackAnchors[0], trackAnchors.Count > 1 ? trackAnchors[1] : null) : null);
+try { trackSource?.Validate(); }
+catch (InvalidDataException ex) { Console.Error.WriteLine($"Error: {ex.Message}"); return 1; }
 
 if (trackPath is not null && !File.Exists(trackPath))
 {
@@ -177,7 +187,7 @@ Console.CancelKeyPress += (_, e) =>
 
 RenderResult result = await RenderJob.RunAsync(
 	new RenderOptions(inputPaths, outputPath, frameLimit, encoder, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level },
-		ExternalTrack: trackPath is null ? null : new ExternalTrackSource(trackPath, trackOffset)), progress,
+		ExternalTrack: trackSource), progress,
 	cts.Token);
 Console.WriteLine();
 

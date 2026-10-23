@@ -13,6 +13,16 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class MainWindow
 {
+	private void OnSensorLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is { } id) SetElementLabel(id, SensorLabelBox.Text);
+	}
+
+	private void OnSensorUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is { } id) SetElementUnits(id, SensorImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
 	private void OnCameraInfoLabelChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;

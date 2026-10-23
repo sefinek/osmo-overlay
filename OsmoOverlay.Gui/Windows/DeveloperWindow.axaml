@@ -100,6 +100,7 @@
 					<Button Content="Welcome (first run)" Tag="welcome" Click="OnActionClick" />
 					<Button Content="Missing dependencies" Tag="dependencies" Click="OnActionClick" />
 					<Button Content="Performance test result" Tag="benchmark" Click="OnActionClick" />
+					<Button Content="External GPS track" Tag="external-track" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>

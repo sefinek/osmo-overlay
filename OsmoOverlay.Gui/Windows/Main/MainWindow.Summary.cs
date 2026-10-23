@@ -59,6 +59,22 @@ public partial class MainWindow
 				await ConfirmDialog.ShowAsync(this, Strings.Summary_CantJoinTitle, problem!, kind: DialogKind.Warning);
 				return;
 			}
+			_cameraSummary = summary;
+			_externalTrackApplied = false;
+			if (_externalTrack is { } trackSource)
+			{
+				try
+				{
+					summary = await Task.Run(() => trackSource.Apply(summary));
+					_externalTrackApplied = true;
+				}
+				catch (Exception ex)
+				{
+					AppendLog(ex.Message, LogLevel.Error);
+					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, ex.Message, kind: DialogKind.Warning);
+				}
+			}
+			RefreshExternalTrack();
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
@@ -143,7 +159,8 @@ public partial class MainWindow
 
 				if (summary.CameraFormat is { } camera)
 				{
-					AppendLog(camera.DescribeTelemetry(rawFrames));
+					AppendLog(camera.DescribeTelemetry(_cameraSummary.TelemetryFrames ?? rawFrames));
+					if (_externalTrackApplied && _externalTrack is { } external) AppendLog(string.Format(Strings.Track_Applied, Path.GetFileName(external.Path)));
 					if (!_availability.CameraAxes)
 					{
 						AppendLog(Strings.Summary_LogNoCameraAxes, LogLevel.Warn);
@@ -174,9 +191,7 @@ public partial class MainWindow
 			PopulateOutputInfo(summary, encoder);
 
 			SetPhase(UiPhase.SummaryReady);
-			ActionButton.IsEnabled = summary.HasTelemetry;
-			GreenScreenButton.IsEnabled = summary.HasTelemetry;
-			RenderRangeButton.IsEnabled = summary.HasTelemetry;
+			ActionButton.IsEnabled = GreenScreenButton.IsEnabled = RenderRangeButton.IsEnabled = CanRenderTelemetry;
 
 			await OpenPreviewAsync(summary);
 			ResetHistory();
@@ -244,29 +259,30 @@ public partial class MainWindow
 	{
 		InfoCamera.Text = summary.CameraModel ?? Strings.Common_UnknownCapital;
 
+		UpdateSupportIcon(summary);
+
 		var recommended = RecommendedSettings.ForCameraModel(summary.CameraModel);
 
-		bool? Check(Func<RecommendedSettings, bool> predicate)
+		CheckLevel? Check(Func<RecommendedRecording, CheckLevel> judge)
 		{
-			return recommended is { } r ? predicate(r) : null;
+			return recommended is { } r ? judge(r) : null;
 		}
 
 		InfoResolution.Text = $"{summary.Video.Width}x{summary.Video.Height}";
-		SetCheck(InfoResolutionCheck, Check(r => summary.Video.Width >= r.Width && summary.Video.Height >= r.Height),
+		SetCheck(InfoResolutionCheck, Check(r => r.Resolution(summary.Video.Width, summary.Video.Height)),
 			recommended is { } r1 ? string.Format(Strings.Summary_OrHigher, $"{r1.Width}x{r1.Height}") : null);
 
 		InfoFrameRate.Text = $"{FormatFps(summary.Video.Fps)} fps";
-		SetCheck(InfoFrameRateCheck, Check(r => Math.Abs(summary.Video.Fps - r.Fps) < 0.5),
-			recommended is { } r2 ? $"~{r2.Fps:0.##} fps" : null);
+		SetCheck(InfoFrameRateCheck, Check(r => r.FrameRate(summary.Video.Fps)),
+			recommended is { } r2 ? string.Format(Strings.Summary_FpsEither, $"{r2.Fps:0.##}", $"{r2.AlternativeFps:0.##}") : null);
 
 		InfoCodec.Text = string.IsNullOrEmpty(summary.Video.Profile)
 			? summary.Video.CodecName
 			: $"{summary.Video.CodecName} ({summary.Video.Profile})";
 		ToolTip.SetTip(InfoCodec, string.Format(Strings.Summary_PixelFormatTip, summary.Video.PixFmt));
 		SetCheck(InfoCodecCheck,
-			Check(_ => summary.Video.CodecName.Equals("hevc", StringComparison.OrdinalIgnoreCase) &&
-			           summary.Video.PixFmt.Contains("10le", StringComparison.OrdinalIgnoreCase)),
-			"HEVC (H.265), 10-bit");
+			Check(r => r.Codec(summary.Video.CodecName, summary.Video.PixFmt)),
+			recommended is { TenBitRecommended: true } ? "HEVC (H.265), 10-bit" : "HEVC (H.265)");
 
 		string primaries = summary.Video.ColorPrimaries ?? "?";
 		string transfer = summary.Video.ColorTransfer ?? "?";
@@ -276,11 +292,11 @@ public partial class MainWindow
 			? $"{primaries} ({range})"
 			: $"{primaries} / {transfer} / {colorSpace} ({range})";
 		SetCheck(InfoColorCheck,
-			Check(_ => primaries == "bt709" && transfer == "bt709" && colorSpace == "bt709" && range == "tv"),
-			Strings.Summary_RecommendedColor);
+			Check(r => r.Color(summary.Video.ColorPrimaries, summary.Video.ColorTransfer, summary.Video.ColorSpace, summary.Video.ColorRange)),
+			recommended is { FullRangeColor: true } ? Strings.Summary_RecommendedColorFullRange : Strings.Summary_RecommendedColor);
 
 		InfoBitrate.Text = $"{summary.Video.BitRate / 1_000_000.0:0.#} Mbps";
-		SetCheck(InfoBitrateCheck, Check(r => summary.Video.BitRate >= r.MinVideoBitrate),
+		SetCheck(InfoBitrateCheck, Check(r => r.VideoBitrate(summary.Video.BitRate)),
 			recommended is { } r3 ? string.Format(Strings.Summary_AtLeast, $"{r3.MinVideoBitrate / 1_000_000.0:0.#} Mbps") : null);
 
 		InfoDuration.Text = TimeSpan.FromSeconds(summary.DurationSeconds).ToString(@"hh\:mm\:ss");
@@ -294,17 +310,47 @@ public partial class MainWindow
 			InfoAudioSampleRate.Text = $"{a.SampleRate} Hz";
 			InfoAudioChannels.Text = $"{a.Channels}ch";
 			InfoAudioBitrate.Text = $"{a.BitRate / 1000.0:0} kbps";
-			SetCheck(InfoAudioBitrateCheck, Check(r => a.BitRate >= r.MinAudioBitrate),
+			SetCheck(InfoAudioBitrateCheck, Check(r => r.AudioBitrate(a.BitRate)),
 				recommended is { } r4 ? string.Format(Strings.Summary_AtLeast, $"{r4.MinAudioBitrate / 1000.0:0} kbps") : null);
 		}
 
+		UpdateTelemetryStatus(summary);
+	}
+
+	/// <summary>The icon beside the camera's name: how fully the app supports it (ICameraFormat.SupportPercent) - none for a camera with no figure.</summary>
+	private void UpdateSupportIcon(FileSummary summary)
+	{
+		int? percent = summary.CameraFormat?.SupportPercent(summary.CameraModel);
+		InfoSupportIcon.IsVisible = percent is not null;
+		if (percent is not { } value)
+		{
+			ToolTip.SetTip(StatusRow(InfoSupportIcon), null);
+			return;
+		}
+
+		bool good = value >= 90;
+		InfoSupportIcon.Data = good ? Icons.Check : Icons.Warning;
+		InfoSupportIcon.Foreground = good ? Palette.Success : Palette.Warning;
+		ToolTip.SetTip(StatusRow(InfoSupportIcon), value >= 100
+			? Strings.Summary_SupportFull
+			: string.Format(Strings.Summary_SupportPartial, value) + Environment.NewLine + Strings.Summary_SupportTip);
+	}
+
+	/// <summary>
+	///     The INPUT card's telemetry pill. Telemetry the recording itself carries is "Detected"; GPS taken from an external track is "Available" -
+	///     the app didn't find it in the file, the user supplied it.
+	/// </summary>
+	private void UpdateTelemetryStatus(FileSummary summary)
+	{
 		// "Detected" alone would read as "full telemetry" even for a recording that never had a GPS
 		// fix (accelerometer/camera-settings data only) - a
 		// distinct amber "No GPS fix" state instead of lumping it in with the green case, so it isn't
 		// mistaken for a recording with real position data.
 		bool hasGpsFix = summary.TelemetryFrames is { Count: > 0 } telemetryFrames && TelemetryProcessor.HasAnyGpsFix(telemetryFrames);
 		IBrush telemetryBrush = !summary.HasTelemetry ? Palette.Danger : hasGpsFix ? Palette.Success : Palette.Warning;
+		bool fromTrack = hasGpsFix && _externalTrackApplied && _externalTrack is not null;
 		InfoTelemetry.Text = !summary.HasTelemetry ? Strings.Summary_TelemetryNotFound
+			: fromTrack ? Strings.Summary_TelemetryAvailable
 			: hasGpsFix ? Strings.Summary_TelemetryDetected
 			: Strings.Summary_TelemetryNoGpsFix;
 		InfoTelemetry.Foreground = telemetryBrush;
@@ -315,25 +361,26 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     ok is null when no RecommendedSettings entry exists for the detected camera model - in
-	///     that case no icon is shown at all rather than judging against a mismatched reference.
-	///     recommendedDescription is the human-readable recommended value (e.g. "at least 70 Mbps"),
-	///     used to phrase the tooltip depending on whether this field actually matches it.
+	///     level is null when no RecommendedSettings entry exists for the detected camera model - in that case no icon is shown at
+	///     all rather than judging against a mismatched reference. recommendedDescription is the human-readable recommended value
+	///     (e.g. "at least 70 Mbps"), used to phrase the tooltip for the level the field reached.
 	/// </summary>
-	private static void SetCheck(IconView icon, bool? ok, string? recommendedDescription)
+	private static void SetCheck(IconView icon, CheckLevel? level, string? recommendedDescription)
 	{
-		icon.Data = ok switch { true => Icons.Check, false => Icons.Close, null => null };
-		icon.Foreground = ok switch
+		icon.Data = level switch { CheckLevel.Good => Icons.Check, CheckLevel.Warning => Icons.Warning, CheckLevel.Bad => Icons.Close, _ => null };
+		icon.Foreground = level switch
 		{
-			true => Palette.Success,
-			false => Palette.Danger,
-			null => null
+			CheckLevel.Good => Palette.Success,
+			CheckLevel.Warning => Palette.Warning,
+			CheckLevel.Bad => Palette.Danger,
+			_ => null
 		};
-		ToolTip.SetTip(StatusRow(icon), ok switch
+		ToolTip.SetTip(StatusRow(icon), level switch
 		{
-			true => string.Format(Strings.Summary_RecommendedOk, recommendedDescription),
-			false => string.Format(Strings.Summary_RecommendedNot, recommendedDescription),
-			null => null
+			CheckLevel.Good => string.Format(Strings.Summary_RecommendedOk, recommendedDescription),
+			CheckLevel.Warning => string.Format(Strings.Summary_RecommendedWarning, recommendedDescription),
+			CheckLevel.Bad => string.Format(Strings.Summary_RecommendedNot, recommendedDescription),
+			_ => null
 		});
 	}
 

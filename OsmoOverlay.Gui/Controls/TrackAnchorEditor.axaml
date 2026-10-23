@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OsmoOverlay.Gui"
+             x:Class="OsmoOverlay.Gui.TrackAnchorEditor">
+
+	<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+		<TextBlock Text="{x:Static local:Strings.Track_VideoSeconds}" FontWeight="SemiBold" />
+		<TextBlock Grid.Column="1" Text="{x:Static local:Strings.Track_Utc}" FontWeight="SemiBold" />
+
+		<NumericUpDown Grid.Row="1" Name="VideoBox" Minimum="0" Increment="0.04" FormatString="0.000" HorizontalAlignment="Stretch" />
+		<TextBox Grid.Row="1" Grid.Column="1" Name="UtcBox" PlaceholderText="2026-01-01T12:00:00Z" />
+
+		<Button Grid.Row="2" Name="CurrentFrameButton" Content="{x:Static local:Strings.Track_CurrentFrame}"
+		        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+		<ComboBox Grid.Row="2" Grid.Column="1" Name="PointBox" PlaceholderText="{x:Static local:Strings.Track_SelectPoint}"
+		          HorizontalAlignment="Stretch" />
+	</Grid>
+</UserControl>

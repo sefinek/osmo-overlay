@@ -1,3 +1,4 @@
+using System.Globalization;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
@@ -80,14 +81,32 @@ public sealed class OverlayPresetTests
 
 	/// <summary>Turned on, a widget that's off by default lands in a free spot - not over the map (TripStat) or a readout (Sun).</summary>
 	[TestMethod]
-	public void CreateDefault_NoWidgetCoversAnother_AllOfThemOn()
+	[DataRow("en")]
+	[DataRow("pl")]
+	public void CreateDefault_NoWidgetCoversAnother_AllOfThemOn(string language)
+	{
+		CultureInfo previous = CultureInfo.CurrentUICulture;
+		try
+		{
+			CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+			AssertDefaultWidgetsDoNotOverlap();
+		}
+		finally
+		{
+			CultureInfo.CurrentUICulture = previous;
+		}
+	}
+
+	private static void AssertDefaultWidgetsDoNotOverlap()
 	{
 		var preset = OverlayPreset.CreateDefault("d", "Default");
 		List<DerivedFrame> frames = [];
 		for (int i = 0; i < 30; i++)
 		{
 			frames.Add(new DerivedFrame(new TelemetryFrame(i, i / 30.0, 50, 20, 200, DateTime.UtcNow, 0, 0, 1, Iso: 400, ShutterSeconds: 0.001,
-				ColorTemperatureKelvin: 5000), 20, 0, 0, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
+				ColorTemperatureKelvin: 5000, AmbientTemperatureCelsius: -23.4, ImuTemperatureCelsius: 29.8,
+				DeviceDistanceMeters: 12345, DeviceBatteryPercent: 100, AudioRmsDbfs: -128, AudioPeakDbfs: -128,
+				WindProcessingActive: false, WindProcessingLevel: 100, ImageLuma: 255), 20, 0, 0, i, 0, 0, new SunPosition(120, 30), 0, 0, 1, 0, 0));
 		}
 
 		using var renderer = new OverlayRenderer((int)OverlayElementBounds.ReferenceWidth, (int)OverlayElementBounds.ReferenceHeight, 200,

@@ -5,8 +5,8 @@ namespace OsmoOverlay.Core.Telemetry.External;
 
 /// <summary>
 ///     The track points of a GPX file (trkpt, in every segment of every track): position, elevation and time. GPX has no
-///     speed and no timer events - a device that wrote only fixes - so a gap in it is told a stop from a lost signal by how far
-///     the camera moved over it (ExternalTrack). Points without a time can't be put on the video's clock and are dropped.
+///     timer events; speed is derived from consecutive fixes. Gaps have unknown motion.
+///     Points without a time can't be put on the video's clock and are dropped.
 ///     The XML is read without resolving DTDs or external entities.
 /// </summary>
 public static class GpxReader
@@ -23,9 +23,16 @@ public static class GpxReader
 		using var reader = XmlReader.Create(stream, settings);
 
 		List<ExternalTrackPoint> points = [];
+		bool startsSegment = false;
 		while (reader.Read())
 		{
-			if (reader.NodeType == XmlNodeType.Element && reader.LocalName == "trkpt" && ReadPoint(reader) is { } point) points.Add(point);
+			if (reader.NodeType != XmlNodeType.Element) continue;
+			if (reader.LocalName == "trkseg") startsSegment = true;
+			if (reader.LocalName == "trkpt" && ReadPoint(reader) is { } point)
+			{
+				points.Add(point with { StartsAfterGap = startsSegment && points.Count > 0 });
+				startsSegment = false;
+			}
 		}
 
 		return new ExternalTrack(points);
@@ -37,7 +44,7 @@ public static class GpxReader
 		    !double.TryParse(reader.GetAttribute("lon"), NumberStyles.Float, CultureInfo.InvariantCulture, out double lon))
 			return null;
 
-		double? elevation = null;
+		double? elevation = null, temperature = null;
 		DateTime? time = null;
 		using (XmlReader point = reader.ReadSubtree())
 		{
@@ -45,6 +52,11 @@ public static class GpxReader
 			point.Read();
 			while (!point.EOF)
 			{
+				if (point.NodeType == XmlNodeType.Element && point.LocalName == "atemp" && point.NamespaceURI == "http://www.garmin.com/xmlschemas/TrackPointExtension/v1")
+				{
+					temperature = double.TryParse(point.ReadElementContentAsString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double celsius) && double.IsFinite(celsius) && celsius >= -273.15 ? celsius : null;
+					continue;
+				}
 				if (point.NodeType != XmlNodeType.Element || point.Depth != 1)
 				{
 					point.Read();
@@ -62,6 +74,9 @@ public static class GpxReader
 							? utc.UtcDateTime
 							: null;
 						break;
+					case "extensions":
+						point.Read();
+						break;
 					default:
 						point.Skip();
 						break;
@@ -69,6 +84,6 @@ public static class GpxReader
 			}
 		}
 
-		return time is { } at ? new ExternalTrackPoint(at, lat, lon, elevation) : null;
+		return time is { } at ? new ExternalTrackPoint(at, lat, lon, elevation, TemperatureCelsius: temperature) : null;
 	}
 }
