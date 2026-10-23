@@ -4008,50 +4008,140 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   <data name="Main_CutPartsOutOfTheMade" xml:space="preserve">
     <value>Wytnij fragmenty z renderu (wykonane cięcia: {0})</value>
   </data>
-  <data name="Track_Title" xml:space="preserve"><value>Trasa GPS</value></data>
-  <data name="Track_FileSection" xml:space="preserve"><value>Plik trasy</value></data>
-  <data name="Track_Range" xml:space="preserve"><value>Zakres trasy</value></data>
-  <data name="Track_SecondAnchorHint" xml:space="preserve"><value>Koryguje narastającą różnicę między zegarem filmu a zegarem GPS. Wybierz zdarzenie blisko końca nagrania.</value></data>
-  <data name="Track_Help" xml:space="preserve"><value>Wskaż to samo zdarzenie na filmie i w trasie GPS, np. ruszenie lub zatrzymanie. Czas filmu jest liczony od początku całego nagrania, przed cięciami. Do synchronizacji nie jest potrzebna data ani godzina z zegara kamery.</value></data>
-  <data name="Track_FileType" xml:space="preserve"><value>Trasa FIT lub GPX</value></data>
-  <data name="Track_Info" xml:space="preserve"><value>{0} - {1} UTC
-Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value></data>
-  <data name="Track_Estimate" xml:space="preserve"><value>Zaproponuj dopasowanie na podstawie ruchu</value></data>
-  <data name="Track_EstimateInfo" xml:space="preserve"><value>Przybliżone dopasowanie (korelacja {0:0.00}). Sprawdź je na filmie. Drgania kamery mogą być niezależne od prędkości.</value></data>
-  <data name="Track_FirstAnchor" xml:space="preserve"><value>Punkt synchronizacji</value></data>
-  <data name="Track_VideoSeconds" xml:space="preserve"><value>Czas filmu (s)</value></data>
-  <data name="Track_Utc" xml:space="preserve"><value>Czas GPS (UTC)</value></data>
-  <data name="Track_CurrentFrame" xml:space="preserve"><value>Ustaw z podglądu</value></data>
-  <data name="Track_SelectPoint" xml:space="preserve"><value>Wybierz punkt z trasy</value></data>
-  <data name="Track_SecondAnchor" xml:space="preserve"><value>Drugi punkt synchronizacji</value></data>
-  <data name="Track_Gaps" xml:space="preserve"><value>Podczas przerw w zapisie i luk w danych GPS pozycja i prędkość są niedostępne. Zatrzymanie pomiaru czasu w urządzeniu GPS nie oznacza, że pojazd stał w miejscu. Jeśli kamera przerwała nagrywanie, zsynchronizuj każde nagranie osobno.</value></data>
-  <data name="Track_Remove" xml:space="preserve"><value>Odłącz trasę</value></data>
-  <data name="Track_Apply" xml:space="preserve"><value>Zastosuj</value></data>
-  <data name="Track_NoEstimate" xml:space="preserve"><value>Nie udało się dopasować ruchu kamery do zmian prędkości z GPS. Ustaw punkt synchronizacji ręcznie.</value></data>
-  <data name="Track_NoOverlap" xml:space="preserve"><value>Po tym dopasowaniu trasa nie obejmuje żadnego fragmentu filmu.</value></data>
-  <data name="Track_InvalidTime" xml:space="preserve"><value>Podaj czas filmu w sekundach i pełną datę z godziną GPS, np. 2026-01-01T12:00:00Z (UTC).</value></data>
-  <data name="Track_None" xml:space="preserve"><value>Brak zewnętrznej trasy GPS</value></data>
-  <data name="Track_Applied" xml:space="preserve"><value>Zastosowano trasę GPS: {0}</value></data>
-  <data name="Track_Removed" xml:space="preserve"><value>Odłączono zewnętrzną trasę GPS</value></data>
-  <data name="Widget_AmbientTemperature" xml:space="preserve"><value>Temperatura z trasy (FIT/GPX)</value></data>
-  <data name="Widget_ImuTemperature" xml:space="preserve"><value>Temperatura czujnika ruchu</value></data>
-  <data name="Widget_DeviceDistance" xml:space="preserve"><value>Dystans licznika</value></data>
-  <data name="Widget_DeviceBattery" xml:space="preserve"><value>Bateria urządzenia GPS</value></data>
-  <data name="Editor_UnavailableAmbientTemperature" xml:space="preserve"><value>Brak temperatury w danych nagrania. Dołącz trasę FIT lub GPX zawierającą pomiary temperatury.</value></data>
-  <data name="Editor_UnavailableImuTemperature" xml:space="preserve"><value>To nagranie nie zawiera temperatury czujnika ruchu. Odczyt jest dostępny w nagraniach GoPro, które zapisują tę temperaturę w telemetrii.</value></data>
-  <data name="Editor_UnavailableDeviceDistance" xml:space="preserve"><value>Brak dystansu zapisanego przez licznik. Dołącz plik FIT z tym pomiarem.</value></data>
-  <data name="Editor_UnavailableDeviceBattery" xml:space="preserve"><value>Brak poziomu baterii urządzenia GPS. Dołącz plik FIT zawierający te dane.</value></data>
-  <data name="Widget_AmbientTemperatureDescription" xml:space="preserve"><value>Temperatura zapisana przez urządzenie GPS w pliku FIT lub GPX.</value></data>
-  <data name="Widget_ImuTemperatureDescription" xml:space="preserve"><value>Temperatura czujnika ruchu w kamerze, niezależna od temperatury z trasy GPS.</value></data>
-  <data name="Widget_DeviceDistanceDescription" xml:space="preserve"><value>Dystans zapisany przez urządzenie GPS w pliku FIT. Obejmuje także odcinek sprzed początku filmu i fragmenty wycięte z nagrania.</value></data>
-  <data name="Widget_DeviceBatteryDescription" xml:space="preserve"><value>Ostatni zapisany poziom baterii urządzenia GPS z pliku FIT.</value></data>
-  <data name="Widget_AudioLevel" xml:space="preserve"><value>Poziom dźwięku</value></data>
-  <data name="Widget_WindProcessing" xml:space="preserve"><value>Redukcja szumu wiatru</value></data>
-  <data name="Widget_ImageLuma" xml:space="preserve"><value>Jasność obrazu</value></data>
-  <data name="Editor_UnavailableAudioLevel" xml:space="preserve"><value>To nagranie nie zawiera poziomów dźwięku w telemetrii kamery.</value></data>
-  <data name="Editor_UnavailableWindProcessing" xml:space="preserve"><value>To nagranie nie zawiera danych o redukcji szumu wiatru w telemetrii kamery.</value></data>
-  <data name="Editor_UnavailableImageLuma" xml:space="preserve"><value>To nagranie nie zawiera średniej jasności obrazu w telemetrii kamery.</value></data>
-  <data name="Widget_AudioLevelDescription" xml:space="preserve"><value>Poziom skuteczny (RMS) i szczytowy sygnału dźwiękowego, odczytane z telemetrii GoPro. Wartości w dBFS opisują poziom sygnału cyfrowego. Pasek pokazuje zakres od -60 do 0 dBFS, a wartości liczbowe nie są ograniczone do tego zakresu.</value></data>
-  <data name="Widget_WindProcessingDescription" xml:space="preserve"><value>Informuje, czy redukcja szumu wiatru jest włączona, i pokazuje wskaźnik od 0 do 100 zapisany w telemetrii GoPro. Wskaźnik nie określa prędkości wiatru ani skuteczności redukcji w procentach.</value></data>
-  <data name="Widget_ImageLumaDescription" xml:space="preserve"><value>Średnia jasność obrazu zapisana w telemetrii GoPro, od 0 (czerń) do 255 (biel). Widżet korzysta z gotowego odczytu z kamery. Nie jest to pomiar natężenia oświetlenia w luksach.</value></data>
+  <data name="Track_Title" xml:space="preserve">
+    <value>Trasa GPS</value>
+  </data>
+  <data name="Track_FileSection" xml:space="preserve">
+    <value>PLIK TRASY</value>
+  </data>
+  <data name="Track_Range" xml:space="preserve">
+    <value>Zakres trasy</value>
+  </data>
+  <data name="Track_SecondAnchorHint" xml:space="preserve">
+    <value>Koryguje narastającą różnicę między zegarem filmu a zegarem GPS. Wybierz zdarzenie blisko końca nagrania.</value>
+  </data>
+  <data name="Track_Help" xml:space="preserve">
+    <value>Wskaż to samo zdarzenie na filmie i w trasie GPS, np. ruszenie lub zatrzymanie. Czas filmu jest liczony od początku całego nagrania, przed cięciami. Do synchronizacji nie jest potrzebna data ani godzina z zegara kamery.</value>
+  </data>
+  <data name="Track_FileType" xml:space="preserve">
+    <value>Trasa FIT lub GPX</value>
+  </data>
+  <data name="Track_Info" xml:space="preserve">
+    <value>{0} - {1} UTC
+Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
+  </data>
+  <data name="Track_Estimate" xml:space="preserve">
+    <value>Zaproponuj dopasowanie na podstawie ruchu</value>
+  </data>
+  <data name="Track_EstimateInfo" xml:space="preserve">
+    <value>Przybliżone dopasowanie (korelacja {0:0.00}). Sprawdź je na filmie. Drgania kamery mogą być niezależne od prędkości.</value>
+  </data>
+  <data name="Track_FirstAnchor" xml:space="preserve">
+    <value>PUNKT SYNCHRONIZACJI</value>
+  </data>
+  <data name="Track_VideoSeconds" xml:space="preserve">
+    <value>Czas filmu (s)</value>
+  </data>
+  <data name="Track_Utc" xml:space="preserve">
+    <value>Czas GPS (UTC)</value>
+  </data>
+  <data name="Track_CurrentFrame" xml:space="preserve">
+    <value>Ustaw z podglądu</value>
+  </data>
+  <data name="Track_SelectPoint" xml:space="preserve">
+    <value>Wybierz punkt z trasy</value>
+  </data>
+  <data name="Track_SecondAnchor" xml:space="preserve">
+    <value>Drugi punkt synchronizacji</value>
+  </data>
+  <data name="Track_Gaps" xml:space="preserve">
+    <value>Podczas przerw w zapisie i luk w danych GPS pozycja i prędkość są niedostępne. Zatrzymanie pomiaru czasu w urządzeniu GPS nie oznacza, że pojazd stał w miejscu. Jeśli kamera przerwała nagrywanie, zsynchronizuj każde nagranie osobno.</value>
+  </data>
+  <data name="Track_Remove" xml:space="preserve">
+    <value>Odłącz trasę</value>
+  </data>
+  <data name="Track_Apply" xml:space="preserve">
+    <value>Zastosuj</value>
+  </data>
+  <data name="Track_NoEstimate" xml:space="preserve">
+    <value>Nie udało się dopasować ruchu kamery do zmian prędkości z GPS. Ustaw punkt synchronizacji ręcznie.</value>
+  </data>
+  <data name="Track_NoOverlap" xml:space="preserve">
+    <value>Po tym dopasowaniu trasa nie obejmuje żadnego fragmentu filmu.</value>
+  </data>
+  <data name="Track_InvalidTime" xml:space="preserve">
+    <value>Podaj czas filmu w sekundach i pełną datę z godziną GPS, np. 2026-01-01T12:00:00Z (UTC).</value>
+  </data>
+  <data name="Track_None" xml:space="preserve">
+    <value>Brak zewnętrznej trasy GPS</value>
+  </data>
+  <data name="Track_Applied" xml:space="preserve">
+    <value>Zastosowano trasę GPS: {0}</value>
+  </data>
+  <data name="Track_Removed" xml:space="preserve">
+    <value>Odłączono zewnętrzną trasę GPS</value>
+  </data>
+  <data name="Widget_AmbientTemperature" xml:space="preserve">
+    <value>Temperatura z trasy (FIT/GPX)</value>
+  </data>
+  <data name="Widget_ImuTemperature" xml:space="preserve">
+    <value>Temperatura czujnika ruchu</value>
+  </data>
+  <data name="Widget_DeviceDistance" xml:space="preserve">
+    <value>Dystans licznika</value>
+  </data>
+  <data name="Widget_DeviceBattery" xml:space="preserve">
+    <value>Bateria urządzenia GPS</value>
+  </data>
+  <data name="Editor_UnavailableAmbientTemperature" xml:space="preserve">
+    <value>Brak temperatury w danych nagrania. Dołącz trasę FIT lub GPX zawierającą pomiary temperatury.</value>
+  </data>
+  <data name="Editor_UnavailableImuTemperature" xml:space="preserve">
+    <value>To nagranie nie zawiera temperatury czujnika ruchu. Odczyt jest dostępny w nagraniach GoPro, które zapisują tę temperaturę w telemetrii.</value>
+  </data>
+  <data name="Editor_UnavailableDeviceDistance" xml:space="preserve">
+    <value>Brak dystansu zapisanego przez licznik. Dołącz plik FIT z tym pomiarem.</value>
+  </data>
+  <data name="Editor_UnavailableDeviceBattery" xml:space="preserve">
+    <value>Brak poziomu baterii urządzenia GPS. Dołącz plik FIT zawierający te dane.</value>
+  </data>
+  <data name="Widget_AmbientTemperatureDescription" xml:space="preserve">
+    <value>Temperatura zapisana przez urządzenie GPS w pliku FIT lub GPX.</value>
+  </data>
+  <data name="Widget_ImuTemperatureDescription" xml:space="preserve">
+    <value>Temperatura czujnika ruchu w kamerze, niezależna od temperatury z trasy GPS.</value>
+  </data>
+  <data name="Widget_DeviceDistanceDescription" xml:space="preserve">
+    <value>Dystans zapisany przez urządzenie GPS w pliku FIT. Obejmuje także odcinek sprzed początku filmu i fragmenty wycięte z nagrania.</value>
+  </data>
+  <data name="Widget_DeviceBatteryDescription" xml:space="preserve">
+    <value>Ostatni zapisany poziom baterii urządzenia GPS z pliku FIT.</value>
+  </data>
+  <data name="Widget_AudioLevel" xml:space="preserve">
+    <value>Poziom dźwięku</value>
+  </data>
+  <data name="Widget_WindProcessing" xml:space="preserve">
+    <value>Redukcja szumu wiatru</value>
+  </data>
+  <data name="Widget_ImageLuma" xml:space="preserve">
+    <value>Jasność obrazu</value>
+  </data>
+  <data name="Editor_UnavailableAudioLevel" xml:space="preserve">
+    <value>To nagranie nie zawiera poziomów dźwięku w telemetrii kamery.</value>
+  </data>
+  <data name="Editor_UnavailableWindProcessing" xml:space="preserve">
+    <value>To nagranie nie zawiera danych o redukcji szumu wiatru w telemetrii kamery.</value>
+  </data>
+  <data name="Editor_UnavailableImageLuma" xml:space="preserve">
+    <value>To nagranie nie zawiera średniej jasności obrazu w telemetrii kamery.</value>
+  </data>
+  <data name="Widget_AudioLevelDescription" xml:space="preserve">
+    <value>Poziom skuteczny (RMS) i szczytowy sygnału dźwiękowego, odczytane z telemetrii GoPro. Wartości w dBFS opisują poziom sygnału cyfrowego. Pasek pokazuje zakres od -60 do 0 dBFS, a wartości liczbowe nie są ograniczone do tego zakresu.</value>
+  </data>
+  <data name="Widget_WindProcessingDescription" xml:space="preserve">
+    <value>Informuje, czy redukcja szumu wiatru jest włączona, i pokazuje wskaźnik od 0 do 100 zapisany w telemetrii GoPro. Wskaźnik nie określa prędkości wiatru ani skuteczności redukcji w procentach.</value>
+  </data>
+  <data name="Widget_ImageLumaDescription" xml:space="preserve">
+    <value>Średnia jasność obrazu zapisana w telemetrii GoPro, od 0 (czerń) do 255 (biel). Widżet korzysta z gotowego odczytu z kamery. Nie jest to pomiar natężenia oświetlenia w luksach.</value>
+  </data>
 </root>

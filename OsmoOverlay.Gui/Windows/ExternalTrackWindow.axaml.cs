@@ -61,7 +61,7 @@ public partial class ExternalTrackWindow : Window
 	private async Task LoadTrackAsync(string path)
 	{
 		SetBusy(true);
-		ProblemText.Text = "";
+		Show(ProblemText, "");
 		try
 		{
 			ExternalTrack track = await Task.Run(() => ExternalTrackReader.Read(path));
@@ -76,14 +76,14 @@ public partial class ExternalTrackWindow : Window
 				UseSecond.IsChecked = false;
 				FirstAnchor.Utc = track.StartUtc;
 				SecondAnchor.Utc = track.EndUtc;
-				EstimateInfo.Text = "";
+				Show(EstimateInfo, "");
 			}
 			else if (Source.Synchronization is null && Source.OffsetSeconds is { } offset && _summary?.ContainerRecordingStartUtc is { } start)
 				FirstAnchor.Utc = start.AddSeconds(offset + FirstAnchor.VideoSeconds);
 		}
 		catch (Exception ex)
 		{
-			ProblemText.Text = ex.Message;
+			Show(ProblemText, ex.Message);
 		}
 		finally { if (!_closed) SetBusy(false); }
 	}
@@ -96,14 +96,14 @@ public partial class ExternalTrackWindow : Window
 		{
 			TrackSyncEstimate? estimate = await Task.Run(() => ExternalTrackSync.Estimate(frames, _summary.Video.Fps, track));
 			if (_closed) return;
-			if (estimate is null) { ProblemText.Text = Strings.Track_NoEstimate; return; }
+			if (estimate is null) { Show(ProblemText, Strings.Track_NoEstimate); return; }
 			FirstAnchor.VideoSeconds = 0;
 			FirstAnchor.Utc = estimate.TrackTimeAtVideoStartUtc;
 			UseSecond.IsChecked = false;
-			ProblemText.Text = "";
-			EstimateInfo.Text = string.Format(Strings.Track_EstimateInfo, estimate.Correlation);
+			Show(ProblemText, "");
+			Show(EstimateInfo, string.Format(Strings.Track_EstimateInfo, estimate.Correlation));
 		}
-		catch (Exception ex) { if (!_closed) ProblemText.Text = ex.Message; }
+		catch (Exception ex) { if (!_closed) Show(ProblemText, ex.Message); }
 		finally { if (!_closed) SetBusy(false); }
 	}
 
@@ -122,12 +122,20 @@ public partial class ExternalTrackWindow : Window
 			Accepted = true;
 			Close();
 		}
-		catch (Exception ex) { ProblemText.Text = ex.Message; }
+		catch (Exception ex) { Show(ProblemText, ex.Message); }
+	}
+
+	/// <summary>A message line is there only while it has something to say - an empty one would leave a gap in the layout.</summary>
+	private static void Show(TextBlock line, string text)
+	{
+		line.Text = text;
+		line.IsVisible = !string.IsNullOrEmpty(text);
 	}
 
 	private void SetBusy(bool busy)
 	{
 		_busy = busy;
+		TrackDetails.IsVisible = SyncSection.IsVisible = _track is not null;
 		Editor.IsEnabled = !busy;
 		ApplyButton.IsEnabled = !busy && _track is not null;
 		RemoveButton.IsEnabled = !busy;

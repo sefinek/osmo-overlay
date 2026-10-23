@@ -4008,50 +4008,140 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   <data name="Main_CutPartsOutOfTheMade" xml:space="preserve">
     <value>Cut parts out of the render (cuts made: {0})</value>
   </data>
-  <data name="Track_Title" xml:space="preserve"><value>GPS track</value></data>
-  <data name="Track_FileSection" xml:space="preserve"><value>Track file</value></data>
-  <data name="Track_Range" xml:space="preserve"><value>Track range</value></data>
-  <data name="Track_SecondAnchorHint" xml:space="preserve"><value>Corrects clock drift in a long recording. Pick an event near the end of the video.</value></data>
-  <data name="Track_Help" xml:space="preserve"><value>Match the same event in the video and the track, such as starting or stopping. Video time starts at the beginning of the entire recording, before cuts. The camera's clock is not needed.</value></data>
-  <data name="Track_FileType" xml:space="preserve"><value>FIT or GPX track</value></data>
-  <data name="Track_Info" xml:space="preserve"><value>{0} - {1} UTC
-GPS points: {2} · timer pauses: {3}</value></data>
-  <data name="Track_Estimate" xml:space="preserve"><value>Suggest alignment based on motion</value></data>
-  <data name="Track_EstimateInfo" xml:space="preserve"><value>Approximate alignment (correlation {0:0.00}). Check it against the video. Camera shake can be unrelated to speed.</value></data>
-  <data name="Track_FirstAnchor" xml:space="preserve"><value>Synchronization point</value></data>
-  <data name="Track_VideoSeconds" xml:space="preserve"><value>Video time (s)</value></data>
-  <data name="Track_Utc" xml:space="preserve"><value>GPS time (UTC)</value></data>
-  <data name="Track_CurrentFrame" xml:space="preserve"><value>Set from preview</value></data>
-  <data name="Track_SelectPoint" xml:space="preserve"><value>Pick a point from the track</value></data>
-  <data name="Track_SecondAnchor" xml:space="preserve"><value>Second synchronization point</value></data>
-  <data name="Track_Gaps" xml:space="preserve"><value>Recording pauses and GPS gaps stay on the timeline with position and speed unavailable. A timer pause does not confirm a standstill. Align separate recordings after a camera stop individually.</value></data>
-  <data name="Track_Remove" xml:space="preserve"><value>Disconnect track</value></data>
-  <data name="Track_Apply" xml:space="preserve"><value>Apply</value></data>
-  <data name="Track_NoEstimate" xml:space="preserve"><value>Not enough distinctive motion in common. Set a synchronization point manually.</value></data>
-  <data name="Track_NoOverlap" xml:space="preserve"><value>The aligned track does not cover any part of the video.</value></data>
-  <data name="Track_InvalidTime" xml:space="preserve"><value>Enter video time in seconds and a full GPS date and time, e.g. 2026-01-01T12:00:00Z (UTC).</value></data>
-  <data name="Track_None" xml:space="preserve"><value>No external GPS track</value></data>
-  <data name="Track_Applied" xml:space="preserve"><value>GPS track applied: {0}</value></data>
-  <data name="Track_Removed" xml:space="preserve"><value>External GPS track disconnected</value></data>
-  <data name="Widget_AmbientTemperature" xml:space="preserve"><value>Track temperature (FIT/GPX)</value></data>
-  <data name="Widget_ImuTemperature" xml:space="preserve"><value>Motion sensor temperature</value></data>
-  <data name="Widget_DeviceDistance" xml:space="preserve"><value>Device distance</value></data>
-  <data name="Widget_DeviceBattery" xml:space="preserve"><value>GPS device battery</value></data>
-  <data name="Editor_UnavailableAmbientTemperature" xml:space="preserve"><value>No temperature in the recording's data. Attach a FIT or GPX track containing temperature readings.</value></data>
-  <data name="Editor_UnavailableImuTemperature" xml:space="preserve"><value>This recording has no motion sensor temperature. Readings are supported for GoPro recordings containing TMPC.</value></data>
-  <data name="Editor_UnavailableDeviceDistance" xml:space="preserve"><value>No distance recorded by the device. Attach a FIT file containing this measurement.</value></data>
-  <data name="Editor_UnavailableDeviceBattery" xml:space="preserve"><value>No GPS device battery level. Attach a FIT file containing these readings.</value></data>
-  <data name="Widget_AmbientTemperatureDescription" xml:space="preserve"><value>Temperature recorded by the GPS device in the FIT or GPX track.</value></data>
-  <data name="Widget_ImuTemperatureDescription" xml:space="preserve"><value>The camera's motion sensor temperature, separate from the temperature in the GPS track.</value></data>
-  <data name="Widget_DeviceDistanceDescription" xml:space="preserve"><value>The original distance counter from the FIT file. Includes the route before the video and any parts cut out.</value></data>
-  <data name="Widget_DeviceBatteryDescription" xml:space="preserve"><value>The last recorded GPS device battery level from the FIT file. This is separate from the camera's battery.</value></data>
-  <data name="Widget_AudioLevel" xml:space="preserve"><value>Audio level</value></data>
-  <data name="Widget_WindProcessing" xml:space="preserve"><value>Wind noise reduction</value></data>
-  <data name="Widget_ImageLuma" xml:space="preserve"><value>Image brightness</value></data>
-  <data name="Editor_UnavailableAudioLevel" xml:space="preserve"><value>This recording has no audio levels in its camera telemetry.</value></data>
-  <data name="Editor_UnavailableWindProcessing" xml:space="preserve"><value>This recording has no wind noise reduction data in its camera telemetry.</value></data>
-  <data name="Editor_UnavailableImageLuma" xml:space="preserve"><value>This recording has no average image brightness in its camera telemetry.</value></data>
-  <data name="Widget_AudioLevelDescription" xml:space="preserve"><value>RMS and peak read from GoPro telemetry (AALP), without analyzing the audio track. dBFS measures digital signal level. The bar ranges from -60 to 0 dBFS; the numbers show the full readings.</value></data>
-  <data name="Widget_WindProcessingDescription" xml:space="preserve"><value>Wind noise reduction state and a 0-100 meter read from GoPro telemetry (WNDM). This is neither wind speed nor a percentage of reduction effectiveness.</value></data>
-  <data name="Widget_ImageLumaDescription" xml:space="preserve"><value>Average image brightness recorded in GoPro telemetry (YAVG), from 0 (black) to 255 (white). It is not calculated from video pixels and does not measure illuminance in lux.</value></data>
+  <data name="Track_Title" xml:space="preserve">
+    <value>GPS track</value>
+  </data>
+  <data name="Track_FileSection" xml:space="preserve">
+    <value>TRACK FILE</value>
+  </data>
+  <data name="Track_Range" xml:space="preserve">
+    <value>Track range</value>
+  </data>
+  <data name="Track_SecondAnchorHint" xml:space="preserve">
+    <value>Corrects clock drift in a long recording. Pick an event near the end of the video.</value>
+  </data>
+  <data name="Track_Help" xml:space="preserve">
+    <value>Match the same event in the video and the track, such as starting or stopping. Video time starts at the beginning of the entire recording, before cuts. The camera's clock is not needed.</value>
+  </data>
+  <data name="Track_FileType" xml:space="preserve">
+    <value>FIT or GPX track</value>
+  </data>
+  <data name="Track_Info" xml:space="preserve">
+    <value>{0} - {1} UTC
+GPS points: {2} · timer pauses: {3}</value>
+  </data>
+  <data name="Track_Estimate" xml:space="preserve">
+    <value>Suggest alignment based on motion</value>
+  </data>
+  <data name="Track_EstimateInfo" xml:space="preserve">
+    <value>Approximate alignment (correlation {0:0.00}). Check it against the video. Camera shake can be unrelated to speed.</value>
+  </data>
+  <data name="Track_FirstAnchor" xml:space="preserve">
+    <value>SYNCHRONIZATION POINT</value>
+  </data>
+  <data name="Track_VideoSeconds" xml:space="preserve">
+    <value>Video time (s)</value>
+  </data>
+  <data name="Track_Utc" xml:space="preserve">
+    <value>GPS time (UTC)</value>
+  </data>
+  <data name="Track_CurrentFrame" xml:space="preserve">
+    <value>Set from preview</value>
+  </data>
+  <data name="Track_SelectPoint" xml:space="preserve">
+    <value>Pick a point from the track</value>
+  </data>
+  <data name="Track_SecondAnchor" xml:space="preserve">
+    <value>Second synchronization point</value>
+  </data>
+  <data name="Track_Gaps" xml:space="preserve">
+    <value>Recording pauses and GPS gaps stay on the timeline with position and speed unavailable. A timer pause does not confirm a standstill. Align separate recordings after a camera stop individually.</value>
+  </data>
+  <data name="Track_Remove" xml:space="preserve">
+    <value>Disconnect track</value>
+  </data>
+  <data name="Track_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Track_NoEstimate" xml:space="preserve">
+    <value>Not enough distinctive motion in common. Set a synchronization point manually.</value>
+  </data>
+  <data name="Track_NoOverlap" xml:space="preserve">
+    <value>The aligned track does not cover any part of the video.</value>
+  </data>
+  <data name="Track_InvalidTime" xml:space="preserve">
+    <value>Enter video time in seconds and a full GPS date and time, e.g. 2026-01-01T12:00:00Z (UTC).</value>
+  </data>
+  <data name="Track_None" xml:space="preserve">
+    <value>No external GPS track</value>
+  </data>
+  <data name="Track_Applied" xml:space="preserve">
+    <value>GPS track applied: {0}</value>
+  </data>
+  <data name="Track_Removed" xml:space="preserve">
+    <value>External GPS track disconnected</value>
+  </data>
+  <data name="Widget_AmbientTemperature" xml:space="preserve">
+    <value>Track temperature (FIT/GPX)</value>
+  </data>
+  <data name="Widget_ImuTemperature" xml:space="preserve">
+    <value>Motion sensor temperature</value>
+  </data>
+  <data name="Widget_DeviceDistance" xml:space="preserve">
+    <value>Device distance</value>
+  </data>
+  <data name="Widget_DeviceBattery" xml:space="preserve">
+    <value>GPS device battery</value>
+  </data>
+  <data name="Editor_UnavailableAmbientTemperature" xml:space="preserve">
+    <value>No temperature in the recording's data. Attach a FIT or GPX track containing temperature readings.</value>
+  </data>
+  <data name="Editor_UnavailableImuTemperature" xml:space="preserve">
+    <value>This recording has no motion sensor temperature. Readings are supported for GoPro recordings containing TMPC.</value>
+  </data>
+  <data name="Editor_UnavailableDeviceDistance" xml:space="preserve">
+    <value>No distance recorded by the device. Attach a FIT file containing this measurement.</value>
+  </data>
+  <data name="Editor_UnavailableDeviceBattery" xml:space="preserve">
+    <value>No GPS device battery level. Attach a FIT file containing these readings.</value>
+  </data>
+  <data name="Widget_AmbientTemperatureDescription" xml:space="preserve">
+    <value>Temperature recorded by the GPS device in the FIT or GPX track.</value>
+  </data>
+  <data name="Widget_ImuTemperatureDescription" xml:space="preserve">
+    <value>The camera's motion sensor temperature, separate from the temperature in the GPS track.</value>
+  </data>
+  <data name="Widget_DeviceDistanceDescription" xml:space="preserve">
+    <value>The original distance counter from the FIT file. Includes the route before the video and any parts cut out.</value>
+  </data>
+  <data name="Widget_DeviceBatteryDescription" xml:space="preserve">
+    <value>The last recorded GPS device battery level from the FIT file. This is separate from the camera's battery.</value>
+  </data>
+  <data name="Widget_AudioLevel" xml:space="preserve">
+    <value>Audio level</value>
+  </data>
+  <data name="Widget_WindProcessing" xml:space="preserve">
+    <value>Wind noise reduction</value>
+  </data>
+  <data name="Widget_ImageLuma" xml:space="preserve">
+    <value>Image brightness</value>
+  </data>
+  <data name="Editor_UnavailableAudioLevel" xml:space="preserve">
+    <value>This recording has no audio levels in its camera telemetry.</value>
+  </data>
+  <data name="Editor_UnavailableWindProcessing" xml:space="preserve">
+    <value>This recording has no wind noise reduction data in its camera telemetry.</value>
+  </data>
+  <data name="Editor_UnavailableImageLuma" xml:space="preserve">
+    <value>This recording has no average image brightness in its camera telemetry.</value>
+  </data>
+  <data name="Widget_AudioLevelDescription" xml:space="preserve">
+    <value>RMS and peak read from GoPro telemetry (AALP), without analyzing the audio track. dBFS measures digital signal level. The bar ranges from -60 to 0 dBFS; the numbers show the full readings.</value>
+  </data>
+  <data name="Widget_WindProcessingDescription" xml:space="preserve">
+    <value>Wind noise reduction state and a 0-100 meter read from GoPro telemetry (WNDM). This is neither wind speed nor a percentage of reduction effectiveness.</value>
+  </data>
+  <data name="Widget_ImageLumaDescription" xml:space="preserve">
+    <value>Average image brightness recorded in GoPro telemetry (YAVG), from 0 (black) to 255 (white). It is not calculated from video pixels and does not measure illuminance in lux.</value>
+  </data>
 </root>

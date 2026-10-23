@@ -9,6 +9,12 @@
 		<Style Selector="TextBlock.sectionLabel">
 			<Setter Property="Margin" Value="4,0,0,-4" />
 		</Style>
+		<Style Selector="ToggleSwitch">
+			<Setter Property="OnContent" Value="" />
+			<Setter Property="OffContent" Value="" />
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
 		<Style Selector="Border.settingsCard">
 			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
 			<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
@@ -50,41 +56,45 @@
 							<TextBox Name="PathBox" IsReadOnly="True" PlaceholderText="{x:Static local:Strings.Track_FileType}" />
 							<Button Grid.Column="1" Content="{x:Static local:Strings.Common_Browse}" Click="OnBrowseClick" />
 						</Grid>
-						<Border Classes="divider" />
-						<StackPanel Classes="settingBlock" Spacing="2">
-							<TextBlock Text="{x:Static local:Strings.Track_Range}" Classes="rowTitle" />
-							<TextBlock Name="TrackInfo" Classes="rowHint" />
-						</StackPanel>
-						<Border Classes="divider" />
-						<StackPanel Classes="settingBlock">
-							<Button Name="EstimateButton" Content="{x:Static local:Strings.Track_Estimate}" Click="OnEstimateClick" IsEnabled="False" HorizontalAlignment="Left" />
-							<TextBlock Name="EstimateInfo" IsVisible="{Binding !!Text, RelativeSource={RelativeSource Self}}" Classes="rowHint" />
-						</StackPanel>
-					</StackPanel>
-				</Border>
-
-				<TextBlock Text="{x:Static local:Strings.Track_FirstAnchor}" Classes="sectionLabel" />
-				<Border Classes="settingsCard">
-					<StackPanel>
-						<StackPanel Classes="settingBlock">
-							<local:TrackAnchorEditor Name="FirstAnchor" />
-						</StackPanel>
-						<Border Classes="divider" />
-						<Grid Margin="16,13" ColumnDefinitions="*,Auto" ColumnSpacing="24">
-							<StackPanel>
-								<TextBlock Text="{x:Static local:Strings.Track_SecondAnchor}" Classes="rowTitle" />
-								<TextBlock Text="{x:Static local:Strings.Track_SecondAnchorHint}" Classes="rowHint" Margin="0,3,0,0" />
+						<StackPanel Name="TrackDetails" IsVisible="False">
+							<Border Classes="divider" />
+							<StackPanel Classes="settingBlock" Spacing="2">
+								<TextBlock Text="{x:Static local:Strings.Track_Range}" Classes="rowTitle" />
+								<TextBlock Name="TrackInfo" Classes="rowHint" />
 							</StackPanel>
-							<ToggleSwitch Grid.Column="1" Name="UseSecond" />
-						</Grid>
-						<Border Classes="divider" IsVisible="{Binding #UseSecond.IsChecked}" />
-						<StackPanel Name="SecondPanel" Classes="settingBlock" IsVisible="{Binding #UseSecond.IsChecked}">
-							<local:TrackAnchorEditor Name="SecondAnchor" />
+							<Border Classes="divider" />
+							<StackPanel Classes="settingBlock">
+								<Button Name="EstimateButton" Content="{x:Static local:Strings.Track_Estimate}" Click="OnEstimateClick" IsEnabled="False" HorizontalAlignment="Left" />
+								<TextBlock Name="EstimateInfo" IsVisible="False" Classes="rowHint" />
+							</StackPanel>
 						</StackPanel>
 					</StackPanel>
 				</Border>
 
-				<TextBlock Name="ProblemText" IsVisible="{Binding !!Text, RelativeSource={RelativeSource Self}}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" />
+				<StackPanel Name="SyncSection" Spacing="14" IsVisible="False">
+					<TextBlock Text="{x:Static local:Strings.Track_FirstAnchor}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<StackPanel Classes="settingBlock">
+								<local:TrackAnchorEditor Name="FirstAnchor" />
+							</StackPanel>
+							<Border Classes="divider" />
+							<Grid Margin="16,13" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Track_SecondAnchor}" Classes="rowTitle" />
+									<TextBlock Text="{x:Static local:Strings.Track_SecondAnchorHint}" Classes="rowHint" Margin="0,3,0,0" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="UseSecond" />
+							</Grid>
+							<Border Classes="divider" IsVisible="{Binding #UseSecond.IsChecked}" />
+							<StackPanel Name="SecondPanel" Classes="settingBlock" IsVisible="{Binding #UseSecond.IsChecked}">
+								<local:TrackAnchorEditor Name="SecondAnchor" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+
+				<TextBlock Name="ProblemText" IsVisible="False" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" />
 				<TextBlock Text="{x:Static local:Strings.Track_Gaps}" Classes="rowHint" Margin="4,0" />
 			</StackPanel>
 		</ScrollViewer>

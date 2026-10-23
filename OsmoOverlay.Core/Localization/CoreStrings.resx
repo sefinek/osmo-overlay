@@ -605,13 +605,31 @@
   <data name="ExternalTrack_NoOverlap" xml:space="preserve">
     <value>The aligned GPS track does not cover any part of the recording.</value>
   </data>
-  <data name="Overlay_AmbientTemperature" xml:space="preserve"><value>Track temperature</value></data>
-  <data name="Overlay_ImuTemperature" xml:space="preserve"><value>Motion sensor temperature</value></data>
-  <data name="Overlay_DeviceDistance" xml:space="preserve"><value>Device distance</value></data>
-  <data name="Overlay_DeviceBattery" xml:space="preserve"><value>Device battery</value></data>
-  <data name="Overlay_AudioLevel" xml:space="preserve"><value>Audio level</value></data>
-  <data name="Overlay_WindProcessing" xml:space="preserve"><value>Wind noise reduction</value></data>
-  <data name="Overlay_ImageLuma" xml:space="preserve"><value>Image brightness</value></data>
-  <data name="Overlay_Active" xml:space="preserve"><value>On</value></data>
-  <data name="Overlay_Inactive" xml:space="preserve"><value>Off</value></data>
+  <data name="Overlay_AmbientTemperature" xml:space="preserve">
+    <value>Track temperature</value>
+  </data>
+  <data name="Overlay_ImuTemperature" xml:space="preserve">
+    <value>Motion sensor temperature</value>
+  </data>
+  <data name="Overlay_DeviceDistance" xml:space="preserve">
+    <value>Device distance</value>
+  </data>
+  <data name="Overlay_DeviceBattery" xml:space="preserve">
+    <value>Device battery</value>
+  </data>
+  <data name="Overlay_AudioLevel" xml:space="preserve">
+    <value>Audio level</value>
+  </data>
+  <data name="Overlay_WindProcessing" xml:space="preserve">
+    <value>Wind noise reduction</value>
+  </data>
+  <data name="Overlay_ImageLuma" xml:space="preserve">
+    <value>Image brightness</value>
+  </data>
+  <data name="Overlay_Active" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="Overlay_Inactive" xml:space="preserve">
+    <value>Off</value>
+  </data>
 </root>
