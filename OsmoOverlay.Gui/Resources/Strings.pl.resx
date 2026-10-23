@@ -2027,6 +2027,9 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
   <data name="SettingsPresets_PickProject" xml:space="preserve">
     <value>Ten projekt nie ma zapisanego presetu ustawień (albo został usunięty). Którego użyć?</value>
   </data>
+  <data name="SettingsPresets_PickWindowTitle" xml:space="preserve">
+    <value>Preset ustawień</value>
+  </data>
   <data name="SettingsPresets_PickTitle" xml:space="preserve">
     <value>Wybierz preset ustawień</value>
   </data>

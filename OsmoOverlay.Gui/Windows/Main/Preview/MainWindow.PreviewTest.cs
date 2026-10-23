@@ -173,7 +173,7 @@ public partial class MainWindow
 	private PreviewReportContext PreviewReportContextFor(string source, string mode, string display, double rate, OverlaySettings settings)
 	{
 		Window viewportWindow = GetTopLevel(PreviewVideo) as Window ?? this;
-		double scaling = viewportWindow.RenderScaling;
+		double scaling = UiScale.DeviceScaling(viewportWindow);
 		return new PreviewReportContext(source, mode, display, _previewFrameSize, PreviewVideo.Bounds.Width * scaling,
 			PreviewVideo.Bounds.Height * scaling, scaling, rate, _previewPlayer.DecoderDescription, _showOverlay,
 			settings.PreviewDrawsShadows && !settings.DisableShadows);

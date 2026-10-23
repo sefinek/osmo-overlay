@@ -2027,6 +2027,9 @@ The cuts, view settings and overlay will be applied once these files are located
   <data name="SettingsPresets_PickProject" xml:space="preserve">
     <value>This project has no settings preset saved (or it was deleted). Which one should it use?</value>
   </data>
+  <data name="SettingsPresets_PickWindowTitle" xml:space="preserve">
+    <value>Settings preset</value>
+  </data>
   <data name="SettingsPresets_PickTitle" xml:space="preserve">
     <value>Choose a settings preset</value>
   </data>

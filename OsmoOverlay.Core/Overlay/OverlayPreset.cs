@@ -106,7 +106,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 				ShowFromSpeedKmh = null, LayerId = nameof(OverlayElementType.Watermark)
 			},
 			// Top right, under the G-meter - placed by hand, so it's a spot in the 4K reference space rather than derived from a margin.
-			new GpsAlertElement { X = 3451.7102f, Y = 396.52588f },
+			new GpsAlertElement { X = 3451.7102f, Y = 426.52588f },
 			// The rest are off by default - added after the layout above, so they mustn't move or cover any of it.
 			new PitchGaugeElement { X = pitchCx, Y = rollCy, Visible = false },
 			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },

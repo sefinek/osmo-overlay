@@ -299,7 +299,7 @@ public partial class BenchmarkWindow : Window
 		LiveCaption.Text = Strings.Benchmark_LivePlayback;
 		await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, ct);
 
-		double scaling = RenderScaling;
+		double scaling = UiScale.DeviceScaling(this);
 		int width = Math.Min(testRecording.Video.Width, (int)(LiveScreen.Bounds.Width * scaling)) & ~1;
 		int height = (int)Math.Round(width * (double)testRecording.Video.Height / testRecording.Video.Width) & ~1;
 		OverlaySettings settings = OverlaySettingsStore.Load();

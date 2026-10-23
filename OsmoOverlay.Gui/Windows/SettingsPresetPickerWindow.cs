@@ -13,7 +13,7 @@ internal sealed class SettingsPresetPickerWindow : Window
 
 	private SettingsPresetPickerWindow(string message, IReadOnlyList<SettingsPreset> presets, string activeId)
 	{
-		Title = Strings.SettingsPresets_PickTitle;
+		Title = Strings.SettingsPresets_PickWindowTitle;
 		Width = 440;
 		SizeToContent = SizeToContent.Height;
 		CanResize = false;
