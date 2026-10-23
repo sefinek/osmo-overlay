@@ -36,7 +36,9 @@ public sealed record RenderOptions(
 	// Where the flat picture of a 360 recording looks - the default (leveled, straight ahead) when null; ignored for a flat video.
 	ReframeView? Reframe = null,
 	// A track from another device put onto the telemetry the render extracts (ignored with TelemetryFrames, which the caller already has the track in).
-	ExternalTrackSource? ExternalTrack = null)
+	ExternalTrackSource? ExternalTrack = null,
+	// A render without the sound track; null = Settings' choice.
+	bool? NoAudio = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -210,6 +212,7 @@ public static class RenderJob
 			var availability = OverlayAvailability.Of(rawFrames, first.Source.ContainerCreationTimeUtc is not null, camera);
 			bool hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
+			bool noAudio = options.NoAudio ?? settings.NoAudio;
 			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
 			var routeIntro = RouteIntroSettings.ForRecording(settings, hasGpsFix, camera, plan.StartsLate);
 			using var renderer = new OverlayRenderer(output.Width, output.Height,
@@ -280,7 +283,7 @@ public static class RenderJob
 				? null
 				: new LibavVideoSource(PlaybackSegment.Of(segments), fps,
 					output.Width, output.Height, reframer);
-			using Process ffmpeg = FfmpegPipeline.StartRender(segments, options.OutputPath, encoder, output, options.Overwrite, encode,
+			using Process ffmpeg = FfmpegPipeline.StartRender(noAudio ? [.. segments.Select(s => s with { Source = s.Source with { Audio = null } })] : segments, options.OutputPath, encoder, output, options.Overwrite, encode,
 				plan, options.GreenScreen, pictures is not null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 

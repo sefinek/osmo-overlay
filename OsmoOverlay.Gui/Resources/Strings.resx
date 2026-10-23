@@ -2421,6 +2421,12 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_PutsTheIndexFirstSo" xml:space="preserve">
     <value>Moves the index to the start of the file so playback in a browser or messaging app can begin before the entire video is downloaded. The image remains unchanged. This extra step takes a few seconds per GB.</value>
   </data>
+  <data name="Settings_RenderWithoutAudio" xml:space="preserve">
+    <value>Render without audio</value>
+  </data>
+  <data name="Settings_RenderWithoutAudioHint" xml:space="preserve">
+    <value>The saved video has no sound track. The picture and telemetry stay unchanged. Applies to renders and to the command-line tool.</value>
+  </data>
   <data name="Settings_ReadTheLicense" xml:space="preserve">
     <value>Read the license</value>
   </data>
@@ -2739,6 +2745,9 @@ Select the original file from the camera&apos;s memory card ({0}). Recordings ex
   </data>
   <data name="Summary_PlanFastStart" xml:space="preserve">
     <value>fast start</value>
+  </data>
+  <data name="Summary_PlanNoAudio" xml:space="preserve">
+    <value>no audio</value>
   </data>
   <data name="Summary_PlanMatches" xml:space="preserve">
     <value>Encoding matches the source 1:1 - resolution, frame rate, codec/profile/level, bitrate, keyframes and color tags{0}.</value>
@@ -4025,6 +4034,9 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   </data>
   <data name="Track_FileType" xml:space="preserve">
     <value>FIT or GPX track</value>
+  </data>
+  <data name="Track_FitPreferred" xml:space="preserve">
+    <value>FIT is the better choice: it holds the recorded speed, timer pauses, distance and the device battery. With GPX the speed is derived from successive positions, and there is no distance or battery.</value>
   </data>
   <data name="Track_Info" xml:space="preserve">
     <value>{0} - {1} UTC

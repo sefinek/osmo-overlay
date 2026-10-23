@@ -3,7 +3,7 @@
              xmlns:local="using:OsmoOverlay.Gui"
              x:Class="OsmoOverlay.Gui.TrackAnchorEditor">
 
-	<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+	<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="6">
 		<TextBlock Text="{x:Static local:Strings.Track_VideoSeconds}" FontWeight="SemiBold" />
 		<TextBlock Grid.Column="1" Text="{x:Static local:Strings.Track_Utc}" FontWeight="SemiBold" />
 

@@ -185,6 +185,7 @@ public partial class SettingsWindow : Window
 		OutputEightBitCheck.IsChecked = settings.OutputEightBit;
 		HardwareDecodingCheck.IsChecked = settings.HardwareDecoding;
 		FastStartCheck.IsChecked = settings.FastStart;
+		NoAudioCheck.IsChecked = settings.NoAudio;
 		MetadataTelemetryCheck.IsChecked = settings.MetadataKeepTelemetry;
 		MetadataSerialCheck.IsChecked = settings.MetadataKeepSerialNumber;
 		MetadataDebugCheck.IsChecked = settings.MetadataKeepDebugTrack;
@@ -283,6 +284,7 @@ public partial class SettingsWindow : Window
 			OutputEightBit = OutputEightBitCheck.IsChecked == true,
 			HardwareDecoding = HardwareDecodingCheck.IsChecked == true,
 			FastStart = FastStartCheck.IsChecked == true,
+			NoAudio = NoAudioCheck.IsChecked == true,
 			PreserveCameraMetadata = PreserveCameraMetadataCheck.IsChecked == true,
 			TagExportedVideo = TagExportedVideoCheck.IsChecked == true,
 			MetadataKeepTelemetry = MetadataTelemetryCheck.IsChecked == true,

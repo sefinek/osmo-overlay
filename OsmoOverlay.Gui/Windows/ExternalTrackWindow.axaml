@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:OsmoOverlay.Gui"
         x:Class="OsmoOverlay.Gui.ExternalTrackWindow"
-        Width="720" MinWidth="620" Height="720" MinHeight="520"
+        Width="720" MinWidth="620" Height="760" MinHeight="520"
         WindowStartupLocation="CenterOwner" Background="{StaticResource WindowBackgroundBrush}"
         Icon="{x:Static local:AppAssets.Icon}" Title="{x:Static local:Strings.Track_Title}">
 	<Window.Styles>
@@ -44,9 +44,9 @@
 		</Style>
 	</Window.Styles>
 
-	<Grid Margin="20" RowDefinitions="*,Auto" RowSpacing="16">
+	<Grid Margin="20" RowDefinitions="*,Auto,Auto" RowSpacing="12">
 		<ScrollViewer HorizontalScrollBarVisibility="Disabled">
-			<StackPanel Name="Editor" Spacing="14">
+			<StackPanel Name="Editor" Spacing="14" Margin="0,0,12,0">
 				<TextBlock Text="{x:Static local:Strings.Track_Help}" Classes="pageSubtitle" />
 
 				<TextBlock Text="{x:Static local:Strings.Track_FileSection}" Classes="sectionLabel" />
@@ -56,16 +56,12 @@
 							<TextBox Name="PathBox" IsReadOnly="True" PlaceholderText="{x:Static local:Strings.Track_FileType}" />
 							<Button Grid.Column="1" Content="{x:Static local:Strings.Common_Browse}" Click="OnBrowseClick" />
 						</Grid>
+						<TextBlock Classes="rowHint" Margin="16,0,16,13" Text="{x:Static local:Strings.Track_FitPreferred}" />
 						<StackPanel Name="TrackDetails" IsVisible="False">
 							<Border Classes="divider" />
 							<StackPanel Classes="settingBlock" Spacing="2">
 								<TextBlock Text="{x:Static local:Strings.Track_Range}" Classes="rowTitle" />
 								<TextBlock Name="TrackInfo" Classes="rowHint" />
-							</StackPanel>
-							<Border Classes="divider" />
-							<StackPanel Classes="settingBlock">
-								<Button Name="EstimateButton" Content="{x:Static local:Strings.Track_Estimate}" Click="OnEstimateClick" IsEnabled="False" HorizontalAlignment="Left" />
-								<TextBlock Name="EstimateInfo" IsVisible="False" Classes="rowHint" />
 							</StackPanel>
 						</StackPanel>
 					</StackPanel>
@@ -79,6 +75,15 @@
 								<local:TrackAnchorEditor Name="FirstAnchor" />
 							</StackPanel>
 							<Border Classes="divider" />
+							<StackPanel Classes="settingBlock" Spacing="6">
+								<Button Name="EstimateButton" Content="{x:Static local:Strings.Track_Estimate}" Click="OnEstimateClick" IsEnabled="False" HorizontalAlignment="Center" />
+								<TextBlock Name="EstimateInfo" IsVisible="False" Classes="rowHint" TextAlignment="Center" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+					<Border Classes="settingsCard">
+						<StackPanel>
 							<Grid Margin="16,13" ColumnDefinitions="*,Auto" ColumnSpacing="24">
 								<StackPanel>
 									<TextBlock Text="{x:Static local:Strings.Track_SecondAnchor}" Classes="rowTitle" />
@@ -94,14 +99,16 @@
 					</Border>
 				</StackPanel>
 
-				<TextBlock Name="ProblemText" IsVisible="False" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" />
 				<TextBlock Text="{x:Static local:Strings.Track_Gaps}" Classes="rowHint" Margin="4,0" />
 			</StackPanel>
 		</ScrollViewer>
-		<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-			<Button Name="RemoveButton" Content="{x:Static local:Strings.Track_Remove}" Click="OnRemoveClick" />
-			<Button Grid.Column="2" Content="{x:Static local:Strings.Common_Cancel}" Click="OnCancelClick" />
-			<Button Grid.Column="3" Name="ApplyButton" Content="{x:Static local:Strings.Track_Apply}" Classes="accent" Click="OnApplyClick" IsEnabled="False" />
+
+		<TextBlock Grid.Row="1" Name="ProblemText" IsVisible="False" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" />
+
+		<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+			<Button Name="RemoveButton" Content="{x:Static local:Strings.Track_Remove}" Classes="danger" Click="OnRemoveClick" />
+			<Button Grid.Column="2" Content="{x:Static local:Strings.Common_Cancel}" IsCancel="True" Click="OnCancelClick" />
+			<Button Grid.Column="3" Name="ApplyButton" Content="{x:Static local:Strings.Track_Apply}" Classes="accent" IsDefault="True" Click="OnApplyClick" IsEnabled="False" />
 		</Grid>
 	</Grid>
 </Window>

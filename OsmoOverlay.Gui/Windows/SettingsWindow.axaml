@@ -297,6 +297,15 @@
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="FastStartCheck" />
 							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_RenderWithoutAudio}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint"
+									           Text="{x:Static local:Strings.Settings_RenderWithoutAudioHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="NoAudioCheck" />
+							</Grid>
 						</StackPanel>
 					</Border>
 					<TextBlock Classes="link" HorizontalAlignment="Left" Text="{x:Static local:Strings.Settings_FindWhatIsFaster}"

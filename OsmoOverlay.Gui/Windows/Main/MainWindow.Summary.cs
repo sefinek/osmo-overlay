@@ -601,6 +601,7 @@ public partial class MainWindow
 		if (settings.PreserveCameraMetadata && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack || settings.MetadataKeepThumbnails))
 			extras.Add(settings.MetadataKeepSerialNumber ? Strings.Summary_PlanMetadataKeptSerial : Strings.Summary_PlanMetadataKept);
 		if (settings.FastStart) extras.Add(Strings.Summary_PlanFastStart);
+		if (settings.NoAudio) extras.Add(Strings.Summary_PlanNoAudio);
 		string suffix = extras.Count > 0 ? $" ({string.Join(", ", extras)})" : "";
 
 		return deviations.Count == 0

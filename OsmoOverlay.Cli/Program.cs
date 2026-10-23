@@ -22,11 +22,12 @@ foreach (string line in AppBanner.BuildLines("CLI"))
 CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format());
 
 string[] options = ["-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder", "--track", "--track-offset", "--track-anchor"];
-string[] flags = ["--no-level"];
-const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--encoder <name>] [--track <file.fit|file.gpx> [--track-offset <seconds> | --track-anchor <video-time>=<UTC> ...]]\n" +
+string[] flags = ["--no-level", "--no-audio"];
+const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--no-audio] [--encoder <name>] [--track <file.fit|file.gpx> [--track-offset <seconds> | --track-anchor <video-time>=<UTC> ...]]\n" +
                      "  inputs are the camera's own recordings (DJI Osmo Action, GoPro or Insta360)\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
                      "  --cut removes that part from the video and the telemetry; repeat it for several cuts. Add @fade or @white (optionally =seconds, e.g. 1:00-1:10@fade=1) to fade through black or white where the cut joins the kept parts, or @cross, @wipeleft, @wiperight, @slideleft, @slideright to blend them (the output gets shorter by that length)\n" +
+                     "  --no-audio leaves the sound track out of the output\n" +
                      "  --view <yaw>,<pitch>,<roll>[,<fov>] frames a 360 recording's flat picture, in degrees (default 0,0,0,100),\n" +
                      "         leveled by the camera's accelerometer unless --no-level\n" +
                      "  --encoder picks ffmpeg's video encoder (hevc_nvenc, hevc_amf, hevc_qsv, libx265, or h264_* / libx264 for H.264 output)\n" +
@@ -60,6 +61,7 @@ string? encoder = null;
 string? trackPath = null;
 double? trackOffset = null;
 List<TrackSyncAnchor> trackAnchors = [];
+bool noAudio = false;
 
 int i = 0;
 while (i < args.Length && !options.Contains(args[i]) && !flags.Contains(args[i]))
@@ -76,6 +78,12 @@ for (; i < args.Length; i++)
 	if (args[i] == "--no-level")
 	{
 		level = false;
+		continue;
+	}
+
+	if (args[i] == "--no-audio")
+	{
+		noAudio = true;
 		continue;
 	}
 
@@ -187,7 +195,7 @@ Console.CancelKeyPress += (_, e) =>
 
 RenderResult result = await RenderJob.RunAsync(
 	new RenderOptions(inputPaths, outputPath, frameLimit, encoder, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: (view ?? new ReframeView()) with { Level = level },
-		ExternalTrack: trackSource), progress,
+		ExternalTrack: trackSource, NoAudio: noAudio ? true : null), progress,
 	cts.Token);
 Console.WriteLine();
 

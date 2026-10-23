@@ -106,6 +106,8 @@ public sealed record OverlaySettings(
 	string? OutputCodec = null,
 	bool OutputEightBit = false,
 	bool FastStart = false,
+	// A render without the sound track - the picture and telemetry are untouched.
+	bool NoAudio = false,
 	// Measured render speed (frames/s) per RenderSpeedHistory.Key - feeds the GUI's pre-render estimate.
 	Dictionary<string, double>? RenderFpsHistory = null,
 	// An app release the user declined at startup - not offered there again (Settings' About tab still does).

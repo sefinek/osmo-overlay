@@ -2254,7 +2254,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Szybki start przy odtwarzaniu w sieci</value>
   </data>
   <data name="Settings_FindWhatIsFaster" xml:space="preserve">
-    <value>Sprawdź, co jest szybsze na tym komputerze</value>
+    <value>Sprawdź wydajność komputera</value>
   </data>
   <data name="Settings_FreeForNonCommercialUse" xml:space="preserve">
     <value>OsmoOverlay jest dostępny bezpłatnie do użytku niekomercyjnego na licencji PolyForm Noncommercial License 1.0.0. Korzystanie z programu, jego modyfikowanie i udostępnianie podlegają warunkom tej licencji.</value>
@@ -2420,6 +2420,12 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   </data>
   <data name="Settings_PutsTheIndexFirstSo" xml:space="preserve">
     <value>Przenosi indeks na początek pliku, aby odtwarzanie w przeglądarce lub komunikatorze mogło rozpocząć się przed pobraniem całego filmu. Obraz pozostaje bez zmian. Dodatkowy etap zapisu trwa kilka sekund na każdy GB.</value>
+  </data>
+  <data name="Settings_RenderWithoutAudio" xml:space="preserve">
+    <value>Zapisuj filmy bez dźwięku</value>
+  </data>
+  <data name="Settings_RenderWithoutAudioHint" xml:space="preserve">
+    <value>Pomija ścieżkę dźwiękową podczas eksportu. Ustawienie dotyczy także renderowania z wiersza poleceń.</value>
   </data>
   <data name="Settings_ReadTheLicense" xml:space="preserve">
     <value>Przeczytaj licencję</value>
@@ -2739,6 +2745,9 @@ Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z
   </data>
   <data name="Summary_PlanFastStart" xml:space="preserve">
     <value>szybki start</value>
+  </data>
+  <data name="Summary_PlanNoAudio" xml:space="preserve">
+    <value>bez dźwięku</value>
   </data>
   <data name="Summary_PlanMatches" xml:space="preserve">
     <value>Parametry kodowania odpowiadają źródłu: rozdzielczość, liczba klatek na sekundę, kodek, profil, poziom, bitrate, odstęp między klatkami kluczowymi i znaczniki kolorów{0}.</value>
@@ -4025,6 +4034,9 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   </data>
   <data name="Track_FileType" xml:space="preserve">
     <value>Trasa FIT lub GPX</value>
+  </data>
+  <data name="Track_FitPreferred" xml:space="preserve">
+    <value>Lepszy jest plik FIT: zawiera zapisaną prędkość, przerwy timera, dystans i stan baterii urządzenia. Z GPX prędkość jest wyliczana z kolejnych pozycji, a dystansu i baterii nie ma.</value>
   </data>
   <data name="Track_Info" xml:space="preserve">
     <value>{0} - {1} UTC
