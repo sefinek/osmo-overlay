@@ -50,8 +50,8 @@ public partial class DeveloperWindow : Window
 					DialogKind.Info, onConfirm: () => Task.Delay(2000), workingText: "Working...");
 				break;
 			case "config-preset-picker":
-				List<ConfigPreset> samples = ConfigPresetStore.Load().Presets;
-				result = await ConfigPresetPickerWindow.PickAsync(this, SampleMessage, samples, samples[0].Id);
+				List<SettingsPreset> samples = SettingsPresetStore.Load().Presets;
+				result = await SettingsPresetPickerWindow.PickAsync(this, SampleMessage, samples, samples[0].Id);
 				break;
 			case "show":
 				await ConfirmDialog.ShowAsync(this, SampleTitle, SampleMessage, kind: Enum.Parse<DialogKind>(argument));

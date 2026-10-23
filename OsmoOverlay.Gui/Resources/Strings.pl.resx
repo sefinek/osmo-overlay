@@ -1812,111 +1812,6 @@ Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. W
   <data name="Monitor_DisplayPrimary" xml:space="preserve">
     <value>Ekran {0} - {1} (główny)</value>
   </data>
-  <data name="ConfigPresets_Active" xml:space="preserve">
-    <value>Aktywny preset</value>
-  </data>
-  <data name="ConfigPresets_ActiveHint" xml:space="preserve">
-    <value>Zakładki Renderowanie, Prędkość i Wstęp z trasą edytują aktywny preset. Żeby zmienić ustawienia innego presetu (np. kalibrację prędkości), wybierz go tutaj i otwórz daną zakładkę.</value>
-  </data>
-  <data name="ConfigPresets_Covers" xml:space="preserve">
-    <value>Preset obejmuje: kalibrację prędkości, orientację i płynność GPS, znak wodny, wstęp z trasą oraz ustawienia renderu (jakość, kodek, rozdzielczość, dźwięk, metadane). Interfejs, zachowanie programu, dekodowanie sprzętowe, cienie i klucze map są wspólne dla wszystkich presetów.</value>
-  </data>
-  <data name="ConfigPresets_CopyName" xml:space="preserve">
-    <value>{0} - kopia</value>
-  </data>
-  <data name="ConfigPresets_DeleteMessage" xml:space="preserve">
-    <value>Czy na pewno chcesz usunąć preset ustawień „{0}”? Układy widgetów zostają bez zmian. Tej operacji nie da się cofnąć.</value>
-  </data>
-  <data name="ConfigPresets_DeleteTitle" xml:space="preserve">
-    <value>Usunąć preset ustawień?</value>
-  </data>
-  <data name="ConfigPresets_Duplicate" xml:space="preserve">
-    <value>Duplikuj</value>
-  </data>
-  <data name="ConfigPresets_Export" xml:space="preserve">
-    <value>Eksportuj</value>
-  </data>
-  <data name="ConfigPresets_Exported" xml:space="preserve">
-    <value>Wyeksportowano preset ustawień „{0}” do {1}</value>
-  </data>
-  <data name="ConfigPresets_ExportTitle" xml:space="preserve">
-    <value>Eksportuj preset ustawień</value>
-  </data>
-  <data name="ConfigPresets_FileType" xml:space="preserve">
-    <value>Preset ustawień</value>
-  </data>
-  <data name="ConfigPresets_Import" xml:space="preserve">
-    <value>Importuj</value>
-  </data>
-  <data name="ConfigPresets_Imported" xml:space="preserve">
-    <value>Zaimportowano preset ustawień „{0}”</value>
-  </data>
-  <data name="ConfigPresets_ImportFailed" xml:space="preserve">
-    <value>Nie udało się zaimportować presetu ustawień z {0} - szczegóły w logu</value>
-  </data>
-  <data name="ConfigPresets_ImportTitle" xml:space="preserve">
-    <value>Importuj preset ustawień</value>
-  </data>
-  <data name="ConfigPresets_Layout" xml:space="preserve">
-    <value>Układ widgetów</value>
-  </data>
-  <data name="ConfigPresets_LayoutHint" xml:space="preserve">
-    <value>Preset nakładki, który włącza się razem z tym presetem. Zmiana układu w głównym oknie nie zmienia tego wyboru.</value>
-  </data>
-  <data name="ConfigPresets_LayoutKeep" xml:space="preserve">
-    <value>Nie zmieniaj układu</value>
-  </data>
-  <data name="ConfigPresets_Name" xml:space="preserve">
-    <value>Nazwa</value>
-  </data>
-  <data name="ConfigPresets_New" xml:space="preserve">
-    <value>Nowy</value>
-  </data>
-  <data name="ConfigPresets_NewName" xml:space="preserve">
-    <value>Preset ustawień {0}</value>
-  </data>
-  <data name="ConfigPresets_Subtitle" xml:space="preserve">
-    <value>Zestawy ustawień na różne okazje, np. jazdę rowerem albo samochodem. Każdy ma własną kalibrację prędkości, renderowanie, wstęp z trasą oraz układ widgetów.</value>
-  </data>
-  <data name="ConfigPresets_ThisPreset" xml:space="preserve">
-    <value>Ten preset</value>
-  </data>
-  <data name="Settings_Presets" xml:space="preserve">
-    <value>Presety</value>
-  </data>
-  <data name="Settings_GroupPreset" xml:space="preserve">
-    <value>Preset: {0}</value>
-  </data>
-  <data name="Settings_GroupProgram" xml:space="preserve">
-    <value>Program</value>
-  </data>
-  <data name="ConfigPresets_PickConfirm" xml:space="preserve">
-    <value>Wybierz</value>
-  </data>
-  <data name="ConfigPresets_PickKeep" xml:space="preserve">
-    <value>Zostaw bieżący</value>
-  </data>
-  <data name="ConfigPresets_PickNew" xml:space="preserve">
-    <value>Z którym presetem ustawień chcesz pracować w nowym projekcie? Wpływa na kalibrację prędkości, renderowanie, wstęp z trasą i układ widgetów.</value>
-  </data>
-  <data name="ConfigPresets_PickProject" xml:space="preserve">
-    <value>Ten projekt nie ma zapisanego presetu ustawień (albo został usunięty). Którego użyć?</value>
-  </data>
-  <data name="ConfigPresets_PickTitle" xml:space="preserve">
-    <value>Wybierz preset ustawień</value>
-  </data>
-  <data name="ConfigPresets_NewTip" xml:space="preserve">
-    <value>Nowy preset z ustawieniami domyślnymi</value>
-  </data>
-  <data name="ConfigPresets_DuplicateTip" xml:space="preserve">
-    <value>Kopia aktywnego presetu z jego ustawieniami</value>
-  </data>
-  <data name="ConfigPresets_ImportTip" xml:space="preserve">
-    <value>Wczytaj preset z pliku od kogoś innego</value>
-  </data>
-  <data name="ConfigPresets_ExportTip" xml:space="preserve">
-    <value>Zapisz aktywny preset do pliku, który można komuś wysłać</value>
-  </data>
   <data name="Presets_CantDeleteLast" xml:space="preserve">
     <value>Nie można usunąć jedynego pozostałego presetu</value>
   </data>
@@ -2044,6 +1939,102 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
   </data>
   <data name="Render_LogRange" xml:space="preserve">
     <value>Renderuję tylko zaznaczony fragment: {0}</value>
+  </data>
+  <data name="SettingsPresets_Active" xml:space="preserve">
+    <value>Aktywny preset</value>
+  </data>
+  <data name="SettingsPresets_ActiveHint" xml:space="preserve">
+    <value>Zakładki Renderowanie, Prędkość i Wstęp z trasą edytują aktywny preset. Żeby zmienić ustawienia innego presetu (np. kalibrację prędkości), wybierz go tutaj i otwórz daną zakładkę.</value>
+  </data>
+  <data name="SettingsPresets_CopyName" xml:space="preserve">
+    <value>{0} - kopia</value>
+  </data>
+  <data name="SettingsPresets_Covers" xml:space="preserve">
+    <value>Preset obejmuje: kalibrację prędkości, orientację i płynność GPS, znak wodny, wstęp z trasą oraz ustawienia renderu (jakość, kodek, rozdzielczość, dźwięk, metadane). Interfejs, zachowanie programu, dekodowanie sprzętowe, cienie i klucze map są wspólne dla wszystkich presetów.</value>
+  </data>
+  <data name="SettingsPresets_DeleteMessage" xml:space="preserve">
+    <value>Czy na pewno chcesz usunąć preset ustawień „{0}”? Układy widgetów zostają bez zmian. Tej operacji nie da się cofnąć.</value>
+  </data>
+  <data name="SettingsPresets_DeleteTitle" xml:space="preserve">
+    <value>Usunąć preset ustawień?</value>
+  </data>
+  <data name="SettingsPresets_Duplicate" xml:space="preserve">
+    <value>Duplikuj</value>
+  </data>
+  <data name="SettingsPresets_DuplicateTip" xml:space="preserve">
+    <value>Kopia aktywnego presetu z jego ustawieniami</value>
+  </data>
+  <data name="SettingsPresets_Export" xml:space="preserve">
+    <value>Eksportuj</value>
+  </data>
+  <data name="SettingsPresets_ExportTip" xml:space="preserve">
+    <value>Zapisz aktywny preset do pliku, który można komuś wysłać</value>
+  </data>
+  <data name="SettingsPresets_ExportTitle" xml:space="preserve">
+    <value>Eksportuj preset ustawień</value>
+  </data>
+  <data name="SettingsPresets_Exported" xml:space="preserve">
+    <value>Wyeksportowano preset ustawień „{0}” do {1}</value>
+  </data>
+  <data name="SettingsPresets_FileType" xml:space="preserve">
+    <value>Preset ustawień</value>
+  </data>
+  <data name="SettingsPresets_Import" xml:space="preserve">
+    <value>Importuj</value>
+  </data>
+  <data name="SettingsPresets_ImportFailed" xml:space="preserve">
+    <value>Nie udało się zaimportować presetu ustawień z {0} - szczegóły w logu</value>
+  </data>
+  <data name="SettingsPresets_ImportTip" xml:space="preserve">
+    <value>Wczytaj preset z pliku od kogoś innego</value>
+  </data>
+  <data name="SettingsPresets_ImportTitle" xml:space="preserve">
+    <value>Importuj preset ustawień</value>
+  </data>
+  <data name="SettingsPresets_Imported" xml:space="preserve">
+    <value>Zaimportowano preset ustawień „{0}”</value>
+  </data>
+  <data name="SettingsPresets_Layout" xml:space="preserve">
+    <value>Układ widgetów</value>
+  </data>
+  <data name="SettingsPresets_LayoutHint" xml:space="preserve">
+    <value>Preset nakładki, który włącza się razem z tym presetem. Zmiana układu w głównym oknie nie zmienia tego wyboru.</value>
+  </data>
+  <data name="SettingsPresets_LayoutKeep" xml:space="preserve">
+    <value>Nie zmieniaj układu</value>
+  </data>
+  <data name="SettingsPresets_Name" xml:space="preserve">
+    <value>Nazwa</value>
+  </data>
+  <data name="SettingsPresets_New" xml:space="preserve">
+    <value>Nowy</value>
+  </data>
+  <data name="SettingsPresets_NewName" xml:space="preserve">
+    <value>Preset ustawień {0}</value>
+  </data>
+  <data name="SettingsPresets_NewTip" xml:space="preserve">
+    <value>Nowy preset z ustawieniami domyślnymi</value>
+  </data>
+  <data name="SettingsPresets_PickConfirm" xml:space="preserve">
+    <value>Wybierz</value>
+  </data>
+  <data name="SettingsPresets_PickKeep" xml:space="preserve">
+    <value>Zostaw bieżący</value>
+  </data>
+  <data name="SettingsPresets_PickNew" xml:space="preserve">
+    <value>Z którym presetem ustawień chcesz pracować w nowym projekcie? Wpływa na kalibrację prędkości, renderowanie, wstęp z trasą i układ widgetów.</value>
+  </data>
+  <data name="SettingsPresets_PickProject" xml:space="preserve">
+    <value>Ten projekt nie ma zapisanego presetu ustawień (albo został usunięty). Którego użyć?</value>
+  </data>
+  <data name="SettingsPresets_PickTitle" xml:space="preserve">
+    <value>Wybierz preset ustawień</value>
+  </data>
+  <data name="SettingsPresets_Subtitle" xml:space="preserve">
+    <value>Zestawy ustawień na różne okazje, np. jazdę rowerem albo samochodem. Każdy ma własną kalibrację prędkości, renderowanie, wstęp z trasą oraz układ widgetów.</value>
+  </data>
+  <data name="SettingsPresets_ThisPreset" xml:space="preserve">
+    <value>Ten preset</value>
   </data>
   <data name="Settings_RouteIntroWhenTrimmed" xml:space="preserve">
     <value>Pokazuj wstęp także po przycięciu początku nagrania</value>
@@ -2524,6 +2515,15 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   </data>
   <data name="Settings_RemoveAssociation" xml:space="preserve">
     <value>Usuń skojarzenie</value>
+  </data>
+  <data name="Settings_GroupPreset" xml:space="preserve">
+    <value>Preset: {0}</value>
+  </data>
+  <data name="Settings_GroupProgram" xml:space="preserve">
+    <value>Program</value>
+  </data>
+  <data name="Settings_Presets" xml:space="preserve">
+    <value>Presety</value>
   </data>
   <data name="Settings_Rendering" xml:space="preserve">
     <value>Renderowanie</value>

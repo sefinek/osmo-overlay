@@ -246,15 +246,6 @@
   <data name="Presets_DuplicateId" xml:space="preserve">
     <value>Skipping overlay preset file with a duplicate id '{0}': {1}</value>
   </data>
-  <data name="ConfigPresets_ImportFailed" xml:space="preserve">
-    <value>Failed to import settings preset from: {0}</value>
-  </data>
-  <data name="ConfigPresets_SkippingUnreadable" xml:space="preserve">
-    <value>Skipping unreadable settings preset file: {0}</value>
-  </data>
-  <data name="ConfigPresets_WriteFailed" xml:space="preserve">
-    <value>Failed to write settings preset</value>
-  </data>
   <data name="Presets_ImportFailed" xml:space="preserve">
     <value>Failed to import overlay preset from: {0}</value>
   </data>
@@ -433,6 +424,15 @@
   </data>
   <data name="Render_UsingExtractedSamples" xml:space="preserve">
     <value>Using {0} previously extracted telemetry samples</value>
+  </data>
+  <data name="SettingsPresets_ImportFailed" xml:space="preserve">
+    <value>Failed to import settings preset from: {0}</value>
+  </data>
+  <data name="SettingsPresets_SkippingUnreadable" xml:space="preserve">
+    <value>Skipping unreadable settings preset file: {0}</value>
+  </data>
+  <data name="SettingsPresets_WriteFailed" xml:space="preserve">
+    <value>Failed to write settings preset</value>
   </data>
   <data name="Settings_Unreadable" xml:space="preserve">
     <value>Overlay settings file is corrupt or unreadable, falling back to defaults</value>

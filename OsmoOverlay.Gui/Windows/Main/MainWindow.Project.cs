@@ -30,7 +30,7 @@ public partial class MainWindow
 		if (hasWork && !await ConfirmDialog.AskAsync(this, Strings.Project_NewTitle, Strings.Project_NewMessage, Strings.Main_NewProject, DialogKind.Warning)) return;
 
 		StartNewProject();
-		await ChooseConfigPresetAsync(Strings.ConfigPresets_PickNew);
+		await ChooseSettingsPresetAsync(Strings.SettingsPresets_PickNew);
 	}
 
 	/// <summary>
@@ -157,7 +157,7 @@ public partial class MainWindow
 			Moments = loaded ? [.. _moments] : [],
 			Volume = loaded ? [.. _volumeLine] : [],
 			ExternalTrack = _externalTrack,
-			ConfigPresetId = OverlaySettingsStore.Load().ActiveConfigPresetId
+			SettingsPresetId = OverlaySettingsStore.Load().ActiveSettingsPresetId
 		};
 	}
 
@@ -176,7 +176,7 @@ public partial class MainWindow
 		}
 
 		ClosePreview();
-		await ApplyProjectConfigPresetAsync(project);
+		await ApplyProjectSettingsPresetAsync(project);
 		_cameraSummary = null;
 		_externalTrackApplied = false;
 		_externalTrack = project.ExternalTrack;
@@ -286,30 +286,30 @@ public partial class MainWindow
 	///     The project's settings preset is made the active one, before the recordings load so they open with its values. A project
 	///     with none (or whose preset is gone) asks, when there is a choice.
 	/// </summary>
-	private async Task ApplyProjectConfigPresetAsync(OverlayProject project)
+	private async Task ApplyProjectSettingsPresetAsync(OverlayProject project)
 	{
-		(List<ConfigPreset> presets, string activeId) = ConfigPresetStore.Load();
+		(List<SettingsPreset> presets, string activeId) = SettingsPresetStore.Load();
 		if (presets.Count < 2) return;
 
-		if (presets.FirstOrDefault(p => p.Id == project.ConfigPresetId) is { } own)
+		if (presets.FirstOrDefault(p => p.Id == project.SettingsPresetId) is { } own)
 		{
-			if (own.Id != activeId) AdoptSettings(ConfigPresetStore.Activate(own));
+			if (own.Id != activeId) AdoptSettings(SettingsPresetStore.Activate(own));
 			return;
 		}
 
-		await ChooseConfigPresetAsync(Strings.ConfigPresets_PickProject);
+		await ChooseSettingsPresetAsync(Strings.SettingsPresets_PickProject);
 	}
 
 	/// <summary>Asks which settings preset to work with (nothing to ask with a single one); dismissing keeps the current.</summary>
-	private async Task ChooseConfigPresetAsync(string message)
+	private async Task ChooseSettingsPresetAsync(string message)
 	{
-		(List<ConfigPreset> presets, string activeId) = ConfigPresetStore.Load();
+		(List<SettingsPreset> presets, string activeId) = SettingsPresetStore.Load();
 		if (presets.Count < 2) return;
 
-		string? chosen = await ConfigPresetPickerWindow.PickAsync(this, message, presets, activeId);
+		string? chosen = await SettingsPresetPickerWindow.PickAsync(this, message, presets, activeId);
 		if (chosen is null || chosen == activeId || presets.FirstOrDefault(p => p.Id == chosen) is not { } preset) return;
 
-		AdoptSettings(ConfigPresetStore.Activate(preset));
+		AdoptSettings(SettingsPresetStore.Activate(preset));
 	}
 
 	/// <summary>What the window keeps from settings.json for itself, brought up to date after a preset switch: watermark, GPS smoothing and the overlay layout.</summary>
@@ -352,7 +352,7 @@ public partial class MainWindow
 		string title = _projectPath is { } path ? $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}" : BaseTitle;
 		if (_phase is UiPhase.SummaryReady or UiPhase.Rendering)
 		{
-			(List<ConfigPreset> presets, string activeId) = ConfigPresetStore.Load();
+			(List<SettingsPreset> presets, string activeId) = SettingsPresetStore.Load();
 			if (presets.Count > 1 && presets.FirstOrDefault(p => p.Id == activeId) is { } active) title += $" | {active.Name}";
 		}
 

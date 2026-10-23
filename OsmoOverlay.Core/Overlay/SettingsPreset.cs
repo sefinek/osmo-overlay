@@ -4,24 +4,24 @@ namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
 ///     A named set of the settings that differ from one kind of ride to another (a bike's speed correction, a car's render
-///     quality, a route card with other stats): the values in ConfigPresetValues, and which overlay layout (OverlayPreset)
+///     quality, a route card with other stats): the values in SettingsPresetValues, and which overlay layout (OverlayPreset)
 ///     it opens with. The active one's values are what OverlaySettings holds - every reader keeps reading settings.json,
-///     and OverlaySettingsStore.Save writes an edit back into this preset (ConfigPresetStore.Sync).
+///     and OverlaySettingsStore.Save writes an edit back into this preset (SettingsPresetStore.Sync).
 /// </summary>
-public sealed record ConfigPreset(string Id, string Name, ConfigPresetValues Values)
+public sealed record SettingsPreset(string Id, string Name, SettingsPresetValues Values)
 {
 	/// <summary>The overlay layout this preset switches to; null leaves the layout as it is.</summary>
 	public string? LayoutPresetId { get; init; }
 }
 
 /// <summary>
-///     What a ConfigPreset holds, and so what OverlaySettings fields it covers. Left out on purpose: whatever belongs to the
+///     What a SettingsPreset holds, and so what OverlaySettings fields it covers. Left out on purpose: whatever belongs to the
 ///     computer or the user rather than the ride (interface, window and panel sizes, hardware decoding, shadows' switches,
 ///     second screen, project handling, cache), the shared map keys and tile servers (secrets), the output folder (a path of
 ///     one machine) and the render speed history - so a preset can be exported and sent to someone. Every default is
 ///     OverlaySettings' own, which a missing field of an older file falls back to.
 /// </summary>
-public sealed record ConfigPresetValues(
+public sealed record SettingsPresetValues(
 	bool ShowWatermark = true,
 	bool SmoothGpsMotion = true,
 	double SpeedCorrectionPercent = 0,
@@ -53,9 +53,9 @@ public sealed record ConfigPresetValues(
 	bool FastStart = false,
 	bool NoAudio = false)
 {
-	public static ConfigPresetValues From(OverlaySettings settings)
+	public static SettingsPresetValues From(OverlaySettings settings)
 	{
-		return new ConfigPresetValues(settings.ShowWatermark, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource,
+		return new SettingsPresetValues(settings.ShowWatermark, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource,
 			settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats, settings.RouteIntroLabels, settings.RouteIntroUnits,
 			settings.RouteIntroColorBySpeed, settings.RouteIntroGpsLossJoin, settings.RouteIntroShowStartFinish, settings.RouteIntroWhenTrimmed,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel, settings.RouteIntroMapProvider, settings.RouteIntroShowEsriMapLabels,

@@ -7,12 +7,12 @@ using OsmoOverlay.Core.Telemetry;
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>
-///     Persists the settings presets (ConfigPreset), one file each under ConfigPresetsDir named by its id, like the overlay
-///     presets. Which one is active is OverlaySettings.ActiveConfigPresetId; the settings themselves stay where they are,
+///     Persists the settings presets (SettingsPreset), one file each under SettingsPresetsDir named by its id, like the overlay
+///     presets. Which one is active is OverlaySettings.ActiveSettingsPresetId; the settings themselves stay where they are,
 ///     so nothing that reads settings.json knows about presets. Switching copies a preset's values into the settings
 ///     (Activate), and every settings save copies them back into the active preset (Sync).
 /// </summary>
-public static class ConfigPresetStore
+public static class SettingsPresetStore
 {
 	/// <summary>
 	///     The preset made from the settings the first time, and always there: it can't be renamed, deleted or given a layout, so
@@ -25,7 +25,7 @@ public static class ConfigPresetStore
 	private static readonly string StoreDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay");
 
-	private static string ConfigPresetsDir => Path.Combine(StoreDir, "config-presets");
+	private static string SettingsPresetsDir => Path.Combine(StoreDir, "settings-presets");
 
 	// The preset and values the last Sync found already in its file - most saves change nothing a preset holds, and then
 	// there is no file to read.
@@ -39,40 +39,40 @@ public static class ConfigPresetStore
 	///     Every preset (Default first, then by name) and the active one. Default is made from the settings as they are when it
 	///     is missing, so nothing changes for someone who never opens this: their settings become the "Default" preset.
 	/// </summary>
-	public static (List<ConfigPreset> Presets, string ActiveId) Load()
+	public static (List<SettingsPreset> Presets, string ActiveId) Load()
 	{
-		List<ConfigPreset> presets = ReadAll();
+		List<SettingsPreset> presets = ReadAll();
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		if (presets.All(p => p.Id != DefaultId))
 		{
-			var first = new ConfigPreset(DefaultId, DefaultName, ConfigPresetValues.From(settings));
+			var first = new SettingsPreset(DefaultId, DefaultName, SettingsPresetValues.From(settings));
 			Write(first);
 			presets.Insert(0, first);
 		}
 
-		string activeId = presets.Any(p => p.Id == settings.ActiveConfigPresetId) ? settings.ActiveConfigPresetId! : presets[0].Id;
-		if (settings.ActiveConfigPresetId != activeId) OverlaySettingsStore.Save(settings with { ActiveConfigPresetId = activeId });
+		string activeId = presets.Any(p => p.Id == settings.ActiveSettingsPresetId) ? settings.ActiveSettingsPresetId! : presets[0].Id;
+		if (settings.ActiveSettingsPresetId != activeId) OverlaySettingsStore.Save(settings with { ActiveSettingsPresetId = activeId });
 		return (presets, activeId);
 	}
 
 	/// <summary>A new preset with the default values and the overlay layout currently in use; saved, not yet active.</summary>
-	public static ConfigPreset Create(string name)
+	public static SettingsPreset Create(string name)
 	{
-		var preset = new ConfigPreset(NewId(), name, new ConfigPresetValues()) { LayoutPresetId = OverlaySettingsStore.Load().ActivePresetId };
+		var preset = new SettingsPreset(NewId(), name, new SettingsPresetValues()) { LayoutPresetId = OverlaySettingsStore.Load().ActivePresetId };
 		Write(preset);
 		return preset;
 	}
 
 	/// <summary>A copy of the preset under another name and id, saved.</summary>
-	public static ConfigPreset Duplicate(ConfigPreset source, string name)
+	public static SettingsPreset Duplicate(SettingsPreset source, string name)
 	{
-		ConfigPreset copy = source with { Id = NewId(), Name = name };
+		SettingsPreset copy = source with { Id = NewId(), Name = name };
 		Write(copy);
 		return copy;
 	}
 
 	/// <summary>Changes one preset as it is on disk now - the values of the active one are kept up to date there, so a copy held for a while is stale.</summary>
-	public static void Modify(string id, Func<ConfigPreset, ConfigPreset> change)
+	public static void Modify(string id, Func<SettingsPreset, SettingsPreset> change)
 	{
 		if (ReadAll().FirstOrDefault(p => p.Id == id) is { } preset) Write(change(preset));
 	}
@@ -92,7 +92,7 @@ public static class ConfigPresetStore
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, CoreStrings.ConfigPresets_WriteFailed);
+			AppLogger.Warn(ex, CoreStrings.SettingsPresets_WriteFailed);
 		}
 	}
 
@@ -100,9 +100,9 @@ public static class ConfigPresetStore
 	///     The settings with this preset's values in, saved, and the preset marked active. Its overlay layout becomes the active one
 	///     when it still exists. Whatever was edited in the settings until now is already in the previous preset (Sync).
 	/// </summary>
-	public static OverlaySettings Activate(ConfigPreset preset)
+	public static OverlaySettings Activate(SettingsPreset preset)
 	{
-		OverlaySettings settings = preset.Values.ApplyTo(OverlaySettingsStore.Load()) with { ActiveConfigPresetId = preset.Id };
+		OverlaySettings settings = preset.Values.ApplyTo(OverlaySettingsStore.Load()) with { ActiveSettingsPresetId = preset.Id };
 		if (preset.LayoutPresetId is { } layout && OverlayPresetStore.Load().Presets.Any(p => p.Id == layout))
 			settings = settings with { ActivePresetId = layout };
 
@@ -116,9 +116,9 @@ public static class ConfigPresetStore
 	/// </summary>
 	internal static void Sync(OverlaySettings settings)
 	{
-		if (settings.ActiveConfigPresetId is not { } id) return;
+		if (settings.ActiveSettingsPresetId is not { } id) return;
 
-		string values = JsonSerializer.Serialize(ConfigPresetValues.From(settings));
+		string values = JsonSerializer.Serialize(SettingsPresetValues.From(settings));
 		lock (SyncGate)
 		{
 			if (_syncedId == id && _syncedValues == values) return;
@@ -130,9 +130,9 @@ public static class ConfigPresetStore
 			if (!File.Exists(path)) return;
 
 			string json = File.ReadAllText(path);
-			if (JsonSerializer.Deserialize<ConfigPreset>(json) is not { } preset) return;
+			if (JsonSerializer.Deserialize<SettingsPreset>(json) is not { } preset) return;
 
-			string updated = JsonSerializer.Serialize(preset with { Values = ConfigPresetValues.From(settings) });
+			string updated = JsonSerializer.Serialize(preset with { Values = SettingsPresetValues.From(settings) });
 			if (updated != json) AtomicFile.WriteAllText(path, updated);
 			lock (SyncGate)
 			{
@@ -142,11 +142,11 @@ public static class ConfigPresetStore
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, CoreStrings.ConfigPresets_WriteFailed);
+			AppLogger.Warn(ex, CoreStrings.SettingsPresets_WriteFailed);
 		}
 	}
 
-	public static void ExportToFile(ConfigPreset preset, string filePath)
+	public static void ExportToFile(SettingsPreset preset, string filePath)
 	{
 		AtomicFile.WriteAllText(filePath, JsonSerializer.Serialize(preset with { LayoutPresetId = null }));
 	}
@@ -155,14 +155,14 @@ public static class ConfigPresetStore
 	///     A preset from a file someone sent, with a new id and values brought into the ranges the settings allow; null on any
 	///     failure (logged). Its overlay layout is not taken - an id means nothing on another computer.
 	/// </summary>
-	public static ConfigPreset? ImportFromFile(string filePath)
+	public static SettingsPreset? ImportFromFile(string filePath)
 	{
 		try
 		{
-			ConfigPreset? imported = JsonSerializer.Deserialize<ConfigPreset>(File.ReadAllText(filePath));
+			SettingsPreset? imported = JsonSerializer.Deserialize<SettingsPreset>(File.ReadAllText(filePath));
 			if (imported?.Values is not { } values) throw new InvalidDataException("Preset file is empty or has no values.");
 
-			ConfigPreset preset = imported with
+			SettingsPreset preset = imported with
 			{
 				Id = NewId(),
 				Name = string.IsNullOrWhiteSpace(imported.Name) ? Path.GetFileNameWithoutExtension(filePath) : imported.Name.Trim(),
@@ -174,12 +174,12 @@ public static class ConfigPresetStore
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, string.Format(CoreStrings.ConfigPresets_ImportFailed, filePath));
+			AppLogger.Warn(ex, string.Format(CoreStrings.SettingsPresets_ImportFailed, filePath));
 			return null;
 		}
 	}
 
-	internal static ConfigPresetValues Sanitize(ConfigPresetValues values)
+	internal static SettingsPresetValues Sanitize(SettingsPresetValues values)
 	{
 		return values with
 		{
@@ -192,16 +192,16 @@ public static class ConfigPresetStore
 		};
 	}
 
-	private static List<ConfigPreset> ReadAll()
+	private static List<SettingsPreset> ReadAll()
 	{
-		List<ConfigPreset> presets = [];
-		if (!Directory.Exists(ConfigPresetsDir)) return presets;
+		List<SettingsPreset> presets = [];
+		if (!Directory.Exists(SettingsPresetsDir)) return presets;
 
-		foreach (string file in Directory.EnumerateFiles(ConfigPresetsDir, "*.json"))
+		foreach (string file in Directory.EnumerateFiles(SettingsPresetsDir, "*.json"))
 		{
 			try
 			{
-				ConfigPreset? preset = JsonSerializer.Deserialize<ConfigPreset>(File.ReadAllText(file));
+				SettingsPreset? preset = JsonSerializer.Deserialize<SettingsPreset>(File.ReadAllText(file));
 				if (preset?.Values is null || string.IsNullOrWhiteSpace(preset.Id) || !SamePath(PathOf(preset.Id), file))
 					throw new InvalidDataException("Preset has no values or its id does not match the file name.");
 
@@ -209,7 +209,7 @@ public static class ConfigPresetStore
 			}
 			catch (Exception ex)
 			{
-				AppLogger.Warn(ex, string.Format(CoreStrings.ConfigPresets_SkippingUnreadable, file));
+				AppLogger.Warn(ex, string.Format(CoreStrings.SettingsPresets_SkippingUnreadable, file));
 			}
 		}
 
@@ -217,16 +217,16 @@ public static class ConfigPresetStore
 		return presets;
 	}
 
-	private static void Write(ConfigPreset preset)
+	private static void Write(SettingsPreset preset)
 	{
 		try
 		{
-			Directory.CreateDirectory(ConfigPresetsDir);
+			Directory.CreateDirectory(SettingsPresetsDir);
 			AtomicFile.WriteAllText(PathOf(preset.Id), JsonSerializer.Serialize(preset));
 		}
 		catch (Exception ex)
 		{
-			AppLogger.Warn(ex, CoreStrings.ConfigPresets_WriteFailed);
+			AppLogger.Warn(ex, CoreStrings.SettingsPresets_WriteFailed);
 		}
 	}
 
@@ -242,6 +242,6 @@ public static class ConfigPresetStore
 
 	private static string PathOf(string id)
 	{
-		return Path.Combine(ConfigPresetsDir, $"{id}.json");
+		return Path.Combine(SettingsPresetsDir, $"{id}.json");
 	}
 }

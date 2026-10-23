@@ -1812,111 +1812,6 @@ Cancel asks again on the next start. "Skip this update" stops the reminders abou
   <data name="Monitor_DisplayPrimary" xml:space="preserve">
     <value>Display {0} - {1} (primary)</value>
   </data>
-  <data name="ConfigPresets_Active" xml:space="preserve">
-    <value>Active preset</value>
-  </data>
-  <data name="ConfigPresets_ActiveHint" xml:space="preserve">
-    <value>The Rendering, Speed and Route intro tabs edit the active preset. To change another preset's settings (such as its speed calibration), pick it here and open that tab.</value>
-  </data>
-  <data name="ConfigPresets_Covers" xml:space="preserve">
-    <value>A preset covers: speed calibration, orientation and GPS smoothing, the watermark, the route intro and the render settings (quality, codec, resolution, sound, metadata). The interface, the program's behavior, hardware decoding, shadows and map keys are shared by all presets.</value>
-  </data>
-  <data name="ConfigPresets_CopyName" xml:space="preserve">
-    <value>{0} - copy</value>
-  </data>
-  <data name="ConfigPresets_DeleteMessage" xml:space="preserve">
-    <value>Are you sure you want to delete the settings preset "{0}"? Widget layouts are left as they are. This can't be undone.</value>
-  </data>
-  <data name="ConfigPresets_DeleteTitle" xml:space="preserve">
-    <value>Delete settings preset?</value>
-  </data>
-  <data name="ConfigPresets_Duplicate" xml:space="preserve">
-    <value>Duplicate</value>
-  </data>
-  <data name="ConfigPresets_Export" xml:space="preserve">
-    <value>Export</value>
-  </data>
-  <data name="ConfigPresets_Exported" xml:space="preserve">
-    <value>Exported settings preset "{0}" to {1}</value>
-  </data>
-  <data name="ConfigPresets_ExportTitle" xml:space="preserve">
-    <value>Export settings preset</value>
-  </data>
-  <data name="ConfigPresets_FileType" xml:space="preserve">
-    <value>Settings preset</value>
-  </data>
-  <data name="ConfigPresets_Import" xml:space="preserve">
-    <value>Import</value>
-  </data>
-  <data name="ConfigPresets_Imported" xml:space="preserve">
-    <value>Imported settings preset "{0}"</value>
-  </data>
-  <data name="ConfigPresets_ImportFailed" xml:space="preserve">
-    <value>Failed to import a settings preset from {0} - see the log for details</value>
-  </data>
-  <data name="ConfigPresets_ImportTitle" xml:space="preserve">
-    <value>Import settings preset</value>
-  </data>
-  <data name="ConfigPresets_Layout" xml:space="preserve">
-    <value>Widget layout</value>
-  </data>
-  <data name="ConfigPresets_LayoutHint" xml:space="preserve">
-    <value>The overlay preset that turns on with this preset. Changing the layout in the main window doesn't change this choice.</value>
-  </data>
-  <data name="ConfigPresets_LayoutKeep" xml:space="preserve">
-    <value>Don't change the layout</value>
-  </data>
-  <data name="ConfigPresets_Name" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="ConfigPresets_New" xml:space="preserve">
-    <value>New</value>
-  </data>
-  <data name="ConfigPresets_NewName" xml:space="preserve">
-    <value>Settings preset {0}</value>
-  </data>
-  <data name="ConfigPresets_Subtitle" xml:space="preserve">
-    <value>Sets of settings for different occasions, such as a bike or a car ride. Each has its own speed calibration, render settings, route intro and widget layout.</value>
-  </data>
-  <data name="ConfigPresets_ThisPreset" xml:space="preserve">
-    <value>This preset</value>
-  </data>
-  <data name="Settings_Presets" xml:space="preserve">
-    <value>Presets</value>
-  </data>
-  <data name="Settings_GroupPreset" xml:space="preserve">
-    <value>Preset: {0}</value>
-  </data>
-  <data name="Settings_GroupProgram" xml:space="preserve">
-    <value>Program</value>
-  </data>
-  <data name="ConfigPresets_PickConfirm" xml:space="preserve">
-    <value>Choose</value>
-  </data>
-  <data name="ConfigPresets_PickKeep" xml:space="preserve">
-    <value>Keep current</value>
-  </data>
-  <data name="ConfigPresets_PickNew" xml:space="preserve">
-    <value>Which settings preset do you want to use for the new project? It sets the speed calibration, render settings, route intro and widget layout.</value>
-  </data>
-  <data name="ConfigPresets_PickProject" xml:space="preserve">
-    <value>This project has no settings preset saved (or it was deleted). Which one should it use?</value>
-  </data>
-  <data name="ConfigPresets_PickTitle" xml:space="preserve">
-    <value>Choose a settings preset</value>
-  </data>
-  <data name="ConfigPresets_NewTip" xml:space="preserve">
-    <value>A new preset with the default settings</value>
-  </data>
-  <data name="ConfigPresets_DuplicateTip" xml:space="preserve">
-    <value>A copy of the active preset with its settings</value>
-  </data>
-  <data name="ConfigPresets_ImportTip" xml:space="preserve">
-    <value>Load a preset from a file someone sent you</value>
-  </data>
-  <data name="ConfigPresets_ExportTip" xml:space="preserve">
-    <value>Save the active preset to a file you can send to someone</value>
-  </data>
   <data name="Presets_CantDeleteLast" xml:space="preserve">
     <value>Cannot delete the only remaining preset</value>
   </data>
@@ -2044,6 +1939,102 @@ The cuts, view settings and overlay will be applied once these files are located
   </data>
   <data name="Render_LogRange" xml:space="preserve">
     <value>Rendering only the selected part: {0}</value>
+  </data>
+  <data name="SettingsPresets_Active" xml:space="preserve">
+    <value>Active preset</value>
+  </data>
+  <data name="SettingsPresets_ActiveHint" xml:space="preserve">
+    <value>The Rendering, Speed and Route intro tabs edit the active preset. To change another preset's settings (such as its speed calibration), pick it here and open that tab.</value>
+  </data>
+  <data name="SettingsPresets_CopyName" xml:space="preserve">
+    <value>{0} - copy</value>
+  </data>
+  <data name="SettingsPresets_Covers" xml:space="preserve">
+    <value>A preset covers: speed calibration, orientation and GPS smoothing, the watermark, the route intro and the render settings (quality, codec, resolution, sound, metadata). The interface, the program's behavior, hardware decoding, shadows and map keys are shared by all presets.</value>
+  </data>
+  <data name="SettingsPresets_DeleteMessage" xml:space="preserve">
+    <value>Are you sure you want to delete the settings preset "{0}"? Widget layouts are left as they are. This can't be undone.</value>
+  </data>
+  <data name="SettingsPresets_DeleteTitle" xml:space="preserve">
+    <value>Delete settings preset?</value>
+  </data>
+  <data name="SettingsPresets_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="SettingsPresets_DuplicateTip" xml:space="preserve">
+    <value>A copy of the active preset with its settings</value>
+  </data>
+  <data name="SettingsPresets_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="SettingsPresets_ExportTip" xml:space="preserve">
+    <value>Save the active preset to a file you can send to someone</value>
+  </data>
+  <data name="SettingsPresets_ExportTitle" xml:space="preserve">
+    <value>Export settings preset</value>
+  </data>
+  <data name="SettingsPresets_Exported" xml:space="preserve">
+    <value>Exported settings preset "{0}" to {1}</value>
+  </data>
+  <data name="SettingsPresets_FileType" xml:space="preserve">
+    <value>Settings preset</value>
+  </data>
+  <data name="SettingsPresets_Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="SettingsPresets_ImportFailed" xml:space="preserve">
+    <value>Failed to import a settings preset from {0} - see the log for details</value>
+  </data>
+  <data name="SettingsPresets_ImportTip" xml:space="preserve">
+    <value>Load a preset from a file someone sent you</value>
+  </data>
+  <data name="SettingsPresets_ImportTitle" xml:space="preserve">
+    <value>Import settings preset</value>
+  </data>
+  <data name="SettingsPresets_Imported" xml:space="preserve">
+    <value>Imported settings preset "{0}"</value>
+  </data>
+  <data name="SettingsPresets_Layout" xml:space="preserve">
+    <value>Widget layout</value>
+  </data>
+  <data name="SettingsPresets_LayoutHint" xml:space="preserve">
+    <value>The overlay preset that turns on with this preset. Changing the layout in the main window doesn't change this choice.</value>
+  </data>
+  <data name="SettingsPresets_LayoutKeep" xml:space="preserve">
+    <value>Don't change the layout</value>
+  </data>
+  <data name="SettingsPresets_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="SettingsPresets_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="SettingsPresets_NewName" xml:space="preserve">
+    <value>Settings preset {0}</value>
+  </data>
+  <data name="SettingsPresets_NewTip" xml:space="preserve">
+    <value>A new preset with the default settings</value>
+  </data>
+  <data name="SettingsPresets_PickConfirm" xml:space="preserve">
+    <value>Choose</value>
+  </data>
+  <data name="SettingsPresets_PickKeep" xml:space="preserve">
+    <value>Keep current</value>
+  </data>
+  <data name="SettingsPresets_PickNew" xml:space="preserve">
+    <value>Which settings preset do you want to use for the new project? It sets the speed calibration, render settings, route intro and widget layout.</value>
+  </data>
+  <data name="SettingsPresets_PickProject" xml:space="preserve">
+    <value>This project has no settings preset saved (or it was deleted). Which one should it use?</value>
+  </data>
+  <data name="SettingsPresets_PickTitle" xml:space="preserve">
+    <value>Choose a settings preset</value>
+  </data>
+  <data name="SettingsPresets_Subtitle" xml:space="preserve">
+    <value>Sets of settings for different occasions, such as a bike or a car ride. Each has its own speed calibration, render settings, route intro and widget layout.</value>
+  </data>
+  <data name="SettingsPresets_ThisPreset" xml:space="preserve">
+    <value>This preset</value>
   </data>
   <data name="Settings_RouteIntroWhenTrimmed" xml:space="preserve">
     <value>Show the intro even when the start of the recording is trimmed</value>
@@ -2524,6 +2515,15 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   </data>
   <data name="Settings_RemoveAssociation" xml:space="preserve">
     <value>Remove association</value>
+  </data>
+  <data name="Settings_GroupPreset" xml:space="preserve">
+    <value>Preset: {0}</value>
+  </data>
+  <data name="Settings_GroupProgram" xml:space="preserve">
+    <value>Program</value>
+  </data>
+  <data name="Settings_Presets" xml:space="preserve">
+    <value>Presets</value>
   </data>
   <data name="Settings_Rendering" xml:space="preserve">
     <value>Rendering</value>

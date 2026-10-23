@@ -246,15 +246,6 @@
   <data name="Presets_DuplicateId" xml:space="preserve">
     <value>Pomijam plik presetu nakładki z powtórzonym id '{0}': {1}</value>
   </data>
-  <data name="ConfigPresets_ImportFailed" xml:space="preserve">
-    <value>Nie udało się zaimportować presetu ustawień z: {0}</value>
-  </data>
-  <data name="ConfigPresets_SkippingUnreadable" xml:space="preserve">
-    <value>Pomijam nieczytelny plik presetu ustawień: {0}</value>
-  </data>
-  <data name="ConfigPresets_WriteFailed" xml:space="preserve">
-    <value>Nie udało się zapisać presetu ustawień</value>
-  </data>
   <data name="Presets_ImportFailed" xml:space="preserve">
     <value>Nie udało się zaimportować presetu nakładki z: {0}</value>
   </data>
@@ -433,6 +424,15 @@
   </data>
   <data name="Render_UsingExtractedSamples" xml:space="preserve">
     <value>Używam wcześniej wyodrębnionych próbek telemetrii ({0})</value>
+  </data>
+  <data name="SettingsPresets_ImportFailed" xml:space="preserve">
+    <value>Nie udało się zaimportować presetu ustawień z: {0}</value>
+  </data>
+  <data name="SettingsPresets_SkippingUnreadable" xml:space="preserve">
+    <value>Pomijam nieczytelny plik presetu ustawień: {0}</value>
+  </data>
+  <data name="SettingsPresets_WriteFailed" xml:space="preserve">
+    <value>Nie udało się zapisać presetu ustawień</value>
   </data>
   <data name="Settings_Unreadable" xml:space="preserve">
     <value>Plik ustawień jest uszkodzony lub nieczytelny - używam ustawień domyślnych</value>

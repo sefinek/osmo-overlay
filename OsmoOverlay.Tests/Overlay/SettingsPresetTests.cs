@@ -5,12 +5,12 @@ using OsmoOverlay.Core.Telemetry;
 namespace OsmoOverlay.Tests.Overlay;
 
 [TestClass]
-public sealed class ConfigPresetTests
+public sealed class SettingsPresetTests
 {
-	// OverlaySettings fields a settings preset deliberately doesn't carry - see ConfigPresetValues.
+	// OverlaySettings fields a settings preset deliberately doesn't carry - see SettingsPresetValues.
 	private static readonly string[] SharedSettings =
 	[
-		nameof(OverlaySettings.ActivePresetId), nameof(OverlaySettings.ActiveConfigPresetId), nameof(OverlaySettings.WelcomeShown),
+		nameof(OverlaySettings.ActivePresetId), nameof(OverlaySettings.ActiveSettingsPresetId), nameof(OverlaySettings.WelcomeShown),
 		nameof(OverlaySettings.DefaultOutputFolder), nameof(OverlaySettings.PreviewMaxWidth), nameof(OverlaySettings.MapApiKeys),
 		nameof(OverlaySettings.CustomMapUrlTemplate), nameof(OverlaySettings.CustomMapAttribution), nameof(OverlaySettings.DefaultMapProvider),
 		nameof(OverlaySettings.CustomMapCreditBriefly), nameof(OverlaySettings.ShowEsriMapLabels), nameof(OverlaySettings.PreviewSnapToGrid),
@@ -29,20 +29,20 @@ public sealed class ConfigPresetTests
 	[TestMethod]
 	public void EverySettingIsEitherInAPresetOrDeliberatelyShared()
 	{
-		string[] inPreset = [.. typeof(ConfigPresetValues).GetProperties().Select(p => p.Name)];
+		string[] inPreset = [.. typeof(SettingsPresetValues).GetProperties().Select(p => p.Name)];
 		string[] unplaced = [.. typeof(OverlaySettings).GetProperties()
 			.Select(p => p.Name)
 			.Where(n => n != nameof(OverlaySettings.PreviewDrawsShadows) && !inPreset.Contains(n) && !SharedSettings.Contains(n))];
 
-		Assert.IsEmpty(unplaced, $"Add to ConfigPresetValues (and From/ApplyTo) or to SharedSettings here: {string.Join(", ", unplaced)}");
+		Assert.IsEmpty(unplaced, $"Add to SettingsPresetValues (and From/ApplyTo) or to SharedSettings here: {string.Join(", ", unplaced)}");
 		Assert.IsEmpty(inPreset.Where(n => typeof(OverlaySettings).GetProperty(n) is null).ToArray());
 	}
 
 	[TestMethod]
 	public void Defaults_AreTheSettingsOwn()
 	{
-		string preset = JsonSerializer.Serialize(new ConfigPresetValues());
-		string settings = JsonSerializer.Serialize(ConfigPresetValues.From(new OverlaySettings()));
+		string preset = JsonSerializer.Serialize(new SettingsPresetValues());
+		string settings = JsonSerializer.Serialize(SettingsPresetValues.From(new OverlaySettings()));
 
 		Assert.AreEqual(settings, preset);
 	}
@@ -52,7 +52,7 @@ public sealed class ConfigPresetTests
 	{
 		var other = new OverlaySettings(ActivePresetId: "layout", AppTheme: "Amoled", HardwareDecoding: false, DefaultOutputFolder: "out",
 			SpeedCorrectionPercent: 3);
-		var values = new ConfigPresetValues(SpeedCorrectionPercent: 12.5, NoAudio: true, OutputCodec: "hevc", RouteIntroDurationSeconds: 20,
+		var values = new SettingsPresetValues(SpeedCorrectionPercent: 12.5, NoAudio: true, OutputCodec: "hevc", RouteIntroDurationSeconds: 20,
 			OrientationSource: OrientationSource.Quaternion);
 
 		OverlaySettings applied = values.ApplyTo(other);
@@ -66,13 +66,13 @@ public sealed class ConfigPresetTests
 		Assert.AreEqual("Amoled", applied.AppTheme);
 		Assert.IsFalse(applied.HardwareDecoding);
 		Assert.AreEqual("out", applied.DefaultOutputFolder);
-		Assert.AreEqual(values, ConfigPresetValues.From(applied) with { RouteIntroLabels = values.RouteIntroLabels });
+		Assert.AreEqual(values, SettingsPresetValues.From(applied) with { RouteIntroLabels = values.RouteIntroLabels });
 	}
 
 	[TestMethod]
 	public void OlderFile_MissingFields_FallBackToTheSettingsDefaults()
 	{
-		ConfigPreset preset = JsonSerializer.Deserialize<ConfigPreset>("""{"Id":"a","Name":"Bike","Values":{"SpeedCorrectionPercent":7}}""")!;
+		SettingsPreset preset = JsonSerializer.Deserialize<SettingsPreset>("""{"Id":"a","Name":"Bike","Values":{"SpeedCorrectionPercent":7}}""")!;
 
 		Assert.AreEqual(7, preset.Values.SpeedCorrectionPercent);
 		Assert.IsTrue(preset.Values.TagExportedVideo);
@@ -83,7 +83,7 @@ public sealed class ConfigPresetTests
 	[TestMethod]
 	public void Sanitize_BringsForeignValuesIntoRange()
 	{
-		ConfigPresetValues clean = ConfigPresetStore.Sanitize(new ConfigPresetValues(
+		SettingsPresetValues clean = SettingsPresetStore.Sanitize(new SettingsPresetValues(
 			SpeedCorrectionPercent: 900, RouteIntroDurationSeconds: double.NaN, NvencPreset: "-preset ultrafast", OutputBitrateMultiplier: 100,
 			OutputResolution: 99, OutputCodec: "prores"));
 

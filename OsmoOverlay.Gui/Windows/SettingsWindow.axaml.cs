@@ -136,7 +136,7 @@ public partial class SettingsWindow : Window
 	/// <summary>Fills every page from the settings. RecordingCruisingSpeedKmh has to be set before.</summary>
 	public void Load(OverlaySettings settings)
 	{
-		LoadConfigPresets();
+		LoadSettingsPresets();
 		ShowWatermarkCheck.IsChecked = settings.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = settings.SmoothGpsMotion;
 		OrientationSourceCombo.SelectedItem = OrientationSourceOptions.FirstOrDefault(o => o.Value == settings.OrientationSource) ?? OrientationSourceOptions[0];

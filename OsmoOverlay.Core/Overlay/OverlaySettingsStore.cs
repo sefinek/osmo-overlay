@@ -153,8 +153,8 @@ public sealed record OverlaySettings(
 	bool DisableShadows = false,
 	// The log panel shows everything the file log gets, not just what the app surfaces; holding Shift at startup turns it on for that run.
 	bool DebugMode = false,
-	// The settings preset (ConfigPreset) whose values the fields it covers hold now; null until the first one is made.
-	string? ActiveConfigPresetId = null)
+	// The settings preset (SettingsPreset) whose values the fields it covers hold now; null until the first one is made.
+	string? ActiveSettingsPresetId = null)
 {
 	/// <summary>Whether the preview draws the widgets' shadows: on in the preview and not turned off everywhere.</summary>
 	[JsonIgnore]
@@ -246,7 +246,7 @@ public static class OverlaySettingsStore
 			return;
 		}
 
-		ConfigPresetStore.Sync(settings);
+		SettingsPresetStore.Sync(settings);
 	}
 
 	/// <summary>
