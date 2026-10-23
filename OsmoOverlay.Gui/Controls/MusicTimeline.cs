@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Preview;
 
@@ -28,6 +29,7 @@ public sealed class MusicTimeline : Control
 	private const double FadeHandleSize = 7;
 	private const double SnapPixels = 6;
 	private const double AddButtonSize = 18;
+	private const double AutoScrollEdgePixels = 24;
 
 	private static readonly IBrush HeaderBrush = Palette.Control;
 	private static readonly IBrush TrackBrush = Palette.SubtleFill;
@@ -60,6 +62,8 @@ public sealed class MusicTimeline : Control
 	private MusicClip? _dragOrigin;
 	private double _grabOffset;
 	private bool _scrubbing;
+	private Point _lastPoint;
+	private DispatcherTimer? _autoScroll;
 	private (Point At, string Text)? _dragLabel;
 
 	static MusicTimeline()
@@ -208,30 +212,37 @@ public sealed class MusicTimeline : Control
 	private void DrawClip(DrawingContext context, MusicClip clip, bool selected)
 	{
 		(double x1, double x2, double top, double bottom) = ClipRect(clip);
-		var rect = new Rect(x1, top, x2 - x1, bottom - top);
+		// Zoomed in, a clip is thousands of pixels wide - only the part in view is drawn (a rounded rectangle or a triangle that long is slow to rasterize).
+		double low = HeaderWidth - 8, high = Bounds.Width + 8;
+		if (x2 < low || x1 > high) return;
+
+		double cx1 = Math.Max(x1, low), cx2 = Math.Min(x2, high);
+		var rect = new Rect(cx1, top, cx2 - cx1, bottom - top);
 		context.DrawRectangle(selected ? SelectedClipBrush : ClipBrush, null, rect, 3, 3);
 
 		DrawWaveform(context, clip, x1, x2, top, bottom);
 
-		if (clip.FadeInSeconds > 0) DrawFade(context, new Point(x1, bottom), new Point(X(clip.StartSeconds + clip.FadeInSeconds), top), new Point(x1, top));
-		if (clip.FadeOutSeconds > 0) DrawFade(context, new Point(x2, bottom), new Point(X(clip.EndSeconds - clip.FadeOutSeconds), top), new Point(x2, top));
+		double fadeInX = X(clip.StartSeconds + clip.FadeInSeconds), fadeOutX = X(clip.EndSeconds - clip.FadeOutSeconds);
+		if (clip.FadeInSeconds > 0) DrawFade(context, new Point(cx1, bottom), new Point(Math.Clamp(fadeInX, low, high), top), new Point(cx1, top), x1 >= low);
+		if (clip.FadeOutSeconds > 0) DrawFade(context, new Point(cx2, bottom), new Point(Math.Clamp(fadeOutX, low, high), top), new Point(cx2, top), x2 <= high);
 
 		if (clip.Repeats)
 		{
 			double span = clip.SourceSeconds - clip.InSeconds;
-			for (double t = clip.StartSeconds + span; t < clip.EndSeconds - 0.01; t += span)
+			double firstRepeat = Math.Max(1, Math.Floor((OutputAt(HeaderWidth) - clip.StartSeconds) / span));
+			for (double t = clip.StartSeconds + firstRepeat * span; t < clip.EndSeconds - 0.01 && X(t) <= high; t += span)
 				context.DrawLine(RepeatPen, new Point(X(t), top + 2), new Point(X(t), bottom - 2));
 		}
 
 		context.DrawRectangle(null, selected ? SelectedClipBorder : ClipBorder, rect.Deflate(0.5), 3, 3);
 
 		const double half = FadeHandleSize / 2;
-		context.FillRectangle(FadeHandleBrush, new Rect(X(clip.StartSeconds + clip.FadeInSeconds) - half, top, FadeHandleSize, FadeHandleSize / 1.4));
-		context.FillRectangle(FadeHandleBrush, new Rect(X(clip.EndSeconds - clip.FadeOutSeconds) - half, top, FadeHandleSize, FadeHandleSize / 1.4));
+		if (fadeInX >= low && fadeInX <= high) context.FillRectangle(FadeHandleBrush, new Rect(fadeInX - half, top, FadeHandleSize, FadeHandleSize / 1.4));
+		if (fadeOutX >= low && fadeOutX <= high) context.FillRectangle(FadeHandleBrush, new Rect(fadeOutX - half, top, FadeHandleSize, FadeHandleSize / 1.4));
 
 		double textX = Math.Max(x1, HeaderWidth) + 6;
 		using (context.PushClip(rect.Deflate(1)))
-			DrawText(context, Path.GetFileNameWithoutExtension(clip.Path), new Point(textX, top + (bottom - top - 14) / 2), TextBrush, x2 - 6 - textX);
+			DrawText(context, Path.GetFileNameWithoutExtension(clip.Path), new Point(textX, top + (bottom - top - 14) / 2), TextBrush, cx2 - 6 - textX);
 	}
 
 	/// <summary>One column per DIP, as tall as the loudest peak of the file under it (AudioWaveform.DisplayLevel) - the part of the file the clip plays, repeated where it loops.</summary>
@@ -256,7 +267,7 @@ public sealed class MusicTimeline : Control
 		}
 	}
 
-	private static void DrawFade(DrawingContext context, Point from, Point to, Point corner)
+	private static void DrawFade(DrawingContext context, Point from, Point to, Point corner, bool drawLine = true)
 	{
 		var shade = new StreamGeometry();
 		using (StreamGeometryContext geometry = shade.Open())
@@ -268,7 +279,7 @@ public sealed class MusicTimeline : Control
 		}
 
 		context.DrawGeometry(FadeShade, null, shade);
-		context.DrawLine(FadeLine, from, to);
+		if (drawLine) context.DrawLine(FadeLine, from, to);
 	}
 
 	private static void DrawText(DrawingContext context, string text, Point at, IBrush brush, double maxWidth)
@@ -338,6 +349,7 @@ public sealed class MusicTimeline : Control
 		if (point.Properties.IsRightButtonPressed)
 		{
 			e.Handled = true;
+			Cursor = null;
 			SelectedIndex = index >= 0 ? index : null;
 			MenuRequested?.Invoke(index >= 0 ? index : null, OutputAt(point.Position.X));
 			return;
@@ -403,10 +415,58 @@ public sealed class MusicTimeline : Control
 			return;
 		}
 
+		UpdateDrag(point);
+	}
+
+	private void UpdateDrag(Point point)
+	{
+		_lastPoint = point;
 		MusicClip dragged = Drag(_dragOrigin!, OutputAt(point.X));
 		_dragLabel = (point, DragLabel(dragged));
 		ClipsEdited?.Invoke(With(dragged), false);
 		InvalidateVisual();
+		UpdateAutoScroll(point);
+	}
+
+	/// <summary>A clip dragged to the edge of the view takes the view along (while the pointer stays there), so a zoomed-in clip can be stretched over the whole recording.</summary>
+	private void UpdateAutoScroll(Point point)
+	{
+		if (_source is null || _drag == Zone.None || (point.X < Bounds.Width - AutoScrollEdgePixels && point.X > HeaderWidth + AutoScrollEdgePixels))
+		{
+			_autoScroll?.Stop();
+			return;
+		}
+
+		_autoScroll ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
+		_autoScroll.Tick -= OnAutoScrollTick;
+		_autoScroll.Tick += OnAutoScrollTick;
+		if (!_autoScroll.IsEnabled) _autoScroll.Start();
+	}
+
+	private void OnAutoScrollTick(object? sender, EventArgs e)
+	{
+		if (_source is null || _drag == Zone.None || _dragOrigin is null)
+		{
+			_autoScroll?.Stop();
+			return;
+		}
+
+		double direction = _lastPoint.X > Bounds.Width - AutoScrollEdgePixels ? 1 : _lastPoint.X < HeaderWidth + AutoScrollEdgePixels ? -1 : 0;
+		if (direction == 0)
+		{
+			_autoScroll?.Stop();
+			return;
+		}
+
+		double before = _source.ViewStart;
+		_source.ScrollTo(before + direction * _source.ViewLength * 0.02);
+		if (_source.ViewStart != before) UpdateDrag(_lastPoint);
+	}
+
+	protected override void OnPointerExited(PointerEventArgs e)
+	{
+		base.OnPointerExited(e);
+		if (_drag == Zone.None) Cursor = null;
 	}
 
 	protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -430,6 +490,7 @@ public sealed class MusicTimeline : Control
 			ScrubEnded?.Invoke();
 		}
 
+		_autoScroll?.Stop();
 		MusicClip? origin = _dragOrigin;
 		bool dragging = _drag != Zone.None && origin is not null && _dragIndex < _clips.Count;
 		MusicClip? result = dragging ? commit && at is { } point ? Drag(origin!, OutputAt(point.X)) : origin : null;

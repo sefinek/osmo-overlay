@@ -161,7 +161,14 @@ public partial class MainWindow
 	private void SetMusic(IEnumerable<MusicClip> clips)
 	{
 		_music = [.. clips];
+		HideEmptyMusicTrack();
 		ShowMusic();
+	}
+
+	/// <summary>The track goes away with its last clip (and comes back with the palette's "Music").</summary>
+	private void HideEmptyMusicTrack()
+	{
+		if (_music.Count == 0) _musicTrackShown = false;
 	}
 
 	/// <summary>Live while dragging (the preview follows), kept in order and in the history on release.</summary>
@@ -183,6 +190,7 @@ public partial class MainWindow
 	private void SetMusicSorted(IEnumerable<MusicClip> clips, MusicClip? select = null)
 	{
 		_music = MusicTrack.Normalize(clips, Math.Max(OutputSeconds, 0));
+		HideEmptyMusicTrack();
 		ShowMusic();
 		int selected = select is null ? -1 : _music.IndexOf(select);
 		MusicTracks.SelectedIndex = selected >= 0 ? selected : null;
@@ -198,7 +206,12 @@ public partial class MainWindow
 			Title = Strings.Music_PickTitle,
 			FileTypeFilter = [new FilePickerFileType(Strings.Music_FileType) { Patterns = ["*.mp3", "*.m4a", "*.aac", "*.wav", "*.flac", "*.ogg", "*.opus", "*.wma", "*.aiff", "*.mp4", "*.mkv", "*.mov"] }]
 		});
-		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path)
+		{
+			HideEmptyMusicTrack();
+			ShowMusic();
+			return;
+		}
 
 		double sourceSeconds;
 		try
@@ -210,6 +223,8 @@ public partial class MainWindow
 			AppLogger.Warn(ex, string.Format(Strings.Music_CantUse, Path.GetFileName(path), ex.Message));
 			await ConfirmDialog.ShowAsync(this, Strings.Music_CantUseTitle, string.Format(Strings.Music_CantUse, Path.GetFileName(path), ex.Message),
 				kind: DialogKind.Warning);
+			HideEmptyMusicTrack();
+			ShowMusic();
 			return;
 		}
 
@@ -243,7 +258,7 @@ public partial class MainWindow
 			items.AddRange([edit, duplicate, remove]);
 		}
 
-		new ContextMenu { ItemsSource = items }.Open(MusicTracks);
+		new ContextMenu { ItemsSource = items, Cursor = new Cursor(StandardCursorType.Arrow) }.Open(MusicTracks);
 	}
 
 	private void RemoveMusic(int index)
@@ -277,7 +292,7 @@ public partial class MainWindow
 
 		MusicClip clip = _music[index];
 		string key = "music-edit:" + index;
-		var panel = new StackPanel { Spacing = 6, Width = 300 };
+		var panel = new StackPanel { Spacing = 6, Width = 300, Cursor = new Cursor(StandardCursorType.Arrow) };
 		bool building = true;
 
 		void Apply(Func<MusicClip, MusicClip> change)
