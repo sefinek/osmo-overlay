@@ -795,7 +795,7 @@
 
 			<Border Grid.Column="1" Classes="card" Name="PreviewCard">
 				<Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
-					<Grid Grid.Row="0" Height="32">
+					<Grid Grid.Row="0" Height="32" ColumnDefinitions="Auto,*,Auto">
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6">
 							<ComboBox Name="PreviewQualityCombo" VerticalAlignment="Center" MinWidth="150"
 							          FontSize="12" Padding="10,4" SelectionChanged="OnPreviewQualityChanged"
@@ -809,7 +809,7 @@
 								<local:IconView Data="{StaticResource IconFullscreen}" Width="14" Height="14" />
 							</Button>
 						</StackPanel>
-						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+						<StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
 							<Button Name="ToggleGridButton" Classes="previewToolButton active"
 							        ToolTip.Tip="{x:Static local:Strings.Main_GridGuides}">
 								<local:IconView Name="GridIcon" Data="{StaticResource IconGrid}" Width="14" Height="14" />
@@ -870,7 +870,7 @@
 								<local:IconView Data="{StaticResource IconFlag}" Width="14" Height="14" />
 							</Button>
 						</StackPanel>
-						<StackPanel Name="AudioPanel" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center"
+						<StackPanel Name="AudioPanel" Grid.Column="2" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center"
 						            IsEnabled="False" ToolTip.ShowOnDisabled="True">
 							<Button Name="MuteButton" Classes="previewToolButton" VerticalAlignment="Center" Click="OnMuteClick"
 							        ToolTip.Tip="{x:Static local:Strings.Main_UnmuteM}">
