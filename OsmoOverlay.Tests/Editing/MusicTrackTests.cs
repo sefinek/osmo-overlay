@@ -93,6 +93,26 @@ public sealed class MusicTrackTests
 	}
 
 	[TestMethod]
+	public void WithCrossfades_OverlapBecomesTheFadeOfBothClips()
+	{
+		List<MusicClip> heard = MusicTrack.WithCrossfades([Clip(0, 20, 30, fadeOut: 1), Clip(15, 20, 30, fadeIn: 2)]);
+
+		Assert.AreEqual(5, heard[0].FadeOutSeconds, 1e-9);
+		Assert.AreEqual(5, heard[1].FadeInSeconds, 1e-9);
+		Assert.AreEqual(0, heard[0].FadeInSeconds);
+	}
+
+	[TestMethod]
+	public void WithCrossfades_ClipInsideAnotherOrApartIsLeftAlone()
+	{
+		List<MusicClip> inside = MusicTrack.WithCrossfades([Clip(0, 30, 40), Clip(5, 10, 30)]);
+		List<MusicClip> apart = MusicTrack.WithCrossfades([Clip(0, 10, 30), Clip(20, 10, 30)]);
+
+		Assert.IsTrue(inside.All(c => c.FadeInSeconds == 0 && c.FadeOutSeconds == 0));
+		Assert.IsTrue(apart.All(c => c.FadeInSeconds == 0 && c.FadeOutSeconds == 0));
+	}
+
+	[TestMethod]
 	public void FfmpegGraph_OriginalAndTwoClips_MixesAllThree()
 	{
 		string graph = MusicTrack.FfmpegGraph([Clip(2, 10, db: -6, fadeIn: 1, fadeOut: 2, duck: -10), Clip(20, 5, 30, 3)], 2, "0:a");

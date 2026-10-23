@@ -234,7 +234,7 @@
 								<ComboBox Grid.Column="1" Name="SettingsPresetCombo" SelectionChanged="OnSettingsPresetChanged" />
 							</Grid>
 							<Border Classes="divider" />
-							<WrapPanel Margin="16,13,16,5">
+							<WrapPanel Margin="16,13,16,5" HorizontalAlignment="Center">
 								<WrapPanel.Styles>
 									<Style Selector="Button">
 										<Setter Property="Margin" Value="0,0,8,8" />

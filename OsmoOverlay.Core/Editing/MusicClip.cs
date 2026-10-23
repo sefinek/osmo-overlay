@@ -72,6 +72,37 @@ public static class MusicTrack
 		return sort ? [.. normalized.OrderBy(c => c.StartSeconds).ThenBy(c => c.Path, StringComparer.Ordinal)] : normalized;
 	}
 
+	/// <summary>
+	///     The clips as they are heard where they overlap like a crossfade (as in a video editor): a clip starting over the end of an
+	///     earlier one fades in for the length of the overlap, and that one fades out over it - never less than the fade each has by
+	///     itself. A clip lying wholly inside another is only mixed with it. Same order as the input; the clips themselves are
+	///     what is stored, this is what is played (FfmpegGraph, MusicMixer) and drawn.
+	/// </summary>
+	public static List<MusicClip> WithCrossfades(IReadOnlyList<MusicClip> clips)
+	{
+		const double Tolerance = 1e-6;
+		double[] fadeIn = [.. clips.Select(c => c.FadeInSeconds)], fadeOut = [.. clips.Select(c => c.FadeOutSeconds)];
+		for (int later = 0; later < clips.Count; later++)
+		{
+			for (int earlier = 0; earlier < clips.Count; earlier++)
+			{
+				MusicClip a = clips[earlier], b = clips[later];
+				if (earlier == later || b.StartSeconds <= a.StartSeconds + Tolerance || b.StartSeconds >= a.EndSeconds - Tolerance || b.EndSeconds <= a.EndSeconds + Tolerance)
+					continue;
+
+				double overlap = a.EndSeconds - b.StartSeconds;
+				fadeOut[earlier] = Math.Max(fadeOut[earlier], overlap);
+				fadeIn[later] = Math.Max(fadeIn[later], overlap);
+			}
+		}
+
+		return [.. clips.Select((c, i) =>
+		{
+			double inFade = Math.Min(fadeIn[i], c.LengthSeconds);
+			return c with { FadeInSeconds = inFade, FadeOutSeconds = Math.Min(fadeOut[i], c.LengthSeconds - inFade) };
+		})];
+	}
+
 	/// <summary>The clip's gain at `seconds` into it (fades included), 0 outside the clip.</summary>
 	public static double GainAt(MusicClip clip, double seconds)
 	{

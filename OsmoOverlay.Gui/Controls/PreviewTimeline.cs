@@ -103,7 +103,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen HoverPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.35));
 	private static readonly Typeface LabelTypeface = new(FontFamily.Default);
 	private static readonly IPen SelectedCutBorder = new Pen(Palette.Danger, 2);
-	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
 	private static readonly Cursor VolumeLineCursor = new(StandardCursorType.SizeNorthSouth);
 	private static readonly Cursor VolumePointCursor = new(StandardCursorType.SizeAll);
@@ -177,7 +176,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	public PreviewTimeline()
 	{
-		Cursor = HandCursor;
 	}
 
 	/// <summary>A drag on the timeline began / ended - Value keeps changing (ValueChanged) in between.</summary>
@@ -1206,7 +1204,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 				InvalidateVisual();
 				break;
 			default:
-				Cursor = EdgeAt(x) is not null ? ResizeCursor : VolumeHitAt(position) is { } hover ? hover >= 0 ? VolumePointCursor : hover == -1 ? VolumeLineCursor : ResizeCursor : HandCursor;
+				Cursor = EdgeAt(x) is not null ? ResizeCursor : VolumeHitAt(position) is { } hover ? hover >= 0 ? VolumePointCursor : hover == -1 ? VolumeLineCursor : ResizeCursor : null;
 				UpdateTip(TipAt(position));
 				break;
 		}

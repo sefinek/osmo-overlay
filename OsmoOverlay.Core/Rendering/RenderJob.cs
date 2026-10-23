@@ -288,7 +288,7 @@ public static class RenderJob
 					output.Width, output.Height, reframer);
 			using Process ffmpeg = FfmpegPipeline.StartRender(noAudio ? [.. segments.Select(s => s with { Source = s.Source with { Audio = null } })] : segments, options.OutputPath, encoder, output, options.Overwrite, encode,
 				plan, options.GreenScreen, pictures is not null, options.Volume,
-				options.Music is { Count: > 0 } ? MusicTrack.Normalize(options.Music, plan.TotalFrames / fps) : null);
+				options.Music is { Count: > 0 } ? MusicTrack.WithCrossfades(MusicTrack.Normalize(options.Music, plan.TotalFrames / fps)) : null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// Disposing the Process doesn't terminate it: every path out of the try below must leave ffmpeg dead,

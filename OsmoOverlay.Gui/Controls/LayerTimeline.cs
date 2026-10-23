@@ -125,8 +125,6 @@ public sealed class LayerTimeline : Control
 	private static readonly IBrush SwitchOnText = Palette.SurfaceSunken;
 	private static readonly Typeface LabelTypeface = new(FontFamily.Default);
 	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
-	private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
-	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
 	// Redrawn with every playhead move while playing - the labels' layouts are kept rather than made again each frame.
 	private readonly Dictionary<(string Text, IBrush Brush, int MaxWidth), FormattedText> _texts = [];
@@ -645,13 +643,7 @@ public sealed class LayerTimeline : Control
 			Cursor = hovered switch
 			{
 				Zone.Body or Zone.Empty when IsOnPlayhead(point.X) => ResizeCursor,
-				Zone.Start or Zone.End => ResizeCursor,
-				Zone.FadeIn or Zone.FadeOut or Zone.Switch => HandCursor,
-				// A clip that can't move (locked layer, read-only preset, no data) is still clicked to select it.
-				// A clip whose time is locked doesn't move in time, so no move cursor (it still goes to another layer by a drag).
-				Zone.Body when hoveredClip is { AnyLocked: true } => HandCursor,
-				Zone.Body => hoveredClip is not null && CanEdit(hoveredClip, hoveredTrack) ? MoveCursor : HandCursor,
-				Zone.Header => Editable ? MoveCursor : null,
+				Zone.Start or Zone.End or Zone.FadeIn or Zone.FadeOut => ResizeCursor,
 				_ => null
 			};
 			ToolTip.SetTip(this, hovered == Zone.Body ? hoveredClip?.LockHint : null);

@@ -40,6 +40,7 @@ public sealed class MusicTimeline : Control
 	private static readonly IPen WaveformPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.45), 1);
 	private static readonly IPen RepeatPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.45), 1, new DashStyle([2, 2], 0));
 	private static readonly IBrush FadeShade = Palette.Tint(Palette.SurfaceSunken, 0.55);
+	private static readonly IBrush CrossfadeFill = Palette.Tint(Palette.SurfaceSunken, 0.35);
 	private static readonly IPen FadeLine = new Pen(Palette.TextPrimary);
 	private static readonly IBrush FadeHandleBrush = Palette.TextPrimary;
 	private static readonly IBrush PastEndFill = Palette.Tint(Palette.SurfaceSunken, 0.75);
@@ -51,9 +52,8 @@ public sealed class MusicTimeline : Control
 	private static readonly IPen AddPen = new Pen(Palette.TextPrimary, 1.5);
 	private static readonly Typeface LabelTypeface = new(FontFamily.Default);
 	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
-	private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
-	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
+	private readonly PlayheadLine _playhead;
 	private PreviewTimeline? _source;
 	private IReadOnlyList<MusicClip> _clips = [];
 	private int? _selected;
@@ -63,6 +63,8 @@ public sealed class MusicTimeline : Control
 	private double _grabOffset;
 	private bool _scrubbing;
 	private Point _lastPoint;
+	private IReadOnlyList<MusicClip>? _crossfadeSource;
+	private IReadOnlyList<MusicClip> _crossfaded = [];
 	private DispatcherTimer? _autoScroll;
 	private (Point At, string Text)? _dragLabel;
 
@@ -74,6 +76,8 @@ public sealed class MusicTimeline : Control
 	public MusicTimeline()
 	{
 		ClipToBounds = true;
+		_playhead = new PlayheadLine(this);
+		VisualChildren.Add(_playhead);
 	}
 
 	/// <summary>The clips as dragged - `final` on release (save it), not while dragging (preview only). Not normalized yet.</summary>
@@ -84,6 +88,9 @@ public sealed class MusicTimeline : Control
 
 	/// <summary>A double-click on a clip.</summary>
 	public event Action<int>? EditRequested;
+
+	/// <summary>A clip was clicked (its index) or the empty track was (null) - the selection the keyboard shortcuts act on.</summary>
+	public event Action<int?>? SelectionChanged;
 
 	/// <summary>The "+" in the header.</summary>
 	public event Action? AddRequested;
@@ -101,14 +108,14 @@ public sealed class MusicTimeline : Control
 		{
 			if (_source is not null)
 			{
-				_source.ViewChanged -= InvalidateVisual;
+				_source.ViewChanged -= Redraw;
 				_source.PropertyChanged -= OnSourcePropertyChanged;
 			}
 
 			_source = value;
 			if (_source is not null)
 			{
-				_source.ViewChanged += InvalidateVisual;
+				_source.ViewChanged += Redraw;
 				_source.PropertyChanged += OnSourcePropertyChanged;
 			}
 
@@ -149,12 +156,29 @@ public sealed class MusicTimeline : Control
 
 	private void OnSourcePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
 	{
-		if (IsEffectivelyVisible && (e.Property == RangeBase.ValueProperty || e.Property == BoundsProperty)) InvalidateVisual();
+		if (!IsEffectivelyVisible) return;
+
+		if (e.Property == RangeBase.ValueProperty) _playhead.InvalidateVisual();
+		else if (e.Property == BoundsProperty) Redraw();
+	}
+
+	/// <summary>Clips and playhead - for what moves both; the playhead alone moves on its own (not redrawing every waveform column as playback goes).</summary>
+	private void Redraw()
+	{
+		InvalidateVisual();
+		_playhead.InvalidateVisual();
 	}
 
 	protected override Size MeasureOverride(Size availableSize)
 	{
+		_playhead.Measure(availableSize);
 		return new Size(0, RowHeight);
+	}
+
+	protected override Size ArrangeOverride(Size finalSize)
+	{
+		_playhead.Arrange(new Rect(finalSize));
+		return finalSize;
 	}
 
 	private double X(double outputSeconds)
@@ -199,17 +223,17 @@ public sealed class MusicTimeline : Control
 				if (end < width) context.FillRectangle(PastEndFill, new Rect(end, 0, width - end, height));
 
 				if (_clips.Count == 0) DrawText(context, Strings.Music_EmptyHint, new Point(Math.Max(X(0), header) + 8, (height - 14) / 2), MutedTextBrush, width);
-				for (int i = 0; i < _clips.Count; i++) DrawClip(context, _clips[i], i == _selected);
+				IReadOnlyList<MusicClip> heard = Crossfaded();
+				for (int i = 0; i < _clips.Count; i++) DrawClip(context, _clips[i], heard[i], i == _selected);
+				for (int i = 0; i < _clips.Count; i++) DrawCrossfades(context, _clips, i);
 
-				double playhead = Math.Round(header + _source.XOf(_source.Value)) + 0.5;
-				if (playhead >= header && playhead <= width) context.DrawLine(PlayheadPen, new Point(playhead, 0), new Point(playhead, height));
 			}
 		}
 
 		if (_dragLabel is { } label) DrawDragLabel(context, label.At, label.Text);
 	}
 
-	private void DrawClip(DrawingContext context, MusicClip clip, bool selected)
+	private void DrawClip(DrawingContext context, MusicClip clip, MusicClip heard, bool selected)
 	{
 		(double x1, double x2, double top, double bottom) = ClipRect(clip);
 		// Zoomed in, a clip is thousands of pixels wide - only the part in view is drawn (a rounded rectangle or a triangle that long is slow to rasterize).
@@ -223,8 +247,9 @@ public sealed class MusicTimeline : Control
 		DrawWaveform(context, clip, x1, x2, top, bottom);
 
 		double fadeInX = X(clip.StartSeconds + clip.FadeInSeconds), fadeOutX = X(clip.EndSeconds - clip.FadeOutSeconds);
-		if (clip.FadeInSeconds > 0) DrawFade(context, new Point(cx1, bottom), new Point(Math.Clamp(fadeInX, low, high), top), new Point(cx1, top), x1 >= low);
-		if (clip.FadeOutSeconds > 0) DrawFade(context, new Point(cx2, bottom), new Point(Math.Clamp(fadeOutX, low, high), top), new Point(cx2, top), x2 <= high);
+		double heardInX = X(heard.StartSeconds + heard.FadeInSeconds), heardOutX = X(heard.EndSeconds - heard.FadeOutSeconds);
+		if (heard.FadeInSeconds > 0) DrawFade(context, new Point(cx1, bottom), new Point(Math.Clamp(heardInX, low, high), top), new Point(cx1, top), x1 >= low);
+		if (heard.FadeOutSeconds > 0) DrawFade(context, new Point(cx2, bottom), new Point(Math.Clamp(heardOutX, low, high), top), new Point(cx2, top), x2 <= high);
 
 		if (clip.Repeats)
 		{
@@ -243,6 +268,36 @@ public sealed class MusicTimeline : Control
 		double textX = Math.Max(x1, HeaderWidth) + 6;
 		using (context.PushClip(rect.Deflate(1)))
 			DrawText(context, Path.GetFileNameWithoutExtension(clip.Path), new Point(textX, top + (bottom - top - 14) / 2), TextBrush, cx2 - 6 - textX);
+	}
+
+	/// <summary>The crossfade where a clip starts over the end of another: the two ramps crossing, as in a video editor.</summary>
+	private void DrawCrossfades(DrawingContext context, IReadOnlyList<MusicClip> clips, int later)
+	{
+		MusicClip b = clips[later];
+		for (int earlier = 0; earlier < clips.Count; earlier++)
+		{
+			MusicClip a = clips[earlier];
+			if (earlier == later || b.StartSeconds <= a.StartSeconds || b.StartSeconds >= a.EndSeconds || b.EndSeconds <= a.EndSeconds) continue;
+
+			double x1 = Math.Max(X(b.StartSeconds), HeaderWidth - 8), x2 = Math.Min(X(a.EndSeconds), Bounds.Width + 8);
+			if (x2 - x1 < 2) continue;
+
+			double top = ClipInset, bottom = RowHeight - ClipInset;
+			context.DrawRectangle(CrossfadeFill, null, new Rect(x1, top, x2 - x1, bottom - top));
+			context.DrawLine(FadeLine, new Point(x1, bottom), new Point(x2, top));
+			context.DrawLine(FadeLine, new Point(x1, top), new Point(x2, bottom));
+		}
+	}
+
+	private IReadOnlyList<MusicClip> Crossfaded()
+	{
+		if (!ReferenceEquals(_clips, _crossfadeSource))
+		{
+			_crossfadeSource = _clips;
+			_crossfaded = MusicTrack.WithCrossfades(_clips);
+		}
+
+		return _crossfaded;
 	}
 
 	/// <summary>One column per DIP, as tall as the loudest peak of the file under it (AudioWaveform.DisplayLevel) - the part of the file the clip plays, repeated where it loops.</summary>
@@ -351,6 +406,7 @@ public sealed class MusicTimeline : Control
 			e.Handled = true;
 			Cursor = null;
 			SelectedIndex = index >= 0 ? index : null;
+			SelectionChanged?.Invoke(_selected);
 			MenuRequested?.Invoke(index >= 0 ? index : null, OutputAt(point.Position.X));
 			return;
 		}
@@ -369,6 +425,7 @@ public sealed class MusicTimeline : Control
 		if (zone == Zone.Empty)
 		{
 			SelectedIndex = null;
+			SelectionChanged?.Invoke(null);
 			_scrubbing = true;
 			e.Pointer.Capture(this);
 			ScrubStarted?.Invoke();
@@ -377,6 +434,7 @@ public sealed class MusicTimeline : Control
 		}
 
 		SelectedIndex = index;
+		SelectionChanged?.Invoke(index);
 		if (e.ClickCount > 1)
 		{
 			EditRequested?.Invoke(index);
@@ -406,8 +464,7 @@ public sealed class MusicTimeline : Control
 			Cursor = hovered switch
 			{
 				Zone.Start or Zone.End => ResizeCursor,
-				Zone.Body => MoveCursor,
-				Zone.FadeIn or Zone.FadeOut or Zone.Add => HandCursor,
+				Zone.FadeIn or Zone.FadeOut => ResizeCursor,
 				_ => null
 			};
 			if (hovered == Zone.Add) ToolTip.SetTip(this, Strings.Music_AddTip);
@@ -599,6 +656,25 @@ public sealed class MusicTimeline : Control
 			Zone.End => string.Format(Strings.Timeline_Out, TimeText.Format(clip.EndSeconds)),
 			_ => string.Format(Strings.Timeline_In, TimeText.Format(clip.StartSeconds)) + " · " + string.Format(Strings.Timeline_Out, TimeText.Format(clip.EndSeconds))
 		};
+	}
+
+	private sealed class PlayheadLine : Control
+	{
+		private readonly MusicTimeline _owner;
+
+		public PlayheadLine(MusicTimeline owner)
+		{
+			_owner = owner;
+			IsHitTestVisible = false;
+		}
+
+		public override void Render(DrawingContext context)
+		{
+			if (_owner._source is not { } source || _owner.OutputDurationSeconds <= 0) return;
+
+			double x = Math.Round(HeaderWidth + source.XOf(source.Value)) + 0.5;
+			if (x >= HeaderWidth && x <= Bounds.Width) context.DrawLine(PlayheadPen, new Point(x, 0), new Point(x, Bounds.Height));
+		}
 	}
 
 	private enum Zone

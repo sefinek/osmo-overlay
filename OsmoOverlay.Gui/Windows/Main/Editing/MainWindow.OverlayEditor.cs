@@ -391,6 +391,12 @@ public partial class MainWindow
 
 	private void SelectElement(string? id)
 	{
+		if (id is not null && _musicActive)
+		{
+			_musicActive = false;
+			MusicTracks.SelectedIndex = null;
+		}
+
 		if (_selectedElementId == id) return;
 
 		_selectedElementId = id;

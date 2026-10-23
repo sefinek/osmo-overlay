@@ -126,10 +126,10 @@ public partial class MainWindow
 			Key.Z when shift => Redo,
 			Key.Z => Undo,
 			Key.Y when !shift => Redo,
-			Key.C when !shift => CopySelectedElement,
-			Key.X when !shift => CutSelectedElement,
-			Key.V when !shift => PasteElement,
-			Key.D when !shift => DuplicateSelectedElement,
+			Key.C when !shift => SelectedMusic is not null ? CopySelectedMusic : CopySelectedElement,
+			Key.X when !shift => SelectedMusic is not null ? CutSelectedMusic : CutSelectedElement,
+			Key.V when !shift => _lastCopiedWasMusic && _copiedMusic is not null ? PasteMusic : PasteElement,
+			Key.D when !shift => SelectedMusic is not null ? DuplicateSelectedMusic : DuplicateSelectedElement,
 			_ => null
 		};
 		if (action is null) return;
@@ -144,6 +144,7 @@ public partial class MainWindow
 	{
 		if (SelectedElement is not { } element) return;
 
+		_lastCopiedWasMusic = false;
 		_copiedElement = element;
 		_pasteCount = 0;
 	}

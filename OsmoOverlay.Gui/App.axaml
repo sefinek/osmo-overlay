@@ -192,8 +192,8 @@
 			<Setter Property="Background" Value="{Binding $parent[ButtonSpinner].Background}" />
 		</Style>
 		<Style Selector="NumericUpDown:disabled /template/ ButtonSpinner#PART_Spinner">
-			<Setter Property="Background" Value="{DynamicResource TextControlBackgroundDisabled}" />
-			<Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushDisabled}" />
+			<Setter Property="Background" Value="{StaticResource ControlPressedBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource ControlBorderBrush}" />
 		</Style>
 		<Style Selector="ButtonSpinner /template/ RepeatButton#PART_DecreaseButton /template/ ContentPresenter#PART_ContentPresenter">
 			<Setter Property="CornerRadius" Value="0,5,5,0" />

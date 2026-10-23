@@ -24,6 +24,9 @@ public partial class MainWindow
 
 	private List<MusicClip> _music = [];
 	private bool _musicTrackShown;
+	private bool _musicActive;
+	private MusicClip? _copiedMusic;
+	private bool _lastCopiedWasMusic;
 	private readonly Dictionary<string, AudioWaveform?> _musicWaveforms = new(StringComparer.OrdinalIgnoreCase);
 	private (PointerPressedEventArgs Pressed, bool Started)? _musicDragStart;
 
@@ -32,6 +35,11 @@ public partial class MainWindow
 	private void WireMusic()
 	{
 		MusicTracks.Source = ExpandedTimeline;
+		MusicTracks.SelectionChanged += index =>
+		{
+			_musicActive = index is not null;
+			if (_musicActive) SelectElement(null);
+		};
 		MusicTracks.Waveform = path => _musicWaveforms.GetValueOrDefault(path);
 		MusicTracks.ClipsEdited += OnMusicEdited;
 		MusicTracks.MenuRequested += ShowMusicMenu;
@@ -259,6 +267,53 @@ public partial class MainWindow
 		}
 
 		new ContextMenu { ItemsSource = items, Cursor = new Cursor(StandardCursorType.Arrow) }.Open(MusicTracks);
+	}
+
+	/// <summary>The clip selected on the track, while the track - not a widget - is what the shortcuts act on.</summary>
+	private MusicClip? SelectedMusic => _musicActive && MusicTracks.SelectedIndex is { } i && i < _music.Count ? _music[i] : null;
+
+	private void CopySelectedMusic()
+	{
+		if (SelectedMusic is not { } clip) return;
+
+		_copiedMusic = clip;
+		_lastCopiedWasMusic = true;
+	}
+
+	private void CutSelectedMusic()
+	{
+		if (SelectedMusic is null || MusicTracks.SelectedIndex is not { } index) return;
+
+		CopySelectedMusic();
+		RemoveMusic(index);
+	}
+
+	/// <summary>At the playhead, cut down to what fits before the output's end.</summary>
+	private void PasteMusic()
+	{
+		if (_copiedMusic is not { } source || _summary is null) return;
+
+		double output = OutputSeconds;
+		double playhead = _outputTimeline?.NearestOutputSeconds(PreviewTimeline.Value) ?? PreviewTimeline.Value;
+		MusicClip copy = source with { StartSeconds = Math.Clamp(playhead, 0, Math.Max(0, output - MusicTrack.MinLengthSeconds)) };
+		_musicTrackShown = true;
+		SetMusicSorted([.. _music, copy], copy);
+		_musicActive = MusicTracks.SelectedIndex is not null;
+		CommitHistory("music");
+		SealHistory();
+	}
+
+	private void DuplicateSelectedMusic()
+	{
+		if (MusicTracks.SelectedIndex is { } index && SelectedMusic is not null) DuplicateMusic(index);
+	}
+
+	private bool TryDeleteSelectedMusic()
+	{
+		if (SelectedMusic is null || MusicTracks.SelectedIndex is not { } index) return false;
+
+		RemoveMusic(index);
+		return true;
 	}
 
 	private void RemoveMusic(int index)

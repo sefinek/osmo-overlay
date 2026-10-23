@@ -175,7 +175,7 @@ public partial class MainWindow
 	/// <summary>Delete: the cut clicked on the timeline if there is one, else - like X - cuts the selection out.</summary>
 	private void DeleteSelectedCutOrCutSelection()
 	{
-		if (_summary is null || TryDeleteSelectedElement()) return;
+		if (_summary is null || TryDeleteSelectedMusic() || TryDeleteSelectedElement()) return;
 		if (_selectedCut is not { } index)
 		{
 			ApplyCutAction(CutAction.CutSelection);

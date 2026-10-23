@@ -20,6 +20,8 @@ internal sealed class MusicMixer : IDisposable
 	private readonly int _channels;
 	private readonly Dictionary<string, Track> _tracks = new(StringComparer.OrdinalIgnoreCase);
 	private float[] _mixed = [];
+	private IReadOnlyList<MusicClip>? _crossfadeSource;
+	private IReadOnlyList<MusicClip> _crossfaded = [];
 
 	/// <param name="outputSeconds">A moment of the recording as a moment of the output (OutputTimeline.ToOutputSeconds), null where it is cut out.</param>
 	public MusicMixer(Func<IReadOnlyList<MusicClip>> clips, Func<double, double?> outputSeconds, int sampleRate, int channels)
@@ -39,7 +41,7 @@ internal sealed class MusicMixer : IDisposable
 	/// </summary>
 	public ReadOnlySpan<float> Mix(ReadOnlySpan<float> samples, double recordingSeconds)
 	{
-		IReadOnlyList<MusicClip> clips = _clips();
+		IReadOnlyList<MusicClip> clips = Crossfaded(_clips());
 		if (clips.Count == 0 || _outputSeconds(recordingSeconds) is not { } start) return samples;
 
 		int frames = samples.Length / _channels;
@@ -64,6 +66,18 @@ internal sealed class MusicMixer : IDisposable
 		}
 
 		return mixed;
+	}
+
+	/// <summary>The clips with their crossfades (MusicTrack.WithCrossfades), worked out again only when the list changes.</summary>
+	private IReadOnlyList<MusicClip> Crossfaded(IReadOnlyList<MusicClip> clips)
+	{
+		if (!ReferenceEquals(clips, _crossfadeSource))
+		{
+			_crossfadeSource = clips;
+			_crossfaded = MusicTrack.WithCrossfades(clips);
+		}
+
+		return _crossfaded;
 	}
 
 	private void AddClip(MusicClip clip, Span<float> mixed, double chunkStart, int chunkFrames)
