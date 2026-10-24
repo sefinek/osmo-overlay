@@ -33,7 +33,7 @@ public sealed partial class EsriKeyGuide : UserControl
 			Text = $"{number}.", FontSize = 14, FontWeight = FontWeight.SemiBold, Foreground = Palette.Accent,
 			HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top
 		});
-		var body = new TextBlock { Text = text, FontSize = 14, TextWrapping = TextWrapping.Wrap, LineHeight = 20 };
+		var body = new TextBlock { Text = text, FontSize = 14, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Left, LineHeight = 20 };
 		Grid.SetColumn(body, 1);
 		grid.Children.Add(body);
 		return grid;

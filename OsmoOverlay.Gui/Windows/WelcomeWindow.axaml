@@ -245,6 +245,16 @@
 									</Grid>
 									<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
 										<Border Classes="iconBadge">
+											<local:IconView Data="{StaticResource IconCamera}" />
+										</Border>
+										<StackPanel Grid.Column="1" Classes="rowDetails">
+											<TextBlock Text="{x:Static local:Strings.Welcome_GoPro}" Classes="rowTitle" />
+											<TextBlock Classes="rowText"
+											           Text="{x:Static local:Strings.Welcome_GoProTested}" />
+										</StackPanel>
+									</Grid>
+									<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+										<Border Classes="iconBadge">
 											<local:IconView Data="{StaticResource IconSphere}" />
 										</Border>
 										<StackPanel Grid.Column="1" Classes="rowDetails">

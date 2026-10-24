@@ -19,6 +19,7 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Drag-and-drop editor** - position, size, fonts, colors, entrance and exit animations. Presets can be exported and shared.
 - **Live preview** - with sound, playback speed control, looping, a timeline with thumbnails and saving a frame as a full-resolution PNG.
 - **Cutting** - remove parts of a recording right in the app. Distance, stats and the route only count what's left.
+- **Music** - add songs on the timeline, with trimming, looping, fades and crossfades.
 - **Recording settings check** - shows whether the footage was recorded with the settings recommended for your camera.
 - **Privacy** - the camera's serial number and GPS track don't end up in the rendered MP4 unless you turn that on.
 - **HUD-only export on a green screen** - for editing in another program.
@@ -90,11 +91,21 @@ If you only see a warning about an unidentified developer, right-clicking the ap
 The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
 
 ## Supported cameras
-The DJI Osmo Action 6 and Action 5 Pro are supported. I don't have other DJI cameras, so I can't test them. Recordings from other models (e.g. Osmo Action 4) should work. The recording settings check only knows the recommended settings for these two.
+Use the original files from the memory card. Footage exported from DJI Mimo has no telemetry.
 
-Insta360 support is experimental and has been tested on the X4. The app displays 360° `.insv` recordings as a standard frame with adjustable viewing direction and field of view. It does not yet read GPS data from these files.
+| Camera                                | Status                  | Read from the recording                                                                     | GPS                                                                |
+|:--------------------------------------|:------------------------|:--------------------------------------------------------------------------------------------|:-------------------------------------------------------------------|
+| DJI Osmo Action 6, Action 5 Pro       | Tested                  | GPS, speed, tilt, G-force, ISO, shutter speed, white balance                                | DJI GPS Bluetooth Remote Controller, or the phone through DJI Mimo |
+| Other DJI Osmo Action (e.g. Action 4) | Untested, should work   | The same                                                                                    | The same                                                           |
+| GoPro HERO12 Black                    | Tested (`.MP4`, `.LRV`) | Tilt, G-force, ISO, shutter speed, white balance, audio level, wind noise, image brightness | None - the camera has no GPS, use an external track                |
+| Other GoPro with GPS                  | Untested                | The same, plus GPS (GPS5/GPS9, covered by synthetic tests only)                             | Built in                                                           |
+| Insta360 X4                           | Experimental (`.insv`)  | Tilt, G-force                                                                               | Not read yet, use an external track                                |
 
-GoPro support has been checked on HERO12 Black MP4 and LRV recordings: accelerometer, gravity, ISO, shutter speed and white balance. Pitch was checked against the picture; roll still needs a controlled sideways tilt test. HERO12 footage needs an external track for GPS widgets. GPS5/GPS9 parsing is covered by synthetic tests but still needs verification on recordings from GPS-equipped models. GoPro MAX 360 recordings are not supported.
+- Without GPS data the widgets that need it are disabled. Before recording with a DJI remote, wait for a satellite fix.
+- The recording settings check knows the recommended settings for the Osmo Action 6 and Action 5 Pro only.
+- GoPro: pitch was checked against the picture, roll still needs a sideways tilt test. GoPro MAX (360) is not supported.
+- Insta360: a 360° recording is shown as a standard frame with adjustable viewing direction and field of view.
+- Audio level, wind noise and image brightness widgets show what the GoPro recorded in its own telemetry. They don't analyze sound or picture: the audio bar is a digital level (dBFS, -60 to 0), not sound pressure, and the wind meter is not wind speed.
 
 ## Adding an external GPS track
 Analyze the recording, position the preview at a recognizable event and open **GPS track** in the Source card. Choose the original FIT or GPX file and match the video time to the GPS date and time (UTC). The point picker lists recorded GPS timestamps and, for FIT, speed. A second matching point later in the recording corrects a gradually increasing time difference. Save the project to keep the file reference and alignment.
@@ -102,8 +113,6 @@ Analyze the recording, position the preview at a recognizable event and open **G
 Motion-based alignment is an approximate suggestion: check it against the video before applying it. The camera's file date can be wrong even when it falls within the track's date range. Timer pauses and GPS gaps remain on the real elapsed timeline with no fix or speed; a stopped timer does not establish that the camera stood still. Align separate recordings after stopping the camera individually.
 
 FIT is preferable when it contains measured speed and timer events. GPX works too; speed is derived from consecutive positions. Temperature is imported from both formats when present; FIT also supplies the device's original distance counter and battery level. Each has its own optional widget, disabled when its data is absent. The device distance includes any route before the video and parts cut out. GoPro's motion sensor temperature is a separate reading from the camera, not the GPS track. Both temperature widgets support Celsius and Fahrenheit. Original tracks contain location data and should be shared carefully.
-
-GoPro's optional diagnostic widgets read the GPMF telemetry embedded in the recording: RMS/peak audio levels in dBFS (AALP), wind noise reduction state and a 0-100 meter (WNDM), and average image brightness on a 0-255 scale (YAVG). They do not analyze audio samples or video pixels. The audio bar spans -60 to 0 dBFS, with full readings shown as numbers; dBFS is a digital signal level, not sound pressure. The wind meter is neither wind speed nor reduction effectiveness. Missing diagnostic samples stay unknown, and recordings without these fields, including native DJI/Insta360 telemetry, disable the corresponding widgets.
 
 The CLI accepts the same alignment, using video time before cuts:
 
@@ -131,7 +140,6 @@ Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit 
 Adding anything to the picture means it has to be encoded again - no program can avoid that. What OsmoOverlay avoids is everything on top of it: the render keeps the source's codec, 10-bit color, bitrate, keyframe interval and HEVC level, so it looks practically the same as the original, while DJI Mimo drops to 8-bit H.264.
 
 ## Good to know
-- DJI Osmo Action cameras need a GPS source: a paired DJI GPS Bluetooth Remote Controller, your phone through DJI Mimo, or an external FIT/GPX track. Before recording with the remote, wait for a satellite fix. Without GPS data, the widgets that need it are disabled.
 - GPS data and the camera's serial number are stored directly in the MP4 file. Be careful who you share it with.
 - The same resolution doesn't mean the same quality - codec, color depth and bitrate matter too.
 

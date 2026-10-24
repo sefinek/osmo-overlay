@@ -2809,7 +2809,7 @@ W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub
   <data name="Summary_NoTelemetryMessage" xml:space="preserve">
     <value>W tym pliku nie znaleziono danych telemetrycznych. Możesz odtworzyć nagranie, ale nie dodasz do niego nakładki z danymi z kamery.
 
-Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z DJI Mimo lub innych aplikacji mogą nie zawierać telemetrii.</value>
+Wybierz oryginalny plik z karty pamięci kamery ({0}). Nagrania wyeksportowane z DJI Mimo nie zawierają telemetrii, a z innych aplikacji mogą jej nie mieć.</value>
   </data>
   <data name="Summary_NoTelemetryTitle" xml:space="preserve">
     <value>Brak danych telemetrycznych</value>
@@ -3353,7 +3353,7 @@ Szczegóły: {0}</value>
     <value>Sprawdź, czy komputer poradzi sobie z renderowaniem w 4K. Test obejmuje system, procesor, pamięć RAM, kodowanie i dekodowanie na karcie graficznej oraz miejsce na dysku.</value>
   </data>
   <data name="Welcome_HardwareOk" xml:space="preserve">
-    <value>Ten komputer spełnia zalecenia sprzętowe do renderowania w 4K.</value>
+    <value>Ten komputer spełnia zalecenia sprzętowe do renderowania w 4K!</value>
   </data>
   <data name="Welcome_HardwareProblem" xml:space="preserve">
     <value>Ten komputer może nie poradzić sobie z renderami 4K - szczegóły wyżej.</value>
@@ -3552,7 +3552,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Ustawienia do zapisania:</value>
   </data>
   <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
-    <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo mogą nie zawierać telemetrii. W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
+    <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo nie zawierają telemetrii. W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Wersja {0}</value>
@@ -4358,5 +4358,11 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Music_PaletteTip" xml:space="preserve">
     <value>Przeciągnij na oś czasu, aby dodać muzykę</value>
+  </data>
+  <data name="Welcome_GoPro" xml:space="preserve">
+    <value>GoPro</value>
+  </data>
+  <data name="Welcome_GoProTested" xml:space="preserve">
+    <value>Sprawdzone na HERO12 Black (pliki .MP4 i .LRV): akcelerometr, wektor grawitacji i ekspozycja. HERO12 nie ma GPS, więc widżety GPS wymagają zewnętrznej trasy FIT lub GPX. Inne modele nie były testowane.</value>
   </data>
 </root>
