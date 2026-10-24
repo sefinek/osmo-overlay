@@ -14,8 +14,10 @@ namespace OsmoOverlay.Gui;
 internal class Program
 {
 	[STAThread]
-	public static void Main(string[] args)
+	public static int Main(string[] args)
 	{
+		if (SmokeTest.IsRequested(args)) SmokeTest.Start();
+
 		// Held while the app runs - the installer's AppMutex, so an update waits for the app to close.
 		using var appMutex = new Mutex(false, AppUpdates.MutexName);
 		OverlaySettings settings = OverlaySettingsStore.Load();
@@ -24,7 +26,7 @@ internal class Program
 		UiLanguages.Apply(settings.UiLanguage);
 		CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format());
 		UiScale.Initialize();
-		BuildAvaloniaApp()
+		return BuildAvaloniaApp()
 			.StartWithClassicDesktopLifetime(args);
 	}
 

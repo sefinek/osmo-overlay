@@ -15,6 +15,7 @@ Projects in `OsmoOverlay.slnx` (net10.0):
 
 - `dotnet build OsmoOverlay.Core|Cli|Gui` - build Core/Cli alone when verifying logic (faster, doesn't need the GUI closed).
 - `dotnet test --project OsmoOverlay.Tests` - MSTest.Sdk on Microsoft.Testing.Platform (`global.json` opts in; required on .NET 10). Pure logic with synthetic data, never a real recording. The CodeCoverage extension is versioned by `MicrosoftTestingExtensionsCodeCoverageVersion` in the csproj - a `PackageReference Update` has no effect on it.
+- `smoke-test.yml` starts the Gui with `--smoke-test` (`SmokeTest`) on Windows/Linux (xvfb)/macOS: the main window opens, SkiaSharp, the required tools and FFmpeg's shared libraries load, then it exits 0/1 (a 90 s watchdog exits 2); the welcome, dependency and update prompts are skipped. FFmpeg comes from BtbN's `FFMPEG_BUILD` (`n9.0`) on Windows/Linux and Homebrew on macOS - bump `FFMPEG_BUILD` together with `FFmpeg.AutoGen`'s major. CPU only: hardware decoding/encoders are not covered.
 - Anything touching ffmpeg/ffprobe is verified by a real build plus the CLI on a real file; visual changes by rendering `OverlayRenderer` to a PNG via SkiaSharp.
 - Release packages: `dotnet run --project OsmoOverlay.Build` (`-- --help`). FFmpeg isn't bundled.
 - Shared settings (framework, company, `Version` - the one place to bump it) live in `Directory.Build.props`. Release builds treat warnings as errors (NuGet audit excepted): keep the build at zero warnings.

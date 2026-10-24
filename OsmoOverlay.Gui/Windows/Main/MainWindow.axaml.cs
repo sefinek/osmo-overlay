@@ -243,6 +243,12 @@ public partial class MainWindow : Window
 	{
 		Opened -= OnWindowOpened;
 
+		if (SmokeTest.Enabled)
+		{
+			SmokeTest.Complete();
+			return;
+		}
+
 		AppendBanner();
 		_ = Task.Run(FfmpegPipeline.DeleteStaleTempFiles);
 		if (OverlaySettingsStore.Load().CacheCleanupDays is > 0 and var cacheDays)
