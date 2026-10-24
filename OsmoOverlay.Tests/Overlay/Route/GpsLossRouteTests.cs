@@ -3,7 +3,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Overlay;
 
 [TestClass]
 public sealed class GpsLossRouteTests

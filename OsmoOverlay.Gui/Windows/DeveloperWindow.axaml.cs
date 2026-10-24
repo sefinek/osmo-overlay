@@ -8,7 +8,6 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Gui.Native;
-using OsmoOverlay.Gui.Windows;
 
 namespace OsmoOverlay.Gui;
 

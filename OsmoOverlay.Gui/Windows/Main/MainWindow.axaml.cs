@@ -16,7 +16,6 @@ using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Updates;
 using OsmoOverlay.Gui.Native;
-using OsmoOverlay.Gui.Windows;
 using RenderOptions = OsmoOverlay.Core.RenderOptions;
 
 namespace OsmoOverlay.Gui;

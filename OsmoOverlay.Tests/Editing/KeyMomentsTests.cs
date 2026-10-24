@@ -1,7 +1,7 @@
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Editing;
 
 [TestClass]
 public sealed class KeyMomentsTests

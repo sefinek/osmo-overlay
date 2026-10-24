@@ -18,7 +18,7 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 
-namespace OsmoOverlay.Gui.Windows;
+namespace OsmoOverlay.Gui;
 
 /// <summary>What the test runs with: the loaded recording (null = none), the layout a render would draw and the preview's width cap.</summary>
 public sealed record BenchmarkRequest(string? RecordingPath, IReadOnlyList<OverlayElement> Layout, int PreviewWidth);

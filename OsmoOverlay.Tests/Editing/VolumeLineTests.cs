@@ -1,6 +1,6 @@
 using OsmoOverlay.Core;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Editing;
 
 [TestClass]
 public sealed class VolumeLineTests

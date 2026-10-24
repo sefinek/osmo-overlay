@@ -1,6 +1,6 @@
 using OsmoOverlay.Core;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Support;
 
 [TestClass]
 public sealed class TimeTextTests

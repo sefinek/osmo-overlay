@@ -3,7 +3,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry.External;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Editing;
 
 [TestClass]
 public sealed class OverlayProjectTests

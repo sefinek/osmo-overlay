@@ -2,7 +2,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Tests;
+namespace OsmoOverlay.Tests.Rendering;
 
 [TestClass]
 public sealed class OutputTimelineTests
