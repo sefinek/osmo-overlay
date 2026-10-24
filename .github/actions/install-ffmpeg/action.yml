@@ -2,8 +2,14 @@ name: Install FFmpeg
 description: FFmpeg with the shared libraries the app's preview loads, on the major FFmpeg.AutoGen targets
 
 inputs:
-  build:
-    description: BtbN release branch (Windows and Linux)
+  gyan-version:
+    description: Gyan's release (Windows), the same build the app installs through winget
+    default: 9.0.2
+  gyan-sha256:
+    description: SHA-256 of that release's full_build-shared.zip
+    default: 8d31e162f1616e37aab3fa2db991b97e1b8dbeb1c8465fd81a81be16ff91b328
+  btbn-build:
+    description: BtbN release branch (Linux)
     default: n9.0
 
 runs:
@@ -13,11 +19,13 @@ runs:
       if: runner.os == 'Windows'
       shell: pwsh
       env:
-        BUILD: ${{ inputs.build }}
+        VERSION: ${{ inputs.gyan-version }}
+        SHA256: ${{ inputs.gyan-sha256 }}
       run: |
-        $name = "ffmpeg-$env:BUILD-latest-win64-gpl-shared-$($env:BUILD.TrimStart('n'))"
+        $name = "ffmpeg-$env:VERSION-full_build-shared"
         $zip = Join-Path $env:RUNNER_TEMP "$name.zip"
-        Invoke-WebRequest "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/$name.zip" -OutFile $zip
+        Invoke-WebRequest "https://github.com/GyanD/codexffmpeg/releases/download/$env:VERSION/$name.zip" -OutFile $zip
+        if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $env:SHA256) { throw 'FFmpeg download hash mismatch' }
         Expand-Archive $zip -DestinationPath $env:RUNNER_TEMP
         Add-Content $env:GITHUB_PATH (Join-Path $env:RUNNER_TEMP "$name\bin")
 
@@ -25,7 +33,7 @@ runs:
       if: runner.os == 'Linux'
       shell: bash
       env:
-        BUILD: ${{ inputs.build }}
+        BUILD: ${{ inputs.btbn-build }}
       run: |
         name="ffmpeg-$BUILD-latest-linux64-gpl-shared-${BUILD#n}"
         curl -fsSL --retry 3 "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/$name.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
