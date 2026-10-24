@@ -10,9 +10,13 @@
     <Description>Telemetry processing, HUD rendering, 360 reframing and the ffmpeg pipeline - the camera formats plug in (OsmoOverlay.Cameras.*).</Description>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(GITHUB_SHA)' != ''">
+    <BuildCommit>$(GITHUB_SHA.Substring(0, 7))</BuildCommit>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(BUILD_DATE)' != ''">
     <AssemblyMetadata Include="BuildDate" Value="$(BUILD_DATE)" />
-    <AssemblyMetadata Include="Commit" Value="$(GITHUB_SHA.Substring(0, 7))" Condition="'$(GITHUB_SHA)' != ''" />
+    <AssemblyMetadata Include="Commit" Value="$(BuildCommit)" Condition="'$(BuildCommit)' != ''" />
   </ItemGroup>
 
   <ItemGroup>

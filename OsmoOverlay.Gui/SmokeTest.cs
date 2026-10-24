@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Logging;
@@ -45,8 +46,9 @@ internal static class SmokeTest
 		foreach (string failure in failures) Console.Error.WriteLine($"Smoke test failed: {failure}");
 		if (failures.Count == 0) Console.WriteLine("Smoke test passed");
 
+		// Opened fires inside the lifetime's own Start; shutting down there leaves StartCore with a half-built state (NullReferenceException).
 		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-			desktop.Shutdown(failures.Count == 0 ? 0 : 1);
+			Dispatcher.UIThread.Post(() => desktop.Shutdown(failures.Count == 0 ? 0 : 1), DispatcherPriority.Background);
 	}
 
 	private static List<string> Run()
