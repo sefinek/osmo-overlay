@@ -224,7 +224,7 @@ internal static class Mp4Fields
 	public static List<(uint Count, uint Delta)> ReadStts(Mp4Box stts)
 	{
 		Span<byte> p = stts.Payload!.AsSpan();
-		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint count = TableCount(p, 8);
 		List<(uint, uint)> entries = new((int)count);
 		for (int i = 0; i < count; i++)
 			entries.Add((BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 8)..]), BinaryPrimitives.ReadUInt32BigEndian(p[(12 + i * 8)..])));
@@ -236,6 +236,7 @@ internal static class Mp4Fields
 		Span<byte> p = stsz.Payload!.AsSpan();
 		uint uniform = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
 		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[8..]);
+		if (uniform == 0 && 12L + (long)count * 4 > p.Length) throw new InvalidDataException("A sample size table is longer than its box.");
 		uint[] sizes = new uint[count];
 		for (int i = 0; i < count; i++)
 			sizes[i] = uniform != 0 ? uniform : BinaryPrimitives.ReadUInt32BigEndian(p[(12 + i * 4)..]);
@@ -245,7 +246,7 @@ internal static class Mp4Fields
 	public static List<(uint FirstChunk, uint SamplesPerChunk)> ReadStsc(Mp4Box stsc)
 	{
 		Span<byte> p = stsc.Payload!.AsSpan();
-		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint count = TableCount(p, 12);
 		List<(uint, uint)> entries = new((int)count);
 		for (int i = 0; i < count; i++)
 			entries.Add((BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 12)..]), BinaryPrimitives.ReadUInt32BigEndian(p[(12 + i * 12)..])));
@@ -255,9 +256,9 @@ internal static class Mp4Fields
 	public static ulong[] ReadChunkOffsets(Mp4Box stcoOrCo64)
 	{
 		Span<byte> p = stcoOrCo64.Payload!.AsSpan();
-		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
-		ulong[] offsets = new ulong[count];
 		bool is64 = stcoOrCo64.Type == "co64";
+		uint count = TableCount(p, is64 ? 8 : 4);
+		ulong[] offsets = new ulong[count];
 		for (int i = 0; i < count; i++)
 			offsets[i] = is64 ? BinaryPrimitives.ReadUInt64BigEndian(p[(8 + i * 8)..]) : BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 4)..]);
 		return offsets;
@@ -281,10 +282,10 @@ internal static class Mp4Fields
 	public static ulong[] SampleOffsets(List<(uint FirstChunk, uint SamplesPerChunk)> stsc, ulong[] chunkOffsets, uint[] sizes)
 	{
 		ulong[] offsets = new ulong[sizes.Length];
-		int sample = 0;
+		int sample = 0, entry = -1;
 		for (int chunk = 0; chunk < chunkOffsets.Length && sample < sizes.Length; chunk++)
 		{
-			int entry = stsc.FindLastIndex(e => e.FirstChunk <= chunk + 1);
+			while (entry + 1 < stsc.Count && stsc[entry + 1].FirstChunk <= chunk + 1) entry++;
 			uint perChunk = entry >= 0 ? stsc[entry].SamplesPerChunk : 1;
 			ulong offset = chunkOffsets[chunk];
 			for (int i = 0; i < perChunk && sample < sizes.Length; i++, sample++)
@@ -298,11 +299,19 @@ internal static class Mp4Fields
 		return offsets;
 	}
 
+	/// <summary>The entry count at the start of a table box, refused when the box is too short to hold that many entries (a corrupt count would otherwise allocate gigabytes).</summary>
+	private static uint TableCount(ReadOnlySpan<byte> payload, int entrySize)
+	{
+		uint count = BinaryPrimitives.ReadUInt32BigEndian(payload[4..]);
+		if (8L + (long)count * entrySize > payload.Length) throw new InvalidDataException("A table is longer than its box.");
+		return count;
+	}
+
 	public static uint[]? ReadSyncSamples(Mp4Box? stss)
 	{
 		if (stss is null) return null;
 		Span<byte> p = stss.Payload!.AsSpan();
-		uint count = BinaryPrimitives.ReadUInt32BigEndian(p[4..]);
+		uint count = TableCount(p, 4);
 		uint[] samples = new uint[count];
 		for (int i = 0; i < count; i++) samples[i] = BinaryPrimitives.ReadUInt32BigEndian(p[(8 + i * 4)..]);
 		return samples;

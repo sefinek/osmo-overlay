@@ -226,7 +226,6 @@ public sealed class MusicTimeline : Control
 				IReadOnlyList<MusicClip> heard = Crossfaded();
 				for (int i = 0; i < _clips.Count; i++) DrawClip(context, _clips[i], heard[i], i == _selected);
 				for (int i = 0; i < _clips.Count; i++) DrawCrossfades(context, _clips, i);
-
 			}
 		}
 

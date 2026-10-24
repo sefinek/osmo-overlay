@@ -119,6 +119,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen VolumeRestPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.5), 1, new DashStyle([4, 3], 0));
 	private static readonly IPen VolumePointPen = new Pen(Palette.Accent, 1.5);
 
+	private const int MaxCachedLabels = 64;
+	private readonly Dictionary<string, FormattedText> _labels = [];
+	private LinearGradientBrush? _routeIntroFill;
+	private (double, double) _routeIntroFillKey;
 	private readonly Dictionary<int, CachedThumbnail> _thumbnailBitmaps = [];
 	private long _thumbnailUse;
 	private readonly Stopwatch _stripeClock = Stopwatch.StartNew();
@@ -467,7 +471,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		DrawPlayhead(context, bottom);
 	}
 
-	/// <summary>The card over the video's first seconds: a band across the video track, fading out where the widgets fade in, named.</summary>
 	/// <summary>Each later file's start as a line through the tracks (dashed after a stop), every file's number and name at its bottom-left.</summary>
 	private void DrawFiles(DrawingContext context, double videoTop, double bottom)
 	{
@@ -479,8 +482,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			double start = X(file.StartSeconds), end = X(file.EndSeconds);
 			if (i > 0) context.DrawLine(file.AfterGap ? FileGapPen : FilePen, new Point(start, videoTop), new Point(start, bottom));
 
-			var label = new FormattedText(string.Format(Strings.Timeline_FileLabel, i + 1, file.Name), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-				new Typeface(FontFamily.Default), 12, Palette.TextPrimary);
+			FormattedText label = Label(string.Format(Strings.Timeline_FileLabel, i + 1, file.Name));
 			double left = Math.Max(start, 0) + 4;
 			if (left + label.Width + 10 > Math.Min(end, Bounds.Width) - 4) continue;
 
@@ -514,24 +516,38 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		return null;
 	}
 
+	private FormattedText Label(string text)
+	{
+		if (_labels.TryGetValue(text, out FormattedText? label)) return label;
+
+		if (_labels.Count >= MaxCachedLabels) _labels.Clear();
+		return _labels[text] = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LabelTypeface, 12, Palette.TextPrimary);
+	}
+
+	/// <summary>The card over the video's first seconds: a band across the video track, fading out where the widgets fade in, named.</summary>
 	private void DrawRouteIntro(DrawingContext context, double videoTop)
 	{
 		if (_routeIntro is not { } intro || intro.End <= 0) return;
 
 		double x0 = X(0), fadeFrom = X(intro.FadeFrom), end = X(intro.End);
 		var band = new Rect(x0, videoTop, Math.Max(0, end - x0), VideoTrackHeight);
-		Color tint = ((ISolidColorBrush)RouteIntroBrush).Color;
-		var fill = new LinearGradientBrush
+		(double, double) key = (fadeFrom, end);
+		if (_routeIntroFill is null || _routeIntroFillKey != key)
 		{
-			StartPoint = new RelativePoint(fadeFrom, 0, RelativeUnit.Absolute),
-			EndPoint = new RelativePoint(Math.Max(end, fadeFrom + 1), 0, RelativeUnit.Absolute),
-			GradientStops = [new GradientStop(Color.FromArgb(150, tint.R, tint.G, tint.B), 0), new GradientStop(Color.FromArgb(30, tint.R, tint.G, tint.B), 1)]
-		};
-		context.FillRectangle(fill, band);
+			Color tint = ((ISolidColorBrush)RouteIntroBrush).Color;
+			_routeIntroFill = new LinearGradientBrush
+			{
+				StartPoint = new RelativePoint(fadeFrom, 0, RelativeUnit.Absolute),
+				EndPoint = new RelativePoint(Math.Max(end, fadeFrom + 1), 0, RelativeUnit.Absolute),
+				GradientStops = [new GradientStop(Color.FromArgb(150, tint.R, tint.G, tint.B), 0), new GradientStop(Color.FromArgb(30, tint.R, tint.G, tint.B), 1)]
+			};
+			_routeIntroFillKey = key;
+		}
+
+		context.FillRectangle(_routeIntroFill, band);
 		context.DrawRectangle(null, RouteIntroPen, band.Deflate(0.5));
 
-		var label = new FormattedText(Strings.Timeline_RouteIntro, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(FontFamily.Default), 12,
-			Palette.TextPrimary);
+		FormattedText label = Label(Strings.Timeline_RouteIntro);
 		if (label.Width + 12 > band.Width) return;
 
 		var chip = new Rect(Math.Max(x0, 0) + 4, videoTop + 4, label.Width + 10, label.Height + 4);

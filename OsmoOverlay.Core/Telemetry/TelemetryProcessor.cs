@@ -252,14 +252,6 @@ public static class TelemetryProcessor
 	}
 
 	/// <summary>
-	///     Contiguous [Start, End] SampleTimeSeconds ranges where the raw stream had no real GPS fix
-	///     (TelemetryFrame.HasGpsFix false) - e.g. for a GUI to mark on a scrub
-	///     timeline. Runs on the raw frames, not DerivedFrames, so it reflects what the camera actually
-	///     recorded regardless of the (optional, cosmetic) GpsInterpolation smoothing setting. Callers
-	///     that want to flag only genuine anomalies (a fix that dropped out mid-recording, not a file
-	///     that never had one at all) should gate this behind HasAnyGpsFix themselves.
-	/// </summary>
-	/// <summary>
 	///     The stretches GpsOutliers repairs - a position or a receiver speed no vehicle could have produced - with which of the
 	///     two each holds. Consecutive frames make one stretch; a gap between files ends it.
 	/// </summary>
@@ -283,6 +275,14 @@ public static class TelemetryProcessor
 		return anomalies;
 	}
 
+	/// <summary>
+	///     Contiguous [Start, End] SampleTimeSeconds ranges where the raw stream had no real GPS fix
+	///     (TelemetryFrame.HasGpsFix false) - e.g. for a GUI to mark on a scrub
+	///     timeline. Runs on the raw frames, not DerivedFrames, so it reflects what the camera actually
+	///     recorded regardless of the (optional, cosmetic) GpsInterpolation smoothing setting. Callers
+	///     that want to flag only genuine anomalies (a fix that dropped out mid-recording, not a file
+	///     that never had one at all) should gate this behind HasAnyGpsFix themselves.
+	/// </summary>
 	public static List<(double Start, double End)> FindGpsLossRanges(IReadOnlyList<TelemetryFrame> frames)
 	{
 		var ranges = new List<(double Start, double End)>();
