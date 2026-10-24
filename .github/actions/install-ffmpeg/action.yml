@@ -1,0 +1,40 @@
+name: Install FFmpeg
+description: FFmpeg with the shared libraries the app's preview loads, on the major FFmpeg.AutoGen targets
+
+inputs:
+  build:
+    description: BtbN release branch (Windows and Linux)
+    default: n9.0
+
+runs:
+  using: composite
+  steps:
+    - name: Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        BUILD: ${{ inputs.build }}
+      run: |
+        $name = "ffmpeg-$env:BUILD-latest-win64-gpl-shared-$($env:BUILD.TrimStart('n'))"
+        $zip = Join-Path $env:RUNNER_TEMP "$name.zip"
+        Invoke-WebRequest "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/$name.zip" -OutFile $zip
+        Expand-Archive $zip -DestinationPath $env:RUNNER_TEMP
+        Add-Content $env:GITHUB_PATH (Join-Path $env:RUNNER_TEMP "$name\bin")
+
+    - name: Linux
+      if: runner.os == 'Linux'
+      shell: bash
+      env:
+        BUILD: ${{ inputs.build }}
+      run: |
+        name="ffmpeg-$BUILD-latest-linux64-gpl-shared-${BUILD#n}"
+        curl -fsSL --retry 3 "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/$name.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
+        echo "$RUNNER_TEMP/$name/bin" >> "$GITHUB_PATH"
+        echo "LD_LIBRARY_PATH=$RUNNER_TEMP/$name/lib" >> "$GITHUB_ENV"
+        sudo apt-get update
+        sudo apt-get install -y xvfb libfontconfig1
+
+    - name: macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: brew install ffmpeg

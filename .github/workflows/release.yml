@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}
@@ -17,11 +17,14 @@ env:
   INNO_SETUP_SHA256: 0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f
 
 jobs:
-  release:
-    name: Build and publish
+  build:
+    name: Build packages
     runs-on: windows-latest
     timeout-minutes: 60
     if: github.ref == 'refs/heads/main'
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -70,10 +73,89 @@ jobs:
       - name: Build packages
         run: dotnet run --project OsmoOverlay.Build -- --iscc "${{ runner.temp }}\InnoSetup7\ISCC.exe"
 
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: packages
+          path: artifacts/OsmoOverlay-*
+          if-no-files-found: error
+          retention-days: 1
+
+  verify:
+    name: Start the package (${{ matrix.os }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            package: win-x64
+          - os: ubuntu-latest
+            package: linux-x64
+          - os: macos-latest
+            package: osx-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: packages
+          path: packages
+
+      - name: Checkout the shared actions
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/actions
+          path: repo
+
+      - name: Install FFmpeg
+        uses: ./repo/.github/actions/install-ffmpeg
+
+      - name: Start the package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $archive = Get-ChildItem packages -Filter '*-${{ matrix.package }}-self-contained.zip' | Select-Object -First 1
+          Expand-Archive $archive.FullName -DestinationPath app
+          $exe = Get-ChildItem app -Recurse -Filter OsmoOverlay.exe | Select-Object -First 1
+          $process = Start-Process $exe.FullName -ArgumentList '--smoke-test' -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            Get-ChildItem (Join-Path $env:LOCALAPPDATA 'OsmoOverlay\logs') -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1 | Get-Content
+            throw "Smoke test exited with $($process.ExitCode)"
+          }
+
+      - name: Start the package (Linux, macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir app
+          tar -xzf packages/*-${{ matrix.package }}-self-contained.tar.gz -C app
+          exe=$(find app -type f -name OsmoOverlay -perm -u+x | head -n 1)
+          [ -n "$exe" ] || { echo "::error::no executable OsmoOverlay in the package"; exit 1; }
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a "$exe" --smoke-test; else "$exe" --smoke-test; fi
+
+  publish:
+    name: Create draft release
+    needs: [build, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: packages
+          path: packages
+
       - name: Create draft release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.version.outputs.tag }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: gh release create "$TAG" artifacts/OsmoOverlay-* --draft --target "$GITHUB_SHA" --title "OsmoOverlay $VERSION" --generate-notes
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: gh release create "$TAG" packages/OsmoOverlay-* --draft --target "$GITHUB_SHA" --title "OsmoOverlay $VERSION" --generate-notes

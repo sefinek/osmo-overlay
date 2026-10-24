@@ -15,8 +15,6 @@ concurrency:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  FFMPEG_BUILD: n9.0
-  FFMPEG_BTBN_URL: https://github.com/BtbN/FFmpeg-Builds/releases/download/latest
 
 jobs:
   smoke:
@@ -37,30 +35,8 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Install FFmpeg (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $name = "ffmpeg-$env:FFMPEG_BUILD-latest-win64-gpl-shared-$($env:FFMPEG_BUILD.TrimStart('n'))"
-          $zip = Join-Path $env:RUNNER_TEMP "$name.zip"
-          Invoke-WebRequest "$env:FFMPEG_BTBN_URL/$name.zip" -OutFile $zip
-          Expand-Archive $zip -DestinationPath $env:RUNNER_TEMP
-          Add-Content $env:GITHUB_PATH (Join-Path $env:RUNNER_TEMP "$name\bin")
-
-      - name: Install FFmpeg (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          name="ffmpeg-$FFMPEG_BUILD-latest-linux64-gpl-shared-${FFMPEG_BUILD#n}"
-          curl -fsSL --retry 3 "$FFMPEG_BTBN_URL/$name.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/$name/bin" >> "$GITHUB_PATH"
-          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/$name/lib" >> "$GITHUB_ENV"
-          sudo apt-get update
-          sudo apt-get install -y xvfb libfontconfig1
-
-      - name: Install FFmpeg (macOS)
-        if: runner.os == 'macOS'
-        run: brew install ffmpeg
+      - name: Install FFmpeg
+        uses: ./.github/actions/install-ffmpeg
 
       - name: Build
         run: dotnet build OsmoOverlay.Gui -c Release
