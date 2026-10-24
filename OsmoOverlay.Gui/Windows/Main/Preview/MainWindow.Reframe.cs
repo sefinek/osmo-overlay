@@ -79,7 +79,7 @@ public partial class MainWindow
 	{
 		_reframing = on && Is360;
 		ToggleReframeButton.Classes.Set("active", _reframing);
-		OverlayDragCanvas.Cursor = _reframing ? SizeAllCursor : null;
+		OverlayDragCanvas.Cursor = RestingCursor;
 		if (_reframing) HideHoverIcons();
 	}
 

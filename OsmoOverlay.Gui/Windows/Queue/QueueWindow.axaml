@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        x:Class="OsmoOverlay.Gui.QueueWindow"
+        Width="820" MinWidth="620" Height="560" MinHeight="340"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource WindowBackgroundBrush}"
+        Icon="{x:Static local:AppAssets.Icon}" Title="{x:Static local:Strings.Queue_Title}">
+	<Window.Resources>
+		<SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{StaticResource SurfaceColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{StaticResource ControlColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBackgroundPressed" Color="{StaticResource ControlPressedColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPointerOver" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderHeaderBorderBrushPressed" Color="{StaticResource ControlBorderHoverColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBackground" Color="{StaticResource SurfaceInsetColor}" />
+		<SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="{StaticResource ControlBorderColor}" />
+		<SolidColorBrush x:Key="ExpanderChevronBackground" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBackgroundPressed" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrush" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPointerOver" Color="Transparent" />
+		<SolidColorBrush x:Key="ExpanderChevronBorderBrushPressed" Color="Transparent" />
+	</Window.Resources>
+
+	<Grid Margin="20" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
+		<Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
+			<Button Name="StartButton" Classes="accent" Content="{x:Static local:Strings.Queue_Start}" Click="OnStartClick" MinWidth="96"
+			        HorizontalContentAlignment="Center" />
+			<Button Grid.Column="1" Name="StopButton" Content="{x:Static local:Strings.Queue_Stop}" Click="OnStopClick" IsEnabled="False" MinWidth="96"
+			        HorizontalContentAlignment="Center" />
+			<TextBlock Grid.Column="3" Classes="infoLabel" VerticalAlignment="Center" Margin="0" Text="{x:Static local:Strings.Queue_IfExists}" />
+			<ComboBox Grid.Column="4" Name="ExistingCombo" MinWidth="150" />
+		</Grid>
+
+		<Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8">
+			<Button Content="{x:Static local:Strings.Queue_AddProjects}" Click="OnAddProjectsClick" />
+			<Button Grid.Column="1" Content="{x:Static local:Strings.Queue_AddRecordings}" Click="OnAddRecordingsClick" />
+		</Grid>
+
+		<ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+			<StackPanel Spacing="6" Margin="0,0,12,0">
+				<TextBlock Name="EmptyText" Classes="infoLabel" TextWrapping="Wrap" Margin="0" Text="{x:Static local:Strings.Queue_Empty}" />
+				<StackPanel Name="ItemsPanel" Spacing="6" />
+			</StackPanel>
+		</ScrollViewer>
+
+		<Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+			<TextBlock Name="SummaryText" Classes="infoLabel" VerticalAlignment="Center" Margin="0" />
+			<Button Grid.Column="1" Content="{x:Static local:Strings.Queue_ClearFinished}" Click="OnClearFinishedClick" />
+		</Grid>
+	</Grid>
+</Window>

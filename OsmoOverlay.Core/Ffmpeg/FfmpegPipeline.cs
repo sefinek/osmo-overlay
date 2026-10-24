@@ -51,7 +51,8 @@ public static class FfmpegPipeline
 		yield return codec + "_qsv";
 	}
 
-	private static bool Works(string encoder, VideoInfo output)
+	/// <summary>The probe's ffmpeg arguments: three black frames of the output's size through the render's own encoder options, to nowhere.</summary>
+	internal static List<string> ProbeArguments(string encoder, VideoInfo output)
 	{
 		(int num, int den) = ParseFrameRate(output.FrameRate);
 		List<string> args =
@@ -61,7 +62,12 @@ public static class FfmpegPipeline
 		];
 		AddVideoEncoderArgs(args, output, encoder, new RenderEncodeSettings("p7", false, 1, false), num, den);
 		args.AddRange(["-f", "null", "-"]);
+		return args;
+	}
 
+	private static bool Works(string encoder, VideoInfo output)
+	{
+		List<string> args = ProbeArguments(encoder, output);
 		string key = string.Join(' ', args);
 		lock (ConfirmedEncoders)
 		{
@@ -72,6 +78,32 @@ public static class FfmpegPipeline
 
 		lock (ConfirmedEncoders) ConfirmedEncoders.Add(key);
 		return true;
+	}
+
+	/// <summary>
+	///     Every encoder for the output's codec tried the way a render would (the graphics cards' first, then the CPU's), with ffmpeg's
+	///     own words for a failure - for finding out why a card isn't used, or for someone with the hardware to confirm that one is.
+	///     Unlike SelectVideoEncoder nothing is remembered and every encoder is tried.
+	/// </summary>
+	public static IReadOnlyList<EncoderProbe> ProbeEncoders(VideoInfo output)
+	{
+		bool h264 = IsH264(output);
+		List<EncoderProbe> results = [];
+		foreach (string encoder in GpuEncoders(h264).Append(h264 ? "libx264" : "libx265"))
+		{
+			(int exitCode, _, string stderr) = ProcessHelper.RunCaptured(ProcessHelper.CreateHidden("ffmpeg", [.. ProbeArguments(encoder, output)]));
+			results.Add(new EncoderProbe(encoder, exitCode == 0, exitCode == 0 ? "" : LastLines(stderr, 3)));
+		}
+
+		return results;
+	}
+
+	/// <summary>The names of the graphics cards found (Windows only) - what the encoders in ProbeEncoders could run on.</summary>
+	public static IReadOnlyList<string> GpuNames => [.. GpuAdapters.All.Select(a => a.Name).Where(name => name.Length > 0)];
+
+	private static string LastLines(string text, int count)
+	{
+		return string.Join(" | ", text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).TakeLast(count));
 	}
 
 	public static bool IsGpuEncoder(string encoder)
@@ -852,3 +884,6 @@ public static class FfmpegPipeline
 ///     the program that made it (ExportMarker), null for nothing.
 /// </summary>
 public sealed record RenderEncodeSettings(string NvencPreset, bool HardwareDecoding, double BitrateMultiplier, bool FfmpegFastStart, string? Comment = null);
+
+/// <summary>One encoder's try (FfmpegPipeline.ProbeEncoders): whether it encoded the test frames, else the last lines ffmpeg said.</summary>
+public sealed record EncoderProbe(string Encoder, bool Works, string Detail);

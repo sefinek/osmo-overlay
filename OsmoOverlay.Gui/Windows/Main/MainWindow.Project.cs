@@ -27,7 +27,9 @@ public partial class MainWindow
 		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering || _previewTestRunning) return;
 
 		bool hasWork = _inputPaths.Count > 0 || _projectPath is not null;
-		if (hasWork && !await ConfirmDialog.AskAsync(this, Strings.Project_NewTitle, Strings.Project_NewMessage, Strings.Main_NewProject, DialogKind.Warning)) return;
+		bool askedAboutChanges = HasUnsavedChanges;
+		if (!await ConfirmUnsavedAsync()) return;
+		if (hasWork && !askedAboutChanges && !await ConfirmDialog.AskAsync(this, Strings.Project_NewTitle, Strings.Project_NewMessage, Strings.Main_NewProject, DialogKind.Warning)) return;
 
 		StartNewProject();
 		await ChooseSettingsPresetAsync(Strings.SettingsPresets_PickNew);
@@ -54,6 +56,8 @@ public partial class MainWindow
 		ActionButton.IsEnabled = false;
 		_projectPath = null;
 		_savedAtTitle = null;
+		_cleanFingerprint = null;
+		SetUnsaved(false);
 		UpdateTitle();
 		ResetHistory();
 	}
@@ -74,6 +78,12 @@ public partial class MainWindow
 	}
 
 	private async void OnSaveProjectClick(object? sender, RoutedEventArgs e)
+	{
+		await SaveProjectCoreAsync();
+	}
+
+	/// <summary>Saves to the project's file, or asks where while it has none.</summary>
+	private async Task SaveProjectCoreAsync()
 	{
 		if (_projectPath is null) await SaveProjectAsAsync();
 		else await SaveProjectAsync(_projectPath);
@@ -121,11 +131,12 @@ public partial class MainWindow
 
 	private async Task SaveProjectAsync(string path)
 	{
+		OverlayProject project;
 		try
 		{
 			// Built here (it reads the window), written off the UI thread - the pointer is the busy one for as long as that takes, over
 			// a shield across the window as many controls set a cursor of their own (the timelines, buttons).
-			OverlayProject project = BuildProject();
+			project = BuildProject();
 			SaveCursorShield.IsVisible = true;
 			await Task.Run(() => project.Save(path));
 		}
@@ -139,6 +150,7 @@ public partial class MainWindow
 
 		SaveCursorShield.IsVisible = false;
 		SetProjectPath(path, DateTime.Now);
+		MarkClean(project);
 		AppendLog(string.Format(Strings.Project_Saved, path));
 	}
 
@@ -165,6 +177,8 @@ public partial class MainWindow
 
 	private async Task OpenProjectAsync(string path)
 	{
+		if (!await ConfirmUnsavedAsync()) return;
+
 		OverlayProject project;
 		try
 		{
@@ -208,6 +222,7 @@ public partial class MainWindow
 		await ApplyProjectPresetAsync(project);
 		ApplyProjectEdits(project);
 		ResetHistory();
+		MarkClean();
 	}
 
 	private void ApplyProjectEdits(OverlayProject project)
@@ -356,7 +371,8 @@ public partial class MainWindow
 	/// </summary>
 	private void UpdateTitle()
 	{
-		string title = _projectPath is { } path ? $"{Path.GetFileNameWithoutExtension(path)} - {BaseTitle}" : BaseTitle;
+		string star = _unsaved ? "*" : "";
+		string title = _projectPath is { } path ? $"{Path.GetFileNameWithoutExtension(path)}{star} - {BaseTitle}" : BaseTitle + star;
 		if (_phase is UiPhase.SummaryReady or UiPhase.Rendering)
 		{
 			(List<SettingsPreset> presets, string activeId) = SettingsPresetStore.Load();

@@ -509,7 +509,7 @@ public partial class BenchmarkWindow : Window
 			FpsLegend.Text = string.Format(Strings.Benchmark_Fps, fps.ToString("0"));
 		}
 
-		if (reading.Frame is { } frame && reading.Stage is BenchmarkStage.Overlay or BenchmarkStage.Render)
+		if (reading is { Frame: { } frame, Stage: BenchmarkStage.Overlay or BenchmarkStage.Render })
 			ShowLiveFrame(frame);
 	}
 

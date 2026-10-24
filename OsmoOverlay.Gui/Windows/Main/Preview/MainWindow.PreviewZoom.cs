@@ -8,7 +8,8 @@ namespace OsmoOverlay.Gui;
 ///     Preview zoom: Fit (the whole frame, the default) or a size relative to the recording's own pixels - 100% is one
 ///     source pixel per screen pixel (DPI scaling included), for judging the HUD as it will render; sharper than the
 ///     preview quality allows it can't get, so pixel-peeping wants "Full resolution". Ctrl+wheel zooms around the
-///     pointer, the middle mouse button pans. GetPreviewTransform includes zoom and pan, so the image and everything
+///     pointer; dragging the picture pans (the left button on a spot with no widget, or the middle one anywhere), a double-click
+///     on it fits it again, and the pointer shows the four arrows over it while it can be moved. GetPreviewTransform includes zoom and pan, so the image and everything
 ///     the editor places over it (selection box, handles, guides, hit-testing) follow the same mapping.
 /// </summary>
 public partial class MainWindow
@@ -25,6 +26,8 @@ public partial class MainWindow
 	private Vector _previewPan;
 	private bool _suppressPreviewZoomEvent;
 	private bool _panning;
+	// A left press on a spot with no widget: a click (it lets go of the selection) until the pointer moves, then a pan.
+	private bool _panCandidate;
 	private Point _panStartPointer;
 	private Vector _panStartOffset;
 
@@ -84,6 +87,7 @@ public partial class MainWindow
 
 		ApplyPreviewLayout();
 		QueueAutoQuality();
+		if (_draggingElementId is null && _resizingElementId is null && !_panning) OverlayDragCanvas.Cursor = RestingCursor;
 	}
 
 	/// <summary>Sizes and places the preview image per GetPreviewTransform, then everything the editor draws over it.</summary>
@@ -116,23 +120,60 @@ public partial class MainWindow
 		_previewPan = new Vector(Math.Clamp(pan.X, -maxX, maxX), Math.Clamp(pan.Y, -maxY, maxY));
 	}
 
+	/// <summary>What the pointer shows over the picture when nothing is being dragged: the four arrows where the picture can be moved (zoomed in, or the 360 view).</summary>
+	private Cursor? RestingCursor => _reframing || _previewZoom is not null ? SizeAllCursor : null;
+
 	/// <summary>Called first by the canvas's own pointer handlers - a middle-button drag pans instead of editing.</summary>
 	private bool TryStartPreviewPan(PointerPressedEventArgs e)
 	{
 		if (_previewZoom is null || !e.GetCurrentPoint(OverlayDragCanvas).Properties.IsMiddleButtonPressed) return false;
 
+		BeginPan(e);
 		_panning = true;
+		return true;
+	}
+
+	/// <summary>
+	///     A left press on the picture where there's no widget, zoomed in: a drag pans (a click still lets go of the selection, on
+	///     release), a double-click fits the picture again. False when it's not zoomed, and the press is a plain click.
+	/// </summary>
+	private bool TryStartEmptyAreaPan(PointerPressedEventArgs e)
+	{
+		if (_previewZoom is null) return false;
+
+		if (e.ClickCount == 2)
+		{
+			SetPreviewZoom(null, null);
+			e.Handled = true;
+			return true;
+		}
+
+		BeginPan(e);
+		_panCandidate = true;
+		return true;
+	}
+
+	private void BeginPan(PointerPressedEventArgs e)
+	{
 		_panStartPointer = e.GetPosition(OverlayDragCanvas);
 		_panStartOffset = _previewPan;
 		e.Pointer.Capture(OverlayDragCanvas);
 		e.Handled = true;
-		return true;
 	}
 
 	private bool ContinuePreviewPan(PointerEventArgs e)
 	{
+		if (_panCandidate && !_panning)
+		{
+			if (Point.Distance(e.GetPosition(OverlayDragCanvas), _panStartPointer) < DragDropThreshold) return true;
+
+			_panCandidate = false;
+			_panning = true;
+		}
+
 		if (!_panning) return false;
 
+		OverlayDragCanvas.Cursor = SizeAllCursor;
 		_previewPan = _panStartOffset + (e.GetPosition(OverlayDragCanvas) - _panStartPointer);
 		ApplyPreviewLayout();
 		return true;
@@ -140,10 +181,14 @@ public partial class MainWindow
 
 	private bool EndPreviewPan(PointerReleasedEventArgs e)
 	{
-		if (!_panning) return false;
+		bool click = _panCandidate;
+		if (!_panning && !click) return false;
 
 		_panning = false;
+		_panCandidate = false;
 		e.Pointer.Capture(null);
+		if (click) SelectElement(null);
+		UpdateHoverState(e);
 		return true;
 	}
 }

@@ -1228,9 +1228,6 @@ Each category lists its three highest values. You can jump to a value or save it
   <data name="Main_Gradient" xml:space="preserve">
     <value>Gradient</value>
   </data>
-  <data name="Main_GreenScreen" xml:space="preserve">
-    <value>Green Screen</value>
-  </data>
   <data name="Main_GridGuides" xml:space="preserve">
     <value>Grid guides</value>
   </data>
@@ -1412,7 +1409,7 @@ Each category lists its three highest values. You can jump to a value or save it
     <value>Preview volume</value>
   </data>
   <data name="Main_PreviewZoom100IsOne" xml:space="preserve">
-    <value>Preview zoom - 100% is one source pixel per screen pixel. Ctrl+wheel zooms at the pointer, the middle mouse button pans. For pixel-peeping, set the preview quality to Full resolution.</value>
+    <value>Preview zoom - 100% is one source pixel per screen pixel. Ctrl+wheel zooms at the pointer; drag the picture to move it (double-click fits it again). For pixel-peeping, set the preview quality to Full resolution.</value>
   </data>
   <data name="Main_PreviousFrameLeft" xml:space="preserve">
     <value>Previous frame (Left)</value>
@@ -1443,9 +1440,6 @@ Each category lists its three highest values. You can jump to a value or save it
   </data>
   <data name="Main_Render" xml:space="preserve">
     <value>Render</value>
-  </data>
-  <data name="Main_RenderJustTheHudOverlay" xml:space="preserve">
-    <value>Render just the HUD overlay on a solid green-screen background (no source video, no audio) for compositing in another editor.</value>
   </data>
   <data name="Main_ResetToDefault" xml:space="preserve">
     <value>Reset to default</value>
@@ -4364,5 +4358,243 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Welcome_GoProTested" xml:space="preserve">
     <value>Checked on the HERO12 Black (.MP4 and .LRV files): accelerometer, gravity and exposure. The HERO12 has no GPS, so GPS widgets need an external FIT or GPX track. Other models are untested.</value>
+  </data>
+  <data name="Main_AddToQueue" xml:space="preserve">
+    <value>Add to queue</value>
+  </data>
+  <data name="Main_AddToQueueHint" xml:space="preserve">
+    <value>Puts this project in the render queue as it is now, to render later with the others.</value>
+  </data>
+  <data name="Main_Queue" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="Main_ExportProfile" xml:space="preserve">
+    <value>Export profile</value>
+  </data>
+  <data name="Main_ExportProfileHint" xml:space="preserve">
+    <value>A ready-made set of size, codec and bitrate for the output. It sets the same options as Settings, Rendering.</value>
+  </data>
+  <data name="Main_ExportProfileCustom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="Main_ExportTelemetry" xml:space="preserve">
+    <value>Export telemetry...</value>
+  </data>
+  <data name="Main_ExportTelemetryHint" xml:space="preserve">
+    <value>Saves the processed telemetry of the whole recording (before cuts) as a CSV table or a GPX track.</value>
+  </data>
+  <data name="Telemetry_ExportTitle" xml:space="preserve">
+    <value>Export telemetry</value>
+  </data>
+  <data name="Telemetry_FileTypeCsv" xml:space="preserve">
+    <value>CSV table</value>
+  </data>
+  <data name="Telemetry_FileTypeGpx" xml:space="preserve">
+    <value>GPX track</value>
+  </data>
+  <data name="Telemetry_Exported" xml:space="preserve">
+    <value>Telemetry saved: {0}</value>
+  </data>
+  <data name="Telemetry_ExportFailed" xml:space="preserve">
+    <value>Couldn't save the telemetry: {0}</value>
+  </data>
+  <data name="Telemetry_ExportFailedTitle" xml:space="preserve">
+    <value>Telemetry not saved</value>
+  </data>
+  <data name="Render_ModeAlpha" xml:space="preserve">
+    <value>Mode: transparent overlay ({0})</value>
+  </data>
+  <data name="Queue_Title" xml:space="preserve">
+    <value>Render queue</value>
+  </data>
+  <data name="Queue_Empty" xml:space="preserve">
+    <value>Nothing in the queue. Add projects or recordings here, or use "Add to queue" in the main window.</value>
+  </data>
+  <data name="Queue_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Queue_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Queue_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Queue_MoveUp" xml:space="preserve">
+    <value>Up</value>
+  </data>
+  <data name="Queue_MoveDown" xml:space="preserve">
+    <value>Down</value>
+  </data>
+  <data name="Queue_Retry" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="Queue_ClearFinished" xml:space="preserve">
+    <value>Clear finished</value>
+  </data>
+  <data name="Queue_IfExists" xml:space="preserve">
+    <value>If the file exists</value>
+  </data>
+  <data name="Queue_ExistsSkip" xml:space="preserve">
+    <value>Skip it</value>
+  </data>
+  <data name="Queue_ExistsOverwrite" xml:space="preserve">
+    <value>Overwrite</value>
+  </data>
+  <data name="Queue_ExistsNumber" xml:space="preserve">
+    <value>Add a number</value>
+  </data>
+  <data name="Queue_StateWaiting" xml:space="preserve">
+    <value>Waiting</value>
+  </data>
+  <data name="Queue_StateRendering" xml:space="preserve">
+    <value>Rendering</value>
+  </data>
+  <data name="Queue_StateDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Queue_StateFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Queue_StateSkipped" xml:space="preserve">
+    <value>Skipped</value>
+  </data>
+  <data name="Queue_StateCancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="Queue_Added" xml:space="preserve">
+    <value>Added to the queue: {0}</value>
+  </data>
+  <data name="Queue_AddFailed" xml:space="preserve">
+    <value>Couldn't add to the queue: {0}</value>
+  </data>
+  <data name="Queue_Busy" xml:space="preserve">
+    <value>The queue is rendering. Wait for it or stop it first.</value>
+  </data>
+  <data name="Queue_RenderBusy" xml:space="preserve">
+    <value>A render is running in the main window.</value>
+  </data>
+  <data name="Queue_Waiting" xml:space="preserve">
+    <value>Waiting: {0}</value>
+  </data>
+  <data name="Queue_FinishedTitle" xml:space="preserve">
+    <value>Queue finished</value>
+  </data>
+  <data name="Queue_FinishedMessage" xml:space="preserve">
+    <value>Done: {0}, failed or skipped: {1}.</value>
+  </data>
+  <data name="Unsaved_Title" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="Unsaved_Message" xml:space="preserve">
+    <value>The project has changes that aren't saved.</value>
+  </data>
+  <data name="Unsaved_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Unsaved_Discard" xml:space="preserve">
+    <value>Don't save</value>
+  </data>
+  <data name="Compare_Placeholder" xml:space="preserve">
+    <value>Compare with...</value>
+  </data>
+  <data name="Compare_Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Compare_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Compare_Hint" xml:space="preserve">
+    <value>Shows another preset in the preview without changing anything (F8).</value>
+  </data>
+  <data name="Compare_Log" xml:space="preserve">
+    <value>The preview shows the preset {0} (F8 or Back returns to the active one).</value>
+  </data>
+  <data name="Queue_AddProjects" xml:space="preserve">
+    <value>Add projects...</value>
+  </data>
+  <data name="Queue_AddRecordings" xml:space="preserve">
+    <value>Add recordings...</value>
+  </data>
+  <data name="Queue_PickProjects" xml:space="preserve">
+    <value>Projects to queue</value>
+  </data>
+  <data name="Queue_PickRecordings" xml:space="preserve">
+    <value>Recordings to queue</value>
+  </data>
+  <data name="Queue_RecordingsTitle" xml:space="preserve">
+    <value>Several recordings</value>
+  </data>
+  <data name="Queue_RecordingsMessage" xml:space="preserve">
+    <value>{0} files. Render each one by itself, or join them as one recording (the camera's split files)?</value>
+  </data>
+  <data name="Queue_RecordingsSeparate" xml:space="preserve">
+    <value>Each by itself</value>
+  </data>
+  <data name="Queue_RecordingsJoined" xml:space="preserve">
+    <value>As one recording</value>
+  </data>
+  <data name="Queue_NotAdded" xml:space="preserve">
+    <value>Not added:
+{0}</value>
+  </data>
+  <data name="Queue_RecordingsCount" xml:space="preserve">
+    <value>{0} recording|{0} recordings</value>
+  </data>
+  <data name="Queue_DetailsRecordings" xml:space="preserve">
+    <value>Recordings to render</value>
+  </data>
+  <data name="Queue_DetailsOutput" xml:space="preserve">
+    <value>Output</value>
+  </data>
+  <data name="Queue_DetailsContent" xml:space="preserve">
+    <value>In the project</value>
+  </data>
+  <data name="Queue_DetailsCuts" xml:space="preserve">
+    <value>cuts: {0}</value>
+  </data>
+  <data name="Queue_DetailsMusic" xml:space="preserve">
+    <value>music clips: {0}</value>
+  </data>
+  <data name="Queue_DetailsVolume" xml:space="preserve">
+    <value>sound level edited</value>
+  </data>
+  <data name="Queue_DetailsTrack" xml:space="preserve">
+    <value>external GPS track</value>
+  </data>
+  <data name="Queue_DetailsNothing" xml:space="preserve">
+    <value>nothing but the recordings</value>
+  </data>
+  <data name="Queue_FileMissing" xml:space="preserve">
+    <value>not found</value>
+  </data>
+  <data name="Queue_Unreadable" xml:space="preserve">
+    <value>The project can't be read: {0}</value>
+  </data>
+  <data name="Main_ExportProfileApplied" xml:space="preserve">
+    <value>Export profile: {0}</value>
+  </data>
+  <data name="Queue_SkippedHint" xml:space="preserve">
+    <value>Choose Overwrite or Add a number above, then try again.</value>
+  </data>
+  <data name="Main_OverlayOnly" xml:space="preserve">
+    <value>Overlay only</value>
+  </data>
+  <data name="Main_OverlayOnlyHint" xml:space="preserve">
+    <value>Renders just the overlay, without the video: on a green background (green screen), or transparent to lay over the footage in an editor. Pick the kind from the menu.</value>
+  </data>
+  <data name="Main_OverlayGreen" xml:space="preserve">
+    <value>Green background (green screen)</value>
+  </data>
+  <data name="Main_OverlayProRes" xml:space="preserve">
+    <value>Transparent, ProRes 4444 (.mov)</value>
+  </data>
+  <data name="Main_OverlayVp9" xml:space="preserve">
+    <value>Transparent, VP9 (.webm)</value>
+  </data>
+  <data name="Main_OverlayProResHint" xml:space="preserve">
+    <value>For Premiere, DaVinci Resolve and Final Cut. A large file.</value>
+  </data>
+  <data name="Main_OverlayVp9Hint" xml:space="preserve">
+    <value>A much smaller file, read by browsers and some editors.</value>
   </data>
 </root>

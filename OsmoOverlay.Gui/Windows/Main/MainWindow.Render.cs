@@ -15,9 +15,17 @@ namespace OsmoOverlay.Gui;
 public partial class MainWindow
 {
 	/// <param name="range">Only this part of the recording (frames, as the selection on the timeline) - the cuts still apply inside it.</param>
-	private async Task RunRenderAsync(bool greenScreen, FrameRange? range = null)
+	/// <param name="alpha">The overlay alone on a transparent background in this format, instead of the video.</param>
+	private async Task RunRenderAsync(bool greenScreen, FrameRange? range = null, AlphaCodec? alpha = null)
 	{
 		if (_phase != UiPhase.SummaryReady || !CanRenderTelemetry) return;
+
+		if (_queue.IsRunning)
+		{
+			await ConfirmDialog.ShowAsync(this, Strings.Queue_Title, Strings.Queue_Busy, kind: DialogKind.Warning);
+			return;
+		}
+
 		string normalOutputPath = OutputPathBox.Text ?? "";
 
 		if (string.IsNullOrWhiteSpace(normalOutputPath))
@@ -32,10 +40,11 @@ public partial class MainWindow
 		double fps = _summary?.Video.Fps ?? 0;
 		double? rangeStart = range is { } part && fps > 0 ? part.Start / fps : null;
 		double? rangeEnd = range is { } part2 && fps > 0 ? part2.End / fps : null;
-		string outputPath = greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
+		string outputPath = alpha is { } alphaFormat ? RenderOptions.AlphaOutputPath(normalOutputPath, alphaFormat)
+			: greenScreen ? RenderOptions.GreenScreenOutputPath(normalOutputPath) : normalOutputPath;
 		if (rangeStart is { } from && rangeEnd is { } to) outputPath = RenderOptions.RangeOutputPath(outputPath, from, to);
-		if (!await ConfirmDiskSpaceAsync(outputPath)) return;
-		if (!await ConfirmComputerNotBusyAsync()) return;
+		if (!await ConfirmDiskSpaceAsync(outputPath, alpha)) return;
+		if (!await ConfirmComputerNotBusyAsync(alpha is { } cpuFormat ? AlphaOverlay.EncoderName(cpuFormat) : _detectedEncoder)) return;
 
 		_cts = new CancellationTokenSource();
 		SetPhase(UiPhase.Rendering);
@@ -58,17 +67,19 @@ public partial class MainWindow
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
 			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
 			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe, Volume: [.. _volumeLine],
-			Music: [.. _music.Where(c => File.Exists(c.Path))]);
+			Music: [.. _music.Where(c => File.Exists(c.Path))], Alpha: alpha);
 
-		AppendLog(greenScreen ? Strings.Render_ModeGreenScreen : Strings.Render_ModeNormal);
+		AppendLog(alpha is { } logged ? string.Format(Strings.Render_ModeAlpha, AlphaOverlay.EncoderName(logged))
+			: greenScreen ? Strings.Render_ModeGreenScreen : Strings.Render_ModeNormal);
 		if (range is { } shown) AppendLog(string.Format(Strings.Render_LogRange, DescribeSelection(shown)));
 		AppendLog(string.Format(Strings.Render_LogOutput, outputPath));
 		AppendLog(string.Format(Strings.Render_LogEncoder, _detectedEncoder, HasCuts ? DescribeCuts() : Strings.Render_NoCuts));
 		string? presetName = _overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Name;
 		AppendLog(string.Format(Strings.Render_LogPreset, presetName ?? Strings.Render_NoPreset));
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
-		if (!greenScreen)
-			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null, rangeStart, rangeEnd, _externalTrack)));
+		if (!greenScreen && alpha is null)
+			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null, rangeStart, rangeEnd, _externalTrack,
+				[.. _volumeLine], [.. _music.Where(c => File.Exists(c.Path))])));
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;
@@ -91,7 +102,7 @@ public partial class MainWindow
 			// "Matches the source" doesn't mean anything for a green-screen render - there's no source
 			// video in it to match (synthetic background, no audio) - so the Output card keeps showing
 			// whatever it already had (the plan, or an earlier normal render's measured results).
-			if (!greenScreen && _summary is not null) await PopulateMeasuredOutputInfoAsync(outputPath, _summary);
+			if (!greenScreen && alpha is null && _summary is not null) await PopulateMeasuredOutputInfoAsync(outputPath, _summary);
 
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 
@@ -119,13 +130,18 @@ public partial class MainWindow
 		}
 
 		SetPhase(UiPhase.SummaryReady);
-		ActionButton.IsEnabled = true;
-		GreenScreenButton.IsEnabled = true;
-		RenderRangeButton.IsEnabled = true;
+		SetRenderButtons(true);
+	}
+
+	/// <summary>The buttons that start a render (the whole video, a range, the overlay alone) and the one that queues it.</summary>
+	private void SetRenderButtons(bool enabled)
+	{
+		ActionButton.IsEnabled = GreenScreenButton.IsEnabled = RenderRangeButton.IsEnabled = QueueAddButton.IsEnabled = enabled;
 	}
 
 	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts,
-		ReframeView? view, double? rangeStart = null, double? rangeEnd = null, ExternalTrackSource? track = null)
+		ReframeView? view, double? rangeStart = null, double? rangeEnd = null, ExternalTrackSource? track = null,
+		IReadOnlyList<VolumePoint>? volume = null, IReadOnlyList<MusicClip>? music = null)
 	{
 		var parts = new List<string> { "OsmoOverlay.Cli" };
 		parts.AddRange(inputPaths.Select(QuoteArg));
@@ -150,6 +166,10 @@ public partial class MainWindow
 			}
 		}
 
+		if (volume is { Count: > 0 }) parts.AddRange(["--volume", QuoteArg(VolumeSpec.Format(volume))]);
+		foreach (MusicClip clip in music ?? [])
+			parts.AddRange(["--music", QuoteArg(MusicSpec.Format(clip))]);
+
 		foreach (TimeRange cut in cutOuts)
 		{
 			parts.AddRange([
@@ -163,7 +183,7 @@ public partial class MainWindow
 
 	private static string QuoteArg(string value)
 	{
-		return value.Contains(' ') ? $"\"{value}\"" : value;
+		return value.IndexOfAny([' ', ';', ',', '&', '(', ')']) >= 0 ? $"\"{value}\"" : value;
 	}
 
 	private void OnCancelClick(object? sender, RoutedEventArgs e)
@@ -194,7 +214,7 @@ public partial class MainWindow
 	///     Before a render: whether the output's drive has room for it (RenderDiskSpace). Too little asks first, and a
 	///     balloon carries the warning when the window isn't in front. True to go on, also when the space can't be read.
 	/// </summary>
-	private async Task<bool> ConfirmDiskSpaceAsync(string outputPath)
+	private async Task<bool> ConfirmDiskSpaceAsync(string outputPath, AlphaCodec? alpha = null)
 	{
 		if (_summary is null) return true;
 
@@ -203,7 +223,10 @@ public partial class MainWindow
 		double bitrateScale = source.BitRate > 0
 			? (double)OutputVideo.For(source, settings).BitRate / source.BitRate * settings.OutputBitrateMultiplier
 			: 1;
-		long estimate = RenderDiskSpace.EstimateOutputBytes(_summary.FileSizeBytes, SourceFrames, PlannedFrameCount(), bitrateScale);
+		VideoInfo written = OutputVideo.For(source, settings);
+		long estimate = alpha is { } format
+			? AlphaOverlay.EstimateBytes(format, written.Width, written.Height, PlannedFrameCount())
+			: RenderDiskSpace.EstimateOutputBytes(_summary.FileSizeBytes, SourceFrames, PlannedFrameCount(), bitrateScale);
 		long required = RenderDiskSpace.RequiredBytes(estimate);
 		if (estimate <= 0 || RenderDiskSpace.AvailableBytes(outputPath) is not { } available || available >= required) return true;
 
@@ -217,12 +240,12 @@ public partial class MainWindow
 	///     (RenderBenchmark.SampleLoadAsync, ~1 s, on the card the encoder runs on). A busy one asks first. The preview stops
 	///     first, so its own playback isn't what's measured. True to go on.
 	/// </summary>
-	private async Task<bool> ConfirmComputerNotBusyAsync()
+	private async Task<bool> ConfirmComputerNotBusyAsync(string encoder)
 	{
 		_previewPlayer.Pause();
 		AppendLog(Strings.Render_CheckingLoad);
-		BenchmarkLoad load = await RenderBenchmark.SampleLoadAsync(_detectedEncoder, CancellationToken.None);
-		bool gpuEncoder = FfmpegPipeline.IsGpuEncoder(_detectedEncoder);
+		BenchmarkLoad load = await RenderBenchmark.SampleLoadAsync(encoder, CancellationToken.None);
+		bool gpuEncoder = FfmpegPipeline.IsGpuEncoder(encoder);
 		bool busy = load.SlowsRender(gpuEncoder);
 		AppendLog(string.Format(Strings.Render_LogLoad, LoadPercent(load.Cpu), LoadPercent(load.Gpu), LoadPercent(load.Encoder)),
 			busy ? LogLevel.Warn : LogLevel.Info);

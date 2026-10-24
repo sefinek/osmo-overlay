@@ -18,6 +18,8 @@ public partial class MainWindow
 		if (_suppressOverlayEvents || PresetComboBox.SelectedIndex < 0) return;
 
 		_activePresetId = _overlayPresets[PresetComboBox.SelectedIndex].Id;
+		StopCompare();
+		RefreshCompareChoices();
 		RefreshWidgetList();
 		ShowLayout();
 		SaveOverlayPresets();

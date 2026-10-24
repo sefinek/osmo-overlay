@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Overlay;
@@ -41,6 +42,16 @@ public sealed record OverlayProject(
 	public List<MusicClip> Music { get; init; } = [];
 
 	private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+	/// <summary>
+	///     A hash of everything a save would keep except where the playhead is (PreviewFrame moves with every click and isn't an edit):
+	///     two projects with the same fingerprint are the same work, so a differing one since the last save is an unsaved change.
+	/// </summary>
+	public string Fingerprint()
+	{
+		byte[] json = JsonSerializer.SerializeToUtf8Bytes(this with { PreviewFrame = 0 });
+		return Convert.ToHexString(SHA256.HashData(json));
+	}
 
 	public void Save(string path)
 	{

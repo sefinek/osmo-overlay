@@ -644,4 +644,49 @@
   <data name="Overlay_Inactive" xml:space="preserve">
     <value>Off</value>
   </data>
+  <data name="ExportProfile_Source" xml:space="preserve">
+    <value>Original (matches the source)</value>
+  </data>
+  <data name="ExportProfile_Compatible" xml:space="preserve">
+    <value>Compatible (8-bit)</value>
+  </data>
+  <data name="ExportProfile_Web1080" xml:space="preserve">
+    <value>Web 1080p (H.264)</value>
+  </data>
+  <data name="ExportProfile_Phone720" xml:space="preserve">
+    <value>Phone 720p (H.264)</value>
+  </data>
+  <data name="ExportProfile_Quality" xml:space="preserve">
+    <value>High quality (1.5x bitrate)</value>
+  </data>
+  <data name="TelemetryExport_UnsupportedFormat" xml:space="preserve">
+    <value>Telemetry can be saved as a .csv table or a .gpx track.</value>
+  </data>
+  <data name="Queue_ProjectNotFound" xml:space="preserve">
+    <value>The project {0} is no longer there.</value>
+  </data>
+  <data name="Queue_RecordingsMissing" xml:space="preserve">
+    <value>Recordings not found: {0}.</value>
+  </data>
+  <data name="Queue_ProfileUnknown" xml:space="preserve">
+    <value>Unknown export profile '{0}'.</value>
+  </data>
+  <data name="Queue_OutputExists" xml:space="preserve">
+    <value>{0} already exists, left as it was.</value>
+  </data>
+  <data name="Queue_Failed" xml:space="preserve">
+    <value>The render failed.</value>
+  </data>
+  <data name="Queue_ItemFailed" xml:space="preserve">
+    <value>Rendering {0} from the queue failed: {1}</value>
+  </data>
+  <data name="Queue_NoFreeName" xml:space="preserve">
+    <value>No free file name next to the existing output.</value>
+  </data>
+  <data name="Queue_SaveFailed" xml:space="preserve">
+    <value>The render queue couldn't be saved: {0}</value>
+  </data>
+  <data name="Queue_LoadFailed" xml:space="preserve">
+    <value>The saved render queue couldn't be read: {0}</value>
+  </data>
 </root>

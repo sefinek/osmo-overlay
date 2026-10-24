@@ -479,13 +479,20 @@
 									        Click="OnRenderRangeClick" IsEnabled="False" IsVisible="False"
 									        HorizontalContentAlignment="Center"
 									        ToolTip.Tip="{x:Static local:Strings.Main_RenderRangeHint}" />
-									<Button Grid.Column="2" Name="GreenScreenButton" Content="{x:Static local:Strings.Main_GreenScreen}"
+									<Button Grid.Column="2" Name="GreenScreenButton" Content="{x:Static local:Strings.Main_OverlayOnly}"
 									        Click="OnGreenScreenRenderClick" IsEnabled="False" IsVisible="False"
 									        HorizontalContentAlignment="Center"
-									        ToolTip.Tip="{x:Static local:Strings.Main_RenderJustTheHudOverlay}" />
+									        ToolTip.Tip="{x:Static local:Strings.Main_OverlayOnlyHint}" />
 									<Button Grid.Column="0" Grid.ColumnSpan="3" Name="CancelButton" Content="{x:Static local:Strings.Common_Cancel}"
 									        Click="OnCancelClick" IsVisible="False" HorizontalAlignment="Stretch"
 									        HorizontalContentAlignment="Center" />
+								</Grid>
+								<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+									<Button Grid.Column="0" Name="QueueAddButton" Content="{x:Static local:Strings.Main_AddToQueue}"
+									        Click="OnAddToQueueClick" IsEnabled="False" HorizontalAlignment="Stretch"
+									        HorizontalContentAlignment="Center" ToolTip.Tip="{x:Static local:Strings.Main_AddToQueueHint}" />
+									<Button Grid.Column="1" Name="QueueOpenButton" Content="{x:Static local:Strings.Main_Queue}"
+									        Click="OnOpenQueueClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 								</Grid>
 								<ProgressBar Name="Progress" Minimum="0" Maximum="100" Height="16" IsVisible="False" />
 							</StackPanel>
@@ -628,6 +635,8 @@
 									<TextBlock Classes="infoLabel" Margin="0,10,0,0">
 										<Run Text="{x:Static local:Strings.Main_Recorded}" /><Run Text=" " /><Run Name="TeleRecordedAt" />
 									</TextBlock>
+									<Button Classes="toolbar" Margin="0,6,0,0" Content="{x:Static local:Strings.Main_ExportTelemetry}"
+									        Click="OnExportTelemetryClick" ToolTip.Tip="{x:Static local:Strings.Main_ExportTelemetryHint}" />
 								</StackPanel>
 							</Border>
 
@@ -636,6 +645,12 @@
 									<StackPanel Classes="cardTitle">
 										<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Main_Output}" />
 									</StackPanel>
+									<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,0,0,4">
+										<TextBlock Classes="infoLabel" VerticalAlignment="Center" Text="{x:Static local:Strings.Main_ExportProfile}" />
+										<ComboBox Grid.Column="1" Name="ExportProfileCombo" HorizontalAlignment="Stretch"
+										          SelectionChanged="OnExportProfileSelectionChanged"
+										          ToolTip.Tip="{x:Static local:Strings.Main_ExportProfileHint}" />
+									</Grid>
 									<Grid RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
@@ -988,7 +1003,7 @@
 						<TextBlock Grid.Column="2" Name="PreviewTimeText" Classes="infoLabel" Margin="0" FontFeatures="+tnum" TextAlignment="Right"
 						           VerticalAlignment="Center" Text="00:00 / 00:00" Background="Transparent" Cursor="Hand"
 						           PointerPressed="OnPreviewTimeTextPressed" ToolTip.Tip="{x:Static local:Strings.Main_ClickToSwitchTheTime}" />
-						<StackPanel Grid.Row="1" Grid.ColumnSpan="3" Name="PreviewStatusBar" Margin="0,8,0,0" Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center"
+						<WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Name="PreviewStatusBar" Margin="0,8,0,0" ItemSpacing="20" LineSpacing="4" HorizontalAlignment="Center"
 						            VerticalAlignment="Center" IsVisible="False">
 							<StackPanel Classes="previewStatus" ToolTip.Tip="{x:Static local:Strings.Main_RecordingTheSourceVideoS}">
 								<local:IconView Data="{StaticResource IconFile}" />
@@ -1013,7 +1028,7 @@
 								<local:IconView Data="{StaticResource IconDisplay}" />
 								<TextBlock Name="StatusDisplayText" MinWidth="118" />
 							</StackPanel>
-						</StackPanel>
+						</WrapPanel>
 					</Grid>
 				</Grid>
 			</Border>
@@ -1052,6 +1067,13 @@
 								</UniformGrid>
 								<Button Name="ResetPresetButton" Classes="toolbar" Content="{x:Static local:Strings.Main_ResetToDefault}"
 								        Click="OnResetPresetClick" />
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="4" Margin="0,2,0,0" ToolTip.Tip="{x:Static local:Strings.Compare_Hint}">
+									<ComboBox Grid.Column="0" Name="CompareComboBox" HorizontalAlignment="Stretch"
+									          PlaceholderText="{x:Static local:Strings.Compare_Placeholder}"
+									          SelectionChanged="OnCompareSelectionChanged" />
+									<Button Grid.Column="1" Name="CompareButton" Classes="toolbar" Padding="14,7" MinWidth="72"
+									        Content="{x:Static local:Strings.Compare_Show}" IsEnabled="False" Click="OnCompareClick" />
+								</Grid>
 								<UniformGrid Columns="2" Margin="0,2,0,0">
 									<Button Classes="toolbar" Margin="0,0,4,0" Content="{x:Static local:Strings.Main_Export}" Click="OnExportPresetClick" />
 									<Button Classes="toolbar" Margin="4,0,0,0" Content="{x:Static local:Strings.Main_Import}" Click="OnImportPresetClick" />

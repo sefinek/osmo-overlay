@@ -1228,9 +1228,6 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   <data name="Main_Gradient" xml:space="preserve">
     <value>Nachylenie</value>
   </data>
-  <data name="Main_GreenScreen" xml:space="preserve">
-    <value>Green screen</value>
-  </data>
   <data name="Main_GridGuides" xml:space="preserve">
     <value>Linie pomocnicze</value>
   </data>
@@ -1412,7 +1409,7 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
     <value>Głośność podglądu</value>
   </data>
   <data name="Main_PreviewZoom100IsOne" xml:space="preserve">
-    <value>Powiększenie podglądu - 100% to jeden piksel źródła na jeden piksel ekranu. Ctrl+kółko powiększa w miejscu kursora, środkowy przycisk myszy przesuwa obraz. Do oglądania pojedynczych pikseli wybierz jakość podglądu Pełna rozdzielczość.</value>
+    <value>Powiększenie podglądu - 100% to jeden piksel źródła na jeden piksel ekranu. Ctrl+kółko powiększa w miejscu kursora; przeciągnij obraz, żeby go przesunąć (dwuklik dopasowuje go z powrotem). Do oglądania pojedynczych pikseli wybierz jakość podglądu Pełna rozdzielczość.</value>
   </data>
   <data name="Main_PreviousFrameLeft" xml:space="preserve">
     <value>Poprzednia klatka (strzałka w lewo)</value>
@@ -1443,9 +1440,6 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   </data>
   <data name="Main_Render" xml:space="preserve">
     <value>Renderuj</value>
-  </data>
-  <data name="Main_RenderJustTheHudOverlay" xml:space="preserve">
-    <value>Renderuj samą nakładkę HUD na jednolitym zielonym tle (bez filmu źródłowego i dźwięku), do złożenia w innym edytorze.</value>
   </data>
   <data name="Main_ResetToDefault" xml:space="preserve">
     <value>Przywróć domyślne</value>
@@ -4364,5 +4358,243 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Welcome_GoProTested" xml:space="preserve">
     <value>Sprawdzone na HERO12 Black (pliki .MP4 i .LRV): akcelerometr, wektor grawitacji i ekspozycja. HERO12 nie ma GPS, więc widżety GPS wymagają zewnętrznej trasy FIT lub GPX. Inne modele nie były testowane.</value>
+  </data>
+  <data name="Main_AddToQueue" xml:space="preserve">
+    <value>Dodaj do kolejki</value>
+  </data>
+  <data name="Main_AddToQueueHint" xml:space="preserve">
+    <value>Dodaje ten projekt w obecnym stanie do kolejki renderowania, żeby wyrenderować go później razem z innymi.</value>
+  </data>
+  <data name="Main_Queue" xml:space="preserve">
+    <value>Kolejka</value>
+  </data>
+  <data name="Main_ExportProfile" xml:space="preserve">
+    <value>Profil eksportu</value>
+  </data>
+  <data name="Main_ExportProfileHint" xml:space="preserve">
+    <value>Gotowy zestaw rozmiaru, kodeka i bitrate'u wyniku. Ustawia te same opcje co Ustawienia, Renderowanie.</value>
+  </data>
+  <data name="Main_ExportProfileCustom" xml:space="preserve">
+    <value>Własny</value>
+  </data>
+  <data name="Main_ExportTelemetry" xml:space="preserve">
+    <value>Eksportuj telemetrię...</value>
+  </data>
+  <data name="Main_ExportTelemetryHint" xml:space="preserve">
+    <value>Zapisuje przetworzoną telemetrię całego nagrania (przed cięciami) jako tabelę CSV albo ślad GPX.</value>
+  </data>
+  <data name="Telemetry_ExportTitle" xml:space="preserve">
+    <value>Eksport telemetrii</value>
+  </data>
+  <data name="Telemetry_FileTypeCsv" xml:space="preserve">
+    <value>Tabela CSV</value>
+  </data>
+  <data name="Telemetry_FileTypeGpx" xml:space="preserve">
+    <value>Ślad GPX</value>
+  </data>
+  <data name="Telemetry_Exported" xml:space="preserve">
+    <value>Zapisano telemetrię: {0}</value>
+  </data>
+  <data name="Telemetry_ExportFailed" xml:space="preserve">
+    <value>Nie udało się zapisać telemetrii: {0}</value>
+  </data>
+  <data name="Telemetry_ExportFailedTitle" xml:space="preserve">
+    <value>Telemetria nie została zapisana</value>
+  </data>
+  <data name="Render_ModeAlpha" xml:space="preserve">
+    <value>Tryb: przezroczysty overlay ({0})</value>
+  </data>
+  <data name="Queue_Title" xml:space="preserve">
+    <value>Kolejka renderowania</value>
+  </data>
+  <data name="Queue_Empty" xml:space="preserve">
+    <value>Kolejka jest pusta. Dodaj tu projekty lub nagrania albo użyj „Dodaj do kolejki” w głównym oknie.</value>
+  </data>
+  <data name="Queue_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Queue_Stop" xml:space="preserve">
+    <value>Zatrzymaj</value>
+  </data>
+  <data name="Queue_Remove" xml:space="preserve">
+    <value>Usuń</value>
+  </data>
+  <data name="Queue_MoveUp" xml:space="preserve">
+    <value>W górę</value>
+  </data>
+  <data name="Queue_MoveDown" xml:space="preserve">
+    <value>W dół</value>
+  </data>
+  <data name="Queue_Retry" xml:space="preserve">
+    <value>Ponów</value>
+  </data>
+  <data name="Queue_ClearFinished" xml:space="preserve">
+    <value>Wyczyść zakończone</value>
+  </data>
+  <data name="Queue_IfExists" xml:space="preserve">
+    <value>Gdy plik istnieje</value>
+  </data>
+  <data name="Queue_ExistsSkip" xml:space="preserve">
+    <value>Pomiń</value>
+  </data>
+  <data name="Queue_ExistsOverwrite" xml:space="preserve">
+    <value>Nadpisz</value>
+  </data>
+  <data name="Queue_ExistsNumber" xml:space="preserve">
+    <value>Dodaj numer</value>
+  </data>
+  <data name="Queue_StateWaiting" xml:space="preserve">
+    <value>Oczekuje</value>
+  </data>
+  <data name="Queue_StateRendering" xml:space="preserve">
+    <value>Renderuje się</value>
+  </data>
+  <data name="Queue_StateDone" xml:space="preserve">
+    <value>Gotowe</value>
+  </data>
+  <data name="Queue_StateFailed" xml:space="preserve">
+    <value>Błąd</value>
+  </data>
+  <data name="Queue_StateSkipped" xml:space="preserve">
+    <value>Pominięto</value>
+  </data>
+  <data name="Queue_StateCancelled" xml:space="preserve">
+    <value>Anulowano</value>
+  </data>
+  <data name="Queue_Added" xml:space="preserve">
+    <value>Dodano do kolejki: {0}</value>
+  </data>
+  <data name="Queue_AddFailed" xml:space="preserve">
+    <value>Nie udało się dodać do kolejki: {0}</value>
+  </data>
+  <data name="Queue_Busy" xml:space="preserve">
+    <value>Kolejka właśnie renderuje. Poczekaj albo ją najpierw zatrzymaj.</value>
+  </data>
+  <data name="Queue_RenderBusy" xml:space="preserve">
+    <value>W głównym oknie trwa render.</value>
+  </data>
+  <data name="Queue_Waiting" xml:space="preserve">
+    <value>Oczekuje: {0}</value>
+  </data>
+  <data name="Queue_FinishedTitle" xml:space="preserve">
+    <value>Kolejka zakończona</value>
+  </data>
+  <data name="Queue_FinishedMessage" xml:space="preserve">
+    <value>Gotowe: {0}, błędy lub pominięte: {1}.</value>
+  </data>
+  <data name="Unsaved_Title" xml:space="preserve">
+    <value>Niezapisane zmiany</value>
+  </data>
+  <data name="Unsaved_Message" xml:space="preserve">
+    <value>Projekt ma niezapisane zmiany.</value>
+  </data>
+  <data name="Unsaved_Save" xml:space="preserve">
+    <value>Zapisz</value>
+  </data>
+  <data name="Unsaved_Discard" xml:space="preserve">
+    <value>Nie zapisuj</value>
+  </data>
+  <data name="Compare_Placeholder" xml:space="preserve">
+    <value>Porównaj z...</value>
+  </data>
+  <data name="Compare_Show" xml:space="preserve">
+    <value>Pokaż</value>
+  </data>
+  <data name="Compare_Back" xml:space="preserve">
+    <value>Wróć</value>
+  </data>
+  <data name="Compare_Hint" xml:space="preserve">
+    <value>Pokazuje inny preset w podglądzie, niczego nie zmieniając (F8).</value>
+  </data>
+  <data name="Compare_Log" xml:space="preserve">
+    <value>Podgląd pokazuje preset {0} (F8 albo Wróć przywraca aktywny).</value>
+  </data>
+  <data name="Queue_AddProjects" xml:space="preserve">
+    <value>Dodaj projekty...</value>
+  </data>
+  <data name="Queue_AddRecordings" xml:space="preserve">
+    <value>Dodaj nagrania...</value>
+  </data>
+  <data name="Queue_PickProjects" xml:space="preserve">
+    <value>Projekty do kolejki</value>
+  </data>
+  <data name="Queue_PickRecordings" xml:space="preserve">
+    <value>Nagrania do kolejki</value>
+  </data>
+  <data name="Queue_RecordingsTitle" xml:space="preserve">
+    <value>Kilka nagrań</value>
+  </data>
+  <data name="Queue_RecordingsMessage" xml:space="preserve">
+    <value>Plików: {0}. Wyrenderować każdy osobno, czy połączyć w jedno nagranie (pliki podzielone przez kamerę)?</value>
+  </data>
+  <data name="Queue_RecordingsSeparate" xml:space="preserve">
+    <value>Każdy osobno</value>
+  </data>
+  <data name="Queue_RecordingsJoined" xml:space="preserve">
+    <value>Jako jedno nagranie</value>
+  </data>
+  <data name="Queue_NotAdded" xml:space="preserve">
+    <value>Nie dodano:
+{0}</value>
+  </data>
+  <data name="Queue_RecordingsCount" xml:space="preserve">
+    <value>{0} nagranie|{0} nagrania|{0} nagrań</value>
+  </data>
+  <data name="Queue_DetailsRecordings" xml:space="preserve">
+    <value>Nagrania do wyrenderowania</value>
+  </data>
+  <data name="Queue_DetailsOutput" xml:space="preserve">
+    <value>Wynik</value>
+  </data>
+  <data name="Queue_DetailsContent" xml:space="preserve">
+    <value>W projekcie</value>
+  </data>
+  <data name="Queue_DetailsCuts" xml:space="preserve">
+    <value>cięcia: {0}</value>
+  </data>
+  <data name="Queue_DetailsMusic" xml:space="preserve">
+    <value>klipy muzyki: {0}</value>
+  </data>
+  <data name="Queue_DetailsVolume" xml:space="preserve">
+    <value>zmieniona głośność</value>
+  </data>
+  <data name="Queue_DetailsTrack" xml:space="preserve">
+    <value>zewnętrzna trasa GPS</value>
+  </data>
+  <data name="Queue_DetailsNothing" xml:space="preserve">
+    <value>same nagrania</value>
+  </data>
+  <data name="Queue_FileMissing" xml:space="preserve">
+    <value>nie znaleziono</value>
+  </data>
+  <data name="Queue_Unreadable" xml:space="preserve">
+    <value>Nie można odczytać projektu: {0}</value>
+  </data>
+  <data name="Main_ExportProfileApplied" xml:space="preserve">
+    <value>Profil eksportu: {0}</value>
+  </data>
+  <data name="Queue_SkippedHint" xml:space="preserve">
+    <value>Wybierz wyżej Nadpisz lub Dodaj numer i ponów.</value>
+  </data>
+  <data name="Main_OverlayOnly" xml:space="preserve">
+    <value>Sam overlay</value>
+  </data>
+  <data name="Main_OverlayOnlyHint" xml:space="preserve">
+    <value>Renderuje sam overlay, bez obrazu: na zielonym tle (green screen) albo przezroczysty, do nałożenia na materiał w edytorze. Rodzaj wybierasz z menu.</value>
+  </data>
+  <data name="Main_OverlayGreen" xml:space="preserve">
+    <value>Zielone tło (green screen)</value>
+  </data>
+  <data name="Main_OverlayProRes" xml:space="preserve">
+    <value>Przezroczysty, ProRes 4444 (.mov)</value>
+  </data>
+  <data name="Main_OverlayVp9" xml:space="preserve">
+    <value>Przezroczysty, VP9 (.webm)</value>
+  </data>
+  <data name="Main_OverlayProResHint" xml:space="preserve">
+    <value>Do Premiere, DaVinci Resolve i Final Cut. Duży plik.</value>
+  </data>
+  <data name="Main_OverlayVp9Hint" xml:space="preserve">
+    <value>Dużo mniejszy plik, czytany przez przeglądarki i część edytorów.</value>
   </data>
 </root>

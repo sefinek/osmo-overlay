@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
@@ -32,7 +33,11 @@ public sealed record RenderOptions(
 	// The sound's level over the recording (VolumeLine); null or empty = the recording's own.
 	IReadOnlyList<VolumePoint>? Volume = null,
 	// Music over the sound, on the output's timeline (MusicTrack); null or empty = none.
-	IReadOnlyList<MusicClip>? Music = null)
+	IReadOnlyList<MusicClip>? Music = null,
+	// The settings this render uses instead of the settings file's (a project's settings preset, an export profile): the file itself is left as it is. Null = the file's.
+	OverlaySettings? Settings = null,
+	// The overlay alone on a transparent background, in this format (AlphaOverlay) - no picture, sound or camera metadata, like GreenScreen; the OutputPath should end in AlphaOverlay.Extension.
+	AlphaCodec? Alpha = null)
 {
 	public static string DefaultOutputPath(IReadOnlyList<string> inputPaths, string? outputFolder = null)
 	{
@@ -56,6 +61,16 @@ public sealed record RenderOptions(
 		if (name.EndsWith("_overlay", StringComparison.OrdinalIgnoreCase))
 			name = name[..^"_overlay".Length];
 		return Path.Combine(dir, $"{name}_greenscreen{ext}");
+	}
+
+	/// <summary>The output path of the transparent overlay render of an already-chosen normal output path: "_alpha" in place of the "_overlay" suffix, the format's extension.</summary>
+	public static string AlphaOutputPath(string outputPath, AlphaCodec format)
+	{
+		string dir = Path.GetDirectoryName(outputPath) ?? ".";
+		string name = Path.GetFileNameWithoutExtension(outputPath);
+		if (name.EndsWith("_overlay", StringComparison.OrdinalIgnoreCase))
+			name = name[..^"_overlay".Length];
+		return Path.Combine(dir, $"{name}_alpha{AlphaOverlay.Extension(format)}");
 	}
 
 	/// <summary>

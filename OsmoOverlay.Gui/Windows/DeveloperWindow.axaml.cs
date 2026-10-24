@@ -82,6 +82,13 @@ public partial class DeveloperWindow : Window
 				result = await _main.AskComputerBusyAsync(argument == "gpu-cpu" ? new BenchmarkLoad(0.82, 0.12, 0, 0) : new BenchmarkLoad(0.63, 0.97, 0.42, 2),
 					argument is "gpu" or "gpu-cpu");
 				break;
+			case "unsaved":
+				result = await ConfirmDialog.AskOrSkipAsync(this, Strings.Unsaved_Title, Strings.Unsaved_Message, Strings.Unsaved_Save, Strings.Unsaved_Discard,
+					DialogKind.Warning);
+				break;
+			case "queue" when _main is not null:
+				_main.OpenQueueWindow();
+				break;
 			case "no-gps" when _main is not null:
 				await _main.ShowNoGpsNoticeAsync();
 				break;

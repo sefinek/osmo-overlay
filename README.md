@@ -1,5 +1,5 @@
 # Osmo Overlay ✨
-Add a modern telemetry HUD (speed, map, route, tilt and more) to DJI Osmo, GoPro and Insta360 footage, using camera telemetry and optional external GPS tracks - encoded just like the camera original, so the quality stays as close to it as a render can get.
+Add a modern telemetry HUD (speed, map, route, tilt and more) to DJI Osmo and GoPro footage, using camera telemetry and optional external GPS tracks - encoded just like the camera original, so the quality stays as close to it as a render can get.
 
 If you find this repository useful, I would greatly appreciate it if you could give it a **star** ⭐. Thank you!
 Using OsmoOverlay in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
@@ -22,7 +22,10 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Music** - add songs on the timeline, with trimming, looping, fades and crossfades.
 - **Recording settings check** - shows whether the footage was recorded with the settings recommended for your camera.
 - **Privacy** - the camera's serial number and GPS track don't end up in the rendered MP4 unless you turn that on.
-- **HUD-only export on a green screen** - for editing in another program.
+- **HUD-only export** - the overlay alone on a green screen, or on a transparent background (ProRes 4444 or VP9 with alpha) to key over the footage in an editor.
+- **Render queue** - queue several projects and render them one after another, from the app or the command line.
+- **Export profiles** - ready-made size, codec and bitrate sets (Compatible 8-bit, Web 1080p, Phone 720p, High quality) next to the exact copy of the source.
+- **Telemetry export** - the processed speed, heading, slope, distance, tilt and G as a CSV table or a GPX track.
 - **Tools** (no re-encoding, no quality loss):
   - **Remove metadata** - a copy that's safe to share: no GPS track, camera serial number, recording date, timecode or thumbnail.
   - **Camera microphone audio** - with an external microphone connected, the camera saves audio from its built-in microphones to a separate .AAC file that neither Vegas Pro nor Audacity opens by default. Converts to WAV or M4A.
@@ -121,6 +124,20 @@ OsmoOverlay.Cli recording.MP4 --track ride.fit --track-anchor 18.5=2026-01-01T12
 ```
 
 Repeat `--track-anchor` once with a later video/GPS time to correct drift. `--track-offset -416` instead applies a known offset to the camera's creation time. Without anchors or an offset, the CLI attempts approximate motion alignment and reports a warning to verify it visually.
+
+## Command line
+`OsmoOverlay.Cli` renders what the app renders:
+
+```sh
+OsmoOverlay.Cli recording.MP4 -o result.mp4 --cut 1:00-1:10@fade --volume 0:off,2:0 --music "song.mp3;start=5;db=-6;loop;len=60"
+OsmoOverlay.Cli ride1.ovproj ride2.ovproj --profile web1080
+OsmoOverlay.Cli recording.MP4 --alpha prores
+OsmoOverlay.Cli recording.MP4 --export-telemetry ride.gpx --telemetry-interval 1
+```
+
+Saved projects (`.ovproj`) are rendered one after another with everything they hold: cuts, overlay, sound, music, GPS track and settings preset. Recordings can be given beside them (rendered after the projects, as one recording, or one render per file with `--each`). A failed one doesn't stop the rest, and an output that already exists is skipped for projects unless `--existing overwrite` or `--existing number` says otherwise. The queue window takes projects and recordings too: **Add projects...** and **Add recordings...**. `--list-presets` shows the names `--settings-preset`, `--layout` and `--profile` take. `OsmoOverlay.Cli --help` lists everything.
+
+For a new camera or graphics card, `--report` prints what a recording's telemetry says about itself (GPS fix, accelerometer scale, tilt range), and with `--expect-lean right|left|nose-up|nose-down` checks that roll and pitch have the right sign on a recording made leaning the camera that way. `--encoder-test` tries every video encoder the way a render would and prints ffmpeg's reason for a failure.
 
 ## Important information
 Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit H.264 at a lower bitrate, which reduces its quality.

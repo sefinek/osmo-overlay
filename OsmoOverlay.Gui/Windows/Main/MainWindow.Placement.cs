@@ -100,10 +100,15 @@ public partial class MainWindow
 	protected override void OnClosing(WindowClosingEventArgs e)
 	{
 		// Before base: its Closing event sets _closing from e.Cancel.
-		if (_phase == UiPhase.Rendering && !_closeConfirmed && OverlaySettingsStore.Load().ConfirmCloseWhileRendering)
+		if ((_phase == UiPhase.Rendering || _queue.IsRunning) && !_closeConfirmed && OverlaySettingsStore.Load().ConfirmCloseWhileRendering)
 		{
 			e.Cancel = true;
 			if (!_askingToClose) _ = ConfirmCloseDuringRenderAsync();
+		}
+		else if (!_closeConfirmed && HasUnsavedChanges)
+		{
+			e.Cancel = true;
+			if (!_askingToClose) _ = ConfirmCloseUnsavedAsync();
 		}
 
 		base.OnClosing(e);
@@ -126,6 +131,18 @@ public partial class MainWindow
 
 		_closeConfirmed = true;
 		_cts?.Cancel();
+		_queueCts?.Cancel();
+		Close();
+	}
+
+	private async Task ConfirmCloseUnsavedAsync()
+	{
+		_askingToClose = true;
+		bool close = await ConfirmUnsavedAsync();
+		_askingToClose = false;
+		if (!close) return;
+
+		_closeConfirmed = true;
 		Close();
 	}
 

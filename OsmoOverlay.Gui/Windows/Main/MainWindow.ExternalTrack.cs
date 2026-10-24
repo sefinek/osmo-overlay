@@ -49,7 +49,7 @@ public partial class MainWindow
 		finally
 		{
 			SetPhase(UiPhase.SummaryReady);
-			ActionButton.IsEnabled = GreenScreenButton.IsEnabled = RenderRangeButton.IsEnabled = CanRenderTelemetry;
+			SetRenderButtons(CanRenderTelemetry);
 		}
 	}
 

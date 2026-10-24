@@ -138,14 +138,15 @@ public partial class MainWindow
 
 	private void OnOverlayCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
+		EndCompare();
 		if (TryStartPreviewPan(e) || TryStartReframeDrag(e)) return;
 		if (_summary is null || !e.GetCurrentPoint(OverlayDragCanvas).Properties.IsLeftButtonPressed) return;
 		if (MapCanvasPointToFullRes(e.GetPosition(OverlayDragCanvas)) is not { } pos) return;
 
-		// A click on the video itself lets go of the selection.
+		// A click on the video itself lets go of the selection - and zoomed in, a drag on it moves the picture.
 		if (FindElementAt(pos) is not { } el)
 		{
-			SelectElement(null);
+			if (!TryStartEmptyAreaPan(e)) SelectElement(null);
 			return;
 		}
 
@@ -235,6 +236,7 @@ public partial class MainWindow
 		}
 
 		_resizingElementId = id;
+		OverlayDragCanvas.Cursor = ResizeCursor;
 		_resizeStartScale = el.Scale;
 		(float anchorX, float anchorY) = FullResAnchor(el);
 		_resizeStartDistance = Math.Max(Point.Distance(pos, new Point(anchorX, anchorY)), 1);
@@ -270,13 +272,19 @@ public partial class MainWindow
 	/// </summary>
 	private void OnOverlayCanvasPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
 	{
+		bool wasPanning = _panning || _panCandidate;
 		_panning = false;
+		_panCandidate = false;
 		_reframeDragStart = null;
-		if (_resizingElementId is null && _draggingElementId is null) return;
+		if (_resizingElementId is null && _draggingElementId is null)
+		{
+			if (wasPanning) OverlayDragCanvas.Cursor = RestingCursor;
+			return;
+		}
 
 		_resizingElementId = null;
 		_draggingElementId = null;
-		OverlayDragCanvas.Cursor = null;
+		OverlayDragCanvas.Cursor = RestingCursor;
 		SealHistory();
 		SaveOverlayPresets();
 	}
@@ -325,7 +333,7 @@ public partial class MainWindow
 
 		Point? pos = MapCanvasPointToFullRes(canvasPos);
 		OverlayElement? hovered = pos is { } p ? FindElementAt(p) : null;
-		OverlayDragCanvas.Cursor = hovered is not null && !IsActivePresetDefault ? HandCursor : null;
+		OverlayDragCanvas.Cursor = hovered is not null && !IsActivePresetDefault ? HandCursor : RestingCursor;
 
 		if (hovered is null)
 		{

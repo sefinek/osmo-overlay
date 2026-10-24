@@ -106,7 +106,9 @@ public static class RenderJob
 				Report(RenderPhase.ExtractingTelemetry, string.Format(CoreStrings.Render_Extracted, rawFrames.Count));
 			}
 
-			OverlaySettings settings = OverlaySettingsStore.Load();
+			OverlaySettings settings = options.Settings ?? OverlaySettingsStore.Load();
+			// Both have no source picture, sound or camera metadata in them: the overlay alone, on a green or a transparent background.
+			bool overlayOnly = options.GreenScreen || options.Alpha is not null;
 			bool smoothGps = options.SmoothGpsMotion ?? settings.SmoothGpsMotion;
 			double fps = first.Source.Video.Fps;
 			var plan = RenderPlan.Resolve(options.RangeStartSeconds, options.RangeEndSeconds, options.CutOuts, options.FrameLimit,
@@ -121,7 +123,9 @@ public static class RenderJob
 			if (output != first.Source.Video)
 				AppLogger.Info($"Output: {output.CodecName} {output.Width}x{output.Height} {output.PixFmt}, ~{output.BitRate / 1_000_000} Mbps");
 			// An encoder picked before Settings changed the output's codec doesn't write it any more.
-			string? requested = options.Encoder is { } picked && FfmpegPipeline.Encodes(picked, output) ? picked : null;
+			// The transparent overlay has its own CPU encoder, whatever graphics card there is.
+			string? requested = options.Alpha is { } alpha ? AlphaOverlay.EncoderName(alpha)
+				: options.Encoder is { } picked && FfmpegPipeline.Encodes(picked, output) ? picked : null;
 			if (requested is null)
 				Report(RenderPhase.SelectingEncoder, CoreStrings.Render_CheckingGpuEncoder);
 			string encoder = requested ?? FfmpegPipeline.SelectVideoEncoder(output);
@@ -189,11 +193,11 @@ public static class RenderJob
 			// describe a longer recording than the video they sit next to, so only the non-track parts stay.
 			bool keepTracks = !plan.IsPartial;
 			if (!keepTracks && (settings.MetadataKeepTelemetry || settings.MetadataKeepDebugTrack) && settings.PreserveCameraMetadata &&
-			    !options.GreenScreen)
+			    !overlayOnly)
 				Report(RenderPhase.Rendering, CoreStrings.Render_PartialNoTracks);
 			var metadataSelection = new CameraMetadataSelection(settings.MetadataKeepTelemetry && keepTracks,
 				settings.MetadataKeepDebugTrack && keepTracks, settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber);
-			bool preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !options.GreenScreen;
+			bool preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !overlayOnly;
 			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata) with
 			{
 				Comment = settings.TagExportedVideo ? ExportMarker.Comment(OrientationTilt.Effective(rawFrames, camera, settings.OrientationSource)) : null
@@ -204,7 +208,7 @@ public static class RenderJob
 			bool succeeded = false;
 			// A 360 recording's picture is made here (FisheyeProjector, the preview's own) and goes to ffmpeg finished, the
 			// overlay drawn on it - ffmpeg only takes the sound from the files.
-			Reframer? reframer = options.GreenScreen
+			Reframer? reframer = overlayOnly
 				? null
 				: Reframer.For(first.Source.Fisheye, rawFrames, camera, options.Reframe ?? new ReframeView());
 			using LibavVideoSource? pictures = reframer is null
@@ -212,9 +216,11 @@ public static class RenderJob
 				: new LibavVideoSource(PlaybackSegment.Of(segments), fps,
 					output.Width, output.Height, reframer);
 			IReadOnlyList<VideoSegment> encoded = noAudio ? [.. segments.Select(s => s with { Source = s.Source with { Audio = null } })] : segments;
-			using Process ffmpeg = FfmpegPipeline.StartRender(encoded, options.OutputPath, encoder, output, options.Overwrite, encode,
-				plan, options.GreenScreen, pictures is not null, options.Volume,
-				options.Music is { Count: > 0 } ? MusicTrack.WithCrossfades(MusicTrack.Normalize(options.Music, plan.TotalFrames / fps)) : null);
+			using Process ffmpeg = options.Alpha is { } alphaFormat
+				? AlphaOverlay.Start(options.OutputPath, first.Source.Video, output, alphaFormat, options.Overwrite, encode, plan.TotalFrames)
+				: FfmpegPipeline.StartRender(encoded, options.OutputPath, encoder, output, options.Overwrite, encode,
+					plan, options.GreenScreen, pictures is not null, options.Volume,
+					options.Music is { Count: > 0 } ? MusicTrack.WithCrossfades(MusicTrack.Normalize(options.Music, plan.TotalFrames / fps)) : null);
 			Report(RenderPhase.Rendering, ProcessHelper.FormatCommand(ffmpeg.StartInfo.FileName, ffmpeg.StartInfo.ArgumentList));
 
 			// Disposing the Process doesn't terminate it: every path out of the try below must leave ffmpeg dead,
@@ -346,7 +352,7 @@ public static class RenderJob
 				}
 
 				PostProcess(options.OutputPath, options.InputPaths, camera, preserveMetadata ? metadataSelection : null,
-					settings.FastStart && !options.GreenScreen,
+					settings.FastStart && !overlayOnly,
 					message => Report(RenderPhase.Rendering, message, written, totalFrames));
 
 				succeeded = true;

@@ -67,7 +67,7 @@ public partial class MainWindow
 	/// <summary>The active preset as the preview draws it - muted and unsoloed layers left out.</summary>
 	private void ShowLayout()
 	{
-		_previewPlayer.SetLayout(OverlayLayers.Drawn(ActiveElements, ActiveLayers));
+		_previewPlayer.SetLayout(ShownLayout());
 	}
 
 	private OverlayLayer? LayerOf(OverlayElement element)

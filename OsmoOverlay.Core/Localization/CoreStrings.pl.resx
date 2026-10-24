@@ -644,4 +644,49 @@
   <data name="Overlay_Inactive" xml:space="preserve">
     <value>Wyłączona</value>
   </data>
+  <data name="ExportProfile_Source" xml:space="preserve">
+    <value>Oryginał (jak źródło)</value>
+  </data>
+  <data name="ExportProfile_Compatible" xml:space="preserve">
+    <value>Zgodny (8 bit)</value>
+  </data>
+  <data name="ExportProfile_Web1080" xml:space="preserve">
+    <value>Internet 1080p (H.264)</value>
+  </data>
+  <data name="ExportProfile_Phone720" xml:space="preserve">
+    <value>Telefon 720p (H.264)</value>
+  </data>
+  <data name="ExportProfile_Quality" xml:space="preserve">
+    <value>Wysoka jakość (1,5x bitrate)</value>
+  </data>
+  <data name="TelemetryExport_UnsupportedFormat" xml:space="preserve">
+    <value>Telemetrię można zapisać jako tabelę .csv albo ślad .gpx.</value>
+  </data>
+  <data name="Queue_ProjectNotFound" xml:space="preserve">
+    <value>Projektu {0} już nie ma.</value>
+  </data>
+  <data name="Queue_RecordingsMissing" xml:space="preserve">
+    <value>Nie znaleziono nagrań: {0}.</value>
+  </data>
+  <data name="Queue_ProfileUnknown" xml:space="preserve">
+    <value>Nieznany profil eksportu „{0}”.</value>
+  </data>
+  <data name="Queue_OutputExists" xml:space="preserve">
+    <value>{0} już istnieje, zostawiono bez zmian.</value>
+  </data>
+  <data name="Queue_Failed" xml:space="preserve">
+    <value>Render się nie udał.</value>
+  </data>
+  <data name="Queue_ItemFailed" xml:space="preserve">
+    <value>Renderowanie {0} z kolejki nie powiodło się: {1}</value>
+  </data>
+  <data name="Queue_NoFreeName" xml:space="preserve">
+    <value>Brak wolnej nazwy pliku obok istniejącego wyniku.</value>
+  </data>
+  <data name="Queue_SaveFailed" xml:space="preserve">
+    <value>Nie udało się zapisać kolejki renderowania: {0}</value>
+  </data>
+  <data name="Queue_LoadFailed" xml:space="preserve">
+    <value>Nie udało się odczytać zapisanej kolejki renderowania: {0}</value>
+  </data>
 </root>

@@ -60,6 +60,8 @@
 					<Button Content="Busy GPU before a render" Tag="busy:gpu" Click="OnActionClick" />
 					<Button Content="Busy CPU before a render" Tag="busy:cpu" Click="OnActionClick" />
 					<Button Content="Busy CPU before a GPU render" Tag="busy:gpu-cpu" Click="OnActionClick" />
+					<Button Content="Unsaved changes" Tag="unsaved" Click="OnActionClick" />
+					<Button Content="Render queue window" Tag="queue" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>

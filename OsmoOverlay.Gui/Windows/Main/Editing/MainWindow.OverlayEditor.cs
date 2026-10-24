@@ -52,6 +52,7 @@ public partial class MainWindow
 
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 	private static readonly Cursor SizeAllCursor = new(StandardCursorType.SizeAll);
+	private static readonly Cursor ResizeCursor = new(StandardCursorType.BottomRightCorner);
 
 	/// <summary>
 	///     Custom drag-and-drop format used to carry an OverlayElementType through a widget-list-to-canvas
@@ -110,6 +111,7 @@ public partial class MainWindow
 		PresetComboBox.ItemsSource = _overlayPresets.Select(p => new PresetOption(p.Id, p.Name)).ToList();
 		PresetComboBox.SelectedIndex = _overlayPresets.FindIndex(p => p.Id == _activePresetId);
 		_suppressOverlayEvents = false;
+		RefreshCompareChoices();
 	}
 
 	/// <summary>
@@ -493,6 +495,7 @@ public partial class MainWindow
 	/// <param name="gestureKey">Set for the many small changes of one drag or typing run, so Undo takes them back together (EditHistory).</param>
 	private void ReplaceActiveElements(List<OverlayElement> elements, IReadOnlyList<OverlayLayer>? layers = null, string? gestureKey = null)
 	{
+		StopCompare();
 		NormalizeActivePreset(elements, layers);
 		RefreshLayers();
 		CommitHistory(gestureKey);

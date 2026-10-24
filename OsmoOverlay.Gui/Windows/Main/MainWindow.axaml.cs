@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -199,6 +200,9 @@ public partial class MainWindow : Window
 		WirePreviewFullscreen();
 		WireSecondScreen();
 		WireAutoSave();
+		WireQueue();
+		WireUnsaved();
+		WireCompare();
 		WireReframe();
 		WireDeveloperWindow();
 
@@ -512,15 +516,7 @@ public partial class MainWindow : Window
 		if (needsPreviewReopen && _editingElementId is { } editing && ActiveElements.FirstOrDefault(el => el.Id == editing) is { } editingElement)
 			PopulateElementSettings(editingElement);
 
-		if (_summary is { } summary && _phase == UiPhase.SummaryReady)
-		{
-			// Another output codec or depth needs its encoder picked again (H.264 isn't HEVC's, 10-bit NVENC isn't on every GPU).
-			VideoInfo output = OutputVideo.For(summary.Video, updated);
-			VideoInfo previous = OutputVideo.For(summary.Video, before);
-			if (output.CodecName != previous.CodecName || output.PixFmt != previous.PixFmt)
-				_detectedEncoder = await Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
-			PopulateOutputInfo(summary, _detectedEncoder);
-		}
+		await ApplyOutputSettingsAsync(before, updated);
 
 		if (needsRestart)
 		{
@@ -624,9 +620,20 @@ public partial class MainWindow : Window
 		await RunRenderAsync(false, selection);
 	}
 
-	private async void OnGreenScreenRenderClick(object? sender, RoutedEventArgs e)
+	/// <summary>The overlay without the video: on a green background, or transparent in one of two formats - chosen from a menu under the button.</summary>
+	private void OnGreenScreenRenderClick(object? sender, RoutedEventArgs e)
 	{
-		await RunRenderAsync(true);
+		if (_phase != UiPhase.SummaryReady) return;
+
+		var green = new MenuItem { Header = Strings.Main_OverlayGreen };
+		green.Click += async (_, _) => await RunRenderAsync(true);
+		var prores = new MenuItem { Header = Strings.Main_OverlayProRes };
+		prores.Click += async (_, _) => await RunRenderAsync(false, null, AlphaCodec.ProRes4444);
+		var vp9 = new MenuItem { Header = Strings.Main_OverlayVp9 };
+		vp9.Click += async (_, _) => await RunRenderAsync(false, null, AlphaCodec.Vp9);
+		ToolTip.SetTip(prores, Strings.Main_OverlayProResHint);
+		ToolTip.SetTip(vp9, Strings.Main_OverlayVp9Hint);
+		new ContextMenu { ItemsSource = new[] { green, prores, vp9 }, Placement = PlacementMode.BottomEdgeAlignedRight, PlacementTarget = GreenScreenButton }.Open(GreenScreenButton);
 	}
 
 	private void SetPhase(UiPhase phase)
@@ -660,7 +667,8 @@ public partial class MainWindow : Window
 		// Editing the input list mid-run would reset the phase under a running summary/render.
 		InputPanel.IsEnabled = !busy;
 		if (busy)
-			ActionButton.IsEnabled = false;
+			ActionButton.IsEnabled = QueueAddButton.IsEnabled = false;
+		UpdateExportProfileEnabled();
 		UpdateReframeControls();
 		RefreshExternalTrack();
 	}

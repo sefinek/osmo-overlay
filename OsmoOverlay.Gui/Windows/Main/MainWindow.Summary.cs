@@ -195,10 +195,11 @@ public partial class MainWindow
 			PopulateOutputInfo(summary, encoder);
 
 			SetPhase(UiPhase.SummaryReady);
-			ActionButton.IsEnabled = GreenScreenButton.IsEnabled = RenderRangeButton.IsEnabled = CanRenderTelemetry;
+			SetRenderButtons(CanRenderTelemetry);
 
 			await OpenPreviewAsync(summary);
 			ResetHistory();
+			MarkClean();
 
 			await ShowSupportNoticeAsync(summary, inputPaths);
 		}
@@ -455,6 +456,7 @@ public partial class MainWindow
 
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
 	{
+		RefreshExportProfiles();
 		double fps = summary.Video.Fps;
 		long totalFrames = PlannedFrameCount();
 
