@@ -275,6 +275,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
+		ClearRouteIntroLevels();
 		_routeIntroCard?.Dispose();
 		_routeIntroBackdrop?.Dispose();
 		_routeIntroRoute?.Dispose();

@@ -137,6 +137,7 @@ public sealed partial class OverlayRenderer
 		}
 
 		_routeIntroMosaic?.Dispose();
+		ClearRouteIntroLevels();
 		_routeIntroMosaic = mosaic;
 		_routeIntroTrailPixels = mosaic is null ? null : ProjectRoute(mosaic);
 	}
@@ -271,7 +272,10 @@ public sealed partial class OverlayRenderer
 		float drawWidth = mosaicImage.Width * fitScale;
 		float drawHeight = mosaicImage.Height * fitScale;
 		var destRect = SKRect.Create(mapRect.MidX - view.MidX * fitScale, mapRect.MidY - view.MidY * fitScale, drawWidth, drawHeight);
-		canvas.DrawImage(mosaicImage, destRect, _imageSampling);
+		if (zoomOut > 1)
+			canvas.DrawImage(RouteIntroMosaicLevel(fitScale), destRect, RouteIntroLevelSampling);
+		else
+			canvas.DrawImage(mosaicImage, destRect, _imageSampling);
 
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
@@ -287,6 +291,51 @@ public sealed partial class OverlayRenderer
 		// On the map, the whole time the card is: what every provider's terms ask for at the least.
 		if (MapSources.Attribution(RouteIntro.MapProviderId, routeIntro: true) is { } credit)
 			DrawCredit(canvas, credit, mapRect.Left + 24f, mapRect.Bottom - 24f, _smallFont, White);
+	}
+
+	// Mipmaps of the mosaic would be rebuilt on every frame of the zoom: the image is too big for Skia's cache to keep them.
+	// A level is the mosaic halved `level` times, made once; drawn at a scale in (0.5, 1] of its own it needs no mipmaps.
+	private const int RouteIntroMaxMosaicLevel = 4;
+	private static readonly SKSamplingOptions RouteIntroLevelSampling = new(SKFilterMode.Linear, SKMipmapMode.None);
+	private readonly Dictionary<int, SKImage> _routeIntroLevels = [];
+	private RouteMapMosaic? _routeIntroLevelsMosaic;
+
+	/// <param name="scale">Card pixels per pixel of the mosaic at full size.</param>
+	private SKImage RouteIntroMosaicLevel(float scale)
+	{
+		SKImage full = _routeIntroMosaic!.Image;
+		if (!ReferenceEquals(_routeIntroLevelsMosaic, _routeIntroMosaic))
+		{
+			ClearRouteIntroLevels();
+			_routeIntroLevelsMosaic = _routeIntroMosaic;
+		}
+
+		int level = RouteIntroMosaicLevelFor(scale);
+		if (level == 0) return full;
+		if (_routeIntroLevels.TryGetValue(level, out SKImage? cached)) return cached;
+
+		var info = new SKImageInfo(Math.Max(1, full.Width >> level), Math.Max(1, full.Height >> level), full.ColorType, full.AlphaType);
+		using var bitmap = new SKBitmap(info);
+		full.ScalePixels(bitmap.PeekPixels(), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
+		bitmap.SetImmutable();
+		SKImage image = SKImage.FromBitmap(bitmap);
+		_routeIntroLevels[level] = image;
+		return image;
+	}
+
+	/// <summary>How many times the mosaic is halved for a draw at `scale`: the most that keeps the level drawn at over half its own size.</summary>
+	internal static int RouteIntroMosaicLevelFor(float scale)
+	{
+		return scale >= 1 || !float.IsFinite(scale) || scale <= 0
+			? 0
+			: Math.Min(RouteIntroMaxMosaicLevel, (int)Math.Floor(Math.Log2(1 / scale)));
+	}
+
+	private void ClearRouteIntroLevels()
+	{
+		foreach (SKImage image in _routeIntroLevels.Values) image.Dispose();
+		_routeIntroLevels.Clear();
+		_routeIntroLevelsMosaic = null;
 	}
 
 	private static SKRect ScaledAboutCenter(SKRect rect, float factor)
