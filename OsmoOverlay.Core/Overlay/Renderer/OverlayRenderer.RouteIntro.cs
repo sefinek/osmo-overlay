@@ -316,7 +316,8 @@ public sealed partial class OverlayRenderer
 
 		var info = new SKImageInfo(Math.Max(1, full.Width >> level), Math.Max(1, full.Height >> level), full.ColorType, full.AlphaType);
 		using var bitmap = new SKBitmap(info);
-		full.ScalePixels(bitmap.PeekPixels(), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
+		if (!full.ScalePixels(bitmap.PeekPixels(), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear))) return full;
+
 		bitmap.SetImmutable();
 		SKImage image = SKImage.FromBitmap(bitmap);
 		_routeIntroLevels[level] = image;
