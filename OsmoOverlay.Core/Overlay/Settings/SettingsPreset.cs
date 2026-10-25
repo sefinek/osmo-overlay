@@ -53,6 +53,9 @@ public sealed record SettingsPresetValues(
 	bool FastStart = false,
 	bool NoAudio = false,
 	int? RouteIntroMapZoom = null,
+	string? RouteIntroTitle = null,
+	string? RouteIntroSubtitle = null,
+	bool RouteIntroElevationProfile = true,
 	bool RouteIntroMapZoomIn = true,
 	double RouteIntroMapZoomInFactor = RouteIntroSettings.DefaultZoomInFactor,
 	double RouteIntroMapZoomInSeconds = RouteIntroSettings.DefaultZoomInSeconds,
@@ -67,6 +70,7 @@ public sealed record SettingsPresetValues(
 			settings.PreserveCameraMetadata, settings.TagExportedVideo, settings.MetadataKeepTelemetry, settings.MetadataKeepDebugTrack,
 			settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber, settings.NvencPreset, settings.OutputBitrateMultiplier,
 			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.FastStart, settings.NoAudio, settings.RouteIntroMapZoom,
+			settings.RouteIntroTitle, settings.RouteIntroSubtitle, settings.RouteIntroElevationProfile,
 			settings.RouteIntroMapZoomIn, settings.RouteIntroMapZoomInFactor, settings.RouteIntroMapZoomInSeconds, settings.RouteIntroMapZoomInDelaySeconds);
 	}
 
@@ -93,6 +97,9 @@ public sealed record SettingsPresetValues(
 			RouteIntroMapProvider = RouteIntroMapProvider,
 			RouteIntroShowEsriMapLabels = RouteIntroShowEsriMapLabels,
 			RouteIntroMapZoom = RouteIntroMapZoom,
+			RouteIntroTitle = RouteIntroTitle,
+			RouteIntroSubtitle = RouteIntroSubtitle,
+			RouteIntroElevationProfile = RouteIntroElevationProfile,
 			RouteIntroMapZoomIn = RouteIntroMapZoomIn,
 			RouteIntroMapZoomInFactor = RouteIntroMapZoomInFactor,
 			RouteIntroMapZoomInSeconds = RouteIntroMapZoomInSeconds,

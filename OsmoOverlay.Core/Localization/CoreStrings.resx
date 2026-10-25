@@ -139,7 +139,7 @@
     <value>File {0} ({1}) has different video parameters from file {2} ({3}). Recordings must have the same resolution, frame rate and pixel format to be joined.</value>
   </data>
   <data name="Join_DifferentLens" xml:space="preserve">
-    <value>{0} and {1} weren't recorded with the same lens setup (360 or flat).</value>
+    <value>Files {0} and {1} were recorded in different modes: 360° and standard.</value>
   </data>
   <data name="Join_UnknownCamera" xml:space="preserve">
     <value>a camera whose telemetry the app can't read</value>
@@ -181,7 +181,7 @@
     <value>GUGiK orthophoto (Poland only)</value>
   </data>
   <data name="Map_NoteLowDetail" xml:space="preserve">
-    <value>Satellite imagery at 10 m a pixel: a close-up map shows only blurry patches; fine for the route overview card.</value>
+    <value>Satellite imagery at 10 m per pixel is suitable for the route intro but looks blurry when zoomed in closely.</value>
   </data>
   <data name="Map_NoteMapTilerVideo" xml:space="preserve">
     <value>Video allowed on internet platforms (YouTube, Vimeo) for channels of up to 100,000 subscribers. The free plan is for non-commercial use only.</value>
@@ -223,7 +223,7 @@
     <value>Lowest point</value>
   </data>
   <data name="Peak_MaxLean" xml:space="preserve">
-    <value>Deepest lean</value>
+    <value>Maximum lean</value>
   </data>
   <data name="Peak_SteepestClimb" xml:space="preserve">
     <value>Steepest climb</value>
@@ -405,7 +405,7 @@
     <value>thumbnails/info</value>
   </data>
   <data name="Render_Probing" xml:space="preserve">
-    <value>Probing source file(s) (ffprobe)...</value>
+    <value>Reading source file information (ffprobe)...</value>
   </data>
   <data name="Render_Realtime" xml:space="preserve">
     <value>({0:0.00}x realtime)</value>
@@ -663,7 +663,7 @@
     <value>Telemetry can be saved as a .csv table or a .gpx track.</value>
   </data>
   <data name="Queue_ProjectNotFound" xml:space="preserve">
-    <value>The project {0} is no longer there.</value>
+    <value>Project not found: {0}.</value>
   </data>
   <data name="Queue_RecordingsMissing" xml:space="preserve">
     <value>Recordings not found: {0}.</value>
@@ -672,7 +672,7 @@
     <value>Unknown export profile '{0}'.</value>
   </data>
   <data name="Queue_OutputExists" xml:space="preserve">
-    <value>{0} already exists, left as it was.</value>
+    <value>File {0} already exists. It was left unchanged.</value>
   </data>
   <data name="Queue_Failed" xml:space="preserve">
     <value>The render failed.</value>
@@ -681,7 +681,7 @@
     <value>Rendering {0} from the queue failed: {1}</value>
   </data>
   <data name="Queue_NoFreeName" xml:space="preserve">
-    <value>No free file name next to the existing output.</value>
+    <value>Could not find an available name for the output file.</value>
   </data>
   <data name="Queue_SaveFailed" xml:space="preserve">
     <value>The render queue couldn't be saved: {0}</value>

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -109,9 +108,9 @@ public static class MapTileFetcher
 		if (!urlTemplate.Contains("{hz}"))
 		{
 			string url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
-			byte[] bytes = await Http.GetByteArrayAsync(url, ct);
+			byte[] bytes = store ? await Http.GetByteArrayAsync(url, ct) : await DownloadSharedAsync(url, ct);
 			SKBitmap bitmap = SKBitmap.Decode(bytes) ?? throw NotAnImage(bytes);
-			return (bitmap, bytes);
+			return (bitmap, store ? bytes : null);
 		}
 
 		string halfUrl = urlTemplate.Replace("{hz}", (zoom - 1).ToString()).Replace("{hx}", (x >> 1).ToString()).Replace("{hy}", (y >> 1).ToString());
@@ -133,21 +132,70 @@ public static class MapTileFetcher
 		return new InvalidDataException($"Tile response ({bytes.Length} bytes) is not a decodable image.");
 	}
 
-	// One download per 512 px tile for the four quarters fetched at once; a failed one is dropped so a retry asks again.
-	private static readonly ConcurrentDictionary<string, Task<byte[]>> SharedDownloads = new();
+	// Downloads kept in memory only, never on disk: one download per 512 px tile for the four quarters fetched at once, and
+	// for a provider that forbids storing (no disk cache) the tiles two mosaics share, or one fetched again after a cancelled
+	// fetch. Short-lived and bounded; a failed download is dropped so a retry asks again.
+	private static readonly TimeSpan SharedDownloadLifetime = TimeSpan.FromMinutes(5);
+	private const long SharedDownloadBudgetBytes = 48L * 1024 * 1024;
+	private static readonly Dictionary<string, (Task<byte[]> Download, DateTime Added)> SharedDownloads = new();
+	private static readonly Lock SharedDownloadsLock = new();
 
 	private static async Task<byte[]> DownloadSharedAsync(string url, CancellationToken ct)
 	{
-		if (SharedDownloads.Count > 64) SharedDownloads.Clear();
-		Task<byte[]> download = SharedDownloads.GetOrAdd(url, u => Http.GetByteArrayAsync(u, CancellationToken.None));
+		Task<byte[]> download;
+		lock (SharedDownloadsLock)
+		{
+			TrimSharedDownloads();
+			if (!SharedDownloads.TryGetValue(url, out var entry))
+			{
+				entry = (Http.GetByteArrayAsync(url, CancellationToken.None), DateTime.UtcNow);
+				SharedDownloads[url] = entry;
+			}
+
+			download = entry.Download;
+		}
+
 		try
 		{
 			return await download.WaitAsync(ct);
 		}
 		catch when (!ct.IsCancellationRequested)
 		{
-			SharedDownloads.TryRemove(new KeyValuePair<string, Task<byte[]>>(url, download));
+			lock (SharedDownloadsLock)
+			{
+				if (SharedDownloads.TryGetValue(url, out var entry) && entry.Download == download) SharedDownloads.Remove(url);
+			}
+
 			throw;
+		}
+	}
+
+	// Under SharedDownloadsLock. Only finished downloads are ever dropped - one still running is what the others wait on.
+	private static void TrimSharedDownloads()
+	{
+		DateTime expired = DateTime.UtcNow - SharedDownloadLifetime;
+		long total = 0;
+		List<KeyValuePair<string, (Task<byte[]> Download, DateTime Added)>> finished = [];
+		foreach (var pair in SharedDownloads)
+		{
+			if (!pair.Value.Download.IsCompleted) continue;
+			if (pair.Value.Added < expired || !pair.Value.Download.IsCompletedSuccessfully)
+			{
+				SharedDownloads.Remove(pair.Key);
+				continue;
+			}
+
+			total += pair.Value.Download.Result.Length;
+			finished.Add(pair);
+		}
+
+		if (total <= SharedDownloadBudgetBytes) return;
+
+		foreach (var pair in finished.OrderBy(p => p.Value.Added))
+		{
+			SharedDownloads.Remove(pair.Key);
+			total -= pair.Value.Download.Result.Length;
+			if (total <= SharedDownloadBudgetBytes) break;
 		}
 	}
 

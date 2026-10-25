@@ -201,7 +201,7 @@ Każdy wariant jest mierzony wielokrotnie, na zmianę z pozostałymi. Wyniki pok
     <value>Test nie wskazał szybszych ustawień.</value>
   </data>
   <data name="Benchmark_OnRecording" xml:space="preserve">
-    <value>Test zmierzy wszystkie etapy na nagraniu testowym, a dekodowanie i krótki render powtórzy na {0}-sekundowej próbce twojego nagrania ({1}). Tylko na nim porówna dekodowanie na GPU i CPU. Podgląd w aplikacji odtworzy twoje nagranie.</value>
+    <value>Test zmierzy wszystkie etapy na nagraniu testowym, a dekodowanie i krótki render powtórzy na {0}-sekundowej próbce twojego nagrania ({1}). Porównanie dekodowania na GPU i CPU obejmie tylko twoje nagranie. Podgląd w aplikacji odtworzy twoje nagranie.</value>
   </data>
   <data name="Benchmark_OnSynthetic" xml:space="preserve">
     <value>Nie wczytano nagrania, więc wszystkie pomiary odbędą się na nagraniu testowym. Dekoduje się ono na CPU łatwiej niż nagranie z kamery, dlatego porównanie dekodowania na GPU i CPU zostanie pominięte. Nagranie testowe zostanie też wczytane do podglądu w aplikacji. Żeby porównać dekodowanie, wczytaj swoje nagranie przed testem.</value>
@@ -654,7 +654,7 @@ Zamknąć OsmoOverlay?</value>
     <value>Oznacz koniec (O)</value>
   </data>
   <data name="Cut_MarkOnlyWhatGetsRemoved" xml:space="preserve">
-    <value>Czas wpisuj jako 1:30 lub 1:30.250, a numer cięcia przenosi do jego miejsca w nagraniu. Wycięte fragmenty znikają z podglądu, renderu i telemetrii - wstęp z trasą, dystans i statystyki liczą się tylko z tego, co zostało.</value>
+    <value>Wpisuj czas w formacie 1:30 lub 1:30.250. Kliknij numer cięcia, aby przejść do jego miejsca w nagraniu. Wycięte fragmenty znikają z podglądu, renderu i telemetrii. Wstęp z trasą, dystans i statystyki uwzględniają tylko zachowane fragmenty.</value>
   </data>
   <data name="Cut_MarkStartI" xml:space="preserve">
     <value>Oznacz początek (I)</value>
@@ -1947,7 +1947,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Preset obejmuje: kalibrację prędkości, orientację i płynność GPS, znak wodny, wstęp z trasą oraz ustawienia renderu (jakość, kodek, rozdzielczość, dźwięk, metadane). Interfejs, zachowanie programu, dekodowanie sprzętowe, cienie i klucze map są wspólne dla wszystkich presetów.</value>
   </data>
   <data name="SettingsPresets_DeleteMessage" xml:space="preserve">
-    <value>Czy na pewno chcesz usunąć preset ustawień „{0}”? Układy widgetów zostają bez zmian. Tej operacji nie da się cofnąć.</value>
+    <value>Czy na pewno chcesz usunąć preset ustawień „{0}”? Układy widżetów pozostaną bez zmian. Tej operacji nie da się cofnąć.</value>
   </data>
   <data name="SettingsPresets_DeleteTitle" xml:space="preserve">
     <value>Usunąć preset ustawień?</value>
@@ -1989,7 +1989,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Zaimportowano preset ustawień „{0}”</value>
   </data>
   <data name="SettingsPresets_Layout" xml:space="preserve">
-    <value>Układ widgetów</value>
+    <value>Układ widżetów</value>
   </data>
   <data name="SettingsPresets_LayoutHint" xml:space="preserve">
     <value>Preset nakładki, który włącza się razem z tym presetem. Zmiana układu w głównym oknie nie zmienia tego wyboru.</value>
@@ -2016,7 +2016,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Zostaw bieżący</value>
   </data>
   <data name="SettingsPresets_PickNew" xml:space="preserve">
-    <value>Z którym presetem ustawień chcesz pracować w nowym projekcie? Wpływa na kalibrację prędkości, renderowanie, wstęp z trasą i układ widgetów.</value>
+    <value>Którego presetu ustawień użyć w nowym projekcie? Określa on kalibrację prędkości, ustawienia renderowania, wstęp z trasą i układ widżetów.</value>
   </data>
   <data name="SettingsPresets_PickProject" xml:space="preserve">
     <value>Ten projekt nie ma zapisanego presetu ustawień (albo został usunięty). Którego użyć?</value>
@@ -2028,7 +2028,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Wybierz preset ustawień</value>
   </data>
   <data name="SettingsPresets_Subtitle" xml:space="preserve">
-    <value>Zestawy ustawień na różne okazje, np. jazdę rowerem albo samochodem. Każdy ma własną kalibrację prędkości, renderowanie, wstęp z trasą oraz układ widgetów.</value>
+    <value>Zestawy ustawień do różnych zastosowań, np. jazdy rowerem lub samochodem. Każdy ma własną kalibrację prędkości, ustawienia renderowania, wstęp z trasą i układ widżetów.</value>
   </data>
   <data name="SettingsPresets_ThisPreset" xml:space="preserve">
     <value>Ten preset</value>
@@ -2136,7 +2136,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Za mało miejsca na dysku</value>
   </data>
   <data name="Render_ModeGreenScreen" xml:space="preserve">
-    <value>Tryb: green screen (sam HUD, jednolite tło, bez dźwięku)</value>
+    <value>Tryb: green screen (sama nakładka, jednolite tło, bez dźwięku)</value>
   </data>
   <data name="Render_ModeNormal" xml:space="preserve">
     <value>Tryb: normalny</value>
@@ -2439,7 +2439,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Źródło orientacji kamery</value>
   </data>
   <data name="Settings_OrientationSourceHint" xml:space="preserve">
-    <value>Źródło danych o położeniu kamery dla widżetów przechyłu, pochylenia i miernika G. Orientacja zapisana przez kamerę DJI pozwala odróżnić obrót kamery od przeciążenia i nie wymaga GPS. Jeśli nagranie jej nie zawiera, używany jest akcelerometr.</value>
+    <value>Źródło danych o orientacji kamery dla widżetów przechyłu, pochylenia i miernika G. Orientacja zapisana przez kamerę DJI pozwala odróżnić obrót kamery od przeciążenia i nie wymaga GPS. Jeśli nagranie jej nie zawiera, używany jest akcelerometr.</value>
   </data>
   <data name="Settings_OrientationAccelerometer" xml:space="preserve">
     <value>Akcelerometr</value>
@@ -4008,7 +4008,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Po utracie sygnału GPS</value>
   </data>
   <data name="TrailStyle_GpsLossHint" xml:space="preserve">
-    <value>Jak trasa łączy miejsce, w którym zniknął sygnał, z miejscem, w którym wrócił - dla utraty trwającej co najmniej sekundę.</value>
+    <value>Sposób połączenia trasy między utratą a odzyskaniem sygnału GPS. Dotyczy przerw trwających co najmniej sekundę.</value>
   </data>
   <data name="Route_JoinDashed" xml:space="preserve">
     <value>Linia przerywana</value>
@@ -4155,7 +4155,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Trasa FIT lub GPX</value>
   </data>
   <data name="Track_FitPreferred" xml:space="preserve">
-    <value>Lepszy jest plik FIT: zawiera zapisaną prędkość, przerwy timera, dystans i stan baterii urządzenia. Z GPX prędkość jest wyliczana z kolejnych pozycji, a dystansu i baterii nie ma.</value>
+    <value>Plik FIT może zawierać zapisaną prędkość, przerwy w pomiarze czasu, dystans i stan baterii urządzenia. Z pliku GPX prędkość jest wyliczana z kolejnych pozycji. GPX nie dostarcza odczytów dystansu z licznika ani poziomu baterii.</value>
   </data>
   <data name="Track_Info" xml:space="preserve">
     <value>{0} - {1} UTC
@@ -4336,7 +4336,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Początek w pliku (s)</value>
   </data>
   <data name="Music_NoPreviewSound" xml:space="preserve">
-    <value>Nagranie nie ma dźwięku, więc podgląd milczy - w renderze muzyka będzie.</value>
+    <value>Nagranie nie zawiera dźwięku, więc muzyki nie słychać w podglądzie. Będzie słyszalna w wyrenderowanym filmie.</value>
   </data>
   <data name="Music_Added" xml:space="preserve">
     <value>Dodano muzykę: {0}</value>
@@ -4372,7 +4372,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Profil eksportu</value>
   </data>
   <data name="Main_ExportProfileHint" xml:space="preserve">
-    <value>Gotowy zestaw rozmiaru, kodeka i bitrate'u wyniku. Ustawia te same opcje co Ustawienia, Renderowanie.</value>
+    <value>Gotowy zestaw rozdzielczości, kodeka, głębi kolorów i bitrate'u filmu wyjściowego. Zmienia te same opcje co zakładka Renderowanie w Ustawieniach.</value>
   </data>
   <data name="Main_ExportProfileCustom" xml:space="preserve">
     <value>Własny</value>
@@ -4402,7 +4402,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Telemetria nie została zapisana</value>
   </data>
   <data name="Render_ModeAlpha" xml:space="preserve">
-    <value>Tryb: przezroczysty overlay ({0})</value>
+    <value>Tryb: przezroczysta nakładka ({0})</value>
   </data>
   <data name="Queue_Title" xml:space="preserve">
     <value>Kolejka renderowania</value>
@@ -4447,7 +4447,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Oczekuje</value>
   </data>
   <data name="Queue_StateRendering" xml:space="preserve">
-    <value>Renderuje się</value>
+    <value>Renderowanie</value>
   </data>
   <data name="Queue_StateDone" xml:space="preserve">
     <value>Gotowe</value>
@@ -4525,7 +4525,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Kilka nagrań</value>
   </data>
   <data name="Queue_RecordingsMessage" xml:space="preserve">
-    <value>Plików: {0}. Wyrenderować każdy osobno, czy połączyć w jedno nagranie (pliki podzielone przez kamerę)?</value>
+    <value>Liczba plików: {0}. Wyrenderować każdy osobno czy połączyć je jako segmenty jednego nagrania podzielonego przez kamerę?</value>
   </data>
   <data name="Queue_RecordingsSeparate" xml:space="preserve">
     <value>Każdy osobno</value>
@@ -4577,10 +4577,10 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Wybierz wyżej Nadpisz lub Dodaj numer i ponów.</value>
   </data>
   <data name="Main_OverlayOnly" xml:space="preserve">
-    <value>Sam overlay</value>
+    <value>Sama nakładka</value>
   </data>
   <data name="Main_OverlayOnlyHint" xml:space="preserve">
-    <value>Renderuje sam overlay, bez obrazu: na zielonym tle (green screen) albo przezroczysty, do nałożenia na materiał w edytorze. Rodzaj wybierasz z menu.</value>
+    <value>Renderuje samą nakładkę na zielonym lub przezroczystym tle, do nałożenia na nagranie w edytorze wideo. Wybierz format z menu.</value>
   </data>
   <data name="Main_OverlayGreen" xml:space="preserve">
     <value>Zielone tło (green screen)</value>
@@ -4595,13 +4595,13 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Do Premiere, DaVinci Resolve i Final Cut. Duży plik.</value>
   </data>
   <data name="Main_OverlayVp9Hint" xml:space="preserve">
-    <value>Dużo mniejszy plik, czytany przez przeglądarki i część edytorów.</value>
+    <value>Znacznie mniejszy plik, obsługiwany przez przeglądarki i część edytorów.</value>
   </data>
   <data name="Settings_RouteIntroMapZoom" xml:space="preserve">
     <value>Oddalenie mapy</value>
   </data>
   <data name="Settings_RouteIntroMapZoomHint" xml:space="preserve">
-    <value>Automatycznie mapa jest dobierana do długości trasy, a przy krótkiej trasie pokazuje więcej otoczenia, żeby obraz nie był rozmyty. Stały poziom (2-19): im niższy, tym dalej od trasy.</value>
+    <value>Tryb Auto dopasowuje mapę do rozmiaru trasy. Przy krótkiej trasie pokazuje więcej otoczenia, aby ograniczyć rozmycie obrazu. Przy ręcznym wyborze poziomu (2-19) niższa wartość oznacza szerszy widok.</value>
   </data>
   <data name="Settings_RouteIntroZoomIn" xml:space="preserve">
     <value>Przybliżanie mapy do trasy</value>
@@ -4617,5 +4617,23 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Settings_RouteIntroZoomInDelay" xml:space="preserve">
     <value>Opóźnienie startu (s)</value>
+  </data>
+  <data name="Settings_RouteIntroTitle" xml:space="preserve">
+    <value>Własny tytuł</value>
+  </data>
+  <data name="Settings_RouteIntroTitleHint" xml:space="preserve">
+    <value>Tytuł i podtytuł nad statystykami wstępu, np. nazwa wyprawy i data. Pozostaw puste pole, aby pominąć dany napis.</value>
+  </data>
+  <data name="Settings_RouteIntroTitlePlaceholder" xml:space="preserve">
+    <value>Tytuł, np. Weekend w Bieszczadach</value>
+  </data>
+  <data name="Settings_RouteIntroSubtitlePlaceholder" xml:space="preserve">
+    <value>Podtytuł, np. dzień 2: Wetlina - Ustrzyki Górne</value>
+  </data>
+  <data name="Settings_RouteIntroElevation" xml:space="preserve">
+    <value>Profil wysokości</value>
+  </data>
+  <data name="Settings_RouteIntroElevationHint" xml:space="preserve">
+    <value>Wykres wysokości zachowanej części trasy, wyświetlany pod statystykami. Pojawia się, gdy nagranie lub ślad zawiera wysokość i na planszy jest wystarczająco dużo miejsca.</value>
   </data>
 </root>

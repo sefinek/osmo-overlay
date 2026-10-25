@@ -178,6 +178,9 @@ public partial class SettingsWindow : Window
 		RouteIntroZoomInSecondsBox.Maximum = (decimal)RouteIntroSettings.MaxZoomInSeconds;
 		RouteIntroZoomInDelayBox.Minimum = 0;
 		RouteIntroZoomInDelayBox.Maximum = (decimal)RouteIntroSettings.MaxZoomInDelaySeconds;
+		RouteIntroTitleBox.Text = routeIntro.Title;
+		RouteIntroSubtitleBox.Text = routeIntro.Subtitle;
+		RouteIntroElevationProfileCheck.IsChecked = routeIntro.ElevationProfile;
 		RouteIntroZoomInCheck.IsChecked = routeIntro.MapZoomIn;
 		RouteIntroZoomInFactorBox.Value = (decimal)routeIntro.MapZoomInFactor;
 		RouteIntroZoomInSecondsBox.Value = (decimal)routeIntro.MapZoomInSeconds;
@@ -350,6 +353,9 @@ public partial class SettingsWindow : Window
 		RouteIntroWhenTrimmedCheck.IsChecked == true,
 		RouteJoinOptions.At(RouteIntroGpsLossCombo.SelectedIndex) ?? RouteJoins.Default,
 		RouteIntroMapZoomAutoCheck.IsChecked == true ? null : (int)(RouteIntroMapZoomBox.Value ?? 17),
+		BlankToNull(RouteIntroTitleBox.Text),
+		BlankToNull(RouteIntroSubtitleBox.Text),
+		RouteIntroElevationProfileCheck.IsChecked == true,
 		RouteIntroZoomInCheck.IsChecked == true,
 		RouteIntroSettings.ClampZoomInFactor((double)(RouteIntroZoomInFactorBox.Value ?? (decimal)RouteIntroSettings.DefaultZoomInFactor)),
 		RouteIntroSettings.ClampZoomInSeconds((double)(RouteIntroZoomInSecondsBox.Value ?? (decimal)RouteIntroSettings.DefaultZoomInSeconds)),
@@ -582,6 +588,11 @@ public partial class SettingsWindow : Window
 	private void OnShowRouteIntroChanged(object? sender, RoutedEventArgs e)
 	{
 		RouteIntroOptionsPanel.IsEnabled = ShowRouteIntroCheck.IsChecked == true;
+	}
+
+	private static string? BlankToNull(string? text)
+	{
+		return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 	}
 
 	private void OnRouteIntroZoomInChanged(object? sender, RoutedEventArgs e)

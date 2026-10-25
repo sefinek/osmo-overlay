@@ -236,7 +236,10 @@ public sealed partial class OverlayRenderer
 
 		SKRect mapRect = GetRouteIntroMapRect();
 		if (withMap) DrawRouteIntroMap(canvas, mapRect);
-		DrawRouteIntroStats(canvas, mapRect.Right + margin, mapRect.Top + 30);
+		float columnX = mapRect.Right + margin;
+		float y = DrawRouteIntroHeading(canvas, columnX, mapRect.Top + 30, refWidth - margin - columnX);
+		y = DrawRouteIntroStats(canvas, columnX, y);
+		if (RouteIntro.ElevationProfile) DrawRouteIntroElevation(canvas, columnX, y, refWidth - margin - columnX, refHeight - RouteIntroBottomReserve);
 
 		canvas.Restore();
 	}
@@ -493,13 +496,112 @@ public sealed partial class OverlayRenderer
 	///     The stats RouteIntro.Stats turns on, two to a row in RouteIntroStat.All's order - each pair's two slots fixed, so
 	///     turning one stat off never moves another into a different pair. Units come from RouteIntro.Units (a card-level
 	///     setting, see OverlaySettings.RouteIntroUnits) - this card has no OverlayElement of its own to carry one.
+	///     Returns where the stats end - the top of what comes under them.
 	/// </summary>
-	private void DrawRouteIntroStats(SKCanvas canvas, float x, float startY)
+	private float DrawRouteIntroStats(SKCanvas canvas, float x, float startY)
 	{
 		float y = startY;
 		RouteIntroStats[] all = RouteIntroStat.All;
 		for (int i = 0; i < all.Length; i += 2)
 			DrawStatRow(canvas, x, ref y, RouteIntroStatItem(all[i]), i + 1 < all.Length ? RouteIntroStatItem(all[i + 1]) : null);
+
+		return y;
+	}
+
+	// The elevation chart's height as a share of its width: a strip, not the widget's own proportions.
+	private const float RouteIntroElevationAspect = 0.17f;
+
+	// Below this the elevation is the same all along (a camera or track with no altitude reads 0).
+	private const double RouteIntroElevationMinSpanMeters = 0.5;
+
+	// Room left at the card's bottom for the watermark.
+	private const float RouteIntroBottomReserve = 260f;
+
+	/// <summary>
+	///     The user's own title and the line under it (RouteIntro.Title/Subtitle, blank = none) at the top of the stats column,
+	///     cut with an ellipsis where they would run past `maxWidth`. Returns where the stats start.
+	/// </summary>
+	private float DrawRouteIntroHeading(SKCanvas canvas, float x, float y, float maxWidth)
+	{
+		string title = RouteIntro.Title?.Trim() ?? "";
+		string subtitle = RouteIntro.Subtitle?.Trim() ?? "";
+		if (title.Length == 0 && subtitle.Length == 0) return y;
+
+		float baseline = y;
+		if (title.Length > 0)
+		{
+			using var font = new SKFont(_hudTypeface, 96);
+			baseline = y + 70;
+			DrawOutlined(canvas, Ellipsized(title, font, maxWidth), x, baseline, font, White);
+		}
+
+		if (subtitle.Length > 0)
+		{
+			using var font = new SKFont(_hudTypeface, 44);
+			baseline += title.Length > 0 ? 66 : 30;
+			DrawOutlined(canvas, Ellipsized(subtitle, font, maxWidth), x, baseline, font, White.WithAlpha(210));
+		}
+
+		return baseline + 110;
+	}
+
+	private static string Ellipsized(string text, SKFont font, float maxWidth)
+	{
+		if (font.MeasureText(text) <= maxWidth) return text;
+
+		int length = text.Length;
+		while (length > 1 && font.MeasureText(text[..length].TrimEnd() + "...") > maxWidth) length--;
+		return text[..length].TrimEnd() + "...";
+	}
+
+	/// <summary>
+	///     The whole ride's elevation over distance (the Profile chart widget's own curve) under the stats, fitted into the
+	///     room left down to `bottom`, in the card's accent. Left out for a recording with no elevation at all (its camera or
+	///     track gave none) and when there is too little room to read.
+	/// </summary>
+	private void DrawRouteIntroElevation(SKCanvas canvas, float x, float y, float width, float bottom)
+	{
+		const float gap = 24f;
+		const float labelHeight = 50f;
+		double? low = null, high = null;
+		foreach (DerivedFrame frame in _allFrames)
+		{
+			if (!frame.Raw.HasGpsFix) continue;
+			low = low is { } l ? Math.Min(l, frame.Raw.AltitudeMeters) : frame.Raw.AltitudeMeters;
+			high = high is { } h ? Math.Max(h, frame.Raw.AltitudeMeters) : frame.Raw.AltitudeMeters;
+		}
+
+		if (high - low is not >= RouteIntroElevationMinSpanMeters || Profile(ProfileSeries.Elevation, ProfileAxis.Distance) is not { } profile) return;
+
+		y += gap;
+		float panelHeight = Math.Min(width * RouteIntroElevationAspect, bottom - y - labelHeight);
+		if (panelHeight < 150) return;
+
+		DrawOutlined(canvas, CoreStrings.Overlay_Elevation.ToUpperInvariant(), x, y + 30, _routeIntroLabelFont, White);
+
+		var panel = new SKRect(x, y + labelHeight, x + width, y + labelHeight + panelHeight);
+		_panelFillPaint.Color = new SKColor(0, 0, 0, 90);
+		canvas.DrawRoundRect(panel, 20, 20, _panelFillPaint);
+		canvas.DrawRoundRect(panel, 20, 20, _thinStroke2White70);
+
+		// The curve is the widget's, in its own plot size; stretched to this panel's shape. The fill takes the stretch,
+		// the line is stretched as a path and stroked after, so it keeps one thickness.
+		const float inset = 28f;
+		var stretch = SKMatrix.CreateScale((width - inset * 2) / ProfilePlotWidth, (panelHeight - inset * 2) / ProfilePlotHeight);
+		canvas.Save();
+		canvas.Translate(panel.Left + inset, panel.Top + inset);
+		_chartFillPaint.Color = Accent.WithAlpha(110);
+		canvas.Save();
+		canvas.Concat(stretch);
+		canvas.DrawPath(profile.Fill, _chartFillPaint);
+		canvas.Restore();
+
+		using var line = new SKPath();
+		profile.Line.Transform(stretch, line);
+		_chartLinePaint.Color = Accent;
+		_chartLinePaint.StrokeWidth = 6;
+		canvas.DrawPath(line, _chartLinePaint);
+		canvas.Restore();
 	}
 
 	private (string Label, string Value)? RouteIntroStatItem(RouteIntroStats stat)

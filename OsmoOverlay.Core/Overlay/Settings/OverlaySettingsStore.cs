@@ -56,6 +56,10 @@ public sealed record OverlaySettings(
 	bool RouteIntroShowEsriMapLabels = false,
 	// null = chosen from the route's size; else the tile zoom the overview is fetched at.
 	int? RouteIntroMapZoom = null,
+	// The card's own heading and the line under it (blank = none), and the elevation chart under its stats.
+	string? RouteIntroTitle = null,
+	string? RouteIntroSubtitle = null,
+	bool RouteIntroElevationProfile = true,
 	// The overview map starts zoomed out and closes in on the route (RouteIntroSettings.MapZoomIn).
 	bool RouteIntroMapZoomIn = true,
 	double RouteIntroMapZoomInFactor = RouteIntroSettings.DefaultZoomInFactor,

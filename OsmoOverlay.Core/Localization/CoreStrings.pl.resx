@@ -181,7 +181,7 @@
     <value>Ortofotomapa GUGiK (tylko Polska)</value>
   </data>
   <data name="Map_NoteLowDetail" xml:space="preserve">
-    <value>Zdjęcia satelitarne o rozdzielczości 10 m na piksel: przy zbliżeniu mapy widać tylko rozmyte plamy. Nadają się do karty przeglądu trasy.</value>
+    <value>Zdjęcia satelitarne o rozdzielczości 10 m na piksel nadają się do wstępu z trasą, ale przy dużym przybliżeniu są rozmyte.</value>
   </data>
   <data name="Map_NoteMapTilerVideo" xml:space="preserve">
     <value>Wideo dozwolone w serwisach internetowych (YouTube, Vimeo) dla kanałów do 100 tys. subskrybentów. Darmowy plan tylko do użytku niekomercyjnego.</value>
@@ -663,7 +663,7 @@
     <value>Telemetrię można zapisać jako tabelę .csv albo ślad .gpx.</value>
   </data>
   <data name="Queue_ProjectNotFound" xml:space="preserve">
-    <value>Projektu {0} już nie ma.</value>
+    <value>Nie znaleziono projektu: {0}.</value>
   </data>
   <data name="Queue_RecordingsMissing" xml:space="preserve">
     <value>Nie znaleziono nagrań: {0}.</value>
@@ -672,7 +672,7 @@
     <value>Nieznany profil eksportu „{0}”.</value>
   </data>
   <data name="Queue_OutputExists" xml:space="preserve">
-    <value>{0} już istnieje, zostawiono bez zmian.</value>
+    <value>Plik {0} już istnieje. Pozostawiono go bez zmian.</value>
   </data>
   <data name="Queue_Failed" xml:space="preserve">
     <value>Render się nie udał.</value>
@@ -681,7 +681,7 @@
     <value>Renderowanie {0} z kolejki nie powiodło się: {1}</value>
   </data>
   <data name="Queue_NoFreeName" xml:space="preserve">
-    <value>Brak wolnej nazwy pliku obok istniejącego wyniku.</value>
+    <value>Nie udało się znaleźć wolnej nazwy dla pliku wyjściowego.</value>
   </data>
   <data name="Queue_SaveFailed" xml:space="preserve">
     <value>Nie udało się zapisać kolejki renderowania: {0}</value>

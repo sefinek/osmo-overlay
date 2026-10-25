@@ -23,6 +23,9 @@ public sealed record RouteIntroSettings(
 	bool ShowWhenTrimmed = false,
 	RouteJoin GpsLossJoin = RouteJoins.Default,
 	int? MapZoom = null,
+	string? Title = null,
+	string? Subtitle = null,
+	bool ElevationProfile = true,
 	bool MapZoomIn = true,
 	double MapZoomInFactor = RouteIntroSettings.DefaultZoomInFactor,
 	double MapZoomInSeconds = RouteIntroSettings.DefaultZoomInSeconds,
@@ -78,6 +81,7 @@ public sealed record RouteIntroSettings(
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel,
 			RouteIntroLabels.From(settings.RouteIntroLabels), settings.RouteIntroWhenTrimmed, settings.RouteIntroGpsLossJoin,
 			settings.RouteIntroMapZoom,
+			settings.RouteIntroTitle, settings.RouteIntroSubtitle, settings.RouteIntroElevationProfile,
 			settings.RouteIntroMapZoomIn, ClampZoomInFactor(settings.RouteIntroMapZoomInFactor), ClampZoomInSeconds(settings.RouteIntroMapZoomInSeconds),
 			ClampZoomInDelay(settings.RouteIntroMapZoomInDelaySeconds));
 	}
@@ -100,6 +104,9 @@ public sealed record RouteIntroSettings(
 			RouteIntroWhenTrimmed = ShowWhenTrimmed,
 			RouteIntroGpsLossJoin = GpsLossJoin,
 			RouteIntroMapZoom = MapZoom,
+			RouteIntroTitle = Title,
+			RouteIntroSubtitle = Subtitle,
+			RouteIntroElevationProfile = ElevationProfile,
 			RouteIntroMapZoomIn = MapZoomIn,
 			RouteIntroMapZoomInFactor = MapZoomInFactor,
 			RouteIntroMapZoomInSeconds = MapZoomInSeconds,

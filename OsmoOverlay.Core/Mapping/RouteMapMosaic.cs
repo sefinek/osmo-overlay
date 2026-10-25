@@ -157,6 +157,7 @@ public sealed class RouteMapMosaic : IDisposable
 		bool fetchedAny = false;
 		int fetchedCount = 0;
 		var drawLock = new Lock();
+		var progressLock = new Lock();
 		// Reported at most a few times a second (plus always the final tile), not on a fixed tile-count
 		// interval - cached tiles resolve from disk in milliseconds, so a count-based throttle (e.g.
 		// every 10 tiles) still spams a dozen near-simultaneous log lines once a route is fully cached;
@@ -170,7 +171,7 @@ public sealed class RouteMapMosaic : IDisposable
 			canvas.Clear(new SKColor(30, 32, 36));
 
 			// Fetches (network + disk cache I/O) run with bounded concurrency; the actual SKCanvas
-			// draw and the fetchedCount/onProgress bookkeeping stay serialized under drawLock, since
+			// draw and the fetchedCount bookkeeping stay serialized under drawLock, since
 			// SKCanvas isn't safe to call into from more than one thread at a time.
 			var coordinates = new List<(int X, int Y)>(totalTiles);
 			for (int tx = minTileX; tx <= maxTileX; tx++)
@@ -183,35 +184,61 @@ public sealed class RouteMapMosaic : IDisposable
 			async ValueTask FetchAndDrawAsync((int X, int Y) coordinate, CancellationToken token)
 			{
 				(int tileX, int tileY) = coordinate;
-				SKBitmap? tile = await MapTileFetcher.FetchAsync(urlTemplate, zoom, tileX, tileY, cacheMaxAge, token);
-				try
-				{
-					using SKBitmap? labels = tile is not null && labelsUrlTemplate is not null
-						? await MapTileFetcher.FetchAsync(labelsUrlTemplate, zoom, tileX, tileY, cacheMaxAge, token)
-						: null;
-					lock (drawLock)
+					// The labels come in parallel with the tile, not after it.
+					Task<SKBitmap?> tileTask = MapTileFetcher.FetchAsync(urlTemplate, zoom, tileX, tileY, cacheMaxAge, token);
+					Task<SKBitmap?> labelsTask = labelsUrlTemplate is null
+						? Task.FromResult<SKBitmap?>(null)
+						: MapTileFetcher.FetchAsync(labelsUrlTemplate, zoom, tileX, tileY, cacheMaxAge, token);
+					SKBitmap? tile = null;
+					SKBitmap? labels = null;
+					try
 					{
-						if (tile is not null)
+						try
 						{
-							fetchedAny = true;
-							var dest = SKRect.Create((tileX - minTileX) * WebMercator.TileSize,
-								(tileY - minTileY) * WebMercator.TileSize, WebMercator.TileSize, WebMercator.TileSize);
-							canvas.DrawBitmap(tile, dest, SKSamplingOptions.Default);
-							if (labels is not null) canvas.DrawBitmap(labels, dest, SKSamplingOptions.Default);
+							await Task.WhenAll(tileTask, labelsTask);
+						}
+						catch
+						{
+							// Both have finished by now - the one that didn't fail still owns a bitmap.
+							if (tileTask.IsCompletedSuccessfully) tileTask.Result?.Dispose();
+							if (labelsTask.IsCompletedSuccessfully) labelsTask.Result?.Dispose();
+							throw;
 						}
 
-						fetchedCount++;
-						if (fetchedCount == totalTiles || progressStopwatch.ElapsedMilliseconds - lastReportedMs >= reportIntervalMs)
+						tile = tileTask.Result;
+						labels = labelsTask.Result;
+						lock (drawLock)
 						{
-							lastReportedMs = progressStopwatch.ElapsedMilliseconds;
-							onProgress?.Invoke(fetchedCount, totalTiles);
+							if (tile is not null)
+							{
+								fetchedAny = true;
+								var dest = SKRect.Create((tileX - minTileX) * WebMercator.TileSize,
+									(tileY - minTileY) * WebMercator.TileSize, WebMercator.TileSize, WebMercator.TileSize);
+								canvas.DrawBitmap(tile, dest, SKSamplingOptions.Default);
+								if (labels is not null) canvas.DrawBitmap(labels, dest, SKSamplingOptions.Default);
+							}
+
+							fetchedCount++;
 						}
+
+						// Not under drawLock: a slow callback (the GUI's log) mustn't hold up the other tiles' drawing.
+						// Its own lock keeps the reports in order, so the last one is always the full count.
+						if (onProgress is not null)
+							lock (progressLock)
+							{
+								int done = fetchedCount;
+								if (done == totalTiles || progressStopwatch.ElapsedMilliseconds - lastReportedMs >= reportIntervalMs)
+								{
+									lastReportedMs = progressStopwatch.ElapsedMilliseconds;
+									onProgress(done, totalTiles);
+								}
+							}
 					}
-				}
-				finally
-				{
-					tile?.Dispose();
-				}
+					finally
+					{
+						tile?.Dispose();
+						labels?.Dispose();
+					}
 			}
 		}
 		catch

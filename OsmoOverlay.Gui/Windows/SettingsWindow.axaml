@@ -496,6 +496,21 @@
 									<NumericUpDown Grid.Column="1" Name="RouteIntroDurationBox" Minimum="1" Maximum="30" Increment="1" FormatString="0" />
 								</Grid>
 								<Border Classes="divider" />
+								<StackPanel Classes="settingBlock" Spacing="6">
+									<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroTitle}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroTitleHint}" />
+									<TextBox Name="RouteIntroTitleBox" MaxLength="60" PlaceholderText="{x:Static local:Strings.Settings_RouteIntroTitlePlaceholder}" />
+									<TextBox Name="RouteIntroSubtitleBox" MaxLength="100" PlaceholderText="{x:Static local:Strings.Settings_RouteIntroSubtitlePlaceholder}" />
+								</StackPanel>
+								<Border Classes="divider" />
+								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+									<StackPanel>
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroElevation}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroElevationHint}" />
+									</StackPanel>
+									<ToggleSwitch Grid.Column="1" Name="RouteIntroElevationProfileCheck" />
+								</Grid>
+								<Border Classes="divider" />
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 									<StackPanel>
 										<TextBlock Text="{x:Static local:Strings.Settings_ColorTheRouteBySpeed}" Classes="rowTitle" />

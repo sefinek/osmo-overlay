@@ -41,7 +41,7 @@ public sealed class RouteIntroSettingsTests
 	{
 		var routeIntro = new RouteIntroSettings(false, 7.5, RouteIntroStats.MaxSpeed | RouteIntroStats.MaxLean, UnitSystem.Imperial, true, "carto-dark",
 			false, "Początek", "", RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.MaxLean)] = "MAKS. PRZECHYŁ" }),
-			MapZoom: 16, MapZoomIn: true, MapZoomInFactor: 2.5, MapZoomInSeconds: 4, MapZoomInDelaySeconds: 1);
+			MapZoom: 16, Title: "Weekend", Subtitle: "Dzień 2", ElevationProfile: false, MapZoomIn: true, MapZoomInFactor: 2.5, MapZoomInSeconds: 4, MapZoomInDelaySeconds: 1);
 		var settings = new OverlaySettings(ActivePresetId: "p1", SpeedCorrectionPercent: 4.2);
 
 		OverlaySettings applied = routeIntro.ApplyTo(settings);
