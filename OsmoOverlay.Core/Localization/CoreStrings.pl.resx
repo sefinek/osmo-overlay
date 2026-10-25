@@ -689,4 +689,13 @@
   <data name="Queue_LoadFailed" xml:space="preserve">
     <value>Nie udało się odczytać zapisanej kolejki renderowania: {0}</value>
   </data>
+  <data name="ExternalTrack_GpxNoTimes" xml:space="preserve">
+    <value>W tym pliku GPX jest za mało punktów z pozycją i czasem. Do synchronizacji z nagraniem potrzebne są co najmniej dwa takie punkty.</value>
+  </data>
+  <data name="ExternalTrack_GpxRouteOnly" xml:space="preserve">
+    <value>Ten plik GPX zawiera zaplanowaną trasę. Do synchronizacji z nagraniem potrzebny jest zapis aktywności z czasem każdego punktu.</value>
+  </data>
+  <data name="ExternalTrack_GpxEmpty" xml:space="preserve">
+    <value>W tym pliku GPX nie ma zapisu trasy GPS. Wybierz zapis aktywności z zegarka lub aplikacji sportowej.</value>
+  </data>
 </root>

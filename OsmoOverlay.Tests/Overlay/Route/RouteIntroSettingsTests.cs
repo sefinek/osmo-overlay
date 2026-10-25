@@ -41,13 +41,26 @@ public sealed class RouteIntroSettingsTests
 	{
 		var routeIntro = new RouteIntroSettings(false, 7.5, RouteIntroStats.MaxSpeed | RouteIntroStats.MaxLean, UnitSystem.Imperial, true, "carto-dark",
 			false, "Początek", "", RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.MaxLean)] = "MAKS. PRZECHYŁ" }),
-			MapZoom: 16);
+			MapZoom: 16, MapZoomIn: true, MapZoomInFactor: 2.5, MapZoomInSeconds: 4, MapZoomInDelaySeconds: 1);
 		var settings = new OverlaySettings(ActivePresetId: "p1", SpeedCorrectionPercent: 4.2);
 
 		OverlaySettings applied = routeIntro.ApplyTo(settings);
 
 		Assert.AreEqual(routeIntro, RouteIntroSettings.From(applied));
 		Assert.AreEqual(settings, RouteIntroSettings.From(settings).ApplyTo(applied));
+	}
+
+	[TestMethod]
+	public void ZoomIn_ValuesAreKeptInRange()
+	{
+		var settings = new OverlaySettings(RouteIntroMapZoomInFactor: 99, RouteIntroMapZoomInSeconds: -1, RouteIntroMapZoomInDelaySeconds: double.NaN);
+
+		RouteIntroSettings routeIntro = RouteIntroSettings.From(settings);
+
+		Assert.AreEqual(RouteIntroSettings.MaxZoomInFactor, routeIntro.MapZoomInFactor);
+		Assert.AreEqual(RouteIntroSettings.MinZoomInSeconds, routeIntro.MapZoomInSeconds);
+		Assert.AreEqual(RouteIntroSettings.DefaultZoomInDelaySeconds, routeIntro.MapZoomInDelaySeconds);
+		Assert.IsTrue(routeIntro.MapZoomIn, "on by default, like the intro itself");
 	}
 
 	[TestMethod]

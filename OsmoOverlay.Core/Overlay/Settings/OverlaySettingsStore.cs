@@ -56,6 +56,11 @@ public sealed record OverlaySettings(
 	bool RouteIntroShowEsriMapLabels = false,
 	// null = chosen from the route's size; else the tile zoom the overview is fetched at.
 	int? RouteIntroMapZoom = null,
+	// The overview map starts zoomed out and closes in on the route (RouteIntroSettings.MapZoomIn).
+	bool RouteIntroMapZoomIn = true,
+	double RouteIntroMapZoomInFactor = RouteIntroSettings.DefaultZoomInFactor,
+	double RouteIntroMapZoomInSeconds = RouteIntroSettings.DefaultZoomInSeconds,
+	double RouteIntroMapZoomInDelaySeconds = RouteIntroSettings.DefaultZoomInDelaySeconds,
 	bool ShowRouteIntro = true,
 	double RouteIntroDurationSeconds = 12.0,
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,

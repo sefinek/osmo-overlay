@@ -689,4 +689,13 @@
   <data name="Queue_LoadFailed" xml:space="preserve">
     <value>The saved render queue couldn't be read: {0}</value>
   </data>
+  <data name="ExternalTrack_GpxNoTimes" xml:space="preserve">
+    <value>This GPX file has too few points with both a position and a timestamp. At least two such points are needed to synchronize it with the recording.</value>
+  </data>
+  <data name="ExternalTrack_GpxRouteOnly" xml:space="preserve">
+    <value>This GPX file contains a planned route. Synchronizing with the recording requires a recorded activity with a timestamp for each point.</value>
+  </data>
+  <data name="ExternalTrack_GpxEmpty" xml:space="preserve">
+    <value>This GPX file contains no recorded GPS track. Choose an activity recorded by a watch or a sports app.</value>
+  </data>
 </root>

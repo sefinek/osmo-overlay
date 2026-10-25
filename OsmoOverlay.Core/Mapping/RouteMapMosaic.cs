@@ -38,7 +38,7 @@ public sealed class RouteMapMosaic : IDisposable
 
 	private readonly SKBitmap _bitmap;
 
-	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route, SKRect view)
+	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route, SKRect view, double coverage)
 	{
 		// Drawing a mutable SKBitmap makes Skia snapshot (copy) its pixels on every single draw call - for
 		// a mosaic of up to MaxTiles tiles that's tens of MB copied per rendered frame. Frozen once here,
@@ -51,6 +51,7 @@ public sealed class RouteMapMosaic : IDisposable
 		Zoom = zoom;
 		Route = route;
 		View = view;
+		Coverage = coverage;
 	}
 
 	public SKImage Image { get; }
@@ -58,6 +59,9 @@ public sealed class RouteMapMosaic : IDisposable
 
 	/// <summary>The part of the image meant to be shown, in its pixels: all of it, or for a mosaic built for a rect's aspect the window centered on the route.</summary>
 	public SKRect View { get; }
+
+	/// <summary>How many times wider than the view the tiles reach, around it: what was asked for, or less where the tile budget ran out. 1 = the view only.</summary>
+	public double Coverage { get; }
 
 	/// <summary>The bounding box of the points the mosaic was built around - its padding counts on it.</summary>
 	public GeoBounds Route { get; }
@@ -79,7 +83,7 @@ public sealed class RouteMapMosaic : IDisposable
 	public static async Task<RouteMapMosaic?> BuildAsync(IReadOnlyList<(double Lat, double Lon)> points,
 		string urlTemplate, int requestedZoom, int paddingTiles, CancellationToken ct,
 		Action<int, int>? onProgress = null, double? targetAspectRatio = null, TimeSpan? cacheMaxAge = null, string? labelsUrlTemplate = null,
-		(double Width, double Height)? minSize = null)
+		(double Width, double Height)? minSize = null, double coverage = 1)
 	{
 		if (points.Count == 0) return null;
 
@@ -88,6 +92,7 @@ public sealed class RouteMapMosaic : IDisposable
 		int zoom = Math.Clamp(requestedZoom, MinZoom, MaxZoom);
 		int minTileX, minTileY, maxTileX, maxTileY;
 		(double Left, double Top, double Width, double Height)? viewWorld = null;
+		double reach = 1;
 		while (true)
 		{
 			(double topLeftX, double topLeftY) = WebMercator.LatLonToWorldPixel(maxLat, minLon, zoom);
@@ -123,9 +128,20 @@ public sealed class RouteMapMosaic : IDisposable
 
 				double viewLeft = (topLeftX + bottomRightX) / 2 - viewWidth / 2;
 				double viewTop = (topLeftY + bottomRightY) / 2 - viewHeight / 2;
-				(minTileX, minTileY) = WebMercator.WorldPixelToTile(viewLeft, viewTop);
-				(maxTileX, maxTileY) = WebMercator.WorldPixelToTile(viewLeft + viewWidth, viewTop + viewHeight);
 				viewWorld = (viewLeft, viewTop, viewWidth, viewHeight);
+
+				// Tiles for more than the view (a caller zooming in on it) - less of it, before the zoom backs off, when the
+				// tile budget doesn't allow all of it.
+				reach = Math.Max(1, coverage);
+				while (true)
+				{
+					double extraX = viewWidth * (reach - 1) / 2;
+					double extraY = viewHeight * (reach - 1) / 2;
+					(minTileX, minTileY) = WebMercator.WorldPixelToTile(viewLeft - extraX, viewTop - extraY);
+					(maxTileX, maxTileY) = WebMercator.WorldPixelToTile(viewLeft + viewWidth + extraX, viewTop + viewHeight + extraY);
+					if (reach <= 1 || (long)(maxTileX - minTileX + 1) * (maxTileY - minTileY + 1) <= MaxTiles) break;
+					reach = Math.Max(1, reach * 0.9);
+				}
 			}
 
 			long tileCount = (long)(maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
@@ -218,7 +234,8 @@ public sealed class RouteMapMosaic : IDisposable
 		return new RouteMapMosaic(bitmap, originWorldX, originWorldY, zoom, new GeoBounds(minLat, maxLat, minLon, maxLon),
 			viewWorld is { } view
 				? SKRect.Create((float)(view.Left - originWorldX), (float)(view.Top - originWorldY), (float)view.Width, (float)view.Height)
-				: new SKRect(0, 0, bitmap.Width, bitmap.Height));
+				: new SKRect(0, 0, bitmap.Width, bitmap.Height),
+			viewWorld is null ? 1 : reach);
 	}
 }
 

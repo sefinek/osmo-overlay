@@ -4603,4 +4603,19 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="Settings_RouteIntroMapZoomHint" xml:space="preserve">
     <value>Automatycznie mapa jest dobierana do długości trasy, a przy krótkiej trasie pokazuje więcej otoczenia, żeby obraz nie był rozmyty. Stały poziom (2-19): im niższy, tym dalej od trasy.</value>
   </data>
+  <data name="Settings_RouteIntroZoomIn" xml:space="preserve">
+    <value>Przybliżanie mapy do trasy</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInHint" xml:space="preserve">
+    <value>Mapa początkowo pokazuje szerszy obszar, a następnie płynnie przybliża się do trasy. Opóźnienie jest liczone od początku wstępu.</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInFrom" xml:space="preserve">
+    <value>Początkowe oddalenie (x)</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInSeconds" xml:space="preserve">
+    <value>Czas przybliżania (s)</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInDelay" xml:space="preserve">
+    <value>Opóźnienie startu (s)</value>
+  </data>
 </root>

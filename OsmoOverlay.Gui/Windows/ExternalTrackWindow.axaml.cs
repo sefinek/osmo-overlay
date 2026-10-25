@@ -70,8 +70,25 @@ public partial class ExternalTrackWindow : Window
 		Show(ProblemText, "");
 		try
 		{
-			ExternalTrack track = await Task.Run(() => ExternalTrackReader.Read(path));
+			// Caught inside the task: a file that isn't a usable track is expected, and an exception crossing Task.Run stops the debugger as user-unhandled.
+			(ExternalTrack? read, string? problem) = await Task.Run<(ExternalTrack?, string?)>(() =>
+			{
+				try
+				{
+					return (ExternalTrackReader.Read(path), null);
+				}
+				catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+				{
+					return (null, ex.Message);
+				}
+			});
 			if (_closed) return;
+			if (read is not { } track)
+			{
+				Show(ProblemText, problem ?? "");
+				return;
+			}
+
 			_track = track;
 			PathBox.Text = path;
 			TrackInfo.Text = string.Format(Strings.Track_Info, track.StartUtc.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture), track.EndUtc.ToString("HH:mm:ss", CultureInfo.InvariantCulture), track.Points.Count, track.Pauses.Count);

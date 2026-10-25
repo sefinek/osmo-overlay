@@ -172,6 +172,17 @@ public partial class SettingsWindow : Window
 		RouteIntroMapZoomAutoCheck.IsChecked = routeIntro.MapZoom is null;
 		RouteIntroMapZoomBox.Value = routeIntro.MapZoom ?? 17;
 		RouteIntroMapZoomBox.IsEnabled = routeIntro.MapZoom is not null;
+		RouteIntroZoomInFactorBox.Minimum = (decimal)RouteIntroSettings.MinZoomInFactor;
+		RouteIntroZoomInFactorBox.Maximum = (decimal)RouteIntroSettings.MaxZoomInFactor;
+		RouteIntroZoomInSecondsBox.Minimum = (decimal)RouteIntroSettings.MinZoomInSeconds;
+		RouteIntroZoomInSecondsBox.Maximum = (decimal)RouteIntroSettings.MaxZoomInSeconds;
+		RouteIntroZoomInDelayBox.Minimum = 0;
+		RouteIntroZoomInDelayBox.Maximum = (decimal)RouteIntroSettings.MaxZoomInDelaySeconds;
+		RouteIntroZoomInCheck.IsChecked = routeIntro.MapZoomIn;
+		RouteIntroZoomInFactorBox.Value = (decimal)routeIntro.MapZoomInFactor;
+		RouteIntroZoomInSecondsBox.Value = (decimal)routeIntro.MapZoomInSeconds;
+		RouteIntroZoomInDelayBox.Value = (decimal)routeIntro.MapZoomInDelaySeconds;
+		RouteIntroZoomInOptions.IsEnabled = routeIntro.MapZoomIn;
 		LoadRouteIntroStats(routeIntro);
 		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
 		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
@@ -338,7 +349,11 @@ public partial class SettingsWindow : Window
 		RouteIntroLabels.From(_routeIntroStatRows.ToDictionary(r => r.Key.ToString(), r => r.Value.Label.Text ?? "")),
 		RouteIntroWhenTrimmedCheck.IsChecked == true,
 		RouteJoinOptions.At(RouteIntroGpsLossCombo.SelectedIndex) ?? RouteJoins.Default,
-		RouteIntroMapZoomAutoCheck.IsChecked == true ? null : (int)(RouteIntroMapZoomBox.Value ?? 17));
+		RouteIntroMapZoomAutoCheck.IsChecked == true ? null : (int)(RouteIntroMapZoomBox.Value ?? 17),
+		RouteIntroZoomInCheck.IsChecked == true,
+		RouteIntroSettings.ClampZoomInFactor((double)(RouteIntroZoomInFactorBox.Value ?? (decimal)RouteIntroSettings.DefaultZoomInFactor)),
+		RouteIntroSettings.ClampZoomInSeconds((double)(RouteIntroZoomInSecondsBox.Value ?? (decimal)RouteIntroSettings.DefaultZoomInSeconds)),
+		RouteIntroSettings.ClampZoomInDelay((double)(RouteIntroZoomInDelayBox.Value ?? (decimal)RouteIntroSettings.DefaultZoomInDelaySeconds)));
 
 	/// <summary>
 	///     A start/finish caption as typed - the box shows the built-in one, and left as that it stays the built-in (null), so it
@@ -567,6 +582,11 @@ public partial class SettingsWindow : Window
 	private void OnShowRouteIntroChanged(object? sender, RoutedEventArgs e)
 	{
 		RouteIntroOptionsPanel.IsEnabled = ShowRouteIntroCheck.IsChecked == true;
+	}
+
+	private void OnRouteIntroZoomInChanged(object? sender, RoutedEventArgs e)
+	{
+		RouteIntroZoomInOptions.IsEnabled = RouteIntroZoomInCheck.IsChecked == true;
 	}
 
 	private void OnRouteIntroMapZoomAutoChanged(object? sender, RoutedEventArgs e)

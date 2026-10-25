@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml;
+using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Core.Telemetry.External;
 
@@ -23,19 +24,23 @@ public static class GpxReader
 		using var reader = XmlReader.Create(stream, settings);
 
 		List<ExternalTrackPoint> points = [];
-		bool startsSegment = false;
+		bool startsSegment = false, hasTrackPoints = false, hasRoute = false;
 		while (reader.Read())
 		{
 			if (reader.NodeType != XmlNodeType.Element) continue;
 			if (reader.LocalName == "trkseg") startsSegment = true;
-			if (reader.LocalName == "trkpt" && ReadPoint(reader) is { } point)
-			{
-				points.Add(point with { StartsAfterGap = startsSegment && points.Count > 0 });
-				startsSegment = false;
-			}
+			if (reader.LocalName is "rte" or "rtept") hasRoute = true;
+			if (reader.LocalName != "trkpt") continue;
+
+			hasTrackPoints = true;
+			if (ReadPoint(reader) is not { } point) continue;
+			points.Add(point with { StartsAfterGap = startsSegment && points.Count > 0 });
+			startsSegment = false;
 		}
 
-		return new ExternalTrack(points);
+		// A planned route (rte) is where to go, not when the camera was there; its points' times, when it has any, are not a ride's.
+		return points.Count < 2 ? throw new InvalidDataException(hasTrackPoints ? CoreStrings.ExternalTrack_GpxNoTimes : hasRoute ? CoreStrings.ExternalTrack_GpxRouteOnly : CoreStrings.ExternalTrack_GpxEmpty) : new ExternalTrack(points);
+
 	}
 
 	private static ExternalTrackPoint? ReadPoint(XmlReader reader)

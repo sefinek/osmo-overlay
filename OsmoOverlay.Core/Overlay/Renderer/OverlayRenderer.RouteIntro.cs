@@ -47,12 +47,13 @@ public sealed partial class OverlayRenderer
 	private RouteIntroMosaicKey? _preparedRouteIntroKey;
 
 	/// <summary>What the route overview's mosaic is fetched for: its tile server and the route's extent.</summary>
-	public readonly record struct RouteIntroMosaicKey(string UrlTemplate, GeoBounds Route, string? LabelsUrlTemplate = null, int? Zoom = null);
+	public readonly record struct RouteIntroMosaicKey(string UrlTemplate, GeoBounds Route, string? LabelsUrlTemplate = null, int? Zoom = null, double ZoomOutReach = 1);
 
 	private RouteIntroMosaicKey CurrentRouteIntroKey()
 	{
 		return new RouteIntroMosaicKey(MapSources.UrlTemplate(RouteIntro.MapProviderId),
-			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, routeIntro: true), RouteIntro.MapZoom);
+			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, routeIntro: true), RouteIntro.MapZoom,
+			RouteIntro.MapZoomIn ? RouteIntro.MapZoomInFactor : 1);
 	}
 
 	/// <summary>
@@ -117,7 +118,7 @@ public sealed partial class OverlayRenderer
 			// Task.Run for the same reason as BuildMapMosaicAsync.
 			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, RouteIntro.MapZoom ?? RouteIntroMapZoomAuto, 0, ct,
 				onTileProgress, targetAspect, MapSources.CacheMaxAge(RouteIntro.MapProviderId), key.LabelsUrlTemplate,
-				RouteIntro.MapZoom is null ? (mapRect.Width / RouteIntroMaxUpscale, mapRect.Height / RouteIntroMaxUpscale) : null), ct), key);
+				RouteIntro.MapZoom is null ? (mapRect.Width / RouteIntroMaxUpscale, mapRect.Height / RouteIntroMaxUpscale) : null, key.ZoomOutReach), ct), key);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -158,32 +159,70 @@ public sealed partial class OverlayRenderer
 		return new SKRect(margin, margin, refWidth * 0.55f, refHeight - margin);
 	}
 
-	/// <summary>Draws the cached card (see _routeIntroCard) at `alpha`, building it first if the key changed. `canvas` must be the frame canvas with only DrawFrame's output-size scale applied.</summary>
-	private void DrawRouteIntroCard(SKCanvas canvas, int outW, int outH, float alpha)
+	private SKImage? _routeIntroBackdrop;
+	private RouteIntroCardKey? _routeIntroBackdropKey;
+
+	/// <summary>
+	///     The card at `sampleTime`, at `alpha`: the cached one, building it first if the key changed. While the map zooms in
+	///     (RouteIntroZoomOut) the cached part is the card without its map and the map is drawn over it each frame - only for
+	///     those few seconds. `canvas` must be the frame canvas with only DrawFrame's output-size scale applied.
+	/// </summary>
+	private void DrawRouteIntroCard(SKCanvas canvas, int outW, int outH, float alpha, double sampleTime)
 	{
+		double? zoomOut = RouteIntroZoomOut(sampleTime);
 		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic);
-		if (_routeIntroCard is null || _routeIntroCardKey != key)
-		{
-			_routeIntroCard?.Dispose();
-			using var surface = SKSurface.Create(new SKImageInfo(outW, outH, SKColorType.Bgra8888, SKAlphaType.Premul));
-			surface.Canvas.Clear(SKColors.Transparent);
-			surface.Canvas.Scale(outW / (float)_width, outH / (float)_height);
-			DrawRouteIntro(surface.Canvas);
-			_routeIntroCard = surface.Snapshot();
-			_routeIntroCardKey = key;
-		}
+		SKImage card = zoomOut is null
+			? CachedRouteIntroCard(ref _routeIntroCard, ref _routeIntroCardKey, key, withMap: true)
+			: CachedRouteIntroCard(ref _routeIntroBackdrop, ref _routeIntroBackdropKey, key, withMap: false);
 
 		canvas.Save();
+		int layer = alpha >= 1f ? -1 : canvas.SaveLayer(AlphaPaint(alpha));
+		canvas.Save();
 		canvas.ResetMatrix();
-		if (alpha >= 1f)
-			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default);
-		else
-			canvas.DrawImage(_routeIntroCard, 0, 0, SKSamplingOptions.Default, AlphaPaint(alpha));
+		canvas.DrawImage(card, 0, 0, SKSamplingOptions.Default);
+		canvas.Restore();
 
+		if (zoomOut is { } factor)
+		{
+			canvas.Scale(_scale, _scale);
+			DrawRouteIntroMap(canvas, GetRouteIntroMapRect(), factor);
+		}
+
+		if (layer >= 0) canvas.RestoreToCount(layer);
 		canvas.Restore();
 	}
 
-	private void DrawRouteIntro(SKCanvas canvas)
+	private SKImage CachedRouteIntroCard(ref SKImage? image, ref RouteIntroCardKey? cachedKey, RouteIntroCardKey key, bool withMap)
+	{
+		if (image is not null && cachedKey == key) return image;
+
+		image?.Dispose();
+		using var surface = SKSurface.Create(new SKImageInfo(key.Width, key.Height, SKColorType.Bgra8888, SKAlphaType.Premul));
+		surface.Canvas.Clear(SKColors.Transparent);
+		surface.Canvas.Scale(key.Width / (float)_width, key.Height / (float)_height);
+		DrawRouteIntro(surface.Canvas, withMap);
+		image = surface.Snapshot();
+		cachedKey = key;
+		return image;
+	}
+
+	/// <summary>
+	///     How many times wider than its final framing the card's map is shown at `sampleTime`, while it zooms in on the
+	///     route; null before it is set up for it or once it has arrived. Geometric between the start and 1, eased out, so the
+	///     closing-in reads as an even glide that settles. Depends only on the time, like everything drawn.
+	/// </summary>
+	private double? RouteIntroZoomOut(double sampleTime)
+	{
+		if (!RouteIntro.MapZoomIn || _routeIntroMosaic is not { Coverage: > 1.001 } mosaic) return null;
+
+		double progress = (sampleTime - RouteIntro.MapZoomInDelaySeconds) / RouteIntro.MapZoomInSeconds;
+		if (progress >= 1) return null;
+
+		double eased = 1 - Math.Pow(1 - Math.Clamp(progress, 0, 1), 3);
+		return Math.Pow(Math.Min(RouteIntro.MapZoomInFactor, mosaic.Coverage), 1 - eased);
+	}
+
+	private void DrawRouteIntro(SKCanvas canvas, bool withMap)
 	{
 		float refWidth = _width / _scale;
 		float refHeight = _height / _scale;
@@ -196,13 +235,13 @@ public sealed partial class OverlayRenderer
 			canvas.DrawRect(0, 0, refWidth, refHeight, backgroundPaint);
 
 		SKRect mapRect = GetRouteIntroMapRect();
-		DrawRouteIntroMap(canvas, mapRect);
+		if (withMap) DrawRouteIntroMap(canvas, mapRect);
 		DrawRouteIntroStats(canvas, mapRect.Right + margin, mapRect.Top + 30);
 
 		canvas.Restore();
 	}
 
-	private void DrawRouteIntroMap(SKCanvas canvas, SKRect mapRect)
+	private void DrawRouteIntroMap(SKCanvas canvas, SKRect mapRect, double zoomOut = 1)
 	{
 		using (var panelPaint = new SKPaint { Color = new SKColor(0, 0, 0, 90), IsAntialias = true, Style = SKPaintStyle.Fill })
 			canvas.DrawRect(mapRect, panelPaint);
@@ -210,7 +249,7 @@ public sealed partial class OverlayRenderer
 		if (_routeIntroMosaic is null)
 		{
 			DrawOutlined(canvas, CoreStrings.Overlay_MapUnavailable.ToUpperInvariant(), (mapRect.Left + mapRect.Right) / 2, (mapRect.Top + mapRect.Bottom) / 2,
-				_labelFont, White, SKTextAlign.Center);
+				_routeIntroValueFont, White, SKTextAlign.Center);
 			canvas.DrawRect(mapRect, _ringStroke3White160);
 			DrawRouteIntroMapLabel(canvas, mapRect);
 			return;
@@ -223,6 +262,7 @@ public sealed partial class OverlayRenderer
 		// The mosaic's view is already in mapRect's shape and centered on the route (targetAspectRatio in
 		// BuildRouteIntroMosaicAsync), so it is fitted to the rect and the rest of the tiles is clipped away.
 		SKRect view = _routeIntroMosaic.View;
+		if (zoomOut > 1) view = ScaledAboutCenter(view, (float)zoomOut);
 		float fitScale = Math.Max(mapRect.Width / view.Width, mapRect.Height / view.Height);
 		float drawWidth = mosaicImage.Width * fitScale;
 		float drawHeight = mosaicImage.Height * fitScale;
@@ -249,6 +289,13 @@ public sealed partial class OverlayRenderer
 		// On the map, the whole time the card is: what every provider's terms ask for at the least.
 		if (MapSources.Attribution(RouteIntro.MapProviderId, routeIntro: true) is { } credit)
 			DrawCredit(canvas, credit, mapRect.Left + 24f, mapRect.Bottom - 24f, _smallFont, White);
+	}
+
+	private static SKRect ScaledAboutCenter(SKRect rect, float factor)
+	{
+		float halfWidth = rect.Width * factor / 2;
+		float halfHeight = rect.Height * factor / 2;
+		return new SKRect(rect.MidX - halfWidth, rect.MidY - halfHeight, rect.MidX + halfWidth, rect.MidY + halfHeight);
 	}
 
 	/// <summary>

@@ -556,6 +556,28 @@
 									</StackPanel>
 									<NumericUpDown Grid.Column="2" Name="RouteIntroMapZoomBox" Increment="1" FormatString="0" VerticalAlignment="Center" />
 								</Grid>
+								<Border Classes="divider" />
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+									<StackPanel Margin="0,0,16,0">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroZoomIn}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroZoomInHint}" />
+									</StackPanel>
+									<ToggleSwitch Grid.Column="1" Name="RouteIntroZoomInCheck" Click="OnRouteIntroZoomInChanged" />
+								</Grid>
+								<Grid Name="RouteIntroZoomInOptions" ColumnDefinitions="*,*,*" ColumnSpacing="12">
+									<StackPanel Spacing="4">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroZoomInFrom}" Classes="rowHint" Margin="0" />
+										<NumericUpDown Name="RouteIntroZoomInFactorBox" Increment="0.5" FormatString="0.0" />
+									</StackPanel>
+									<StackPanel Grid.Column="1" Spacing="4">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroZoomInSeconds}" Classes="rowHint" Margin="0" />
+										<NumericUpDown Name="RouteIntroZoomInSecondsBox" Increment="0.5" FormatString="0.0" />
+									</StackPanel>
+									<StackPanel Grid.Column="2" Spacing="4">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroZoomInDelay}" Classes="rowHint" Margin="0" />
+										<NumericUpDown Name="RouteIntroZoomInDelayBox" Increment="0.5" FormatString="0.0" />
+									</StackPanel>
+								</Grid>
 							</StackPanel>
 						</Border>
 

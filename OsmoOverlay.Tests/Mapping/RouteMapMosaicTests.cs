@@ -32,6 +32,24 @@ public sealed class RouteMapMosaicTests
 	}
 
 	[TestMethod]
+	public async Task BuildAsync_WithCoverage_HasTilesAroundTheView_OrLessWhenTheBudgetRunsOut()
+	{
+		using var server = new TileServer();
+
+		using RouteMapMosaic? wide = await RouteMapMosaic.BuildAsync(ShortRoute, server.UrlTemplate, 18, 0, CancellationToken.None,
+			targetAspectRatio: 1.06, cacheMaxAge: TimeSpan.Zero, minSize: (1056, 995), coverage: 3);
+		using RouteMapMosaic? tooWide = await RouteMapMosaic.BuildAsync(ShortRoute, server.UrlTemplate, 18, 0, CancellationToken.None,
+			targetAspectRatio: 1.06, cacheMaxAge: TimeSpan.Zero, minSize: (1056, 995), coverage: 40);
+
+		Assert.IsNotNull(wide);
+		Assert.AreEqual(3, wide.Coverage);
+		Assert.IsTrue(wide.View.Left >= wide.View.Width, "a whole view's width of tiles to the left of it, at least");
+		Assert.IsNotNull(tooWide);
+		Assert.IsTrue(tooWide.Coverage is > 1 and < 40, "the budget cuts the reach, not the zoom");
+		Assert.AreEqual(18, tooWide.Zoom);
+	}
+
+	[TestMethod]
 	public async Task BuildAsync_WithoutARect_ShowsTheWholeImage()
 	{
 		using var server = new TileServer();

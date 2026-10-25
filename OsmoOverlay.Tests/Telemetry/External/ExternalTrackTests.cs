@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Localization;
 using System.Text;
 using System.Xml;
 using OsmoOverlay.Core.Telemetry.External;
@@ -59,6 +60,21 @@ public sealed class ExternalTrackTests
 		                             """);
 
 		Assert.AreEqual(2, GpxReader.Read(gpx).Points.Count);
+	}
+
+	[TestMethod]
+	public void Gpx_APlannedRouteOrUntimedPoints_AreRefusedWithAReasonThatSaysSo()
+	{
+		var route = new MemoryStream("""
+		                             <gpx><rte><rtept lat="50.1" lon="20"><time>2001-06-02T00:18:15Z</time></rtept>
+		                             <rtept lat="50.2" lon="20"><time>2001-11-07T23:53:41Z</time></rtept></rte></gpx>
+		                             """u8.ToArray());
+		var untimed = new MemoryStream("""<gpx><trk><trkseg><trkpt lat="50.1" lon="20"/><trkpt lat="50.2" lon="20"/></trkseg></trk></gpx>"""u8.ToArray());
+		var empty = new MemoryStream("""<gpx/>"""u8.ToArray());
+
+		Assert.AreEqual(CoreStrings.ExternalTrack_GpxRouteOnly, Assert.ThrowsExactly<InvalidDataException>(() => GpxReader.Read(route)).Message);
+		Assert.AreEqual(CoreStrings.ExternalTrack_GpxNoTimes, Assert.ThrowsExactly<InvalidDataException>(() => GpxReader.Read(untimed)).Message);
+		Assert.AreEqual(CoreStrings.ExternalTrack_GpxEmpty, Assert.ThrowsExactly<InvalidDataException>(() => GpxReader.Read(empty)).Message);
 	}
 
 	[TestMethod]

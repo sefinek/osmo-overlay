@@ -22,13 +22,43 @@ public sealed record RouteIntroSettings(
 	RouteIntroLabels? Labels = null,
 	bool ShowWhenTrimmed = false,
 	RouteJoin GpsLossJoin = RouteJoins.Default,
-	int? MapZoom = null)
+	int? MapZoom = null,
+	bool MapZoomIn = true,
+	double MapZoomInFactor = RouteIntroSettings.DefaultZoomInFactor,
+	double MapZoomInSeconds = RouteIntroSettings.DefaultZoomInSeconds,
+	double MapZoomInDelaySeconds = RouteIntroSettings.DefaultZoomInDelaySeconds)
 {
+	// The zoom-in starts this many times wider than the final view, takes this long and begins after this delay. The factor
+	// is capped by what one mosaic can cover (RouteMapMosaic's tile budget).
+	public const double DefaultZoomInFactor = 3;
+	public const double DefaultZoomInSeconds = 8;
+	public const double DefaultZoomInDelaySeconds = 2;
+	public const double MinZoomInFactor = 1.5;
+	public const double MaxZoomInFactor = 4;
+	public const double MinZoomInSeconds = 0.5;
+	public const double MaxZoomInSeconds = 10;
+	public const double MaxZoomInDelaySeconds = 5;
+
 	// The start's and finish's captions when the user gave none (null) - "" is a dot without one. Drawn as is, so in capitals.
 	public static string DefaultStartLabel => CoreStrings.Overlay_Start.ToUpperInvariant();
 	public static string DefaultFinishLabel => CoreStrings.Overlay_Finish.ToUpperInvariant();
 
 	public static readonly RouteIntroSettings Disabled = new(false, 0, RouteIntroStats.None, UnitSystem.Metric, false);
+
+	public static double ClampZoomInFactor(double value)
+	{
+		return double.IsFinite(value) ? Math.Clamp(value, MinZoomInFactor, MaxZoomInFactor) : DefaultZoomInFactor;
+	}
+
+	public static double ClampZoomInSeconds(double value)
+	{
+		return double.IsFinite(value) ? Math.Clamp(value, MinZoomInSeconds, MaxZoomInSeconds) : DefaultZoomInSeconds;
+	}
+
+	public static double ClampZoomInDelay(double value)
+	{
+		return double.IsFinite(value) ? Math.Clamp(value, 0, MaxZoomInDelaySeconds) : DefaultZoomInDelaySeconds;
+	}
 
 	public bool Shows(RouteIntroStats stat)
 	{
@@ -47,7 +77,9 @@ public sealed record RouteIntroSettings(
 			settings.RouteIntroUnits, settings.RouteIntroColorBySpeed, settings.RouteIntroMapProvider, settings.RouteIntroShowStartFinish,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel,
 			RouteIntroLabels.From(settings.RouteIntroLabels), settings.RouteIntroWhenTrimmed, settings.RouteIntroGpsLossJoin,
-			settings.RouteIntroMapZoom);
+			settings.RouteIntroMapZoom,
+			settings.RouteIntroMapZoomIn, ClampZoomInFactor(settings.RouteIntroMapZoomInFactor), ClampZoomInSeconds(settings.RouteIntroMapZoomInSeconds),
+			ClampZoomInDelay(settings.RouteIntroMapZoomInDelaySeconds));
 	}
 
 	/// <summary>The reverse of From: these values written into the settings.</summary>
@@ -67,7 +99,11 @@ public sealed record RouteIntroSettings(
 			RouteIntroFinishLabel = FinishLabel,
 			RouteIntroWhenTrimmed = ShowWhenTrimmed,
 			RouteIntroGpsLossJoin = GpsLossJoin,
-			RouteIntroMapZoom = MapZoom
+			RouteIntroMapZoom = MapZoom,
+			RouteIntroMapZoomIn = MapZoomIn,
+			RouteIntroMapZoomInFactor = MapZoomInFactor,
+			RouteIntroMapZoomInSeconds = MapZoomInSeconds,
+			RouteIntroMapZoomInDelaySeconds = MapZoomInDelaySeconds
 		};
 	}
 

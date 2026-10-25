@@ -276,6 +276,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
 		_routeIntroCard?.Dispose();
+		_routeIntroBackdrop?.Dispose();
 	}
 
 	/// <summary>
@@ -313,6 +314,8 @@ public sealed partial class OverlayRenderer : IDisposable
 		DisposeRoutes(_mapRoutes);
 		_routeIntroCard?.Dispose();
 		_routeIntroCard = null;
+		_routeIntroBackdrop?.Dispose();
+		_routeIntroBackdrop = null;
 		if (_routeIntroMosaic is { } mosaic) _routeIntroTrailPixels = ProjectRoute(mosaic);
 	}
 
@@ -426,7 +429,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		{
 			if (crossfadeT is { } t)
 			{
-				DrawRouteIntroCard(canvas, outW, outH, 1 - t);
+				DrawRouteIntroCard(canvas, outW, outH, 1 - t, sampleTime);
 				// The widgets fade in as one flattened group, not each on its own.
 				int saveCount = canvas.SaveLayer(AlphaPaint(t));
 				DrawWidgets(canvas, frame);
@@ -434,7 +437,7 @@ public sealed partial class OverlayRenderer : IDisposable
 			}
 			else
 			{
-				DrawRouteIntroCard(canvas, outW, outH, 1f);
+				DrawRouteIntroCard(canvas, outW, outH, 1f, sampleTime);
 			}
 		}
 		else

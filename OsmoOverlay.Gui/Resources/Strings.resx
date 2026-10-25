@@ -4603,4 +4603,19 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Settings_RouteIntroMapZoomHint" xml:space="preserve">
     <value>Automatic fits the map to the length of the route and, for a short route, shows more of the surroundings so the picture doesn't turn blurry. Fixed level (2-19): the lower, the further from the route.</value>
   </data>
+  <data name="Settings_RouteIntroZoomIn" xml:space="preserve">
+    <value>Zoom the map in on the route</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInHint" xml:space="preserve">
+    <value>The map starts zoomed out, then smoothly zooms in on the route. The delay is measured from the start of the intro.</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInFrom" xml:space="preserve">
+    <value>Initial zoom out (x)</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInSeconds" xml:space="preserve">
+    <value>Zoom duration (s)</value>
+  </data>
+  <data name="Settings_RouteIntroZoomInDelay" xml:space="preserve">
+    <value>Start delay (s)</value>
+  </data>
 </root>
