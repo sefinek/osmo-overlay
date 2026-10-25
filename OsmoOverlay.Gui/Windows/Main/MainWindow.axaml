@@ -645,22 +645,15 @@
 									<StackPanel Classes="cardTitle">
 										<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Main_Output}" />
 									</StackPanel>
-									<Grid RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
-										<Grid.ColumnDefinitions>
-											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />
-											<ColumnDefinition Width="*" />
-											<ColumnDefinition Width="24" />
-											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
-											<ColumnDefinition Width="*" />
-										</Grid.ColumnDefinitions>
-										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Encoder}" />
+									<Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="8" RowSpacing="2">
+										<TextBlock Grid.Row="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Encoder}" />
 										<TextBlock Grid.Row="0" Grid.Column="1" Classes="infoValue" Name="OutEncoder" />
-										<TextBlock Grid.Row="0" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_Audio}" />
-										<TextBlock Grid.Row="0" Grid.Column="4" Classes="infoValue" Name="OutAudio" TextWrapping="Wrap" />
-										<TextBlock Grid.Row="1" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Frames}" Name="OutFrameCountLabel" />
-										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutFrameCount" />
-										<TextBlock Grid.Row="1" Grid.Column="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_EstRenderTime}" Name="OutEstimatedTimeLabel" />
-										<TextBlock Grid.Row="1" Grid.Column="4" Classes="infoValue" Name="OutEstimatedTime" />
+										<TextBlock Grid.Row="1" Classes="infoLabel" Text="{x:Static local:Strings.Main_Audio}" />
+										<TextBlock Grid.Row="1" Grid.Column="1" Classes="infoValue" Name="OutAudio" TextWrapping="Wrap" />
+										<TextBlock Grid.Row="2" Classes="infoLabel" Text="{x:Static local:Strings.Main_Frames}" Name="OutFrameCountLabel" />
+										<TextBlock Grid.Row="2" Grid.Column="1" Classes="infoValue" Name="OutFrameCount" TextWrapping="Wrap" />
+										<TextBlock Grid.Row="3" Classes="infoLabel" Text="{x:Static local:Strings.Main_EstRenderTime}" Name="OutEstimatedTimeLabel" />
+										<TextBlock Grid.Row="3" Grid.Column="1" Classes="infoValue" Name="OutEstimatedTime" />
 									</Grid>
 
 									<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,6,0,0" FontSize="11" Opacity="0.6"

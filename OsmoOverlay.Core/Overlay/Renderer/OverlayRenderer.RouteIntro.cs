@@ -265,6 +265,7 @@ public sealed partial class OverlayRenderer
 		// The mosaic's view is already in mapRect's shape and centered on the route (targetAspectRatio in
 		// BuildRouteIntroMosaicAsync), so it is fitted to the rect and the rest of the tiles is clipped away.
 		SKRect view = _routeIntroMosaic.View;
+		float finalScale = Math.Max(mapRect.Width / view.Width, mapRect.Height / view.Height);
 		if (zoomOut > 1) view = ScaledAboutCenter(view, (float)zoomOut);
 		float fitScale = Math.Max(mapRect.Width / view.Width, mapRect.Height / view.Height);
 		float drawWidth = mosaicImage.Width * fitScale;
@@ -274,14 +275,8 @@ public sealed partial class OverlayRenderer
 
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
 		{
-			// Drawn once per card (see DrawRouteIntroCard), so it's built right here and dropped again.
-			using var route = new RouteGeometry(RouteIntro.ColorBySpeed, _trailSpeedScaleKmh);
-			RouteJoin?[] joins = RouteIntroJoins();
-			for (int i = 0; i < pixels.Count; i++)
-				route.Add(pixels[i], _allFrames[i].SpeedKmh, joins[i]);
-
 			var toCard = SKMatrix.CreateScaleTranslation(fitScale, fitScale, destRect.Left, destRect.Top);
-			DrawRoute(canvas, route, toCard, TrailColor, 6);
+			DrawRoute(canvas, RouteIntroRouteFor(pixels, finalScale), toCard, TrailColor, 6);
 			if (RouteIntro.ShowStartFinish) DrawRouteIntroEnds(canvas, mapRect, pixels, toCard);
 		}
 
@@ -321,7 +316,7 @@ public sealed partial class OverlayRenderer
 		SKPoint finish = toCard.MapPoint(pixels[last]);
 		string startLabel = (RouteIntro.StartLabel ?? RouteIntroSettings.DefaultStartLabel).Trim();
 		string finishLabel = (RouteIntro.FinishLabel ?? RouteIntroSettings.DefaultFinishLabel).Trim();
-		List<SKPoint> route = RouteOnCard(pixels, toCard);
+		List<SKPoint> route = _routeIntroThinned!.ConvertAll(toCard.MapPoint);
 
 		if (SKPoint.Distance(start, finish) < RouteEndRadius * 3)
 		{
@@ -336,6 +331,40 @@ public sealed partial class OverlayRenderer
 		List<SKRect> taken = [DotRect(start), DotRect(finish)];
 		if (DrawRouteEndCaption(canvas, mapRect, start, startLabel, route, taken) is { } startCaption) taken.Add(startCaption);
 		DrawRouteEndCaption(canvas, mapRect, finish, finishLabel, route, taken);
+	}
+
+	// The card's route in the mosaic's own pixels (RouteGeometry draws through any uniform scale), built once per mosaic and
+	// settings: the map zooms in over several seconds, and rebuilding tens of thousands of points every frame of it was
+	// most of what a render spent there. _routeIntroThinned is its thinned copy the captions keep clear of.
+	private RouteGeometry? _routeIntroRoute;
+	private List<SKPoint>? _routeIntroThinned;
+	private (RouteMapMosaic? Mosaic, RouteIntroSettings Settings, float Scale)? _routeIntroRouteKey;
+
+	/// <param name="finalScale">The card's pixels per mosaic pixel once the map has arrived - the largest it is ever drawn at.</param>
+	private RouteGeometry RouteIntroRouteFor(List<SKPoint> pixels, float finalScale)
+	{
+		var key = (_routeIntroMosaic, RouteIntro, finalScale);
+		if (_routeIntroRoute is { } cached && _routeIntroRouteKey == key) return cached;
+
+		ClearRouteIntroRoute();
+		var route = new RouteGeometry(RouteIntro.ColorBySpeed, _trailSpeedScaleKmh, 0.25f / finalScale);
+		RouteJoin?[] joins = RouteIntroJoins();
+		for (int i = 0; i < pixels.Count; i++)
+			route.Add(pixels[i], _allFrames[i].SpeedKmh, joins[i]);
+
+		var scale = SKMatrix.CreateScale(finalScale, finalScale);
+		_routeIntroThinned = RouteOnCard(pixels, scale).ConvertAll(p => new SKPoint(p.X / finalScale, p.Y / finalScale));
+		_routeIntroRoute = route;
+		_routeIntroRouteKey = key;
+		return route;
+	}
+
+	private void ClearRouteIntroRoute()
+	{
+		_routeIntroRoute?.Dispose();
+		_routeIntroRoute = null;
+		_routeIntroThinned = null;
+		_routeIntroRouteKey = null;
 	}
 
 	/// <summary>How the route reaches each frame from the one before: a cut's own join, or the card's GPS loss join at the first fix after a loss - null where it carries on.</summary>

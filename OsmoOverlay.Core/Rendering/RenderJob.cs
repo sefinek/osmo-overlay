@@ -129,8 +129,10 @@ public static class RenderJob
 			if (requested is null)
 				Report(RenderPhase.SelectingEncoder, CoreStrings.Render_CheckingGpuEncoder);
 			string encoder = requested ?? FfmpegPipeline.SelectVideoEncoder(output);
-			Report(RenderPhase.SelectingEncoder,
-				string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? CoreStrings.Render_EncoderGpu : CoreStrings.Render_EncoderCpu, encoder));
+			string encoderMessage = FfmpegPipeline.IsGpuEncoder(encoder) ? CoreStrings.Render_EncoderGpu
+				: options.Alpha is not null ? CoreStrings.Render_EncoderCpuOnly
+				: CoreStrings.Render_EncoderCpu;
+			Report(RenderPhase.SelectingEncoder, string.Format(encoderMessage, encoder));
 
 			int totalFrames = (int)plan.TotalFrames;
 			Report(RenderPhase.Rendering, plan.IsPartial

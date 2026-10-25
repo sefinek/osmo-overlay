@@ -333,6 +333,9 @@
   <data name="Render_EncoderCpu" xml:space="preserve">
     <value>Enkoder: {0} (brak enkodera na karcie graficznej - renderowanie na CPU)</value>
   </data>
+  <data name="Render_EncoderCpuOnly" xml:space="preserve">
+    <value>Enkoder: {0} (CPU)</value>
+  </data>
   <data name="Render_EncoderGpu" xml:space="preserve">
     <value>Enkoder: {0} (GPU)</value>
   </data>

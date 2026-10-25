@@ -277,6 +277,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_routeIntroMosaic?.Dispose();
 		_routeIntroCard?.Dispose();
 		_routeIntroBackdrop?.Dispose();
+		_routeIntroRoute?.Dispose();
 	}
 
 	/// <summary>
@@ -316,6 +317,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_routeIntroCard = null;
 		_routeIntroBackdrop?.Dispose();
 		_routeIntroBackdrop = null;
+		ClearRouteIntroRoute();
 		if (_routeIntroMosaic is { } mosaic) _routeIntroTrailPixels = ProjectRoute(mosaic);
 	}
 
