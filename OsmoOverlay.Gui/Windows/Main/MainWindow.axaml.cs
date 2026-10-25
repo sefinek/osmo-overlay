@@ -67,6 +67,7 @@ public partial class MainWindow : Window
 	// OverlayPresetStore.Save's cleanup delete every other preset file, so OverlayContent stays hidden until this is true.
 	private bool _overlayPresetsLoaded;
 	private UiPhase _phase = UiPhase.Idle;
+	private bool _renderStarting;
 	// The preview's frame size in pixels - null while no recording is open in the preview.
 	private PixelSize? _previewFrameSize;
 	private int _previewMaxWidth;

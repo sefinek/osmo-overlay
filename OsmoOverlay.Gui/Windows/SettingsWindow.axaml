@@ -542,7 +542,21 @@
 
 						<TextBlock Text="{x:Static local:Strings.Settings_Map}" Classes="sectionLabel" />
 						<Border Classes="settingsCard" Padding="16">
-							<local:MapSourcePicker Name="RouteIntroMapSource" IsRouteIntro="True" />
+							<StackPanel Spacing="14">
+								<local:MapSourcePicker Name="RouteIntroMapSource" IsRouteIntro="True" />
+								<Border Classes="divider" />
+								<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+									<StackPanel Margin="0,0,16,0">
+										<TextBlock Text="{x:Static local:Strings.Settings_RouteIntroMapZoom}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroMapZoomHint}" />
+									</StackPanel>
+									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+										<TextBlock Text="{x:Static local:Strings.Main_Auto}" VerticalAlignment="Center" />
+										<ToggleSwitch Name="RouteIntroMapZoomAutoCheck" Click="OnRouteIntroMapZoomAutoChanged" />
+									</StackPanel>
+									<NumericUpDown Grid.Column="2" Name="RouteIntroMapZoomBox" Increment="1" FormatString="0" VerticalAlignment="Center" />
+								</Grid>
+							</StackPanel>
 						</Border>
 
 						<TextBlock Name="RouteIntroStatsLabel" Text="{x:Static local:Strings.Settings_StatsToShow}" Classes="sectionLabel" />

@@ -54,6 +54,8 @@ public sealed record OverlaySettings(
 	bool CustomMapCreditBriefly = false,
 	bool ShowEsriMapLabels = true,
 	bool RouteIntroShowEsriMapLabels = false,
+	// null = chosen from the route's size; else the tile zoom the overview is fetched at.
+	int? RouteIntroMapZoom = null,
 	bool ShowRouteIntro = true,
 	double RouteIntroDurationSeconds = 12.0,
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,

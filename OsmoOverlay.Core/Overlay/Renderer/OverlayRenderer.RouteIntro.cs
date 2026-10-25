@@ -16,11 +16,11 @@ namespace OsmoOverlay.Core.Overlay;
 /// </summary>
 public sealed partial class OverlayRenderer
 {
-	// Requests the highest zoom RouteMapMosaic supports; BuildAsync's own MaxTiles budget backs this
-	// off automatically until the mosaic fits, so a short route still gets crisp close-in tiles while
-	// a long one degrades gracefully instead of hardcoding one zoom that's too coarse for a short
-	// route (visibly blurry once stretched to fill the card) or too many tiles for a long one.
-	private const int RouteIntroMapZoomDefault = RouteMapMosaic.MaxZoom;
+	// Automatic zoom: the closest one aerial imagery is still real at nearly everywhere, backed off by
+	// BuildAsync's own MaxTiles budget for a long route. A short route gets map around it up to
+	// RouteIntroMaxUpscale instead of a few tiles stretched over the whole card (visibly blurry).
+	private const int RouteIntroMapZoomAuto = 18;
+	private const double RouteIntroMaxUpscale = 2;
 
 	// How long the crossfade into the normal HUD widgets takes, counted backwards from
 	// RouteIntro.DurationSeconds (not appended after it) - so the setting still means "the card is
@@ -47,12 +47,12 @@ public sealed partial class OverlayRenderer
 	private RouteIntroMosaicKey? _preparedRouteIntroKey;
 
 	/// <summary>What the route overview's mosaic is fetched for: its tile server and the route's extent.</summary>
-	public readonly record struct RouteIntroMosaicKey(string UrlTemplate, GeoBounds Route, string? LabelsUrlTemplate = null);
+	public readonly record struct RouteIntroMosaicKey(string UrlTemplate, GeoBounds Route, string? LabelsUrlTemplate = null, int? Zoom = null);
 
 	private RouteIntroMosaicKey CurrentRouteIntroKey()
 	{
 		return new RouteIntroMosaicKey(MapSources.UrlTemplate(RouteIntro.MapProviderId),
-			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, routeIntro: true));
+			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, routeIntro: true), RouteIntro.MapZoom);
 	}
 
 	/// <summary>
@@ -115,8 +115,9 @@ public sealed partial class OverlayRenderer
 		try
 		{
 			// Task.Run for the same reason as BuildMapMosaicAsync.
-			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, RouteIntroMapZoomDefault, 0, ct,
-				onTileProgress, targetAspect, MapSources.CacheMaxAge(RouteIntro.MapProviderId), key.LabelsUrlTemplate), ct), key);
+			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, RouteIntro.MapZoom ?? RouteIntroMapZoomAuto, 0, ct,
+				onTileProgress, targetAspect, MapSources.CacheMaxAge(RouteIntro.MapProviderId), key.LabelsUrlTemplate,
+				RouteIntro.MapZoom is null ? (mapRect.Width / RouteIntroMaxUpscale, mapRect.Height / RouteIntroMaxUpscale) : null), ct), key);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -219,15 +220,13 @@ public sealed partial class OverlayRenderer
 		canvas.ClipRect(mapRect);
 
 		SKImage mosaicImage = _routeIntroMosaic.Image;
-		// Cover (Math.Max), not contain: BuildRouteIntroMosaicAsync already padded the mosaic out to
-		// mapRect's own aspect ratio (via targetAspectRatio), so the two match up to the rounding from
-		// whole tile counts - cover here only ever trims that sub-tile rounding sliver via the ClipRect
-		// above, not the route itself.
-		float fitScale = Math.Max(mapRect.Width / mosaicImage.Width, mapRect.Height / mosaicImage.Height);
+		// The mosaic's view is already in mapRect's shape and centered on the route (targetAspectRatio in
+		// BuildRouteIntroMosaicAsync), so it is fitted to the rect and the rest of the tiles is clipped away.
+		SKRect view = _routeIntroMosaic.View;
+		float fitScale = Math.Max(mapRect.Width / view.Width, mapRect.Height / view.Height);
 		float drawWidth = mosaicImage.Width * fitScale;
 		float drawHeight = mosaicImage.Height * fitScale;
-		var destRect = SKRect.Create((mapRect.Left + mapRect.Right) / 2 - drawWidth / 2,
-			(mapRect.Top + mapRect.Bottom) / 2 - drawHeight / 2, drawWidth, drawHeight);
+		var destRect = SKRect.Create(mapRect.MidX - view.MidX * fitScale, mapRect.MidY - view.MidY * fitScale, drawWidth, drawHeight);
 		canvas.DrawImage(mosaicImage, destRect, _imageSampling);
 
 		if (_routeIntroTrailPixels is { Count: >= 2 } pixels)
@@ -338,11 +337,17 @@ public sealed partial class OverlayRenderer
 		using var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill, Color = new SKColor(0, 0, 0, 150) };
 		canvas.DrawCircle(at, RouteEndRadius + 4, paint);
 
-		var dot = SKRect.Create(at.X - RouteEndRadius, at.Y - RouteEndRadius, RouteEndRadius * 2, RouteEndRadius * 2);
+		// Two antialiased half-discs would leave a seam of the dark disc under them; the right half goes over a whole one instead.
 		paint.Color = left;
-		canvas.DrawArc(dot, 90, 180, true, paint);
-		paint.Color = right;
-		canvas.DrawArc(dot, 270, 180, true, paint);
+		canvas.DrawCircle(at, RouteEndRadius, paint);
+		if (right != left)
+		{
+			canvas.Save();
+			canvas.ClipRect(new SKRect(at.X, at.Y - RouteEndRadius, at.X + RouteEndRadius, at.Y + RouteEndRadius));
+			paint.Color = right;
+			canvas.DrawCircle(at, RouteEndRadius, paint);
+			canvas.Restore();
+		}
 
 		paint.Style = SKPaintStyle.Stroke;
 		paint.StrokeWidth = 5;

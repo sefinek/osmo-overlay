@@ -53,6 +53,9 @@ public sealed class MusicTimeline : Control
 	private static readonly Typeface LabelTypeface = new(FontFamily.Default);
 	private static readonly Cursor ResizeCursor = new(StandardCursorType.SizeWestEast);
 
+	private const int MaxCachedTexts = 256;
+
+	private readonly Dictionary<(string Text, IBrush Brush, int MaxWidth), FormattedText> _texts = [];
 	private readonly PlayheadLine _playhead;
 	private PreviewTimeline? _source;
 	private IReadOnlyList<MusicClip> _clips = [];
@@ -336,16 +339,24 @@ public sealed class MusicTimeline : Control
 		if (drawLine) context.DrawLine(FadeLine, from, to);
 	}
 
-	private static void DrawText(DrawingContext context, string text, Point at, IBrush brush, double maxWidth)
+	private void DrawText(DrawingContext context, string text, Point at, IBrush brush, double maxWidth)
 	{
 		if (maxWidth <= 8) return;
 
-		var formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelTypeface, 12, brush)
+		// Past the text's own width the limit changes nothing, so a clip scrolled or zoomed wider still hits the cache.
+		(string, IBrush, int) key = (text, brush, (int)Math.Min(maxWidth, 400));
+		if (!_texts.TryGetValue(key, out FormattedText? formatted))
 		{
-			MaxTextWidth = Math.Min(maxWidth, 400),
-			MaxLineCount = 1,
-			Trimming = TextTrimming.CharacterEllipsis
-		};
+			if (_texts.Count >= MaxCachedTexts) _texts.Clear();
+			formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelTypeface, 12, brush)
+			{
+				MaxTextWidth = key.Item3,
+				MaxLineCount = 1,
+				Trimming = TextTrimming.CharacterEllipsis
+			};
+			_texts[key] = formatted;
+		}
+
 		context.DrawText(formatted, at);
 	}
 

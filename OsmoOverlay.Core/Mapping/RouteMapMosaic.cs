@@ -18,6 +18,9 @@ public sealed class RouteMapMosaic : IDisposable
 	// silently trying to fetch thousands of tiles.
 	private const int MaxTiles = 300;
 
+	// Room around the route in a view, as a share of its extent.
+	private const double ViewMargin = 1.12;
+
 	// The requested zoom (OverlayElement.MapZoom, edited via the GUI's "Zoom" NumericUpDown) is
 	// clamped to this range before use - public so the GUI can bound the control to the same range
 	// instead of duplicating these numbers as separate hardcoded Minimum/Maximum literals in XAML.
@@ -35,7 +38,7 @@ public sealed class RouteMapMosaic : IDisposable
 
 	private readonly SKBitmap _bitmap;
 
-	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route)
+	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route, SKRect view)
 	{
 		// Drawing a mutable SKBitmap makes Skia snapshot (copy) its pixels on every single draw call - for
 		// a mosaic of up to MaxTiles tiles that's tens of MB copied per rendered frame. Frozen once here,
@@ -47,10 +50,14 @@ public sealed class RouteMapMosaic : IDisposable
 		_originWorldY = originWorldY;
 		Zoom = zoom;
 		Route = route;
+		View = view;
 	}
 
 	public SKImage Image { get; }
 	public int Zoom { get; }
+
+	/// <summary>The part of the image meant to be shown, in its pixels: all of it, or for a mosaic built for a rect's aspect the window centered on the route.</summary>
+	public SKRect View { get; }
 
 	/// <summary>The bounding box of the points the mosaic was built around - its padding counts on it.</summary>
 	public GeoBounds Route { get; }
@@ -71,7 +78,8 @@ public sealed class RouteMapMosaic : IDisposable
 	/// <summary>Null when there are no points to map, or every single tile fetch failed (e.g. fully offline).</summary>
 	public static async Task<RouteMapMosaic?> BuildAsync(IReadOnlyList<(double Lat, double Lon)> points,
 		string urlTemplate, int requestedZoom, int paddingTiles, CancellationToken ct,
-		Action<int, int>? onProgress = null, double? targetAspectRatio = null, TimeSpan? cacheMaxAge = null, string? labelsUrlTemplate = null)
+		Action<int, int>? onProgress = null, double? targetAspectRatio = null, TimeSpan? cacheMaxAge = null, string? labelsUrlTemplate = null,
+		(double Width, double Height)? minSize = null)
 	{
 		if (points.Count == 0) return null;
 
@@ -79,6 +87,7 @@ public sealed class RouteMapMosaic : IDisposable
 
 		int zoom = Math.Clamp(requestedZoom, MinZoom, MaxZoom);
 		int minTileX, minTileY, maxTileX, maxTileY;
+		(double Left, double Top, double Width, double Height)? viewWorld = null;
 		while (true)
 		{
 			(double topLeftX, double topLeftY) = WebMercator.LatLonToWorldPixel(maxLat, minLon, zoom);
@@ -94,34 +103,29 @@ public sealed class RouteMapMosaic : IDisposable
 			maxTileX += paddingTiles;
 			maxTileY += paddingTiles;
 
-			// A caller that draws the whole mosaic fit-to-rect (RouteIntro) needs its aspect ratio to
-			// already match the target rect - otherwise the draw side has to choose between letterboxing
-			// (contain) or cropping into the actual route (cover). Padding out the shorter tile axis
-			// here, before the tile-count budget check below, means the extra tiles count against
-			// MaxTiles too, so a route that's already close to the budget still backs off zoom instead
-			// of silently overshooting it.
+			// A caller that draws the mosaic over a rect (RouteIntro) gets a view: the window of the bitmap in that rect's
+			// shape, centered on the route, at least minSize pixels (what it tolerates upscaled - a short route would otherwise
+			// be a couple of tiles blown up several times over) and with a margin around the route. The tiles cover the
+			// view, not the other way round, so the route sits in the middle whatever the tile grid does.
 			if (targetAspectRatio is { } targetAspect)
 			{
-				// "Before" the aspect pad below, not before paddingTiles above - the two padding steps
-				// stack (paddingTiles first, then this), though in practice no caller passes both a
-				// non-zero paddingTiles and a targetAspectRatio at once.
-				int tilesWideBeforeAspectPad = maxTileX - minTileX + 1;
-				int tilesHighBeforeAspectPad = maxTileY - minTileY + 1;
-				double currentAspect = (double)tilesWideBeforeAspectPad / tilesHighBeforeAspectPad;
-				if (currentAspect < targetAspect)
+				double viewWidth = Math.Max(bottomRightX - topLeftX, 1) * ViewMargin;
+				double viewHeight = Math.Max(bottomRightY - topLeftY, 1) * ViewMargin;
+				if (viewWidth / viewHeight < targetAspect) viewWidth = viewHeight * targetAspect;
+				else viewHeight = viewWidth / targetAspect;
+
+				if (minSize is { } min)
 				{
-					int extra = (int)Math.Ceiling(tilesHighBeforeAspectPad * targetAspect) - tilesWideBeforeAspectPad;
-					int extraLeft = extra / 2;
-					minTileX -= extraLeft;
-					maxTileX += extra - extraLeft;
+					double grow = Math.Max(1, Math.Max(min.Width / viewWidth, min.Height / viewHeight));
+					viewWidth *= grow;
+					viewHeight *= grow;
 				}
-				else if (currentAspect > targetAspect)
-				{
-					int extra = (int)Math.Ceiling(tilesWideBeforeAspectPad / targetAspect) - tilesHighBeforeAspectPad;
-					int extraTop = extra / 2;
-					minTileY -= extraTop;
-					maxTileY += extra - extraTop;
-				}
+
+				double viewLeft = (topLeftX + bottomRightX) / 2 - viewWidth / 2;
+				double viewTop = (topLeftY + bottomRightY) / 2 - viewHeight / 2;
+				(minTileX, minTileY) = WebMercator.WorldPixelToTile(viewLeft, viewTop);
+				(maxTileX, maxTileY) = WebMercator.WorldPixelToTile(viewLeft + viewWidth, viewTop + viewHeight);
+				viewWorld = (viewLeft, viewTop, viewWidth, viewHeight);
 			}
 
 			long tileCount = (long)(maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
@@ -211,7 +215,10 @@ public sealed class RouteMapMosaic : IDisposable
 
 		double originWorldX = minTileX * (double)WebMercator.TileSize;
 		double originWorldY = minTileY * (double)WebMercator.TileSize;
-		return new RouteMapMosaic(bitmap, originWorldX, originWorldY, zoom, new GeoBounds(minLat, maxLat, minLon, maxLon));
+		return new RouteMapMosaic(bitmap, originWorldX, originWorldY, zoom, new GeoBounds(minLat, maxLat, minLon, maxLon),
+			viewWorld is { } view
+				? SKRect.Create((float)(view.Left - originWorldX), (float)(view.Top - originWorldY), (float)view.Width, (float)view.Height)
+				: new SKRect(0, 0, bitmap.Width, bitmap.Height));
 	}
 }
 

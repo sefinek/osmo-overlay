@@ -4597,4 +4597,10 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Main_OverlayVp9Hint" xml:space="preserve">
     <value>A much smaller file, read by browsers and some editors.</value>
   </data>
+  <data name="Settings_RouteIntroMapZoom" xml:space="preserve">
+    <value>Map zoom</value>
+  </data>
+  <data name="Settings_RouteIntroMapZoomHint" xml:space="preserve">
+    <value>Automatic fits the map to the length of the route and, for a short route, shows more of the surroundings so the picture doesn't turn blurry. Fixed level (2-19): the lower, the further from the route.</value>
+  </data>
 </root>

@@ -38,8 +38,6 @@ public partial class MainWindow
 		}
 	}
 
-	private bool _renderStarting;
-
 	private async Task RunRenderCoreAsync(bool greenScreen, FrameRange? range, AlphaCodec? alpha)
 	{
 		if (_phase != UiPhase.SummaryReady || !CanRenderTelemetry) return;

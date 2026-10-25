@@ -4597,4 +4597,10 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="Main_OverlayVp9Hint" xml:space="preserve">
     <value>Dużo mniejszy plik, czytany przez przeglądarki i część edytorów.</value>
   </data>
+  <data name="Settings_RouteIntroMapZoom" xml:space="preserve">
+    <value>Oddalenie mapy</value>
+  </data>
+  <data name="Settings_RouteIntroMapZoomHint" xml:space="preserve">
+    <value>Automatycznie mapa jest dobierana do długości trasy, a przy krótkiej trasie pokazuje więcej otoczenia, żeby obraz nie był rozmyty. Stały poziom (2-19): im niższy, tym dalej od trasy.</value>
+  </data>
 </root>

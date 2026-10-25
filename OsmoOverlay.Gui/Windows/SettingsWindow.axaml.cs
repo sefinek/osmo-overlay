@@ -8,6 +8,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
+using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
@@ -166,6 +167,11 @@ public partial class SettingsWindow : Window
 		RouteIntroOptionsPanel.IsEnabled = routeIntro.Enabled;
 		RouteIntroDurationBox.Value = (decimal)routeIntro.DurationSeconds;
 		RouteIntroWhenTrimmedCheck.IsChecked = routeIntro.ShowWhenTrimmed;
+		RouteIntroMapZoomBox.Minimum = RouteMapMosaic.MinZoom;
+		RouteIntroMapZoomBox.Maximum = RouteMapMosaic.MaxZoom;
+		RouteIntroMapZoomAutoCheck.IsChecked = routeIntro.MapZoom is null;
+		RouteIntroMapZoomBox.Value = routeIntro.MapZoom ?? 17;
+		RouteIntroMapZoomBox.IsEnabled = routeIntro.MapZoom is not null;
 		LoadRouteIntroStats(routeIntro);
 		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
 		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
@@ -331,7 +337,8 @@ public partial class SettingsWindow : Window
 		OwnEndLabel(RouteIntroFinishLabelBox.Text, RouteIntroSettings.DefaultFinishLabel),
 		RouteIntroLabels.From(_routeIntroStatRows.ToDictionary(r => r.Key.ToString(), r => r.Value.Label.Text ?? "")),
 		RouteIntroWhenTrimmedCheck.IsChecked == true,
-		RouteJoinOptions.At(RouteIntroGpsLossCombo.SelectedIndex) ?? RouteJoins.Default);
+		RouteJoinOptions.At(RouteIntroGpsLossCombo.SelectedIndex) ?? RouteJoins.Default,
+		RouteIntroMapZoomAutoCheck.IsChecked == true ? null : (int)(RouteIntroMapZoomBox.Value ?? 17));
 
 	/// <summary>
 	///     A start/finish caption as typed - the box shows the built-in one, and left as that it stays the built-in (null), so it
@@ -560,6 +567,11 @@ public partial class SettingsWindow : Window
 	private void OnShowRouteIntroChanged(object? sender, RoutedEventArgs e)
 	{
 		RouteIntroOptionsPanel.IsEnabled = ShowRouteIntroCheck.IsChecked == true;
+	}
+
+	private void OnRouteIntroMapZoomAutoChanged(object? sender, RoutedEventArgs e)
+	{
+		RouteIntroMapZoomBox.IsEnabled = RouteIntroMapZoomAutoCheck.IsChecked != true;
 	}
 
 	private void OnRouteIntroStartFinishChanged(object? sender, RoutedEventArgs e)

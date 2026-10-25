@@ -2,6 +2,7 @@ using System.Text.Json;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -185,6 +186,7 @@ public static class SettingsPresetStore
 		{
 			SpeedCorrectionPercent = SpeedCalibration.Clamp(values.SpeedCorrectionPercent),
 			RouteIntroDurationSeconds = double.IsFinite(values.RouteIntroDurationSeconds) ? Math.Clamp(values.RouteIntroDurationSeconds, 1, 120) : 12,
+			RouteIntroMapZoom = values.RouteIntroMapZoom is { } z ? Math.Clamp(z, RouteMapMosaic.MinZoom, RouteMapMosaic.MaxZoom) : null,
 			NvencPreset = NvencPresets.Contains(values.NvencPreset) ? values.NvencPreset : "p7",
 			OutputBitrateMultiplier = double.IsFinite(values.OutputBitrateMultiplier) ? Math.Clamp(values.OutputBitrateMultiplier, 1, 4) : 1,
 			OutputResolution = values.OutputResolution is { } r && OutputVideo.Resolutions.Contains(r) ? r : null,

@@ -616,7 +616,10 @@ public partial class WelcomeWindow : Window
 				targetAspectRatio: 2.0, cacheMaxAge: cacheMaxAge, labelsUrlTemplate: labelsUrlTemplate));
 			if (mosaic is null) return null;
 
-			using SKData png = mosaic.Image.Encode(SKEncodedImageFormat.Png, 100);
+			using SKImage? view = mosaic.Image.Subset(SKRectI.Round(mosaic.View));
+			if (view is null) return null;
+
+			using SKData png = view.Encode(SKEncodedImageFormat.Png, 100);
 			using var stream = new MemoryStream(png.ToArray());
 			return new Bitmap(stream);
 		}

@@ -40,7 +40,8 @@ public sealed class RouteIntroSettingsTests
 	public void ApplyTo_IsTheReverseOfFrom_AndLeavesTheRestAlone()
 	{
 		var routeIntro = new RouteIntroSettings(false, 7.5, RouteIntroStats.MaxSpeed | RouteIntroStats.MaxLean, UnitSystem.Imperial, true, "carto-dark",
-			false, "Początek", "", RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.MaxLean)] = "MAKS. PRZECHYŁ" }));
+			false, "Początek", "", RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.MaxLean)] = "MAKS. PRZECHYŁ" }),
+			MapZoom: 16);
 		var settings = new OverlaySettings(ActivePresetId: "p1", SpeedCorrectionPercent: 4.2);
 
 		OverlaySettings applied = routeIntro.ApplyTo(settings);

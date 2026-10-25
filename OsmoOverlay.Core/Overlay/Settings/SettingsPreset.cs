@@ -51,7 +51,8 @@ public sealed record SettingsPresetValues(
 	string? OutputCodec = null,
 	bool OutputEightBit = false,
 	bool FastStart = false,
-	bool NoAudio = false)
+	bool NoAudio = false,
+	int? RouteIntroMapZoom = null)
 {
 	public static SettingsPresetValues From(OverlaySettings settings)
 	{
@@ -61,7 +62,7 @@ public sealed record SettingsPresetValues(
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel, settings.RouteIntroMapProvider, settings.RouteIntroShowEsriMapLabels,
 			settings.PreserveCameraMetadata, settings.TagExportedVideo, settings.MetadataKeepTelemetry, settings.MetadataKeepDebugTrack,
 			settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber, settings.NvencPreset, settings.OutputBitrateMultiplier,
-			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.FastStart, settings.NoAudio);
+			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.FastStart, settings.NoAudio, settings.RouteIntroMapZoom);
 	}
 
 	/// <summary>The reverse of From: these values written into the settings, everything else in them kept.</summary>
@@ -86,6 +87,7 @@ public sealed record SettingsPresetValues(
 			RouteIntroFinishLabel = RouteIntroFinishLabel,
 			RouteIntroMapProvider = RouteIntroMapProvider,
 			RouteIntroShowEsriMapLabels = RouteIntroShowEsriMapLabels,
+			RouteIntroMapZoom = RouteIntroMapZoom,
 			PreserveCameraMetadata = PreserveCameraMetadata,
 			TagExportedVideo = TagExportedVideo,
 			MetadataKeepTelemetry = MetadataKeepTelemetry,
