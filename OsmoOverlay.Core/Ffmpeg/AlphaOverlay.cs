@@ -30,7 +30,6 @@ public static class AlphaOverlay
 		return format == AlphaCodec.ProRes4444 ? "prores_ks" : "libvpx-vp9";
 	}
 
-	/// <summary>The format a command-line name stands for (prores, vp9), or null.</summary>
 	public static AlphaCodec? Parse(string name)
 	{
 		return name.ToLowerInvariant() switch
@@ -51,8 +50,6 @@ public static class AlphaOverlay
 		return (long)(width * (double)height * frames * bytesPerPixel);
 	}
 
-	/// <param name="output">The size written (OutputVideo.For) - the frames on the pipe are this big.</param>
-	/// <param name="totalFrames">The frames the pipe carries; the encoder stops after them.</param>
 	internal static List<string> Arguments(string outputPath, VideoInfo source, VideoInfo output, AlphaCodec format, bool overwrite,
 		RenderEncodeSettings encode, long totalFrames)
 	{

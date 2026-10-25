@@ -14,13 +14,37 @@ namespace OsmoOverlay.Gui;
 /// <summary>Running the actual render (RenderJob), progress reporting, and the completion dialog/balloon.</summary>
 public partial class MainWindow
 {
+	/// <summary>
+	///     Starts a render once. The checks before it (the drive's space, the computer's load - a second of sampling, or a dialog)
+	///     run before the phase becomes Rendering, so a second click in that time started a second render beside the first,
+	///     both fetching the same map tiles and writing the same cache files.
+	/// </summary>
 	/// <param name="range">Only this part of the recording (frames, as the selection on the timeline) - the cuts still apply inside it.</param>
 	/// <param name="alpha">The overlay alone on a transparent background in this format, instead of the video.</param>
 	private async Task RunRenderAsync(bool greenScreen, FrameRange? range = null, AlphaCodec? alpha = null)
 	{
+		if (_renderStarting) return;
+
+		_renderStarting = true;
+		SetRenderButtons(false);
+		try
+		{
+			await RunRenderCoreAsync(greenScreen, range, alpha);
+		}
+		finally
+		{
+			_renderStarting = false;
+			if (_phase == UiPhase.SummaryReady) SetRenderButtons(CanRenderTelemetry);
+		}
+	}
+
+	private bool _renderStarting;
+
+	private async Task RunRenderCoreAsync(bool greenScreen, FrameRange? range, AlphaCodec? alpha)
+	{
 		if (_phase != UiPhase.SummaryReady || !CanRenderTelemetry) return;
 
-		if (_queue.IsRunning)
+		if (QueueBusy)
 		{
 			await ConfirmDialog.ShowAsync(this, Strings.Queue_Title, Strings.Queue_Busy, kind: DialogKind.Warning);
 			return;

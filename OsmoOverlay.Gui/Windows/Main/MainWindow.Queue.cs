@@ -23,6 +23,9 @@ public partial class MainWindow
 
 	internal bool IsQueueRunning => _queue.IsRunning;
 
+	/// <summary>True from the moment Start is pressed, not only once the queue's own thread is going.</summary>
+	private bool QueueBusy => _queue.IsRunning || _queueCts is not null;
+
 	private void WireQueue()
 	{
 		// What was waiting when the app last closed (a render that was running then waits again).
@@ -51,7 +54,6 @@ public partial class MainWindow
 		_queueStore.Save(_queue.Items.Where(i => i.State is not (QueueState.Done or QueueState.Skipped)).Select(i => i.Request));
 	}
 
-	/// <summary>What the project in the window is called in the queue: its file's name, or - while it isn't saved - its first recording's.</summary>
 	private string ProjectDisplayName()
 	{
 		return Path.GetFileNameWithoutExtension(_projectPath ?? _summary?.InputPaths.FirstOrDefault() ?? "");
@@ -139,12 +141,11 @@ public partial class MainWindow
 		_queueWindow.Show(this);
 	}
 
-	/// <summary>Renders the waiting projects; returns when none is left or <see cref="StopQueue" /> was called.</summary>
 	internal async Task StartQueueAsync(ExistingOutput existing)
 	{
-		if (_queue.IsRunning) return;
+		if (QueueBusy) return;
 
-		if (_phase == UiPhase.Rendering)
+		if (_phase == UiPhase.Rendering || _renderStarting)
 		{
 			await ConfirmDialog.ShowAsync(this, Strings.Queue_Title, Strings.Queue_RenderBusy, kind: DialogKind.Warning);
 			return;

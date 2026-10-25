@@ -19,7 +19,6 @@ public sealed class QueueStore(string? directory = null)
 
 	private string ListPath => Path.Combine(_directory, "queue.json");
 
-	/// <summary>Writes a copy of `project` into the queue's folder and returns its path - what a QueueRequest points at.</summary>
 	public string Snapshot(OverlayProject project)
 	{
 		Directory.CreateDirectory(_directory);
@@ -53,7 +52,6 @@ public sealed class QueueStore(string? directory = null)
 		}
 	}
 
-	/// <summary>The remembered requests whose project is still there.</summary>
 	public List<QueueRequest> Load()
 	{
 		try

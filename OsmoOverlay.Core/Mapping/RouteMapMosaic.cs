@@ -75,10 +75,7 @@ public sealed class RouteMapMosaic : IDisposable
 	{
 		if (points.Count == 0) return null;
 
-		double minLat = points.Min(p => p.Lat);
-		double maxLat = points.Max(p => p.Lat);
-		double minLon = points.Min(p => p.Lon);
-		double maxLon = points.Max(p => p.Lon);
+		(double minLat, double maxLat, double minLon, double maxLon) = GeoBounds.Of(points);
 
 		int zoom = Math.Clamp(requestedZoom, MinZoom, MaxZoom);
 		int minTileX, minTileY, maxTileX, maxTileY;
@@ -155,52 +152,45 @@ public sealed class RouteMapMosaic : IDisposable
 			// Fetches (network + disk cache I/O) run with bounded concurrency; the actual SKCanvas
 			// draw and the fetchedCount/onProgress bookkeeping stay serialized under drawLock, since
 			// SKCanvas isn't safe to call into from more than one thread at a time.
-			using var throttle = new SemaphoreSlim(MaxConcurrentFetches);
-			var tasks = new List<Task>(totalTiles);
+			var coordinates = new List<(int X, int Y)>(totalTiles);
 			for (int tx = minTileX; tx <= maxTileX; tx++)
 			for (int ty = minTileY; ty <= maxTileY; ty++)
-				tasks.Add(FetchAndDrawAsync(tx, ty));
+				coordinates.Add((tx, ty));
 
-			await Task.WhenAll(tasks);
+			var options = new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrentFetches, CancellationToken = ct };
+			await Parallel.ForEachAsync(coordinates, options, FetchAndDrawAsync);
 
-			async Task FetchAndDrawAsync(int tileX, int tileY)
+			async ValueTask FetchAndDrawAsync((int X, int Y) coordinate, CancellationToken token)
 			{
-				await throttle.WaitAsync(ct);
+				(int tileX, int tileY) = coordinate;
+				SKBitmap? tile = await MapTileFetcher.FetchAsync(urlTemplate, zoom, tileX, tileY, cacheMaxAge, token);
 				try
 				{
-					SKBitmap? tile = await MapTileFetcher.FetchAsync(urlTemplate, zoom, tileX, tileY, cacheMaxAge, ct);
-					try
+					using SKBitmap? labels = tile is not null && labelsUrlTemplate is not null
+						? await MapTileFetcher.FetchAsync(labelsUrlTemplate, zoom, tileX, tileY, cacheMaxAge, token)
+						: null;
+					lock (drawLock)
 					{
-						using SKBitmap? labels = tile is not null && labelsUrlTemplate is not null
-							? await MapTileFetcher.FetchAsync(labelsUrlTemplate, zoom, tileX, tileY, cacheMaxAge, ct)
-							: null;
-						lock (drawLock)
+						if (tile is not null)
 						{
-							if (tile is not null)
-							{
-								fetchedAny = true;
-								var dest = SKRect.Create((tileX - minTileX) * WebMercator.TileSize,
-									(tileY - minTileY) * WebMercator.TileSize, WebMercator.TileSize, WebMercator.TileSize);
-								canvas.DrawBitmap(tile, dest, SKSamplingOptions.Default);
-								if (labels is not null) canvas.DrawBitmap(labels, dest, SKSamplingOptions.Default);
-							}
-
-							fetchedCount++;
-							if (fetchedCount == totalTiles || progressStopwatch.ElapsedMilliseconds - lastReportedMs >= reportIntervalMs)
-							{
-								lastReportedMs = progressStopwatch.ElapsedMilliseconds;
-								onProgress?.Invoke(fetchedCount, totalTiles);
-							}
+							fetchedAny = true;
+							var dest = SKRect.Create((tileX - minTileX) * WebMercator.TileSize,
+								(tileY - minTileY) * WebMercator.TileSize, WebMercator.TileSize, WebMercator.TileSize);
+							canvas.DrawBitmap(tile, dest, SKSamplingOptions.Default);
+							if (labels is not null) canvas.DrawBitmap(labels, dest, SKSamplingOptions.Default);
 						}
-					}
-					finally
-					{
-						tile?.Dispose();
+
+						fetchedCount++;
+						if (fetchedCount == totalTiles || progressStopwatch.ElapsedMilliseconds - lastReportedMs >= reportIntervalMs)
+						{
+							lastReportedMs = progressStopwatch.ElapsedMilliseconds;
+							onProgress?.Invoke(fetchedCount, totalTiles);
+						}
 					}
 				}
 				finally
 				{
-					throttle.Release();
+					tile?.Dispose();
 				}
 			}
 		}

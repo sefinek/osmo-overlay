@@ -10,7 +10,6 @@ namespace OsmoOverlay.Core;
 /// </summary>
 public static class ProjectRender
 {
-	/// <summary>What the project's recordings say about its timeline: the frame rate and the frames of all of them joined.</summary>
 	public readonly record struct Timeline(double Fps, long Frames);
 
 	/// <summary>Probes the project's recordings (ffprobe) - throws when one can't be read.</summary>

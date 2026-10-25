@@ -23,7 +23,6 @@ public partial class MainWindow
 		_dirtyTimer.Start();
 	}
 
-	/// <summary>The current state is the one saved (or loaded): no changes since.</summary>
 	private void MarkClean()
 	{
 		_cleanFingerprint = CurrentFingerprint();

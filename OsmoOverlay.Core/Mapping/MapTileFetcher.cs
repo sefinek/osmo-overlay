@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using OsmoOverlay.Core.Localization;
@@ -38,8 +39,9 @@ public static class MapTileFetcher
 	{
 		bool store = cacheMaxAge != TimeSpan.Zero;
 		string cachePath = CachePath(urlTemplate, zoom, x, y);
+		var cacheFile = new FileInfo(cachePath);
 		// An older one is fetched again and written over.
-		if (store && File.Exists(cachePath) && (cacheMaxAge is not { } maxAge || File.GetLastWriteTimeUtc(cachePath) > DateTime.UtcNow - maxAge))
+		if (store && cacheFile.Exists && (cacheMaxAge is not { } maxAge || cacheFile.LastWriteTimeUtc > DateTime.UtcNow - maxAge))
 		{
 			// Not `using`: the caller owns and disposes the bitmap.
 			var cached = SKBitmap.Decode(cachePath);
@@ -73,9 +75,9 @@ public static class MapTileFetcher
 
 				return bitmap;
 			}
-			catch (Exception ex) when (ex is not OperationCanceledException)
+			catch (Exception ex) when (!ct.IsCancellationRequested)
 			{
-				if (attempt == MaxFetchAttempts)
+				if (attempt == MaxFetchAttempts || !IsTransient(ex))
 				{
 					AppLogger.Warn(ex, string.Format(CoreStrings.Map_FetchTileFailed, $"z={zoom} x={x} y={y}", MaxFetchAttempts));
 					return null;
@@ -86,6 +88,12 @@ public static class MapTileFetcher
 		}
 
 		return null;
+	}
+
+	// A timeout is a TaskCanceledException too, hence the token check in FetchAsync rather than the exception type.
+	private static bool IsTransient(Exception ex)
+	{
+		return ex is not HttpRequestException { StatusCode: { } status } || status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests || (int)status >= 500;
 	}
 
 	/// <summary>

@@ -8,13 +8,8 @@ namespace OsmoOverlay.Core;
 /// <summary>What to do when a render's output file is already there.</summary>
 public enum ExistingOutput
 {
-	/// <summary>Leave the file alone and go on to the next render.</summary>
 	Skip,
-
-	/// <summary>Write over it.</summary>
 	Overwrite,
-
-	/// <summary>Write beside it, as "name (2).mp4".</summary>
 	Number
 }
 
@@ -49,7 +44,6 @@ public sealed class QueueItem(QueueRequest request)
 	/// <summary>The file it writes (or wrote) - known once it starts.</summary>
 	public string? OutputPath { get; internal set; }
 
-	/// <summary>0 to 1 while rendering.</summary>
 	public double Progress { get; internal set; }
 
 	public TimeSpan Elapsed { get; internal set; }
@@ -109,7 +103,6 @@ public sealed class RenderQueue
 		return item;
 	}
 
-	/// <summary>Takes a waiting or finished item out; one being rendered stays.</summary>
 	public bool Remove(QueueItem item)
 	{
 		lock (_gate)
@@ -142,14 +135,12 @@ public sealed class RenderQueue
 		return true;
 	}
 
-	/// <summary>Takes out everything that's done, failed, skipped or cancelled.</summary>
 	public void ClearFinished()
 	{
 		lock (_gate) _items.RemoveAll(i => i.IsFinished);
 		ListChanged?.Invoke();
 	}
 
-	/// <summary>Puts a cancelled or failed item back to wait for the next run.</summary>
 	public bool Retry(QueueItem item)
 	{
 		lock (_gate)
@@ -295,7 +286,6 @@ public sealed class RenderQueue
 	}
 }
 
-/// <summary>Where a render may write, given what is there already.</summary>
 public static class OutputFiles
 {
 	private const int MaxNumber = 10_000;
