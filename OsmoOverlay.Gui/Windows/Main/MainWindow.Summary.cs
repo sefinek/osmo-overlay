@@ -456,7 +456,6 @@ public partial class MainWindow
 
 	private void PopulateOutputInfo(FileSummary summary, string encoder)
 	{
-		RefreshExportProfiles();
 		double fps = summary.Video.Fps;
 		long totalFrames = PlannedFrameCount();
 

@@ -24,7 +24,7 @@ Pull requests are welcome too - bug fixes, new widgets, support for other camera
 - **Privacy** - the camera's serial number and GPS track don't end up in the rendered MP4 unless you turn that on.
 - **HUD-only export** - the overlay alone on a green screen, or on a transparent background (ProRes 4444 or VP9 with alpha) to key over the footage in an editor.
 - **Render queue** - queue several projects and render them one after another, from the app or the command line.
-- **Export profiles** - ready-made size, codec and bitrate sets (Compatible 8-bit, Web 1080p, Phone 720p, High quality) next to the exact copy of the source.
+- **Export profiles** - ready-made size, codec and bitrate sets for the command line (`--profile`: Compatible 8-bit, Web 1080p, Phone 720p, High quality) next to the exact copy of the source.
 - **Telemetry export** - the processed speed, heading, slope, distance, tilt and G as a CSV table or a GPX track.
 - **Tools** (no re-encoding, no quality loss):
   - **Remove metadata** - a copy that's safe to share: no GPS track, camera serial number, recording date, timecode or thumbnail.
@@ -183,6 +183,11 @@ dotnet run --project OsmoOverlay.Build                   # build every release p
 dotnet run --project OsmoOverlay.Build -- --help         # options: platforms, variant, version, output directory
 ```
 Packages for all platforms can be built on any system (Windows, Linux or macOS).
+
+## Reviews and mentions
+- [Creative Content - Australian Videocamera Magazine](https://cre-8.com.au/2026/10/23/review-osmo-overlay)
+- [Quadricottero News](https://www.quadricottero.com/2026/10/osmooverlay-arriva-il-software-gratuito.html)
+- [Mototour.pl](https://mototour.pl/infomoto/186-art/5919-osmooverlay-darmowy-program-na-kamery-dji-do-telemetrii)
 
 ## License
 OsmoOverlay is free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE), with source code on [GitHub](https://github.com/sefinek/osmo-overlay). You may use, modify and share it under its terms, which also permit uses covered by the **Noncommercial Organizations** section.

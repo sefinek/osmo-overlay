@@ -845,12 +845,11 @@
 								<TextBlock Grid.Column="1" Text="github.com/sefinek/osmo-overlay" Classes="link"
 								           Tag="https://github.com/sefinek/osmo-overlay" PointerPressed="OnLinkClick" />
 							</Grid>
-							<Border Classes="divider" />
-							<Grid Classes="settingRow" ColumnDefinitions="Auto,*">
-								<TextBlock Text="{x:Static local:Strings.Settings_Configuration}" Classes="rowTitle" Width="110" />
-								<TextBlock Grid.Column="1" Name="ConfigLastUpdatedText" />
-							</Grid>
 						</StackPanel>
+					</Border>
+					<TextBlock Text="{x:Static local:Strings.Settings_PressMentions}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel Name="PressMentionsList" />
 					</Border>
 					<TextBlock Text="{x:Static local:Strings.Settings_License}" Classes="sectionLabel licenseTitle" />
 					<Border Classes="settingsCard licenseCard" Padding="18">

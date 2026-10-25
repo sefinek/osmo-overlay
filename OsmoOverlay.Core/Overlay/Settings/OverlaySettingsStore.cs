@@ -292,14 +292,4 @@ public static class OverlaySettingsStore
 		string? template = string.IsNullOrEmpty(settings.CustomMapUrlTemplate) ? settings.CustomMapUrlTemplate : map(settings.CustomMapUrlTemplate);
 		return settings with { MapApiKeys = keys, CustomMapUrlTemplate = template };
 	}
-
-	/// <summary>
-	///     The settings file's own last-write timestamp - not a field inside OverlaySettings itself,
-	///     since the filesystem already tracks this accurately for every Save() call site (there are
-	///     many, scattered across the GUI) without each one needing to remember to stamp it manually.
-	/// </summary>
-	public static DateTime? GetLastUpdatedUtc()
-	{
-		return File.Exists(StorePath) ? File.GetLastWriteTimeUtc(StorePath) : null;
-	}
 }

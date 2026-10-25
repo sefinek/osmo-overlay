@@ -46,7 +46,6 @@ public partial class MainWindow
 	{
 		int waiting = _queue.Items.Count(i => i.State is QueueState.Waiting or QueueState.Rendering);
 		QueueOpenButton.Content = waiting > 0 ? $"{Strings.Main_Queue} ({waiting})" : Strings.Main_Queue;
-		UpdateExportProfileEnabled();
 	}
 
 	private void SaveQueue()
@@ -156,7 +155,6 @@ public partial class MainWindow
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);
 		_queueWindow?.RunningChanged();
 		CancellationTokenSource cts = _queueCts;
-		UpdateExportProfileEnabled();
 		try
 		{
 			_queue.ItemChanged += OnQueueItemProgress;
@@ -169,7 +167,6 @@ public partial class MainWindow
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 			SaveQueue();
 			_queueWindow?.RunningChanged();
-			UpdateExportProfileEnabled();
 		}
 
 		if (cts.IsCancellationRequested) return;

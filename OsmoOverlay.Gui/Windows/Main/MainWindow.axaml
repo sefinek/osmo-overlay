@@ -645,12 +645,6 @@
 									<StackPanel Classes="cardTitle">
 										<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.Main_Output}" />
 									</StackPanel>
-									<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,0,0,4">
-										<TextBlock Classes="infoLabel" VerticalAlignment="Center" Text="{x:Static local:Strings.Main_ExportProfile}" />
-										<ComboBox Grid.Column="1" Name="ExportProfileCombo" HorizontalAlignment="Stretch"
-										          SelectionChanged="OnExportProfileSelectionChanged"
-										          ToolTip.Tip="{x:Static local:Strings.Main_ExportProfileHint}" />
-									</Grid>
 									<Grid RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="2">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelLeft" />

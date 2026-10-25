@@ -669,7 +669,6 @@ public partial class MainWindow : Window
 		InputPanel.IsEnabled = !busy;
 		if (busy)
 			ActionButton.IsEnabled = QueueAddButton.IsEnabled = false;
-		UpdateExportProfileEnabled();
 		UpdateReframeControls();
 		RefreshExternalTrack();
 	}

@@ -125,13 +125,10 @@ public partial class SettingsWindow : Window
 		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
 		AppVersionText.Text = SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
 
+		FillPressMentions();
 		CoreVersionText.Text = string.Format(Strings.Settings_BuildDate, BuildInfo.Describe());
 		DependencyStatusRows.ShowChecking(DependencyStatusGrid, RequiredTools.All);
 
-		DateTime? configLastUpdatedUtc = OverlaySettingsStore.GetLastUpdatedUtc();
-		ConfigLastUpdatedText.Text = configLastUpdatedUtc is { } utc
-			? string.Format(Strings.Settings_ConfigLastUpdatedAt, utc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))
-			: Strings.Settings_ConfigNeverUpdated;
 	}
 
 	/// <summary>Fills every page from the settings. RecordingCruisingSpeedKmh has to be set before.</summary>
@@ -577,6 +574,32 @@ public partial class SettingsWindow : Window
 		}
 
 		ShowProjectAssociation();
+	}
+
+	// Reviews and articles about the program: one line per entry.
+	private static readonly (string Name, string Url)[] PressMentions =
+	[
+		("Creative Content - Australian Videocamera Magazine", "https://cre-8.com.au/2026/10/23/review-osmo-overlay"),
+		("Quadricottero News", "https://www.quadricottero.com/2026/10/osmooverlay-arriva-il-software-gratuito.html"),
+		("Mototour.pl", "https://mototour.pl/infomoto/186-art/5919-osmooverlay-darmowy-program-na-kamery-dji-do-telemetrii")
+	];
+
+	private void FillPressMentions()
+	{
+		for (int i = 0; i < PressMentions.Length; i++)
+		{
+			(string name, string url) = PressMentions[i];
+			if (i > 0) PressMentionsList.Children.Add(new Border { Classes = { "divider" } });
+
+			var link = new TextBlock { Text = url["https://".Length..].TrimEnd('/'), Tag = url, Classes = { "link" } };
+			link.PointerPressed += OnLinkClick;
+			var text = new StackPanel { Spacing = 2 };
+			text.Children.Add(new TextBlock { Text = name, Classes = { "rowTitle" } });
+			text.Children.Add(link);
+			var row = new Grid { Classes = { "settingRow" } };
+			row.Children.Add(text);
+			PressMentionsList.Children.Add(row);
+		}
 	}
 
 	/// <summary>Every TextBlock.link on the About tab - the address is in its Tag.</summary>

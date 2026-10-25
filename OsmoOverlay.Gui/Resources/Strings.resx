@@ -1040,7 +1040,7 @@ Each category lists up to three moments with extreme values. You can jump to a m
     <value>Add...</value>
   </data>
   <data name="Main_AddSeveralSegmentsOfThe" xml:space="preserve">
-    <value>Add several segments of the same auto-split recording to stitch them into one render</value>
+    <value>Add several segments of the same auto-split recording to stitch them into one render.</value>
   </data>
   <data name="Main_Along" xml:space="preserve">
     <value>X axis</value>
@@ -2276,15 +2276,6 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_ColorTheRouteBySpeed" xml:space="preserve">
     <value>Color the route by speed</value>
   </data>
-  <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
-    <value>App settings last changed: {0}</value>
-  </data>
-  <data name="Settings_ConfigNeverUpdated" xml:space="preserve">
-    <value>App settings have not been changed yet.</value>
-  </data>
-  <data name="Settings_Configuration" xml:space="preserve">
-    <value>Configuration</value>
-  </data>
   <data name="Settings_CopiesWhatTheCameraRecorded" xml:space="preserve">
     <value>Copies camera metadata to the output file so DJI Mimo, ExifTool and OsmoOverlay can still read it. Select the data you want to keep below.</value>
   </data>
@@ -2527,6 +2518,9 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   </data>
   <data name="Settings_ReopenTheLastProject" xml:space="preserve">
     <value>Reopen the last project</value>
+  </data>
+  <data name="Settings_PressMentions" xml:space="preserve">
+    <value>Reviews and mentions</value>
   </data>
   <data name="Settings_Repository" xml:space="preserve">
     <value>Repository</value>
@@ -4368,15 +4362,6 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Main_Queue" xml:space="preserve">
     <value>Queue</value>
   </data>
-  <data name="Main_ExportProfile" xml:space="preserve">
-    <value>Export profile</value>
-  </data>
-  <data name="Main_ExportProfileHint" xml:space="preserve">
-    <value>A preset for the output video's resolution, codec, bit depth and bitrate. It changes the same options as the Rendering tab in Settings.</value>
-  </data>
-  <data name="Main_ExportProfileCustom" xml:space="preserve">
-    <value>Custom</value>
-  </data>
   <data name="Main_ExportTelemetry" xml:space="preserve">
     <value>Export telemetry...</value>
   </data>
@@ -4570,9 +4555,6 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Queue_Unreadable" xml:space="preserve">
     <value>The project can't be read: {0}</value>
   </data>
-  <data name="Main_ExportProfileApplied" xml:space="preserve">
-    <value>Export profile: {0}</value>
-  </data>
   <data name="Queue_SkippedHint" xml:space="preserve">
     <value>Choose Overwrite or Add a number above, then try again.</value>
   </data>
@@ -4622,18 +4604,18 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Custom title</value>
   </data>
   <data name="Settings_RouteIntroTitleHint" xml:space="preserve">
-    <value>A title and subtitle above the intro's statistics, such as the trip name and date. Leave a field empty to hide that text.</value>
+    <value>An optional title and subtitle shown above the stats on the route intro, such as the trip name and date. Leave a field blank to hide it.</value>
   </data>
   <data name="Settings_RouteIntroTitlePlaceholder" xml:space="preserve">
     <value>Title, e.g. Weekend in the mountains</value>
   </data>
   <data name="Settings_RouteIntroSubtitlePlaceholder" xml:space="preserve">
-    <value>Subtitle, e.g. Day 2: Wetlina to Ustrzyki Gorne</value>
+    <value>Subtitle, e.g. Day 2: Lakeside loop</value>
   </data>
   <data name="Settings_RouteIntroElevation" xml:space="preserve">
     <value>Elevation profile</value>
   </data>
   <data name="Settings_RouteIntroElevationHint" xml:space="preserve">
-    <value>An elevation chart for the retained route, shown below the statistics. It appears when the recording or track includes elevation and there is enough room on the card.</value>
+    <value>An elevation chart for the route, shown below the stats. It appears when the recording or track has elevation data and the card has room for it.</value>
   </data>
 </root>

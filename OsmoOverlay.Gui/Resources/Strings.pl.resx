@@ -1040,7 +1040,7 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
     <value>Dodaj...</value>
   </data>
   <data name="Main_AddSeveralSegmentsOfThe" xml:space="preserve">
-    <value>Dodaj kilka segmentów tego samego nagrania (podzielonego automatycznie przez kamerę), aby połączyć je w jeden render</value>
+    <value>Dodaj kilka segmentów tego samego nagrania (podzielonego automatycznie przez kamerę), aby połączyć je w jeden render.</value>
   </data>
   <data name="Main_Along" xml:space="preserve">
     <value>Oś pozioma</value>
@@ -2276,15 +2276,6 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Settings_ColorTheRouteBySpeed" xml:space="preserve">
     <value>Koloruj trasę według prędkości</value>
   </data>
-  <data name="Settings_ConfigLastUpdatedAt" xml:space="preserve">
-    <value>Ostatnia zmiana ustawień aplikacji: {0}</value>
-  </data>
-  <data name="Settings_ConfigNeverUpdated" xml:space="preserve">
-    <value>Ustawienia aplikacji nie były jeszcze zmieniane.</value>
-  </data>
-  <data name="Settings_Configuration" xml:space="preserve">
-    <value>Konfiguracja</value>
-  </data>
   <data name="Settings_CopiesWhatTheCameraRecorded" xml:space="preserve">
     <value>Kopiuje metadane kamery do pliku wyjściowego, aby mogły je nadal odczytywać DJI Mimo, ExifTool i OsmoOverlay. Poniżej wybierz dane, które chcesz zachować.</value>
   </data>
@@ -2527,6 +2518,9 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   </data>
   <data name="Settings_ReopenTheLastProject" xml:space="preserve">
     <value>Otwieraj ostatni projekt</value>
+  </data>
+  <data name="Settings_PressMentions" xml:space="preserve">
+    <value>Napisali o programie</value>
   </data>
   <data name="Settings_Repository" xml:space="preserve">
     <value>Repozytorium</value>
@@ -4368,15 +4362,6 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="Main_Queue" xml:space="preserve">
     <value>Kolejka</value>
   </data>
-  <data name="Main_ExportProfile" xml:space="preserve">
-    <value>Profil eksportu</value>
-  </data>
-  <data name="Main_ExportProfileHint" xml:space="preserve">
-    <value>Gotowy zestaw rozdzielczości, kodeka, głębi kolorów i bitrate'u filmu wyjściowego. Zmienia te same opcje co zakładka Renderowanie w Ustawieniach.</value>
-  </data>
-  <data name="Main_ExportProfileCustom" xml:space="preserve">
-    <value>Własny</value>
-  </data>
   <data name="Main_ExportTelemetry" xml:space="preserve">
     <value>Eksportuj telemetrię...</value>
   </data>
@@ -4569,9 +4554,6 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Queue_Unreadable" xml:space="preserve">
     <value>Nie można odczytać projektu: {0}</value>
-  </data>
-  <data name="Main_ExportProfileApplied" xml:space="preserve">
-    <value>Profil eksportu: {0}</value>
   </data>
   <data name="Queue_SkippedHint" xml:space="preserve">
     <value>Wybierz wyżej Nadpisz lub Dodaj numer i ponów.</value>
