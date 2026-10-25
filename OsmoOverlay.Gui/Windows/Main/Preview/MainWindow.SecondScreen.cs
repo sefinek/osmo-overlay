@@ -147,25 +147,15 @@ public partial class MainWindow
 	{
 		if (_secondScreen is not { } window || _viewportOnSecondScreen || _previewFullscreen || PreviewViewport.Parent is not Panel host) return;
 
-		_zoomBeforeFullscreen = _previewZoom;
-		_panBeforeFullscreen = _previewPan;
-		SetPreviewZoom(null, null);
-		HideHoverIcons();
-		OverlayDragCanvas.IsHitTestVisible = false;
-		PreviewFullscreenNoticeTitle.Text = Strings.SecondScreen_NoticeTitle;
-		PreviewFullscreenNoticeText.Text = string.Format(Strings.SecondScreen_NoticeText, _secondScreenName);
-		PreviewFullscreenNotice.IsVisible = true;
+		BeginViewportMove(Strings.SecondScreen_NoticeTitle, string.Format(Strings.SecondScreen_NoticeText, _secondScreenName));
 
 		MoveViewport(() =>
 		{
-			_viewportHost = host;
-			_viewportIndex = host.Children.IndexOf(PreviewViewport);
-			host.Children.RemoveAt(_viewportIndex);
+			Control viewport = DetachViewport(host);
 			// Settled while it's in no window: moved with a layout pass still queued for it here, the main window's
 			// pass throws "InvalidateArrange on wrong LayoutManager" and the viewport is never arranged.
 			UpdateLayout();
-			PreviewViewport.CornerRadius = default;
-			window.ShowViewport(PreviewViewport);
+			window.ShowViewport(viewport);
 			_viewportOnSecondScreen = true;
 		});
 	}
@@ -180,15 +170,10 @@ public partial class MainWindow
 			window.TakeViewport();
 			window.UpdateLayout();
 			window.ShowLog();
-			PreviewViewport.CornerRadius = new CornerRadius(6);
-			_viewportHost!.Children.Insert(_viewportIndex, PreviewViewport);
+			ReattachViewport();
 		});
 
-		PreviewFullscreenNotice.IsVisible = false;
-		OverlayDragCanvas.IsHitTestVisible = true;
-		SetPreviewZoom(_zoomBeforeFullscreen, null);
-		_previewPan = _panBeforeFullscreen;
-		ApplyPreviewLayout();
+		EndViewportMove();
 	}
 
 	private void MoveViewport(Action move)

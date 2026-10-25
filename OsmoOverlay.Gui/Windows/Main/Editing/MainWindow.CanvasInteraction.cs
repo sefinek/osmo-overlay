@@ -324,6 +324,15 @@ public partial class MainWindow
 			return;
 		}
 
+		// Measuring a widget takes the compositor's lock, which the compose thread holds for the whole frame it draws -
+		// at 4K the UI thread would wait on every pointer move. A played frame is gone before it could be pointed at anyway.
+		if (_previewPlayer.IsPlaying)
+		{
+			OverlayDragCanvas.Cursor = RestingCursor;
+			HideHoverIcons();
+			return;
+		}
+
 		Point canvasPos = e.GetPosition(OverlayDragCanvas);
 
 		// Ignore while the pointer is over one of the hover icons themselves - they sit at a widget's
@@ -376,6 +385,8 @@ public partial class MainWindow
 			HoverLabelText.Text = VisibleWidgetNames().FirstOrDefault(w => w.Element.Id == element.Id).Name ?? GetWidgetLabel(element.Type);
 		}
 
+		HoverOutline.IsVisible = true;
+		HoverLabel.IsVisible = true;
 		double width = Math.Max(0, bottomRight.X - topLeft.X);
 		Canvas.SetLeft(HoverOutline, topLeft.X);
 		Canvas.SetTop(HoverOutline, topLeft.Y);
@@ -403,11 +414,17 @@ public partial class MainWindow
 		Canvas.SetTop(WidgetGearHoverButton, topLeft.Y - WidgetGearHoverButton.Height / 2);
 	}
 
-	private void HideHoverIcons()
+	/// <summary>
+	///     `immediately` skips the fade: the viewport is about to be moved to another window, and an opacity transition cut
+	///     off by the move stays where it was, leaving the last widget's name on the full screen picture.
+	/// </summary>
+	private void HideHoverIcons(bool immediately = false)
 	{
 		_hoveredElementId = null;
 		HoverOutline.Classes.Set("shown", false);
 		HoverLabel.Classes.Set("shown", false);
+		HoverOutline.IsVisible = !immediately;
+		HoverLabel.IsVisible = !immediately;
 		RemoveWidgetButton.IsVisible = false;
 		WidgetGearHoverButton.IsVisible = false;
 	}

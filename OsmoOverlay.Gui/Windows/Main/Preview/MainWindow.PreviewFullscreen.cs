@@ -20,8 +20,8 @@ public partial class MainWindow
 	private PreviewFullscreenWindow? _fullscreenWindow;
 	private Panel? _viewportHost;
 	private int _viewportIndex;
-	private double? _zoomBeforeFullscreen;
-	private Vector _panBeforeFullscreen;
+	private double? _zoomBeforeViewportMove;
+	private Vector _panBeforeViewportMove;
 	private bool _previewFullscreen;
 	private bool _closing;
 
@@ -51,19 +51,11 @@ public partial class MainWindow
 
 		if (_summary is null || _previewFrameSize is null || PreviewViewport.Parent is not Panel host) return;
 
-		_zoomBeforeFullscreen = _previewZoom;
-		_panBeforeFullscreen = _previewPan;
+		Screen? screen = PreviewMonitor();
 		_previewFullscreen = true;
 		FullscreenButton.Classes.Set("active", true);
-		SetPreviewZoom(null, null);
-		HideHoverIcons();
-		OverlayDragCanvas.IsHitTestVisible = false;
-
-		Screen? screen = PreviewMonitor();
+		BeginViewportMove(Strings.Main_ThePreviewIsFullScreen, string.Format(Strings.Fullscreen_NoticeText, DescribeScreen(screen)));
 		var window = new PreviewFullscreenWindow(DetachViewport(host), screen);
-		PreviewFullscreenNoticeTitle.Text = Strings.Main_ThePreviewIsFullScreen;
-		PreviewFullscreenNoticeText.Text = string.Format(Strings.Fullscreen_NoticeText, DescribeScreen(screen));
-		PreviewFullscreenNotice.IsVisible = true;
 		window.AddHandler(KeyDownEvent, OnPreviewSpaceKeyDown, RoutingStrategies.Tunnel);
 		window.AddHandler(KeyUpEvent, OnPreviewSpaceKeyUp, RoutingStrategies.Tunnel);
 		window.KeyDown += OnPreviewShortcutKeyDown;
@@ -77,6 +69,33 @@ public partial class MainWindow
 		MovePreviewViewport(() => window.Show(this));
 	}
 
+	/// <summary>
+	///     The editor steps aside before the viewport leaves the main window (full screen or second screen): zoom Fit, no
+	///     hover (shown at once - a fade cut off by the move would stay on the picture), no hit-testing, and the notice in
+	///     the place the viewport was.
+	/// </summary>
+	private void BeginViewportMove(string noticeTitle, string noticeText)
+	{
+		_zoomBeforeViewportMove = _previewZoom;
+		_panBeforeViewportMove = _previewPan;
+		SetPreviewZoom(null, null);
+		HideHoverIcons(true);
+		OverlayDragCanvas.IsHitTestVisible = false;
+		PreviewFullscreenNoticeTitle.Text = noticeTitle;
+		PreviewFullscreenNoticeText.Text = noticeText;
+		PreviewFullscreenNotice.IsVisible = true;
+	}
+
+	/// <summary>The viewport is back in the main window: the zoom and pan from before the move, the editor active again.</summary>
+	private void EndViewportMove()
+	{
+		PreviewFullscreenNotice.IsVisible = false;
+		OverlayDragCanvas.IsHitTestVisible = true;
+		SetPreviewZoom(_zoomBeforeViewportMove, null);
+		_previewPan = _panBeforeViewportMove;
+		ApplyPreviewLayout();
+	}
+
 	private Control DetachViewport(Panel host)
 	{
 		_viewportHost = host;
@@ -86,25 +105,23 @@ public partial class MainWindow
 		return PreviewViewport;
 	}
 
+	private void ReattachViewport()
+	{
+		PreviewViewport.CornerRadius = new CornerRadius(6);
+		_viewportHost!.Children.Insert(_viewportIndex, PreviewViewport);
+	}
+
 	private void LeavePreviewFullscreen(PreviewFullscreenWindow window)
 	{
 		_fullscreenWindow = null;
 		if (_closing) return;
 
 		window.Content = null;
-		MovePreviewViewport(() =>
-		{
-			PreviewViewport.CornerRadius = new CornerRadius(6);
-			_viewportHost!.Children.Insert(_viewportIndex, PreviewViewport);
-		});
+		MovePreviewViewport(ReattachViewport);
 
 		_previewFullscreen = false;
-		PreviewFullscreenNotice.IsVisible = false;
 		FullscreenButton.Classes.Set("active", false);
-		OverlayDragCanvas.IsHitTestVisible = true;
-		SetPreviewZoom(_zoomBeforeFullscreen, null);
-		_previewPan = _panBeforeFullscreen;
-		ApplyPreviewLayout();
+		EndViewportMove();
 	}
 
 	/// <summary>
