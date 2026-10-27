@@ -635,7 +635,8 @@
 									<TextBlock Classes="infoLabel" Margin="0,10,0,0">
 										<Run Text="{x:Static local:Strings.Main_Recorded}" /><Run Text=" " /><Run Name="TeleRecordedAt" />
 									</TextBlock>
-									<Button Classes="toolbar" Margin="0,6,0,0" Content="{x:Static local:Strings.Main_ExportTelemetry}"
+									<Button Margin="0,6,0,0" Content="{x:Static local:Strings.Main_ExportTelemetry}"
+									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 									        Click="OnExportTelemetryClick" ToolTip.Tip="{x:Static local:Strings.Main_ExportTelemetryHint}" />
 								</StackPanel>
 							</Border>
