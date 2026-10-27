@@ -606,7 +606,7 @@ public partial class SettingsWindow : Window
 	/// <summary>Every TextBlock.link on the About tab - the address is in its Tag.</summary>
 	private void OnLinkClick(object? sender, PointerPressedEventArgs e)
 	{
-		if ((sender as Control)?.Tag is string url) AppUpdateFlow.OpenInBrowser(url);
+		if (sender is Control { Tag: string url }) AppUpdateFlow.OpenInBrowser(url);
 	}
 
 	private void OnShowRouteIntroChanged(object? sender, RoutedEventArgs e)

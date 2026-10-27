@@ -261,7 +261,9 @@ public partial class MainWindow
 	{
 		if (_suppressPreviewQualityEvent || PreviewQualityCombo.SelectedItem is not PreviewQualityOption option ||
 		    option.MaxWidth == _previewMaxWidth)
+		{
 			return;
+		}
 
 		_previewMaxWidth = option.MaxWidth;
 		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewMaxWidth = _previewMaxWidth });

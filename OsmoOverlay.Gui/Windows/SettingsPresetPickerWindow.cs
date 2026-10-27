@@ -25,12 +25,11 @@ internal sealed class SettingsPresetPickerWindow : Window
 		_list = new ComboBox
 		{
 			ItemsSource = presets.Select(p => new ChoiceOption<string>(p.Name, p.Id)).ToList(),
-			HorizontalAlignment = HorizontalAlignment.Stretch
+			HorizontalAlignment = HorizontalAlignment.Stretch,
+			SelectedIndex = Math.Max(0, presets.ToList().FindIndex(p => p.Id == activeId))
 		};
-		_list.SelectedIndex = Math.Max(0, presets.ToList().FindIndex(p => p.Id == activeId));
 
-		var choose = new Button { Content = Strings.SettingsPresets_PickConfirm, IsDefault = true };
-		choose.Classes.Add("accent");
+		var choose = new Button { Content = Strings.SettingsPresets_PickConfirm, IsDefault = true, Classes = { "accent" } };
 		choose.Click += (_, _) => Choose();
 		var keep = new Button { Content = Strings.SettingsPresets_PickKeep, IsCancel = true };
 		keep.Click += (_, _) => Close(null);

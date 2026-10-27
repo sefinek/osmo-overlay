@@ -32,7 +32,7 @@ public partial class QueueWindow : Window
 	private readonly RenderQueue _queue;
 	private readonly Dictionary<QueueItem, QueueRow> _rows = [];
 	private readonly Dictionary<string, QueueDetails> _details = [];
-	private readonly object _gate = new();
+	private readonly Lock _gate = new();
 	private bool _refreshPending;
 
 	public QueueWindow() : this(null)
@@ -141,7 +141,7 @@ public partial class QueueWindow : Window
 		await ShowNotAddedAsync(_main.QueueRecordings(paths, joined));
 	}
 
-	private async Task ShowNotAddedAsync(IReadOnlyList<string> problems)
+	private async Task ShowNotAddedAsync(List<string> problems)
 	{
 		if (problems.Count > 0)
 			await ConfirmDialog.ShowAsync(this, Strings.Queue_Title, string.Format(Strings.Queue_NotAdded, string.Join('\n', problems)), kind: DialogKind.Warning);

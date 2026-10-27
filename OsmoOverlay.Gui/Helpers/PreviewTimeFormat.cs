@@ -40,16 +40,12 @@ internal static class PreviewTimeFormats
 	/// </summary>
 	public static string Format(PreviewTimeFormat format, TimeSpan time, long frame, double fps, string? cameraTimecode)
 	{
-		switch (format)
+		return format switch
 		{
-			case PreviewTimeFormat.Milliseconds:
-				return TimeText.Format(time.TotalSeconds);
-			case PreviewTimeFormat.CameraTimecode when cameraTimecode is not null && SmpteTimecode.AddFrames(cameraTimecode, frame, fps) is { } timecode:
-				return timecode;
-			case PreviewTimeFormat.Timecode or PreviewTimeFormat.CameraTimecode when SmpteTimecode.FromFrame(frame, fps) is { } timecode:
-				return timecode;
-			default:
-				return time.ToString(time.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss");
-		}
+			PreviewTimeFormat.Milliseconds => TimeText.Format(time.TotalSeconds),
+			PreviewTimeFormat.CameraTimecode when cameraTimecode is not null && SmpteTimecode.AddFrames(cameraTimecode, frame, fps) is { } timecode => timecode,
+			PreviewTimeFormat.Timecode or PreviewTimeFormat.CameraTimecode when SmpteTimecode.FromFrame(frame, fps) is { } timecode => timecode,
+			_ => time.ToString(time.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss")
+		};
 	}
 }

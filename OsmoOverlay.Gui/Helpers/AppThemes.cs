@@ -36,9 +36,10 @@ internal static class AppThemes
 			if (entry is not { Key: string key, Value: Color color }) continue;
 
 			app.Resources[key] = color;
-			if (key.EndsWith("Color", StringComparison.Ordinal) &&
-			    app.TryGetResource(key[..^"Color".Length] + "Brush", null, out object? brush) && brush is SolidColorBrush solid)
+			if (key.EndsWith("Color", StringComparison.Ordinal) && app.TryGetResource(key[..^"Color".Length] + "Brush", null, out object? brush) && brush is SolidColorBrush solid)
+			{
 				solid.Color = color;
+			}
 		}
 
 		if (app.TryGetResource("AccentGradientBrush", null, out object? gradient) && gradient is LinearGradientBrush { GradientStops.Count: 2 } accent)
