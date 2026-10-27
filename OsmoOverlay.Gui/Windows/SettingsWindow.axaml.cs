@@ -581,7 +581,8 @@ public partial class SettingsWindow : Window
 	[
 		("Creative Content - Australian Videocamera Magazine", "https://cre-8.com.au/2026/10/23/review-osmo-overlay"),
 		("Quadricottero News", "https://www.quadricottero.com/2026/10/osmooverlay-arriva-il-software-gratuito.html"),
-		("Mototour.pl", "https://mototour.pl/infomoto/186-art/5919-osmooverlay-darmowy-program-na-kamery-dji-do-telemetrii")
+		("Mototour.pl", "https://mototour.pl/infomoto/186-art/5919-osmooverlay-darmowy-program-na-kamery-dji-do-telemetrii"),
+		("VIDEOAKTIV", "https://www.videoaktiv.tv/news/editing/osmooverlay-telemetrie-einblendungen-fuer-dji-videos")
 	];
 
 	private void FillPressMentions()
