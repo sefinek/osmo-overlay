@@ -55,7 +55,7 @@ public sealed class RouteIntroSettingsTests
 	{
 		var settings = new OverlaySettings(RouteIntroMapZoomInFactor: 99, RouteIntroMapZoomInSeconds: -1, RouteIntroMapZoomInDelaySeconds: double.NaN);
 
-		RouteIntroSettings routeIntro = RouteIntroSettings.From(settings);
+		var routeIntro = RouteIntroSettings.From(settings);
 
 		Assert.AreEqual(RouteIntroSettings.MaxZoomInFactor, routeIntro.MapZoomInFactor);
 		Assert.AreEqual(RouteIntroSettings.MinZoomInSeconds, routeIntro.MapZoomInSeconds);

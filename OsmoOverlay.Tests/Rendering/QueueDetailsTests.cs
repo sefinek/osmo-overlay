@@ -42,7 +42,7 @@ public sealed class QueueDetailsTests
 	{
 		string copy = Queued(Project());
 
-		QueueDetails details = QueueDetails.Of(new QueueRequest(copy, Name: "My ride"), new OverlaySettings());
+		var details = QueueDetails.Of(new QueueRequest(copy, Name: "My ride"), new OverlaySettings());
 
 		Assert.AreEqual("My ride", details.Name);
 		Assert.AreNotEqual(Path.GetFileNameWithoutExtension(copy), details.Name);
@@ -51,7 +51,7 @@ public sealed class QueueDetailsTests
 	[TestMethod]
 	public void WithoutANameItIsTheFirstRecordings()
 	{
-		QueueDetails details = QueueDetails.Of(new QueueRequest(Queued(Project())), new OverlaySettings());
+		var details = QueueDetails.Of(new QueueRequest(Queued(Project())), new OverlaySettings());
 
 		Assert.AreEqual("GX010001", details.Name);
 	}
@@ -59,7 +59,7 @@ public sealed class QueueDetailsTests
 	[TestMethod]
 	public void ItListsTheRecordingsTheOutputAndWhatTheProjectHolds()
 	{
-		QueueDetails details = QueueDetails.Of(new QueueRequest(Queued(Project())), new OverlaySettings());
+		var details = QueueDetails.Of(new QueueRequest(Queued(Project())), new OverlaySettings());
 
 		CollectionAssert.AreEqual(new[] { Path.Combine(_dir, "GX010001.MP4"), Path.Combine(_dir, "GX020001.MP4") }, details.Recordings.ToArray());
 		Assert.AreEqual(Path.Combine(_dir, "out.mp4"), details.OutputPath);
@@ -76,7 +76,7 @@ public sealed class QueueDetailsTests
 		string copy = Queued(Project());
 
 		Assert.AreEqual(Path.Combine(_dir, "elsewhere.mp4"), QueueDetails.Of(new QueueRequest(copy, Output: Path.Combine(_dir, "elsewhere.mp4")), new OverlaySettings()).OutputPath);
-		Assert.AreEqual(Path.Combine(_dir, "out_alpha.webm"), QueueDetails.Of(new QueueRequest(copy, Alpha: OsmoOverlay.Core.Ffmpeg.AlphaCodec.Vp9), new OverlaySettings()).OutputPath);
+		Assert.AreEqual(Path.Combine(_dir, "out_alpha.webm"), QueueDetails.Of(new QueueRequest(copy, Alpha: AlphaCodec.Vp9), new OverlaySettings()).OutputPath);
 	}
 
 	[TestMethod]
@@ -84,7 +84,7 @@ public sealed class QueueDetailsTests
 	{
 		OverlayProject project = Project() with { OutputPath = null };
 
-		QueueDetails details = QueueDetails.Of(new QueueRequest(Queued(project)), new OverlaySettings());
+		var details = QueueDetails.Of(new QueueRequest(Queued(project)), new OverlaySettings());
 
 		Assert.AreEqual(Path.Combine(_dir, "GX010001_overlay.mp4"), details.OutputPath);
 	}
@@ -92,7 +92,7 @@ public sealed class QueueDetailsTests
 	[TestMethod]
 	public void AGoneProjectIsReportedNotThrown()
 	{
-		QueueDetails details = QueueDetails.Of(new QueueRequest(Path.Combine(_dir, "gone.ovproj"), Name: "Gone"), new OverlaySettings());
+		var details = QueueDetails.Of(new QueueRequest(Path.Combine(_dir, "gone.ovproj"), Name: "Gone"), new OverlaySettings());
 
 		Assert.AreEqual("Gone", details.Name);
 		Assert.IsNotNull(details.Problem);

@@ -30,9 +30,12 @@ public sealed class SettingsPresetTests
 	public void EverySettingIsEitherInAPresetOrDeliberatelyShared()
 	{
 		string[] inPreset = [.. typeof(SettingsPresetValues).GetProperties().Select(p => p.Name)];
-		string[] unplaced = [.. typeof(OverlaySettings).GetProperties()
-			.Select(p => p.Name)
-			.Where(n => n != nameof(OverlaySettings.PreviewDrawsShadows) && !inPreset.Contains(n) && !SharedSettings.Contains(n))];
+		string[] unplaced =
+		[
+			.. typeof(OverlaySettings).GetProperties()
+				.Select(p => p.Name)
+				.Where(n => n != nameof(OverlaySettings.PreviewDrawsShadows) && !inPreset.Contains(n) && !SharedSettings.Contains(n))
+		];
 
 		Assert.IsEmpty(unplaced, $"Add to SettingsPresetValues (and From/ApplyTo) or to SharedSettings here: {string.Join(", ", unplaced)}");
 		Assert.IsEmpty(inPreset.Where(n => typeof(OverlaySettings).GetProperty(n) is null).ToArray());

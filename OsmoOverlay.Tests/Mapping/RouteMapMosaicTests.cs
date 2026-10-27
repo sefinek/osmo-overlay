@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 using OsmoOverlay.Core.Mapping;
 using SkiaSharp;
 
@@ -92,7 +93,7 @@ public sealed class RouteMapMosaicTests
 
 		private static int FreePort()
 		{
-			var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+			var probe = new TcpListener(IPAddress.Loopback, 0);
 			probe.Start();
 			int port = ((IPEndPoint)probe.LocalEndpoint).Port;
 			probe.Stop();

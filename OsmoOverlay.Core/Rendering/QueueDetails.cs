@@ -23,7 +23,7 @@ public sealed record QueueDetails(
 	{
 		try
 		{
-			OverlayProject project = OverlayProject.Load(request.ProjectPath);
+			var project = OverlayProject.Load(request.ProjectPath);
 			string output = request.Output ?? ProjectRender.OutputPathFor(project, settings);
 			if (request.Alpha is { } alpha) output = RenderOptions.AlphaOutputPath(output, alpha);
 			return new QueueDetails(NameOf(request, project.InputPaths.FirstOrDefault()), [.. project.InputPaths], output, project.Cuts.Count,

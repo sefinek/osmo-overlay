@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
@@ -45,8 +46,8 @@ internal sealed class SettingsPresetPickerWindow : Window
 					Spacing = 4,
 					Children =
 					{
-						new TextBlock { Text = Strings.SettingsPresets_PickTitle, FontSize = 18, FontWeight = Avalonia.Media.FontWeight.Bold },
-						new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap, Foreground = Palette.TextMuted }
+						new TextBlock { Text = Strings.SettingsPresets_PickTitle, FontSize = 18, FontWeight = FontWeight.Bold },
+						new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Foreground = Palette.TextMuted }
 					}
 				},
 				_list,

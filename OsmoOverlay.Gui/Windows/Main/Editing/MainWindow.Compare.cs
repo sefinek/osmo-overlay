@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
@@ -83,7 +82,7 @@ public partial class MainWindow
 			if (ComparePreset is not { } other || _summary is null) return;
 
 			_comparing = true;
-			AppendLog(string.Format(Strings.Compare_Log, other.Name), LogLevel.Info);
+			AppendLog(string.Format(Strings.Compare_Log, other.Name));
 		}
 
 		ShowLayout();

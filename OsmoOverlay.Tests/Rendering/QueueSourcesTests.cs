@@ -1,3 +1,4 @@
+using System.Text.Json;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Overlay;
 
@@ -79,7 +80,7 @@ public sealed class QueueSourcesTests
 		string notProject = Path.Combine(_dir, "x.ovproj");
 		File.WriteAllText(notProject, "{ not json");
 
-		Assert.ThrowsExactly<System.Text.Json.JsonException>(() => store.Import(notProject));
+		Assert.ThrowsExactly<JsonException>(() => store.Import(notProject));
 		Assert.IsFalse(Directory.Exists(Path.Combine(_dir, "queue")) && Directory.EnumerateFiles(Path.Combine(_dir, "queue")).Any(), "nothing was copied");
 	}
 

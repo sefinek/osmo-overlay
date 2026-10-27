@@ -1,6 +1,6 @@
-using OsmoOverlay.Core.Localization;
 using System.Text;
 using System.Xml;
+using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Tests.Telemetry.External;

@@ -165,51 +165,51 @@
 					<StackPanel>
 						<TextBlock Name="PresetGroupHeader" Classes="sidebarGroup" TextTrimming="CharacterEllipsis" />
 						<ListBox Name="CategoryList" Classes="category" SelectedIndex="0" SelectionChanged="OnCategoryChanged">
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconSliders}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Settings_Presets}" />
-						</StackPanel>
-					</ListBoxItem>
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconDisplay}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" />
-						</StackPanel>
-					</ListBoxItem>
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconStopwatch}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Common_Speed}" />
-						</StackPanel>
-					</ListBoxItem>
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconFlag}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" />
-						</StackPanel>
-					</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconSliders}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Settings_Presets}" />
+								</StackPanel>
+							</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconDisplay}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Settings_Rendering}" />
+								</StackPanel>
+							</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconStopwatch}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Common_Speed}" />
+								</StackPanel>
+							</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconFlag}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Settings_RouteIntro}" />
+								</StackPanel>
+							</ListBoxItem>
 						</ListBox>
 						<TextBlock Classes="sidebarGroup" Margin="10,18,0,6" Text="{x:Static local:Strings.Settings_GroupProgram}" />
 						<ListBox Name="ProgramCategoryList" Classes="category" SelectionChanged="OnCategoryChanged">
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconEye}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Settings_Interface}" />
-						</StackPanel>
-					</ListBoxItem>
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconGear}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" />
-						</StackPanel>
-					</ListBoxItem>
-						<ListBoxItem Theme="{StaticResource SidebarItem}">
-						<StackPanel Orientation="Horizontal" Spacing="12">
-							<local:IconView Data="{StaticResource IconInfo}" Width="16" Height="16" />
-							<TextBlock Text="{x:Static local:Strings.Settings_About}" />
-						</StackPanel>
-					</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconEye}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Settings_Interface}" />
+								</StackPanel>
+							</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconGear}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Settings_Behavior}" />
+								</StackPanel>
+							</ListBoxItem>
+							<ListBoxItem Theme="{StaticResource SidebarItem}">
+								<StackPanel Orientation="Horizontal" Spacing="12">
+									<local:IconView Data="{StaticResource IconInfo}" Width="16" Height="16" />
+									<TextBlock Text="{x:Static local:Strings.Settings_About}" />
+								</StackPanel>
+							</ListBoxItem>
 						</ListBox>
 					</StackPanel>
 				</ScrollViewer>

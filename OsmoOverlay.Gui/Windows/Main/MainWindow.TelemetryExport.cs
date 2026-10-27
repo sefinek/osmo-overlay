@@ -1,6 +1,5 @@
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;

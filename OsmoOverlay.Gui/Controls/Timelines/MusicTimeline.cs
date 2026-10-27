@@ -37,7 +37,7 @@ public sealed class MusicTimeline : Control
 	private static readonly IBrush SelectedClipBrush = Palette.Tint(Palette.Success, 0.62);
 	private static readonly IPen ClipBorder = new Pen(Palette.Success);
 	private static readonly IPen SelectedClipBorder = new Pen(Palette.TextPrimary, 1.5);
-	private static readonly IPen WaveformPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.45), 1);
+	private static readonly IPen WaveformPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.45));
 	private static readonly IPen RepeatPen = new Pen(Palette.Tint(Palette.TextPrimary, 0.45), 1, new DashStyle([2, 2], 0));
 	private static readonly IBrush FadeShade = Palette.Tint(Palette.SurfaceSunken, 0.55);
 	private static readonly IBrush CrossfadeFill = Palette.Tint(Palette.SurfaceSunken, 0.35);
@@ -329,7 +329,7 @@ public sealed class MusicTimeline : Control
 		var shade = new StreamGeometry();
 		using (StreamGeometryContext geometry = shade.Open())
 		{
-			geometry.BeginFigure(from, true);
+			geometry.BeginFigure(from);
 			geometry.LineTo(to);
 			geometry.LineTo(corner);
 			geometry.EndFigure(true);

@@ -991,7 +991,7 @@
 						           VerticalAlignment="Center" Text="00:00 / 00:00" Background="Transparent" Cursor="Hand"
 						           PointerPressed="OnPreviewTimeTextPressed" ToolTip.Tip="{x:Static local:Strings.Main_ClickToSwitchTheTime}" />
 						<WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Name="PreviewStatusBar" Margin="0,8,0,0" ItemSpacing="20" LineSpacing="4" HorizontalAlignment="Center"
-						            VerticalAlignment="Center" IsVisible="False">
+						           VerticalAlignment="Center" IsVisible="False">
 							<StackPanel Classes="previewStatus" ToolTip.Tip="{x:Static local:Strings.Main_RecordingTheSourceVideoS}">
 								<local:IconView Data="{StaticResource IconFile}" />
 								<TextBlock Name="StatusSourceText" />

@@ -1,6 +1,5 @@
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
-using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core;
 

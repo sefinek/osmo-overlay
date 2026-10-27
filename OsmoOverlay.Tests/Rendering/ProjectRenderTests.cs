@@ -58,7 +58,7 @@ public sealed class ProjectRenderTests
 	[TestMethod]
 	public void Options_UsesTheEmbeddedLayoutWithoutItsMutedLayers()
 	{
-		OverlayPreset preset = OverlayPreset.CreateDefault("p", "Project's");
+		var preset = OverlayPreset.CreateDefault("p", "Project's");
 
 		RenderOptions options = ProjectRender.Options(Project(preset: preset), Timeline, "x.mp4", new OverlaySettings(), _ => true);
 

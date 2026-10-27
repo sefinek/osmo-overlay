@@ -96,11 +96,14 @@ public static class MusicTrack
 			}
 		}
 
-		return [.. clips.Select((c, i) =>
-		{
-			double inFade = Math.Min(fadeIn[i], c.LengthSeconds);
-			return c with { FadeInSeconds = inFade, FadeOutSeconds = Math.Min(fadeOut[i], c.LengthSeconds - inFade) };
-		})];
+		return
+		[
+			.. clips.Select((c, i) =>
+			{
+				double inFade = Math.Min(fadeIn[i], c.LengthSeconds);
+				return c with { FadeInSeconds = inFade, FadeOutSeconds = Math.Min(fadeOut[i], c.LengthSeconds - inFade) };
+			})
+		];
 	}
 
 	/// <summary>The clip's gain at `seconds` into it (fades included), 0 outside the clip.</summary>

@@ -5,7 +5,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
-using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
 

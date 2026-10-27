@@ -100,8 +100,10 @@ public partial class MainWindow
 		AppendLog(string.Format(Strings.Render_LogPreset, presetName ?? Strings.Render_NoPreset));
 		// No CLI equivalent shown for green screen - the CLI doesn't have a flag for this mode yet.
 		if (!greenScreen && alpha is null)
+		{
 			AppendLog(string.Format(Strings.Render_LogCli, BuildCliCommand(inputPaths, outputPath, cutOuts ?? [], Is360 ? _reframe : null, rangeStart, rangeEnd, _externalTrack,
 				[.. _volumeLine], [.. _music.Where(c => File.Exists(c.Path))])));
+		}
 
 		CancellationTokenSource cts = _cts;
 		RenderResult result;

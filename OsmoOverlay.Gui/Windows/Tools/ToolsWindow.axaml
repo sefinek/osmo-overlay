@@ -32,110 +32,110 @@
 	</Window.Styles>
 
 	<DockPanel>
-	<Border DockPanel.Dock="Bottom" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}"
-	        BorderThickness="0,1,0,0" Padding="20,12">
-		<Button HorizontalAlignment="Right" Content="{x:Static local:Strings.Tools_Close}" Classes="accent" Click="OnCloseClick" />
-	</Border>
-	<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-	<StackPanel Margin="20,20,20,16" Spacing="12">
-		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_VideoAudio}" />
-
-		<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-			<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
-				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_FixColorTags}" />
-					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="SelectColorTagFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectColorTagFileClick" />
-					</StackPanel>
-					<TextBlock Classes="hint"
-					           Text="{x:Static local:Strings.Tools_VegasProSMp4Export}" />
-				</DockPanel>
-			</Border>
-
-			<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
-				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_RemoveMetadata}" />
-					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="SelectStripFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectStripFileClick" />
-					</StackPanel>
-					<TextBlock Classes="hint"
-					           Text="{x:Static local:Strings.Tools_SavesACopySafeTo}" />
-				</DockPanel>
-			</Border>
-
-			<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
-				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_CameraMicrophoneAudioAac}" />
-					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Name="ConvertAudioWavButton" Content="{x:Static local:Strings.Tools_ToWav}" Click="OnConvertAudioWavClick" />
-						<Button Name="ConvertAudioM4aButton" Content="{x:Static local:Strings.Tools_ToM4a}" Click="OnConvertAudioM4aClick" />
-					</StackPanel>
-					<TextBlock Classes="hint"
-					           Text="{x:Static local:Strings.Tools_WithAnExternalMicConnected}" />
-				</DockPanel>
-			</Border>
-
-			<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
-				<DockPanel>
-					<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Common_CompareVideos}" />
-					<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
-						<Button Content="{x:Static local:Strings.Tools_Compare}" Click="OnCompareVideosClick" />
-						<Button Content="{x:Static local:Strings.Tools_ComparePlayback}" Click="OnComparePlaybackClick" />
-					</StackPanel>
-					<TextBlock Classes="hint"
-					           Text="{x:Static local:Strings.Tools_PickUpTo6Files}" />
-				</DockPanel>
-			</Border>
-		</Grid>
-
-		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_Performance}" Margin="0,8,0,0" />
-
-		<Border Classes="card toolCard">
-			<Grid ColumnDefinitions="*,Auto">
-				<StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-					<TextBlock Classes="toolTitle" Text="Benchmark" />
-					<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Tools_PerformanceHint}" />
-				</StackPanel>
-				<Button Name="BenchmarkButton" Grid.Column="1" Content="{x:Static local:Strings.Tools_RunBenchmark}" Click="OnBenchmarkClick" />
-			</Grid>
+		<Border DockPanel.Dock="Bottom" Background="{StaticResource SurfaceSunkenBrush}" BorderBrush="{StaticResource CardBorderBrush}"
+		        BorderThickness="0,1,0,0" Padding="20,12">
+			<Button HorizontalAlignment="Right" Content="{x:Static local:Strings.Tools_Close}" Classes="accent" Click="OnCloseClick" />
 		</Border>
+		<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+			<StackPanel Margin="20,20,20,16" Spacing="12">
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_VideoAudio}" />
 
-		<Border Classes="card toolCard">
-			<StackPanel Spacing="10">
-				<Grid ColumnDefinitions="*,Auto">
-					<StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-						<TextBlock Classes="toolTitle" Text="{x:Static local:Strings.Tools_TestRecording}" />
-						<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Tools_TestRecordingHint}" />
-						<TextBlock Name="TestRecordingStatus" Classes="hint" TextWrapping="Wrap" Margin="0,6,0,0" />
-					</StackPanel>
-					<StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
-						<Button Name="GenerateTestRecordingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-						        Content="{x:Static local:Strings.Tools_GenerateTestRecording}" Click="OnGenerateTestRecordingClick" />
-						<Button Name="ShowTestRecordingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-						        Content="{x:Static local:Strings.Common_ShowInFolder}" Click="OnShowTestRecordingClick" />
-						<Button Name="LoadTestRecordingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-						        Content="{x:Static local:Strings.Tools_LoadTestRecording}" Click="OnLoadTestRecordingClick" />
-					</StackPanel>
+				<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+					<Border Grid.Row="0" Grid.Column="0" Classes="card toolCard">
+						<DockPanel>
+							<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_FixColorTags}" />
+							<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+								<Button Name="SelectColorTagFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectColorTagFileClick" />
+							</StackPanel>
+							<TextBlock Classes="hint"
+							           Text="{x:Static local:Strings.Tools_VegasProSMp4Export}" />
+						</DockPanel>
+					</Border>
+
+					<Border Grid.Row="0" Grid.Column="1" Classes="card toolCard">
+						<DockPanel>
+							<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_RemoveMetadata}" />
+							<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+								<Button Name="SelectStripFileButton" Content="{x:Static local:Strings.Tools_SelectFile}" Click="OnSelectStripFileClick" />
+							</StackPanel>
+							<TextBlock Classes="hint"
+							           Text="{x:Static local:Strings.Tools_SavesACopySafeTo}" />
+						</DockPanel>
+					</Border>
+
+					<Border Grid.Row="1" Grid.Column="0" Classes="card toolCard">
+						<DockPanel>
+							<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Tools_CameraMicrophoneAudioAac}" />
+							<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+								<Button Name="ConvertAudioWavButton" Content="{x:Static local:Strings.Tools_ToWav}" Click="OnConvertAudioWavClick" />
+								<Button Name="ConvertAudioM4aButton" Content="{x:Static local:Strings.Tools_ToM4a}" Click="OnConvertAudioM4aClick" />
+							</StackPanel>
+							<TextBlock Classes="hint"
+							           Text="{x:Static local:Strings.Tools_WithAnExternalMicConnected}" />
+						</DockPanel>
+					</Border>
+
+					<Border Grid.Row="1" Grid.Column="1" Classes="card toolCard">
+						<DockPanel>
+							<TextBlock DockPanel.Dock="Top" Classes="toolTitle" Text="{x:Static local:Strings.Common_CompareVideos}" />
+							<StackPanel DockPanel.Dock="Bottom" Classes="toolActions">
+								<Button Content="{x:Static local:Strings.Tools_Compare}" Click="OnCompareVideosClick" />
+								<Button Content="{x:Static local:Strings.Tools_ComparePlayback}" Click="OnComparePlaybackClick" />
+							</StackPanel>
+							<TextBlock Classes="hint"
+							           Text="{x:Static local:Strings.Tools_PickUpTo6Files}" />
+						</DockPanel>
+					</Border>
 				</Grid>
-				<ProgressBar Name="TestRecordingProgress" IsVisible="False" Minimum="0" Maximum="1" />
+
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_Performance}" Margin="0,8,0,0" />
+
+				<Border Classes="card toolCard">
+					<Grid ColumnDefinitions="*,Auto">
+						<StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+							<TextBlock Classes="toolTitle" Text="Benchmark" />
+							<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Tools_PerformanceHint}" />
+						</StackPanel>
+						<Button Name="BenchmarkButton" Grid.Column="1" Content="{x:Static local:Strings.Tools_RunBenchmark}" Click="OnBenchmarkClick" />
+					</Grid>
+				</Border>
+
+				<Border Classes="card toolCard">
+					<StackPanel Spacing="10">
+						<Grid ColumnDefinitions="*,Auto">
+							<StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+								<TextBlock Classes="toolTitle" Text="{x:Static local:Strings.Tools_TestRecording}" />
+								<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Tools_TestRecordingHint}" />
+								<TextBlock Name="TestRecordingStatus" Classes="hint" TextWrapping="Wrap" Margin="0,6,0,0" />
+							</StackPanel>
+							<StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+								<Button Name="GenerateTestRecordingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+								        Content="{x:Static local:Strings.Tools_GenerateTestRecording}" Click="OnGenerateTestRecordingClick" />
+								<Button Name="ShowTestRecordingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+								        Content="{x:Static local:Strings.Common_ShowInFolder}" Click="OnShowTestRecordingClick" />
+								<Button Name="LoadTestRecordingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+								        Content="{x:Static local:Strings.Tools_LoadTestRecording}" Click="OnLoadTestRecordingClick" />
+							</StackPanel>
+						</Grid>
+						<ProgressBar Name="TestRecordingProgress" IsVisible="False" Minimum="0" Maximum="1" />
+					</StackPanel>
+				</Border>
+
+				<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_AppData}" Margin="0,8,0,0" />
+
+				<Border Classes="card toolCard">
+					<Grid ColumnDefinitions="*,Auto">
+						<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
+						           Text="{x:Static local:Strings.Tools_PresetsSettingsMapTilesLogs}" />
+						<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+							<Button Content="{x:Static local:Strings.Tools_OpenDataFolder}" Click="OnOpenDataFolderClick" />
+							<Button Content="{x:Static local:Strings.Tools_ClearCache}" Click="OnClearCacheClick"
+							        ToolTip.Tip="{x:Static local:Strings.Tools_DeletesTheCachedFileAnalysis}" />
+						</StackPanel>
+					</Grid>
+				</Border>
+
 			</StackPanel>
-		</Border>
-
-		<TextBlock Classes="sectionLabel" Text="{x:Static local:Strings.Tools_AppData}" Margin="0,8,0,0" />
-
-		<Border Classes="card toolCard">
-			<Grid ColumnDefinitions="*,Auto">
-				<TextBlock Grid.Column="0" Classes="hint" VerticalAlignment="Center" Margin="0,0,16,0"
-				           Text="{x:Static local:Strings.Tools_PresetsSettingsMapTilesLogs}" />
-				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-					<Button Content="{x:Static local:Strings.Tools_OpenDataFolder}" Click="OnOpenDataFolderClick" />
-					<Button Content="{x:Static local:Strings.Tools_ClearCache}" Click="OnClearCacheClick"
-					        ToolTip.Tip="{x:Static local:Strings.Tools_DeletesTheCachedFileAnalysis}" />
-				</StackPanel>
-			</Grid>
-		</Border>
-
-	</StackPanel>
-	</ScrollViewer>
+		</ScrollViewer>
 	</DockPanel>
 </Window>

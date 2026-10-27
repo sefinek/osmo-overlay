@@ -379,7 +379,7 @@ public partial class MainWindow
 			{
 				if (e.NewValue is { } number) Apply(c => set(c, (double)number));
 			};
-			panel.Children.Add(new TextBlock { Text = label, Classes = { "infoLabel" }, Margin = new Avalonia.Thickness(0) });
+			panel.Children.Add(new TextBlock { Text = label, Classes = { "infoLabel" }, Margin = new Thickness(0) });
 			panel.Children.Add(box);
 			return box;
 		}

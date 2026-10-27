@@ -13,9 +13,8 @@ public partial class MainWindow
 {
 	private readonly DispatcherTimer _dirtyTimer = new() { Interval = TimeSpan.FromSeconds(2) };
 	private string? _cleanFingerprint;
-	private bool _unsaved;
 
-	private bool HasUnsavedChanges => _unsaved;
+	private bool HasUnsavedChanges { get; set; }
 
 	private void WireUnsaved()
 	{
@@ -54,9 +53,9 @@ public partial class MainWindow
 
 	private void SetUnsaved(bool unsaved)
 	{
-		if (_unsaved == unsaved) return;
+		if (HasUnsavedChanges == unsaved) return;
 
-		_unsaved = unsaved;
+		HasUnsavedChanges = unsaved;
 		UpdateTitle();
 	}
 
@@ -67,7 +66,7 @@ public partial class MainWindow
 	private async Task<bool> ConfirmUnsavedAsync()
 	{
 		CheckUnsaved();
-		if (!_unsaved) return true;
+		if (!HasUnsavedChanges) return true;
 
 		DialogChoice choice = await ConfirmDialog.AskOrSkipAsync(this, Strings.Unsaved_Title, Strings.Unsaved_Message, Strings.Unsaved_Save,
 			Strings.Unsaved_Discard, DialogKind.Warning);
@@ -76,6 +75,6 @@ public partial class MainWindow
 
 		await SaveProjectCoreAsync();
 		CheckUnsaved();
-		return !_unsaved;
+		return !HasUnsavedChanges;
 	}
 }

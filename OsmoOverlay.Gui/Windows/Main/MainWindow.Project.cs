@@ -371,7 +371,7 @@ public partial class MainWindow
 	/// </summary>
 	private void UpdateTitle()
 	{
-		string star = _unsaved ? "*" : "";
+		string star = HasUnsavedChanges ? "*" : "";
 		string title = _projectPath is { } path ? $"{Path.GetFileNameWithoutExtension(path)}{star} - {BaseTitle}" : BaseTitle + star;
 		if (_phase is UiPhase.SummaryReady or UiPhase.Rendering)
 		{

@@ -75,7 +75,7 @@ public sealed class TelemetryExportTests
 	[TestMethod]
 	public void Csv_KeepsOneFrameInEveryInterval()
 	{
-		string[] lines = Csv(Frames(55, 10), 1).Split('\n', StringSplitOptions.RemoveEmptyEntries);
+		string[] lines = Csv(Frames(55), 1).Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
 		Assert.AreEqual(1 + 6, lines.Length);
 		CollectionAssert.AreEqual(new[] { "0", "1", "2", "3", "4", "5" }, lines.Skip(1).Select(l => l.Split(',')[0]).ToArray());
@@ -155,7 +155,7 @@ public sealed class TelemetryExportTests
 		try
 		{
 			Assert.AreEqual(2, TelemetryExport.Write(Path.Combine(dir, "t.CSV"), Frames(2)));
-			Assert.AreEqual(1, TelemetryExport.Write(Path.Combine(dir, "t.gpx"), Frames(30, 10), 5));
+			Assert.AreEqual(1, TelemetryExport.Write(Path.Combine(dir, "t.gpx"), Frames(30), 5));
 
 			Assert.IsTrue(File.ReadAllText(Path.Combine(dir, "t.CSV")).StartsWith("time_s,"));
 			StringAssert.Contains(File.ReadAllText(Path.Combine(dir, "t.gpx")), "<gpx");

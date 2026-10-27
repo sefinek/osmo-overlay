@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
@@ -14,43 +15,42 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public partial class MainWindow
 {
-	private readonly RenderQueue _queue = new();
 	private readonly QueueStore _queueStore = new();
 	private QueueWindow? _queueWindow;
 	private CancellationTokenSource? _queueCts;
 
-	internal RenderQueue Queue => _queue;
+	internal RenderQueue Queue { get; } = new();
 
-	internal bool IsQueueRunning => _queue.IsRunning;
+	internal bool IsQueueRunning => Queue.IsRunning;
 
 	/// <summary>True from the moment Start is pressed, not only once the queue's own thread is going.</summary>
-	private bool QueueBusy => _queue.IsRunning || _queueCts is not null;
+	private bool QueueBusy => Queue.IsRunning || _queueCts is not null;
 
 	private void WireQueue()
 	{
 		// What was waiting when the app last closed (a render that was running then waits again).
-		foreach (QueueRequest request in _queueStore.Load()) _queue.Add(request);
-		_queue.ListChanged += SaveQueue;
-		_queue.ListChanged += RequestQueueButtonUpdate;
-		_queue.ItemChanged += _ => RequestQueueButtonUpdate();
+		foreach (QueueRequest request in _queueStore.Load()) Queue.Add(request);
+		Queue.ListChanged += SaveQueue;
+		Queue.ListChanged += RequestQueueButtonUpdate;
+		Queue.ItemChanged += _ => RequestQueueButtonUpdate();
 		UpdateQueueButton();
 	}
 
 	private void RequestQueueButtonUpdate()
 	{
-		Avalonia.Threading.Dispatcher.UIThread.Post(UpdateQueueButton);
+		Dispatcher.UIThread.Post(UpdateQueueButton);
 	}
 
 	/// <summary>"Queue (3)": a queue that outlives the app is easy to forget, so what waits in it shows on the button.</summary>
 	private void UpdateQueueButton()
 	{
-		int waiting = _queue.Items.Count(i => i.State is QueueState.Waiting or QueueState.Rendering);
+		int waiting = Queue.Items.Count(i => i.State is QueueState.Waiting or QueueState.Rendering);
 		QueueOpenButton.Content = waiting > 0 ? $"{Strings.Main_Queue} ({waiting})" : Strings.Main_Queue;
 	}
 
 	private void SaveQueue()
 	{
-		_queueStore.Save(_queue.Items.Where(i => i.State is not (QueueState.Done or QueueState.Skipped)).Select(i => i.Request));
+		_queueStore.Save(Queue.Items.Where(i => i.State is not (QueueState.Done or QueueState.Skipped)).Select(i => i.Request));
 	}
 
 	private string ProjectDisplayName()
@@ -71,7 +71,7 @@ public partial class MainWindow
 		try
 		{
 			string path = _queueStore.Snapshot(BuildProject());
-			_queue.Add(new QueueRequest(path, Name: ProjectDisplayName()));
+			Queue.Add(new QueueRequest(path, Name: ProjectDisplayName()));
 			AppendLog(string.Format(Strings.Queue_Added, Path.GetFileName(OutputPathBox.Text)));
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -88,7 +88,7 @@ public partial class MainWindow
 		{
 			try
 			{
-				_queue.Add(new QueueRequest(_queueStore.Import(path), Name: Path.GetFileNameWithoutExtension(path)));
+				Queue.Add(new QueueRequest(_queueStore.Import(path), Name: Path.GetFileNameWithoutExtension(path)));
 			}
 			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or JsonException)
 			{
@@ -111,7 +111,7 @@ public partial class MainWindow
 		{
 			try
 			{
-				_queue.Add(new QueueRequest(_queueStore.Snapshot(ProjectRender.ForRecordings(job, settings)), Name: Path.GetFileNameWithoutExtension(job[0])));
+				Queue.Add(new QueueRequest(_queueStore.Snapshot(ProjectRender.ForRecordings(job, settings)), Name: Path.GetFileNameWithoutExtension(job[0])));
 			}
 			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 			{
@@ -157,12 +157,12 @@ public partial class MainWindow
 		CancellationTokenSource cts = _queueCts;
 		try
 		{
-			_queue.ItemChanged += OnQueueItemProgress;
-			await Task.Run(() => _queue.RunAsync(existing, cts.Token));
+			Queue.ItemChanged += OnQueueItemProgress;
+			await Task.Run(() => Queue.RunAsync(existing, cts.Token));
 		}
 		finally
 		{
-			_queue.ItemChanged -= OnQueueItemProgress;
+			Queue.ItemChanged -= OnQueueItemProgress;
 			_queueCts = null;
 			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
 			SaveQueue();
@@ -171,7 +171,7 @@ public partial class MainWindow
 
 		if (cts.IsCancellationRequested) return;
 
-		IReadOnlyList<QueueItem> items = _queue.Items;
+		IReadOnlyList<QueueItem> items = Queue.Items;
 		int done = items.Count(i => i.State == QueueState.Done);
 		int rest = items.Count(i => i.State is QueueState.Failed or QueueState.Skipped);
 		await NotifyRenderFinishedAsync(Strings.Queue_FinishedTitle, string.Format(Strings.Queue_FinishedMessage, done, rest),
@@ -187,6 +187,6 @@ public partial class MainWindow
 	{
 		if (item.State != QueueState.Rendering || item.Progress <= 0) return;
 
-		Avalonia.Threading.Dispatcher.UIThread.Post(() => TaskbarProgress.SetValue(this, (ulong)(item.Progress * 1000), 1000));
+		Dispatcher.UIThread.Post(() => TaskbarProgress.SetValue(this, (ulong)(item.Progress * 1000), 1000));
 	}
 }

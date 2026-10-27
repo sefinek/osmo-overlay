@@ -40,7 +40,6 @@ public static class GpxReader
 
 		// A planned route (rte) is where to go, not when the camera was there; its points' times, when it has any, are not a ride's.
 		return points.Count < 2 ? throw new InvalidDataException(hasTrackPoints ? CoreStrings.ExternalTrack_GpxNoTimes : hasRoute ? CoreStrings.ExternalTrack_GpxRouteOnly : CoreStrings.ExternalTrack_GpxEmpty) : new ExternalTrack(points);
-
 	}
 
 	private static ExternalTrackPoint? ReadPoint(XmlReader reader)

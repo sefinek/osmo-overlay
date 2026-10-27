@@ -1,4 +1,3 @@
-using OsmoOverlay.Core;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 

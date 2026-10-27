@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using OsmoOverlay.Cameras.Dji;
 using OsmoOverlay.Cameras.GoPro;
@@ -401,7 +402,7 @@ foreach (string spec in musicSpecs)
 	{
 		length = SourceProbe.ProbeAudioDuration(musicFile);
 	}
-	catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or IOException)
+	catch (Exception ex) when (ex is InvalidOperationException or Win32Exception or IOException)
 	{
 		Console.Error.WriteLine($"Error: {musicFile} can't be read as sound: {ex.Message}");
 		return 1;
@@ -540,7 +541,7 @@ static (FileSummary Summary, List<DerivedFrame> Frames, OverlaySettings Settings
 	{
 		(summary, problem) = FileSummaryReader.Read(paths);
 	}
-	catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+	catch (Exception ex) when (ex is InvalidOperationException or IOException or Win32Exception)
 	{
 		Console.Error.WriteLine($"Error: {ex.Message}");
 		return null;

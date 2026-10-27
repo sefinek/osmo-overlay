@@ -208,6 +208,7 @@ public sealed partial class OverlayRenderer
 				DrawTrailTail(canvas, toDial.MapPoint((float)last.East, (float)last.North), toDial.MapPoint((float)east, (float)north), frame.SpeedKmh, element);
 			}
 		}
+
 		return new SKPoint((float)((east - centerEast) * scale), (float)(-(north - centerNorth) * scale));
 	}
 

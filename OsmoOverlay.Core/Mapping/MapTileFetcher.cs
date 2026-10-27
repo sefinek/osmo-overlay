@@ -146,7 +146,7 @@ public static class MapTileFetcher
 		lock (SharedDownloadsLock)
 		{
 			TrimSharedDownloads();
-			if (!SharedDownloads.TryGetValue(url, out var entry))
+			if (!SharedDownloads.TryGetValue(url, out (Task<byte[]> Download, DateTime Added) entry))
 			{
 				entry = (Http.GetByteArrayAsync(url, CancellationToken.None), DateTime.UtcNow);
 				SharedDownloads[url] = entry;
@@ -163,7 +163,7 @@ public static class MapTileFetcher
 		{
 			lock (SharedDownloadsLock)
 			{
-				if (SharedDownloads.TryGetValue(url, out var entry) && entry.Download == download) SharedDownloads.Remove(url);
+				if (SharedDownloads.TryGetValue(url, out (Task<byte[]> Download, DateTime Added) entry) && entry.Download == download) SharedDownloads.Remove(url);
 			}
 
 			throw;
@@ -176,7 +176,7 @@ public static class MapTileFetcher
 		DateTime expired = DateTime.UtcNow - SharedDownloadLifetime;
 		long total = 0;
 		List<KeyValuePair<string, (Task<byte[]> Download, DateTime Added)>> finished = [];
-		foreach (var pair in SharedDownloads)
+		foreach (KeyValuePair<string, (Task<byte[]> Download, DateTime Added)> pair in SharedDownloads)
 		{
 			if (!pair.Value.Download.IsCompleted) continue;
 			if (pair.Value.Added < expired || !pair.Value.Download.IsCompletedSuccessfully)
@@ -191,7 +191,7 @@ public static class MapTileFetcher
 
 		if (total <= SharedDownloadBudgetBytes) return;
 
-		foreach (var pair in finished.OrderBy(p => p.Value.Added))
+		foreach (KeyValuePair<string, (Task<byte[]> Download, DateTime Added)> pair in finished.OrderBy(p => p.Value.Added))
 		{
 			SharedDownloads.Remove(pair.Key);
 			total -= pair.Value.Download.Result.Length;

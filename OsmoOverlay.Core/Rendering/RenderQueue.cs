@@ -216,7 +216,7 @@ public sealed class RenderQueue
 				return;
 			}
 
-			OverlayProject project = OverlayProject.Load(item.Request.ProjectPath);
+			var project = OverlayProject.Load(item.Request.ProjectPath);
 			if (ProjectRender.MissingFiles(project, _services.FileExists).Where(p => project.InputPaths.Contains(p)).ToList() is { Count: > 0 } missing)
 			{
 				Update(item, QueueState.Failed, string.Format(CoreStrings.Queue_RecordingsMissing, string.Join(", ", missing.Select(Path.GetFileName))));

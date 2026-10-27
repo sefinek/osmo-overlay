@@ -19,7 +19,7 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void Create_CountsFramesTimeAndRate()
 	{
-		TelemetryReport report = TelemetryReport.Create(Frames(101), true);
+		var report = TelemetryReport.Create(Frames(101), true);
 
 		Assert.AreEqual(101, report.Frames);
 		Assert.AreEqual(10, report.DurationSeconds, 1e-9);
@@ -31,7 +31,7 @@ public sealed class TelemetryReportTests
 	{
 		List<DerivedFrame> frames = [.. Enumerable.Range(0, 20).Select(i => Frame(i, fix: i is < 4 or >= 14))];
 
-		TelemetryReport report = TelemetryReport.Create(frames, true);
+		var report = TelemetryReport.Create(frames, true);
 
 		Assert.AreEqual(10 / 20.0, report.GpsFixShare, 1e-9);
 		Assert.AreEqual(1, report.GpsLossStretches);
@@ -55,7 +55,7 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void CheckLean_RollSignTellsRightFromLeft()
 	{
-		TelemetryReport right = TelemetryReport.Create(Frames(30, roll: 25), true);
+		var right = TelemetryReport.Create(Frames(30, roll: 25), true);
 
 		Assert.IsTrue(right.CheckLean(Lean.Right));
 		Assert.IsFalse(right.CheckLean(Lean.Left), "a wrong sign shows as the other lean");
@@ -73,7 +73,7 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void CheckLean_ALevelCameraLeansNoWay()
 	{
-		TelemetryReport level = TelemetryReport.Create(Frames(30, roll: 2, pitch: -1), true);
+		var level = TelemetryReport.Create(Frames(30, roll: 2, pitch: -1), true);
 
 		Assert.IsFalse(level.CheckLean(Lean.Right));
 		Assert.IsFalse(level.CheckLean(Lean.NoseDown));

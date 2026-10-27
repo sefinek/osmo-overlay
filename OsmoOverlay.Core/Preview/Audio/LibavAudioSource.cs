@@ -131,7 +131,7 @@ public sealed unsafe class LibavAudioSource : IDisposable
 			_resampler = resampler;
 		}
 
-		int capacity = _converts ? (int)Math.Min(int.MaxValue / Channels, ffmpeg.swr_get_out_samples(_resampler, frame->nb_samples)) : frame->nb_samples;
+		int capacity = _converts ? Math.Min(int.MaxValue / Channels, ffmpeg.swr_get_out_samples(_resampler, frame->nb_samples)) : frame->nb_samples;
 		int needed = capacity * Channels;
 		if (_buffer.Length < needed) _buffer = new float[needed];
 

@@ -16,7 +16,7 @@ public sealed class MusicTrackTests
 	[TestMethod]
 	public void Normalize_CutsTheClipToTheFileAndTheOutput()
 	{
-		List<MusicClip> clips = MusicTrack.Normalize([Clip(50, 20, 30), Clip(0, 40, 30, 10)], Output);
+		List<MusicClip> clips = MusicTrack.Normalize([Clip(50), Clip(0, 40, 30, 10)], Output);
 
 		Assert.AreEqual(2, clips.Count);
 		Assert.AreEqual(20, clips[0].LengthSeconds, 1e-9);
@@ -83,7 +83,7 @@ public sealed class MusicTrackTests
 	[TestMethod]
 	public void DuckDbAt_RampsInAndOutAndSumsTheClips()
 	{
-		List<MusicClip> clips = [Clip(10, 20, duck: -12), Clip(15, 10, duck: -6)];
+		List<MusicClip> clips = [Clip(10, duck: -12), Clip(15, 10, duck: -6)];
 
 		Assert.AreEqual(0, MusicTrack.DuckDbAt(clips, 5));
 		Assert.AreEqual(-6, MusicTrack.DuckDbAt(clips, 10 + MusicTrack.DuckRampSeconds / 2), 1e-9);
@@ -95,7 +95,7 @@ public sealed class MusicTrackTests
 	[TestMethod]
 	public void WithCrossfades_OverlapBecomesTheFadeOfBothClips()
 	{
-		List<MusicClip> heard = MusicTrack.WithCrossfades([Clip(0, 20, 30, fadeOut: 1), Clip(15, 20, 30, fadeIn: 2)]);
+		List<MusicClip> heard = MusicTrack.WithCrossfades([Clip(fadeOut: 1), Clip(15, fadeIn: 2)]);
 
 		Assert.AreEqual(5, heard[0].FadeOutSeconds, 1e-9);
 		Assert.AreEqual(5, heard[1].FadeInSeconds, 1e-9);
@@ -105,8 +105,8 @@ public sealed class MusicTrackTests
 	[TestMethod]
 	public void WithCrossfades_ClipInsideAnotherOrApartIsLeftAlone()
 	{
-		List<MusicClip> inside = MusicTrack.WithCrossfades([Clip(0, 30, 40), Clip(5, 10, 30)]);
-		List<MusicClip> apart = MusicTrack.WithCrossfades([Clip(0, 10, 30), Clip(20, 10, 30)]);
+		List<MusicClip> inside = MusicTrack.WithCrossfades([Clip(0, 30, 40), Clip(5, 10)]);
+		List<MusicClip> apart = MusicTrack.WithCrossfades([Clip(0, 10), Clip(20, 10)]);
 
 		Assert.IsTrue(inside.All(c => c.FadeInSeconds == 0 && c.FadeOutSeconds == 0));
 		Assert.IsTrue(apart.All(c => c.FadeInSeconds == 0 && c.FadeOutSeconds == 0));

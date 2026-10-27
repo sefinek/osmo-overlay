@@ -303,7 +303,7 @@ internal static class Mp4Fields
 	private static uint TableCount(ReadOnlySpan<byte> payload, int entrySize)
 	{
 		uint count = BinaryPrimitives.ReadUInt32BigEndian(payload[4..]);
-		if (8L + (long)count * entrySize > payload.Length) throw new InvalidDataException("A table is longer than its box.");
+		if (8L + count * entrySize > payload.Length) throw new InvalidDataException("A table is longer than its box.");
 		return count;
 	}
 

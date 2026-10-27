@@ -178,10 +178,6 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		FocusableProperty.OverrideDefaultValue<PreviewTimeline>(false);
 	}
 
-	public PreviewTimeline()
-	{
-	}
-
 	/// <summary>A drag on the timeline began / ended - Value keeps changing (ValueChanged) in between.</summary>
 	public event Action? ScrubStarted;
 	public event Action? ScrubEnded;

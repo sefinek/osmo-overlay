@@ -319,7 +319,7 @@ public sealed partial class OverlayRenderer
 		if (!full.ScalePixels(bitmap.PeekPixels(), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear))) return full;
 
 		bitmap.SetImmutable();
-		SKImage image = SKImage.FromBitmap(bitmap);
+		var image = SKImage.FromBitmap(bitmap);
 		_routeIntroLevels[level] = image;
 		return image;
 	}
@@ -393,7 +393,7 @@ public sealed partial class OverlayRenderer
 	/// <param name="finalScale">The card's pixels per mosaic pixel once the map has arrived - the largest it is ever drawn at.</param>
 	private RouteGeometry RouteIntroRouteFor(List<SKPoint> pixels, float finalScale)
 	{
-		var key = (_routeIntroMosaic, RouteIntro, finalScale);
+		(RouteMapMosaic? _routeIntroMosaic, RouteIntroSettings RouteIntro, float finalScale) key = (_routeIntroMosaic, RouteIntro, finalScale);
 		if (_routeIntroRoute is { } cached && _routeIntroRouteKey == key) return cached;
 
 		ClearRouteIntroRoute();

@@ -100,7 +100,7 @@ public partial class MainWindow
 	protected override void OnClosing(WindowClosingEventArgs e)
 	{
 		// Before base: its Closing event sets _closing from e.Cancel.
-		if ((_phase == UiPhase.Rendering || _queue.IsRunning) && !_closeConfirmed && OverlaySettingsStore.Load().ConfirmCloseWhileRendering)
+		if ((_phase == UiPhase.Rendering || Queue.IsRunning) && !_closeConfirmed && OverlaySettingsStore.Load().ConfirmCloseWhileRendering)
 		{
 			e.Cancel = true;
 			if (!_askingToClose) _ = ConfirmCloseDuringRenderAsync();

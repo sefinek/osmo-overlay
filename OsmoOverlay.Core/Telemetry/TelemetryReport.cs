@@ -95,11 +95,11 @@ public sealed record TelemetryReport(
 		var text = new StringBuilder();
 		text.AppendLine(Line("Frames", $"{Frames} over {Num(DurationSeconds, "0.0")} s ({Num(SampleRateHz, "0.0")} per second)"));
 		text.AppendLine(Line("GPS fix", $"{Num(GpsFixShare * 100, "0.0")}% of the frames; {GpsLossStretches} stretch(es) without one" +
-		                              (GpsLossStretches > 0 ? $", the longest {Num(LongestGpsLossSeconds, "0.0")} s" : "")));
+		                                (GpsLossStretches > 0 ? $", the longest {Num(LongestGpsLossSeconds, "0.0")} s" : "")));
 		text.AppendLine(Line("GPS time", HasGpsTime ? "present" : "none"));
 		text.AppendLine(Line("Max speed", $"{Num(MaxSpeedKmh, "0.0")} km/h"));
 		text.AppendLine(Line("Accelerometer", $"{Num(Gravity.Median, "0.000")} g median ({Num(Gravity.Min, "0.00")} to {Num(Gravity.Max, "0.00")})" +
-		                                    (GravityLooksRight ? "" : "  <- far from 1 g: the scale may be wrong")));
+		                                      (GravityLooksRight ? "" : "  <- far from 1 g: the scale may be wrong")));
 		text.AppendLine(Line("Roll", TiltKnown ? Describe(Roll) : "unknown (the camera's axes aren't known)"));
 		text.AppendLine(Line("Pitch", TiltKnown ? Describe(Pitch) : "unknown (the camera's axes aren't known)"));
 		return text.ToString().TrimEnd();
