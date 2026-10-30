@@ -24,8 +24,7 @@ namespace OsmoOverlay.Core.Overlay;
 ///     RouteIntro* configures the optional fullscreen "whole route" card shown for the first
 ///     RouteIntroDurationSeconds of the render - on by default, same as MapWidget, even though it
 ///     also needs network access to fetch map tiles. RouteIntroStats picks which stats appear alongside the
-///     map, RouteIntroLabels their captions; RouteIntroUnits is its own setting (not per-widget Units, like
-///     Elevation/Distance/SpeedGauge use) since the card has no OverlayElement of its own to carry one.
+///     map, RouteIntroLabels their captions; its stats use the settings' MeasurementUnits, like the widgets' defaults.
 /// </summary>
 public sealed record OverlaySettings(
 	string? ActivePresetId = null,
@@ -70,7 +69,6 @@ public sealed record OverlaySettings(
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,
 	// The user's own captions for the card's stats, by RouteIntroStats name (RouteIntroLabels).
 	Dictionary<string, string>? RouteIntroLabels = null,
-	UnitSystem RouteIntroUnits = UnitSystem.Metric,
 	// The overview map's route colored by speed like the compass/map widgets' TrailColorBySpeed - off here by default.
 	bool RouteIntroColorBySpeed = false,
 	// How the overview map's route crosses a stretch without a GPS fix (RouteJoin) - a cut has its own choice, made in the cut editor.
@@ -172,7 +170,11 @@ public sealed record OverlaySettings(
 	// The SDK key of the user's DJI Open API app, which DJI's flight record API asks for to give the keys of an encrypted flight log (DjiKeychains). A secret: protected on disk like MapApiKeys.
 	string? DjiApiKey = null,
 	// While a recording is read the panels give way to an animated "app is working" screen over the console; off keeps them in place (a slow computer).
-	bool WorkingAnimation = true)
+	bool WorkingAnimation = true,
+	// The units new widgets and the built-in layouts start with (UnitPreferences); null = metric, until the welcome window's Units step is saved.
+	UnitPreferences? MeasurementUnits = null,
+	// The map behind a GPS track viewed with no recording (TrackMapSettings); null = its defaults.
+	TrackMapSettings? TrackMap = null)
 {
 	/// <summary>Whether the preview draws the widgets' shadows: on in the preview and not turned off everywhere.</summary>
 	[JsonIgnore]

@@ -34,6 +34,7 @@
 					<Button Content="Danger" Tag="ask:Danger" Click="OnActionClick" />
 					<Button Content="With progress" Tag="ask-working" Click="OnActionClick" />
 					<Button Content="Settings preset picker" Tag="config-preset-picker" Click="OnActionClick" />
+					<Button Content="Track preview format" Tag="track-format" Click="OnActionClick" />
 				</WrapPanel>
 				<TextBlock Text="DIALOGS - NOTICE (OK)" Classes="sectionLabel" />
 				<WrapPanel>

@@ -1,11 +1,13 @@
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
+using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
 
@@ -18,7 +20,9 @@ public partial class MainWindow
 	private ExternalTrackPlayback? _fullTelemetry;
 	private TimeSpan _fullTelemetryPosition;
 	private int _fullTelemetryGeneration;
-	private bool CanRenderTelemetry => _summary?.HasTelemetry == true && (_externalTrack is null || _externalTrackApplied);
+	private bool _trackOnly;
+	private TrackOnlyFormat _trackOnlyFormat = TrackOnlyFormat.Default;
+	private bool CanRenderTelemetry => !_trackOnly && _summary?.HasTelemetry == true && (_externalTrack is null || _externalTrackApplied);
 
 	private async void OnExternalTrackClick(object? sender, RoutedEventArgs e)
 	{
@@ -121,27 +125,8 @@ public partial class MainWindow
 					(IReadOnlyList<(double Start, double End)>)TelemetryProcessor.FindGpsLossRanges(prepared.RawFrames));
 			});
 			if (generation != _fullTelemetryGeneration || _summary != summary || _phase != UiPhase.SummaryReady) return;
-			_fullTelemetry = playback;
-			_fullTelemetryPosition = TimeSpan.FromSeconds(Math.Clamp((context.Sync.At(_previewPosition.TotalSeconds) - context.Track.StartUtc).TotalSeconds, 0, playback.DurationSeconds));
-			FullTelemetryButton.Classes.Set("active", true);
-			CutScrim.IsVisible = false;
-			foreach (PreviewTimeline timeline in Timelines)
-			{
-				timeline.Cuts = [];
-				timeline.Moments = [];
-				timeline.Volume = [];
-				timeline.Maximum = playback.DurationSeconds;
-				timeline.RecordingTimeAt = playback.VideoPosition;
-				timeline.RouteIntro = null;
-				timeline.Selection = null;
-				timeline.IsReadOnly = true;
-				timeline.Highlight = ExternalTrackPreview.RecordingRange(playback.Track, playback.Synchronization, playback.RecordingSeconds);
-				timeline.Files = timeline.Highlight is { } range ? [new TimelineFile(range.StartSeconds, range.EndSeconds, Strings.FullTelemetry_Recording, false)] : [];
-				timeline.FlightEvents = [.. playback.Track.Events.Select(e => new TimelineFlightEvent((e.Utc - playback.Track.StartUtc).TotalSeconds, e.Event))];
-			}
-			ShowGpsMarks(anomalies, lossRanges);
-			RefreshLayers();
-			await OpenPreviewPlayerAsync(summary, _fullTelemetryPosition, trackPlayback: playback);
+			TimeSpan position = TimeSpan.FromSeconds(Math.Clamp((context.Sync.At(_previewPosition.TotalSeconds) - context.Track.StartUtc).TotalSeconds, 0, playback.DurationSeconds));
+			await ShowFullTelemetryAsync(summary, playback, anomalies, lossRanges, position);
 		}
 		catch (Exception ex)
 		{
@@ -152,9 +137,35 @@ public partial class MainWindow
 		}
 	}
 
+	private async Task ShowFullTelemetryAsync(FileSummary summary, ExternalTrackPlayback playback, IReadOnlyList<GpsAnomaly> anomalies,
+		IReadOnlyList<(double Start, double End)> lossRanges, TimeSpan position)
+	{
+		_fullTelemetry = playback;
+		_fullTelemetryPosition = position;
+		FullTelemetryButton.Classes.Set("active", true);
+		CutScrim.IsVisible = false;
+		foreach (PreviewTimeline timeline in Timelines)
+		{
+			timeline.Cuts = [];
+			timeline.Moments = [];
+			timeline.Volume = [];
+			timeline.Maximum = playback.DurationSeconds;
+			timeline.RecordingTimeAt = playback.VideoPosition;
+			timeline.RouteIntro = null;
+			timeline.Selection = null;
+			timeline.IsReadOnly = true;
+			timeline.Highlight = ExternalTrackPreview.RecordingRange(playback.Track, playback.Synchronization, playback.RecordingSeconds);
+			timeline.Files = timeline.Highlight is { } range ? [new TimelineFile(range.StartSeconds, range.EndSeconds, Strings.FullTelemetry_Recording, false)] : [];
+			timeline.FlightEvents = [.. playback.Track.Events.Select(e => new TimelineFlightEvent((e.Utc - playback.Track.StartUtc).TotalSeconds, e.Event))];
+		}
+		ShowGpsMarks(anomalies, lossRanges);
+		RefreshLayers();
+		await OpenPreviewPlayerAsync(summary, position, trackPlayback: playback);
+	}
+
 	private void ReturnToRecordingPreview()
 	{
-		if (_fullTelemetry is not { } playback) return;
+		if (_fullTelemetry is not { } playback || _trackOnly) return;
 		double seconds = ExternalTrackPreview.RecordingPosition(playback.Track, playback.Synchronization, _fullTelemetryPosition.TotalSeconds);
 		_previewPosition = TimeSpan.FromSeconds(Math.Clamp(seconds, 0, Math.Max(0, playback.RecordingSeconds - 1 / _summary!.Video.Fps)));
 		_previewFrame = FrameAt(_previewPosition.TotalSeconds);
@@ -166,9 +177,10 @@ public partial class MainWindow
 	private void CloseFullTelemetry(bool restorePreview)
 	{
 		_fullTelemetryGeneration++;
-		if (_fullTelemetry is null) return;
+		if (_fullTelemetry is not { } closing) return;
 		_fullTelemetry = null;
 		_previewPlayer.Close();
+		closing.Backdrop?.Dispose();
 		FullTelemetryButton.Classes.Set("active", false);
 		_suppressTimelineEvent = true;
 		foreach (PreviewTimeline timeline in Timelines)
@@ -182,6 +194,88 @@ public partial class MainWindow
 		_suppressTimelineEvent = false;
 		if (restorePreview && _phase == UiPhase.SummaryReady && _summary is { } summary)
 			_ = OpenPreviewAsync(summary, previewPosition: _previewPosition);
+	}
+
+	private async void OnOpenTrackOnlyClick(object? sender, RoutedEventArgs e)
+	{
+		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering || _previewTestRunning) return;
+		if (await TrackFormatWindow.AskAsync(this, _trackOnlyFormat) is not { } format) return;
+
+		_trackOnlyFormat = format;
+		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenRememberedAsync("gps-track", new FilePickerOpenOptions
+		{
+			Title = Strings.Track_Title,
+			FileTypeFilter = [new FilePickerFileType(Strings.Track_FileType) { Patterns = [.. ExternalTrackReader.Extensions.SelectMany(x => new[] { "*" + x, "*" + x.ToUpperInvariant() })] }]
+		});
+		if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
+
+		await OpenTrackOnlyAsync(path, format);
+	}
+
+	/// <summary>A GPS track on its own (TrackOnlyRecording) in the full telemetry preview - it only plays, so rendering stays off.</summary>
+	private async Task OpenTrackOnlyAsync(string path, TrackOnlyFormat format)
+	{
+		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering) return;
+
+		ClosePreview();
+		ResetReframe();
+		ClearCuts();
+		SetVolumeLine([]);
+		ResetMusic();
+		ClearMoments();
+		ReleaseTimelineTracks();
+		_inputPaths.Clear();
+		RefreshInputFilesList();
+		OutputPathBox.Text = "";
+		ClearExternalTrack();
+		SetPhase(UiPhase.LoadingSummary);
+		AppendLog(string.Format(Strings.TrackOnly_Loading, Path.GetFileName(path)));
+		ExternalTrackPlayback? opening = null;
+		try
+		{
+			OverlaySettings settings = OverlaySettingsStore.Load();
+			(FileSummary summary, ExternalTrackPlayback playback, IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges) =
+				await Task.Run(() =>
+				{
+					(FileSummary created, ExternalTrackPlayback prepared) = TrackOnlyRecording.Create(ExternalTrackReader.Read(path), settings, format);
+					return (created, prepared, (IReadOnlyList<GpsAnomaly>)TelemetryProcessor.FindGpsAnomalies(prepared.RawFrames),
+						(IReadOnlyList<(double Start, double End)>)TelemetryProcessor.FindGpsLossRanges(prepared.RawFrames));
+				});
+
+			playback = opening = playback with { Backdrop = await TrackBackdrop.BuildAsync(playback.DerivedFrames, settings, format) };
+			_summary = summary;
+			_trackOnly = true;
+			_cleanFingerprint = null;
+			_availability = OverlayAvailability.Of(summary.TelemetryFrames!, true, null);
+			_mapSourcesForRoute = null;
+			_measuredSpeeds = null;
+			await Task.Run(() => RecordingSpeeds(summary));
+			PopulateTelemetryInfo(summary);
+			SetPhase(UiPhase.SummaryReady);
+			SetRenderButtons(false);
+			LoadOverlayPresets();
+			ShowTrackMapSettings();
+			PreviewPlaceholder.IsVisible = false;
+			TransportPanel.IsEnabled = true;
+			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;
+			await ShowFullTelemetryAsync(summary, playback, anomalies, lossRanges, TimeSpan.Zero);
+			UpdatePreviewStatus();
+			AppendLog(string.Format(Strings.TrackOnly_Opened, Path.GetFileName(path)));
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Error(ex, ex.Message);
+			AppendLog(string.Format(Strings.TrackOnly_Failed, ex.Message), LogLevel.Error);
+			ClosePreview();
+			if (_fullTelemetry != opening) opening?.Backdrop?.Dispose();
+			SetPhase(UiPhase.Idle);
+			ActionButton.IsEnabled = false;
+			await ConfirmDialog.ShowAsync(this, Strings.Track_Title, string.Format(Strings.TrackOnly_Failed, ex.Message), kind: DialogKind.Warning);
+		}
+		finally
+		{
+			TaskbarProgress.SetState(this, TaskbarProgress.State.NoProgress);
+		}
 	}
 
 	private void ShowExternalTrackInfo(ExternalTrack track)

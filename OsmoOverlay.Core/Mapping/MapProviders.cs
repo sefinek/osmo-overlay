@@ -304,7 +304,9 @@ public sealed record MapSources(
 	{
 		if (!(showLabels ?? (routeIntro ? ShowRouteIntroEsriLabels : ShowEsriLabels)) || !SupportsLabels(providerId)) return null;
 		if (Resolve(providerId) == MapProviders.EsriPublicId)
-			return "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
+			// Place names alone show nothing at a street map's zoom: the street names are Esri's separate transportation layer.
+			return MapLabelLayers.Join("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+				"https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}");
 
 		if (ApiKey(MapProviders.EsriKeyGroup) is not { } key) return null;
 		return "https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=" + Uri.EscapeDataString(key);

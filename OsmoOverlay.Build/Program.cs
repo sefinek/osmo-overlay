@@ -382,7 +382,7 @@ static string FindRepoRoot()
 static string ShortVersion(string version)
 {
 	string[] parts = version.Split('.');
-	return parts.Length == 4 && parts[3] == "0" ? string.Join('.', parts[..3]) : version;
+	return parts is [_, _, _, "0"] ? string.Join('.', parts[..3]) : version;
 }
 
 static string Suffix(Flavor flavor)

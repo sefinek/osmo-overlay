@@ -30,7 +30,6 @@ public sealed record SettingsPresetValues(
 	double RouteIntroDurationSeconds = 12.0,
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,
 	Dictionary<string, string>? RouteIntroLabels = null,
-	UnitSystem RouteIntroUnits = UnitSystem.Metric,
 	bool RouteIntroColorBySpeed = false,
 	RouteJoin RouteIntroGpsLossJoin = RouteJoins.Default,
 	bool RouteIntroShowStartFinish = true,
@@ -66,7 +65,7 @@ public sealed record SettingsPresetValues(
 	public static SettingsPresetValues From(OverlaySettings settings)
 	{
 		return new SettingsPresetValues(settings.ShowWatermark, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource,
-			settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats, settings.RouteIntroLabels, settings.RouteIntroUnits,
+			settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats, settings.RouteIntroLabels,
 			settings.RouteIntroColorBySpeed, settings.RouteIntroGpsLossJoin, settings.RouteIntroShowStartFinish, settings.RouteIntroWhenTrimmed,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel, settings.RouteIntroMapProvider, settings.RouteIntroShowEsriMapLabels,
 			settings.PreserveCameraMetadata, settings.TagExportedVideo, settings.MetadataKeepTelemetry, settings.MetadataKeepDebugTrack,
@@ -90,7 +89,6 @@ public sealed record SettingsPresetValues(
 			RouteIntroDurationSeconds = RouteIntroDurationSeconds,
 			RouteIntroStats = RouteIntroStats,
 			RouteIntroLabels = RouteIntroLabels,
-			RouteIntroUnits = RouteIntroUnits,
 			RouteIntroColorBySpeed = RouteIntroColorBySpeed,
 			RouteIntroGpsLossJoin = RouteIntroGpsLossJoin,
 			RouteIntroShowStartFinish = RouteIntroShowStartFinish,

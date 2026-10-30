@@ -67,13 +67,17 @@ internal static class FlightLogCrypto
 
 		using var aes = Aes.Create();
 		aes.Key = key;
-		try
+		// Decrypted without padding and checked by hand: a wrong key or a record the chain has lost is routine here (about a quarter
+		// of type 49), and an exception per record is slow and floods the debugger's output.
+		byte[] plain = aes.DecryptCbc(ciphertext, iv, PaddingMode.None);
+		int padding = plain[^1];
+		if (padding is < 1 or > 16) return [];
+
+		for (int i = plain.Length - padding; i < plain.Length; i++)
 		{
-			return aes.DecryptCbc(ciphertext, iv, PaddingMode.PKCS7);
+			if (plain[i] != padding) return [];
 		}
-		catch (CryptographicException)
-		{
-			return [];
-		}
+
+		return plain[..^padding];
 	}
 }

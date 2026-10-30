@@ -39,8 +39,10 @@ public static class OverlayPresetStore
 	/// <summary>The built-in presets as they are now, in the order they head the list.</summary>
 	private static List<OverlayPreset> BuiltIns()
 	{
-		return [OverlayPreset.CreateDefault(DefaultPresetId, CoreStrings.Preset_ActionCameras), OverlayPreset.CreateDrone(DronePresetId, CoreStrings.Preset_DjiDrones),
-			OverlayPreset.CreateFpv(FpvPresetId, CoreStrings.Preset_FpvDrones)];
+		UnitPreferences units = UnitPreferences.Current;
+		return [units.ApplyTo(OverlayPreset.CreateDefault(DefaultPresetId, CoreStrings.Preset_ActionCameras)),
+			units.ApplyTo(OverlayPreset.CreateDrone(DronePresetId, CoreStrings.Preset_DjiDrones)),
+			units.ApplyTo(OverlayPreset.CreateFpv(FpvPresetId, CoreStrings.Preset_FpvDrones))];
 	}
 
 	private static readonly string StoreDir = Path.Combine(

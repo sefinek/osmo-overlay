@@ -644,6 +644,26 @@
 								</StackPanel>
 							</Border>
 
+							<Border Classes="card" Name="TrackMapCard" IsVisible="False">
+								<StackPanel Spacing="8">
+									<StackPanel Classes="cardTitle">
+										<TextBlock Classes="cardTitleText" Text="{x:Static local:Strings.TrackMap_Header}" />
+									</StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Main_MapSource}" Classes="infoLabel" Margin="0" />
+									<local:MapSourcePicker Name="TrackMapSource" />
+									<CheckBox Name="TrackMapFollowCheck" Content="{x:Static local:Strings.TrackMap_Follow}" Click="OnTrackMapFollowChanged" />
+									<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+									           Text="{x:Static local:Strings.TrackMap_FollowHint}" />
+									<TextBlock Text="{x:Static local:Strings.TrackMap_MaxZoom}" Classes="infoLabel" Margin="0" />
+									<NumericUpDown Name="TrackMapZoomBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch"
+									               ValueChanged="OnTrackMapZoomChanged" />
+									<CheckBox Name="TrackMapTrailCheck" Content="{x:Static local:Strings.TrackMap_ShowTrail}" Click="OnTrackMapTrailChanged" />
+									<TextBlock Name="TrackMapStatus" Classes="infoLabel" Margin="0" FontSize="12" Opacity="0.6" TextWrapping="Wrap" IsVisible="False" />
+									<TextBlock Classes="infoLabel" Margin="0" FontSize="12" Opacity="0.4" TextWrapping="Wrap"
+									           Text="{x:Static local:Strings.Main_FetchesTilesOverTheNetwork}" />
+								</StackPanel>
+							</Border>
+
 							<Border Classes="card" Name="OutputInfoCard" IsVisible="False">
 								<StackPanel Spacing="4">
 									<StackPanel Classes="cardTitle">
@@ -754,6 +774,12 @@
 							        Click="OnResetElementClick" />
 						</Grid>
 						<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
+						<Border Name="BuiltInSettingsNotice" Classes="card" Padding="12,10" IsVisible="False">
+							<StackPanel Spacing="8">
+								<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Main_BuiltInSettingsLocked}" />
+								<Button Content="{x:Static local:Strings.Main_DuplicateToEdit}" HorizontalAlignment="Left" Click="OnDuplicatePresetClick" />
+							</StackPanel>
+						</Border>
 						<ContentControl Name="WidgetSettingsPanelHost" HorizontalContentAlignment="Stretch" />
 					</StackPanel>
 				</ScrollViewer>
@@ -961,9 +987,10 @@
 								<TextBlock Text="{x:Static local:Strings.Main_NoVideoLoaded}" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
 								<TextBlock Text="{x:Static local:Strings.Main_PickADjiOsmoAction}"
 								           Foreground="{StaticResource TextMutedBrush}" FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
-								           MaxWidth="320" TextAlignment="Center" />
+								           MaxWidth="480" TextAlignment="Center" />
 								<Button Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent" HorizontalAlignment="Center" Margin="0,4,0,0"
 								        Click="OnAddInputFilesClick" />
+								<Button Content="{x:Static local:Strings.TrackOnly_Open}" HorizontalAlignment="Center" Click="OnOpenTrackOnlyClick" />
 							</StackPanel>
 						</Grid>
 					</Border>

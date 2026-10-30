@@ -192,8 +192,6 @@ public partial class SettingsWindow : Window
 		RouteIntroZoomInDelayBox.Value = (decimal)routeIntro.MapZoomInDelaySeconds;
 		RouteIntroZoomInOptions.IsEnabled = routeIntro.MapZoomIn;
 		LoadRouteIntroStats(routeIntro);
-		RouteIntroMetricRadio.IsChecked = routeIntro.Units == UnitSystem.Metric;
-		RouteIntroImperialRadio.IsChecked = routeIntro.Units == UnitSystem.Imperial;
 		RouteIntroColorBySpeedCheck.IsChecked = routeIntro.ColorBySpeed;
 		RouteIntroGpsLossCombo.SelectedIndex = RouteJoinOptions.IndexOf(routeIntro.GpsLossJoin);
 		RouteIntroStartFinishCheck.IsChecked = routeIntro.ShowStartFinish;
@@ -356,7 +354,7 @@ public partial class SettingsWindow : Window
 		ShowRouteIntroCheck.IsChecked == true,
 		(double)(RouteIntroDurationBox.Value ?? 12),
 		_routeIntroStatRows.Where(r => r.Value.Check.IsChecked == true).Aggregate(RouteIntroStats.None, (all, r) => all | r.Key),
-		RouteIntroImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric,
+		UnitPreferences.Current,
 		RouteIntroColorBySpeedCheck.IsChecked == true,
 		_routeIntroProvider,
 		RouteIntroStartFinishCheck.IsChecked == true,

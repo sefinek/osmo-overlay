@@ -29,6 +29,7 @@ public partial class MainWindow
 	/// <summary>The flag button swaps the left column to the key moments panel, the same way the cut editor opens.</summary>
 	private void OnToggleMomentsPanelClick(object? sender, RoutedEventArgs e)
 	{
+		if (_trackOnly) return;
 		ReturnToRecordingPreview();
 		if (MomentsColumnScroll.IsVisible)
 		{
@@ -73,7 +74,7 @@ public partial class MainWindow
 	/// <summary>B: a moment at the frame on screen, named by its number until it's renamed in the panel.</summary>
 	private void AddMomentAtCurrentFrame()
 	{
-		if (_summary is null) return;
+		if (_summary is null || _trackOnly) return;
 		ReturnToRecordingPreview();
 
 		AddMoment(new KeyMoment(CurrentFrame(), string.Format(Strings.Moments_DefaultName, _moments.Count + 1)));

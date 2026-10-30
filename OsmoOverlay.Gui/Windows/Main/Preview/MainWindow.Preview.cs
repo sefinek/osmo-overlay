@@ -60,7 +60,7 @@ public partial class MainWindow
 			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
 			MomentsEditor.Attach(summary.Video.Fps, SourceFrames,
 				processedFrames,
-				UnitSystem.Metric);
+				UnitPreferences.Current);
 			RefreshCutViews();
 			RefreshMoments();
 			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;
@@ -115,7 +115,7 @@ public partial class MainWindow
 		ShowPlayingState(false);
 		TransportPanel.IsEnabled = false;
 		CutsEditor.Attach(0, 0);
-		MomentsEditor.Attach(0, 0, null, UnitSystem.Metric);
+		MomentsEditor.Attach(0, 0, null, UnitPreferences.Metric);
 		foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = false;
 		UpdateAudioPanel();
 
@@ -336,7 +336,7 @@ public partial class MainWindow
 			{
 				ExternalTrackPlayback updated = await Task.Run(() => ExternalTrackPreview.Prepare(playback.Track, playback.Synchronization, playback.RecordingSeconds, settings));
 				if (_fullTelemetry != playback) return;
-				_fullTelemetry = playback = updated;
+				_fullTelemetry = playback = updated with { Backdrop = playback.Backdrop };
 			}
 			await OpenPreviewPlayerAsync(summary, _fullTelemetryPosition, trackPlayback: playback);
 			if (playing && _fullTelemetry == playback) _previewPlayer.Play(_fullTelemetryPosition);

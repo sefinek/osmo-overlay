@@ -125,6 +125,7 @@
 						<Image Name="HardwareArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Hardware.webp}" />
 						<Image Name="SpeedArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Speed.webp}" />
 						<Image Name="MapArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Map.webp}" />
+						<Image Name="UnitsArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Speed.webp}" />
 						<Image Name="PreferencesArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Preferences.webp}" />
 						<Image Name="FinishArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Support.webp}" />
 					</Panel>
@@ -243,8 +244,14 @@
 									<Border Classes="iconBadge">
 										<local:IconView Data="{StaticResource IconInfo}" Classes="noticeIcon" />
 									</Border>
-									<TextBlock Grid.Column="1" Classes="rowText"
-									           Text="{x:Static local:Strings.Welcome_UseTheOriginalFilesFrom}" />
+									<StackPanel Grid.Column="1" Spacing="10">
+										<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_UseTheOriginalFilesFrom}" />
+										<Border CornerRadius="8" ClipToBounds="True" HorizontalAlignment="Center" MaxWidth="560"
+										        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+											<Image Stretch="Uniform" Source="{local:AssetImage Path=Welcome/GpsIndicator.webp}" />
+										</Border>
+										<TextBlock Classes="rowText caption" TextAlignment="Center" Text="{x:Static local:Strings.Welcome_GpsIndicatorCaption}" />
+									</StackPanel>
 								</Grid>
 							</Border>
 						</StackPanel>
@@ -411,6 +418,61 @@
 							</Border>
 						</StackPanel>
 
+						<StackPanel Name="UnitsStep" Classes="step" Opacity="0">
+							<StackPanel Classes="stepHeader">
+								<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="stepTitle" />
+								<TextBlock Classes="lead" Text="{x:Static local:Strings.Welcome_UnitsLead}" />
+							</StackPanel>
+							<StackPanel Spacing="6" Margin="0,4,0,0">
+								<TextBlock Text="{x:Static local:Strings.Welcome_UnitsQuickChoice}" Classes="fieldLabel" HorizontalAlignment="Center" />
+								<WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
+									<Button Content="{x:Static local:Strings.Common_Metric}" Tag="Metric" Margin="0,0,10,0" Click="OnUnitsQuickChoiceClick" />
+									<Button Content="{x:Static local:Strings.Welcome_UnitsUnitedStates}" Tag="UnitedStates" Margin="0,0,10,0" Click="OnUnitsQuickChoiceClick" />
+									<Button Content="{x:Static local:Strings.Welcome_UnitsUnitedKingdom}" Tag="UnitedKingdom" Click="OnUnitsQuickChoiceClick" />
+								</WrapPanel>
+								<TextBlock Name="UnitsSuggestionHint" Classes="rowText" TextAlignment="Center" Text="{x:Static local:Strings.Welcome_UnitsSuggested}" />
+							</StackPanel>
+							<Border Classes="card">
+								<StackPanel>
+									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+										<TextBlock Text="{x:Static local:Strings.Welcome_UnitsSpeed}" Classes="rowTitle" VerticalAlignment="Center" />
+										<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+											<RadioButton Name="UnitsSpeedMetricRadio" Content="km/h" GroupName="unitsSpeed" />
+											<RadioButton Name="UnitsSpeedImperialRadio" Content="mph" GroupName="unitsSpeed" />
+										</StackPanel>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+										<StackPanel Classes="rowDetails" VerticalAlignment="Center">
+											<TextBlock Text="{x:Static local:Strings.Welcome_UnitsDistance}" Classes="rowTitle" />
+											<TextBlock Text="{x:Static local:Strings.Welcome_UnitsDistanceHint}" Classes="rowText" />
+										</StackPanel>
+										<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+											<RadioButton Name="UnitsDistanceMetricRadio" Content="km, m" GroupName="unitsDistance" />
+											<RadioButton Name="UnitsDistanceImperialRadio" Content="mi, ft" GroupName="unitsDistance" />
+										</StackPanel>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+										<StackPanel Classes="rowDetails" VerticalAlignment="Center">
+											<TextBlock Text="{x:Static local:Strings.Welcome_UnitsAltitude}" Classes="rowTitle" />
+											<TextBlock Text="{x:Static local:Strings.Welcome_UnitsAltitudeHint}" Classes="rowText" />
+										</StackPanel>
+										<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+											<RadioButton Name="UnitsAltitudeMetricRadio" Content="m" GroupName="unitsAltitude" />
+											<RadioButton Name="UnitsAltitudeImperialRadio" Content="ft" GroupName="unitsAltitude" />
+										</StackPanel>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+										<TextBlock Text="{x:Static local:Strings.Welcome_UnitsTemperature}" Classes="rowTitle" VerticalAlignment="Center" />
+										<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+											<RadioButton Name="UnitsTemperatureMetricRadio" Content="°C" GroupName="unitsTemperature" />
+											<RadioButton Name="UnitsTemperatureImperialRadio" Content="°F" GroupName="unitsTemperature" />
+										</StackPanel>
+									</Grid>
+								</StackPanel>
+							</Border>
+							<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_UnitsNote}" />
+						</StackPanel>
+
 						<StackPanel Name="PreferencesStep" Classes="step" Opacity="0">
 							<StackPanel Classes="stepHeader">
 								<TextBlock Text="{x:Static local:Strings.Welcome_RenderingAndFiles}" Classes="stepTitle" />
@@ -479,13 +541,12 @@
 			</ScrollViewer>
 
 			<Border Grid.Row="1" Padding="24,10" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
-				<Grid Classes="wizardFooter" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
-					<StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+				<Grid Classes="wizardFooter" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+					<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
 						<Button Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
-						<Button Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Classes="wizard" Click="OnSkipClick" />
+						<Button Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
 					</StackPanel>
-					<Button Grid.Column="2" Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
-					<Button Grid.Column="3" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
+					<Button Grid.Column="2" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
 					        Click="OnOpenRecordingClick" />
 				</Grid>
 			</Border>

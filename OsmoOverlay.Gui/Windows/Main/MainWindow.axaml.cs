@@ -211,6 +211,7 @@ public partial class MainWindow : Window
 		WireAutoSave();
 		WireQueue();
 		WireUnsaved();
+		WireTrackMap();
 		WireCompare();
 		WireReframe();
 		WireDeveloperWindow();
@@ -480,6 +481,7 @@ public partial class MainWindow : Window
 		OverlaySettings updated = settings.Apply(saved);
 		if (updated != saved) OverlaySettingsStore.Save(updated);
 		SetDebugMode(updated.DebugMode);
+		ReloadPresetsAfterUnitsChange(before, saved);
 
 		AdoptLayout(updated);
 		UpdateTitle();
@@ -650,6 +652,11 @@ public partial class MainWindow : Window
 		UiPhase previous = _phase;
 		_phase = phase;
 		if (phase != UiPhase.SummaryReady) CloseFullTelemetry(false);
+		if (phase != UiPhase.SummaryReady && _trackOnly)
+		{
+			_trackOnly = false;
+			_summary = null;
+		}
 		UpdateTitle();
 
 		// The log while there's no recording on the timeline or a render runs; a freshly loaded summary brings back
@@ -665,9 +672,10 @@ public partial class MainWindow : Window
 
 		bool summaryVisible = phase is UiPhase.SummaryReady or UiPhase.Rendering;
 		SummaryPanel.IsVisible = summaryVisible;
-		OutputInfoCard.IsVisible = summaryVisible;
-		FileInfoCard.IsVisible = phase == UiPhase.SummaryReady;
+		OutputInfoCard.IsVisible = summaryVisible && !_trackOnly;
+		FileInfoCard.IsVisible = phase == UiPhase.SummaryReady && !_trackOnly;
 		TelemetryCard.IsVisible = phase == UiPhase.SummaryReady && _summary?.Telemetry is not null;
+		TrackMapCard.IsVisible = phase == UiPhase.SummaryReady && _trackOnly;
 		bool overlayReady = summaryVisible && _summary?.HasTelemetry == true && _overlayPresetsLoaded;
 		OverlayContent.IsVisible = overlayReady;
 		OverlayPlaceholder.IsVisible = !overlayReady;

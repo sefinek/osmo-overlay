@@ -573,8 +573,8 @@ public sealed partial class OverlayRenderer
 
 	/// <summary>
 	///     The stats RouteIntro.Stats turns on, two to a row in RouteIntroStat.All's order - each pair's two slots fixed, so
-	///     turning one stat off never moves another into a different pair. Units come from RouteIntro.Units (a card-level
-	///     setting, see OverlaySettings.RouteIntroUnits) - this card has no OverlayElement of its own to carry one.
+	///     turning one stat off never moves another into a different pair. Units come from RouteIntro.Units (the settings'
+	///     MeasurementUnits, one per quantity) - this card has no OverlayElement of its own to carry one.
 	///     Returns where the stats end - the top of what comes under them.
 	/// </summary>
 	private float DrawRouteIntroStats(SKCanvas canvas, float x, float startY)
@@ -687,15 +687,15 @@ public sealed partial class OverlayRenderer
 	{
 		if (!RouteIntro.Shows(stat)) return null;
 
-		UnitSystem units = RouteIntro.Units;
+		UnitPreferences units = RouteIntro.Units;
 		int last = _tripStats.Count - 1;
 		string value = stat switch
 		{
-			RouteIntroStats.Distance => Joined(FormatDistance(_totalDistanceMeters, units)),
-			RouteIntroStats.ElevationGain => Joined(FormatAltitude(last >= 0 ? _tripStats.ElevationGainMeters(last) : 0, units)),
-			RouteIntroStats.ElevationLoss => Joined(FormatAltitude(last >= 0 ? _tripStats.ElevationLossMeters(last) : 0, units)),
-			RouteIntroStats.MaxSpeed => Joined(FormatSpeed(_observedMaxSpeedKmh, units)),
-			RouteIntroStats.AverageSpeed => Joined(FormatSpeed(last >= 0 ? _tripStats.AverageSpeedKmh(last) : 0, units)),
+			RouteIntroStats.Distance => Joined(FormatDistance(_totalDistanceMeters, units.Distance)),
+			RouteIntroStats.ElevationGain => Joined(FormatAltitude(last >= 0 ? _tripStats.ElevationGainMeters(last) : 0, units.Altitude)),
+			RouteIntroStats.ElevationLoss => Joined(FormatAltitude(last >= 0 ? _tripStats.ElevationLossMeters(last) : 0, units.Altitude)),
+			RouteIntroStats.MaxSpeed => Joined(FormatSpeed(_observedMaxSpeedKmh, units.Speed)),
+			RouteIntroStats.AverageSpeed => Joined(FormatSpeed(last >= 0 ? _tripStats.AverageSpeedKmh(last) : 0, units.Speed)),
 			RouteIntroStats.Date => RouteIntroDate(),
 			RouteIntroStats.Duration => OverlayTimeFormatting.FormatElapsed(_totalDurationSeconds),
 			RouteIntroStats.MovingTime => OverlayTimeFormatting.FormatElapsed(last >= 0 ? _tripStats.MovingSeconds(last) : 0),
@@ -722,7 +722,7 @@ public sealed partial class OverlayRenderer
 					extreme = extreme is { } e ? pick(e, frame.Raw.AltitudeMeters) : frame.Raw.AltitudeMeters;
 			}
 
-			return extreme is { } meters ? Joined(FormatAltitude(meters, units)) : "--";
+			return extreme is { } meters ? Joined(FormatAltitude(meters, units.Altitude)) : "--";
 		}
 	}
 

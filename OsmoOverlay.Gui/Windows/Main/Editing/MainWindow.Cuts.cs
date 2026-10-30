@@ -62,6 +62,7 @@ public partial class MainWindow
 	/// <summary>The scissors button swaps the left column to the cut editor, the same way a widget's settings open (OpenElementSettings).</summary>
 	private void OnToggleCutsPanelClick(object? sender, RoutedEventArgs e)
 	{
+		if (_trackOnly) return;
 		ReturnToRecordingPreview();
 		if (CutsColumnScroll.IsVisible)
 		{
@@ -113,7 +114,7 @@ public partial class MainWindow
 	/// <summary>The editor's buttons and the preview's I/O/X keys, at the frame on screen.</summary>
 	private void ApplyCutAction(CutAction action)
 	{
-		if (_summary is null) return;
+		if (_summary is null || _trackOnly) return;
 		ReturnToRecordingPreview();
 
 		long frame = CurrentFrame();

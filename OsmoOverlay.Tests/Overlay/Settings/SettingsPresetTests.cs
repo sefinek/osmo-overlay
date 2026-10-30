@@ -10,7 +10,7 @@ public sealed class SettingsPresetTests
 	// OverlaySettings fields a settings preset deliberately doesn't carry - see SettingsPresetValues.
 	private static readonly string[] SharedSettings =
 	[
-		nameof(OverlaySettings.ActivePresetId), nameof(OverlaySettings.ActiveSettingsPresetId), nameof(OverlaySettings.WelcomeShown),
+		nameof(OverlaySettings.ActivePresetId), nameof(OverlaySettings.ActiveSettingsPresetId), nameof(OverlaySettings.WelcomeShown), nameof(OverlaySettings.MeasurementUnits),
 		nameof(OverlaySettings.DefaultOutputFolder), nameof(OverlaySettings.PreviewMaxWidth), nameof(OverlaySettings.MapApiKeys),
 		nameof(OverlaySettings.CustomMapUrlTemplate), nameof(OverlaySettings.CustomMapAttribution), nameof(OverlaySettings.DefaultMapProvider),
 		nameof(OverlaySettings.CustomMapCreditBriefly), nameof(OverlaySettings.ShowEsriMapLabels), nameof(OverlaySettings.PreviewSnapToGrid),
@@ -23,7 +23,7 @@ public sealed class SettingsPresetTests
 		nameof(OverlaySettings.PreviewMonitor), nameof(OverlaySettings.SecondScreenEnabled), nameof(OverlaySettings.SecondScreenMonitor),
 		nameof(OverlaySettings.ReopenLastProject), nameof(OverlaySettings.LastProject), nameof(OverlaySettings.AutoSaveMinutes),
 		nameof(OverlaySettings.CacheCleanupDays), nameof(OverlaySettings.LoopByDefault), nameof(OverlaySettings.PreviewShadows),
-		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode), nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.WorkingAnimation)
+		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode), nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.WorkingAnimation), nameof(OverlaySettings.TrackMap)
 	];
 
 	[TestMethod]

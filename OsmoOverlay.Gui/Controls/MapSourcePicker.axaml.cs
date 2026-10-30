@@ -19,14 +19,48 @@ namespace OsmoOverlay.Gui;
 /// </summary>
 public sealed partial class MapSourcePicker : UserControl
 {
-	private static readonly List<ProviderOption> Options =
-	[
-		new(MapProviders.AutoSatelliteId, Strings.MapSource_AutoSatellite),
-		new(MapProviders.StreetsAutoId, Strings.MapSource_AutoStreets),
-		.. MapProviders.BuiltIn.Where(p => p.Terms.Video != MapUse.NotAllowed).Select(p => new ProviderOption(p.Id, p.Name)),
-		new(MapProviders.CustomId, Strings.MapSource_Custom),
-		.. MapProviders.BuiltIn.Where(p => p.Terms.Video == MapUse.NotAllowed).Select(p => new ProviderOption(p.Id, p.Name))
-	];
+	// Esri's own entries are what the two best-available picks resolve to (its key when there is one, else its public service), so
+	// listing them again would only offer the same maps twice - one of them failing without a key. A map that already has one chosen
+	// (an older preset) still shows it, see Load.
+	private static readonly HashSet<string> EsriDuplicates =
+		[MapProviders.EsriImageryId, MapProviders.EsriStreetsId, MapProviders.EsriPublicId, MapProviders.EsriStreetsPublicId];
+
+	private static readonly HashSet<string> SatelliteIds =
+		[MapProviders.EsriImageryId, MapProviders.EsriPublicId, MapProviders.MapTilerSatelliteId, "maptiler-hybrid", MapProviders.GugikId, MapProviders.EoxId];
+
+	/// <summary>
+	///     The list top to bottom: the two best-available picks, each saying which map it really is now (Esri's keyed service, or
+	///     its public one without a key), then the others under their headings, the custom server last. `own` is a provider the
+	///     map already has chosen that the list no longer offers (an Esri one), kept so the box still shows it.
+	/// </summary>
+	private static List<object> BuildItems(MapSources sources, string? own)
+	{
+		string withoutKey = sources.ApiKey(MapProviders.EsriKeyGroup) is null ? Strings.MapSource_WithoutKey : "";
+		bool keyed = withoutKey.Length == 0;
+		List<object> items =
+		[
+			new ProviderOption(MapProviders.AutoSatelliteId, string.Format(Strings.MapSource_AutoSatellite, "Esri World Imagery" + withoutKey)),
+			new ProviderOption(MapProviders.StreetsAutoId, string.Format(Strings.MapSource_AutoStreets, (keyed ? "Esri Navigation" : "Esri World Street Map") + withoutKey))
+		];
+
+		MapProvider[] others = [.. MapProviders.BuiltIn.Where(p => !EsriDuplicates.Contains(p.Id) || p.Id == own)];
+		AddGroup(Strings.MapSource_GroupSatellite, others.Where(p => SatelliteIds.Contains(p.Id)));
+		AddGroup(Strings.MapSource_GroupStreets, others.Where(p => !SatelliteIds.Contains(p.Id)));
+		items.Add(Header(Strings.MapSource_GroupOther));
+		items.Add(new ProviderOption(MapProviders.CustomId, Strings.MapSource_Custom));
+		return items;
+
+		void AddGroup(string title, IEnumerable<MapProvider> providers)
+		{
+			items.Add(Header(title));
+			items.AddRange(providers.Select(p => new ProviderOption(p.Id, p.Name)));
+		}
+	}
+
+	private static ComboBoxItem Header(string text)
+	{
+		return new ComboBoxItem { Content = text.ToUpperInvariant(), IsEnabled = false, FontSize = 11, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 6, 0, 0) };
+	}
 
 	private bool _loading;
 	private bool _perMapLabels;
@@ -37,7 +71,6 @@ public sealed partial class MapSourcePicker : UserControl
 	public MapSourcePicker()
 	{
 		InitializeComponent();
-		ProviderCombo.ItemsSource = Options;
 	}
 
 	/// <summary>The provider id, after the user picked another one.</summary>
@@ -53,12 +86,19 @@ public sealed partial class MapSourcePicker : UserControl
 		_perMapLabels = perMapLabels;
 		_showLabels = showLabels;
 		string shown = providerId ?? settings.DefaultMapProvider ?? MapProviders.AutoSatelliteId;
-		ProviderCombo.SelectedItem = Options.FirstOrDefault(o => o.Id == shown) ?? Options[0];
+		ShowItems(settings, shown);
 		CustomUrlBox.Text = settings.CustomMapUrlTemplate;
 		CustomAttributionBox.Text = settings.CustomMapAttribution;
 		CustomCreditBrieflyCheck.IsChecked = settings.CustomMapCreditBriefly;
 		ShowSelected(settings);
 		_loading = false;
+	}
+
+	private void ShowItems(OverlaySettings settings, string selectedId)
+	{
+		List<object> items = BuildItems(CurrentSources(settings), EsriDuplicates.Contains(selectedId) ? selectedId : null);
+		ProviderCombo.ItemsSource = items;
+		ProviderCombo.SelectedItem = items.OfType<ProviderOption>().FirstOrDefault(o => o.Id == selectedId) ?? items.OfType<ProviderOption>().First();
 	}
 
 	private string SelectedId => (ProviderCombo.SelectedItem as ProviderOption)?.Id ?? MapProviders.DefaultId;
@@ -272,7 +312,12 @@ public sealed partial class MapSourcePicker : UserControl
 		else keys[group] = key;
 
 		SaveShared(settings with { MapApiKeys = keys.Count == 0 ? null : keys });
-		ShowSelected(OverlaySettingsStore.Load());
+		OverlaySettings saved = OverlaySettingsStore.Load();
+		bool loading = _loading;
+		_loading = true;
+		ShowItems(saved, SelectedId);
+		_loading = loading;
+		ShowSelected(saved);
 	}
 
 	// The best-available picks take Esri's key - the one that makes them sharp and allowed in a film - whatever they resolve to now.

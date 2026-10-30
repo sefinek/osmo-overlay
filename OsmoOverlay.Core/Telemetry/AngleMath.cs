@@ -17,4 +17,12 @@ public static class AngleMath
 		deg %= 360;
 		return deg < 0 ? deg + 360 : deg;
 	}
+
+	/// <summary>The angle `fraction` of the way from `from` to `to`, the shorter way round.</summary>
+	public static double LerpDegrees(double from, double to, double fraction)
+	{
+		double delta = NormalizeDegrees(to - from);
+		if (delta > 180) delta -= 360;
+		return from + delta * fraction;
+	}
 }

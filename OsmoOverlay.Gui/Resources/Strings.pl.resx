@@ -1711,13 +1711,13 @@ Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. W
     <value>Zdjęcia satelitarne Esri World Imagery: z twoim kluczem Esri wolno je pokazać w filmie, bez klucza pochodzą z publicznego serwera Esri.</value>
   </data>
   <data name="MapSource_AutoSatellite" xml:space="preserve">
-    <value>Satelita - najlepsza dostępna (domyślnie)</value>
+    <value>Satelita (domyślnie: {0})</value>
   </data>
   <data name="MapSource_AutoStreetsDescription" xml:space="preserve">
     <value>Mapa ulic z nazwami, jak w Google Maps, od Esri: z twoim kluczem Esri wolno ją pokazać w filmie, bez klucza pochodzi z publicznego serwera Esri.</value>
   </data>
   <data name="MapSource_AutoStreets" xml:space="preserve">
-    <value>Ulice - najlepsza dostępna</value>
+    <value>Ulice (domyślnie: {0})</value>
   </data>
   <data name="MapSource_Custom" xml:space="preserve">
     <value>Własny...</value>
@@ -5151,5 +5151,128 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="FullTelemetry_Error" xml:space="preserve">
     <value>Nie udało się przygotować podglądu: {0}</value>
+  </data>
+  <data name="Welcome_UnitsLead" xml:space="preserve">
+    <value>Wybierz, w jakich jednostkach pokazywać prędkość, odległość, wysokość i temperaturę. Zmienisz je później w ustawieniach każdego widżetu.</value>
+  </data>
+  <data name="Welcome_UnitsQuickChoice" xml:space="preserve">
+    <value>Szybki wybór</value>
+  </data>
+  <data name="Welcome_UnitsUnitedStates" xml:space="preserve">
+    <value>Stany Zjednoczone</value>
+  </data>
+  <data name="Welcome_UnitsUnitedKingdom" xml:space="preserve">
+    <value>Wielka Brytania</value>
+  </data>
+  <data name="Welcome_UnitsSuggested" xml:space="preserve">
+    <value>Ustawiono według regionu komputera - sprawdź i dostosuj.</value>
+  </data>
+  <data name="Welcome_UnitsSpeed" xml:space="preserve">
+    <value>Prędkość</value>
+  </data>
+  <data name="Welcome_UnitsDistance" xml:space="preserve">
+    <value>Odległość</value>
+  </data>
+  <data name="Welcome_UnitsDistanceHint" xml:space="preserve">
+    <value>Dystans trasy i odległość od punktu startu: kilometry i metry albo mile i stopy.</value>
+  </data>
+  <data name="Welcome_UnitsAltitude" xml:space="preserve">
+    <value>Wysokość</value>
+  </data>
+  <data name="Welcome_UnitsAltitudeHint" xml:space="preserve">
+    <value>Wysokość n.p.m., wysokość drona nad punktem startu i prędkość wznoszenia: metry albo stopy.</value>
+  </data>
+  <data name="Welcome_UnitsTemperature" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="Welcome_UnitsNote" xml:space="preserve">
+    <value>Dotyczy wbudowanych układów i nowych widżetów. Własne układy zachowują swoje jednostki.</value>
+  </data>
+  <data name="Settings_RouteIntroUnitsHint" xml:space="preserve">
+    <value>Takie same jak w widżetach - zmienisz je w przewodniku powitalnym (krok Jednostki).</value>
+  </data>
+  <data name="Welcome_MapPreviewFailedKey" xml:space="preserve">
+    <value>Nie udało się wczytać podglądu. Sprawdź połączenie, klucz API i limit kafelków w ArcGIS Location Platform.</value>
+  </data>
+  <data name="Welcome_GpsIndicatorCaption" xml:space="preserve">
+    <value>Wskaźnik GPS w prawym górnym rogu podglądu DJI Mimo (zaznaczony na czerwono) - zacznij nagrywać dopiero, gdy pokaże sygnał.</value>
+  </data>
+  <data name="MapSource_WithoutKey" xml:space="preserve">
+    <value>, bez klucza</value>
+  </data>
+  <data name="MapSource_GroupSatellite" xml:space="preserve">
+    <value>Satelitarne</value>
+  </data>
+  <data name="MapSource_GroupStreets" xml:space="preserve">
+    <value>Ulice i mapy terenowe</value>
+  </data>
+  <data name="MapSource_GroupOther" xml:space="preserve">
+    <value>Inne</value>
+  </data>
+  <data name="Main_BuiltInSettingsLocked" xml:space="preserve">
+    <value>To wbudowany układ - jest tylko do odczytu, więc ustawień widżetu nie można zmieniać. Zrób jego kopię, aby je edytować.</value>
+  </data>
+  <data name="Main_DuplicateToEdit" xml:space="preserve">
+    <value>Zrób kopię i edytuj</value>
+  </data>
+  <data name="TrackFormat_Title" xml:space="preserve">
+    <value>Format podglądu</value>
+  </data>
+  <data name="TrackFormat_Message" xml:space="preserve">
+    <value>Nie ma nagrania, z którego dałoby się to odczytać, więc wybierz rozmiar obrazu i liczbę klatek podglądu trasy.</value>
+  </data>
+  <data name="TrackFormat_Resolution" xml:space="preserve">
+    <value>Rozdzielczość</value>
+  </data>
+  <data name="TrackFormat_Fps" xml:space="preserve">
+    <value>Liczba klatek na sekundę</value>
+  </data>
+  <data name="TrackFormat_FpsValue" xml:space="preserve">
+    <value>{0} kl./s</value>
+  </data>
+  <data name="TrackFormat_Confirm" xml:space="preserve">
+    <value>Wybierz trasę</value>
+  </data>
+  <data name="TrackFormat_Vertical" xml:space="preserve">
+    <value>{0} x {1} (pionowo)</value>
+  </data>
+  <data name="TrackFormat_Square" xml:space="preserve">
+    <value>{0} x {1} (kwadrat)</value>
+  </data>
+  <data name="TrackOnly_Open" xml:space="preserve">
+    <value>Podejrzyj trasę GPS</value>
+  </data>
+  <data name="TrackOnly_Loading" xml:space="preserve">
+    <value>Wczytuję trasę: {0}</value>
+  </data>
+  <data name="TrackOnly_Failed" xml:space="preserve">
+    <value>Nie udało się wczytać trasy: {0}</value>
+  </data>
+  <data name="TrackOnly_Opened" xml:space="preserve">
+    <value>Trasa {0}: podgląd widgetów bez nagrania. Renderowanie jest wyłączone.</value>
+  </data>
+  <data name="TrackOnly_CantSave" xml:space="preserve">
+    <value>Podglądu samej trasy nie można zapisać jako projektu.</value>
+  </data>
+  <data name="TrackMap_Header" xml:space="preserve">
+    <value>MAPA W TLE</value>
+  </data>
+  <data name="TrackMap_Follow" xml:space="preserve">
+    <value>Podążaj za pozycją</value>
+  </data>
+  <data name="TrackMap_FollowHint" xml:space="preserve">
+    <value>Mapa przybliża się, gdy poruszasz się powoli, i oddala wraz z prędkością. Wyłączone pokazuje całą trasę naraz.</value>
+  </data>
+  <data name="TrackMap_MaxZoom" xml:space="preserve">
+    <value>Największe przybliżenie (2-19)</value>
+  </data>
+  <data name="TrackMap_ShowTrail" xml:space="preserve">
+    <value>Pokaż ślad trasy</value>
+  </data>
+  <data name="TrackMap_Loading" xml:space="preserve">
+    <value>Pobieram mapę tła...</value>
+  </data>
+  <data name="TrackMap_Unavailable" xml:space="preserve">
+    <value>Nie udało się pobrać mapy tła, więc obraz zostaje czarny.</value>
   </data>
 </root>

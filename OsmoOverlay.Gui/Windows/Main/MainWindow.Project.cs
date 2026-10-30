@@ -131,6 +131,12 @@ public partial class MainWindow
 
 	private async Task SaveProjectAsync(string path)
 	{
+		if (_trackOnly)
+		{
+			AppendLog(Strings.TrackOnly_CantSave, LogLevel.Warn);
+			return;
+		}
+
 		OverlayProject project;
 		try
 		{

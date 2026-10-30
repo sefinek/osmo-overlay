@@ -38,7 +38,7 @@ public sealed class RouteMapMosaic : IDisposable
 
 	private readonly SKBitmap _bitmap;
 
-	private RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route, SKRect view, double coverage)
+	internal RouteMapMosaic(SKBitmap bitmap, double originWorldX, double originWorldY, int zoom, GeoBounds route, SKRect view, double coverage)
 	{
 		// Drawing a mutable SKBitmap makes Skia snapshot (copy) its pixels on every single draw call - for
 		// a mosaic of up to MaxTiles tiles that's tens of MB copied per rendered frame. Frozen once here,
@@ -178,6 +178,7 @@ public sealed class RouteMapMosaic : IDisposable
 			for (int ty = minTileY; ty <= maxTileY; ty++)
 				coordinates.Add((tx, ty));
 
+			string[] labelLayers = MapLabelLayers.Split(labelsUrlTemplate);
 			var options = new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrentFetches, CancellationToken = ct };
 			await Parallel.ForEachAsync(coordinates, options, FetchAndDrawAsync);
 
@@ -186,27 +187,25 @@ public sealed class RouteMapMosaic : IDisposable
 				(int tileX, int tileY) = coordinate;
 				// The labels come in parallel with the tile, not after it.
 				Task<SKBitmap?> tileTask = MapTileFetcher.FetchAsync(urlTemplate, zoom, tileX, tileY, cacheMaxAge, token);
-				Task<SKBitmap?> labelsTask = labelsUrlTemplate is null
-					? Task.FromResult<SKBitmap?>(null)
-					: MapTileFetcher.FetchAsync(labelsUrlTemplate, zoom, tileX, tileY, cacheMaxAge, token);
+				Task<SKBitmap?>[] labelTasks = [.. labelLayers.Select(layer => MapTileFetcher.FetchAsync(layer, zoom, tileX, tileY, cacheMaxAge, token))];
 				SKBitmap? tile = null;
-				SKBitmap? labels = null;
+				SKBitmap?[] labels = [];
 				try
 				{
 					try
 					{
-						await Task.WhenAll(tileTask, labelsTask);
+						await Task.WhenAll([tileTask, .. labelTasks]);
 					}
 					catch
 					{
-						// Both have finished by now - the one that didn't fail still owns a bitmap.
+						// All have finished by now - the ones that didn't fail still own a bitmap.
 						if (tileTask.IsCompletedSuccessfully) tileTask.Result?.Dispose();
-						if (labelsTask.IsCompletedSuccessfully) labelsTask.Result?.Dispose();
+						foreach (Task<SKBitmap?> labelTask in labelTasks.Where(t => t.IsCompletedSuccessfully)) labelTask.Result?.Dispose();
 						throw;
 					}
 
 					tile = tileTask.Result;
-					labels = labelsTask.Result;
+					labels = [.. labelTasks.Select(t => t.Result)];
 					lock (drawLock)
 					{
 						if (tile is not null)
@@ -215,7 +214,10 @@ public sealed class RouteMapMosaic : IDisposable
 							var dest = SKRect.Create((tileX - minTileX) * WebMercator.TileSize,
 								(tileY - minTileY) * WebMercator.TileSize, WebMercator.TileSize, WebMercator.TileSize);
 							canvas.DrawBitmap(tile, dest, SKSamplingOptions.Default);
-							if (labels is not null) canvas.DrawBitmap(labels, dest, SKSamplingOptions.Default);
+							foreach (SKBitmap? layer in labels)
+							{
+								if (layer is not null) canvas.DrawBitmap(layer, dest, SKSamplingOptions.Default);
+							}
 						}
 
 						fetchedCount++;
@@ -239,7 +241,7 @@ public sealed class RouteMapMosaic : IDisposable
 				finally
 				{
 					tile?.Dispose();
-					labels?.Dispose();
+					foreach (SKBitmap? layer in labels) layer?.Dispose();
 				}
 			}
 		}

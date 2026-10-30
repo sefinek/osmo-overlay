@@ -1711,13 +1711,13 @@ Cancel asks again on the next start. "Skip this update" stops the reminders abou
     <value>Esri World Imagery satellite photos: with your Esri key they may be shown in a film, without one they come from Esri's public server.</value>
   </data>
   <data name="MapSource_AutoSatellite" xml:space="preserve">
-    <value>Satellite - best available (default)</value>
+    <value>Satellite (default: {0})</value>
   </data>
   <data name="MapSource_AutoStreetsDescription" xml:space="preserve">
     <value>A street map with names, like Google Maps, from Esri: with your Esri key it may be shown in a film, without one it comes from Esri's public server.</value>
   </data>
   <data name="MapSource_AutoStreets" xml:space="preserve">
-    <value>Streets - best available</value>
+    <value>Streets (default: {0})</value>
   </data>
   <data name="MapSource_Custom" xml:space="preserve">
     <value>Custom...</value>
@@ -5151,5 +5151,128 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="FullTelemetry_Error" xml:space="preserve">
     <value>Could not prepare the preview: {0}</value>
+  </data>
+  <data name="Welcome_UnitsLead" xml:space="preserve">
+    <value>Choose the units for speed, distance, altitude and temperature. You can still change them in each widget&apos;s settings.</value>
+  </data>
+  <data name="Welcome_UnitsQuickChoice" xml:space="preserve">
+    <value>Quick choice</value>
+  </data>
+  <data name="Welcome_UnitsUnitedStates" xml:space="preserve">
+    <value>United States</value>
+  </data>
+  <data name="Welcome_UnitsUnitedKingdom" xml:space="preserve">
+    <value>United Kingdom</value>
+  </data>
+  <data name="Welcome_UnitsSuggested" xml:space="preserve">
+    <value>Set from this computer&apos;s region - check and adjust.</value>
+  </data>
+  <data name="Welcome_UnitsSpeed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="Welcome_UnitsDistance" xml:space="preserve">
+    <value>Distance</value>
+  </data>
+  <data name="Welcome_UnitsDistanceHint" xml:space="preserve">
+    <value>Trip distance and distance from home: kilometres and metres, or miles and feet.</value>
+  </data>
+  <data name="Welcome_UnitsAltitude" xml:space="preserve">
+    <value>Altitude</value>
+  </data>
+  <data name="Welcome_UnitsAltitudeHint" xml:space="preserve">
+    <value>Elevation, a drone&apos;s height above take-off and its climb rate: metres or feet.</value>
+  </data>
+  <data name="Welcome_UnitsTemperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="Welcome_UnitsNote" xml:space="preserve">
+    <value>Applies to the built-in layouts and new widgets. Your own layouts keep their units.</value>
+  </data>
+  <data name="Settings_RouteIntroUnitsHint" xml:space="preserve">
+    <value>Same as the widgets&apos; - change them in the welcome guide (Units step).</value>
+  </data>
+  <data name="Welcome_MapPreviewFailedKey" xml:space="preserve">
+    <value>Couldn&apos;t load the preview. Check the connection, the API key and the tile limit in ArcGIS Location Platform.</value>
+  </data>
+  <data name="Welcome_GpsIndicatorCaption" xml:space="preserve">
+    <value>The GPS indicator in the top right of the DJI Mimo preview (marked in red) - start recording only once it shows a signal.</value>
+  </data>
+  <data name="MapSource_WithoutKey" xml:space="preserve">
+    <value>, no key</value>
+  </data>
+  <data name="MapSource_GroupSatellite" xml:space="preserve">
+    <value>Satellite</value>
+  </data>
+  <data name="MapSource_GroupStreets" xml:space="preserve">
+    <value>Streets and terrain</value>
+  </data>
+  <data name="MapSource_GroupOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="Main_BuiltInSettingsLocked" xml:space="preserve">
+    <value>This is a built-in layout and is read-only, so the widget&apos;s settings can&apos;t be changed. Make a copy to edit them.</value>
+  </data>
+  <data name="Main_DuplicateToEdit" xml:space="preserve">
+    <value>Make a copy and edit</value>
+  </data>
+  <data name="TrackFormat_Title" xml:space="preserve">
+    <value>Preview format</value>
+  </data>
+  <data name="TrackFormat_Message" xml:space="preserve">
+    <value>There is no recording to read this from, so pick the picture size and frame rate of the track preview.</value>
+  </data>
+  <data name="TrackFormat_Resolution" xml:space="preserve">
+    <value>Resolution</value>
+  </data>
+  <data name="TrackFormat_Fps" xml:space="preserve">
+    <value>Frames per second</value>
+  </data>
+  <data name="TrackFormat_FpsValue" xml:space="preserve">
+    <value>{0} fps</value>
+  </data>
+  <data name="TrackFormat_Confirm" xml:space="preserve">
+    <value>Choose a track</value>
+  </data>
+  <data name="TrackFormat_Vertical" xml:space="preserve">
+    <value>{0} x {1} (vertical)</value>
+  </data>
+  <data name="TrackFormat_Square" xml:space="preserve">
+    <value>{0} x {1} (square)</value>
+  </data>
+  <data name="TrackOnly_Open" xml:space="preserve">
+    <value>View a GPS track</value>
+  </data>
+  <data name="TrackOnly_Loading" xml:space="preserve">
+    <value>Loading the track: {0}</value>
+  </data>
+  <data name="TrackOnly_Failed" xml:space="preserve">
+    <value>Couldn&apos;t load the track: {0}</value>
+  </data>
+  <data name="TrackOnly_Opened" xml:space="preserve">
+    <value>Track {0}: a widgets preview with no recording. Rendering is off.</value>
+  </data>
+  <data name="TrackOnly_CantSave" xml:space="preserve">
+    <value>A track-only preview can&apos;t be saved as a project.</value>
+  </data>
+  <data name="TrackMap_Header" xml:space="preserve">
+    <value>BACKGROUND MAP</value>
+  </data>
+  <data name="TrackMap_Follow" xml:space="preserve">
+    <value>Follow the position</value>
+  </data>
+  <data name="TrackMap_FollowHint" xml:space="preserve">
+    <value>The map closes in while you move slowly and zooms out as you speed up. Off shows the whole track at once.</value>
+  </data>
+  <data name="TrackMap_MaxZoom" xml:space="preserve">
+    <value>Closest zoom (2-19)</value>
+  </data>
+  <data name="TrackMap_ShowTrail" xml:space="preserve">
+    <value>Show the track</value>
+  </data>
+  <data name="TrackMap_Loading" xml:space="preserve">
+    <value>Loading the background map...</value>
+  </data>
+  <data name="TrackMap_Unavailable" xml:space="preserve">
+    <value>The background map couldn&apos;t be loaded, so the picture stays black.</value>
   </data>
 </root>

@@ -85,7 +85,10 @@ public sealed unsafe class LibavVideoSource : IDisposable
 
 		// Opened up front: a broken file or a decoder that won't start should fail here, where the caller can
 		// still fall back, not on the first seek.
-		lock (_lock) SessionFor(0);
+		if (_segments.Count > 0)
+		{
+			lock (_lock) SessionFor(0);
+		}
 	}
 
 	public TimeSpan Duration { get; }
@@ -121,10 +124,19 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	private VideoFrame? TrackFrame(long index, SeekAccuracy accuracy, CancellationToken ct)
 	{
 		if (ct.IsCancellationRequested) return null;
-		if (_trackPlayback!.VideoPosition(index / Fps) is { } seconds)
+		double trackSeconds = index / Fps;
+		if (_trackPlayback!.VideoPosition(trackSeconds) is { } seconds)
 			return DecodeAt(Math.Clamp(PreviewFrames.IndexAt(seconds, Fps), 0, _totalFrames - 1), accuracy, ct)?.Frame;
 		byte[] pixels = _buffers.Rent(_width * _height * 4);
-		MemoryMarshal.Cast<byte, uint>(pixels.AsSpan(0, _width * _height * 4)).Fill(0xFF000000);
+		if (_trackPlayback.Backdrop is { } backdrop)
+		{
+			backdrop.DrawInto(pixels, _width, _height, trackSeconds, _trackPlayback.DerivedFrames);
+		}
+		else
+		{
+			MemoryMarshal.Cast<byte, uint>(pixels.AsSpan(0, _width * _height * 4)).Fill(0xFF000000);
+		}
+
 		return new VideoFrame(pixels, _width, _height);
 	}
 

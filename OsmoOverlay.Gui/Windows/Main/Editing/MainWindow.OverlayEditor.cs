@@ -94,6 +94,18 @@ public partial class MainWindow
 		SetPhase(_phase);
 	}
 
+	/// <summary>The built-in layouts are made with the saved units, so a change of them (the welcome window, opened from Settings) reads the list again.</summary>
+	private void ReloadPresetsAfterUnitsChange(OverlaySettings before, OverlaySettings after)
+	{
+		if (UnitPreferences.From(before) == UnitPreferences.From(after)) return;
+
+		MomentsEditor.SetUnits(UnitPreferences.From(after));
+		if (!_overlayPresetsLoaded) return;
+
+		SaveOverlayPresets();
+		LoadOverlayPresets();
+	}
+
 	private void SaveOverlayPresets()
 	{
 		_presetSaveDelay.Stop();
@@ -160,6 +172,7 @@ public partial class MainWindow
 		DeletePresetButton.IsEnabled = editable;
 		ResetPresetButton.IsEnabled = editable;
 		DefaultPresetLockedHint.IsVisible = !editable;
+		UpdateWidgetSettingsLock();
 
 		return;
 
@@ -588,7 +601,7 @@ public partial class MainWindow
 	{
 		if (_summary is null || IsActivePresetDefault) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory");
+		OverlayPreset factory = UnitPreferences.Current.ApplyTo(OverlayPreset.CreateDefault("factory", "Factory"));
 		if (factory.Elements.FirstOrDefault(e => e.Type == type) is not { } template) return;
 
 		(float refX, float refY) = OverlayElementBounds.ToReference(x, y, _summary.Video.Width, _summary.Video.Height);
@@ -640,7 +653,7 @@ public partial class MainWindow
 		OverlayElement? existing = ActiveElements.FirstOrDefault(e => e.Id == id);
 		if (existing is null) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory");
+		OverlayPreset factory = UnitPreferences.Current.ApplyTo(OverlayPreset.CreateDefault("factory", "Factory"));
 		if (factory.Elements.FirstOrDefault(e => e.Type == existing.Type) is not { } defaults) return;
 
 		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible, LayerId = el.LayerId });
@@ -700,8 +713,18 @@ public partial class MainWindow
 		MomentsColumnScroll.IsVisible = false;
 		UpdateMomentsButton();
 		SourceColumnScroll.IsVisible = false;
+		UpdateWidgetSettingsLock();
 		WidgetSettingsColumnScroll.IsVisible = true;
 		WidgetSettingsColumnScroll.Offset = default;
+	}
+
+	/// <summary>A built-in layout can't be edited, so its widget's settings are shown but dimmed, with the way to a copy that can - instead of controls that take a change and silently drop it.</summary>
+	private void UpdateWidgetSettingsLock()
+	{
+		bool locked = IsActivePresetDefault;
+		WidgetSettingsPanelHost.IsEnabled = !locked;
+		WidgetSettingsResetButton.IsEnabled = !locked;
+		BuiltInSettingsNotice.IsVisible = locked;
 	}
 
 	private void OnWidgetSettingsBackClick(object? sender, RoutedEventArgs e)

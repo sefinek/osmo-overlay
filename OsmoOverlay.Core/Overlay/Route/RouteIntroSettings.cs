@@ -13,7 +13,7 @@ public sealed record RouteIntroSettings(
 	bool Enabled,
 	double DurationSeconds,
 	RouteIntroStats Stats,
-	UnitSystem Units,
+	UnitPreferences Units,
 	bool ColorBySpeed,
 	string? MapProviderId = null,
 	bool ShowStartFinish = false,
@@ -46,7 +46,7 @@ public sealed record RouteIntroSettings(
 	public static string DefaultStartLabel => CoreStrings.Overlay_Start.ToUpperInvariant();
 	public static string DefaultFinishLabel => CoreStrings.Overlay_Finish.ToUpperInvariant();
 
-	public static readonly RouteIntroSettings Disabled = new(false, 0, RouteIntroStats.None, UnitSystem.Metric, false);
+	public static readonly RouteIntroSettings Disabled = new(false, 0, RouteIntroStats.None, UnitPreferences.Metric, false);
 
 	public static double ClampZoomInFactor(double value)
 	{
@@ -77,7 +77,7 @@ public sealed record RouteIntroSettings(
 	public static RouteIntroSettings From(OverlaySettings settings)
 	{
 		return new RouteIntroSettings(settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats,
-			settings.RouteIntroUnits, settings.RouteIntroColorBySpeed, settings.RouteIntroMapProvider, settings.RouteIntroShowStartFinish,
+			UnitPreferences.From(settings), settings.RouteIntroColorBySpeed, settings.RouteIntroMapProvider, settings.RouteIntroShowStartFinish,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel,
 			RouteIntroLabels.From(settings.RouteIntroLabels), settings.RouteIntroWhenTrimmed, settings.RouteIntroGpsLossJoin,
 			settings.RouteIntroMapZoom,
@@ -86,7 +86,7 @@ public sealed record RouteIntroSettings(
 			ClampZoomInDelay(settings.RouteIntroMapZoomInDelaySeconds));
 	}
 
-	/// <summary>The reverse of From: these values written into the settings.</summary>
+	/// <summary>The reverse of From: these values written into the settings. The units are the settings' own (MeasurementUnits), not the card's to change.</summary>
 	public OverlaySettings ApplyTo(OverlaySettings settings)
 	{
 		return settings with
@@ -95,7 +95,6 @@ public sealed record RouteIntroSettings(
 			RouteIntroDurationSeconds = DurationSeconds,
 			RouteIntroStats = Stats,
 			RouteIntroLabels = Labels?.ToSettings(),
-			RouteIntroUnits = Units,
 			RouteIntroColorBySpeed = ColorBySpeed,
 			RouteIntroMapProvider = MapProviderId,
 			RouteIntroShowStartFinish = ShowStartFinish,

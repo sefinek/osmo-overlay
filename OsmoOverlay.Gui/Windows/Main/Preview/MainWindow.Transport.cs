@@ -136,7 +136,7 @@ public partial class MainWindow
 
 		Action? action = e.Key switch
 		{
-			Key.Escape when _fullTelemetry is not null && !_previewFullscreen && !_viewportOnSecondScreen => CloseFullTelemetry,
+			Key.Escape when _fullTelemetry is not null && !_trackOnly && !_previewFullscreen && !_viewportOnSecondScreen => CloseFullTelemetry,
 			Key.Left => () => StepFrames(-1),
 			Key.Right => () => StepFrames(1),
 			Key.Home => GoToStart,
@@ -224,7 +224,7 @@ public partial class MainWindow
 	/// <summary>Up/Down: to the previous/next edge of a cut, the selection or a GPS loss, a key moment, or the start/end (TimelineMarkers).</summary>
 	private void JumpToMarker(int direction)
 	{
-		if (_summary is null) return;
+		if (_summary is null || _trackOnly) return;
 		ReturnToRecordingPreview();
 
 		double fps = _summary.Video.Fps;

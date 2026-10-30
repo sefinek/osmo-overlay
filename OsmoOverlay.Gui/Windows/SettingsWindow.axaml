@@ -562,10 +562,9 @@
 								</Grid>
 								<Border Classes="divider" />
 								<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
-									<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="rowTitle" VerticalAlignment="Center" />
-									<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
-										<RadioButton Name="RouteIntroMetricRadio" Content="{x:Static local:Strings.Common_Metric}" GroupName="RouteIntroUnits" />
-										<RadioButton Name="RouteIntroImperialRadio" Content="{x:Static local:Strings.Common_Imperial}" GroupName="RouteIntroUnits" />
+									<StackPanel Spacing="2">
+										<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="rowTitle" />
+										<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_RouteIntroUnitsHint}" />
 									</StackPanel>
 								</Grid>
 							</StackPanel>
