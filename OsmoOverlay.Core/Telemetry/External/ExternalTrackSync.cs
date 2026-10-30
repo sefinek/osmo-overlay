@@ -12,7 +12,8 @@ public sealed record TrackSyncEstimate(DateTime TrackTimeAtVideoStartUtc, TrackS
 /// <summary>
 ///     Suggests a video start by correlating accelerometer variation with track speed, excluding gaps and timer pauses.
 ///     A strong, distinct match is still a heuristic: camera shake is not a speed sensor. Overlapping clock ranges
-///     do not establish alignment. Manual anchors are independent of the camera's clock.
+///     do not establish alignment. Manual anchors are independent of the camera's clock. The search runs on half-second bins, ranked by significance;
+///     the winner is then refined to a few hundredths of a second (Refine).
 /// </summary>
 public static class ExternalTrackSync
 {
@@ -31,6 +32,12 @@ public static class ExternalTrackSync
 	private const double MaxRivalShare = 0.85;
 
 	private const double DistinctSeconds = 5;
+
+	/// <summary>The refinement of the best match: how far around it (seconds) and at what step the recording is slid again, on the exact times of the camera's bins.</summary>
+	private const double RefineSpanSeconds = 1, RefineStepSeconds = 0.05;
+
+	/// <summary>How many points of the track a bin is averaged from.</summary>
+	private const int BinSamples = 5;
 
 	public static TrackSyncEstimate? Estimate(IReadOnlyList<TelemetryFrame> frames, double fps, ExternalTrack track)
 	{
@@ -61,7 +68,30 @@ public static class ExternalTrackSync
 		double rival = scores.Where(s => Math.Abs(s.Shift - bestShift) * StepSeconds > DistinctSeconds).Select(s => s.Significance).DefaultIfEmpty(0).Max();
 		if (best < MinCorrelation || rival > bestSignificance * MaxRivalShare) return null;
 
-		return new TrackSyncEstimate(track.StartUtc.AddSeconds(bestShift * StepSeconds), TrackSyncMethod.Motion, best);
+		(double startSeconds, double refined) = Refine(camera, track, bestShift * StepSeconds, minOverlap) ?? (bestShift * StepSeconds, best);
+		return new TrackSyncEstimate(track.StartUtc.AddSeconds(startSeconds), TrackSyncMethod.Motion, Math.Max(best, refined));
+	}
+
+	/// <summary>
+	///     The best match slid on by tenths of a step: the coarse search compares bins that start at whole steps, which leaves its answer up to half a step off and
+	///     biased. Here the track's speed is read at the middle of each of the camera's bins for each candidate start (seconds into the track), so the answer is as
+	///     exact as the two profiles allow. Null when no candidate has enough to go by.
+	/// </summary>
+	private static (double StartSeconds, double Correlation)? Refine(double[] camera, ExternalTrack track, double coarseSeconds, int minOverlap)
+	{
+		double[] aligned = new double[camera.Length];
+		(double StartSeconds, double Correlation)? best = null;
+		int steps = (int)Math.Round(RefineSpanSeconds / RefineStepSeconds);
+		for (int k = -steps; k <= steps; k++)
+		{
+			double start = coarseSeconds + k * RefineStepSeconds;
+			int cursor = 0;
+			for (int i = 0; i < aligned.Length; i++) aligned[i] = MeanSpeed(track, start + i * StepSeconds, ref cursor);
+
+			if (Correlate(camera, aligned, 0, minOverlap) is { } match && (best is null || match.Correlation > best.Value.Correlation)) best = (start, match.Correlation);
+		}
+
+		return best;
 	}
 
 	/// <summary>
@@ -107,14 +137,30 @@ public static class ExternalTrackSync
 	{
 		double[] speed = new double[(int)Math.Floor(trackSeconds / StepSeconds) + 1];
 		int cursor = 0;
-		for (int i = 0; i < speed.Length; i++)
-		{
-			speed[i] = track.At(track.StartUtc.AddSeconds(i * StepSeconds), ref cursor) is { } sample
-				? sample.State != ExternalTrackState.Fix ? double.NaN : sample.SpeedMs ?? double.NaN
-				: double.NaN;
-		}
+		for (int i = 0; i < speed.Length; i++) speed[i] = SpeedAt(track, track.StartUtc.AddSeconds(i * StepSeconds), ref cursor);
 
 		return speed;
+	}
+
+	/// <summary>The track's mean speed over the half second from `seconds` into the track, as the camera's bin is a mean over its half second; NaN when any sample is missing.</summary>
+	private static double MeanSpeed(ExternalTrack track, double seconds, ref int cursor)
+	{
+		double sum = 0;
+		for (int k = 0; k < BinSamples; k++)
+		{
+			double speed = SpeedAt(track, track.StartUtc.AddSeconds(seconds + (k + 0.5) * StepSeconds / BinSamples), ref cursor);
+			if (double.IsNaN(speed)) return double.NaN;
+
+			sum += speed;
+		}
+
+		return sum / BinSamples;
+	}
+
+	/// <summary>The track's speed (m/s) at a moment: NaN outside it, in a gap or a timer pause, and where it has no speed.</summary>
+	private static double SpeedAt(ExternalTrack track, DateTime utc, ref int cursor)
+	{
+		return track.At(utc, ref cursor) is { State: ExternalTrackState.Fix } sample ? sample.SpeedMs ?? double.NaN : double.NaN;
 	}
 
 	/// <summary>Pearson's correlation of the camera's shake with the track's speed where the recording, `shift` steps into the track, overlaps it - null with too little to go by.</summary>

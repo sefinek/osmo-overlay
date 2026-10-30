@@ -40,10 +40,16 @@ public static class RecommendedSettings
 			[DjiMavicAir2] = MavicAir2
 		};
 
+	/// <summary>
+	///     The model's entry: by the name as it is, else by a known model's name within it - a drone's name is its owner's ("Mavic Air 2 Jan",
+	///     "My Mavic Air 2"). The longest known name is tried first, so one that holds another stays its own.
+	/// </summary>
 	public static RecommendedRecording? ForCameraModel(string? cameraModel)
 	{
-		return cameraModel is not null && ByCameraModel.TryGetValue(cameraModel, out RecommendedRecording? settings)
-			? settings
-			: null;
+		if (cameraModel is null) return null;
+		if (ByCameraModel.TryGetValue(cameraModel, out RecommendedRecording? settings)) return settings;
+
+		string? known = ByCameraModel.Keys.OrderByDescending(name => name.Length).FirstOrDefault(name => cameraModel.Contains(name, StringComparison.OrdinalIgnoreCase));
+		return known is null ? null : ByCameraModel[known];
 	}
 }

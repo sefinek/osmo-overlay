@@ -160,7 +160,10 @@
     <value>Znaleziono libavcodec {0}, potrzebny jest {1}</value>
   </data>
   <data name="Map_AllTilesFailed" xml:space="preserve">
-    <value>Widżet mapy: nie udało się pobrać żadnego kafelka (brak sieci lub serwer kafelków jest nieosiągalny) - pomijam mapę</value>
+    <value>Widżet mapy: nie udało się pobrać żadnego kafelka (brak sieci, serwer kafelków jest nieosiągalny lub odrzucił żądanie) - pomijam mapę</value>
+  </data>
+  <data name="Map_AccessDenied" xml:space="preserve">
+    <value>Serwer map {0} odrzucił żądanie (HTTP {1}). Sprawdź klucz API tej mapy (ustawienia widżetu Mapa) albo wybierz inny styl mapy.</value>
   </data>
   <data name="Map_ApiKeyMissing" xml:space="preserve">
     <value>Nie podano klucza API wymaganego przez mapę {0}, więc kafelki nie zostaną pobrane. Wpisz klucz w ustawieniach widżetu Mapa.</value>
@@ -337,7 +340,7 @@
     <value>Enkoder: {0} (CPU)</value>
   </data>
   <data name="Render_EncoderGpu" xml:space="preserve">
-    <value>Enkoder: {0} (GPU)</value>
+    <value>Enkoder: {0} ({1})</value>
   </data>
   <data name="Render_Estimating" xml:space="preserve">
     <value>szacowanie pozostałego czasu...</value>
@@ -621,7 +624,7 @@
     <value>Po tym dopasowaniu trasa GPS nie obejmuje żadnego fragmentu nagrania.</value>
   </data>
   <data name="DjiLog_NeedsApiKey" xml:space="preserve">
-    <value>Ten dziennik lotu DJI jest zaszyfrowany. Aby go odczytać, podaj klucz API DJI (SDK key z developer.dji.com) w ustawieniach.</value>
+    <value>Ten dziennik lotu DJI jest zaszyfrowany. Aby go odczytać, podaj klucz API DJI (SDK key z developer.dji.com) w Ustawieniach.</value>
   </data>
   <data name="DjiLog_KeyRejected" xml:space="preserve">
     <value>DJI odrzuciło klucz API. Sprawdź, czy to SDK key aktywowanej aplikacji typu Open API.</value>
@@ -663,7 +666,7 @@
     <value>Prędkość pionowa</value>
   </data>
   <data name="Overlay_Satellites" xml:space="preserve">
-    <value>GPS</value>
+    <value>Satelity GPS</value>
   </data>
   <data name="Overlay_Signal" xml:space="preserve">
     <value>Sygnał</value>

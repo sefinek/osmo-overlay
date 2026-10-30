@@ -177,4 +177,32 @@ public sealed class ExternalTrackSyncTests
 		Assert.IsNotNull(estimate);
 		Assert.AreEqual(4.9, (estimate.TrackTimeAtVideoStartUtc - TrackStart).TotalSeconds, 1);
 	}
+
+	[TestMethod]
+	public void Estimate_FindsTheStartWithinAFewTenthsOfASecondNotJustOnTheSearchGrid()
+	{
+		List<ExternalTrackPoint> points = [];
+		double latitude = 53.1;
+		for (int tenth = 0; tenth <= 1500; tenth++)
+		{
+			double second = tenth / 10.0;
+			points.Add(new ExternalTrackPoint(TrackStart.AddSeconds(second), latitude, 18.9, 80, Speed(second)));
+			latitude += Speed(second) * 9e-7;
+		}
+
+		var track = new ExternalTrack(points);
+		List<double> errors = [];
+		for (int i = 0; i < 12; i++)
+		{
+			double start = 30 + i * 0.07;
+			TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(Camera(start, 70), Fps, track);
+
+			Assert.IsNotNull(estimate, $"start {start}");
+			errors.Add((estimate.TrackTimeAtVideoStartUtc - TrackStart).TotalSeconds - start);
+		}
+
+		Assert.IsTrue(errors.Average(Math.Abs) < 0.1, $"mean error {errors.Average(Math.Abs):0.000} s");
+		Assert.IsTrue(errors.Max(Math.Abs) < 0.25, $"largest error {errors.Max(Math.Abs):0.000} s");
+		Assert.IsTrue(Math.Abs(errors.Average()) < 0.1, $"bias {errors.Average():0.000} s");
+	}
 }

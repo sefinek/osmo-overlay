@@ -92,8 +92,9 @@ public partial class MainWindow
 
 		double fps = _summary.Video.Fps;
 		LayerTracks.Fps = fps > 0 ? fps : 30;
-		LayerTracks.OutputDurationSeconds = PlannedFrameCount() / LayerTracks.Fps;
-		if (_outputTimeline is { } output)
+		// The full telemetry view's clock is the track's, with no cuts: widgets are timed on it as the renderer reads them.
+		LayerTracks.OutputDurationSeconds = _fullTelemetry?.DurationSeconds ?? PlannedFrameCount() / LayerTracks.Fps;
+		if (_outputTimeline is { } output && _fullTelemetry is null)
 		{
 			LayerTracks.ToRecording = output.ToRecordingSeconds;
 			LayerTracks.ToOutput = output.NearestOutputSeconds;
@@ -109,7 +110,8 @@ public partial class MainWindow
 		// The timelines show the recording: the card's output seconds where they fall in it, after the cuts.
 		foreach (PreviewTimeline timeline in Timelines)
 			timeline.RouteIntro = intro is { } span ? (LayerTracks.ToRecording(span.FadeFrom), LayerTracks.ToRecording(span.End)) : null;
-		LayerTracks.Editable = !IsActivePresetDefault;
+		// The widgets' times are the recording's output seconds, which the full telemetry view's timeline (the track's seconds) doesn't show.
+		LayerTracks.Editable = !IsActivePresetDefault && _fullTelemetry is null;
 		LayerTracks.SelectedId = _selectedElementId;
 		NewLayerButton.IsEnabled = !IsActivePresetDefault;
 

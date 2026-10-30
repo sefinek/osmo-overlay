@@ -2727,7 +2727,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Enkoder: {0} (brak enkodera na karcie graficznej - CPU)</value>
   </data>
   <data name="Summary_LogEncoderGpu" xml:space="preserve">
-    <value>Enkoder: {0} (GPU)</value>
+    <value>Enkoder: {0} ({1})</value>
   </data>
   <data name="Summary_LogExtracting" xml:space="preserve">
     <value>Wyodrębnianie telemetrii...</value>
@@ -2864,6 +2864,9 @@ Wybierz oryginalny plik z karty pamięci kamery lub drona ({0}). Nagrania wyeksp
   </data>
   <data name="Summary_FpsEither" xml:space="preserve">
     <value>{0} lub {1} kl./s</value>
+  </data>
+  <data name="Summary_ColorUntagged" xml:space="preserve">
+    <value>brak tagów ({0})</value>
   </data>
   <data name="Summary_RecommendedColor" xml:space="preserve">
     <value>Rec.709, zakres ograniczony</value>
@@ -4119,7 +4122,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Klucz SDK aplikacji typu Open API z konta deweloperskiego DJI. Służy do pobierania kluczy odszyfrowujących dzienniki lotu (FlightRecord). Pobrane klucze są zapisywane na komputerze do ponownego użycia. Do DJI wysyłane są tylko bloki kluczy z nagłówka dziennika, bez pozycji GPS.</value>
   </data>
   <data name="Settings_DjiApiKeyGet" xml:space="preserve">
-    <value>Jak zdobyć klucz (developer.dji.com)</value>
+    <value>Zdobądź klucz na developer.dji.com</value>
   </data>
   <data name="Settings_DebugModeHint" xml:space="preserve">
     <value>Panel logów pokazuje wszystko, co trafia do pliku logu, także wpisy techniczne. Możesz też uruchomić aplikację w tym trybie, przytrzymując Shift podczas startu (tylko Windows).</value>
@@ -4875,6 +4878,9 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Track_FindInPhone" xml:space="preserve">
     <value>Znajdź w telefonie…</value>
+  </data>
+  <data name="Track_FoundSaved" xml:space="preserve">
+    <value>Znaleziono dziennik lotu pasujący do nagrania wśród zapisanych na tym komputerze: {0}</value>
   </data>
   <data name="Track_ReadingFile" xml:space="preserve">
     <value>Odczytywanie trasy: {0}</value>

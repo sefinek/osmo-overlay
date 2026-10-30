@@ -48,6 +48,7 @@ public partial class WelcomeWindow : Window
 	private readonly string? _defaultMapProvider;
 	private string? _mapPreviewKey;
 	private int _step;
+	private bool _hardwareChecked;
 
 	public WelcomeWindow() : this(false)
 	{
@@ -80,7 +81,6 @@ public partial class WelcomeWindow : Window
 		ProjectAssociationCheck.IsChecked = ProjectFileAssociation.IsSupported && ProjectFileAssociation.IsRegistered();
 
 		ShowTools();
-		ShowHardware();
 		ShowStep(0);
 		AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Bubble, true);
 		AddHandler(KeyDownEvent, OnWindowArrowKeyDown, RoutingStrategies.Tunnel);
@@ -179,6 +179,7 @@ public partial class WelcomeWindow : Window
 
 		StepScrollViewer.Offset = default;
 		StepLabel.Text = string.Format(Strings.Welcome_StepOf, step + 1, _steps.Length);
+		if (_steps[step] == HardwareStep && !_hardwareChecked) ShowHardware();
 		if (_steps[step] == MapStep) ShowMapPreviews();
 		if (_steps[step] == PreferencesStep) _ = UpdateOutputDiskSpaceAsync();
 		if (IsLastStep) ShowSummary();
@@ -399,8 +400,8 @@ public partial class WelcomeWindow : Window
 		if (result.Success)
 		{
 			ShowTools();
-			// FFmpeg is what the encoder and decoder checks run.
-			ShowHardware();
+			// FFmpeg is what the encoder and decoder checks run: one that ran without it has to run again.
+			if (_hardwareChecked) ShowHardware();
 			return;
 		}
 
@@ -409,9 +410,11 @@ public partial class WelcomeWindow : Window
 		ToolsHint.Text = result.Message;
 	}
 
-	// Rows show "Checking..." until HardwareCheck has answered (the encoder and decoder runs take a second or two).
+	// Rows show "Checking..." until HardwareCheck has answered (the encoder and decoder runs take a second or two). It runs when its step is first
+	// shown, not with the window: it starts ffmpeg, and the window would wait for that to open.
 	private async void ShowHardware()
 	{
+		_hardwareChecked = true;
 		HardwareRows.Children.Clear();
 		HardwareRows.Children.Add(new TextBlock { Text = Strings.Welcome_Checking, Classes = { "rowText" } });
 		HardwareHint.Text = "";

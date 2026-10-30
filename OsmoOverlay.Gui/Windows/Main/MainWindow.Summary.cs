@@ -215,7 +215,7 @@ public partial class MainWindow
 			AppendLog(Strings.Summary_LogCheckingGpuEncoder);
 			string encoder = await encoderProbe;
 			await speedsRead;
-			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
+			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder, FfmpegPipeline.EncoderCard(encoder) ?? "GPU"));
 
 			_summary = summary;
 			AdoptCameraLayout(summary);
@@ -296,6 +296,16 @@ public partial class MainWindow
 			art: DialogArt.NoGps);
 	}
 
+	/// <summary>The colour tags as one line - "no tags (tv)" for a file with none (a drone's MP4), "?" for a missing one among the others.</summary>
+	private static string ColorText(VideoInfo video)
+	{
+		string range = video.ColorRange ?? "?";
+		if (video.ColorPrimaries is null && video.ColorTransfer is null && video.ColorSpace is null) return string.Format(Strings.Summary_ColorUntagged, range);
+
+		string primaries = video.ColorPrimaries ?? "?", transfer = video.ColorTransfer ?? "?", colorSpace = video.ColorSpace ?? "?";
+		return primaries == transfer && transfer == colorSpace ? $"{primaries} ({range})" : $"{primaries} / {transfer} / {colorSpace} ({range})";
+	}
+
 	private void PopulateInputInfo(FileSummary summary)
 	{
 		InfoCameraLabel.Text = summary.CameraFormat?.IsDrone == true ? Strings.Main_Drone : Strings.Main_Camera;
@@ -326,13 +336,7 @@ public partial class MainWindow
 			Check(r => r.Codec(summary.Video.CodecName, summary.Video.PixFmt)),
 			recommended is { TenBitRecommended: true } ? "HEVC (H.265), 10-bit" : "HEVC (H.265)");
 
-		string primaries = summary.Video.ColorPrimaries ?? "?";
-		string transfer = summary.Video.ColorTransfer ?? "?";
-		string colorSpace = summary.Video.ColorSpace ?? "?";
-		string range = summary.Video.ColorRange ?? "?";
-		InfoColor.Text = primaries == transfer && transfer == colorSpace
-			? $"{primaries} ({range})"
-			: $"{primaries} / {transfer} / {colorSpace} ({range})";
+		InfoColor.Text = ColorText(summary.Video);
 		SetCheck(InfoColorCheck,
 			Check(r => r.Color(summary.Video.ColorPrimaries, summary.Video.ColorTransfer, summary.Video.ColorSpace, summary.Video.ColorRange)),
 			recommended is { FullRangeColor: true } ? Strings.Summary_RecommendedColorFullRange : Strings.Summary_RecommendedColor);
@@ -567,18 +571,10 @@ public partial class MainWindow
 		SetMatchCheck(OutPixFmtCheck,
 			output.Video.PixFmt.Equals(inputSummary.Video.PixFmt, StringComparison.OrdinalIgnoreCase));
 
-		string primaries = output.Video.ColorPrimaries ?? "?";
-		string transfer = output.Video.ColorTransfer ?? "?";
-		string colorSpace = output.Video.ColorSpace ?? "?";
-		string range = output.Video.ColorRange ?? "?";
-		OutColor.Text = primaries == transfer && transfer == colorSpace
-			? $"{primaries} ({range})"
-			: $"{primaries} / {transfer} / {colorSpace} ({range})";
+		OutColor.Text = ColorText(output.Video);
 		SetMatchCheck(OutColorCheck,
-			primaries == (inputSummary.Video.ColorPrimaries ?? "?") &&
-			transfer == (inputSummary.Video.ColorTransfer ?? "?") &&
-			colorSpace == (inputSummary.Video.ColorSpace ?? "?") &&
-			range == (inputSummary.Video.ColorRange ?? "?"));
+			output.Video.ColorPrimaries == inputSummary.Video.ColorPrimaries && output.Video.ColorTransfer == inputSummary.Video.ColorTransfer &&
+			output.Video.ColorSpace == inputSummary.Video.ColorSpace && output.Video.ColorRange == inputSummary.Video.ColorRange);
 
 		OutBitrate.Text = $"{output.Video.BitRate / 1_000_000.0:0.#} Mbps";
 		// The encoder's rate lands near the source's, not exactly on it - "matches" means close.

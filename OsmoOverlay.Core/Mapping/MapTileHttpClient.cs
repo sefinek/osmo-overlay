@@ -4,10 +4,15 @@ using System.Net;
 namespace OsmoOverlay.Core.Mapping;
 
 internal sealed class MapTileHttpClient(HttpClient http, TimeProvider? timeProvider = null,
-	Func<TimeSpan, CancellationToken, Task>? delay = null, Action<string, TimeSpan>? onCooldown = null)
+	Func<TimeSpan, CancellationToken, Task>? delay = null, Action<string, TimeSpan>? onCooldown = null, Action<string, HttpStatusCode>? onAccessDenied = null)
 {
 	private static readonly TimeSpan InitialCooldown = TimeSpan.FromSeconds(30);
 	private static readonly TimeSpan MaxBackoff = TimeSpan.FromMinutes(5);
+
+	// A server that answers 401/403 to this many requests in a row, with no tile in between, isn't going to serve the rest (a wrong or
+	// unauthorized API key): they fail at once for a while instead of each one asking and being refused.
+	private const int AccessDeniedLimit = 3;
+	private static readonly TimeSpan AccessDeniedCooldown = TimeSpan.FromMinutes(1);
 	private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
 	private readonly ConcurrentDictionary<string, ServerState> _servers = new(StringComparer.OrdinalIgnoreCase);
 
@@ -19,12 +24,16 @@ internal sealed class MapTileHttpClient(HttpClient http, TimeProvider? timeProvi
 		public int Failures;
 		public bool Throttled;
 		public long Version;
+		public int Denied;
+		public DateTimeOffset DeniedUntil;
+		public HttpStatusCode DeniedStatus;
 	}
 
 	public async Task<byte[]> GetBytesAsync(string url, CancellationToken ct)
 	{
 		var uri = new Uri(url);
 		ServerState server = _servers.GetOrAdd(uri.Authority, _ => new ServerState());
+		ThrowIfDenied(server);
 		await server.Recovery.WaitAsync(ct);
 		bool holdingRecovery = true;
 		try
@@ -50,8 +59,10 @@ internal sealed class MapTileHttpClient(HttpClient http, TimeProvider? timeProvi
 			{
 				RegisterCooldown(server, uri.Authority, response);
 			}
+			if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden) RegisterDenied(server, uri.Authority, response.StatusCode);
 			response.EnsureSuccessStatusCode();
 			byte[] bytes = await response.Content.ReadAsByteArrayAsync(ct);
+			lock (server.Sync) server.Denied = 0;
 			if (recovering)
 			{
 				lock (server.Sync)
@@ -69,6 +80,35 @@ internal sealed class MapTileHttpClient(HttpClient http, TimeProvider? timeProvi
 		{
 			if (holdingRecovery) server.Recovery.Release();
 		}
+	}
+
+	private void ThrowIfDenied(ServerState server)
+	{
+		HttpStatusCode status;
+		lock (server.Sync)
+		{
+			if (server.Denied < AccessDeniedLimit || _time.GetUtcNow() >= server.DeniedUntil) return;
+
+			status = server.DeniedStatus;
+		}
+
+		throw new HttpRequestException($"The server refused the earlier requests (HTTP {(int)status}).", null, status);
+	}
+
+	private void RegisterDenied(ServerState server, string host, HttpStatusCode status)
+	{
+		DateTimeOffset now = _time.GetUtcNow();
+		bool announce;
+		lock (server.Sync)
+		{
+			// Said once when the refusals start, and again whenever a request let through after the pause is refused too.
+			announce = server.Denied == 0 || server.Denied >= AccessDeniedLimit && now >= server.DeniedUntil;
+			server.Denied = Math.Min(server.Denied + 1, AccessDeniedLimit);
+			server.DeniedStatus = status;
+			if (server.Denied >= AccessDeniedLimit) server.DeniedUntil = now + AccessDeniedCooldown;
+		}
+
+		if (announce) onAccessDenied?.Invoke(host, status);
 	}
 
 	private async Task WaitForCooldownAsync(ServerState server, CancellationToken ct)

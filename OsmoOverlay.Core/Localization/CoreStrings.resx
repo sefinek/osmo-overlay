@@ -160,7 +160,10 @@
     <value>libavcodec {0} was found, but {1} is required</value>
   </data>
   <data name="Map_AllTilesFailed" xml:space="preserve">
-    <value>Map widget: every tile fetch failed (offline, or the tile server is unreachable) - skipping the map</value>
+    <value>Map widget: no tile could be fetched (offline, the tile server is unreachable or it refused the request) - skipping the map</value>
+  </data>
+  <data name="Map_AccessDenied" xml:space="preserve">
+    <value>Map server {0} refused the request (HTTP {1}). Check this map's API key (Map widget settings) or pick another map style.</value>
   </data>
   <data name="Map_ApiKeyMissing" xml:space="preserve">
     <value>The API key required for the {0} map is missing, so tiles will not be downloaded. Enter the key in the Map widget settings.</value>
@@ -337,7 +340,7 @@
     <value>Using encoder: {0} (CPU)</value>
   </data>
   <data name="Render_EncoderGpu" xml:space="preserve">
-    <value>Using encoder: {0} (GPU)</value>
+    <value>Using encoder: {0} ({1})</value>
   </data>
   <data name="Render_Estimating" xml:space="preserve">
     <value>estimating time left...</value>
@@ -621,7 +624,7 @@
     <value>The aligned GPS track does not cover any part of the recording.</value>
   </data>
   <data name="DjiLog_NeedsApiKey" xml:space="preserve">
-    <value>This DJI flight log is encrypted. To read it, enter a DJI API key (the SDK key from developer.dji.com) in the settings.</value>
+    <value>This DJI flight log is encrypted. To read it, enter a DJI API key (the SDK key from developer.dji.com) in Settings.</value>
   </data>
   <data name="DjiLog_KeyRejected" xml:space="preserve">
     <value>DJI rejected the API key. Check that it is the SDK key of an activated Open API app.</value>
@@ -663,7 +666,7 @@
     <value>Climb rate</value>
   </data>
   <data name="Overlay_Satellites" xml:space="preserve">
-    <value>GPS</value>
+    <value>Satellites</value>
   </data>
   <data name="Overlay_Signal" xml:space="preserve">
     <value>Signal</value>

@@ -42,16 +42,6 @@
 			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
 			<Setter Property="TextWrapping" Value="Wrap" />
 		</Style>
-		<Style Selector="TextBlock.stepLabel">
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="LetterSpacing" Value="1" />
-			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
-		</Style>
-		<Style Selector="TextBlock.stepTitle">
-			<Setter Property="FontSize" Value="22" />
-			<Setter Property="FontWeight" Value="Bold" />
-		</Style>
 		<Style Selector="TextBlock.summaryLabel">
 			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
 			<Setter Property="VerticalAlignment" Value="Top" />
@@ -62,8 +52,8 @@
 	</Window.Styles>
 
 	<Grid Margin="20" RowDefinitions="Auto,*,Auto,Auto">
-		<Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-			<StackPanel Spacing="2">
+		<Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+			<StackPanel Spacing="6">
 				<TextBlock Name="StepLabel" Classes="stepLabel" />
 				<TextBlock Name="StepTitle" Classes="stepTitle" />
 			</StackPanel>
@@ -172,11 +162,11 @@
 			<ProgressBar Name="Busy" IsIndeterminate="True" IsVisible="False" Margin="0,12,0,0" />
 		</StackPanel>
 
-		<Grid Grid.Row="3" Margin="0,12,0,0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
-			<Button Name="RemoveButton" Content="{x:Static local:Strings.Track_Remove}" Classes="danger" Click="OnRemoveClick" />
-			<Button Grid.Column="2" Content="{x:Static local:Strings.Common_Cancel}" IsCancel="True" Click="OnCancelClick" />
-			<Button Grid.Column="3" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Click="OnBackClick" IsVisible="False" />
-			<Button Grid.Column="4" Name="NextButton" Classes="accent" IsDefault="True" Click="OnNextClick" IsEnabled="False" />
+		<Grid Grid.Row="3" Classes="wizardFooter" Margin="0,12,0,0" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="10">
+			<Button Content="{x:Static local:Strings.Common_Cancel}" Classes="wizard" IsCancel="True" Click="OnCancelClick" />
+			<Button Grid.Column="1" Name="RemoveButton" Content="{x:Static local:Strings.Track_Remove}" Classes="danger wizard" Click="OnRemoveClick" />
+			<Button Grid.Column="3" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" IsVisible="False" />
+			<Button Grid.Column="4" Name="NextButton" Classes="accent wizard" IsDefault="True" Click="OnNextClick" IsEnabled="False" />
 		</Grid>
 	</Grid>
 </Window>

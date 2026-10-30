@@ -2727,7 +2727,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Using encoder: {0} (no graphics card encoder - CPU)</value>
   </data>
   <data name="Summary_LogEncoderGpu" xml:space="preserve">
-    <value>Using encoder: {0} (GPU)</value>
+    <value>Using encoder: {0} ({1})</value>
   </data>
   <data name="Summary_LogExtracting" xml:space="preserve">
     <value>Extracting telemetry...</value>
@@ -2864,6 +2864,9 @@ Select the original file from the camera&apos;s or drone&apos;s memory card ({0}
   </data>
   <data name="Summary_FpsEither" xml:space="preserve">
     <value>{0} or {1} fps</value>
+  </data>
+  <data name="Summary_ColorUntagged" xml:space="preserve">
+    <value>no tags ({0})</value>
   </data>
   <data name="Summary_RecommendedColor" xml:space="preserve">
     <value>Rec.709, limited range</value>
@@ -4119,7 +4122,7 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>The SDK key of an Open API app from your DJI developer account. Used to retrieve decryption keys for flight logs (FlightRecord). Downloaded keys are saved on your computer for reuse. Only key blocks from the log&apos;s header are sent to DJI, without GPS positions.</value>
   </data>
   <data name="Settings_DjiApiKeyGet" xml:space="preserve">
-    <value>How to get a key (developer.dji.com)</value>
+    <value>Get a key at developer.dji.com</value>
   </data>
   <data name="Settings_DebugModeHint" xml:space="preserve">
     <value>The log panel shows everything written to the log file, including technical entries. You can also start the app in this mode by holding Shift at launch (Windows only).</value>
@@ -4875,6 +4878,9 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Track_FindInPhone" xml:space="preserve">
     <value>Find in a phone...</value>
+  </data>
+  <data name="Track_FoundSaved" xml:space="preserve">
+    <value>Found a flight log matching the recording among those saved on this computer: {0}</value>
   </data>
   <data name="Track_ReadingFile" xml:space="preserve">
     <value>Reading the track: {0}</value>

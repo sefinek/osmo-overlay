@@ -78,7 +78,10 @@ public static class FfmpegPipeline
 		(int exitCode, _, string stderr) = ProcessHelper.RunCaptured(ProcessHelper.CreateHidden("ffmpeg", [.. args]));
 		if (exitCode != 0)
 		{
-			AppLogger.Info($"Encoder probe failed for {encoder} (exit code {exitCode}): {stderr.Trim()}");
+			// A failure where the card is (not just a machine without one of that make) is why a render may end up on another encoder.
+			string message = $"Encoder probe failed for {encoder} (exit code {exitCode}): {stderr.Trim()}";
+			if (EncoderCard(encoder) is not null) AppLogger.Warn(message);
+			else AppLogger.Info(message);
 			return false;
 		}
 
@@ -147,6 +150,12 @@ public static class FfmpegPipeline
 			EncoderFamily.Qsv => 0x8086,
 			_ => null
 		};
+	}
+
+	/// <summary>The name of the graphics card `encoder` runs on (the vendor's dedicated one, see GpuAdapters.Pick) - null for the CPU encoders or without a card of its vendor listed.</summary>
+	public static string? EncoderCard(string encoder)
+	{
+		return GpuVendor(encoder) is { } vendor && GpuAdapters.Pick(GpuAdapters.All, vendor)?.Name is { Length: > 0 } name ? name : null;
 	}
 
 	/// <summary>Global options naming the device `encoder` runs on (EncoderDevice) - none for NVENC and the CPU encoders.</summary>
@@ -223,8 +232,8 @@ public static class FfmpegPipeline
 		SourceInfo info = segments[0].Source;
 		(int num, int den) = ParseFrameRate(info.Video.FrameRate);
 
-		var args = new List<string> { "-hide_banner", "-y" };
-		if (!overwrite) args[^1] = "-n";
+		// -nostats: the progress is the frames written to its stdin, and the stats lines would only pile up in the stderr read whole at the end.
+		var args = new List<string> { "-hide_banner", overwrite ? "-y" : "-n", "-nostats" };
 		args.AddRange(EncoderDeviceArgs(encoder));
 		string[] hwDecode = encode.HardwareDecoding ? HwDecodeArgs(encoder) : [];
 

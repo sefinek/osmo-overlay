@@ -83,6 +83,26 @@
 		<Style Selector="TextBlock.muted, .muted:disabled TextBlock">
 			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
 		</Style>
+		<Style Selector="TextBlock.stepTitle">
+			<Setter Property="FontSize" Value="24" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="LineHeight" Value="30" />
+		</Style>
+		<Style Selector="TextBlock.stepLabel">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="LetterSpacing" Value="1" />
+			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+		</Style>
+		<Style Selector="Button.wizard">
+			<Setter Property="MinWidth" Value="88" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Grid.wizardFooter Button">
+			<Setter Property="MinHeight" Value="34" />
+			<Setter Property="Padding" Value="14,5" />
+		</Style>
 
 		<Style Selector="Button">
 			<Setter Property="Background" Value="{StaticResource ControlBrush}" />

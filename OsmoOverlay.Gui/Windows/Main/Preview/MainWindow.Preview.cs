@@ -69,9 +69,7 @@ public partial class MainWindow
 
 			// No fix at all isn't an anomaly worth flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
 			(IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges) = await FindGpsAsync(summary);
-			IReadOnlyList<TimeRange> gpsLoss = [.. lossRanges.Select(r => new TimeRange(r.Start, r.End))];
-			foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = gpsLoss;
-			foreach (PreviewTimeline timeline in Timelines) timeline.GpsAnomalies = anomalies;
+			ShowGpsMarks(anomalies, lossRanges);
 			IReadOnlyList<TimelineFlightEvent> flightEvents = await FindFlightEventsAsync(summary);
 			foreach (PreviewTimeline timeline in Timelines) timeline.FlightEvents = flightEvents;
 			IReadOnlyList<TimelineFile> files = TimelineFiles(summary);
@@ -84,6 +82,17 @@ public partial class MainWindow
 		{
 			AppendLog(string.Format(Strings.Preview_Unavailable, ex.Message));
 			ClosePreview();
+		}
+	}
+
+	/// <summary>Both timelines mark the stretches the GPS lost or had repaired.</summary>
+	private void ShowGpsMarks(IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges)
+	{
+		IReadOnlyList<TimeRange> gpsLoss = [.. lossRanges.Select(r => new TimeRange(r.Start, r.End))];
+		foreach (PreviewTimeline timeline in Timelines)
+		{
+			timeline.GpsLoss = gpsLoss;
+			timeline.GpsAnomalies = anomalies;
 		}
 	}
 

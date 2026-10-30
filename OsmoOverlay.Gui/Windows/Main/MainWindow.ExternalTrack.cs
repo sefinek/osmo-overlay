@@ -114,13 +114,16 @@ public partial class MainWindow
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		try
 		{
-			ExternalTrackPlayback playback = await Task.Run(() => ExternalTrackPreview.Prepare(context.Track, context.Sync,
-				summary.TotalFrameCount / summary.Video.Fps, settings));
+			(ExternalTrackPlayback playback, IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges) = await Task.Run(() =>
+			{
+				ExternalTrackPlayback prepared = ExternalTrackPreview.Prepare(context.Track, context.Sync, summary.TotalFrameCount / summary.Video.Fps, settings);
+				return (prepared, (IReadOnlyList<GpsAnomaly>)TelemetryProcessor.FindGpsAnomalies(prepared.RawFrames),
+					(IReadOnlyList<(double Start, double End)>)TelemetryProcessor.FindGpsLossRanges(prepared.RawFrames));
+			});
 			if (generation != _fullTelemetryGeneration || _summary != summary || _phase != UiPhase.SummaryReady) return;
 			_fullTelemetry = playback;
 			_fullTelemetryPosition = TimeSpan.FromSeconds(Math.Clamp((context.Sync.At(_previewPosition.TotalSeconds) - context.Track.StartUtc).TotalSeconds, 0, playback.DurationSeconds));
 			FullTelemetryButton.Classes.Set("active", true);
-			ReleaseTimelineTracks();
 			CutScrim.IsVisible = false;
 			foreach (PreviewTimeline timeline in Timelines)
 			{
@@ -128,13 +131,16 @@ public partial class MainWindow
 				timeline.Moments = [];
 				timeline.Volume = [];
 				timeline.Maximum = playback.DurationSeconds;
-				timeline.GpsLoss = [];
-				timeline.GpsAnomalies = [];
+				timeline.RecordingTimeAt = playback.VideoPosition;
 				timeline.RouteIntro = null;
-				timeline.Selection = ExternalTrackPreview.RecordingRange(playback.Track, playback.Synchronization, playback.RecordingSeconds);
-				timeline.Files = timeline.Selection is { } range ? [new TimelineFile(range.StartSeconds, range.EndSeconds, Strings.FullTelemetry_Recording, false)] : [];
+				timeline.Selection = null;
+				timeline.IsReadOnly = true;
+				timeline.Highlight = ExternalTrackPreview.RecordingRange(playback.Track, playback.Synchronization, playback.RecordingSeconds);
+				timeline.Files = timeline.Highlight is { } range ? [new TimelineFile(range.StartSeconds, range.EndSeconds, Strings.FullTelemetry_Recording, false)] : [];
 				timeline.FlightEvents = [.. playback.Track.Events.Select(e => new TimelineFlightEvent((e.Utc - playback.Track.StartUtc).TotalSeconds, e.Event))];
 			}
+			ShowGpsMarks(anomalies, lossRanges);
+			RefreshLayers();
 			await OpenPreviewPlayerAsync(summary, _fullTelemetryPosition, trackPlayback: playback);
 		}
 		catch (Exception ex)
@@ -167,6 +173,9 @@ public partial class MainWindow
 		_suppressTimelineEvent = true;
 		foreach (PreviewTimeline timeline in Timelines)
 		{
+			timeline.RecordingTimeAt = null;
+			timeline.Highlight = null;
+			timeline.IsReadOnly = false;
 			timeline.Maximum = _summary is { } recording ? recording.TotalFrameCount / recording.Video.Fps : 1;
 			timeline.Value = _previewPosition.TotalSeconds;
 		}

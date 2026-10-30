@@ -80,8 +80,24 @@ public partial class ExternalTrackWindow : Window
 		Opened += async (_, _) =>
 		{
 			if (source is not null) await OpenCurrentAsync(source);
+			else await UseSavedLogAsync();
 		};
 		Closed += (_, _) => _closed = true;
+	}
+
+	/// <summary>
+	///     A drone's flight log kept from an earlier search (or beside the recording) that covers the recording is loaded at once - the user only
+	///     picks one by hand when there is none, or another is wanted. A track picked meanwhile is left alone.
+	/// </summary>
+	private async Task UseSavedLogAsync()
+	{
+		if (_summary is not { CameraFormat.IsDrone: true } summary) return;
+
+		ExternalTrackSource? found = await Task.Run(() => ExternalTrackSource.FindFor(summary.CameraFormat, summary.InputPaths[0], summary.ContainerRecordingStartUtc));
+		if (_closed || found is null || _track is not null || _busy) return;
+
+		Log?.Invoke(string.Format(Strings.Track_FoundSaved, Path.GetFileName(found.Path)), LogLevel.Info);
+		await LoadTrackAsync(found.Path);
 	}
 
 	/// <summary>An attached track: its file is read again and the window opens on the summary of how it is placed now.</summary>

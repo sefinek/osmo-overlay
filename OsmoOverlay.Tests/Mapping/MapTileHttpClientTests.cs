@@ -115,4 +115,59 @@ public sealed class MapTileHttpClientTests
 		}
 		CollectionAssert.AreEqual(new[] { TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30) }, clock.Delays);
 	}
+
+	[TestMethod]
+	public async Task RefusedRepeatedly_LaterRequestsFailAtOnceAndTheRefusalIsAnnouncedOnce()
+	{
+		var clock = new Clock();
+		using var handler = new Handler((_, _) => new HttpResponseMessage(HttpStatusCode.Forbidden));
+		using var http = new HttpClient(handler);
+		List<HttpStatusCode> announced = [];
+		var client = new MapTileHttpClient(http, clock, clock.Advance, onAccessDenied: (_, status) => announced.Add(status));
+
+		for (int i = 0; i < 6; i++)
+		{
+			HttpRequestException ex = await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetBytesAsync($"https://tiles.example/{i}", CancellationToken.None));
+			Assert.AreEqual(HttpStatusCode.Forbidden, ex.StatusCode);
+		}
+
+		Assert.AreEqual(3, handler.Calls, "after three refusals the server isn't asked again");
+		CollectionAssert.AreEqual(new[] { HttpStatusCode.Forbidden }, announced);
+	}
+
+	[TestMethod]
+	public async Task RefusedServer_IsAskedAgainAfterThePause_AndAnnouncesIfItRefusesAgain()
+	{
+		var clock = new Clock();
+		using var handler = new Handler((call, _) => call <= 3 ? new HttpResponseMessage(HttpStatusCode.Unauthorized) : Success());
+		using var http = new HttpClient(handler);
+		int announced = 0;
+		var client = new MapTileHttpClient(http, clock, clock.Advance, onAccessDenied: (_, _) => announced++);
+		for (int i = 0; i < 4; i++)
+			await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetBytesAsync("https://tiles.example/tile", CancellationToken.None));
+
+		await clock.Advance(TimeSpan.FromMinutes(1), CancellationToken.None);
+		await client.GetBytesAsync("https://tiles.example/tile", CancellationToken.None);
+
+		Assert.AreEqual(4, handler.Calls);
+		Assert.AreEqual(1, announced);
+	}
+
+	[TestMethod]
+	public async Task ATileBetweenRefusals_KeepsTheServerInUse()
+	{
+		var clock = new Clock();
+		using var handler = new Handler((call, _) => call is 1 or 2 or 4 or 5 ? new HttpResponseMessage(HttpStatusCode.Forbidden) : Success());
+		using var http = new HttpClient(handler);
+		var client = new MapTileHttpClient(http, clock, clock.Advance);
+
+		for (int i = 1; i <= 6; i++)
+		{
+			if (i is 1 or 2 or 4 or 5)
+				await Assert.ThrowsExactlyAsync<HttpRequestException>(() => client.GetBytesAsync("https://tiles.example/tile", CancellationToken.None));
+			else await client.GetBytesAsync("https://tiles.example/tile", CancellationToken.None);
+		}
+
+		Assert.AreEqual(6, handler.Calls);
+	}
 }

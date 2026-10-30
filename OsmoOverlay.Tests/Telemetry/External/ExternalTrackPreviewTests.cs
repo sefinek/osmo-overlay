@@ -109,4 +109,17 @@ public sealed class ExternalTrackPreviewTests
 		cts.Cancel();
 		Assert.ThrowsExactly<OperationCanceledException>(() => ExternalTrackPreview.Frames(track, cts.Token));
 	}
+
+	[TestMethod]
+	public void FramesOfATrackWithAGapMarkTheGapAsLostGps()
+	{
+		ExternalTrackPoint[] points = [.. Enumerable.Range(0, 11).Where(i => i is <= 2 or >= 8).Select(i => new ExternalTrackPoint(Start.AddSeconds(i), 50, 20 + i * 0.00001))];
+		var track = new ExternalTrack(points);
+
+		List<(double Start, double End)> lost = TelemetryProcessor.FindGpsLossRanges(ExternalTrackPreview.Frames(track));
+
+		Assert.AreEqual(1, lost.Count);
+		Assert.IsTrue(lost[0].Start is > 2 and < 2.5, $"{lost[0].Start}");
+		Assert.IsTrue(lost[0].End is > 7.5 and < 8, $"{lost[0].End}");
+	}
 }

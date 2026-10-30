@@ -18,8 +18,9 @@ namespace OsmoOverlay.Core.Mapping;
 public static class MapTileFetcher
 {
 	private static readonly HttpClient Http = CreateHttpClient();
-	private static readonly MapTileHttpClient Downloads = new(Http, onCooldown: (host, cooldown) =>
-		AppLogger.Warn(string.Format(CoreStrings.Map_RateLimited, host, Math.Ceiling(cooldown.TotalSeconds))));
+	private static readonly MapTileHttpClient Downloads = new(Http,
+		onCooldown: (host, cooldown) => AppLogger.Warn(string.Format(CoreStrings.Map_RateLimited, host, Math.Ceiling(cooldown.TotalSeconds))),
+		onAccessDenied: (host, status) => AppLogger.Warn(string.Format(CoreStrings.Map_AccessDenied, host, (int)status)));
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "map-tiles");
@@ -83,7 +84,8 @@ public static class MapTileFetcher
 			{
 				if (attempt == MaxFetchAttempts || !IsTransient(ex))
 				{
-					AppLogger.Warn(ex, string.Format(CoreStrings.Map_FetchTileFailed, $"z={zoom} x={x} y={y}", attempt));
+					// A refusal is said once for the server (MapTileHttpClient), not for each of its tiles.
+					if (!IsAccessDenied(ex)) AppLogger.Warn(ex, string.Format(CoreStrings.Map_FetchTileFailed, $"z={zoom} x={x} y={y}", attempt));
 					return null;
 				}
 
@@ -94,10 +96,21 @@ public static class MapTileFetcher
 		return null;
 	}
 
-	// A timeout is a TaskCanceledException too, hence the token check in FetchAsync rather than the exception type.
+	// A timeout is a TaskCanceledException too, hence the token check in FetchAsync rather than the exception type. Only what a second try can
+	// change: a network error, a server's own trouble, an answer that wasn't an image. A bad URL or a refusal (401/403/404) stays what it is.
 	private static bool IsTransient(Exception ex)
 	{
-		return ex is not HttpRequestException { StatusCode: { } status } || status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests || (int)status >= 500;
+		return ex switch
+		{
+			HttpRequestException { StatusCode: { } status } => status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests || (int)status >= 500,
+			HttpRequestException or TaskCanceledException or IOException or InvalidDataException => true,
+			_ => false
+		};
+	}
+
+	private static bool IsAccessDenied(Exception ex)
+	{
+		return ex is HttpRequestException { StatusCode: HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden };
 	}
 
 	/// <summary>

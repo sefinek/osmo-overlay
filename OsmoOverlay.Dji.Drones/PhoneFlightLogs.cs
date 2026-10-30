@@ -50,6 +50,12 @@ public static class PhoneFlightLogs
 		return name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) && name.Contains("FlightRecord", StringComparison.OrdinalIgnoreCase);
 	}
 
+	/// <summary>How many logs are already kept in CacheFolder.</summary>
+	public static int CachedLogCount()
+	{
+		return Directory.Exists(CacheFolder) ? Directory.EnumerateFiles(CacheFolder, "*.txt").Count(path => IsLogName(Path.GetFileName(path))) : 0;
+	}
+
 	public static Task<IReadOnlyList<PhoneDevice>> ListDevicesAsync()
 	{
 		return CanReadDevices ? RunSta<IReadOnlyList<PhoneDevice>>(ListDevices) : Task.FromResult<IReadOnlyList<PhoneDevice>>([]);

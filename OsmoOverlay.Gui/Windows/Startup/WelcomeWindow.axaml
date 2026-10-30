@@ -47,17 +47,6 @@
 				</Transitions>
 			</Setter>
 		</Style>
-		<Style Selector="TextBlock.stepTitle">
-			<Setter Property="FontSize" Value="24" />
-			<Setter Property="FontWeight" Value="Bold" />
-			<Setter Property="LineHeight" Value="30" />
-		</Style>
-		<Style Selector="TextBlock.stepLabel">
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="LetterSpacing" Value="1" />
-			<Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
-		</Style>
 		<Style Selector="TextBlock.lead">
 			<Setter Property="FontSize" Value="15" />
 			<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
@@ -108,22 +97,6 @@
 		<Style Selector="Border.iconBadge > local|IconView.noticeIcon">
 			<Setter Property="Width" Value="20" />
 			<Setter Property="Height" Value="20" />
-		</Style>
-		<Style Selector="Button.ghost">
-			<Setter Property="Background" Value="Transparent" />
-			<Setter Property="BorderThickness" Value="0" />
-			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-		</Style>
-		<Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="{StaticResource SubtleFillBrush}" />
-			<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-		</Style>
-		<Style Selector="Button.wizard">
-			<Setter Property="MinWidth" Value="88" />
-		</Style>
-		<Style Selector="Grid.wizardFooter > Button">
-			<Setter Property="MinHeight" Value="34" />
-			<Setter Property="Padding" Value="14,5" />
 		</Style>
 	</Window.Styles>
 
@@ -506,11 +479,13 @@
 			</ScrollViewer>
 
 			<Border Grid.Row="1" Padding="24,10" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,1,0,0">
-				<Grid Classes="wizardFooter" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="10">
-					<Button Grid.Column="0" Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Classes="ghost" Click="OnSkipClick" />
-					<Button Grid.Column="1" Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
-					<Button Grid.Column="3" Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
-					<Button Grid.Column="4" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
+				<Grid Classes="wizardFooter" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+					<StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+						<Button Name="BackButton" Content="{x:Static local:Strings.Common_Back}" Classes="wizard" Click="OnBackClick" />
+						<Button Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Classes="wizard" Click="OnSkipClick" />
+					</StackPanel>
+					<Button Grid.Column="2" Name="NextButton" Content="{x:Static local:Strings.Welcome_Next}" Classes="wizard" Click="OnNextClick" />
+					<Button Grid.Column="3" Name="OpenRecordingButton" Content="{x:Static local:Strings.Common_OpenARecording}" Classes="accent wizard" IsVisible="False"
 					        Click="OnOpenRecordingClick" />
 				</Grid>
 			</Border>

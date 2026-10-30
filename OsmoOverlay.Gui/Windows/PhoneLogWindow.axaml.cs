@@ -32,8 +32,40 @@ public partial class PhoneLogWindow : Window
 	{
 		InitializeComponent();
 		_summary = summary;
-		Opened += async (_, _) => await RefreshAsync();
+		Opened += async (_, _) =>
+		{
+			// A log kept from an earlier search may already be the one: no phone needed then.
+			if (!await ShowSavedMatchAsync()) await RefreshAsync();
+		};
 		Closed += (_, _) => _cancel.Cancel();
+	}
+
+	private Task<string?> FindMatchAsync()
+	{
+		return _summary is null
+			? Task.FromResult<string?>(null)
+			: Task.Run(() => ExternalTrackSource.FindFor(_summary.CameraFormat, _summary.InputPaths[0], _summary.ContainerRecordingStartUtc)?.Path);
+	}
+
+	private async Task<bool> ShowSavedMatchAsync()
+	{
+		if (await FindMatchAsync() is not { } match || _cancel.IsCancellationRequested) return false;
+
+		_match = match;
+		MatchFile.Text = Path.GetFileName(match);
+		MatchStats.Text = string.Format(Strings.Phone_Done, 0, PhoneFlightLogs.CachedLogCount());
+		OpenLogsButton.IsVisible = true;
+		Log?.Invoke(Strings.Phone_Match + ": " + Path.GetFileName(match), LogLevel.Info);
+		ShowMatchPanel();
+		ActionButton.IsEnabled = true;
+		return true;
+	}
+
+	private void ShowMatchPanel()
+	{
+		StepsText.IsVisible = DevicesCard.IsVisible = FolderButton.IsVisible = false;
+		MatchPanel.IsVisible = ShowButton.IsVisible = true;
+		ActionButton.Content = Strings.Phone_Use;
 	}
 
 	private async Task RefreshAsync()
@@ -111,7 +143,7 @@ public partial class PhoneLogWindow : Window
 			PhoneCopyResult result = await copy();
 			if (_cancel.IsCancellationRequested) return;
 
-			_match = _summary is null ? null : ExternalTrackSource.FindFor(_summary.CameraFormat, _summary.InputPaths[0], _summary.ContainerRecordingStartUtc)?.Path;
+			_match = await FindMatchAsync();
 			OpenLogsButton.IsVisible = Directory.Exists(PhoneFlightLogs.CacheFolder);
 			string copied = string.Format(Strings.Phone_Done, result.Copied, result.AlreadyKept);
 			Log?.Invoke(copied, LogLevel.Info);
@@ -136,12 +168,7 @@ public partial class PhoneLogWindow : Window
 				Log?.Invoke(Strings.Phone_Match + ": " + Path.GetFileName(_match), LogLevel.Info);
 			}
 
-			if (_match is not null)
-			{
-				StepsText.IsVisible = DevicesCard.IsVisible = FolderButton.IsVisible = false;
-				MatchPanel.IsVisible = ShowButton.IsVisible = true;
-				ActionButton.Content = Strings.Phone_Use;
-			}
+			if (_match is not null) ShowMatchPanel();
 		}
 		catch (OperationCanceledException)
 		{
