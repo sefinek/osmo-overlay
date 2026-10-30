@@ -139,6 +139,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private IReadOnlyList<TimeRange> _gpsLoss = [];
 	private IReadOnlyList<GpsAnomaly> _gpsAnomalies = [];
 	private IReadOnlyList<TimelineFlightEvent> _flightEvents = [];
+	private List<(TimeRange Range, IBrush Brush)>? _marks;
 	private IReadOnlyList<TimelineMoment> _moments = [];
 	private string? _tip;
 	private (double FadeFrom, double End)? _routeIntro;
@@ -318,6 +319,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_gpsLoss = value;
+			_marks = null;
 			_contentVersion++;
 			InvalidateVisual();
 		}
@@ -330,6 +332,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_gpsAnomalies = value;
+			_marks = null;
 			_contentVersion++;
 			InvalidateVisual();
 		}
@@ -342,6 +345,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_flightEvents = value;
+			_marks = null;
 			_contentVersion++;
 			InvalidateVisual();
 		}
@@ -1495,10 +1499,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	}
 
 	/// <summary>The GPS losses (warning), the repaired anomalies (alert) and the flight log's events, each with its color.</summary>
-	private IEnumerable<(TimeRange Range, IBrush Brush)> GpsMarks()
+	private List<(TimeRange Range, IBrush Brush)> GpsMarks()
 	{
-		return _gpsLoss.Select(l => (l, GpsLossBrush)).Concat(_gpsAnomalies.Select(a => (new TimeRange(a.Start, a.End), GpsAnomalyBrush)))
-			.Concat(_flightEvents.Select(e => (new TimeRange(e.Seconds, e.Seconds), FlightEventBrush(e.Event.Kind))));
+		return _marks ??= [.. _gpsLoss.Select(l => (l, GpsLossBrush)).Concat(_gpsAnomalies.Select(a => (new TimeRange(a.Start, a.End), GpsAnomalyBrush)))
+			.Concat(_flightEvents.Select(e => (new TimeRange(e.Seconds, e.Seconds), FlightEventBrush(e.Event.Kind))))];
 	}
 
 	/// <summary>

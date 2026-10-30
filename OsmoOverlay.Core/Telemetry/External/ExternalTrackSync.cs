@@ -79,16 +79,28 @@ public static class ExternalTrackSync
 	/// </summary>
 	private static (double StartSeconds, double Correlation)? Refine(double[] camera, ExternalTrack track, double coarseSeconds, int minOverlap)
 	{
+		// Every time a candidate reads lies on the refinement's own grid (a bin's samples sit half a sample step in), so the track is read once per
+		// grid point instead of once per candidate, bin and sample.
+		int steps = (int)Math.Round(RefineSpanSeconds / RefineStepSeconds);
+		int perBin = (int)Math.Round(StepSeconds / RefineStepSeconds), perSample = perBin / BinSamples, half = perSample / 2;
+		double gridStart = coarseSeconds - steps * RefineStepSeconds;
+		double[] grid = new double[2 * steps + (camera.Length - 1) * perBin + (BinSamples - 1) * perSample + half + 1];
+		int cursor = 0;
+		for (int n = 0; n < grid.Length; n++) grid[n] = SpeedAt(track, track.StartUtc.AddSeconds(gridStart + n * RefineStepSeconds), ref cursor);
+
 		double[] aligned = new double[camera.Length];
 		(double StartSeconds, double Correlation)? best = null;
-		int steps = (int)Math.Round(RefineSpanSeconds / RefineStepSeconds);
 		for (int k = -steps; k <= steps; k++)
 		{
-			double start = coarseSeconds + k * RefineStepSeconds;
-			int cursor = 0;
-			for (int i = 0; i < aligned.Length; i++) aligned[i] = MeanSpeed(track, start + i * StepSeconds, ref cursor);
+			for (int i = 0; i < aligned.Length; i++)
+			{
+				int first = k + steps + i * perBin + half;
+				double sum = 0;
+				for (int b = 0; b < BinSamples; b++) sum += grid[first + b * perSample];
+				aligned[i] = sum / BinSamples;
+			}
 
-			if (Correlate(camera, aligned, 0, minOverlap) is { } match && (best is null || match.Correlation > best.Value.Correlation)) best = (start, match.Correlation);
+			if (Correlate(camera, aligned, 0, minOverlap) is { } match && (best is null || match.Correlation > best.Value.Correlation)) best = (coarseSeconds + k * RefineStepSeconds, match.Correlation);
 		}
 
 		return best;
@@ -140,21 +152,6 @@ public static class ExternalTrackSync
 		for (int i = 0; i < speed.Length; i++) speed[i] = SpeedAt(track, track.StartUtc.AddSeconds(i * StepSeconds), ref cursor);
 
 		return speed;
-	}
-
-	/// <summary>The track's mean speed over the half second from `seconds` into the track, as the camera's bin is a mean over its half second; NaN when any sample is missing.</summary>
-	private static double MeanSpeed(ExternalTrack track, double seconds, ref int cursor)
-	{
-		double sum = 0;
-		for (int k = 0; k < BinSamples; k++)
-		{
-			double speed = SpeedAt(track, track.StartUtc.AddSeconds(seconds + (k + 0.5) * StepSeconds / BinSamples), ref cursor);
-			if (double.IsNaN(speed)) return double.NaN;
-
-			sum += speed;
-		}
-
-		return sum / BinSamples;
 	}
 
 	/// <summary>The track's speed (m/s) at a moment: NaN outside it, in a gap or a timer pause, and where it has no speed.</summary>
