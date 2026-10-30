@@ -162,7 +162,7 @@ public partial class MainWindow
 			ImageElement => string.Format(Strings.Layers_NoFileChosen, name),
 			TripStatElement stat => stat.Label ?? OverlayRenderer.DefaultTripStatLabel(stat.Stat),
 			TripProgressBarElement { ShowFromSpeedKmh: { } kmh } => string.Format(Strings.Layers_FromSpeed, name, kmh.ToString("0.#")),
-			ProfileChartElement chart => chart.Label ?? (chart.Series == ProfileSeries.Speed ? Strings.Layers_SpeedChart : Strings.Layers_ElevationChart),
+			ProfileChartElement chart => chart.Label ?? chart.Series switch { ProfileSeries.Speed => Strings.Layers_SpeedChart, ProfileSeries.Height => Strings.Widget_Height, _ => Strings.Layers_ElevationChart },
 			ElapsedTimeTextElement { Label: { } label } when !string.IsNullOrWhiteSpace(label) => label,
 			LabeledStatElement { Label: { } label } => label,
 			_ => name

@@ -1075,6 +1075,9 @@ Each category lists up to three moments with extreme values. You can jump to a m
   <data name="Main_Camera" xml:space="preserve">
     <value>Camera</value>
   </data>
+  <data name="Main_Drone" xml:space="preserve">
+    <value>Drone</value>
+  </data>
   <data name="Main_CameraInfo" xml:space="preserve">
     <value>Camera info</value>
   </data>
@@ -1283,7 +1286,7 @@ Each category lists up to three moments with extreme values. You can jump to a m
     <value>LAYERS</value>
   </data>
   <data name="Main_Legacy" xml:space="preserve">
-    <value>Classic</value>
+    <value>Legacy</value>
   </data>
   <data name="Main_LogLastProjectGone" xml:space="preserve">
     <value>The last project no longer exists: {0}</value>
@@ -1376,7 +1379,7 @@ Each category lists up to three moments with extreme values. You can jump to a m
     <value>PANEL</value>
   </data>
   <data name="Main_PickADjiOsmoAction" xml:space="preserve">
-    <value>Choose a recording from a supported camera and click "Get Summary" to preview the overlay.</value>
+    <value>Choose a recording from a supported camera or drone and click "Get Summary" to preview the overlay.</value>
   </data>
   <data name="Main_PickAFileAndGet" xml:space="preserve">
     <value>Choose a file and click "Get Summary" to edit widgets.</value>
@@ -2444,6 +2447,18 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_TagExportedVideoHint" xml:space="preserve">
     <value>Writes the app name and version, telemetry calculation version, tilt measurement source and project links to the exported file's metadata. This helps compare videos rendered with different OsmoOverlay versions.</value>
   </data>
+  <data name="Settings_OutputAspect" xml:space="preserve">
+    <value>Aspect ratio</value>
+  </data>
+  <data name="Settings_OutputAspectHint" xml:space="preserve">
+    <value>Changes the video&apos;s aspect ratio, e.g. to 9:16 for vertical videos. By default, the image is cropped from the center and the overlay is drawn on the output frame. The main window preview keeps the original aspect ratio. 360° recordings are rendered directly at the selected aspect ratio.</value>
+  </data>
+  <data name="Settings_OutputAspectBars" xml:space="preserve">
+    <value>Add black bars instead of cropping</value>
+  </data>
+  <data name="Settings_OutputAspectBarsHint" xml:space="preserve">
+    <value>The whole picture fits in the frame and black bars fill the rest. This only applies when an aspect ratio is chosen.</value>
+  </data>
   <data name="Settings_OutputCodec" xml:space="preserve">
     <value>Codec</value>
   </data>
@@ -2751,7 +2766,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>GPS timestamp: not present in this recording - Date &amp; time / UTC time fall back to the file's own recording-start time instead (approximate, not GPS-synced; flagged with a warning icon in the widget list)</value>
   </data>
   <data name="Summary_LogNoTelemetry" xml:space="preserve">
-    <value>No telemetry found. The recording can be played, but an overlay using camera data cannot be added. Select the original file from the camera&apos;s memory card ({0})</value>
+    <value>No telemetry found. The recording can be played, but without an overlay of camera data. Select the original file from the camera&apos;s or drone&apos;s memory card ({0}).</value>
   </data>
   <data name="Summary_LogProbing" xml:space="preserve">
     <value>Reading source file information (ffprobe)...</value>
@@ -2797,7 +2812,7 @@ For DJI cameras, record with the DJI GPS Bluetooth Remote Controller or use your
   <data name="Summary_NoTelemetryMessage" xml:space="preserve">
     <value>No telemetry data was found in this file. You can play the recording, but you cannot add an overlay using data from the camera.
 
-Select the original file from the camera&apos;s memory card ({0}). Recordings exported from DJI Mimo contain no telemetry, and those from other apps may not either.</value>
+Select the original file from the camera&apos;s or drone&apos;s memory card ({0}). Recordings exported from DJI Mimo contain no telemetry, and those from other apps may not either.</value>
   </data>
   <data name="Summary_NoTelemetryTitle" xml:space="preserve">
     <value>No telemetry data</value>
@@ -3239,7 +3254,7 @@ Details: {0}</value>
     <value>Insta360 (experimental support)</value>
   </data>
   <data name="Welcome_BurnSpeedHeadingTiltAnd" xml:space="preserve">
-    <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action, GoPro or Insta360 camera. This guide introduces the supported cameras and helps you set up tools, adjust speed correction and choose where to save videos.</value>
+    <value>Burn speed, heading, tilt and more onto footage from your DJI Osmo Action, GoPro or Insta360 camera, or a DJI drone. This guide introduces the supported devices and helps you set up tools, adjust speed correction and choose where to save videos.</value>
   </data>
   <data name="Welcome_CheckDecoder" xml:space="preserve">
     <value>Hardware decoding</value>
@@ -3382,7 +3397,7 @@ Details: {0}</value>
 Note: OsmoOverlay is provided free of charge. If someone asks you to pay for this program, they are most likely trying to scam you.</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
-    <value>OsmoOverlay reads telemetry stored in files from supported cameras. You do not need separate data files.</value>
+    <value>OsmoOverlay reads telemetry stored in files from supported cameras. A separate data file (the flight log) is only needed for DJI drones.</value>
   </data>
   <data name="Welcome_OsmoOverlayRendersWithFFmpegExifTool" xml:space="preserve">
     <value>OsmoOverlay uses FFmpeg for rendering. The optional ExifTool provides a fallback for reading telemetry when the built-in decoder cannot read the recording data.</value>
@@ -4034,6 +4049,9 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   <data name="Timeline_GpsAnomalyTip" xml:space="preserve">
     <value>GPS anomaly: {0} - {1}, {2}. The app corrected it using readings from before and after the anomaly.</value>
   </data>
+  <data name="Timeline_FlightEventTip" xml:space="preserve">
+    <value>{0} - {1}: {2}</value>
+  </data>
   <data name="Timeline_GpsJumpPosition" xml:space="preserve">
     <value>a position jump</value>
   </data>
@@ -4091,6 +4109,18 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   <data name="Settings_DebugMode" xml:space="preserve">
     <value>Debug mode</value>
   </data>
+  <data name="Settings_DjiDrones" xml:space="preserve">
+    <value>DJI drones</value>
+  </data>
+  <data name="Settings_DjiApiKey" xml:space="preserve">
+    <value>DJI API key</value>
+  </data>
+  <data name="Settings_DjiApiKeyHint" xml:space="preserve">
+    <value>The SDK key of an Open API app from your DJI developer account. Used to retrieve decryption keys for flight logs (FlightRecord). Downloaded keys are saved on your computer for reuse. Only key blocks from the log&apos;s header are sent to DJI, without GPS positions.</value>
+  </data>
+  <data name="Settings_DjiApiKeyGet" xml:space="preserve">
+    <value>How to get a key (developer.dji.com)</value>
+  </data>
   <data name="Settings_DebugModeHint" xml:space="preserve">
     <value>The log panel shows everything written to the log file, including technical entries. You can also start the app in this mode by holding Shift at launch (Windows only).</value>
   </data>
@@ -4133,20 +4163,14 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
   <data name="Track_Title" xml:space="preserve">
     <value>GPS track</value>
   </data>
-  <data name="Track_FileSection" xml:space="preserve">
-    <value>TRACK FILE</value>
-  </data>
   <data name="Track_Range" xml:space="preserve">
     <value>Track range</value>
   </data>
   <data name="Track_SecondAnchorHint" xml:space="preserve">
     <value>Corrects clock drift in a long recording. Pick an event near the end of the video.</value>
   </data>
-  <data name="Track_Help" xml:space="preserve">
-    <value>Match the same event in the video and the track, such as starting or stopping. Video time starts at the beginning of the entire recording, before cuts. The camera's clock is not needed.</value>
-  </data>
   <data name="Track_FileType" xml:space="preserve">
-    <value>FIT or GPX track</value>
+    <value>FIT or GPX track, DJI flight log</value>
   </data>
   <data name="Track_FitPreferred" xml:space="preserve">
     <value>A FIT file can contain recorded speed, timer pauses, distance and the device's battery level. With GPX, speed is calculated from consecutive positions. GPX does not provide the device's distance counter or battery level.</value>
@@ -4155,11 +4179,20 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>{0} - {1} UTC
 GPS points: {2} · timer pauses: {3}</value>
   </data>
-  <data name="Track_Estimate" xml:space="preserve">
-    <value>Suggest alignment based on motion</value>
+  <data name="Track_StatDevice" xml:space="preserve">
+    <value>Device: {0}</value>
   </data>
-  <data name="Track_EstimateInfo" xml:space="preserve">
-    <value>Approximate alignment (correlation {0:0.00}). Check it against the video. Camera shake can be unrelated to speed.</value>
+  <data name="Track_StatDistance" xml:space="preserve">
+    <value>distance: {0} km</value>
+  </data>
+  <data name="Track_StatMaxSpeed" xml:space="preserve">
+    <value>max speed: {0} km/h</value>
+  </data>
+  <data name="Track_StatMaxHeight" xml:space="preserve">
+    <value>max height: {0} m</value>
+  </data>
+  <data name="Track_StatRecordings" xml:space="preserve">
+    <value>camera recordings: {0}</value>
   </data>
   <data name="Track_FirstAnchor" xml:space="preserve">
     <value>SYNCHRONIZATION POINT</value>
@@ -4188,9 +4221,6 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Track_Apply" xml:space="preserve">
     <value>Apply</value>
   </data>
-  <data name="Track_NoEstimate" xml:space="preserve">
-    <value>Could not align camera motion with GPS speed changes. Set a synchronization point manually.</value>
-  </data>
   <data name="Track_NoOverlap" xml:space="preserve">
     <value>The aligned track does not cover any part of the video.</value>
   </data>
@@ -4199,6 +4229,15 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Track_None" xml:space="preserve">
     <value>No external GPS track</value>
+  </data>
+  <data name="Track_Reading" xml:space="preserve">
+    <value>Reading the track...</value>
+  </data>
+  <data name="Track_ReadingDjiLog" xml:space="preserve">
+    <value>Reading the DJI flight log... The first time, keys are downloaded from DJI.</value>
+  </data>
+  <data name="Track_Applying" xml:space="preserve">
+    <value>Adding the GPS track: {0}...</value>
   </data>
   <data name="Track_Applied" xml:space="preserve">
     <value>GPS track applied: {0}</value>
@@ -4211,6 +4250,132 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Widget_ImuTemperature" xml:space="preserve">
     <value>Motion sensor temperature</value>
+  </data>
+  <data name="Widget_Height" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="Widget_HomeDistance" xml:space="preserve">
+    <value>Distance from take-off</value>
+  </data>
+  <data name="Widget_HeightDescription" xml:space="preserve">
+    <value>The drone's height above its take-off point, from the DJI flight log. It is not the altitude above sea level.</value>
+  </data>
+  <data name="Widget_HomeDistanceDescription" xml:space="preserve">
+    <value>The drone's straight-line distance from its take-off point, from the DJI flight log.</value>
+  </data>
+  <data name="Widget_VerticalSpeed" xml:space="preserve">
+    <value>Climb rate</value>
+  </data>
+  <data name="Widget_Satellites" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="Widget_VerticalSpeedDescription" xml:space="preserve">
+    <value>The drone&apos;s vertical speed, calculated from height changes in the DJI flight log over about one second. Positive values indicate ascent; negative values indicate descent.</value>
+  </data>
+  <data name="Widget_SatellitesDescription" xml:space="preserve">
+    <value>The number of satellites detected by the drone&apos;s receiver and the GPS signal level shown as bars. Data comes from the DJI flight log.</value>
+  </data>
+  <data name="Widget_DroneBattery" xml:space="preserve">
+    <value>Drone battery</value>
+  </data>
+  <data name="Widget_FlightAlerts" xml:space="preserve">
+    <value>Flight alerts</value>
+  </data>
+  <data name="DroneBattery_Hint" xml:space="preserve">
+    <value>Shows the drone&apos;s battery charge level as an icon and a percentage. You can also display voltage, temperature, current and individual cell voltages. Data comes from the DJI flight log.</value>
+  </data>
+  <data name="DroneBattery_Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="DroneBattery_Icon" xml:space="preserve">
+    <value>Battery icon</value>
+  </data>
+  <data name="DroneBattery_Voltage" xml:space="preserve">
+    <value>Voltage</value>
+  </data>
+  <data name="DroneBattery_Temperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="DroneBattery_Current" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="DroneBattery_Cells" xml:space="preserve">
+    <value>Voltage of each cell</value>
+  </data>
+  <data name="DroneBattery_Levels" xml:space="preserve">
+    <value>Warning levels</value>
+  </data>
+  <data name="DroneBattery_LowPercent" xml:space="preserve">
+    <value>Low charge threshold (%)</value>
+  </data>
+  <data name="DroneBattery_CriticalPercent" xml:space="preserve">
+    <value>Critical charge threshold (%)</value>
+  </data>
+  <data name="DroneBattery_LowColor" xml:space="preserve">
+    <value>Low color</value>
+  </data>
+  <data name="DroneBattery_CriticalColor" xml:space="preserve">
+    <value>Critical color</value>
+  </data>
+  <data name="DroneBattery_LevelsHint" xml:space="preserve">
+    <value>The icon and percentage change color smoothly with the charge level: from green through yellow to the low and critical colors at the selected thresholds. At or below the critical threshold, the critical color stays. Leave the color fields blank to use the default orange and red.</value>
+  </data>
+  <data name="Widget_Signal" xml:space="preserve">
+    <value>Signal</value>
+  </data>
+  <data name="Widget_FlightMode" xml:space="preserve">
+    <value>Flight mode</value>
+  </data>
+  <data name="Widget_FlightModeDescription" xml:space="preserve">
+    <value>The flight mode the drone is in (P-GPS, Sport...), from the DJI flight log.</value>
+  </data>
+  <data name="Signal_Hint" xml:space="preserve">
+    <value>The quality of the drone&apos;s radio links from the DJI flight log, in percent, with bars for their average. Which line is the uplink and which the downlink has not been confirmed against the DJI app.</value>
+  </data>
+  <data name="Signal_Uplink" xml:space="preserve">
+    <value>Uplink</value>
+  </data>
+  <data name="Signal_Downlink" xml:space="preserve">
+    <value>Downlink</value>
+  </data>
+  <data name="Signal_Bars" xml:space="preserve">
+    <value>Signal bars</value>
+  </data>
+  <data name="FlightAlerts_Fade" xml:space="preserve">
+    <value>Fade and slide length (s)</value>
+  </data>
+  <data name="FlightAlerts_Slide" xml:space="preserve">
+    <value>Slide in</value>
+  </data>
+  <data name="FlightAlerts_Hint" xml:space="preserve">
+    <value>Briefly displays notifications about events from the DJI flight log: flight mode changes, motors starting and stopping, battery status, and warnings and notices from the DJI app. Original warnings and notices remain in the language of the app used during the flight.</value>
+  </data>
+  <data name="FlightAlerts_Announce" xml:space="preserve">
+    <value>Show events</value>
+  </data>
+  <data name="FlightAlerts_Modes" xml:space="preserve">
+    <value>Flight mode changes</value>
+  </data>
+  <data name="FlightAlerts_Motors" xml:space="preserve">
+    <value>Motors on and off</value>
+  </data>
+  <data name="FlightAlerts_Battery" xml:space="preserve">
+    <value>Battery level and voltage</value>
+  </data>
+  <data name="FlightAlerts_Warnings" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="FlightAlerts_Notices" xml:space="preserve">
+    <value>Notices</value>
+  </data>
+  <data name="FlightAlerts_Duration" xml:space="preserve">
+    <value>Time on screen (s)</value>
+  </data>
+  <data name="FlightAlerts_Lines" xml:space="preserve">
+    <value>Events shown at once</value>
+  </data>
+  <data name="Editor_UnavailableDroneLog" xml:space="preserve">
+    <value>This widget needs the drone's flight log. Add it with the GPS Track button.</value>
   </data>
   <data name="Widget_DeviceDistance" xml:space="preserve">
     <value>Device distance</value>
@@ -4617,5 +4782,356 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Settings_RouteIntroElevationHint" xml:space="preserve">
     <value>An elevation chart for the route, shown below the stats. It appears when the recording or track has elevation data and the card has room for it.</value>
+  </data>
+  <data name="Widget_RcSticks" xml:space="preserve">
+    <value>Remote sticks</value>
+  </data>
+  <data name="Widget_RcSticksDescription" xml:space="preserve">
+    <value>Shows controller stick positions recorded in the DJI flight log. Assumes Mode 2: the left stick controls throttle and yaw; the right stick controls pitch and roll. The dot is yellow at small deflections, orange at medium deflections and red near full deflection.</value>
+  </data>
+  <data name="Widget_Attitude" xml:space="preserve">
+    <value>Attitude indicator</value>
+  </data>
+  <data name="Widget_AttitudeDescription" xml:space="preserve">
+    <value>Shows the drone&apos;s attitude relative to the horizon using the DJI flight log. When the nose rises, the horizon line moves down. When the drone banks, the line rotates.</value>
+  </data>
+  <data name="Widget_Orientation3D" xml:space="preserve">
+    <value>3D orientation</value>
+  </data>
+  <data name="Widget_Orientation3DDescription" xml:space="preserve">
+    <value>A visualization of the drone&apos;s pitch, roll and heading using the DJI flight log. The view looks north from the south. Blue marks the front of the drone; orange marks the rear.</value>
+  </data>
+  <data name="Phone_Title" xml:space="preserve">
+    <value>Find a flight log on your phone</value>
+  </data>
+  <data name="Phone_Steps" xml:space="preserve">
+    <value>Connect your phone with a USB cable, unlock it and select &quot;File transfer&quot; in the notification. Select the phone below and click &quot;Search for logs&quot;. The app saves copies of the DJI Fly logs it finds on your computer so it can automatically match them to future recordings.</value>
+  </data>
+  <data name="Phone_Devices" xml:space="preserve">
+    <value>Phones</value>
+  </data>
+  <data name="Phone_None" xml:space="preserve">
+    <value>No phone found. Connect it, unlock the screen and press Refresh.</value>
+  </data>
+  <data name="Phone_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Phone_Search" xml:space="preserve">
+    <value>Search for logs</value>
+  </data>
+  <data name="Phone_Folder" xml:space="preserve">
+    <value>Choose a folder...</value>
+  </data>
+  <data name="Phone_Searching" xml:space="preserve">
+    <value>Searching the phone...</value>
+  </data>
+  <data name="Phone_Copying" xml:space="preserve">
+    <value>Copying {0}</value>
+  </data>
+  <data name="Phone_Done" xml:space="preserve">
+    <value>Copied from the phone: {0}. Already saved on this computer: {1}.</value>
+  </data>
+  <data name="Phone_Match" xml:space="preserve">
+    <value>Found the log of this recording</value>
+  </data>
+  <data name="Phone_NoMatch" xml:space="preserve">
+    <value>No log found for this recording</value>
+  </data>
+  <data name="Phone_NoMatchHint" xml:space="preserve">
+    <value>No log covers the time of this recording. DJI Fly may have deleted older logs from the phone.</value>
+  </data>
+  <data name="Phone_Places" xml:space="preserve">
+    <value>Places checked: {0}, with logs: {1}. Logs in total: {2}.</value>
+  </data>
+  <data name="Phone_OpenLogs" xml:space="preserve">
+    <value>Open the folder with the downloaded logs</value>
+  </data>
+  <data name="Phone_LogSource" xml:space="preserve">
+    <value>Flight log source: {0}</value>
+  </data>
+  <data name="Phone_LogPlace" xml:space="preserve">
+    <value>Folder {0}: logs {1}</value>
+  </data>
+  <data name="Phone_LogPlaceMissing" xml:space="preserve">
+    <value>Folder {0}: not on the phone</value>
+  </data>
+  <data name="Phone_LogDevices" xml:space="preserve">
+    <value>Phones found: {0}</value>
+  </data>
+  <data name="Phone_PlaceNone" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="Track_Summary" xml:space="preserve">
+    <value>duration: {0} · GPS points: {1}</value>
+  </data>
+  <data name="Phone_Found" xml:space="preserve">
+    <value>Found a flight log matching the recording</value>
+  </data>
+  <data name="Phone_Use" xml:space="preserve">
+    <value>Use this log</value>
+  </data>
+  <data name="Phone_Failed" xml:space="preserve">
+    <value>Could not read the phone: {0}</value>
+  </data>
+  <data name="Track_FindInPhone" xml:space="preserve">
+    <value>Find in a phone...</value>
+  </data>
+  <data name="Track_ReadingFile" xml:space="preserve">
+    <value>Reading the track: {0}</value>
+  </data>
+  <data name="Track_ReadFailed" xml:space="preserve">
+    <value>Could not load the track {0}: {1}</value>
+  </data>
+  <data name="Track_Loaded" xml:space="preserve">
+    <value>Loaded the track {0}: {1} GPS points, {2} - {3} UTC</value>
+  </data>
+  <data name="Track_StepFile" xml:space="preserve">
+    <value>Track file</value>
+  </data>
+  <data name="Track_StepSync" xml:space="preserve">
+    <value>Matching to the recording</value>
+  </data>
+  <data name="Track_StepSummary" xml:space="preserve">
+    <value>Summary</value>
+  </data>
+  <data name="Track_FileHelp" xml:space="preserve">
+    <value>Select a track file from a GPS device or a drone&apos;s flight log. In the next step, the app will try to match the track to the recording automatically. If it cannot find a match, or you want to refine it, you can adjust the alignment manually.</value>
+  </data>
+  <data name="Track_Aligning" xml:space="preserve">
+    <value>Matching the track to the recording...</value>
+  </data>
+  <data name="Track_Auto_RecordingSpan" xml:space="preserve">
+    <value>The track was matched automatically using the recording start time stored in the log. The start of the video is known exactly.</value>
+  </data>
+  <data name="Track_Auto_ContainerClock" xml:space="preserve">
+    <value>The track was matched automatically using the camera&apos;s clock. The camera and device clocks may differ, so check the alignment in the preview.</value>
+  </data>
+  <data name="Track_Auto_Motion" xml:space="preserve">
+    <value>The track was matched automatically using camera movement (correlation: {0:0.00}). This alignment is approximate - check it in the preview.</value>
+  </data>
+  <data name="Track_Auto_Start" xml:space="preserve">
+    <value>The video starts at {0} UTC on the track.</value>
+  </data>
+  <data name="Track_Auto_None" xml:space="preserve">
+    <value>The track could not be matched automatically.</value>
+  </data>
+  <data name="Track_Auto_NoneHint" xml:space="preserve">
+    <value>Pick the same event by hand on the video and on the track.</value>
+  </data>
+  <data name="Track_ModeAuto" xml:space="preserve">
+    <value>Use the automatic match</value>
+  </data>
+  <data name="Track_ModeAutoHint" xml:space="preserve">
+    <value>Uses the video start time determined by the app.</value>
+  </data>
+  <data name="Track_ModeManual" xml:space="preserve">
+    <value>Set the match by hand</value>
+  </data>
+  <data name="Track_ModeManualHint" xml:space="preserve">
+    <value>Pick the same event on the video and on the track, e.g. pulling away or stopping. The video time counts from the start of the whole recording, before cuts. No date or time from the camera's clock is needed.</value>
+  </data>
+  <data name="Track_SumTrack" xml:space="preserve">
+    <value>Track</value>
+  </data>
+  <data name="Track_SumAlignment" xml:space="preserve">
+    <value>Match</value>
+  </data>
+  <data name="Track_SumCoverage" xml:space="preserve">
+    <value>Video covered</value>
+  </data>
+  <data name="Track_Method_RecordingSpan" xml:space="preserve">
+    <value>Automatic, using the recorded start time</value>
+  </data>
+  <data name="Track_Method_ContainerClock" xml:space="preserve">
+    <value>Automatic, using the camera&apos;s clock</value>
+  </data>
+  <data name="Track_Method_Motion" xml:space="preserve">
+    <value>Automatic, using camera movement</value>
+  </data>
+  <data name="Track_Method_Manual" xml:space="preserve">
+    <value>Manual, one point</value>
+  </data>
+  <data name="Track_Method_ManualDrift" xml:space="preserve">
+    <value>Manual, two points (corrects clock drift)</value>
+  </data>
+  <data name="Track_Coverage" xml:space="preserve">
+    <value>The track spans {0}% of the recording&apos;s duration</value>
+  </data>
+  <data name="Track_CoverageHint" xml:space="preserve">
+    <value>Outside the track's range the position and speed are unavailable.</value>
+  </data>
+  <data name="Track_VerifyHint" xml:space="preserve">
+    <value>After applying, check in the preview that the track matches the video.</value>
+  </data>
+  <data name="ElementStyle_Align" xml:space="preserve">
+    <value>Text alignment</value>
+  </data>
+  <data name="ElementStyle_AlignLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="ElementStyle_AlignCenter" xml:space="preserve">
+    <value>Center</value>
+  </data>
+  <data name="ElementStyle_AlignRight" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="ElementStyle_AlignHint" xml:space="preserve">
+    <value>Aligns the widget&apos;s text lines with each other, such as the caption and value. Right alignment works well for widgets near the right edge of the image.</value>
+  </data>
+  <data name="ElementStyle_Opacity" xml:space="preserve">
+    <value>Widget opacity (%)</value>
+  </data>
+  <data name="Signal_ColorByLevel" xml:space="preserve">
+    <value>Percentage color depends on signal strength</value>
+  </data>
+  <data name="DroneBattery_ColorByCharge" xml:space="preserve">
+    <value>Colors follow the battery's condition</value>
+  </data>
+  <data name="Main_Working" xml:space="preserve">
+    <value>The app is working...</value>
+  </data>
+  <data name="Settings_WorkingAnimation" xml:space="preserve">
+    <value>Animated working screen</value>
+  </data>
+  <data name="Settings_WorkingAnimationHint" xml:space="preserve">
+    <value>While a recording loads, the app replaces the panels with an animated background showing &quot;The app is working...&quot;. Turn this option off if the animation affects performance. The panels will then remain visible.</value>
+  </data>
+  <data name="Chart_AutoHeight" xml:space="preserve">
+    <value>Chart height follows the change</value>
+  </data>
+  <data name="Chart_AutoHeightHint" xml:space="preserve">
+    <value>When height or speed changes only slightly, the chart uses less space and adjusts its scale to the range of values. The widget&apos;s bottom edge stays in place.</value>
+  </data>
+  <data name="DroneBattery_Limits" xml:space="preserve">
+    <value>Warning limits</value>
+  </data>
+  <data name="DroneBattery_LowCell" xml:space="preserve">
+    <value>Low cell voltage - below (V)</value>
+  </data>
+  <data name="DroneBattery_CriticalCell" xml:space="preserve">
+    <value>Critical cell voltage - at or below (V)</value>
+  </data>
+  <data name="DroneBattery_ColdWarn" xml:space="preserve">
+    <value>Too cold, warning - below (°C)</value>
+  </data>
+  <data name="DroneBattery_ColdCritical" xml:space="preserve">
+    <value>Too cold, critical - up to (°C)</value>
+  </data>
+  <data name="DroneBattery_HotWarn" xml:space="preserve">
+    <value>Too hot, warning - from (°C)</value>
+  </data>
+  <data name="DroneBattery_HotCritical" xml:space="preserve">
+    <value>Too hot, critical - from (°C)</value>
+  </data>
+  <data name="DroneBattery_LimitsHint" xml:space="preserve">
+    <value>The battery voltage and cell readings are colored according to the lowest cell voltage. The temperature color depends on its own thresholds. Set the warning and critical colors above. These thresholds apply only to the widget; flight alerts use separate thresholds.</value>
+  </data>
+  <data name="Signal_Levels" xml:space="preserve">
+    <value>Signal levels</value>
+  </data>
+  <data name="Signal_GoodPercent" xml:space="preserve">
+    <value>Good - from (%)</value>
+  </data>
+  <data name="Signal_FairPercent" xml:space="preserve">
+    <value>Fair - from (%)</value>
+  </data>
+  <data name="Signal_FairColor" xml:space="preserve">
+    <value>Fair signal color</value>
+  </data>
+  <data name="Signal_PoorColor" xml:space="preserve">
+    <value>Poor signal color</value>
+  </data>
+  <data name="Signal_LevelsHint" xml:space="preserve">
+    <value>At or above the &quot;Good&quot; threshold, percentage values use the accent color and the bars are green. From &quot;Fair&quot; up to &quot;Good&quot;, both use the fair signal color; below &quot;Fair&quot;, they use the poor signal color. Leave the color fields blank to use the default yellow and red.</value>
+  </data>
+  <data name="ElementStyle_Decimals" xml:space="preserve">
+    <value>Decimal places</value>
+  </data>
+  <data name="ElementStyle_DecimalsAuto" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="ElementStyle_ShowLabel" xml:space="preserve">
+    <value>Show the caption</value>
+  </data>
+  <data name="ElementStyle_ShowUnit" xml:space="preserve">
+    <value>Show the unit</value>
+  </data>
+  <data name="ElementStyle_UppercaseLabel" xml:space="preserve">
+    <value>Caption in capitals</value>
+  </data>
+  <data name="Sensor_Limits" xml:space="preserve">
+    <value>Limits</value>
+  </data>
+  <data name="Sensor_WarnAbove" xml:space="preserve">
+    <value>Warning above (m)</value>
+  </data>
+  <data name="Sensor_AlertAbove" xml:space="preserve">
+    <value>Alert above (m)</value>
+  </data>
+  <data name="Sensor_LimitOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Sensor_LimitsHint" xml:space="preserve">
+    <value>The reading changes color when it exceeds a threshold. Enter thresholds in meters regardless of the widget&apos;s units, e.g. set a warning above 120 m. Leave a field blank to disable that threshold.</value>
+  </data>
+  <data name="Sensor_Satellites" xml:space="preserve">
+    <value>Satellites</value>
+  </data>
+  <data name="Sensor_ColorByCount" xml:space="preserve">
+    <value>Color follows the number of satellites</value>
+  </data>
+  <data name="Sensor_WarnBelow" xml:space="preserve">
+    <value>Warning below (satellites)</value>
+  </data>
+  <data name="Sensor_AlertBelow" xml:space="preserve">
+    <value>Alert below (satellites)</value>
+  </data>
+  <data name="Sensor_FlightMode" xml:space="preserve">
+    <value>Flight mode</value>
+  </data>
+  <data name="Sensor_ColorByMode" xml:space="preserve">
+    <value>Highlight the modes that need attention</value>
+  </data>
+  <data name="Sensor_ColorByModeHint" xml:space="preserve">
+    <value>ATTI (no position hold from GPS) is red, go home and landing orange. The mode names are the DJI app's.</value>
+  </data>
+  <data name="Sensor_StateColors" xml:space="preserve">
+    <value>State colors</value>
+  </data>
+  <data name="Sensor_WarnColor" xml:space="preserve">
+    <value>Warning color</value>
+  </data>
+  <data name="Sensor_AlertColor" xml:space="preserve">
+    <value>Alert color</value>
+  </data>
+  <data name="Sensor_StateColorsHint" xml:space="preserve">
+    <value>Leave the color fields blank to use the default orange for warnings and red for alerts.</value>
+  </data>
+  <data name="Sensor_ValueColors" xml:space="preserve">
+    <value>Value colors</value>
+  </data>
+  <data name="Sensor_ClimbColor" xml:space="preserve">
+    <value>Climbing</value>
+  </data>
+  <data name="Sensor_SinkColor" xml:space="preserve">
+    <value>Sinking</value>
+  </data>
+  <data name="Sensor_ValueColorsHint" xml:space="preserve">
+    <value>Empty: the accent color.</value>
+  </data>
+  <data name="Chart_ShowMarker" xml:space="preserve">
+    <value>Marker at the current position</value>
+  </data>
+  <data name="Chart_ShowMinMax" xml:space="preserve">
+    <value>Show the minimum and maximum</value>
+  </data>
+  <data name="Chart_LineWidth" xml:space="preserve">
+    <value>Line thickness</value>
+  </data>
+  <data name="Editor_StatMaxHeight" xml:space="preserve">
+    <value>Max height (drone)</value>
+  </data>
+  <data name="Editor_StatMaxHomeDistance" xml:space="preserve">
+    <value>Max distance from take-off (drone)</value>
   </data>
 </root>

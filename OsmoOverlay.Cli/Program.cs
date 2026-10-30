@@ -13,6 +13,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
+using OsmoOverlay.Dji.Drones;
 
 UiLanguages.Apply(UiLanguages.English);
 
@@ -23,18 +24,18 @@ AppDomain.CurrentDomain.UnhandledException += (_, e) =>
 foreach (string line in AppBanner.BuildLines("CLI"))
 	AppLogger.Info(line);
 
-CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format());
-
+CameraFormats.Register(new DjiOsmoFormat(), new GoProFormat(), new Insta360Format(), new DjiDroneFormat());
+ExternalTrackReader.Register(new DjiFlightLogFormat());
 string[] options =
 [
 	"-o", "--frames", "--from", "--to", "--cut", "--view", "--encoder", "--track", "--track-offset", "--track-anchor", "--volume", "--music",
-	"--settings-preset", "--layout", "--profile", "--alpha", "--existing", "--export-telemetry", "--telemetry-interval", "--expect-lean"
+	"--settings-preset", "--layout", "--profile", "--aspect", "--alpha", "--existing", "--export-telemetry", "--telemetry-interval", "--expect-lean"
 ];
 string[] flags = ["--no-level", "--no-audio", "--each"];
-const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--no-audio] [--encoder <name>] [--track <file.fit|file.gpx> [--track-offset <seconds> | --track-anchor <video-time>=<UTC> ...]]\n" +
+const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.mp4>] [--frames N] [--from <time>] [--to <time>] [--cut <time>-<time> ...] [--view <yaw>,<pitch>,<roll>[,<fov>]] [--no-level] [--no-audio] [--encoder <name>] [--track <file.fit|file.gpx|FlightRecord.txt> [--track-offset <seconds> | --track-anchor <video-time>=<UTC> ...]]\n" +
                      "                         [--volume <time>:<dB>,...] [--music <file>[;start=..][;in=..][;len=..][;db=..][;fadein=..][;fadeout=..][;duck=..][;loop] ...]\n" +
-                     "                         [--settings-preset <name>] [--layout <name>] [--profile <name>] [--alpha <prores|vp9>] [--existing <skip|overwrite|number>]\n" +
-                     "  inputs are the camera's own recordings (DJI Osmo Action, GoPro or Insta360)\n" +
+                     "                         [--settings-preset <name>] [--layout <name>] [--profile <name>] [--aspect <shape>] [--alpha <prores|vp9>] [--existing <skip|overwrite|number>]\n" +
+                     "  inputs are the camera's own recordings (DJI Osmo Action, GoPro, Insta360 or a DJI drone - which needs its flight log as --track)\n" +
                      "  <time> is seconds (90, 90.5) or [h:]mm:ss[.fff] (1:30, 1:02:03.25) on the combined timeline of all inputs\n" +
                      "  --cut removes that part from the video and the telemetry; repeat it for several cuts. Add @fade or @white (optionally =seconds, e.g. 1:00-1:10@fade=1) to fade through black or white where the cut joins the kept parts, or @cross, @wipeleft, @wiperight, @slideleft, @slideright to blend them (the output gets shorter by that length)\n" +
                      "  --no-audio leaves the sound track out of the output\n" +
@@ -45,6 +46,7 @@ const string usage = "Usage: OsmoOverlay.Cli <input1> [input2 ...] [-o <output.m
                      "  --encoder picks ffmpeg's video encoder (hevc_nvenc, hevc_amf, hevc_qsv, libx265, or h264_* / libx264 for H.264 output)\n" +
                      "         instead of the first one that works here; one that doesn't write the output's codec is ignored\n" +
                      "  --settings-preset, --layout and --profile (an export profile) take a name or id from --list-presets; they apply to this render only\n" +
+                     "  --aspect gives the picture another shape (16:9, 9:16, 4:5, 1:1 or 4:3): cut from the middle, or with @bars (9:16@bars) the whole picture on black bars\n" +
                      "  --alpha renders the overlay alone on a transparent background (ProRes 4444 .mov or VP9 .webm) instead of the video\n" +
                      "  --existing says what to do when the output is already there (default: overwrite)\n" +
                      "  --track puts a FIT or GPX track from another device (a bike computer, a watch) on the telemetry: its position, altitude and\n" +
@@ -106,6 +108,8 @@ List<string> musicSpecs = [];
 string? settingsPresetName = null;
 string? layoutName = null;
 string? profileName = null;
+string? aspect = null;
+bool aspectBars = false;
 AlphaCodec? alpha = null;
 ExistingOutput? existing = null;
 string? exportTelemetryPath = null;
@@ -232,6 +236,10 @@ for (; i < args.Length; i++)
 			break;
 		case "--profile":
 			profileName = value;
+			break;
+		case "--aspect" when OutputVideo.TryParseOption(value, out string parsedAspect, out bool parsedBars):
+			aspect = parsedAspect;
+			aspectBars = parsedBars;
 			break;
 		case "--alpha" when AlphaOverlay.Parse(value) is { } parsedAlpha:
 			alpha = parsedAlpha;
@@ -370,6 +378,7 @@ if (settingsPresetName is not null)
 }
 
 if (profile is not null) settings = profile.ApplyTo(settings ?? OverlaySettingsStore.Load());
+if (aspect is not null) settings = (settings ?? OverlaySettingsStore.Load()) with { OutputAspect = aspect, OutputPadToAspect = aspectBars };
 
 IReadOnlyList<OverlayElement>? layout = null;
 if (layoutName is not null || layoutId is not null)

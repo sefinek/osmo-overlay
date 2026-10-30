@@ -344,6 +344,22 @@
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputAspect}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputAspectHint}" />
+								</StackPanel>
+								<ComboBox Grid.Column="1" Name="OutputAspectCombo" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_OutputAspectBars}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputAspectBarsHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="OutputAspectBarsCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
 									<TextBlock Text="{x:Static local:Strings.Settings_OutputCodec}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_OutputCodecHint}" />
 								</StackPanel>
@@ -745,6 +761,22 @@
 						</StackPanel>
 					</Border>
 
+					<TextBlock Text="{x:Static local:Strings.Settings_DjiDrones}" Classes="sectionLabel" />
+					<Border Classes="settingsCard">
+						<StackPanel>
+							<Grid Classes="settingRow" RowDefinitions="Auto,Auto" RowSpacing="12">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_DjiApiKey}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_DjiApiKeyHint}" />
+									<TextBlock Classes="link" HorizontalAlignment="Left" Text="{x:Static local:Strings.Settings_DjiApiKeyGet}"
+									           Tag="https://developer.dji.com/user" PointerPressed="OnLinkClick" />
+								</StackPanel>
+								<TextBox Grid.Row="1" Name="DjiApiKeyBox" PasswordChar="•"
+								         PlaceholderText="{x:Static local:Strings.MapSource_PasteYourApiKey}" />
+							</Grid>
+						</StackPanel>
+					</Border>
+
 					<TextBlock Text="{x:Static local:Strings.Settings_PlaybackAndMonitors}" Classes="sectionLabel" />
 					<Border Classes="settingsCard">
 						<StackPanel>
@@ -762,6 +794,14 @@
 									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_DisableShadowsHint}" />
 								</StackPanel>
 								<ToggleSwitch Grid.Column="1" Name="DisableShadowsCheck" />
+							</Grid>
+							<Border Classes="divider" />
+							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
+								<StackPanel>
+									<TextBlock Text="{x:Static local:Strings.Settings_WorkingAnimation}" Classes="rowTitle" />
+									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_WorkingAnimationHint}" />
+								</StackPanel>
+								<ToggleSwitch Grid.Column="1" Name="WorkingAnimationCheck" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">

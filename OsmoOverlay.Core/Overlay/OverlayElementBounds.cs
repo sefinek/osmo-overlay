@@ -32,9 +32,9 @@ public static class OverlayElementBounds
 	public const float CaptionAboveOffset = 56f;
 
 	public const float DateFontSize = 46f;
-	public const float LabelFontSize = 30f;
-	public const float ValueFontSize = 95f;
-	public const float UnitFontSize = 46f;
+	public const float LabelFontSize = 36f;
+	public const float ValueFontSize = 88f;
+	public const float UnitFontSize = 42f;
 	public const float SmallFontSize = 36f;
 	public const float WatermarkTitleFontSize = 40f;
 	public const float WatermarkSubtitleFontSize = 30f;
@@ -81,8 +81,8 @@ public static class OverlayElementBounds
 	// DrawStat (Elevation/Gradient/Distance) and DrawCameraInfo's own fixed layout - the y-offsets each
 	// line's baseline sits at, in the same reference-pixel space GetBounds measures in. Kept here (not
 	// re-derived) since they mirror exact literals in OverlayRenderer.TextWidgets.cs.
-	private const float StatValueBaselineY = 90f;
-	private const float StatUnitGapX = 12f;
+	internal const float StatValueBaselineY = 90f;
+	internal const float StatUnitGapX = 12f;
 	private static readonly float[] CameraInfoLineBaselineYs = [58f, 102f, 146f];
 
 	// Representative sample content GetBounds measures for widgets whose real text isn't known at
@@ -196,7 +196,7 @@ public static class OverlayElementBounds
 	/// </summary>
 	public static SKRect GetBounds(OverlayElementType type, float x, float y, float scale,
 		string? dateFormat = null, string? locale = null, string? label = null, string? cameraModel = null,
-		string? fontFamily = null, string? text = null, string? imagePath = null, GpsAlertTexts? gpsAlertTexts = null)
+		string? fontFamily = null, string? text = null, string? imagePath = null, GpsAlertTexts? gpsAlertTexts = null, OverlayElement? element = null)
 	{
 		SKRect local = type switch
 		{
@@ -221,6 +221,15 @@ public static class OverlayElementBounds
 			OverlayElementType.AmbientTemperature => MeasureStat(label ?? CoreStrings.Overlay_AmbientTemperature, "23.4", "°C", fontFamily),
 			OverlayElementType.ImuTemperature => MeasureStat(label ?? CoreStrings.Overlay_ImuTemperature, "29.8", "°C", fontFamily),
 			OverlayElementType.DeviceDistance => MeasureStat(label ?? CoreStrings.Overlay_DeviceDistance, SampleDistanceValue, "KM", fontFamily),
+			OverlayElementType.Height => MeasureStat(label ?? CoreStrings.Overlay_Height, SampleElevationValue, "M", fontFamily),
+			OverlayElementType.HomeDistance => MeasureStat(label ?? CoreStrings.Overlay_HomeDistance, SampleDistanceValue, "KM", fontFamily),
+			OverlayElementType.VerticalSpeed => MeasureStat(label ?? CoreStrings.Overlay_VerticalSpeed, "-99.9", "M/S", fontFamily),
+			OverlayElementType.Satellites => MeasureSatellites(label ?? CoreStrings.Overlay_Satellites, (element as SatellitesElement)?.ShowBars ?? true, fontFamily),
+			OverlayElementType.DroneBattery => MeasureDroneBattery(element as DroneBatteryElement ?? new DroneBatteryElement { X = 0, Y = 0, FontFamily = fontFamily, Label = label }),
+			OverlayElementType.FlightMode => SKRect.Union(MeasureLine((label ?? CoreStrings.Overlay_FlightModeLabel).ToUpperInvariant(), LabelFontSize, fontFamily),
+				OffsetY(MeasureLine("Confirm Landing", FlightModeSize, fontFamily), FlightModeBaseline)),
+			OverlayElementType.Signal => MeasureSignal(element as SignalElement ?? new SignalElement { X = 0, Y = 0, FontFamily = fontFamily, Label = label }),
+			OverlayElementType.FlightAlerts => FlightAlertsBox(fontFamily, (element as FlightAlertsElement)?.MaxLines ?? 1),
 			OverlayElementType.DeviceBattery => MeasureStat(label ?? CoreStrings.Overlay_DeviceBattery, "100", "%", fontFamily),
 			OverlayElementType.AudioLevel => SKRect.Union(new SKRect(0, 20, OverlayRenderer.AudioMeterWidth, 56),
 				SKRect.Union(MeasureLine((label ?? CoreStrings.Overlay_AudioLevel).ToUpperInvariant(), LabelFontSize, fontFamily),
@@ -247,6 +256,8 @@ public static class OverlayElementBounds
 			OverlayElementType.SpeedGauge => CircleLocal(SpeedRadius),
 			OverlayElementType.MapWidget => CircleLocal(MapRadius),
 			OverlayElementType.GMeter => CircleWithBottomLabelLocal(GMeterRadius),
+			OverlayElementType.RcSticks => new SKRect(0, 0, StickPadSize * 2 + StickPadGap, StickPadSize),
+			OverlayElementType.AttitudeIndicator or OverlayElementType.Orientation3D => CircleLocal(DroneDialRadius),
 			_ => SKRect.Empty
 		};
 
@@ -369,6 +380,168 @@ public static class OverlayElementBounds
 		(float ascent, float descent, float width) = LineExtent(text, fontSize, family);
 		float pad = fontSize * 0.09f;
 		return new SKRect(-pad, ascent - pad, width + pad, descent + pad);
+	}
+
+	// The remote's sticks and the two dials of the aircraft's attitude (OverlayRenderer.DroneControls.cs).
+	public const float StickPadSize = 130;
+	public const float StickPadGap = 24;
+	public const float DroneDialRadius = 110;
+
+	public const float FlightModeSize = 56;
+	public const float FlightModeBaseline = 66;
+
+	// The signal bars (GPS level, radio links) and the signal widget's two lines (OverlayRenderer.Signal.cs).
+	public const float SignalBarsGap = 26;
+	public const float SignalBarWidth = 13;
+	public const float SignalBarStep = 20;
+	public const int SignalBarCount = 5;
+	public const float SignalBarMinHeight = 16;
+	public const float SignalBarHeightStep = 11;
+	public const float SignalLineSize = 40;
+	public const float SignalLineStep = 44;
+	public const float SignalTextX = 36;
+
+	/// <summary>
+	///     The baseline of link `index` of `lines`: the last one sits on the stat widgets' value baseline, so the signal's lines and bars end where the
+	///     GPS count and its bars do and the two read as one row.
+	/// </summary>
+	public static float SignalBaseline(int lines, int index) => StatValueBaselineY - (lines - 1 - index) * SignalLineStep;
+
+	public static float SignalBarsWidth => SignalBarCount * SignalBarStep - (SignalBarStep - SignalBarWidth);
+
+	/// <summary>The GPS widget: the stat plus the bars after the value.</summary>
+	private static SKRect MeasureSatellites(string label, bool bars, string? family)
+	{
+		SKRect stat = MeasureStat(label, "99", "", family);
+		if (!bars) return stat;
+
+		(float valueAscent, _, float valueWidth) = LineExtent("99", ValueFontSize, family);
+		float barsRight = valueWidth + SignalBarsGap + SignalBarsWidth;
+		return new SKRect(stat.Left, Math.Min(stat.Top, StatValueBaselineY - SignalBarMinHeight - 4 * SignalBarHeightStep), Math.Max(stat.Right, barsRight), stat.Bottom);
+	}
+
+	/// <summary>Mirrors DrawSignal: the caption, a line per link and the bars after the widest line.</summary>
+	private static SKRect MeasureSignal(SignalElement element)
+	{
+		string? family = element.FontFamily;
+		(float labelAscent, _, float labelWidth) = LineExtent((element.Label ?? CoreStrings.Overlay_Signal).ToUpperInvariant(), LabelFontSize, family);
+		(float lineAscent, float lineDescent, float lineWidth) = LineExtent("100%", SignalLineSize, family);
+		int lines = (element.ShowUplink ? 1 : 0) + (element.ShowDownlink ? 1 : 0);
+		float pad = SignalLineSize * 0.09f;
+		float right = Math.Max(labelWidth, SignalTextX + lineWidth + (element.ShowBars ? SignalBarsGap + SignalBarsWidth : 0));
+		float bottom = lines == 0 ? 0 : StatValueBaselineY + lineDescent;
+		return new SKRect(-pad, labelAscent - pad, right + pad, Math.Max(bottom, 0) + pad);
+	}
+
+	// The drone battery widget: the icon beside the percent, the extra lines under it (OverlayRenderer.DroneBattery.cs).
+	public const float DroneBatteryIconWidth = 50;
+	/// <summary>The charge's figure, a little under a stat's value so the percent doesn't outweigh the icon.</summary>
+	public const float DroneBatteryValueFontSize = ValueFontSize * 0.88f;
+	public const float DroneBatteryIconGap = 22;
+	public const float DroneBatteryIconTop = 18;
+	public const float DroneBatteryIconBottom = 134;
+	public const float DroneBatteryCapWidth = 20;
+	public const float DroneBatteryCapHeight = 8;
+	// The percent and the first line under it sit as a pair about the icon's middle (the icon spans IconTop to IconBottom), not on the stat widgets' value baseline.
+	public const float DroneBatteryValueBaseline = 81;
+	public const float DroneBatteryLineBaseline = 125;
+	public const float DroneBatteryLineStep = 44;
+
+	/// <summary>The flight alerts' stack - the most lines the widget can be set to show at once.</summary>
+	public const int FlightAlertsMaxLines = 5;
+
+	/// <summary>Mirrors DrawDroneBattery: the caption, then the icon and the percent, then the lines the element is set to show.</summary>
+	private static SKRect MeasureDroneBattery(DroneBatteryElement element)
+	{
+		string? family = element.FontFamily;
+		(float labelAscent, float labelDescent, float labelWidth) = LineExtent((element.Label ?? CoreStrings.Overlay_DroneBattery).ToUpperInvariant(), LabelFontSize, family);
+		(float valueAscent, float valueDescent, float valueWidth) = LineExtent("100", DroneBatteryValueFontSize, family);
+		(_, _, float unitWidth) = LineExtent("%", UnitFontSize, family);
+		string[] lines = OverlayRenderer.DroneBatteryLines(element, OverlayRenderer.SampleDroneBattery);
+		(_, float lineDescent, _) = LineExtent("0", SmallFontSize, family);
+		float left = element.ShowIcon ? DroneBatteryIconWidth + DroneBatteryIconGap : 0;
+		float pad = ValueFontSize * 0.09f;
+
+		float right = Math.Max(labelWidth, left + Math.Max(valueWidth + StatUnitGapX + unitWidth, lines.Length == 0 ? 0 : lines.Max(l => LineExtent(l, SmallFontSize, family).Width)));
+		float top = Math.Min(labelAscent, DroneBatteryValueBaseline + valueAscent);
+		float bottom = Math.Max(labelDescent, DroneBatteryValueBaseline + valueDescent);
+		if (lines.Length > 0) bottom = Math.Max(bottom, DroneBatteryLineBaseline + (lines.Length - 1) * DroneBatteryLineStep + lineDescent);
+		if (element.ShowIcon)
+		{
+			top = Math.Min(top, DroneBatteryIconTop);
+			bottom = Math.Max(bottom, DroneBatteryIconBottom);
+		}
+
+		return new SKRect(-pad, top - pad, right + pad, bottom + pad);
+	}
+
+	/// <summary>A flight alert's panel for text `text` wide: roomier than the text, and never narrower than a typical message, so a stack of them lines up.</summary>
+	public static float FlightAlertWidth(float text)
+	{
+		return Math.Max(FlightAlertMinWidth, GpsAlertGap * 3 + GpsAlertIcon + text + FlightAlertExtraPadding);
+	}
+
+	public const float FlightAlertMinWidth = 820;
+	public const float FlightAlertExtraPadding = 60;
+
+	/// <summary>The flight alerts' stack of <paramref name="lines"/> panels around its anchor (top center), for a typical event - the real width follows the one shown.</summary>
+	public static SKRect FlightAlertsBox(string? fontFamily, int lines)
+	{
+		int count = Math.Clamp(lines, 1, FlightAlertsMaxLines);
+		float text = Math.Max(LineExtent(CoreStrings.Overlay_CriticalVoltage.ToUpperInvariant(), GpsAlertTitleSize, fontFamily).Width,
+			LineExtent(string.Format(CoreStrings.Overlay_CellVoltageDetail, "3.30"), GpsAlertDetailSize, fontFamily).Width);
+		float width = FlightAlertWidth(text);
+		return new SKRect(-width / 2, 0, width / 2, count * GpsAlertHeight + (count - 1) * 14);
+	}
+
+	/// <summary>The widgets drawn as a caption over a value and a unit (DrawStat), which can drop the caption or the unit and choose the caption's case.</summary>
+	public static bool SupportsStatParts(OverlayElement element)
+	{
+		return element is ElevationElement or GradientElement or DistanceElement or TemperatureElementBase or DeviceDistanceElement or DeviceBatteryElement
+			or ImageLumaElement or HeightElement or HomeDistanceElement or VerticalSpeedElement or TripStatElement;
+	}
+
+	/// <summary>The stat widgets whose reading has digits after a decimal point to choose.</summary>
+	public static bool SupportsDecimals(OverlayElement element)
+	{
+		return SupportsStatParts(element) && element is not (DeviceBatteryElement or ImageLumaElement);
+	}
+
+	/// <summary>The widgets whose lines of text TextAlign lines up (the rest are one line, or a layout of their own).</summary>
+	public static bool SupportsTextAlign(OverlayElement element)
+	{
+		return element is ElevationElement or GradientElement or DistanceElement or TemperatureElementBase or DeviceDistanceElement or DeviceBatteryElement
+			or ImageLumaElement or HeightElement or HomeDistanceElement or VerticalSpeedElement or TripStatElement or TextElement or ElapsedTimeTextElement
+			or CameraInfoElement or FlightModeElement;
+	}
+
+	/// <summary>
+	///     The right edge of the text a widget lines its text up to - its measured box without the padding around the ink. The measured box
+	///     is from sample values, so the edge stays put as the readout's digits change.
+	/// </summary>
+	internal static float TextBoxRight(OverlayElement element)
+	{
+		float pad = element switch
+		{
+			TextElement or ElapsedTimeTextElement => DateFontSize,
+			CameraInfoElement => SmallFontSize,
+			FlightModeElement => FlightModeSize,
+			_ => ValueFontSize
+		} * 0.09f;
+		SKRect box = GetBounds(element.Type, 0, 0, 1, label: (element as LabeledStatElement)?.Label ?? (element as ElapsedTimeTextElement)?.Label,
+			fontFamily: (element as StyledOverlayElement)?.FontFamily, text: (element as TextElement)?.Text, element: element);
+		return box.IsEmpty ? 0 : box.Right - pad;
+	}
+
+	/// <summary>Where a line `line` wide starts in a box `box` wide for this alignment.</summary>
+	internal static float AlignedX(TextAlign align, float box, float line)
+	{
+		return align switch
+		{
+			TextAlign.Center => (box - line) / 2,
+			TextAlign.Right => box - line,
+			_ => 0
+		};
 	}
 
 	/// <summary>Mirrors DrawStat's layout: an uppercased label at y=0, then VALUE + " " + UNIT at y=StatValueBaselineY.</summary>

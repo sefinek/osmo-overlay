@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Telemetry.External;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -64,17 +65,36 @@ public partial class MainWindow
 
 			_cameraSummary = summary;
 			_externalTrackApplied = false;
+			if (_externalTrack is null && ExternalTrackSource.FindFor(summary.CameraFormat, inputPaths[0], summary.ContainerRecordingStartUtc) is { } found)
+			{
+				_externalTrack = found;
+				AppendLog(string.Format(Strings.Track_Applying, Path.GetFileName(found.Path)));
+			}
 			if (_externalTrack is { } trackSource)
 			{
-				try
+				FileSummary withTrack = summary;
+				// Caught inside the task: a track that doesn't fit the recording is expected, and an exception crossing Task.Run stops the debugger as user-unhandled.
+				string? trackProblem = await Task.Run(() =>
 				{
-					summary = await Task.Run(() => trackSource.Apply(summary));
+					try
+					{
+						withTrack = trackSource.Apply(withTrack);
+						return null;
+					}
+					catch (Exception ex) when (ex is InvalidOperationException or InvalidDataException or IOException or UnauthorizedAccessException)
+					{
+						return ex.Message;
+					}
+				});
+				if (trackProblem is null)
+				{
+					summary = withTrack;
 					_externalTrackApplied = true;
 				}
-				catch (Exception ex)
+				else
 				{
-					AppendLog(ex.Message, LogLevel.Error);
-					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, ex.Message, kind: DialogKind.Warning);
+					AppendLog(trackProblem, LogLevel.Error);
+					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, trackProblem, kind: DialogKind.Warning);
 				}
 			}
 
@@ -111,7 +131,7 @@ public partial class MainWindow
 			}
 			else
 			{
-				AppendLog(string.Format(Strings.Summary_LogNoTelemetry, string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))),
+				AppendLog(string.Format(Strings.Summary_LogNoTelemetry, string.Join(", ", CameraFormats.All.Select(c => c.Brand).Distinct())),
 					LogLevel.Warn);
 			}
 
@@ -163,7 +183,7 @@ public partial class MainWindow
 
 				if (summary.CameraFormat is { } camera)
 				{
-					AppendLog(camera.DescribeTelemetry(_cameraSummary.TelemetryFrames ?? rawFrames));
+					if (!(camera.IsDrone && _externalTrackApplied)) AppendLog(camera.DescribeTelemetry(_cameraSummary.TelemetryFrames ?? rawFrames));
 					if (_externalTrackApplied && _externalTrack is { } external) AppendLog(string.Format(Strings.Track_Applied, Path.GetFileName(external.Path)));
 					if (!_availability.CameraAxes)
 					{
@@ -187,6 +207,7 @@ public partial class MainWindow
 			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
 
 			_summary = summary;
+			AdoptCameraLayout(summary);
 			_mapSourcesForRoute = null;
 			_detectedEncoder = encoder;
 
@@ -233,6 +254,8 @@ public partial class MainWindow
 	/// </summary>
 	private async Task ShowSupportNoticeAsync(FileSummary summary, List<string> inputPaths)
 	{
+		if (summary.CameraFormat?.IsDrone == true && _externalTrackApplied) return;
+
 		string key = string.Join('|', inputPaths);
 		if (key == _supportNoticeShownFor) return;
 		_supportNoticeShownFor = key;
@@ -250,7 +273,7 @@ public partial class MainWindow
 	internal Task ShowNoTelemetryNoticeAsync()
 	{
 		return ConfirmDialog.ShowAsync(this, Strings.Summary_NoTelemetryTitle,
-			string.Format(Strings.Summary_NoTelemetryMessage, string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))),
+			string.Format(Strings.Summary_NoTelemetryMessage, string.Join(", ", CameraFormats.All.Select(c => c.Brand).Distinct())),
 			kind: DialogKind.Warning);
 	}
 
@@ -262,6 +285,7 @@ public partial class MainWindow
 
 	private void PopulateInputInfo(FileSummary summary)
 	{
+		InfoCameraLabel.Text = summary.CameraFormat?.IsDrone == true ? Strings.Main_Drone : Strings.Main_Camera;
 		InfoCamera.Text = summary.CameraModel ?? Strings.Common_UnknownCapital;
 
 		UpdateSupportIcon(summary);

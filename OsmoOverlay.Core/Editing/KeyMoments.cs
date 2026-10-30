@@ -15,7 +15,9 @@ public enum PeakKind
 	StrongestG,
 	SteepestClimb,
 	SteepestDescent,
-	MaxLean
+	MaxLean,
+	FastestAscent,
+	FastestDescent
 }
 
 /// <summary>Where a peak of the telemetry is: its frame and the value there, in km/h, meters, G, percent or degrees.</summary>
@@ -28,6 +30,7 @@ public static class KeyMoments
 	private const double MinSpeedKmh = 1;
 	private const double MinGradientPercent = 1;
 	private const double MinLeanDegrees = 1;
+	private const double MinClimbRateMs = 0.5;
 	// The same stretch the gradient widget measures a slope over (TelemetryProcessor.GradientWindowMeters).
 	private const double SlopeWindowMeters = TelemetryProcessor.GradientWindowMeters;
 	// The peaks of one category listed together are at least this far apart in time.
@@ -44,11 +47,13 @@ public static class KeyMoments
 			PeakKind.SteepestClimb => CoreStrings.Peak_SteepestClimb,
 			PeakKind.SteepestDescent => CoreStrings.Peak_SteepestDescent,
 			PeakKind.MaxLean => CoreStrings.Peak_MaxLean,
+			PeakKind.FastestAscent => CoreStrings.Peak_FastestAscent,
+			PeakKind.FastestDescent => CoreStrings.Peak_FastestDescent,
 			_ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
 		};
 	}
 
-	/// <summary>The single highest peak of `kind`, or null when the data has none (no GPS fix, a standstill, unknown axes).</summary>
+	/// <summary>The single highest peak of `kind` (a drone's highest point is its height above the take-off, as its Height widget shows), or null when the data has none (no GPS fix, a standstill, unknown axes).</summary>
 	public static Peak? Find(IReadOnlyList<DerivedFrame> frames, PeakKind kind, double fps, long totalFrames, double? ridingFromKmh = null)
 	{
 		List<Peak> top = FindTop(frames, kind, fps, totalFrames, 1, ridingFromKmh);
@@ -66,6 +71,11 @@ public static class KeyMoments
 		double? ridingFromKmh = null)
 	{
 		if (frames.Count == 0 || fps <= 0 || totalFrames <= 0 || count <= 0) return [];
+
+		// A flight has no slopes to climb (the drone is in the air - its climb rate is the measure) and its lowest point is the ground it took off from.
+		bool flight = IsFlight(frames);
+		if (flight && kind is PeakKind.SteepestClimb or PeakKind.SteepestDescent or PeakKind.LowestPoint) return [];
+		if (!flight && kind is PeakKind.FastestAscent or PeakKind.FastestDescent) return [];
 
 		bool gpsKind = kind is not (PeakKind.StrongestG or PeakKind.MaxLean);
 		bool[]? riding = ridingFromKmh is { } kmh && !gpsKind ? TripStats.Riding(frames, kmh) : null;
@@ -98,12 +108,18 @@ public static class KeyMoments
 			if (times.Any(t => Math.Abs(t - time) < MinPeakSeparationSeconds)) continue;
 
 			times.Add(time);
-			double shown = kind is PeakKind.LowestPoint or PeakKind.SteepestDescent ? -value : value;
+			double shown = kind is PeakKind.LowestPoint or PeakKind.SteepestDescent or PeakKind.FastestDescent ? -value : value;
 			peaks.Add(new Peak(Math.Clamp((long)Math.Round(time * fps), 0, totalFrames - 1), shown));
 			if (peaks.Count == count) break;
 		}
 
 		return peaks;
+	}
+
+	/// <summary>Whether the frames come from a flight log (a drone): only a flight carries a height above the take-off.</summary>
+	public static bool IsFlight(IReadOnlyList<DerivedFrame> frames)
+	{
+		return frames.Any(f => f.Raw.HeightAboveHomeMeters is not null);
 	}
 
 	/// <summary>Below these a recording just stood still or had no such data - there's no peak to show.</summary>
@@ -114,6 +130,7 @@ public static class KeyMoments
 			PeakKind.TopSpeed => value >= MinSpeedKmh,
 			PeakKind.SteepestClimb or PeakKind.SteepestDescent => value >= MinGradientPercent,
 			PeakKind.MaxLean => value >= MinLeanDegrees,
+			PeakKind.FastestAscent or PeakKind.FastestDescent => value >= MinClimbRateMs,
 			PeakKind.StrongestG => value > 0,
 			_ => true
 		};
@@ -160,8 +177,10 @@ public static class KeyMoments
 		return kind switch
 		{
 			PeakKind.TopSpeed => frame.SpeedKmh,
-			PeakKind.HighestPoint => frame.Raw.AltitudeMeters,
+			PeakKind.HighestPoint => frame.Raw.HeightAboveHomeMeters ?? frame.Raw.AltitudeMeters,
 			PeakKind.LowestPoint => -frame.Raw.AltitudeMeters,
+			PeakKind.FastestAscent => frame.Raw.VerticalSpeedMs ?? double.NaN,
+			PeakKind.FastestDescent => -frame.Raw.VerticalSpeedMs ?? double.NaN,
 			PeakKind.MaxLean => Math.Abs(frame.RollDegrees),
 			_ => double.NaN
 		};

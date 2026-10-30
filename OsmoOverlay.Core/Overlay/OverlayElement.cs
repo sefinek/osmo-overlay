@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using OsmoOverlay.Core.Telemetry;
 
 namespace OsmoOverlay.Core.Overlay;
 
@@ -15,6 +16,13 @@ public enum OverlayAnimationType
 	SlideDown,
 	SlideLeft,
 	SlideRight
+}
+
+public enum TextAlign
+{
+	Left,
+	Center,
+	Right
 }
 
 public enum OverlayElementType
@@ -48,7 +56,18 @@ public enum OverlayElementType
 	DeviceBattery,
 	AudioLevel,
 	WindProcessing,
-	ImageLuma
+	ImageLuma,
+	Height,
+	HomeDistance,
+	VerticalSpeed,
+	Satellites,
+	DroneBattery,
+	FlightAlerts,
+	Signal,
+	FlightMode,
+	RcSticks,
+	AttitudeIndicator,
+	Orientation3D
 }
 
 /// <summary>
@@ -104,6 +123,17 @@ public enum OverlayElementType
 [JsonDerivedType(typeof(AudioLevelElement), (int)OverlayElementType.AudioLevel)]
 [JsonDerivedType(typeof(WindProcessingElement), (int)OverlayElementType.WindProcessing)]
 [JsonDerivedType(typeof(ImageLumaElement), (int)OverlayElementType.ImageLuma)]
+[JsonDerivedType(typeof(HeightElement), (int)OverlayElementType.Height)]
+[JsonDerivedType(typeof(HomeDistanceElement), (int)OverlayElementType.HomeDistance)]
+[JsonDerivedType(typeof(VerticalSpeedElement), (int)OverlayElementType.VerticalSpeed)]
+[JsonDerivedType(typeof(SatellitesElement), (int)OverlayElementType.Satellites)]
+[JsonDerivedType(typeof(DroneBatteryElement), (int)OverlayElementType.DroneBattery)]
+[JsonDerivedType(typeof(FlightAlertsElement), (int)OverlayElementType.FlightAlerts)]
+[JsonDerivedType(typeof(SignalElement), (int)OverlayElementType.Signal)]
+[JsonDerivedType(typeof(FlightModeElement), (int)OverlayElementType.FlightMode)]
+[JsonDerivedType(typeof(RcSticksElement), (int)OverlayElementType.RcSticks)]
+[JsonDerivedType(typeof(AttitudeIndicatorElement), (int)OverlayElementType.AttitudeIndicator)]
+[JsonDerivedType(typeof(Orientation3DElement), (int)OverlayElementType.Orientation3D)]
 public abstract record OverlayElement
 {
 	[JsonIgnore] public abstract OverlayElementType Type { get; }
@@ -114,6 +144,8 @@ public abstract record OverlayElement
 	public bool Visible { get; init; } = true;
 	public string Id { get; init; } = "";
 	public float Scale { get; init; } = 1f;
+	/// <summary>How opaque the whole widget is (shadow included), 0 to 1 - on top of its own fade in and out (OverlayRenderer.BeginElement).</summary>
+	public float Opacity { get; init; } = 1f;
 	public double? AppearAtSeconds { get; init; }
 	public double? DisappearAtSeconds { get; init; }
 	public OverlayAnimationType AnimationType { get; init; } = OverlayAnimationType.None;
@@ -164,6 +196,12 @@ public interface IPanelElement
 /// </summary>
 public abstract record StyledOverlayElement : OverlayElement
 {
+	/// <summary>
+	///     Where the widget's lines of text sit against each other - the caption over the value, the lines of a text. Only the widgets
+	///     OverlayElementBounds.SupportsTextAlign names read it. The anchor stays the widget's left edge, so put a widget on the right
+	///     of the picture and give it Right to have its text end at its right edge.
+	/// </summary>
+	public TextAlign TextAlign { get; init; } = TextAlign.Left;
 	public string? FontFamily { get; init; }
 	public string? TextColor { get; init; }
 	public string? OutlineColor { get; init; }
@@ -180,6 +218,32 @@ public abstract record LabeledStatElement : StyledOverlayElement
 {
 	public string? AccentColor { get; init; }
 	public string? Label { get; init; }
+
+	/// <summary>How the widget shows its readout, for the ones drawn as a caption over a value and a unit (OverlayElementBounds.SupportsStatParts).</summary>
+	public bool ShowLabel { get; init; } = true;
+	public bool ShowUnit { get; init; } = true;
+	public bool UppercaseLabel { get; init; } = true;
+
+	/// <summary>Digits after the decimal point; null is the widget's own (OverlayElementBounds.SupportsDecimals).</summary>
+	public int? Decimals { get; init; }
+}
+
+/// <summary>
+///     A stat that can turn WarnColor and then AlertColor - orange and red when null - as its reading gets worse: the thresholds are on the
+///     subtypes (a height or a distance over a limit, too few satellites, a mode that needs attention).
+/// </summary>
+public abstract record ThresholdStatElement : LabeledStatElement
+{
+	public string? WarnColor { get; init; }
+	public string? AlertColor { get; init; }
+}
+
+/// <summary>A height or a distance from the take-off, with limits (in meters) above which it warns: null is no limit.</summary>
+public abstract record RangeLimitedElement : ThresholdStatElement
+{
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+	public double? WarnAboveMeters { get; init; }
+	public double? AlertAboveMeters { get; init; }
 }
 
 /// <summary>Reference: the GPS altitude itself (what "ELEVATION" reads as), or the change since the render's first frame.</summary>
@@ -247,6 +311,163 @@ public sealed record WindProcessingElement : LabeledStatElement
 public sealed record ImageLumaElement : LabeledStatElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ImageLuma;
+}
+
+/// <summary>A drone's height above its take-off point (a flight log) - not the altitude above sea level Elevation shows.</summary>
+public sealed record HeightElement : RangeLimitedElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Height;
+}
+
+/// <summary>A drone's straight-line distance from its take-off point (a flight log).</summary>
+public sealed record HomeDistanceElement : RangeLimitedElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.HomeDistance;
+}
+
+/// <summary>A drone's climb rate, signed (a flight log) - worked out from the height over a second, not read from the log.</summary>
+public sealed record VerticalSpeedElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.VerticalSpeed;
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+	/// <summary>The value's color while climbing and while sinking (a rate within 0.05 m/s of nothing is neither); null keeps the accent color.</summary>
+	public string? ClimbColor { get; init; }
+	public string? SinkColor { get; init; }
+}
+
+/// <summary>The drone's GPS (a flight log): the number of satellites its receiver had and, as bars, the aircraft's own GPS level.</summary>
+public sealed record SatellitesElement : ThresholdStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Satellites;
+	public bool ShowBars { get; init; } = true;
+	/// <summary>The count takes WarnColor below WarnBelow satellites and AlertColor below AlertBelow.</summary>
+	public bool ColorByCount { get; init; } = true;
+	public int WarnBelow { get; init; } = 10;
+	public int AlertBelow { get; init; } = 6;
+}
+
+/// <summary>
+///     The quality of the drone's radio links in percent (a flight log), one line each, and bars for their average - green, yellow
+///     or red by level, whatever the colors of the text.
+/// </summary>
+public sealed record SignalElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Signal;
+	public bool ShowUplink { get; init; } = true;
+	public bool ShowDownlink { get; init; } = true;
+	public bool ShowBars { get; init; } = true;
+	/// <summary>Each link's percent by its level - the accent color while good, yellow or red below - instead of the text color.</summary>
+	public bool ColorByLevel { get; init; } = true;
+	/// <summary>A link at or above GoodPercent is good, at or above FairPercent fair, below that poor: the percent's and the bars' color.</summary>
+	public int GoodPercent { get; init; } = 70;
+	public int FairPercent { get; init; } = 50;
+	/// <summary>Null: yellow and red.</summary>
+	public string? FairColor { get; init; }
+	public string? PoorColor { get; init; }
+}
+
+/// <summary>
+///     A drone's battery from its flight log (OverlayRenderer.DroneBattery.cs): a battery icon filled to the charge, the percent,
+///     and optionally the pack voltage, temperature, current and each cell. The icon and the percent follow the charge from green
+///     through yellow to LowColor at LowPercent and CriticalColor at CriticalPercent (null: orange and red) while ColorByCharge is on. Units are the temperature's.
+/// </summary>
+public sealed record DroneBatteryElement : LabeledStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.DroneBattery;
+	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+	public bool ShowIcon { get; init; } = true;
+	public bool ShowVoltage { get; init; } = true;
+	public bool ShowTemperature { get; init; }
+	public bool ShowCurrent { get; init; }
+	public bool ShowCells { get; init; }
+	/// <summary>The icon and the percent follow the charge from green to red and the voltage, cell and temperature lines turn orange or red when poor; off, all keep their plain colors.</summary>
+	public bool ColorByCharge { get; init; } = true;
+	public int LowPercent { get; init; } = 30;
+	public int CriticalPercent { get; init; } = 15;
+	public string? LowColor { get; init; }
+	public string? CriticalColor { get; init; }
+
+	// Where the voltage, cell and temperature lines turn LowColor and CriticalColor (DroneBatteryHealth): a cell below the first or at the
+	// second, a temperature (always in degrees Celsius) under the cold limits or at the hot ones.
+	public double LowCellVolts { get; init; } = DroneBatteryHealth.LowCellVolts;
+	public double CriticalCellVolts { get; init; } = DroneBatteryHealth.CriticalCellVolts;
+	public double ColdCautionCelsius { get; init; } = DroneBatteryHealth.ColdCautionCelsius;
+	public double ColdCriticalCelsius { get; init; } = DroneBatteryHealth.ColdCriticalCelsius;
+	public double HotCautionCelsius { get; init; } = DroneBatteryHealth.HotCautionCelsius;
+	public double HotCriticalCelsius { get; init; } = DroneBatteryHealth.HotCriticalCelsius;
+}
+
+/// <summary>
+///     What the flight log says happened (OverlayRenderer.FlightAlerts.cs): a mode change, the motors, the battery's charge and
+///     cell voltage, the app's own warnings and notices - each on a panel for ShowSeconds, the newest MaxLines of them stacked
+///     downward. Centered on X, its top on Y. The Show flags pick which kinds are announced.
+/// </summary>
+public sealed record FlightAlertsElement : StyledOverlayElement, IPanelElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.FlightAlerts;
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
+	public double ShowSeconds { get; init; } = 6;
+	public int MaxLines { get; init; } = 1;
+	/// <summary>How long a panel takes to fade in and out; with SlideIn it also travels that way (a short one reads as a snap).</summary>
+	public double FadeSeconds { get; init; } = 0.35;
+	public bool SlideIn { get; init; }
+	public bool ShowFlightModes { get; init; } = true;
+	public bool ShowMotors { get; init; } = true;
+	public bool ShowBattery { get; init; } = true;
+	public bool ShowWarnings { get; init; } = true;
+	public bool ShowTips { get; init; } = true;
+}
+
+/// <summary>The flight mode the drone is in (a flight log): P-GPS, Sport and the like, as the app names them.</summary>
+public sealed record FlightModeElement : ThresholdStatElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.FlightMode;
+	/// <summary>ATTI (no GPS hold) is AlertColor; the modes the aircraft takes itself to the ground in (go home, landing) are WarnColor. Names are the app's.</summary>
+	public bool ColorByMode { get; init; } = true;
+}
+
+/// <summary>
+///     The remote controller's two sticks (a flight log, OverlayRenderer.DroneControls.cs): a square each with a dot - yellow near the
+///     center, orange in between, red at the end of its travel. Top-left anchored. The left stick is throttle and rudder, the right
+///     one elevator and aileron (the usual "mode 2" remote).
+/// </summary>
+public sealed record RcSticksElement : StyledOverlayElement, IPanelElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.RcSticks;
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
+}
+
+/// <summary>The aircraft's attitude against the horizon (a flight log): the blue ground tilts with the roll and moves with the pitch. Circle-centered.</summary>
+public sealed record AttitudeIndicatorElement : StyledOverlayElement, IPanelElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.AttitudeIndicator;
+
+	public AttitudeIndicatorElement()
+	{
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
+	}
+
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
+}
+
+/// <summary>
+///     The aircraft drawn at its pitch, roll and heading (a flight log), seen from the south with north toward the back of the
+///     dial: the front is blue, the rear orange. Circle-centered.
+/// </summary>
+public sealed record Orientation3DElement : StyledOverlayElement, IPanelElement
+{
+	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Orientation3D;
+
+	public Orientation3DElement()
+	{
+		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
+	}
+
+	public string? PanelColor { get; init; }
+	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
 }
 
 /// <summary>No Units - CameraInfo shows ISO/shutter/color-temperature, none of which are metric/imperial.</summary>
@@ -565,7 +786,8 @@ public sealed record TripProgressBarElement : OverlayElement, IPanelElement
 public enum ProfileSeries
 {
 	Elevation,
-	Speed
+	Speed,
+	Height
 }
 
 public enum ProfileAxis
@@ -574,7 +796,7 @@ public enum ProfileAxis
 	Time
 }
 
-/// <summary>The whole recording's elevation or speed as a chart, what's been covered so far highlighted - see OverlayRenderer.Charts.cs.</summary>
+/// <summary>The whole recording's elevation, speed or height above take-off (a drone) as a chart, what's been covered so far highlighted - see OverlayRenderer.Charts.cs.</summary>
 public sealed record ProfileChartElement : LabeledStatElement, IPanelElement
 {
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.ProfileChart;
@@ -583,6 +805,18 @@ public sealed record ProfileChartElement : LabeledStatElement, IPanelElement
 	public ProfileSeries Series { get; init; } = ProfileSeries.Elevation;
 	public ProfileAxis Axis { get; init; } = ProfileAxis.Distance;
 	public UnitSystem Units { get; init; } = UnitSystem.Metric;
+
+	/// <summary>The curve's own look: its thickness (times the usual), the marker at the frame shown, and the lowest and highest reading written on the panel.</summary>
+	public float LineWidth { get; init; } = 1f;
+	public bool ShowMarker { get; init; } = true;
+	public bool ShowMinMax { get; init; }
+
+	/// <summary>
+	///     The panel is as tall as the recording's change in height needs (a flat flight gets a low strip, a climb the full panel) and the
+	///     curve is scaled to that change, not to a floor at the ground. The widget keeps its bottom edge: it is X/Y's full size that shrinks
+	///     from the top.
+	/// </summary>
+	public bool AutoHeight { get; init; }
 }
 
 public enum TripStatKind
@@ -591,7 +825,10 @@ public enum TripStatKind
 	AverageSpeed,
 	ElevationGain,
 	ElevationLoss,
-	MovingTime
+	MovingTime,
+	/// <summary>A drone's record height above its take-off and record distance from it, so far (TripStats.MaxHeightMeters).</summary>
+	MaxHeight,
+	MaxHomeDistance
 }
 
 /// <summary>A running statistic - its value up to the frame shown, not the whole recording's (TripStats).</summary>
@@ -624,5 +861,4 @@ public sealed record ImageElement : OverlayElement
 	}
 
 	public string? ImagePath { get; init; }
-	public float Opacity { get; init; } = 1f;
 }

@@ -28,6 +28,8 @@ public partial class KeyMomentsEditor : UserControl
 	private long _totalFrames;
 	private IReadOnlyList<DerivedFrame>? _frames;
 	private UnitSystem _units;
+	// Only a recording with a ride's G-force or lean has anything for "only while riding" to filter.
+	private bool _hasRidePeaks;
 
 	public KeyMomentsEditor()
 	{
@@ -48,6 +50,10 @@ public partial class KeyMomentsEditor : UserControl
 		_frames = frames;
 		_units = units;
 		IsEnabled = totalFrames > 0;
+		_hasRidePeaks = frames is { Count: > 0 } && totalFrames > 0 && fps > 0
+		                && new[] { PeakKind.StrongestG, PeakKind.MaxLean }.Any(kind => KeyMoments.FindTop(frames, kind, fps, totalFrames, 1).Count > 0);
+		MovingOnlyCheck.IsVisible = _hasRidePeaks;
+		RidingFromPanel.IsVisible = _hasRidePeaks && MovingOnlyCheck.IsChecked == true;
 		PeakRows.Children.Clear();
 		ShowPeaks();
 	}
@@ -59,7 +65,7 @@ public partial class KeyMomentsEditor : UserControl
 	/// </summary>
 	private void ShowPeaks()
 	{
-		double? ridingFrom = MovingOnlyCheck.IsChecked == true ? (double)(RidingFromBox.Value ?? 2) : null;
+		double? ridingFrom = _hasRidePeaks && MovingOnlyCheck.IsChecked == true ? (double)(RidingFromBox.Value ?? 2) : null;
 		bool any = false;
 		int position = 0;
 		foreach (PeakKind kind in PeakKinds)
@@ -261,6 +267,7 @@ public partial class KeyMomentsEditor : UserControl
 			PeakKind.StrongestG => $"{value.ToString("0.00", c)} G",
 			PeakKind.SteepestClimb or PeakKind.SteepestDescent => $"{value.ToString("0.0", c)}%",
 			PeakKind.MaxLean => $"{value.ToString("0", c)}°",
+			PeakKind.FastestAscent or PeakKind.FastestDescent => imperial ? $"{(value * 3.28084).ToString("0.0", c)} ft/s" : $"{value.ToString("0.0", c)} m/s",
 			_ => value.ToString("0.##", c)
 		};
 	}

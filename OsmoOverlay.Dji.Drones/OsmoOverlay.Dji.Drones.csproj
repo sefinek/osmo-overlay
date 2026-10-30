@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>OsmoOverlay.Dji.Drones</AssemblyName>
+    <RootNamespace>OsmoOverlay.Dji.Drones</RootNamespace>
+
+    <AssemblyTitle>OsmoOverlay DJI drones</AssemblyTitle>
+    <Description>DJI drone support for OsmoOverlay: the flight log (DJI Fly / GO 4 FlightRecord) read as a track for any recording - position, height, speed and battery, decrypted with the keys DJI hands out for a log.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OsmoOverlay.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -274,7 +274,7 @@ public static class FfmpegPipeline
 		string range = (info.Video.ColorRange ?? "tv") == "pc" ? "pc" : "tv";
 		bool h264 = IsH264Encoder(encoder);
 
-		string graph = FilterGraph(source.MainVideo, source.InputCount, info.Video, output, greenScreen, composedPicture);
+		string graph = FilterGraph(source.MainVideo, source.InputCount, info.Video, output, greenScreen, composedPicture, encode.PadToAspect);
 		string? audioMap = source.AudioMap;
 		bool encodeAudio = source.EncodeAudio;
 		if (audioMap is not null && volume is { Count: > 0 })
@@ -388,7 +388,8 @@ public static class FfmpegPipeline
 	///     into YUV and laid on it - or, for a picture already composed in C# (`composedPicture`, a 360 recording's), only turned
 	///     into YUV. Shared with RenderBenchmark, so it times the graph a render runs.
 	/// </summary>
-	internal static string FilterGraph(string mainVideo, int overlayInput, VideoInfo source, VideoInfo output, bool greenScreen, bool composedPicture)
+	internal static string FilterGraph(string mainVideo, int overlayInput, VideoInfo source, VideoInfo output, bool greenScreen, bool composedPicture,
+		bool padToAspect = false)
 	{
 		string primaries = source.ColorPrimaries ?? "bt709";
 		string transfer = source.ColorTransfer ?? "bt709";
@@ -415,7 +416,7 @@ public static class FfmpegPipeline
 		// The main picture's format is set, not negotiated: hardware decoding hands over p010, which overlay can't take, and
 		// left to itself ffmpeg turned it into yuva420p10 - an alpha plane added and blended on every frame. Measured at 4K
 		// 10-bit: 40 -> 47 fps for the graph, the same output to the bit.
-		string resize = greenScreen ? "" : ResizeFilter(source, output);
+		string resize = greenScreen ? "" : ResizeFilter(source, output, padToAspect);
 		string main = resize.Length > 0 ? resize : $"format={PixelFormat(tenBit)},";
 		// threads=0 on the scale: swscale runs on one thread by default, and turning a whole 4K BGRA frame into YUV was the
 		// render's slowest stage - measured 31 -> 67 fps for the overlay graph alone.
@@ -433,14 +434,33 @@ public static class FfmpegPipeline
 	}
 
 	/// <summary>
-	///     The source's picture brought to the output's size and bit depth, ending in a comma to go on before what follows -
-	///     empty when they're the same, so a default render's graph stays as it was.
+	///     The source's picture brought to the output's size, shape and bit depth, ending in a comma to go on before what follows -
+	///     empty when they're the same, so a default render's graph stays as it was. Another shape is cut from the middle of
+	///     the picture, or with `padToAspect` the whole picture is scaled to fit and laid on black bars.
 	/// </summary>
-	internal static string ResizeFilter(VideoInfo source, VideoInfo output)
+	internal static string ResizeFilter(VideoInfo source, VideoInfo output, bool padToAspect = false)
 	{
 		if (output.Width == source.Width && output.Height == source.Height && output.PixFmt == source.PixFmt) return "";
 
-		return $"scale={output.Width}:{output.Height}:flags=lanczos:threads=0,format={PixelFormat(IsTenBit(output))},";
+		string format = $"format={PixelFormat(IsTenBit(output))},";
+		if (!OutputVideo.Reshapes(source, output)) return Scale(output.Width, output.Height) + format;
+
+		if (!padToAspect)
+		{
+			(int cutWidth, int cutHeight) = OutputVideo.Framed(source.Width, source.Height, output.Width / (double)output.Height, false);
+			return $"crop={cutWidth}:{cutHeight}," + (cutWidth == output.Width && cutHeight == output.Height ? "" : Scale(output.Width, output.Height)) + format;
+		}
+
+		double fit = Math.Min(output.Width / (double)source.Width, output.Height / (double)source.Height);
+		int fitWidth = Math.Min(output.Width, Math.Max(2, (int)Math.Round(source.Width * fit / 2) * 2));
+		int fitHeight = Math.Min(output.Height, Math.Max(2, (int)Math.Round(source.Height * fit / 2) * 2));
+		return (fitWidth == source.Width && fitHeight == source.Height ? "" : Scale(fitWidth, fitHeight)) + format +
+		       $"pad={output.Width}:{output.Height}:(ow-iw)/2:(oh-ih)/2:black,";
+
+		static string Scale(int width, int height)
+		{
+			return $"scale={width}:{height}:flags=lanczos:threads=0,";
+		}
 	}
 
 	/// <summary>Whether `encoder` writes `video`'s codec - a choice made for the source can be stale once Settings changed the output's.</summary>
@@ -853,7 +873,8 @@ public static class FfmpegPipeline
 			settings.OutputBitrateMultiplier is >= 0.5 and <= 4 ? settings.OutputBitrateMultiplier : 1.0,
 			// ffmpeg's own +faststart only when nothing edits the file after ffmpeg - otherwise
 			// Mp4FastStart runs last instead (ffmpeg's would just be undone by the append).
-			settings.FastStart && !postProcessing);
+			settings.FastStart && !postProcessing,
+			PadToAspect: settings.OutputPadToAspect);
 	}
 
 	internal static (int num, int den) ParseFrameRate(string rFrameRate)
@@ -881,9 +902,11 @@ public static class FfmpegPipeline
 /// <summary>
 ///     Export options on top of the source-matched defaults (see OverlaySettings): NVENC preset,
 ///     hardware decoding, bitrate relative to the source, and ffmpeg-side fast start. Comment is what the file says about
-///     the program that made it (ExportMarker), null for nothing.
+///     the program that made it (ExportMarker), null for nothing. PadToAspect: a picture of another shape than the source's goes
+///     whole onto black bars instead of being cut from the middle (OverlaySettings.OutputPadToAspect).
 /// </summary>
-public sealed record RenderEncodeSettings(string NvencPreset, bool HardwareDecoding, double BitrateMultiplier, bool FfmpegFastStart, string? Comment = null);
+public sealed record RenderEncodeSettings(string NvencPreset, bool HardwareDecoding, double BitrateMultiplier, bool FfmpegFastStart, string? Comment = null,
+	bool PadToAspect = false);
 
 /// <summary>One encoder's try (FfmpegPipeline.ProbeEncoders): whether it encoded the test frames, else the last lines ffmpeg said.</summary>
 public sealed record EncoderProbe(string Encoder, bool Works, string Detail);

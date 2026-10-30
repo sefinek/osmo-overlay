@@ -31,6 +31,26 @@
 		</Grid>
 		<TextBlock Text="{x:Static local:Strings.ElementStyle_OutlineWidth}" Classes="infoLabel" Margin="0" />
 		<NumericUpDown Name="OutlineWidthBox" Minimum="0" Maximum="3" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch" />
+		<StackPanel Name="ReadoutPanel" Spacing="8" IsVisible="False">
+			<StackPanel Name="DecimalsPanel" Spacing="8">
+				<TextBlock Text="{x:Static local:Strings.ElementStyle_Decimals}" Classes="infoLabel" Margin="0" />
+				<ComboBox Name="DecimalsCombo" HorizontalAlignment="Stretch" />
+			</StackPanel>
+			<CheckBox Name="ShowLabelCheck" Content="{x:Static local:Strings.ElementStyle_ShowLabel}" />
+			<CheckBox Name="ShowUnitCheck" Content="{x:Static local:Strings.ElementStyle_ShowUnit}" />
+			<CheckBox Name="UppercaseCheck" Content="{x:Static local:Strings.ElementStyle_UppercaseLabel}" />
+		</StackPanel>
+		<StackPanel Name="AlignPanel" Spacing="8" IsVisible="False">
+			<TextBlock Text="{x:Static local:Strings.ElementStyle_Align}" Classes="infoLabel" Margin="0" />
+			<StackPanel Orientation="Horizontal" Spacing="12">
+				<RadioButton Name="AlignLeftButton" Content="{x:Static local:Strings.ElementStyle_AlignLeft}" />
+				<RadioButton Name="AlignCenterButton" Content="{x:Static local:Strings.ElementStyle_AlignCenter}" />
+				<RadioButton Name="AlignRightButton" Content="{x:Static local:Strings.ElementStyle_AlignRight}" />
+			</StackPanel>
+			<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.ElementStyle_AlignHint}" />
+		</StackPanel>
+		<TextBlock Text="{x:Static local:Strings.ElementStyle_Opacity}" Classes="infoLabel" Margin="0" />
+		<NumericUpDown Name="OpacityBox" Minimum="10" Maximum="100" Increment="5" FormatString="0" HorizontalAlignment="Stretch" />
 		<Button Name="ApplyToAllButton" Content="{x:Static local:Strings.ElementStyle_ApplyFontAndColorsTo}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
 		        ToolTip.Tip="{x:Static local:Strings.ElementStyle_GivesEveryTextWidgetThis}" />
 	</StackPanel>

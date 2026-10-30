@@ -1,3 +1,5 @@
+using System.Globalization;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
@@ -17,12 +19,20 @@ public partial class MainWindow
 	{
 		if (_phase != UiPhase.SummaryReady || _cameraSummary is not { HasTelemetry: true } camera) return;
 		_previewPlayer.Pause();
+		bool timelineWasOpen = TimelineCard.IsVisible;
+		SetTimelineExpanded(false, false);
 		var editor = new ExternalTrackWindow(camera, _externalTrack, _previewPosition.TotalSeconds);
+		editor.Log += (message, level) => AppendLog(message, level);
 		await editor.ShowDialog(this);
-		if (!editor.Accepted) return;
+		if (!editor.Accepted)
+		{
+			SetTimelineExpanded(timelineWasOpen, false);
+			return;
+		}
 
 		OverlayProject edits = BuildProject();
 		SetPhase(UiPhase.LoadingSummary);
+		if (editor.Source is { } adding) AppendLog(string.Format(Strings.Track_Applying, Path.GetFileName(adding.Path)));
 		try
 		{
 			FileSummary updated = editor.Source is { } source ? await Task.Run(() => source.Apply(camera)) : camera;
@@ -33,6 +43,7 @@ public partial class MainWindow
 			_mapSourcesForRoute = null;
 			await Task.Run(() => RecordingSpeeds(updated));
 			PopulateTelemetryInfo(updated);
+			PopulateInputInfo(updated);
 			UpdateTelemetryStatus(updated);
 			SetPhase(UiPhase.SummaryReady);
 			await OpenPreviewAsync(updated);
@@ -65,5 +76,28 @@ public partial class MainWindow
 	{
 		ExternalTrackStatus.Text = _externalTrack is { } source ? Path.GetFileName(source.Path) : Strings.Track_None;
 		ExternalTrackButton.IsEnabled = _phase == UiPhase.SummaryReady && _cameraSummary?.HasTelemetry == true && !_previewTestRunning;
+		ExternalTrackInfo.IsVisible = false;
+		if (_externalTrack is { } shown) _ = ShowExternalTrackInfoAsync(shown);
+	}
+
+	private async Task ShowExternalTrackInfoAsync(ExternalTrackSource source)
+	{
+		try
+		{
+			ExternalTrack track = await Task.Run(() => ExternalTrackReader.Read(source.Path));
+			if (!ReferenceEquals(_externalTrack, source)) return;
+
+			TimeSpan length = track.EndUtc - track.StartUtc;
+			string text = string.Format(Strings.Track_Summary,
+				length.ToString(length.TotalHours >= 1 ? @"h\:mm\:ss" : @"m\:ss", CultureInfo.InvariantCulture), track.Points.Count);
+			if (track.DeviceName is { } name) text = $"{name} · {text}";
+			ExternalTrackInfo.Text = text;
+			ToolTip.SetTip(ExternalTrackInfo, text);
+			ExternalTrackInfo.IsVisible = true;
+		}
+		catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+		{
+			AppLogger.Warn(ex, "The external track's details could not be read.");
+		}
 	}
 }

@@ -388,7 +388,7 @@ public static class RenderBenchmark
 		[
 			.. DecodeInput(source, settings.HardwareDecoding, encoder),
 			"-f", "lavfi", "-i", $"color=c=red@0.3:s={output.Width}x{output.Height}:r={num}/{den},format=bgra",
-			"-filter_complex", FfmpegPipeline.FilterGraph("[0:v]", 1, video, output, false, false), "-map", "[v]",
+			"-filter_complex", FfmpegPipeline.FilterGraph("[0:v]", 1, video, output, false, false, settings.OutputPadToAspect), "-map", "[v]",
 			"-frames:v", Invariant(gpu ? NvencFrames : CpuEncodeFrames)
 		];
 		FfmpegPipeline.AddVideoEncoderArgs(args, output, encoder, new RenderEncodeSettings(settings.NvencPreset, settings.HardwareDecoding, 1, false), num, den);
@@ -465,7 +465,7 @@ public static class RenderBenchmark
 		[
 			"-hide_banner", .. DecodeInput(source, hardwareDecoding, encoder),
 			"-f", "rawvideo", "-pix_fmt", "bgra", "-s", $"{output.Width}x{output.Height}", "-r", $"{num}/{den}", "-i", "pipe:0",
-			"-filter_complex", FfmpegPipeline.FilterGraph("[0:v]", 1, video, output, false, false), "-map", "[v]", "-frames:v", Invariant(RenderFrames)
+			"-filter_complex", FfmpegPipeline.FilterGraph("[0:v]", 1, video, output, false, false, settings.OutputPadToAspect), "-map", "[v]", "-frames:v", Invariant(RenderFrames)
 		];
 		FfmpegPipeline.AddVideoEncoderArgs(args, output, encoder, new RenderEncodeSettings(settings.NvencPreset, hardwareDecoding, 1, false), num, den);
 		args.AddRange(["-f", "null", "-"]);

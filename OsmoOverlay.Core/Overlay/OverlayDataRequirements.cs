@@ -21,7 +21,17 @@ public readonly record struct OverlayAvailability(
 	bool DeviceBattery = false,
 	bool AudioLevel = false,
 	bool WindProcessing = false,
-	bool ImageLuma = false)
+	bool ImageLuma = false,
+	bool HeightAboveHome = false,
+	bool HomeDistance = false,
+	bool VerticalSpeed = false,
+	bool Satellites = false,
+	bool DroneBattery = false,
+	bool FlightAlerts = false,
+	bool Signal = false,
+	bool FlightMode = false,
+	bool DroneSticks = false,
+	bool DroneAttitude = false)
 {
 	public static OverlayAvailability Of(IReadOnlyList<TelemetryFrame> frames, bool containerTime, ICameraFormat? camera)
 	{
@@ -33,7 +43,17 @@ public readonly record struct OverlayAvailability(
 			frames.Any(f => f.DeviceBatteryPercent is { } b && double.IsFinite(b)),
 			frames.Any(f => f.AudioRmsDbfs is >= -128 and <= 0 || f.AudioPeakDbfs is >= -128 and <= 0),
 			frames.Any(f => f.WindProcessingActive is not null || f.WindProcessingLevel is >= 0 and <= 100),
-			frames.Any(f => f.ImageLuma is >= 0 and <= 255));
+			frames.Any(f => f.ImageLuma is >= 0 and <= 255),
+			frames.Any(f => f.HeightAboveHomeMeters is { } h && double.IsFinite(h)),
+			frames.Any(f => f.DistanceFromHomeMeters is { } d && double.IsFinite(d)),
+			frames.Any(f => f.VerticalSpeedMs is { } v && double.IsFinite(v)),
+			frames.Any(f => f.GpsSatellites is >= 0),
+			frames.Any(f => f.DroneBattery is { } b && double.IsFinite(b.Percent)),
+			frames.Any(f => f.FlightEvents is { Count: > 0 }),
+			frames.Any(f => f.DroneSignal is { } s && (s.UplinkPercent is not null || s.DownlinkPercent is not null)),
+			frames.Any(f => !string.IsNullOrEmpty(f.FlightMode)),
+			frames.Any(f => f.DroneSticks is not null),
+			frames.Any(f => f.DroneAttitude is not null));
 	}
 
 	public IReadOnlyList<OverlayElement> Apply(IReadOnlyList<OverlayElement> layout)
@@ -74,6 +94,16 @@ public static class OverlayDataRequirements
 			OverlayElementType.AudioLevel => data.AudioLevel,
 			OverlayElementType.WindProcessing => data.WindProcessing,
 			OverlayElementType.ImageLuma => data.ImageLuma,
+			OverlayElementType.Height => data.HeightAboveHome,
+			OverlayElementType.HomeDistance => data.HomeDistance,
+			OverlayElementType.VerticalSpeed => data.VerticalSpeed,
+			OverlayElementType.Satellites => data.Satellites,
+			OverlayElementType.DroneBattery => data.DroneBattery,
+			OverlayElementType.FlightAlerts => data.FlightAlerts,
+			OverlayElementType.Signal => data.Signal,
+			OverlayElementType.FlightMode => data.FlightMode,
+			OverlayElementType.RcSticks => data.DroneSticks,
+			OverlayElementType.AttitudeIndicator or OverlayElementType.Orientation3D => data.DroneAttitude,
 			// Text and Image need no data.
 			_ => true
 		};

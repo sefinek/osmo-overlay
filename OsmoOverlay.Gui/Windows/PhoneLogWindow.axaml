@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:OsmoOverlay.Gui"
+        xmlns:dji="using:OsmoOverlay.Dji.Drones"
+        x:Class="OsmoOverlay.Gui.PhoneLogWindow"
+        Width="560" MinWidth="460" Height="560" MinHeight="460"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource WindowBackgroundBrush}"
+        Icon="{x:Static local:AppAssets.Icon}" Title="{x:Static local:Strings.Phone_Title}">
+	<Window.Styles>
+		<Style Selector="Border.settingsCard">
+			<Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+			<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="12" />
+		</Style>
+		<Style Selector="TextBlock.rowHint">
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="LineHeight" Value="18" />
+		</Style>
+	</Window.Styles>
+
+	<Grid Margin="20" RowDefinitions="Auto,*,Auto,Auto" RowSpacing="14">
+		<TextBlock Name="StepsText" Text="{x:Static local:Strings.Phone_Steps}" Classes="rowHint" />
+
+		<Border Grid.Row="1" Name="DevicesCard" Classes="settingsCard">
+			<Grid RowDefinitions="Auto,*" Margin="16,13" RowSpacing="10">
+				<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+					<TextBlock Text="{x:Static local:Strings.Phone_Devices}" FontWeight="SemiBold" VerticalAlignment="Center" />
+					<Button Grid.Column="1" Name="RefreshButton" Content="{x:Static local:Strings.Phone_Refresh}" Click="OnRefreshClick" />
+				</Grid>
+				<Panel Grid.Row="1">
+					<ListBox Name="Devices" SelectionChanged="OnDeviceSelected">
+						<ListBox.ItemTemplate>
+							<DataTemplate x:DataType="dji:PhoneDevice">
+								<TextBlock Text="{Binding Name}" Margin="4,6" FontSize="15" />
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+					<TextBlock Name="NoDevices" Classes="rowHint" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center"
+					           Text="{x:Static local:Strings.Phone_None}" IsVisible="False" />
+				</Panel>
+			</Grid>
+		</Border>
+
+		<StackPanel Grid.Row="1" Name="MatchPanel" IsVisible="False" VerticalAlignment="Center" Spacing="12">
+			<Border Name="MatchCard" Padding="20,24" CornerRadius="12" BorderThickness="1"
+			        Background="{StaticResource SuccessSubtleBrush}" BorderBrush="{StaticResource SuccessBrush}">
+				<StackPanel Spacing="10" HorizontalAlignment="Center">
+					<Border Width="48" Height="48" CornerRadius="24" Background="{StaticResource SuccessBrush}" HorizontalAlignment="Center">
+						<local:IconView Data="{StaticResource IconCheck}" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+					</Border>
+					<TextBlock Text="{x:Static local:Strings.Phone_Found}" FontWeight="SemiBold" FontSize="17" Foreground="{StaticResource SuccessBrush}"
+					           TextAlignment="Center" TextWrapping="Wrap" />
+					<TextBlock Name="MatchFile" FontSize="14" TextAlignment="Center" TextWrapping="Wrap" />
+					<TextBlock Name="MatchStats" Classes="rowHint" TextAlignment="Center" />
+				</StackPanel>
+			</Border>
+
+			<Border Classes="settingsCard" Padding="16,12">
+				<StackPanel Spacing="8">
+					<TextBlock Name="MatchPlaces" Classes="rowHint" />
+					<ItemsControl Name="PlacesList">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="local:PhoneLogPlaceRow">
+								<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="0,2" Opacity="{Binding Opacity}">
+									<TextBlock Text="{Binding Path}" FontSize="13" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
+									<TextBlock Grid.Column="1" Text="{Binding Count}" FontSize="13" FontWeight="SemiBold" />
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+			</Border>
+		</StackPanel>
+
+		<StackPanel Grid.Row="2" Spacing="8">
+			<ProgressBar Name="Busy" IsIndeterminate="True" IsVisible="False" />
+			<TextBlock Name="VerdictText" IsVisible="False" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" />
+			<TextBlock Name="StatusText" Classes="rowHint" IsVisible="False" />
+			<TextBlock Name="ProblemText" IsVisible="False" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" />
+			<Button Name="OpenLogsButton" IsVisible="False" HorizontalAlignment="Center" Content="{x:Static local:Strings.Phone_OpenLogs}" Click="OnOpenLogsClick" />
+		</StackPanel>
+
+		<Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+			<Button Name="CloseButton" Content="{x:Static local:Strings.Common_Cancel}" IsCancel="True" Click="OnCloseClick" />
+			<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+				<Button Name="FolderButton" Content="{x:Static local:Strings.Phone_Folder}" Click="OnFolderClick" />
+				<Button Name="ShowButton" IsVisible="False" Content="{x:Static local:Strings.Common_ShowInFolder}" Click="OnShowClick" />
+			</StackPanel>
+			<Button Grid.Column="3" Name="ActionButton" Content="{x:Static local:Strings.Phone_Search}" Classes="accent" IsDefault="True" IsEnabled="False" Click="OnActionClick" />
+		</Grid>
+	</Grid>
+</Window>

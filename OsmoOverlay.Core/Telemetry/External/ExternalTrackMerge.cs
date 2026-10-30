@@ -19,15 +19,29 @@ public static class ExternalTrackMerge
 		var result = new List<TelemetryFrame>(frames.Count);
 		var fill = new GpsForwardFill();
 		int cursor = 0;
+		var clock = new List<DateTime>(frames.Count);
 		foreach (TelemetryFrame frame in frames)
 		{
 			DateTime utc = synchronization.At(frame.SampleTimeSeconds);
+			clock.Add(utc);
 			ExternalTrackSample? reading = track.At(utc, ref cursor);
 			TelemetryFrame merged = frame with
 			{
 				AmbientTemperatureCelsius = reading?.TemperatureCelsius,
 				DeviceDistanceMeters = reading?.DistanceMeters,
-				DeviceBatteryPercent = track.BatteryAt(utc)
+				DeviceBatteryPercent = track.BatteryAt(utc),
+				DroneBattery = track.DroneBatteryAt(utc),
+				DroneSignal = track.DroneSignalAt(utc),
+				DroneSticks = track.DroneSticksAt(utc),
+				DroneAttitude = reading is { State: ExternalTrackState.Fix } attitude ? attitude.Attitude : null,
+				FlightMode = reading is { State: ExternalTrackState.Fix } moded ? moded.FlightMode : null,
+				GpsLevel = reading is { State: ExternalTrackState.Fix } leveled ? leveled.GpsLevel : null,
+				HeightAboveHomeMeters = reading is { State: ExternalTrackState.Fix } fix ? fix.HeightMeters : null,
+				VerticalSpeedMs = reading is { State: ExternalTrackState.Fix } climbing ? climbing.VerticalSpeedMs : null,
+				GpsSatellites = reading is { State: ExternalTrackState.Fix } counted ? counted.Satellites : null,
+				DistanceFromHomeMeters = reading is { State: ExternalTrackState.Fix } at && track.Home is { } home
+					? TelemetryMath.HaversineMeters(home.Latitude, home.Longitude, at.Latitude, at.Longitude)
+					: null
 			};
 			if (reading is not { } sample)
 			{
@@ -52,8 +66,26 @@ public static class ExternalTrackMerge
 			});
 		}
 
+		AttachEvents(result, clock, track);
 		TelemetryExtraction.BackfillBeforeFirstFix(result);
 		return result;
+	}
+
+	/// <summary>Each event goes onto the first frame at or after its moment - an event outside the recording is left out.</summary>
+	private static void AttachEvents(List<TelemetryFrame> frames, List<DateTime> clock, ExternalTrack track)
+	{
+		if (frames.Count == 0 || track.Events.Count == 0) return;
+
+		double frameSeconds = frames.Count > 1 ? (clock[^1] - clock[0]).TotalSeconds / (frames.Count - 1) : 0;
+		var slack = TimeSpan.FromSeconds(Math.Max(frameSeconds, 0.001));
+		foreach (ExternalTrackEvent trackEvent in track.Events)
+		{
+			if (trackEvent.Utc < clock[0] - slack || trackEvent.Utc > clock[^1] + slack) continue;
+
+			int index = clock.BinarySearch(trackEvent.Utc);
+			if (index < 0) index = Math.Min(~index, frames.Count - 1);
+			frames[index] = frames[index] with { FlightEvents = [.. frames[index].FlightEvents ?? [], trackEvent.Event] };
+		}
 	}
 
 	/// <summary>A frame the track doesn't reach keeps the camera's own GPS - or, with none, holds the last position the track gave.</summary>

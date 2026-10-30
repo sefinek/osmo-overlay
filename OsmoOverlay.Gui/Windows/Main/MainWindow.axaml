@@ -429,7 +429,10 @@
 
 								<StackPanel Spacing="4">
 									<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-										<TextBlock Name="ExternalTrackStatus" Text="{x:Static local:Strings.Track_None}" Classes="infoLabel" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+										<StackPanel VerticalAlignment="Center" Spacing="0">
+											<TextBlock Name="ExternalTrackStatus" Text="{x:Static local:Strings.Track_None}" Classes="infoLabel" Margin="0" TextTrimming="CharacterEllipsis" />
+											<TextBlock Name="ExternalTrackInfo" Classes="hint" IsVisible="False" TextTrimming="CharacterEllipsis" />
+										</StackPanel>
 										<Button Grid.Column="1" Name="ExternalTrackButton" Content="{x:Static local:Strings.Track_Title}" Click="OnExternalTrackClick" IsEnabled="False" />
 									</Grid>
 								</StackPanel>
@@ -515,7 +518,7 @@
 											<ColumnDefinition Width="Auto" SharedSizeGroup="InfoLabelRight" />
 											<ColumnDefinition Width="*" />
 										</Grid.ColumnDefinitions>
-										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Text="{x:Static local:Strings.Main_Camera}" />
+										<TextBlock Grid.Row="0" Grid.Column="0" Classes="infoLabel" Name="InfoCameraLabel" Text="{x:Static local:Strings.Main_Camera}" />
 										<StackPanel Background="Transparent" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="10">
 											<TextBlock Classes="infoValue" Name="InfoCamera" VerticalAlignment="Center" />
 											<local:IconView Classes="checkIcon" Name="InfoSupportIcon" VerticalAlignment="Center" />
@@ -1485,6 +1488,200 @@
 									</Grid>
 
 									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="DroneBatteryListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.DroneBattery}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_DroneBattery}" />
+										</Border>
+										<Border Name="DroneBatterySettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_Hint}" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="DroneBatteryLabelBox" LostFocus="OnDroneBatteryLabelChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_Show}" Classes="infoLabel" Margin="0" />
+														<CheckBox Name="DroneBatteryIconCheck" Content="{x:Static local:Strings.DroneBattery_Icon}" Click="OnDroneBatteryOptionChanged" />
+														<CheckBox Name="DroneBatteryColorCheck" Content="{x:Static local:Strings.DroneBattery_ColorByCharge}" Click="OnDroneBatteryOptionChanged" />
+														<CheckBox Name="DroneBatteryVoltageCheck" Content="{x:Static local:Strings.DroneBattery_Voltage}" Click="OnDroneBatteryOptionChanged" />
+														<CheckBox Name="DroneBatteryTemperatureCheck" Content="{x:Static local:Strings.DroneBattery_Temperature}" Click="OnDroneBatteryOptionChanged" />
+														<CheckBox Name="DroneBatteryCurrentCheck" Content="{x:Static local:Strings.DroneBattery_Current}" Click="OnDroneBatteryOptionChanged" />
+														<CheckBox Name="DroneBatteryCellsCheck" Content="{x:Static local:Strings.DroneBattery_Cells}" Click="OnDroneBatteryOptionChanged" />
+														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
+														<StackPanel Orientation="Horizontal" Spacing="12">
+															<RadioButton Name="DroneBatteryMetricRadio" Content="°C" GroupName="DroneBatteryUnits" Click="OnDroneBatteryUnitsChanged" />
+															<RadioButton Name="DroneBatteryImperialRadio" Content="°F" GroupName="DroneBatteryUnits" Click="OnDroneBatteryUnitsChanged" />
+														</StackPanel>
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_Levels}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_LowPercent}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryLowBox" Minimum="1" Maximum="100" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLevelChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_CriticalPercent}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryCriticalBox" Minimum="0" Maximum="99" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLevelChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_LowColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="DroneBatteryLowColorBox" PlaceholderText="#FF9800" LostFocus="OnDroneBatteryColorChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_CriticalColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="DroneBatteryCriticalColorBox" PlaceholderText="#F44336" LostFocus="OnDroneBatteryColorChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_LevelsHint}" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_Limits}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_LowCell}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryLowCellBox" Minimum="2.5" Maximum="4.2" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_CriticalCell}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryCriticalCellBox" Minimum="2.5" Maximum="4.2" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_ColdWarn}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryColdWarnBox" Minimum="-40" Maximum="60" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_ColdCritical}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryColdCriticalBox" Minimum="-40" Maximum="60" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_HotWarn}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryHotWarnBox" Minimum="0" Maximum="100" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
+														<TextBlock Text="{x:Static local:Strings.DroneBattery_HotCritical}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="DroneBatteryHotCriticalBox" Minimum="0" Maximum="100" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_LimitsHint}" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="DroneBatteryStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="DroneBatteryShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="DroneBatteryTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="FlightAlertsListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.FlightAlerts}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_FlightAlerts}" />
+										</Border>
+										<Border Name="FlightAlertsSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.FlightAlerts_Hint}" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.FlightAlerts_Announce}" Classes="settingsGroupTitle" />
+														<CheckBox Name="FlightAlertsModesCheck" Content="{x:Static local:Strings.FlightAlerts_Modes}" Click="OnFlightAlertsOptionChanged" />
+														<CheckBox Name="FlightAlertsMotorsCheck" Content="{x:Static local:Strings.FlightAlerts_Motors}" Click="OnFlightAlertsOptionChanged" />
+														<CheckBox Name="FlightAlertsBatteryCheck" Content="{x:Static local:Strings.FlightAlerts_Battery}" Click="OnFlightAlertsOptionChanged" />
+														<CheckBox Name="FlightAlertsWarningsCheck" Content="{x:Static local:Strings.FlightAlerts_Warnings}" Click="OnFlightAlertsOptionChanged" />
+														<CheckBox Name="FlightAlertsNoticesCheck" Content="{x:Static local:Strings.FlightAlerts_Notices}" Click="OnFlightAlertsOptionChanged" />
+														<TextBlock Text="{x:Static local:Strings.FlightAlerts_Duration}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="FlightAlertsSecondsBox" Minimum="1" Maximum="30" Increment="0.5" FormatString="0.0" HorizontalAlignment="Stretch" ValueChanged="OnFlightAlertsNumberChanged" />
+														<TextBlock Text="{x:Static local:Strings.FlightAlerts_Lines}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="FlightAlertsLinesBox" Minimum="1" Maximum="5" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnFlightAlertsNumberChanged" />
+														<TextBlock Text="{x:Static local:Strings.FlightAlerts_Fade}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="FlightAlertsFadeBox" Minimum="0.05" Maximum="2" Increment="0.05" FormatString="0.00" HorizontalAlignment="Stretch" ValueChanged="OnFlightAlertsNumberChanged" />
+														<CheckBox Name="FlightAlertsSlideCheck" Content="{x:Static local:Strings.FlightAlerts_Slide}" Click="OnFlightAlertsOptionChanged" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="FlightAlertsStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Panel}" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="FlightAlertsPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="FlightAlertsShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="FlightAlertsTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="SignalListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Signal}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_Signal}" />
+										</Border>
+										<Border Name="SignalSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Signal_Hint}" />
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SignalLabelBox" LostFocus="OnSignalLabelChanged" />
+														<CheckBox Name="SignalUplinkCheck" Content="{x:Static local:Strings.Signal_Uplink}" Click="OnSignalOptionChanged" />
+														<CheckBox Name="SignalDownlinkCheck" Content="{x:Static local:Strings.Signal_Downlink}" Click="OnSignalOptionChanged" />
+														<CheckBox Name="SignalBarsCheck" Content="{x:Static local:Strings.Signal_Bars}" Click="OnSignalOptionChanged" />
+														<CheckBox Name="SignalColorCheck" Content="{x:Static local:Strings.Signal_ColorByLevel}" Click="OnSignalOptionChanged" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Signal_Levels}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Signal_GoodPercent}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SignalGoodBox" Minimum="1" Maximum="100" Increment="5" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnSignalLevelsChanged" />
+														<TextBlock Text="{x:Static local:Strings.Signal_FairPercent}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SignalFairBox" Minimum="0" Maximum="99" Increment="5" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnSignalLevelsChanged" />
+														<TextBlock Text="{x:Static local:Strings.Signal_FairColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SignalFairColorBox" PlaceholderText="#F7C51E" LostFocus="OnSignalColorChanged" />
+														<TextBlock Text="{x:Static local:Strings.Signal_PoorColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SignalPoorColorBox" PlaceholderText="#FF4D4D" LostFocus="OnSignalColorChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Signal_LevelsHint}" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="SignalStyle" HasAccentColor="True" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="SignalShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="SignalTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+
+									<Grid ColumnDefinitions="*,Auto">
 										<Border Grid.Column="0" Name="SpeedListItem" Classes="overlayListItem"
 										        Tag="{x:Static core:OverlayElementType.SpeedGauge}"
 										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
@@ -1630,6 +1827,126 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
 														<local:ElementTimingEditor Name="PitchTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="RcSticksListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.RcSticks}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_RcSticks}" />
+										</Border>
+										<Border Name="RcSticksSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<Border Classes="calloutInfo">
+													<TextBlock Classes="calloutInfoText"
+													           Text="{x:Static local:Strings.Widget_RcSticksDescription}" />
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="RcSticksStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Panel}" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="RcSticksPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="RcSticksShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="RcSticksTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="AttitudeListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.AttitudeIndicator}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_Attitude}" />
+										</Border>
+										<Border Name="AttitudeSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<Border Classes="calloutInfo">
+													<TextBlock Classes="calloutInfoText"
+													           Text="{x:Static local:Strings.Widget_AttitudeDescription}" />
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="AttitudeStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Panel}" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="AttitudePanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="AttitudeShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="AttitudeTiming" />
+													</StackPanel>
+												</Border>
+											</StackPanel>
+										</Border>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<Border Grid.Column="0" Name="Orientation3DListItem" Classes="overlayListItem"
+										        Tag="{x:Static core:OverlayElementType.Orientation3D}"
+										        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+										        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+											<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_Orientation3D}" />
+										</Border>
+										<Border Name="Orientation3DSettingsPanel" Grid.Column="1" IsVisible="False">
+											<StackPanel Classes="settingsFlyout" Spacing="12">
+												<Border Classes="calloutInfo">
+													<TextBlock Classes="calloutInfoText"
+													           Text="{x:Static local:Strings.Widget_Orientation3DDescription}" />
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
+														<local:ElementStyleEditor Name="Orientation3DStyle" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Panel}" Classes="settingsGroupTitle" />
+														<local:ElementPanelEditor Name="Orientation3DPanelFill" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Shadow}" Classes="settingsGroupTitle" />
+														<local:ElementShadowEditor Name="Orientation3DShadow" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Main_Timing}" Classes="settingsGroupTitle" />
+														<local:ElementTimingEditor Name="Orientation3DTiming" />
 													</StackPanel>
 												</Border>
 											</StackPanel>
@@ -1879,6 +2196,8 @@
 															             GroupName="ProfileSeries" Click="OnProfileSeriesChanged" />
 															<RadioButton Name="ProfileSpeedRadio" Content="{x:Static local:Strings.Common_Speed}"
 															             GroupName="ProfileSeries" Click="OnProfileSeriesChanged" />
+															<RadioButton Name="ProfileHeightRadio" Content="{x:Static local:Strings.Widget_Height}"
+															             GroupName="ProfileSeries" Click="OnProfileSeriesChanged" />
 														</StackPanel>
 														<TextBlock Text="{x:Static local:Strings.Main_Along}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
@@ -1898,6 +2217,12 @@
 															<RadioButton Name="ProfileImperialRadio" Content="{x:Static local:Strings.Common_Imperial}"
 															             GroupName="ProfileUnits" Click="OnProfileUnitsChanged" />
 														</StackPanel>
+														<CheckBox Name="ProfileAutoHeightCheck" Content="{x:Static local:Strings.Chart_AutoHeight}" Click="OnProfileAutoHeightChanged"
+														          ToolTip.Tip="{x:Static local:Strings.Chart_AutoHeightHint}" />
+														<CheckBox Name="ProfileMarkerCheck" Content="{x:Static local:Strings.Chart_ShowMarker}" Click="OnProfileLookChanged" />
+														<CheckBox Name="ProfileMinMaxCheck" Content="{x:Static local:Strings.Chart_ShowMinMax}" Click="OnProfileLookChanged" />
+														<TextBlock Text="{x:Static local:Strings.Chart_LineWidth}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="ProfileLineWidthBox" Minimum="0.5" Maximum="3" Increment="0.25" FormatString="0.00" HorizontalAlignment="Stretch" ValueChanged="OnProfileLineWidthChanged" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -2139,6 +2464,31 @@
 											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
 												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_DeviceBattery}" />
 											</Border>
+											<Border Name="HeightListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.Height}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_Height}" />
+											</Border>
+											<Border Name="HomeDistanceListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.HomeDistance}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_HomeDistance}" />
+											</Border>
+											<Border Name="FlightModeListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.FlightMode}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_FlightMode}" />
+											</Border>
+											<Border Name="VerticalSpeedListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.VerticalSpeed}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_VerticalSpeed}" />
+											</Border>
+											<Border Name="SatellitesListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.Satellites}"
+											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
+											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
+												<TextBlock Classes="overlayListItemText" Text="{x:Static local:Strings.Widget_Satellites}" />
+											</Border>
 											<Border Name="AudioLevelListItem" Classes="overlayListItem" Tag="{x:Static core:OverlayElementType.AudioLevel}"
 											        PointerPressed="OnWidgetItemPointerPressed" PointerMoved="OnWidgetItemPointerMoved"
 											        PointerReleased="OnWidgetItemPointerEnded" PointerCaptureLost="OnWidgetItemPointerEnded">
@@ -2163,13 +2513,63 @@
 														<TextBlock Text="{x:Static local:Strings.Main_Display}" Classes="settingsGroupTitle" />
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="SensorLabelBox" LostFocus="OnSensorLabelChanged" />
-														<StackPanel Name="SensorUnitsPanel" Spacing="8">
+														<StackPanel Name="SensorBarsPanel" Spacing="8" IsVisible="False">
+														<CheckBox Name="SatellitesBarsCheck" Content="{x:Static local:Strings.Signal_Bars}" Click="OnSatellitesBarsChanged" />
+													</StackPanel>
+													<StackPanel Name="SensorUnitsPanel" Spacing="8">
 															<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
 															<StackPanel Orientation="Horizontal" Spacing="12">
 																<RadioButton Name="SensorMetricRadio" GroupName="SensorUnits" Click="OnSensorUnitsChanged" />
 																<RadioButton Name="SensorImperialRadio" GroupName="SensorUnits" Click="OnSensorUnitsChanged" />
 															</StackPanel>
 														</StackPanel>
+													</StackPanel>
+												</Border>
+												<Border Name="SensorLimitsGroup" Classes="settingsGroup" IsVisible="False">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Sensor_Limits}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_WarnAbove}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SensorWarnAboveBox" Minimum="0" Maximum="100000" Increment="10" FormatString="0" HorizontalAlignment="Stretch" PlaceholderText="{x:Static local:Strings.Sensor_LimitOff}" ValueChanged="OnSensorThresholdNumberChanged" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_AlertAbove}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SensorAlertAboveBox" Minimum="0" Maximum="100000" Increment="10" FormatString="0" HorizontalAlignment="Stretch" PlaceholderText="{x:Static local:Strings.Sensor_LimitOff}" ValueChanged="OnSensorThresholdNumberChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_LimitsHint}" />
+													</StackPanel>
+												</Border>
+												<Border Name="SensorGpsGroup" Classes="settingsGroup" IsVisible="False">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Sensor_Satellites}" Classes="settingsGroupTitle" />
+														<CheckBox Name="SensorColorByCountCheck" Content="{x:Static local:Strings.Sensor_ColorByCount}" Click="OnSensorThresholdClick" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_WarnBelow}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SensorWarnBelowBox" Minimum="1" Maximum="60" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnSensorThresholdNumberChanged" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_AlertBelow}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="SensorAlertBelowBox" Minimum="0" Maximum="59" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnSensorThresholdNumberChanged" />
+													</StackPanel>
+												</Border>
+												<Border Name="SensorModeGroup" Classes="settingsGroup" IsVisible="False">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Sensor_FlightMode}" Classes="settingsGroupTitle" />
+														<CheckBox Name="SensorColorByModeCheck" Content="{x:Static local:Strings.Sensor_ColorByMode}" Click="OnSensorThresholdClick" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_ColorByModeHint}" />
+													</StackPanel>
+												</Border>
+												<Border Name="SensorStateColorsGroup" Classes="settingsGroup" IsVisible="False">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Sensor_StateColors}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_WarnColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SensorWarnColorBox" PlaceholderText="#FF9800" LostFocus="OnSensorThresholdLostFocus" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_AlertColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SensorAlertColorBox" PlaceholderText="#F44336" LostFocus="OnSensorThresholdLostFocus" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_StateColorsHint}" />
+													</StackPanel>
+												</Border>
+												<Border Name="SensorClimbGroup" Classes="settingsGroup" IsVisible="False">
+													<StackPanel Spacing="8">
+														<TextBlock Text="{x:Static local:Strings.Sensor_ValueColors}" Classes="settingsGroupTitle" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_ClimbColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SensorClimbColorBox" LostFocus="OnSensorThresholdLostFocus" />
+														<TextBlock Text="{x:Static local:Strings.Sensor_SinkColor}" Classes="infoLabel" Margin="0" />
+														<TextBox Name="SensorSinkColorBox" LostFocus="OnSensorThresholdLostFocus" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_ValueColorsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -2285,6 +2685,15 @@
 			</Border>
 		</Grid>
 
+		<Border Name="WorkingView" Grid.Row="0" IsVisible="False" CornerRadius="12" ClipToBounds="True"
+		        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
+			<Grid>
+				<local:AuroraBackground Name="Aurora" />
+				<TextBlock Text="{x:Static local:Strings.Main_Working}" FontSize="30" FontWeight="SemiBold"
+				           HorizontalAlignment="Center" VerticalAlignment="Center" />
+			</Grid>
+		</Border>
+
 		<local:PanelSplitter Name="BottomSplitter" Grid.Row="1" ToolTip.Tip="{x:Static local:Strings.Main_ResizeCards}" />
 
 		<Border Grid.Row="2" Classes="card" Name="TimelineCard" IsVisible="False" DragDrop.AllowDrop="True"
@@ -2305,10 +2714,12 @@
 					<Border Height="{x:Static local:PreviewTimeline.VideoTrackHeight}">
 						<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Video}" />
 					</Border>
-					<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
-					<Border Height="{x:Static local:PreviewTimeline.AudioTrackHeight}">
-						<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Audio}" />
-					</Border>
+					<StackPanel Name="AudioTrackLabel">
+						<Border Height="{x:Static local:PreviewTimeline.TrackGap}" />
+						<Border Height="{x:Static local:PreviewTimeline.AudioTrackHeight}">
+							<TextBlock Classes="timelineTrackName" Text="{x:Static local:Strings.Main_Audio}" />
+						</Border>
+					</StackPanel>
 				</StackPanel>
 				<Border Grid.Row="0" Grid.Column="1" Name="ExpandedTimelineFrame" CornerRadius="4" ClipToBounds="True">
 					<local:PreviewTimeline Name="ExpandedTimeline" Expanded="True" Minimum="0" Maximum="1" IsEnabled="False"

@@ -11,6 +11,20 @@ internal static class ExplorerHelper
 	///     double-clicking it, not like the CreateHidden/redirected-output pattern used for ffmpeg/ffprobe/
 	///     exiftool elsewhere.
 	/// </summary>
+	public static void OpenFolder(string folder)
+	{
+		try
+		{
+			ProcessStartInfo psi = OperatingSystem.IsMacOS()
+				? new ProcessStartInfo("open") { ArgumentList = { folder } }
+				: new ProcessStartInfo(folder) { UseShellExecute = true };
+			Process.Start(psi)?.Dispose();
+		}
+		catch
+		{
+		}
+	}
+
 	public static void ShowInFolder(string filePath)
 	{
 		try

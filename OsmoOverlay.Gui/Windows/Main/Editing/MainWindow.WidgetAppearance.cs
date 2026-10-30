@@ -118,6 +118,10 @@ public partial class MainWindow
 			TripProgressBarElement bar => bar with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
 			ProfileChartElement chart => chart with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
 			GpsAlertElement gpsAlert => gpsAlert with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
+			FlightAlertsElement flightAlerts => flightAlerts with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
+			RcSticksElement sticks => sticks with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
+			AttitudeIndicatorElement attitude => attitude with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
+			Orientation3DElement orientation => orientation with { PanelColor = panel.Color, PanelOpacity = panel.Opacity },
 			_ => element
 		};
 	}

@@ -214,6 +214,9 @@ public sealed partial class OverlayRenderer : IDisposable
 	public void Dispose()
 	{
 		_gpsAlertPaint.Dispose();
+		_droneBatteryPaint.Dispose();
+		_flightAlertPaint.Dispose();
+		_signalPaint.Dispose();
 		_hudTypeface.Dispose();
 		_dateFont.Dispose();
 		_labelFont.Dispose();
@@ -586,13 +589,13 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>
 	///     How much later than its own times a widget is shown: the opening of the bottom center - the watermark, and the trip
-	///     progress bar that takes its place (unless it waits for a speed instead) - counts them from the route overview card's
+	///     progress bar that takes its place (unless it waits for a speed instead), and a height profile put on their layer - counts them from the route overview card's
 	///     end. On the card the watermark is in the card's own corner (DrawWatermark); as widgets the two come after it, one
 	///     after the other as on a video without it. 0 for the rest, timed to the video.
 	/// </summary>
 	public double IntroShiftSeconds(OverlayElement element)
 	{
-		bool opening = element is WatermarkElement or TripProgressBarElement { ShowFromSpeedKmh: null };
+		bool opening = element is WatermarkElement or TripProgressBarElement { ShowFromSpeedKmh: null } or ProfileChartElement { LayerId: nameof(OverlayElementType.Watermark) };
 		return opening && RouteIntro.Enabled ? RouteIntro.DurationSeconds : 0;
 	}
 
@@ -768,8 +771,30 @@ public sealed partial class OverlayRenderer : IDisposable
 			case DistanceElement distance:
 				DrawDistance(canvas, frame, distance);
 				break;
-			case TemperatureElementBase or DeviceDistanceElement or DeviceBatteryElement or WindProcessingElement or ImageLumaElement:
+			case TemperatureElementBase or DeviceDistanceElement or DeviceBatteryElement or WindProcessingElement or ImageLumaElement or HeightElement or HomeDistanceElement
+				or VerticalSpeedElement or SatellitesElement:
 				DrawSensorStat(canvas, frame, (LabeledStatElement)element);
+				break;
+			case DroneBatteryElement droneBattery:
+				DrawDroneBattery(canvas, frame, droneBattery);
+				break;
+			case FlightModeElement flightMode:
+				DrawFlightMode(canvas, frame, flightMode);
+				break;
+			case RcSticksElement rcSticks:
+				DrawRcSticks(canvas, frame, rcSticks);
+				break;
+			case AttitudeIndicatorElement attitude:
+				DrawAttitudeIndicator(canvas, frame, attitude);
+				break;
+			case Orientation3DElement orientation:
+				DrawOrientation3D(canvas, frame, orientation);
+				break;
+			case SignalElement signal:
+				DrawSignal(canvas, frame, signal);
+				break;
+			case FlightAlertsElement flightAlerts:
+				DrawFlightAlerts(canvas, frame, flightAlerts);
 				break;
 			case AudioLevelElement audio:
 				DrawAudioLevel(canvas, frame, audio);

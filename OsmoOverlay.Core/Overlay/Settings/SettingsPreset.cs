@@ -50,6 +50,8 @@ public sealed record SettingsPresetValues(
 	int? OutputResolution = null,
 	string? OutputCodec = null,
 	bool OutputEightBit = false,
+	string? OutputAspect = null,
+	bool OutputPadToAspect = false,
 	bool FastStart = false,
 	bool NoAudio = false,
 	int? RouteIntroMapZoom = null,
@@ -69,7 +71,8 @@ public sealed record SettingsPresetValues(
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel, settings.RouteIntroMapProvider, settings.RouteIntroShowEsriMapLabels,
 			settings.PreserveCameraMetadata, settings.TagExportedVideo, settings.MetadataKeepTelemetry, settings.MetadataKeepDebugTrack,
 			settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber, settings.NvencPreset, settings.OutputBitrateMultiplier,
-			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.FastStart, settings.NoAudio, settings.RouteIntroMapZoom,
+			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.OutputAspect, settings.OutputPadToAspect, settings.FastStart, settings.NoAudio,
+				settings.RouteIntroMapZoom,
 			settings.RouteIntroTitle, settings.RouteIntroSubtitle, settings.RouteIntroElevationProfile,
 			settings.RouteIntroMapZoomIn, settings.RouteIntroMapZoomInFactor, settings.RouteIntroMapZoomInSeconds, settings.RouteIntroMapZoomInDelaySeconds);
 	}
@@ -115,6 +118,8 @@ public sealed record SettingsPresetValues(
 			OutputResolution = OutputResolution,
 			OutputCodec = OutputCodec,
 			OutputEightBit = OutputEightBit,
+			OutputAspect = OutputAspect,
+			OutputPadToAspect = OutputPadToAspect,
 			FastStart = FastStart,
 			NoAudio = NoAudio
 		};

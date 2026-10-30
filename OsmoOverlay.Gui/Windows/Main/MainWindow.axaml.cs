@@ -124,7 +124,8 @@ public partial class MainWindow : Window
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
 			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
 			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
-			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming, SensorTiming
+			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming, SensorTiming, DroneBatteryTiming, FlightAlertsTiming, SignalTiming,
+			RcSticksTiming, AttitudeTiming, Orientation3DTiming
 		];
 		foreach (ElementTimingEditor timing in _timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
@@ -133,7 +134,8 @@ public partial class MainWindow : Window
 			DateTimeShadow, UtcTimeShadow, CameraInfoShadow, CompassShadow, MapShadow,
 			SpeedShadow, RollShadow, PitchShadow, SunShadow, GMeterShadow, ElapsedTimeShadow,
 			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
-			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow, SensorShadow
+			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow, SensorShadow, DroneBatteryShadow, FlightAlertsShadow, SignalShadow,
+			RcSticksShadow, AttitudeShadow, Orientation3DShadow
 		];
 		foreach (ElementShadowEditor shadow in _shadowEditors)
 		{
@@ -146,7 +148,8 @@ public partial class MainWindow : Window
 		ElementPanelEditor[] panelEditors =
 		[
 			SunPanelFill, RollPanelFill, PitchPanelFill, GMeterPanelFill, SpeedPanelFill,
-			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill, GpsAlertPanelFill
+			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill, GpsAlertPanelFill, FlightAlertsPanelFill,
+			RcSticksPanelFill, AttitudePanelFill, Orientation3DPanelFill
 		];
 		foreach (ElementPanelEditor panel in panelEditors)
 		{
@@ -165,7 +168,8 @@ public partial class MainWindow : Window
 		[
 			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, RollStyle, PitchStyle, SunStyle,
 			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
-			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle, SensorStyle
+			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle, SensorStyle, DroneBatteryStyle, FlightAlertsStyle, SignalStyle,
+			RcSticksStyle, AttitudeStyle, Orientation3DStyle
 		];
 		foreach (ElementStyleEditor style in styleEditors)
 		{
@@ -646,6 +650,12 @@ public partial class MainWindow : Window
 		// the user's choice. After a render the log stays, showing how it went.
 		if (phase != UiPhase.SummaryReady) SetTimelineExpanded(false, false);
 		else if (previous == UiPhase.LoadingSummary) SetTimelineExpanded(_timelineWanted, false);
+
+		// While the summary is read the panels have nothing to do: the console is all there is, under the aurora.
+		bool working = phase == UiPhase.LoadingSummary && OverlaySettingsStore.Load().WorkingAnimation;
+		TopGrid.IsVisible = !working;
+		WorkingView.IsVisible = working;
+		Aurora.Running = working;
 
 		bool summaryVisible = phase is UiPhase.SummaryReady or UiPhase.Rendering;
 		SummaryPanel.IsVisible = summaryVisible;

@@ -356,6 +356,19 @@ public partial class MainWindow
 		SwitchToPreset(layoutId);
 	}
 
+	/// <summary>
+	///     A built-in layout follows the recording's camera (a drone's footage gets the drone layout, anything else the default one);
+	///     a layout of the user's own is left alone. A project opened after this brings its own.
+	/// </summary>
+	private void AdoptCameraLayout(FileSummary summary)
+	{
+		string wanted = summary.CameraFormat?.PreferredPresetId ?? OverlayPresetStore.DefaultPresetId;
+		if (!OverlayPresetStore.IsBuiltIn(_activePresetId) || _activePresetId == wanted || _overlayPresets.All(p => p.Id != wanted)) return;
+		if (OverlayPresetStore.IsDronePreset(_activePresetId) && OverlayPresetStore.IsDronePreset(wanted)) return;
+
+		SwitchToPreset(wanted);
+	}
+
 	private void SwitchToPreset(string id)
 	{
 		_activePresetId = id;

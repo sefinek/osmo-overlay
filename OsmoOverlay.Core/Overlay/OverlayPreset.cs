@@ -18,6 +18,134 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	private const double WatermarkSeconds = 6;
 	private const float WatermarkBelowBar = 14;
 
+	/// <summary>
+	///     The layout for a DJI drone's footage: the default one without what a drone has no data for (the camera's roll and G-force, a
+	///     gradient, a heading, the sun, the date) or doesn't need (the GPS alert - the flight alerts are the drone's - the climb rate,
+	///     the flight mode, the progress bar). The battery is in the top left corner, the radio link and the GPS are a row in the top right, the flight alerts sit at the top center,
+	///     the distance and the trip's figures are a column down the left under the battery (the height is the profile's, below), the height profile, the speed
+	///     gauge and the map are where the default has them. The height profile is on the bottom guide, where the progress bar would be, and comes in after the watermark.
+	/// </summary>
+	public static OverlayPreset CreateDrone(string id, string name)
+	{
+		OverlayPreset basis = CreateDefault(id, name);
+		OverlayElement date = basis.Elements.First(e => e is DateTimeTextElement);
+		const float width = OverlayElementBounds.ReferenceWidth;
+		const float m = OverlayElementBounds.Margin;
+		float top = date.Y;
+		// On the bottom guide, where the default keeps the progress bar (this layout leaves the bar out); the profile only comes in once the watermark has gone.
+		float chartY = OverlayElementBounds.ReferenceHeight - m - (OverlayElementBounds.ChartTop + OverlayElementBounds.ChartHeight + 1);
+		float gpsX = width - m - DroneGpsWidth, signalX = gpsX - DroneTopGap - DroneSignalWidth;
+		float sticksX = width - m - (OverlayElementBounds.StickPadSize * 2 + OverlayElementBounds.StickPadGap), dialX = width - m - OverlayElementBounds.DroneDialRadius;
+
+		return basis with
+		{
+			Elements =
+			[
+				.. basis.Elements.Select(e => e switch
+				{
+					DateTimeTextElement or ElevationElement or GradientElement or RollGaugeElement or GMeterElement or CompassElement or SunWidgetElement or GpsAlertElement
+						or TripProgressBarElement => e with { Visible = false },
+					ProfileChartElement chart => chart with { Y = chartY, Visible = true, Series = ProfileSeries.Height, Axis = ProfileAxis.Time, AutoHeight = true },
+					DroneBatteryElement => e with { X = m, Y = top, Visible = true },
+					SignalElement => e with { X = signalX, Y = top, Visible = true },
+					SatellitesElement => e with { X = gpsX, Y = top, Visible = true },
+					FlightAlertsElement alerts => alerts with { Visible = true, ShowSeconds = 5, MaxLines = 2 },
+					RcSticksElement => e with { X = sticksX, Y = top + DroneControlsTop, Visible = true },
+					AttitudeIndicatorElement => e with { X = dialX, Y = top + DroneControlsTop + OverlayElementBounds.StickPadSize + DroneControlsGap + OverlayElementBounds.DroneDialRadius, Visible = true },
+					Orientation3DElement => e with
+					{
+						X = dialX, Y = top + DroneControlsTop + OverlayElementBounds.StickPadSize + 2 * DroneControlsGap + OverlayElementBounds.DroneDialRadius * 3, Visible = true
+					},
+					HeightElement or HomeDistanceElement => e with { Visible = false },
+					DistanceElement => e with { X = m, Y = top + DroneColumnStep },
+					TripStatElement => e with { X = m, Y = top + 2 * DroneColumnStep, Visible = true },
+					_ => e
+				})
+			]
+		};
+	}
+
+	/// <summary>
+	///     An FPV goggles' OSD, not the DJI layout: everything that is shown is white, text on a see-through ground. The aircraft's own state
+	///     is along the edges - battery, radio link and GPS in a row top left, the flight timer and the height, distance and climb rate in a
+	///     column top right, the flight mode top center over the alerts (three, 3 s, fading in 0.12 s and sliding in) - and the instruments
+	///     are along the bottom: the remote's sticks left, the attitude indicator and the 3D orientation in the middle, the speed gauge right.
+	///     The map is bottom left (with its credit), the sticks next to it. The date and time sit under the flight timer. No profile, sun or camera gauges.
+	/// </summary>
+	public static OverlayPreset CreateFpv(string id, string name)
+	{
+		OverlayPreset basis = CreateDefault(id, name);
+		const float width = OverlayElementBounds.ReferenceWidth, height = OverlayElementBounds.ReferenceHeight, m = OverlayElementBounds.Margin;
+		float top = basis.Elements.First(e => e is DateTimeTextElement).Y;
+		float signalX = m + FpvBatteryWidth + DroneTopGap, gpsX = signalX + FpvSignalWidth + DroneTopGap, leftY = top + FpvLeftColumnTop;
+		float bottom = height - m;
+		// A widget whose text ends on the right margin, lined up to the right: the box is the widget's own, so its left edge follows its width.
+		OverlayElement OnRightEdge(StyledOverlayElement e, float y)
+		{
+			StyledOverlayElement aligned = e with { Y = y, Visible = true, TextAlign = TextAlign.Right };
+			return aligned with { X = width - m - OverlayElementBounds.TextBoxRight(aligned) };
+		}
+
+		OverlayElement AtTopCenter(StyledOverlayElement e)
+		{
+			StyledOverlayElement centered = e with { Y = top, Visible = true, TextAlign = TextAlign.Center };
+			return centered with { X = width / 2f - OverlayElementBounds.TextBoxRight(centered) / 2 };
+		}
+
+		const float dial = OverlayElementBounds.DroneDialRadius;
+		float sticksX = basis.Elements.First(e => e is MapWidgetElement).X + OverlayElementBounds.MapRadius + FpvMapToSticks;
+		const string white = "#FFFFFF";
+
+		return basis with
+		{
+			Elements =
+			[
+				.. basis.Elements.Select(e =>
+				{
+					OverlayElement placed = e switch
+					{
+						DroneBatteryElement battery => battery with { X = m, Y = top, Visible = true, ShowTemperature = true, ShowCurrent = true, ShowCells = true },
+						SignalElement => e with { X = signalX, Y = top, Visible = true },
+						SatellitesElement => e with { X = gpsX, Y = top, Visible = true },
+						FlightModeElement f => AtTopCenter(f),
+						FlightAlertsElement alerts => alerts with { X = width / 2f, Y = top + FpvAlertsBelowTop, Visible = true, ShowSeconds = 3, MaxLines = 3, FadeSeconds = 0.12, SlideIn = true },
+						ElapsedTimeTextElement t => OnRightEdge(t, top),
+						DateTimeTextElement d => OnRightEdge(d, top + FpvDateBelowTime),
+						HeightElement h => OnRightEdge(h, top + FpvRightColumnTop),
+						HomeDistanceElement d => OnRightEdge(d, top + FpvRightColumnTop + FpvRowStep),
+						VerticalSpeedElement v => OnRightEdge(v, top + FpvRightColumnTop + 2 * FpvRowStep),
+						DistanceElement => e with { X = m, Y = leftY, Visible = true },
+						TripStatElement => e with { X = m, Y = leftY + FpvRowStep, Visible = true },
+						RcSticksElement => e with { X = sticksX, Y = bottom - OverlayElementBounds.StickPadSize, Visible = true },
+						AttitudeIndicatorElement => e with { X = width / 2f - dial - FpvDialGap / 2, Y = bottom - dial, Visible = true },
+						Orientation3DElement => e with { X = width / 2f + dial + FpvDialGap / 2, Y = bottom - dial, Visible = true },
+						SpeedGaugeElement or MapWidgetElement or MapAttributionElement => e,
+						_ => e with { Visible = false }
+					};
+					return placed switch
+					{
+						LabeledStatElement stat => stat with { AccentColor = white },
+						_ => placed
+					};
+				}),
+				new TripStatElement { X = m, Y = leftY + 2 * FpvRowStep, Stat = TripStatKind.AverageSpeed, AccentColor = white, Id = "TripStat.AverageSpeed" },
+				new TripStatElement { X = m, Y = leftY + 3 * FpvRowStep, Stat = TripStatKind.MaxHeight, AccentColor = white, Id = "TripStat.MaxHeight" },
+				new TripStatElement { X = m, Y = leftY + 4 * FpvRowStep, Stat = TripStatKind.MaxHomeDistance, AccentColor = white, Id = "TripStat.MaxHomeDistance" }
+			]
+		};
+	}
+
+	// The widest the GPS and the signal widgets get at 4K (measured), the gap between them, and the rhythm of the left column (the battery's own height).
+	private const float DroneGpsWidth = 240;
+	private const float DroneSignalWidth = 280;
+	private const float DroneTopGap = 60;
+	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 502, FpvSignalWidth = 242, FpvLeftColumnTop = 340, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvMapToSticks = 110;
+	private const float DroneColumnStep = 220;
+
+	// The sticks and the two dials stacked down the right edge under the top row: where the first starts, and the gap between them.
+	private const float DroneControlsTop = 200;
+	private const float DroneControlsGap = 40;
+
 	public static OverlayPreset CreateDefault(string id, string name)
 	{
 		const float width = OverlayElementBounds.ReferenceWidth;
@@ -109,7 +237,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new GpsAlertElement { X = 3451.7102f, Y = 426.52588f },
 			// The rest are off by default - added after the layout above, so they mustn't move or cover any of it.
 			new PitchGaugeElement { X = pitchCx, Y = rollCy, Visible = false },
-			new ProfileChartElement { X = chartX, Y = chartY, Visible = false },
+			// Off by default; turned on it comes in where the watermark's credit has gone, as the progress bar does.
+				new ProfileChartElement
+				{
+					X = chartX, Y = chartY, Visible = false, AnimationType = OverlayAnimationType.Fade, AppearAtSeconds = WatermarkSeconds, LayerId = nameof(OverlayElementType.Watermark)
+				},
 			new TripStatElement { X = m - 1, Y = tripStatY, Visible = false },
 			new TextElement { X = width / 2f, Y = dateY, Visible = false },
 			new ImageElement { X = width / 2f, Y = m, Visible = false },
@@ -119,7 +251,18 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new DeviceBatteryElement { X = 2200, Y = 800, Visible = false },
 			new AudioLevelElement { X = 1200, Y = 1100, Visible = false },
 			new WindProcessingElement { X = 2200, Y = 1100, Visible = false },
-			new ImageLumaElement { X = 1200, Y = 1400, Visible = false }
+			new ImageLumaElement { X = 1200, Y = 1400, Visible = false },
+			new HeightElement { X = 1200, Y = 1700, Visible = false },
+			new HomeDistanceElement { X = 2900, Y = 800, Visible = false },
+			new VerticalSpeedElement { X = 2200, Y = 1400, Visible = false },
+			new SatellitesElement { X = 2900, Y = 1100, Visible = false },
+			new DroneBatteryElement { X = 2740, Y = 1400, Visible = false },
+			new FlightAlertsElement { X = width / 2f, Y = m, Visible = false },
+			new SignalElement { X = 1200, Y = 2000, Visible = false },
+			new FlightModeElement { X = 2900, Y = 1700, Visible = false },
+			new RcSticksElement { X = 2900, Y = 1960, Visible = false },
+			new AttitudeIndicatorElement { X = 2430, Y = 1880, Visible = false },
+			new Orientation3DElement { X = 2760, Y = 1880, Visible = false }
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid, so a

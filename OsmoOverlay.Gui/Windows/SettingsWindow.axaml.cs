@@ -41,6 +41,12 @@ public partial class SettingsWindow : Window
 		.. OutputVideo.Resolutions.Select(r => new ChoiceOption<int?>(r == 2160 ? "2160p (4K)" : $"{r}p", r))
 	];
 
+	private static readonly List<ChoiceOption<string?>> OutputAspectOptions =
+	[
+		new(Strings.Settings_SameAsSource, null),
+		.. OutputVideo.Aspects.Select(a => new ChoiceOption<string?>(a, a))
+	];
+
 	private static readonly List<ChoiceOption<string?>> OutputCodecOptions =
 	[
 		new(Strings.Settings_CodecSameAsSource, null),
@@ -108,6 +114,8 @@ public partial class SettingsWindow : Window
 		NvencPresetCombo.ItemsSource = NvencPresetOptions;
 		BitrateCombo.ItemsSource = BitrateOptions;
 		OutputResolutionCombo.ItemsSource = OutputResolutionOptions;
+		OutputAspectCombo.ItemsSource = OutputAspectOptions;
+		OutputAspectCombo.SelectionChanged += (_, _) => OutputAspectBarsCheck.IsEnabled = (OutputAspectCombo.SelectedItem as ChoiceOption<string?>)?.Value is not null;
 		OutputCodecCombo.ItemsSource = OutputCodecOptions;
 		OrientationSourceCombo.ItemsSource = OrientationSourceOptions;
 		InterfaceScaleCombo.ItemsSource = InterfaceScaleOptions;
@@ -200,6 +208,8 @@ public partial class SettingsWindow : Window
 		BitrateCombo.SelectedItem = BitrateOptions.FirstOrDefault(o => Math.Abs(o.Value - settings.OutputBitrateMultiplier) < 0.001)
 		                            ?? BitrateOptions[0];
 		OutputResolutionCombo.SelectedItem = OutputResolutionOptions.FirstOrDefault(o => o.Value == settings.OutputResolution) ?? OutputResolutionOptions[0];
+		OutputAspectCombo.SelectedItem = OutputAspectOptions.FirstOrDefault(o => o.Value == settings.OutputAspect) ?? OutputAspectOptions[0];
+		OutputAspectBarsCheck.IsChecked = settings.OutputPadToAspect;
 		OutputCodecCombo.SelectedItem = OutputCodecOptions.FirstOrDefault(o => o.Value == settings.OutputCodec) ?? OutputCodecOptions[0];
 		OutputEightBitCheck.IsChecked = settings.OutputEightBit;
 		HardwareDecodingCheck.IsChecked = settings.HardwareDecoding;
@@ -232,8 +242,10 @@ public partial class SettingsWindow : Window
 		LoopByDefaultCheck.IsChecked = settings.LoopByDefault;
 		PreviewShadowsCheck.IsChecked = settings.PreviewShadows;
 		DisableShadowsCheck.IsChecked = settings.DisableShadows;
+		WorkingAnimationCheck.IsChecked = settings.WorkingAnimation;
 		ConfirmCloseWhileRenderingCheck.IsChecked = settings.ConfirmCloseWhileRendering;
 		DebugModeCheck.IsChecked = settings.DebugMode;
+		DjiApiKeyBox.Text = settings.DjiApiKey;
 		ProjectFilesGroup.IsEnabled = ProjectFileAssociation.IsSupported;
 		ProjectFilesGroup.Classes.Set("muted", !ProjectFileAssociation.IsSupported);
 		ShowProjectAssociation();
@@ -299,6 +311,8 @@ public partial class SettingsWindow : Window
 			NvencPreset = (NvencPresetCombo.SelectedItem as ChoiceOption<string> ?? NvencPresetOptions[0]).Value,
 			OutputBitrateMultiplier = (BitrateCombo.SelectedItem as ChoiceOption<double> ?? BitrateOptions[0]).Value,
 			OutputResolution = (OutputResolutionCombo.SelectedItem as ChoiceOption<int?>)?.Value,
+			OutputAspect = (OutputAspectCombo.SelectedItem as ChoiceOption<string?>)?.Value,
+			OutputPadToAspect = OutputAspectBarsCheck.IsChecked == true,
 			OutputCodec = (OutputCodecCombo.SelectedItem as ChoiceOption<string?>)?.Value,
 			OutputEightBit = OutputEightBitCheck.IsChecked == true,
 			HardwareDecoding = HardwareDecodingCheck.IsChecked == true,
@@ -324,8 +338,10 @@ public partial class SettingsWindow : Window
 			LoopByDefault = LoopByDefaultCheck.IsChecked == true,
 			PreviewShadows = PreviewShadowsCheck.IsChecked == true,
 			DisableShadows = DisableShadowsCheck.IsChecked == true,
+			WorkingAnimation = WorkingAnimationCheck.IsChecked == true,
 			ConfirmCloseWhileRendering = ConfirmCloseWhileRenderingCheck.IsChecked == true,
 			DebugMode = DebugModeCheck.IsChecked == true,
+			DjiApiKey = string.IsNullOrWhiteSpace(DjiApiKeyBox.Text) ? null : DjiApiKeyBox.Text.Trim(),
 			LayerRowsVisible = Math.Clamp((int)(LayerRowsBox.Value ?? LayerTimeline.DefaultVisibleTracks), LayerTimeline.MinVisibleTracks, LayerTimeline.MaxVisibleTracks)
 		};
 	}

@@ -387,7 +387,7 @@
     <value>Nie znaleziono próbek telemetrii w plikach</value>
   </data>
   <data name="Render_NoTelemetry" xml:space="preserve">
-    <value>W pliku {0} nie znaleziono telemetrii. Wybierz oryginalne nagranie z obsługiwanej kamery; pliki wyeksportowane z innych aplikacji mogą nie zawierać tych danych.</value>
+    <value>W pliku {0} nie znaleziono telemetrii. Wybierz oryginalne nagranie z obsługiwanej kamery lub drona; pliki wyeksportowane z innych aplikacji mogą nie zawierać tych danych.</value>
   </data>
   <data name="Render_OutputExists" xml:space="preserve">
     <value>Plik wyjściowy już istnieje: {0}</value>
@@ -504,7 +504,7 @@
     <value>Źródło telemetrii: telemetria wygenerowana do testu wydajności (z celowymi anomaliami)</value>
   </data>
   <data name="Overlay_Elevation" xml:space="preserve">
-    <value>Wysokość</value>
+    <value>Wysokość n.p.m.</value>
   </data>
   <data name="Overlay_Gradient" xml:space="preserve">
     <value>Nachylenie</value>
@@ -620,11 +620,125 @@
   <data name="ExternalTrack_NoOverlap" xml:space="preserve">
     <value>Po tym dopasowaniu trasa GPS nie obejmuje żadnego fragmentu nagrania.</value>
   </data>
+  <data name="DjiLog_NeedsApiKey" xml:space="preserve">
+    <value>Ten dziennik lotu DJI jest zaszyfrowany. Aby go odczytać, podaj klucz API DJI (SDK key z developer.dji.com) w ustawieniach.</value>
+  </data>
+  <data name="DjiLog_KeyRejected" xml:space="preserve">
+    <value>DJI odrzuciło klucz API. Sprawdź, czy to SDK key aktywowanej aplikacji typu Open API.</value>
+  </data>
+  <data name="DjiLog_KeychainFailed" xml:space="preserve">
+    <value>Nie udało się pobrać kluczy do dziennika lotu z DJI: {0}</value>
+  </data>
+  <data name="DjiLog_NoPositions" xml:space="preserve">
+    <value>Dziennik lotu nie zawiera pozycji GPS.</value>
+  </data>
+  <data name="DjiDrone_NeedsLog" xml:space="preserve">
+    <value>Drony DJI nie zapisują telemetrii w pliku wideo. Aby uzyskać pozycję, wysokość i prędkość, dodaj dziennik lotu (FlightRecord). Na Androidzie znajdziesz go w Pobrane/product_data/flightRecords.</value>
+  </data>
+  <data name="DjiDrone_Name" xml:space="preserve">
+    <value>Drony DJI</value>
+  </data>
+  <data name="Preset_ActionCameras" xml:space="preserve">
+    <value>Kamery sportowe</value>
+  </data>
+  <data name="Preset_DjiDrones" xml:space="preserve">
+    <value>Drony DJI</value>
+  </data>
+  <data name="Preset_FpvDrones" xml:space="preserve">
+    <value>Drony FPV</value>
+  </data>
   <data name="Overlay_AmbientTemperature" xml:space="preserve">
     <value>Temperatura z trasy</value>
   </data>
   <data name="Overlay_ImuTemperature" xml:space="preserve">
     <value>Temperatura czujnika ruchu</value>
+  </data>
+  <data name="Overlay_Height" xml:space="preserve">
+    <value>Wysokość</value>
+  </data>
+  <data name="Overlay_HomeDistance" xml:space="preserve">
+    <value>Od punktu startu</value>
+  </data>
+  <data name="Overlay_VerticalSpeed" xml:space="preserve">
+    <value>Prędkość pionowa</value>
+  </data>
+  <data name="Overlay_Satellites" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="Overlay_Signal" xml:space="preserve">
+    <value>Sygnał</value>
+  </data>
+  <data name="Overlay_FlightModeLabel" xml:space="preserve">
+    <value>Tryb lotu</value>
+  </data>
+  <data name="Overlay_BatteryEndDetail" xml:space="preserve">
+    <value>Bateria przy wyłączeniu silników: {0}%</value>
+  </data>
+  <data name="Overlay_ReturnAltitude" xml:space="preserve">
+    <value>Powrót do domu</value>
+  </data>
+  <data name="Overlay_ReturnAltitudeDetail" xml:space="preserve">
+    <value>Wysokość powrotu ustawiona na {0} m</value>
+  </data>
+  <data name="Overlay_AltitudeLimit" xml:space="preserve">
+    <value>Limit wysokości</value>
+  </data>
+  <data name="Overlay_AltitudeLimitDetail" xml:space="preserve">
+    <value>Maksymalna wysokość lotu ustawiona na {0} m</value>
+  </data>
+  <data name="Overlay_FinalPosition" xml:space="preserve">
+    <value>Lądowanie</value>
+  </data>
+  <data name="Overlay_FinalPositionDetail" xml:space="preserve">
+    <value>Ostateczna pozycja: {0} m od punktu startu</value>
+  </data>
+  <data name="Overlay_DroneBattery" xml:space="preserve">
+    <value>Bateria drona</value>
+  </data>
+  <data name="Overlay_FlightMode" xml:space="preserve">
+    <value>Tryb lotu</value>
+  </data>
+  <data name="Overlay_MotorsOn" xml:space="preserve">
+    <value>Silniki włączone</value>
+  </data>
+  <data name="Overlay_MotorsOnDetail" xml:space="preserve">
+    <value>Uruchomiono silniki drona</value>
+  </data>
+  <data name="Overlay_MotorsOff" xml:space="preserve">
+    <value>Silniki wyłączone</value>
+  </data>
+  <data name="Overlay_MotorsOffDetail" xml:space="preserve">
+    <value>Zatrzymano silniki drona</value>
+  </data>
+  <data name="Overlay_BatteryAlert" xml:space="preserve">
+    <value>Bateria</value>
+  </data>
+  <data name="Overlay_BatteryStartDetail" xml:space="preserve">
+    <value>Bateria na starcie: {0}%</value>
+  </data>
+  <data name="Overlay_BatteryLevelDetail" xml:space="preserve">
+    <value>Bateria spadła do {0}%</value>
+  </data>
+  <data name="Overlay_LowVoltage" xml:space="preserve">
+    <value>Niskie napięcie</value>
+  </data>
+  <data name="Overlay_CriticalVoltage" xml:space="preserve">
+    <value>Krytycznie niskie napięcie</value>
+  </data>
+  <data name="Overlay_CellVoltageDetail" xml:space="preserve">
+    <value>Najniższe napięcie ogniwa: {0} V</value>
+  </data>
+  <data name="Overlay_FlightNotice" xml:space="preserve">
+    <value>Informacja</value>
+  </data>
+  <data name="Overlay_FlightWarning" xml:space="preserve">
+    <value>Ostrzeżenie</value>
+  </data>
+  <data name="Overlay_MessageCode" xml:space="preserve">
+    <value>{0} (kod {1})</value>
+  </data>
+  <data name="DjiLog_Summary" xml:space="preserve">
+    <value>{0}: czas lotu: {1}, dystans: {2} km, maks. wysokość: {3} m, maks. prędkość: {4} km/h</value>
   </data>
   <data name="Overlay_DeviceDistance" xml:space="preserve">
     <value>Dystans licznika</value>
@@ -700,5 +814,17 @@
   </data>
   <data name="ExternalTrack_GpxEmpty" xml:space="preserve">
     <value>W tym pliku GPX nie ma zapisu trasy GPS. Wybierz zapis aktywności z zegarka lub aplikacji sportowej.</value>
+  </data>
+  <data name="Peak_FastestAscent" xml:space="preserve">
+    <value>Najszybsze wznoszenie</value>
+  </data>
+  <data name="Peak_FastestDescent" xml:space="preserve">
+    <value>Najszybsze opadanie</value>
+  </data>
+  <data name="Overlay_MaxHeight" xml:space="preserve">
+    <value>Maks. wysokość</value>
+  </data>
+  <data name="Overlay_MaxHomeDistance" xml:space="preserve">
+    <value>Maks. odległość</value>
   </data>
 </root>

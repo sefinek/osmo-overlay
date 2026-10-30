@@ -19,6 +19,30 @@ public static class OverlayPresetStore
 	/// </summary>
 	public const string DefaultPresetId = "default";
 
+	/// <summary>Id of the second built-in preset, for DJI drones' footage (OverlayPreset.CreateDrone) - read-only like Default.</summary>
+	public const string DronePresetId = "dji-drones";
+
+	/// <summary>Id of the third built-in preset, the drone layout in the manner of FPV goggles' OSD (OverlayPreset.CreateFpv) - read-only like the others.</summary>
+	public const string FpvPresetId = "fpv-drones";
+
+	public static bool IsBuiltIn(string? id)
+	{
+		return id is DefaultPresetId or DronePresetId or FpvPresetId;
+	}
+
+	/// <summary>The built-in layouts for a drone's footage.</summary>
+	public static bool IsDronePreset(string? id)
+	{
+		return id is DronePresetId or FpvPresetId;
+	}
+
+	/// <summary>The built-in presets as they are now, in the order they head the list.</summary>
+	private static List<OverlayPreset> BuiltIns()
+	{
+		return [OverlayPreset.CreateDefault(DefaultPresetId, CoreStrings.Preset_ActionCameras), OverlayPreset.CreateDrone(DronePresetId, CoreStrings.Preset_DjiDrones),
+			OverlayPreset.CreateFpv(FpvPresetId, CoreStrings.Preset_FpvDrones)];
+	}
+
 	private static readonly string StoreDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay");
 
@@ -38,7 +62,7 @@ public static class OverlayPresetStore
 		try
 		{
 			List<OverlayPreset> presets = LoadPresetFiles();
-			RefreshBuiltInDefault(presets);
+			RefreshBuiltIns(presets);
 			if (presets.Count > 0)
 			{
 				string? activeId = OverlaySettingsStore.Load().ActivePresetId;
@@ -55,8 +79,8 @@ public static class OverlayPresetStore
 			KnownPresetContent.Clear();
 		}
 
-		var defaultPreset = OverlayPreset.CreateDefault(DefaultPresetId, "Default");
-		return ([defaultPreset], defaultPreset.Id);
+		List<OverlayPreset> builtIns = BuiltIns();
+		return (builtIns, DefaultPresetId);
 	}
 
 	public static void Save(List<OverlayPreset> presets, string activePresetId)
@@ -67,7 +91,7 @@ public static class OverlayPresetStore
 
 			for (int i = 0; i < presets.Count; i++)
 			{
-				if (presets[i].Id != DefaultPresetId) presets[i] = Stamp(presets[i]);
+				if (!IsBuiltIn(presets[i].Id)) presets[i] = Stamp(presets[i]);
 				WritePreset(presets[i]);
 			}
 
@@ -94,33 +118,30 @@ public static class OverlayPresetStore
 	}
 
 	/// <summary>
-	///     The built-in Default preset is read-only and must always match whatever CreateDefault
-	///     currently computes, not a stale snapshot from whenever it was first written to disk - guards
-	///     against both a later CreateDefault change leaving old installs with outdated positions, and
-	///     default.json going missing entirely (e.g. deleted by hand - Save()'s cleanup only ever
-	///     removes files, never restores one). Cheap to recompute, so this always overwrites rather than
-	///     checking whether anything actually changed. Also keeps it first in the list.
+	///     The built-in presets are read-only and must always match whatever CreateDefault / CreateDrone currently compute, not a
+	///     stale snapshot from whenever they were first written to disk - guards against both a later change leaving old installs
+	///     with outdated positions, and a file going missing entirely (e.g. deleted by hand - Save()'s cleanup only ever removes
+	///     files, never restores one). Cheap to recompute, so this always overwrites rather than checking whether anything
+	///     changed. Also keeps them first in the list, Default, then the drone one, then the FPV one.
 	/// </summary>
-	private static void RefreshBuiltInDefault(List<OverlayPreset> presets)
+	private static void RefreshBuiltIns(List<OverlayPreset> presets)
 	{
-		int index = presets.FindIndex(p => p.Id == DefaultPresetId);
-		var fresh = OverlayPreset.CreateDefault(DefaultPresetId, "Default");
+		List<OverlayPreset> fresh = BuiltIns();
+		foreach (OverlayPreset builtIn in fresh)
+		{
+			if (presets.All(p => p.Id != builtIn.Id))
+			{
+				// Wasn't just stale, it was actually missing from disk - write it back immediately so the
+				// fix survives even if the user closes the app without triggering any other Save() first.
+				// CreateDirectory covers the very first run too, where PresetsDir doesn't exist yet.
+				Directory.CreateDirectory(PresetsDir);
+				WritePreset(builtIn);
+			}
+		}
 
-		if (index < 0)
-		{
-			// Wasn't just stale, it was actually missing from disk - write it back immediately so the
-			// fix survives even if the user closes the app without triggering any other Save() first.
-			// CreateDirectory covers the very first run too, where PresetsDir doesn't exist yet.
-			presets.Insert(0, fresh);
-			Directory.CreateDirectory(PresetsDir);
-			WritePreset(fresh);
-		}
-		else
-		{
-			// Files load in directory order, so Default sits wherever its file does - the list always starts with it.
-			presets.RemoveAt(index);
-			presets.Insert(0, fresh);
-		}
+		// Files load in directory order, so a built-in sits wherever its file does - the list always starts with them.
+		presets.RemoveAll(p => IsBuiltIn(p.Id));
+		presets.InsertRange(0, fresh);
 	}
 
 	/// <summary>Serializes one preset to an arbitrary file the user picked, so it can be shared/sent to someone else.</summary>

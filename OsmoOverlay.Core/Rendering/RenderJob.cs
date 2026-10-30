@@ -11,6 +11,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Core;
 
@@ -97,7 +98,8 @@ public static class RenderJob
 			{
 				Report(RenderPhase.ExtractingTelemetry, CoreStrings.Render_Extracting);
 				TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
-				rawFrames = options.ExternalTrack is { } externalTrack
+				ExternalTrackSource? track = options.ExternalTrack ?? ExternalTrackSource.FindFor(camera, first.InputPath, first.Source.ContainerCreationTimeUtc);
+				rawFrames = track is { } externalTrack
 					? externalTrack.Apply(extraction.Frames, first.Source.Video.Fps, first.Source.ContainerCreationTimeUtc)
 					: extraction.Frames;
 				cameraModel ??= extraction.CameraModel;

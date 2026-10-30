@@ -53,6 +53,8 @@ public partial class MainWindow
 			IReadOnlyList<TimeRange> gpsLoss = [.. lossRanges.Select(r => new TimeRange(r.Start, r.End))];
 			foreach (PreviewTimeline timeline in Timelines) timeline.GpsLoss = gpsLoss;
 			foreach (PreviewTimeline timeline in Timelines) timeline.GpsAnomalies = anomalies;
+			IReadOnlyList<TimelineFlightEvent> flightEvents = await FindFlightEventsAsync(summary);
+			foreach (PreviewTimeline timeline in Timelines) timeline.FlightEvents = flightEvents;
 			IReadOnlyList<TimelineFile> files = TimelineFiles(summary);
 			foreach (PreviewTimeline timeline in Timelines) timeline.Files = files;
 		}
@@ -61,6 +63,18 @@ public partial class MainWindow
 			AppendLog(string.Format(Strings.Preview_Unavailable, ex.Message));
 			ClosePreview();
 		}
+	}
+
+	/// <summary>The events of the drone's flight log, found off the UI thread - only a recording with a log has any.</summary>
+	private static Task<IReadOnlyList<TimelineFlightEvent>> FindFlightEventsAsync(FileSummary summary)
+	{
+		if (summary.TelemetryFrames is not { Count: > 0 } frames) return Task.FromResult<IReadOnlyList<TimelineFlightEvent>>([]);
+
+		return Task.Run<IReadOnlyList<TimelineFlightEvent>>(() =>
+		[
+			.. frames.Where(f => f.FlightEvents is { Count: > 0 })
+				.SelectMany(f => f.FlightEvents!.Select(e => new TimelineFlightEvent(f.SampleTimeSeconds, e)))
+		]);
 	}
 
 	private void ClosePreview()
@@ -83,6 +97,7 @@ public partial class MainWindow
 		{
 			timeline.GpsLoss = [];
 			timeline.GpsAnomalies = [];
+			timeline.FlightEvents = [];
 			timeline.RouteIntro = null;
 			timeline.Files = [];
 		}

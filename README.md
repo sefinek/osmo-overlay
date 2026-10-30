@@ -105,7 +105,7 @@ Use the original files from the memory card. Footage exported from DJI Mimo has 
 | Insta360 X4                           | Experimental (`.insv`)  | Tilt, G-force                                                                               | Not read yet, use an external track                                |
 
 - Without GPS data the widgets that need it are disabled. Before recording with a DJI remote, wait for a satellite fix.
-- The recording settings check knows the recommended settings for the Osmo Action 6 and Action 5 Pro only.
+- The recording settings check knows the recommended settings for the Osmo Action 6, Action 5 Pro, GoPro HERO12 Black and Mavic Air 2 (found by the aircraft name in the flight log) only.
 - GoPro: pitch was checked against the picture, roll still needs a sideways tilt test. GoPro MAX (360) is not supported.
 - Insta360: a 360° recording is shown as a standard frame with adjustable viewing direction and field of view.
 - Audio level, wind noise and image brightness widgets show what the GoPro recorded in its own telemetry. They don't analyze sound or picture: the audio bar is a digital level (dBFS, -60 to 0), not sound pressure, and the wind meter is not wind speed.

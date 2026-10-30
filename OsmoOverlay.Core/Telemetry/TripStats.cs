@@ -20,6 +20,8 @@ public sealed class TripStats
 	private readonly double[] _gainMeters;
 	private readonly double[] _lossMeters;
 	private readonly double[] _distanceMeters;
+	private readonly double[] _maxHeightMeters;
+	private readonly double[] _maxHomeDistanceMeters;
 
 	private TripStats(int count)
 	{
@@ -28,6 +30,8 @@ public sealed class TripStats
 		_gainMeters = new double[count];
 		_lossMeters = new double[count];
 		_distanceMeters = new double[count];
+		_maxHeightMeters = new double[count];
+		_maxHomeDistanceMeters = new double[count];
 	}
 
 	public static TripStats Compute(IReadOnlyList<DerivedFrame> frames)
@@ -35,13 +39,16 @@ public sealed class TripStats
 		var stats = new TripStats(frames.Count);
 		if (frames.Count == 0) return stats;
 
-		double maxSpeed = 0, moving = 0, gain = 0, loss = 0;
+		double maxSpeed = 0, moving = 0, gain = 0, loss = 0, maxHeight = 0, maxHomeDistance = 0;
 		double anchor = frames[0].Raw.AltitudeMeters;
 
 		for (int i = 0; i < frames.Count; i++)
 		{
 			DerivedFrame frame = frames[i];
 			maxSpeed = Math.Max(maxSpeed, frame.SpeedKmh);
+			// Only a flight log has these; a reading that isn't there (or is not a number) leaves the record as it was.
+			if (frame.Raw.HeightAboveHomeMeters is { } height && double.IsFinite(height)) maxHeight = Math.Max(maxHeight, height);
+			if (frame.Raw.DistanceFromHomeMeters is { } away && double.IsFinite(away)) maxHomeDistance = Math.Max(maxHomeDistance, away);
 
 			if (i > 0 && frame.StartsAfterCut)
 			{
@@ -70,6 +77,8 @@ public sealed class TripStats
 			stats._gainMeters[i] = gain;
 			stats._lossMeters[i] = loss;
 			stats._distanceMeters[i] = frame.CumulativeDistanceMeters;
+			stats._maxHeightMeters[i] = maxHeight;
+			stats._maxHomeDistanceMeters[i] = maxHomeDistance;
 		}
 
 		return stats;
@@ -101,6 +110,17 @@ public sealed class TripStats
 	public double ElevationLossMeters(int index)
 	{
 		return _lossMeters[index];
+	}
+
+	/// <summary>The highest the aircraft has been above its take-off so far, and the farthest from it (a flight log's readings; 0 without them).</summary>
+	public double MaxHeightMeters(int index)
+	{
+		return _maxHeightMeters[index];
+	}
+
+	public double MaxHomeDistanceMeters(int index)
+	{
+		return _maxHomeDistanceMeters[index];
 	}
 
 	/// <summary>How far either side of a frame Riding looks: GPS speed lags the bike by a second or two.</summary>

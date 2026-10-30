@@ -23,6 +23,118 @@ public partial class MainWindow
 		if (_editingElementId is { } id) SetElementUnits(id, SensorImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
+	private void OnDroneBatteryLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is { } id) SetElementLabel(id, DroneBatteryLabelBox.Text);
+	}
+
+	private void OnDroneBatteryUnitsChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is { } id) SetElementUnits(id, DroneBatteryImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
+	}
+
+	private void OnDroneBatteryOptionChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool icon = DroneBatteryIconCheck.IsChecked == true, voltage = DroneBatteryVoltageCheck.IsChecked == true, temperature = DroneBatteryTemperatureCheck.IsChecked == true;
+		bool current = DroneBatteryCurrentCheck.IsChecked == true, cells = DroneBatteryCellsCheck.IsChecked == true, colored = DroneBatteryColorCheck.IsChecked == true;
+		UpdateElement(id, el => el is DroneBatteryElement b
+			? b with { ShowIcon = icon, ShowVoltage = voltage, ShowTemperature = temperature, ShowCurrent = current, ShowCells = cells, ColorByCharge = colored }
+			: el);
+	}
+
+	private void OnDroneBatteryLevelChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || DroneBatteryLowBox.Value is not { } low || DroneBatteryCriticalBox.Value is not { } critical) return;
+
+		UpdateElement(id, el => el is DroneBatteryElement b ? b with { LowPercent = (int)low, CriticalPercent = (int)critical } : el);
+	}
+
+	private void OnDroneBatteryColorChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		string? low = DroneBatteryLowColorBox.Text?.Trim(), critical = DroneBatteryCriticalColorBox.Text?.Trim();
+		if (string.IsNullOrEmpty(low)) low = null;
+		if (string.IsNullOrEmpty(critical)) critical = null;
+		UpdateElement(id, el => el is DroneBatteryElement b ? b with { LowColor = low, CriticalColor = critical } : el);
+	}
+
+	private void OnDroneBatteryLimitsChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+		if (DroneBatteryLowCellBox.Value is not { } lowCell || DroneBatteryCriticalCellBox.Value is not { } criticalCell || DroneBatteryColdWarnBox.Value is not { } coldWarn
+		    || DroneBatteryColdCriticalBox.Value is not { } coldCritical || DroneBatteryHotWarnBox.Value is not { } hotWarn || DroneBatteryHotCriticalBox.Value is not { } hotCritical)
+			return;
+
+		UpdateElement(id, el => el is DroneBatteryElement b
+			? b with
+			{
+				LowCellVolts = (double)lowCell, CriticalCellVolts = (double)criticalCell, ColdCautionCelsius = (double)coldWarn, ColdCriticalCelsius = (double)coldCritical,
+				HotCautionCelsius = (double)hotWarn, HotCriticalCelsius = (double)hotCritical
+			}
+			: el);
+	}
+
+	private void OnSignalLevelsChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || SignalGoodBox.Value is not { } good || SignalFairBox.Value is not { } fair) return;
+
+		UpdateElement(id, el => el is SignalElement w ? w with { GoodPercent = (int)good, FairPercent = (int)fair } : el);
+	}
+
+	private void OnSignalColorChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		string? fair = SignalFairColorBox.Text?.Trim(), poor = SignalPoorColorBox.Text?.Trim();
+		if (string.IsNullOrEmpty(fair)) fair = null;
+		if (string.IsNullOrEmpty(poor)) poor = null;
+		UpdateElement(id, el => el is SignalElement w ? w with { FairColor = fair, PoorColor = poor } : el);
+	}
+
+	private void OnSignalLabelChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_editingElementId is { } id) SetElementLabel(id, SignalLabelBox.Text);
+	}
+
+	private void OnSignalOptionChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool up = SignalUplinkCheck.IsChecked == true, down = SignalDownlinkCheck.IsChecked == true, bars = SignalBarsCheck.IsChecked == true;
+		bool colored = SignalColorCheck.IsChecked == true;
+		UpdateElement(id, el => el is SignalElement w ? w with { ShowUplink = up, ShowDownlink = down, ShowBars = bars, ColorByLevel = colored } : el);
+	}
+
+	private void OnSatellitesBarsChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool bars = SatellitesBarsCheck.IsChecked == true;
+		UpdateElement(id, el => el is SatellitesElement g ? g with { ShowBars = bars } : el);
+	}
+
+	private void OnFlightAlertsOptionChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool modes = FlightAlertsModesCheck.IsChecked == true, motors = FlightAlertsMotorsCheck.IsChecked == true, battery = FlightAlertsBatteryCheck.IsChecked == true;
+		bool warnings = FlightAlertsWarningsCheck.IsChecked == true, notices = FlightAlertsNoticesCheck.IsChecked == true, slide = FlightAlertsSlideCheck.IsChecked == true;
+		UpdateElement(id, el => el is FlightAlertsElement a
+			? a with { ShowFlightModes = modes, ShowMotors = motors, ShowBattery = battery, ShowWarnings = warnings, ShowTips = notices, SlideIn = slide }
+			: el);
+	}
+
+	private void OnFlightAlertsNumberChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || FlightAlertsSecondsBox.Value is not { } seconds || FlightAlertsLinesBox.Value is not { } lines
+		    || FlightAlertsFadeBox.Value is not { } fade) return;
+
+		UpdateElement(id, el => el is FlightAlertsElement a ? a with { ShowSeconds = (double)seconds, MaxLines = (int)lines, FadeSeconds = (double)fade } : el);
+	}
+
 	private void OnCameraInfoLabelChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
@@ -46,9 +158,63 @@ public partial class MainWindow
 	private void OnProfileSeriesChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_editingElementId is not { } id) return;
-		ProfileSeries series = ProfileSpeedRadio.IsChecked == true ? ProfileSeries.Speed : ProfileSeries.Elevation;
+		ProfileSeries series = ProfileSpeedRadio.IsChecked == true ? ProfileSeries.Speed : ProfileHeightRadio.IsChecked == true ? ProfileSeries.Height : ProfileSeries.Elevation;
 		ProfileLabelBox.PlaceholderText = OverlayRenderer.DefaultProfileLabel(series);
 		UpdateElement(id, el => el is ProfileChartElement p ? p with { Series = series } : el);
+	}
+
+	private void OnProfileLookChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool marker = ProfileMarkerCheck.IsChecked == true, minMax = ProfileMinMaxCheck.IsChecked == true;
+		UpdateElement(id, el => el is ProfileChartElement p ? p with { ShowMarker = marker, ShowMinMax = minMax } : el);
+	}
+
+	private void OnProfileLineWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || ProfileLineWidthBox.Value is not { } width) return;
+
+		UpdateElement(id, el => el is ProfileChartElement p ? p with { LineWidth = (float)width } : el);
+	}
+
+	private void OnSensorThresholdClick(object? sender, RoutedEventArgs e) => ApplySensorThresholds();
+
+	private void OnSensorThresholdLostFocus(object? sender, RoutedEventArgs e) => ApplySensorThresholds();
+
+	private void OnSensorThresholdNumberChanged(object? sender, NumericUpDownValueChangedEventArgs e) => ApplySensorThresholds();
+
+	/// <summary>The limits, thresholds and colors of the drone readouts that turn a color when they are past them - one write for whichever widget is open.</summary>
+	private void ApplySensorThresholds()
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		static string? Color(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+		static double? Meters(decimal? value) => value is { } v ? (double)v : null;
+		string? warnColor = Color(SensorWarnColorBox.Text), alertColor = Color(SensorAlertColorBox.Text);
+		double? warnAbove = Meters(SensorWarnAboveBox.Value), alertAbove = Meters(SensorAlertAboveBox.Value);
+		bool byCount = SensorColorByCountCheck.IsChecked == true, byMode = SensorColorByModeCheck.IsChecked == true;
+		int warnBelow = (int)(SensorWarnBelowBox.Value ?? 10), alertBelow = (int)(SensorAlertBelowBox.Value ?? 6);
+		string? climb = Color(SensorClimbColorBox.Text), sink = Color(SensorSinkColorBox.Text);
+
+		UpdateElement(id, el => el switch
+		{
+			HeightElement h => h with { WarnAboveMeters = warnAbove, AlertAboveMeters = alertAbove, WarnColor = warnColor, AlertColor = alertColor },
+			HomeDistanceElement d => d with { WarnAboveMeters = warnAbove, AlertAboveMeters = alertAbove, WarnColor = warnColor, AlertColor = alertColor },
+			SatellitesElement s => s with { ColorByCount = byCount, WarnBelow = warnBelow, AlertBelow = alertBelow, WarnColor = warnColor, AlertColor = alertColor },
+			FlightModeElement f => f with { ColorByMode = byMode, WarnColor = warnColor, AlertColor = alertColor },
+			VerticalSpeedElement v => v with { ClimbColor = climb, SinkColor = sink },
+			_ => el
+		});
+	}
+
+	private void OnProfileAutoHeightChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool auto = ProfileAutoHeightCheck.IsChecked == true;
+		UpdateElement(id, el => el is ProfileChartElement p ? p with { AutoHeight = auto } : el);
+		RefreshSelectionHighlight();
 	}
 
 	private void OnProfileAxisChanged(object? sender, RoutedEventArgs e)

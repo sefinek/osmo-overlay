@@ -387,7 +387,7 @@
     <value>No telemetry samples found in the file(s)</value>
   </data>
   <data name="Render_NoTelemetry" xml:space="preserve">
-    <value>No telemetry was found in {0}. Select an original recording from a supported camera; files exported from other apps may no longer contain this data.</value>
+    <value>No telemetry was found in {0}. Select an original recording from a supported camera or drone; files exported from other apps may no longer contain this data.</value>
   </data>
   <data name="Render_OutputExists" xml:space="preserve">
     <value>Output file already exists: {0}</value>
@@ -620,11 +620,125 @@
   <data name="ExternalTrack_NoOverlap" xml:space="preserve">
     <value>The aligned GPS track does not cover any part of the recording.</value>
   </data>
+  <data name="DjiLog_NeedsApiKey" xml:space="preserve">
+    <value>This DJI flight log is encrypted. To read it, enter a DJI API key (the SDK key from developer.dji.com) in the settings.</value>
+  </data>
+  <data name="DjiLog_KeyRejected" xml:space="preserve">
+    <value>DJI rejected the API key. Check that it is the SDK key of an activated Open API app.</value>
+  </data>
+  <data name="DjiLog_KeychainFailed" xml:space="preserve">
+    <value>The keys for the flight log could not be fetched from DJI: {0}</value>
+  </data>
+  <data name="DjiLog_NoPositions" xml:space="preserve">
+    <value>The flight log holds no GPS positions.</value>
+  </data>
+  <data name="DjiDrone_NeedsLog" xml:space="preserve">
+    <value>DJI drones do not write telemetry into the video file. To get position, height and speed, add the flight log (FlightRecord). On Android you can find it in Download/product_data/flightRecords.</value>
+  </data>
+  <data name="DjiDrone_Name" xml:space="preserve">
+    <value>DJI drone</value>
+  </data>
+  <data name="Preset_ActionCameras" xml:space="preserve">
+    <value>Action cameras</value>
+  </data>
+  <data name="Preset_DjiDrones" xml:space="preserve">
+    <value>DJI drones</value>
+  </data>
+  <data name="Preset_FpvDrones" xml:space="preserve">
+    <value>FPV drones</value>
+  </data>
   <data name="Overlay_AmbientTemperature" xml:space="preserve">
     <value>Track temperature</value>
   </data>
   <data name="Overlay_ImuTemperature" xml:space="preserve">
     <value>Motion sensor temperature</value>
+  </data>
+  <data name="Overlay_Height" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="Overlay_HomeDistance" xml:space="preserve">
+    <value>From take-off</value>
+  </data>
+  <data name="Overlay_VerticalSpeed" xml:space="preserve">
+    <value>Climb rate</value>
+  </data>
+  <data name="Overlay_Satellites" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="Overlay_Signal" xml:space="preserve">
+    <value>Signal</value>
+  </data>
+  <data name="Overlay_FlightModeLabel" xml:space="preserve">
+    <value>Flight mode</value>
+  </data>
+  <data name="Overlay_BatteryEndDetail" xml:space="preserve">
+    <value>Battery at motor shutdown: {0}%</value>
+  </data>
+  <data name="Overlay_ReturnAltitude" xml:space="preserve">
+    <value>Return to home</value>
+  </data>
+  <data name="Overlay_ReturnAltitudeDetail" xml:space="preserve">
+    <value>Return altitude set to {0} m</value>
+  </data>
+  <data name="Overlay_AltitudeLimit" xml:space="preserve">
+    <value>Altitude limit</value>
+  </data>
+  <data name="Overlay_AltitudeLimitDetail" xml:space="preserve">
+    <value>Maximum flight altitude set to {0} m</value>
+  </data>
+  <data name="Overlay_FinalPosition" xml:space="preserve">
+    <value>Landing</value>
+  </data>
+  <data name="Overlay_FinalPositionDetail" xml:space="preserve">
+    <value>Final position was {0} m from take-off</value>
+  </data>
+  <data name="Overlay_DroneBattery" xml:space="preserve">
+    <value>Drone battery</value>
+  </data>
+  <data name="Overlay_FlightMode" xml:space="preserve">
+    <value>Flight mode</value>
+  </data>
+  <data name="Overlay_MotorsOn" xml:space="preserve">
+    <value>Motors on</value>
+  </data>
+  <data name="Overlay_MotorsOnDetail" xml:space="preserve">
+    <value>The drone&apos;s motors have started</value>
+  </data>
+  <data name="Overlay_MotorsOff" xml:space="preserve">
+    <value>Motors off</value>
+  </data>
+  <data name="Overlay_MotorsOffDetail" xml:space="preserve">
+    <value>The drone&apos;s motors have stopped</value>
+  </data>
+  <data name="Overlay_BatteryAlert" xml:space="preserve">
+    <value>Battery</value>
+  </data>
+  <data name="Overlay_BatteryStartDetail" xml:space="preserve">
+    <value>Battery started at {0}%</value>
+  </data>
+  <data name="Overlay_BatteryLevelDetail" xml:space="preserve">
+    <value>Battery reached {0}%</value>
+  </data>
+  <data name="Overlay_LowVoltage" xml:space="preserve">
+    <value>Low voltage</value>
+  </data>
+  <data name="Overlay_CriticalVoltage" xml:space="preserve">
+    <value>Critically low voltage</value>
+  </data>
+  <data name="Overlay_CellVoltageDetail" xml:space="preserve">
+    <value>Lowest cell voltage: {0} V</value>
+  </data>
+  <data name="Overlay_FlightNotice" xml:space="preserve">
+    <value>Notice</value>
+  </data>
+  <data name="Overlay_FlightWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Overlay_MessageCode" xml:space="preserve">
+    <value>{0} (code {1})</value>
+  </data>
+  <data name="DjiLog_Summary" xml:space="preserve">
+    <value>{0}: flight duration: {1}, distance: {2} km, max height: {3} m, max speed: {4} km/h</value>
   </data>
   <data name="Overlay_DeviceDistance" xml:space="preserve">
     <value>Device distance</value>
@@ -700,5 +814,17 @@
   </data>
   <data name="ExternalTrack_GpxEmpty" xml:space="preserve">
     <value>This GPX file contains no recorded GPS track. Choose an activity recorded by a watch or a sports app.</value>
+  </data>
+  <data name="Peak_FastestAscent" xml:space="preserve">
+    <value>Fastest climb</value>
+  </data>
+  <data name="Peak_FastestDescent" xml:space="preserve">
+    <value>Fastest descent</value>
+  </data>
+  <data name="Overlay_MaxHeight" xml:space="preserve">
+    <value>Max height</value>
+  </data>
+  <data name="Overlay_MaxHomeDistance" xml:space="preserve">
+    <value>Max distance</value>
   </data>
 </root>

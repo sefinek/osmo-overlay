@@ -39,6 +39,46 @@ public sealed class ExternalTrackMergeTests
 	}
 
 	[TestMethod]
+	public void Apply_AFlightLogsHeightAndDistanceFromTakeOffReachTheFrames()
+	{
+		var track = new ExternalTrack(
+			[new ExternalTrackPoint(T0, 50, 20, HeightMeters: 10), new ExternalTrackPoint(T0.AddSeconds(2), 50.001, 20, HeightMeters: 30)],
+			home: new ExternalTrackHome(50, 20));
+
+		List<TelemetryFrame> merged = ExternalTrackMerge.Apply(Frames(100), track, T0);
+
+		Assert.AreEqual(20, merged[25].HeightAboveHomeMeters!.Value, 1e-9);
+		Assert.AreEqual(55.6, merged[25].DistanceFromHomeMeters!.Value, 0.1);
+		Assert.AreEqual(0, merged[0].DistanceFromHomeMeters!.Value, 1e-6);
+	}
+
+	[TestMethod]
+	public void Apply_AFlightLogsClimbRateAndSatellitesReachTheFrames()
+	{
+		var track = new ExternalTrack(
+			[new ExternalTrackPoint(T0, 50, 20, VerticalSpeedMs: 1, Satellites: 12), new ExternalTrackPoint(T0.AddSeconds(2), 50.001, 20, VerticalSpeedMs: 3, Satellites: 14)]);
+
+		TelemetryFrame frame = ExternalTrackMerge.Apply(Frames(100), track, T0)[25];
+
+		Assert.AreEqual(2, frame.VerticalSpeedMs!.Value, 1e-9);
+		Assert.AreEqual(12, frame.GpsSatellites, "a count is not interpolated");
+		TelemetryFrame withoutFix = ExternalTrackMerge.Apply(Frames(200), track, T0)[150];
+		Assert.IsNull(withoutFix.VerticalSpeedMs);
+		Assert.IsNull(withoutFix.GpsSatellites);
+	}
+
+	[TestMethod]
+	public void Apply_ATrackWithoutHeightOrTakeOffLeavesThemUnset()
+	{
+		var track = new ExternalTrack([Point(0, 53.1, 2), Point(1, 53.1001, 4)]);
+
+		TelemetryFrame frame = ExternalTrackMerge.Apply(Frames(25), track, T0)[10];
+
+		Assert.IsNull(frame.HeightAboveHomeMeters);
+		Assert.IsNull(frame.DistanceFromHomeMeters);
+	}
+
+	[TestMethod]
 	public void Apply_ExternalSensorsFollowTheSameAnchorsWithoutReplacingImuTemperature()
 	{
 		var track = new ExternalTrack(

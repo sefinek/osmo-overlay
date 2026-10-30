@@ -18,10 +18,7 @@ public sealed partial class OverlayRenderer
 	{
 		if (string.IsNullOrWhiteSpace(element.ImagePath) || LoadImage(element.ImagePath) is not { } image) return;
 
-		float opacity = Math.Clamp(element.Opacity, 0f, 1f);
-		if (opacity <= 0f) return;
-
-		canvas.DrawImage(image, 0, 0, _imageSampling, opacity < 1f ? AlphaPaint(opacity) : null);
+		canvas.DrawImage(image, 0, 0, _imageSampling, null);
 	}
 
 	private SKImage? LoadImage(string path)

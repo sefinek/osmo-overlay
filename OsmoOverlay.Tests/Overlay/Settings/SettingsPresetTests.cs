@@ -23,7 +23,7 @@ public sealed class SettingsPresetTests
 		nameof(OverlaySettings.PreviewMonitor), nameof(OverlaySettings.SecondScreenEnabled), nameof(OverlaySettings.SecondScreenMonitor),
 		nameof(OverlaySettings.ReopenLastProject), nameof(OverlaySettings.LastProject), nameof(OverlaySettings.AutoSaveMinutes),
 		nameof(OverlaySettings.CacheCleanupDays), nameof(OverlaySettings.LoopByDefault), nameof(OverlaySettings.PreviewShadows),
-		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode)
+		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode), nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.WorkingAnimation)
 	];
 
 	[TestMethod]
@@ -55,7 +55,7 @@ public sealed class SettingsPresetTests
 	{
 		var other = new OverlaySettings(ActivePresetId: "layout", AppTheme: "Amoled", HardwareDecoding: false, DefaultOutputFolder: "out",
 			SpeedCorrectionPercent: 3);
-		var values = new SettingsPresetValues(SpeedCorrectionPercent: 12.5, NoAudio: true, OutputCodec: "hevc", RouteIntroDurationSeconds: 20,
+		var values = new SettingsPresetValues(SpeedCorrectionPercent: 12.5, NoAudio: true, OutputCodec: "hevc", OutputAspect: "4:5", OutputPadToAspect: true, RouteIntroDurationSeconds: 20,
 			OrientationSource: OrientationSource.Quaternion);
 
 		OverlaySettings applied = values.ApplyTo(other);
@@ -63,6 +63,8 @@ public sealed class SettingsPresetTests
 		Assert.AreEqual(12.5, applied.SpeedCorrectionPercent);
 		Assert.IsTrue(applied.NoAudio);
 		Assert.AreEqual("hevc", applied.OutputCodec);
+		Assert.AreEqual("4:5", applied.OutputAspect);
+		Assert.IsTrue(applied.OutputPadToAspect);
 		Assert.AreEqual(20, applied.RouteIntroDurationSeconds);
 		Assert.AreEqual(OrientationSource.Quaternion, applied.OrientationSource);
 		Assert.AreEqual("layout", applied.ActivePresetId);
@@ -88,7 +90,7 @@ public sealed class SettingsPresetTests
 	{
 		SettingsPresetValues clean = SettingsPresetStore.Sanitize(new SettingsPresetValues(
 			SpeedCorrectionPercent: 900, RouteIntroDurationSeconds: double.NaN, NvencPreset: "-preset ultrafast", OutputBitrateMultiplier: 100,
-			OutputResolution: 99, OutputCodec: "prores"));
+			OutputResolution: 99, OutputCodec: "prores", OutputAspect: "7:3"));
 
 		Assert.AreEqual(50, clean.SpeedCorrectionPercent);
 		Assert.AreEqual(12, clean.RouteIntroDurationSeconds);
@@ -96,5 +98,7 @@ public sealed class SettingsPresetTests
 		Assert.AreEqual(4, clean.OutputBitrateMultiplier);
 		Assert.IsNull(clean.OutputResolution);
 		Assert.IsNull(clean.OutputCodec);
+		Assert.IsNull(clean.OutputAspect);
+		Assert.AreEqual("9:16", SettingsPresetStore.Sanitize(new SettingsPresetValues(OutputAspect: "9:16")).OutputAspect);
 	}
 }

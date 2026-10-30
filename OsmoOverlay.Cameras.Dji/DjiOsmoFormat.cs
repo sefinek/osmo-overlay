@@ -20,6 +20,7 @@ public sealed class DjiOsmoFormat : ICameraFormat
 {
 	public string Id => "dji-osmo";
 	public string DisplayName => "DJI Osmo Action";
+	public string Brand => "DJI";
 	public bool HasMetadataToCopy => true;
 
 	public string? SupportNotice(string? cameraModel)

@@ -19,8 +19,11 @@ public sealed partial class OverlayRenderer
 	private const float ProfilePlotHeight = OverlayElementBounds.ChartHeight - ProfileInset * 2;
 	// A flat ride would otherwise stretch a metre of GPS wobble over the chart's full height.
 	private const double ProfileMinElevationSpanMeters = 20;
+	// AutoHeight: the change in the series (m, or km/h for the speed) that fills the whole panel, and the lowest the panel goes.
+	private const double ProfileFullSpan = 60;
+	private const float ProfileMinPanelHeight = 96f;
 
-	private readonly Dictionary<(ProfileSeries, ProfileAxis), ProfileGeometry> _profiles = [];
+	private readonly Dictionary<(ProfileSeries, ProfileAxis, bool), ProfileGeometry> _profiles = [];
 
 	private readonly SKPaint _chartFillPaint = new() { IsAntialias = true, Style = SKPaintStyle.Fill };
 	private readonly SKPaint _chartLinePaint = new()
@@ -30,8 +33,12 @@ public sealed partial class OverlayRenderer
 	{
 		const float width = OverlayElementBounds.ChartWidth;
 		const float top = OverlayElementBounds.ChartTop;
-		const float height = OverlayElementBounds.ChartHeight;
+		ProfileGeometry? profile = Profile(element.Series, element.Axis, element.AutoHeight);
+		float height = profile?.PanelHeight ?? OverlayElementBounds.ChartHeight;
 
+		// A shorter panel keeps its bottom edge, so the widget doesn't leave the place it was put at.
+		canvas.Save();
+		canvas.Translate(0, OverlayElementBounds.ChartHeight - height);
 		SKColor textColor = TextColorOf(element);
 		SKColor accent = AccentColorOf(element);
 		SKColor outlineColor = OutlineColorOf(element);
@@ -40,7 +47,7 @@ public sealed partial class OverlayRenderer
 			TextFont(element, OverlayElementBounds.LabelFontSize), textColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 		(string value, string unit) = element.Series == ProfileSeries.Speed
 			? FormatSpeed(frame.SpeedKmh, element.Units)
-			: FormatAltitude(frame.Raw.AltitudeMeters, element.Units);
+			: FormatAltitude(ProfileValue(element.Series, frame), element.Units);
 		DrawOutlined(canvas, $"{value} {unit}", width, 0, TextFont(element, OverlayElementBounds.SmallFontSize), accent,
 			SKTextAlign.Right, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 
@@ -48,7 +55,11 @@ public sealed partial class OverlayRenderer
 		canvas.DrawRoundRect(panel, ProfileCornerRadius, ProfileCornerRadius, PanelFillPaint(element));
 		canvas.DrawRoundRect(panel, ProfileCornerRadius, ProfileCornerRadius, _thinStroke2White70);
 
-		if (Profile(element.Series, element.Axis) is not { } profile) return;
+		if (profile is null)
+		{
+			canvas.Restore();
+			return;
+		}
 
 		const float plotLeft = ProfileInset;
 		const float plotTop = top + ProfileInset;
@@ -59,30 +70,67 @@ public sealed partial class OverlayRenderer
 
 		_chartFillPaint.Color = accent.WithAlpha(40);
 		canvas.DrawPath(profile.Fill, _chartFillPaint);
+		float lineScale = Math.Clamp(element.LineWidth, 0.5f, 3f);
 		_chartLinePaint.Color = White.WithAlpha(90);
-		_chartLinePaint.StrokeWidth = 3;
+		_chartLinePaint.StrokeWidth = 3 * lineScale;
 		canvas.DrawPath(profile.Line, _chartLinePaint);
 
 		canvas.Save();
-		canvas.ClipRect(new SKRect(0, 0, markerX, ProfilePlotHeight));
+		canvas.ClipRect(new SKRect(0, 0, markerX, profile.PlotHeight));
 		_chartFillPaint.Color = accent.WithAlpha(110);
 		canvas.DrawPath(profile.Fill, _chartFillPaint);
 		_chartLinePaint.Color = accent;
-		_chartLinePaint.StrokeWidth = 4;
+		_chartLinePaint.StrokeWidth = 4 * lineScale;
 		canvas.DrawPath(profile.Line, _chartLinePaint);
 		canvas.Restore();
 
-		float markerY = profile.YAt(markerX);
-		canvas.DrawLine(markerX, 0, markerX, ProfilePlotHeight, _thinStroke2White70);
-		canvas.DrawCircle(markerX, markerY, 11, _dotOutlineBlackFill);
-		_chartFillPaint.Color = accent;
-		canvas.DrawCircle(markerX, markerY, 8, _chartFillPaint);
+		if (element.ShowMarker)
+		{
+			float markerY = profile.YOf(ProfileValue(element.Series, frame));
+			canvas.DrawLine(markerX, 0, markerX, profile.PlotHeight, _thinStroke2White70);
+			canvas.DrawCircle(markerX, markerY, 11, _dotOutlineBlackFill);
+			_chartFillPaint.Color = accent;
+			canvas.DrawCircle(markerX, markerY, 8, _chartFillPaint);
+		}
+
+		if (element.ShowMinMax)
+		{
+			// The readings' own extremes, small, in the plot's corners - on the left, where the curve starts at the take-off or at rest.
+			SKFont small = TextFont(element, OverlayElementBounds.SmallFontSize * 0.75f);
+			(string high, string highUnit) = ProfileReading(element, profile.DataMax);
+			(string low, string lowUnit) = ProfileReading(element, profile.DataMin);
+			DrawOutlined(canvas, $"{high} {highUnit}", 8, small.Size, small, textColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+			DrawOutlined(canvas, $"{low} {lowUnit}", 8, profile.PlotHeight - 8, small, textColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		}
+
 		canvas.Restore();
+		canvas.Restore();
+	}
+
+	private static (string Value, string Unit) ProfileReading(ProfileChartElement element, double value)
+	{
+		return element.Series == ProfileSeries.Speed ? FormatSpeed(value, element.Units) : FormatAltitude(value, element.Units);
 	}
 
 	public static string DefaultProfileLabel(ProfileSeries series)
 	{
-		return series == ProfileSeries.Speed ? CoreStrings.Overlay_Speed : CoreStrings.Overlay_Elevation;
+		return series switch
+		{
+			ProfileSeries.Speed => CoreStrings.Overlay_Speed,
+			ProfileSeries.Height => CoreStrings.Overlay_Height,
+			_ => CoreStrings.Overlay_Elevation
+		};
+	}
+
+	/// <summary>What the chart plots for a frame: the frame's own reading, so the marker sits on the value the heading shows (the curve is averaged into columns).</summary>
+	private static double ProfileValue(ProfileSeries series, DerivedFrame frame)
+	{
+		return series switch
+		{
+			ProfileSeries.Speed => frame.SpeedKmh,
+			ProfileSeries.Height => frame.Raw.HeightAboveHomeMeters is { } height && double.IsFinite(height) ? height : 0,
+			_ => frame.Raw.AltitudeMeters
+		};
 	}
 
 	/// <summary>0..1 along the chart's X axis - the share of the distance or time covered at `frame`.</summary>
@@ -98,10 +146,10 @@ public sealed partial class OverlayRenderer
 	///     Built on first use for a (series, axis) pair and kept until SetFrames. Null when there's nothing to plot - no
 	///     frames, or no time passing. A recording that never moves falls back from distance to time rather than show nothing.
 	/// </summary>
-	private ProfileGeometry? Profile(ProfileSeries series, ProfileAxis axis)
+	private ProfileGeometry? Profile(ProfileSeries series, ProfileAxis axis, bool fit = false)
 	{
 		if (_totalDistanceMeters < 1) axis = ProfileAxis.Time;
-		if (_profiles.TryGetValue((series, axis), out ProfileGeometry? cached)) return cached;
+		if (_profiles.TryGetValue((series, axis, fit), out ProfileGeometry? cached)) return cached;
 		if (_allFrames.Count < 2 || _totalDurationSeconds <= 0) return null;
 
 		double[] sums = new double[ProfileBuckets];
@@ -109,7 +157,7 @@ public sealed partial class OverlayRenderer
 		foreach (DerivedFrame f in _allFrames)
 		{
 			int bucket = Math.Min((int)(ProfilePosition(f, axis) * ProfileBuckets), ProfileBuckets - 1);
-			sums[bucket] += series == ProfileSeries.Speed ? f.SpeedKmh : f.Raw.AltitudeMeters;
+			sums[bucket] += ProfileValue(series, f);
 			counts[bucket]++;
 		}
 
@@ -121,10 +169,26 @@ public sealed partial class OverlayRenderer
 		}
 
 		double min, max;
-		if (series == ProfileSeries.Speed)
+		float panelHeight = OverlayElementBounds.ChartHeight;
+		if (fit)
+		{
+			// Scaled to the change the series really has, with a little room each side, in a panel as tall as that change asks for.
+			double low = samples.Min(s => s.Value), high = samples.Max(s => s.Value), change = Math.Max(high - low, 1);
+			double room = change * 0.1;
+			min = low - room;
+			max = high + room;
+			panelHeight = (float)Math.Clamp(OverlayElementBounds.ChartHeight * change / ProfileFullSpan, ProfileMinPanelHeight, OverlayElementBounds.ChartHeight);
+		}
+		else if (series == ProfileSeries.Speed)
 		{
 			min = 0;
 			max = Math.Max(samples.Max(s => s.Value) * 1.1, 1);
+		}
+		else if (series == ProfileSeries.Height)
+		{
+			// Rests on the ground: the take-off point is the chart's floor, the highest point has room above it.
+			min = Math.Min(0, samples.Min(s => s.Value));
+			max = Math.Max(samples.Max(s => s.Value) * 1.1, min + ProfileMinElevationSpanMeters);
 		}
 		else
 		{
@@ -136,15 +200,16 @@ public sealed partial class OverlayRenderer
 			max = mid + span * 0.6;
 		}
 
+		float plotHeight = panelHeight - ProfileInset * 2;
 		SKPoint[] points =
 		[
-			.. samples.Select(s => new SKPoint(s.X * ProfilePlotWidth, (1f - (float)((s.Value - min) / (max - min))) * ProfilePlotHeight))
+			.. samples.Select(s => new SKPoint(s.X * ProfilePlotWidth, (1f - (float)((s.Value - min) / (max - min))) * plotHeight))
 		];
 		// The line reaches both edges, so the start and the end of the ride sit on the chart's sides.
 		points = [new SKPoint(0, points[0].Y), .. points, new SKPoint(ProfilePlotWidth, points[^1].Y)];
 
-		var geometry = new ProfileGeometry(axis, points);
-		_profiles[(series, axis)] = geometry;
+		var geometry = new ProfileGeometry(axis, points, min, max, panelHeight, samples.Min(s => s.Value), samples.Max(s => s.Value));
+		_profiles[(series, axis, fit)] = geometry;
 		return geometry;
 	}
 
@@ -159,30 +224,49 @@ public sealed partial class OverlayRenderer
 	{
 		private readonly SKPoint[] _points;
 
-		public ProfileGeometry(ProfileAxis axis, SKPoint[] points)
+		private readonly double _min, _max;
+
+		public ProfileGeometry(ProfileAxis axis, SKPoint[] points, double min, double max, float panelHeight, double dataMin, double dataMax)
 		{
 			Axis = axis;
 			_points = points;
+			_min = min;
+			_max = max;
+			PanelHeight = panelHeight;
+			DataMin = dataMin;
+			DataMax = dataMax;
+			PlotHeight = panelHeight - ProfileInset * 2;
 
 			using var line = new SKPathBuilder();
 			using var fill = new SKPathBuilder();
 			line.MoveTo(points[0]);
-			fill.MoveTo(0, ProfilePlotHeight);
+			fill.MoveTo(0, PlotHeight);
 			foreach (SKPoint point in points)
 			{
 				line.LineTo(point);
 				fill.LineTo(point);
 			}
 
-			fill.LineTo(ProfilePlotWidth, ProfilePlotHeight);
+			fill.LineTo(ProfilePlotWidth, PlotHeight);
 			fill.Close();
 			Line = line.Detach();
 			Fill = fill.Detach();
 		}
 
 		public ProfileAxis Axis { get; }
+		public float PanelHeight { get; }
+		/// <summary>The lowest and highest reading, not the scale's ends (which have room around them).</summary>
+		public double DataMin { get; }
+		public double DataMax { get; }
+		public float PlotHeight { get; }
 		public SKPath Line { get; }
 		public SKPath Fill { get; }
+
+		/// <summary>The plot's Y for a value on the chart's scale, kept inside the plot.</summary>
+		public float YOf(double value)
+		{
+			return Math.Clamp((1f - (float)((value - _min) / (_max - _min))) * PlotHeight, 0, PlotHeight);
+		}
 
 		/// <summary>The curve's Y at `x`, between the two points around it.</summary>
 		public float YAt(float x)
