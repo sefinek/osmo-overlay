@@ -1,4 +1,4 @@
-using OsmoOverlay.Core.Telemetry.External;
+using System.Diagnostics;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -6,8 +6,10 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
@@ -15,7 +17,7 @@ namespace OsmoOverlay.Gui;
 /// <summary>"Get Summary" (probing/telemetry extraction) and populating the Input/Telemetry/Output info cards from the resulting FileSummary.</summary>
 public partial class MainWindow
 {
-	private async Task RunGetSummaryAsync()
+	private async Task RunGetSummaryAsync(OverlayProject? project = null)
 	{
 		if (_inputPaths.Count == 0) return;
 
@@ -28,6 +30,9 @@ public partial class MainWindow
 		}
 
 		List<string> inputPaths = [.. _inputPaths];
+		var loadingTime = Stopwatch.StartNew();
+		_externalTrackDetails = null;
+		_measuredSpeeds = null;
 
 		ClosePreview();
 		ResetReframe();
@@ -64,6 +69,7 @@ public partial class MainWindow
 			}
 
 			_cameraSummary = summary;
+			long summaryMs = loadingTime.ElapsedMilliseconds;
 			_externalTrackApplied = false;
 			if (_externalTrack is null && ExternalTrackSource.FindFor(summary.CameraFormat, inputPaths[0], summary.ContainerRecordingStartUtc) is { } found)
 			{
@@ -73,12 +79,15 @@ public partial class MainWindow
 			if (_externalTrack is { } trackSource)
 			{
 				FileSummary withTrack = summary;
+				ExternalTrack? loadedTrack = null;
 				// Caught inside the task: a track that doesn't fit the recording is expected, and an exception crossing Task.Run stops the debugger as user-unhandled.
 				string? trackProblem = await Task.Run(() =>
 				{
 					try
 					{
-						withTrack = trackSource.Apply(withTrack);
+						trackSource.Validate();
+						loadedTrack = ExternalTrackReader.Read(trackSource.Path);
+						withTrack = trackSource.Apply(withTrack, loadedTrack);
 						return null;
 					}
 					catch (Exception ex) when (ex is InvalidOperationException or InvalidDataException or IOException or UnauthorizedAccessException)
@@ -89,6 +98,7 @@ public partial class MainWindow
 				if (trackProblem is null)
 				{
 					summary = withTrack;
+					_externalTrackDetails = (trackSource.Path, loadedTrack!);
 					_externalTrackApplied = true;
 				}
 				else
@@ -99,6 +109,7 @@ public partial class MainWindow
 			}
 
 			RefreshExternalTrack();
+			long trackMs = loadingTime.ElapsedMilliseconds - summaryMs;
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
@@ -215,10 +226,12 @@ public partial class MainWindow
 			PopulateTelemetryInfo(summary);
 			PopulateOutputInfo(summary, encoder);
 
+			long analysisMs = loadingTime.ElapsedMilliseconds - summaryMs - trackMs;
+			await OpenPreviewAsync(summary, project);
 			SetPhase(UiPhase.SummaryReady);
 			SetRenderButtons(CanRenderTelemetry);
-
-			await OpenPreviewAsync(summary);
+			AppLogger.Info($"Recording load: summary {summaryMs} ms, track {trackMs} ms, analysis and controls {analysisMs} ms, " +
+			               $"preview {loadingTime.ElapsedMilliseconds - summaryMs - trackMs - analysisMs} ms, total {loadingTime.ElapsedMilliseconds} ms");
 			ResetHistory();
 			MarkClean();
 

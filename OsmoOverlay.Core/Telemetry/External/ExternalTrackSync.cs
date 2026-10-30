@@ -24,8 +24,11 @@ public static class ExternalTrackSync
 
 	public const double MinCorrelation = 0.5;
 
-	/// <summary>How far a second candidate must stay behind the best one, and how far from it (seconds) it has to be to count as another.</summary>
-	private const double MinMargin = 0.1;
+	/// <summary>
+	///     How far a second candidate must stay behind the best one - as a share of the best one's significance (see Significance) - and how
+	///     far from it (seconds) it has to be to count as another.
+	/// </summary>
+	private const double MaxRivalShare = 0.85;
 
 	private const double DistinctSeconds = 5;
 
@@ -46,19 +49,28 @@ public static class ExternalTrackSync
 		int minOverlap = (int)(MinOverlapSeconds / StepSeconds);
 		int from = -(camera.Length - minOverlap);
 		int to = speed.Length - minOverlap;
-		List<(int Shift, double Correlation)> scores = [];
+		List<(int Shift, double Correlation, double Significance)> scores = [];
 		for (int shift = from; shift <= to; shift++)
 		{
-			if (Correlate(camera, speed, shift, minOverlap) is { } r) scores.Add((shift, r));
+			if (Correlate(camera, speed, shift, minOverlap) is { } match) scores.Add((shift, match.Correlation, Significance(match.Correlation, match.Samples)));
 		}
 
 		if (scores.Count == 0) return null;
 
-		(int bestShift, double best) = scores.MaxBy(s => s.Correlation);
-		double rival = scores.Where(s => Math.Abs(s.Shift - bestShift) * StepSeconds > DistinctSeconds).Select(s => s.Correlation).DefaultIfEmpty(-1).Max();
-		if (best < MinCorrelation || best - rival < MinMargin) return null;
+		(int bestShift, double best, double bestSignificance) = scores.MaxBy(s => s.Significance);
+		double rival = scores.Where(s => Math.Abs(s.Shift - bestShift) * StepSeconds > DistinctSeconds).Select(s => s.Significance).DefaultIfEmpty(0).Max();
+		if (best < MinCorrelation || rival > bestSignificance * MaxRivalShare) return null;
 
 		return new TrackSyncEstimate(track.StartUtc.AddSeconds(bestShift * StepSeconds), TrackSyncMethod.Motion, best);
+	}
+
+	/// <summary>
+	///     Fisher's z of a correlation over `samples` pairs: the same correlation means more over a long overlap than over a short one, so a match that
+	///     only a third of the recording overlaps doesn't outrank one that all of it does. A ranking, not a probability (neighbouring bins aren't independent).
+	/// </summary>
+	private static double Significance(double correlation, double samples)
+	{
+		return Math.Atanh(Math.Clamp(correlation, -0.999, 0.999)) * Math.Sqrt(Math.Max(samples - 3, 0));
 	}
 
 	/// <summary>How much the camera shook in each half second: the standard deviation of the accelerometer's length (g) over the frames in it.</summary>
@@ -106,7 +118,7 @@ public static class ExternalTrackSync
 	}
 
 	/// <summary>Pearson's correlation of the camera's shake with the track's speed where the recording, `shift` steps into the track, overlaps it - null with too little to go by.</summary>
-	private static double? Correlate(double[] camera, double[] speed, int shift, int minOverlap)
+	private static (double Correlation, double Samples)? Correlate(double[] camera, double[] speed, int shift, int minOverlap)
 	{
 		double n = 0, sumC = 0, sumS = 0, sumCC = 0, sumSS = 0, sumCS = 0;
 		for (int i = Math.Max(0, -shift); i < camera.Length && i + shift < speed.Length; i++)
@@ -129,6 +141,6 @@ public static class ExternalTrackSync
 		double varianceS = sumSS - sumS * sumS / n;
 		if (varianceC <= 1e-12 || varianceS <= 1e-12) return null;
 
-		return (sumCS - sumC * sumS / n) / Math.Sqrt(varianceC * varianceS);
+		return ((sumCS - sumC * sumS / n) / Math.Sqrt(varianceC * varianceS), n);
 	}
 }

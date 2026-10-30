@@ -214,7 +214,7 @@
     <value>Polska</value>
   </data>
   <data name="Map_FetchTileFailed" xml:space="preserve">
-    <value>Nie udało się pobrać kafelka mapy {0} po {1} próbach</value>
+    <value>Nie udało się pobrać kafelka mapy {0}. Liczba prób: {1}.</value>
   </data>
   <data name="Peak_HighestPoint" xml:space="preserve">
     <value>Najwyższy punkt</value>
@@ -672,7 +672,7 @@
     <value>Tryb lotu</value>
   </data>
   <data name="Overlay_BatteryEndDetail" xml:space="preserve">
-    <value>Bateria przy wyłączeniu silników: {0}%</value>
+    <value>Poziom naładowania przy wyłączeniu silników: {0}%</value>
   </data>
   <data name="Overlay_ReturnAltitude" xml:space="preserve">
     <value>Powrót do domu</value>
@@ -693,7 +693,7 @@
     <value>Ostateczna pozycja: {0} m od punktu startu</value>
   </data>
   <data name="Overlay_DroneBattery" xml:space="preserve">
-    <value>Bateria drona</value>
+    <value>Akumulator</value>
   </data>
   <data name="Overlay_FlightMode" xml:space="preserve">
     <value>Tryb lotu</value>
@@ -714,16 +714,16 @@
     <value>Bateria</value>
   </data>
   <data name="Overlay_BatteryStartDetail" xml:space="preserve">
-    <value>Bateria na starcie: {0}%</value>
+    <value>Poziom naładowania przy włączeniu silników: {0}%</value>
   </data>
   <data name="Overlay_BatteryLevelDetail" xml:space="preserve">
-    <value>Bateria spadła do {0}%</value>
+    <value>Poziom naładowania spadł do {0}%</value>
   </data>
   <data name="Overlay_LowVoltage" xml:space="preserve">
-    <value>Niskie napięcie</value>
+    <value>Niskie napięcie ogniwa</value>
   </data>
   <data name="Overlay_CriticalVoltage" xml:space="preserve">
-    <value>Krytycznie niskie napięcie</value>
+    <value>Krytycznie niskie napięcie ogniwa</value>
   </data>
   <data name="Overlay_CellVoltageDetail" xml:space="preserve">
     <value>Najniższe napięcie ogniwa: {0} V</value>
@@ -826,5 +826,8 @@
   </data>
   <data name="Overlay_MaxHomeDistance" xml:space="preserve">
     <value>Maks. odległość</value>
+  </data>
+  <data name="Map_RateLimited" xml:space="preserve">
+    <value>Serwer map {0} ograniczył liczbę zapytań. Pobieranie wstrzymane na co najmniej {1} s.</value>
   </data>
 </root>

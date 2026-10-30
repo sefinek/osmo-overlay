@@ -9,8 +9,8 @@ public enum BatteryCondition
 
 /// <summary>
 ///     How a drone battery's readings stand, for coloring them: normal is the widget's plain text, caution and critical take its low and
-///     critical colors. The defaults of the limits are the cell voltages the flight alerts announce (FlightEventTracker) and the range DJI
-///     batteries are rated for, with a margin - heuristics, not the battery's own limits; the widget lets the user set its own.
+///     critical colors. Voltage defaults follow the generic LiPo guidance in https://betaflight.com/docs/wiki/app/power-tab.
+///     These are display heuristics, not DJI firmware limits or a battery fault diagnosis; the widget lets the user set its own.
 /// </summary>
 public static class DroneBatteryHealth
 {
@@ -23,7 +23,7 @@ public static class DroneBatteryHealth
 	public static BatteryCondition Cells(DroneBattery? battery, double low = LowCellVolts, double critical = CriticalCellVolts)
 	{
 		return battery?.MinCellVoltage is { } lowest && double.IsFinite(lowest)
-			? lowest <= critical ? BatteryCondition.Critical : lowest < low ? BatteryCondition.Caution : BatteryCondition.Normal
+			? lowest <= critical ? BatteryCondition.Critical : lowest <= low ? BatteryCondition.Caution : BatteryCondition.Normal
 			: BatteryCondition.Normal;
 	}
 

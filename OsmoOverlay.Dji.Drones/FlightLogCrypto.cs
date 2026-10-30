@@ -37,17 +37,23 @@ internal static class FlightLogCrypto
 	/// <summary>The 8 bytes a record of `recordType` is xored with, from the record's first byte (which is not part of its content).</summary>
 	public static byte[] XorKey(byte firstByte, byte recordType)
 	{
+		byte[] key = new byte[8];
+		WriteXorKey(key, firstByte, recordType);
+		return key;
+	}
+
+	private static void WriteXorKey(Span<byte> key, byte firstByte, byte recordType)
+	{
 		Span<byte> seed = stackalloc byte[8];
 		BinaryPrimitives.WriteUInt64LittleEndian(seed, unchecked(XorMagic * firstByte));
-		byte[] key = new byte[8];
 		BinaryPrimitives.WriteUInt64LittleEndian(key, Crc64((byte)(firstByte + recordType), seed));
-		return key;
 	}
 
 	/// <summary>The record's content xored in place; `content` is what follows the record's first byte.</summary>
 	public static void Xor(Span<byte> content, byte firstByte, byte recordType)
 	{
-		byte[] key = XorKey(firstByte, recordType);
+		Span<byte> key = stackalloc byte[8];
+		WriteXorKey(key, firstByte, recordType);
 		for (int i = 0; i < content.Length; i++) content[i] ^= key[i & 7];
 	}
 

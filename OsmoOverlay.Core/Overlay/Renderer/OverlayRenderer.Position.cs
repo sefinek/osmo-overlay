@@ -70,7 +70,7 @@ public sealed partial class OverlayRenderer
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
 		string urlTemplate = MapSources.UrlTemplate(mapElement.MapProviderId);
 		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		string? labelsUrlTemplate = MapSources.LabelsUrlTemplate(mapElement.MapProviderId);
+		string? labelsUrlTemplate = MapSources.LabelsUrlTemplate(mapElement.MapProviderId, showLabels: mapElement.ShowEsriLabels);
 		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor, labelsUrlTemplate);
 		_preparedMapKey = key;
 
@@ -129,7 +129,7 @@ public sealed partial class OverlayRenderer
 		if (layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
 			return false;
 		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		MapMosaicKey key = (MapSources.UrlTemplate(mapElement.MapProviderId), mapElement.MapZoom, maxFactor, MapSources.LabelsUrlTemplate(mapElement.MapProviderId));
+		MapMosaicKey key = (MapSources.UrlTemplate(mapElement.MapProviderId), mapElement.MapZoom, maxFactor, MapSources.LabelsUrlTemplate(mapElement.MapProviderId, showLabels: mapElement.ShowEsriLabels));
 		return _preparedMapKey != key;
 	}
 

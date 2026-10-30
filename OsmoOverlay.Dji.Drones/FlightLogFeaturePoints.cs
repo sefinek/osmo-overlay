@@ -9,7 +9,7 @@ internal static class FlightLogFeaturePoints
 	public const int Base = 1, Vision = 2, Waypoint = 3, Agriculture = 4, AirLink = 5, AfterSales = 6, DjiFlyCustom = 7, Plaintext = 8, FlightHub = 9,
 		Gimbal = 10, Rc = 11, Camera = 12, Battery = 13, FlySafe = 14, Security = 15;
 
-	public static readonly string[] Names =
+	private static readonly string[] Names =
 	[
 		"", "FR_Standardization_Feature_Base_1", "FR_Standardization_Feature_Vision_2", "FR_Standardization_Feature_Waypoint_3",
 		"FR_Standardization_Feature_Agriculture_4", "FR_Standardization_Feature_AirLink_5", "FR_Standardization_Feature_AfterSales_6",
@@ -17,6 +17,11 @@ internal static class FlightLogFeaturePoints
 		"FR_Standardization_Feature_Gimbal_10", "FR_Standardization_Feature_RC_11", "FR_Standardization_Feature_Camera_12",
 		"FR_Standardization_Feature_Battery_13", "FR_Standardization_Feature_FlySafe_14", "FR_Standardization_Feature_Security_15"
 	];
+
+	public static string Name(int featurePoint)
+	{
+		return Names[featurePoint is >= 1 and <= 15 ? featurePoint : Plaintext];
+	}
 
 	public static int FromName(string name)
 	{

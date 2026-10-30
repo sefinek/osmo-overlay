@@ -138,7 +138,7 @@ public partial class MainWindow
 		{
 			if (_closing) return;
 
-			TimeSpan position = _previewPosition;
+			TimeSpan position = TimeSpan.FromSeconds(PreviewTimeline.Value);
 			if (wasPlaying)
 			{
 				_previewPlayer.Play(position);

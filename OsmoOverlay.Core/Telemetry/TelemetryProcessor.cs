@@ -18,6 +18,15 @@ public sealed record GpsAnomaly(double Start, double End, bool Position, bool Sp
 
 public static class TelemetryProcessor
 {
+	/// <summary>Uncorrected accelerometer-derived frames for the current smoothing setting; cached summaries use no GPS smoothing.</summary>
+	public static IReadOnlyList<DerivedFrame> MeasuredFrames(FileSummary summary, bool smoothGps)
+	{
+		if (summary.TelemetryFrames is not { Count: > 0 }) return [];
+		return !smoothGps && summary.DerivedFrames is { } derived
+			? derived
+			: Process(summary.TelemetryFrames ?? [], summary.CameraFormat, smoothGps);
+	}
+
 	// Reference window for speed/heading/gradient, and the smoothing time constant for the on-screen
 	// G-force readout (roll/pitch: CameraTilt). All expressed in seconds (not sample count) so behavior
 	// stays consistent regardless of the camera's telemetry sampling rate.

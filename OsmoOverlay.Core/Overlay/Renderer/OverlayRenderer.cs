@@ -305,6 +305,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_firstReachingSeconds.Clear();
 		_arrivalSeconds.Clear();
 		_gpsAlerts = null;
+		_flightAlerts = null;
 		TrailSpeedPercentileKmh = trailSpeedPercentileKmh;
 		_trailSpeedScaleKmh = Math.Max(trailSpeedPercentileKmh, 5);
 		ClearProfiles();
@@ -340,6 +341,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_firstReachingSeconds.Clear();
 		_arrivalSeconds.Clear();
 		_gpsAlerts = null;
+		_flightAlerts = null;
 		TrailSpeedPercentileKmh = ComputeTrailSpeedPercentile(allFrames);
 		_trailSpeedScaleKmh = Math.Max(TrailSpeedPercentileKmh, 5);
 		_gMeterDeltas = GMeterDeltas.Compute(allFrames);
@@ -676,7 +678,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	private MapCredit? CreditOf(IReadOnlyList<MapWidgetElement> maps)
 	{
-		if (MapSources.Credit(maps.Select(m => m.MapProviderId)) is not { } text) return null;
+		if (MapSources.Credit(maps.Select(m => (m.MapProviderId, m.ShowEsriLabels))) is not { } text) return null;
 
 		bool required = maps.Any(m => MapSources.CreditRule(m.MapProviderId) == MapCreditRule.WhileMapVisible);
 		return new MapCredit(text, required);

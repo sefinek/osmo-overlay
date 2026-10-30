@@ -140,4 +140,41 @@ public sealed class ExternalTrackSyncTests
 		Assert.AreEqual(3, speed[2 * 32], 0.5);
 		Assert.IsTrue(double.IsNaN(speed[2 * 45]), "lost");
 	}
+
+	// The shake (per half second) of a 78 s walk with a camera and the speed of a recorder that dropped its fixes while the walker stood (a GoPro HERO12 sample;
+	// the recording really began 4.9 s before the track). A match on the track's first third alone must not outrank one that covers the whole of it.
+	private static readonly double[] WalkShake = [0.17, 0.24, 0.22, 0.15, 0.28, 0.13, 0.27, 0.32, 0.23, 0.11, 0.19, 0.24, 0.19, 0.18, 0.16, 0.23, 0.25, 0.21, 0.21, 0.17, 0.19, 0.19, 0.13, 0.16, 0.15, 0.16, 0.15, 0.13, 0.13, 0.13, 0.13, 0.09, 0.05, 0.01, 0.03, 0.03, 0.03, 0.01, 0.02, 0.02, 0.01, 0.01, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.02, 0.05, 0.02, 0.03, 0.02, 0.04, 0.03, 0.02, 0.02, 0.03, 0.05, 0.05, 0.04, 0.03, 0.03, 0.02, 0.02, 0.02, 0.03, 0.04, 0.04, 0.07, 0.02, 0.03, 0.04, 0.05, 0.08, 0.13, 0.13, 0.13, 0.18, 0.16, 0.21, 0.26, 0.22, 0.30, 0.29, 0.24, 0.25, 0.24, 0.26, 0.23, 0.19, 0.19, 0.17, 0.23, 0.18, 0.16, 0.12, 0.16, 0.13, 0.14, 0.17, 0.15, 0.11, 0.10, 0.12, 0.10, 0.16, 0.14, 0.18, 0.12, 0.14, 0.17, 0.09, 0.07, 0.08, 0.11, 0.08, 0.02, 0.03, 0.03, 0.02, 0.02, 0.01, 0.01, 0.01, 0.03, 0.03, 0.02, 0.02, 0.01, 0.04, 0.04, 0.03, 0.03, 0.02, 0.05, 0.03, 0.04, 0.04, 0.03, 0.03, 0.03, 0.03, 0.02, 0.02, 0.02, 0.02, 0.05, 0.02, 0.06, 0.01, 0.02, 0.07];
+
+	private static readonly double[] WalkSpeedBeforeGap = [1.7, 1.6, 1.3, 1.3, 1.0, 1.4, 1.4, 1.5, 1.4, 1.0, 1.2, 1.0, 1.4, 1.1, 1.3, 0.8, 1.0, 0.9, 1.1, 1.0, 1.0, 0.3, 0.1];
+	private static readonly double[] WalkSpeedAfterGap = [1.3, 1.1, 0.9, 1.1, 1.1, 1.1, 1.5, 0.9, 1.1, 1.0, 0.4, 0.5, 0.1];
+
+	[TestMethod]
+	public void Estimate_AMatchOverTheWholeTrackBeatsOneOverAThirdOfIt()
+	{
+		List<ExternalTrackPoint> points = [];
+		double latitude = 53.1;
+		for (int s = 0; s < WalkSpeedBeforeGap.Length; s++)
+		{
+			points.Add(new ExternalTrackPoint(TrackStart.AddSeconds(s), latitude, 18.9, 80, WalkSpeedBeforeGap[s]));
+			latitude += WalkSpeedBeforeGap[s] * 9e-6;
+		}
+
+		for (int s = 0; s < WalkSpeedAfterGap.Length; s++)
+		{
+			points.Add(new ExternalTrackPoint(TrackStart.AddSeconds(55 + s), latitude, 18.9, 80, WalkSpeedAfterGap[s]));
+			latitude += WalkSpeedAfterGap[s] * 9e-6;
+		}
+
+		var frames = new List<TelemetryFrame>();
+		for (int frame = 0; frame < WalkShake.Length * Fps / 2; frame++)
+		{
+			double shake = WalkShake[(int)(frame / Fps / 0.5)];
+			frames.Add(new TelemetryFrame(frame, frame / Fps, 0, 0, 0, null, 0, 0, 1 + (frame % 2 == 0 ? shake : -shake), HasGpsFix: false));
+		}
+
+		TrackSyncEstimate? estimate = ExternalTrackSync.Estimate(frames, Fps, new ExternalTrack(points));
+
+		Assert.IsNotNull(estimate);
+		Assert.AreEqual(4.9, (estimate.TrackTimeAtVideoStartUtc - TrackStart).TotalSeconds, 1);
+	}
 }

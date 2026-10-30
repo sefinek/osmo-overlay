@@ -36,6 +36,14 @@ public sealed class TrackSynchronizationTests
 	}
 
 	[TestMethod]
+	public void InverseSynchronizationIncludesDriftAndUnclippedAnchors()
+	{
+		var sync = new TrackSynchronization(new(10, T0), new(110, T0.AddSeconds(101)));
+		foreach (double seconds in new[] { -10.0, 0, 10, 60, 110, 200 })
+			Assert.AreEqual(seconds, sync.VideoSecondsAt(sync.At(seconds)), 1e-6);
+	}
+
+	[TestMethod]
 	public void InvalidOrReversedAnchorsAreRejected()
 	{
 		TrackSynchronization[] invalid =

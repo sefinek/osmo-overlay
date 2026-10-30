@@ -1,46 +1,65 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Gui;
 
 /// <summary>Live preview: opening/closing PreviewPlayer for a loaded file, its timeline (PreviewTimeline: scrubbing, GPS loss, cuts) and the frame display.</summary>
 public partial class MainWindow
 {
-	private async Task OpenPreviewAsync(FileSummary summary)
+	private async Task OpenPreviewPlayerAsync(FileSummary summary, TimeSpan position, IReadOnlyList<DerivedFrame>? frames = null,
+		ExternalTrackPlayback? trackPlayback = null)
+	{
+		_openedPreviewMaxWidth = ResolvePreviewMaxWidth(summary);
+		ShowQualityPicker();
+		double scale = Math.Min(1.0, _openedPreviewMaxWidth / (double)summary.Video.Width);
+		int width = Math.Max(2, (int)(summary.Video.Width * scale) & ~1);
+		int height = Math.Max(2, (int)(summary.Video.Height * scale) & ~1);
+		_previewFrameSize = new PixelSize(width, height);
+		ApplyPreviewLayout();
+		await _previewPlayer.OpenAsync(summary, width, height, OverlaySettingsStore.Load(), ShownLayout(), frames, position, trackPlayback);
+	}
+
+	private async Task OpenPreviewAsync(FileSummary summary, OverlayProject? project = null, TimeSpan? previewPosition = null)
 	{
 		ClosePreview();
 
 		try
 		{
-			_openedPreviewMaxWidth = ResolvePreviewMaxWidth(summary);
-			ShowQualityPicker();
-			double scale = Math.Min(1.0, (double)_openedPreviewMaxWidth / summary.Video.Width);
-			int previewWidth = (int)(summary.Video.Width * scale) & ~1;
-			int previewHeight = (int)(summary.Video.Height * scale) & ~1;
-
-			_previewFrameSize = new PixelSize(previewWidth, previewHeight);
-			ApplyPreviewLayout();
-
-			await _previewPlayer.OpenAsync(summary, previewWidth, previewHeight);
+			var openingTime = Stopwatch.StartNew();
 			LoadOverlayPresets();
+			if (project is not null)
+			{
+				await ApplyProjectPresetAsync(project);
+				ApplyProjectEdits(project, restorePosition: false);
+			}
+			OverlaySettings settings = OverlaySettingsStore.Load();
+			IReadOnlyList<DerivedFrame>? processedFrames = await Task.Run(() =>
+			{
+				IReadOnlyList<DerivedFrame>? measured = RecordingSpeeds(summary, settings.SmoothGpsMotion).Frames;
+				return measured is null ? null : OrientationTilt.Apply(SpeedCalibration.Apply(measured, settings.SpeedCorrectionPercent), summary.CameraFormat, settings.OrientationSource);
+			});
+			long preparationMs = openingTime.ElapsedMilliseconds;
+			TimeSpan position = previewPosition ?? TimeSpan.FromSeconds(Math.Clamp(project?.PreviewFrame ?? 0, 0, Math.Max(0, summary.TotalFrameCount - 1)) / summary.Video.Fps);
+			foreach (PreviewTimeline timeline in Timelines) timeline.Maximum = summary.TotalFrameCount / summary.Video.Fps;
+			await OpenPreviewPlayerAsync(summary, position, processedFrames);
+			long playerMs = openingTime.ElapsedMilliseconds - preparationMs;
 
-			foreach (PreviewTimeline timeline in Timelines) timeline.Maximum = _previewPlayer.Duration.TotalSeconds;
 			PreviewPlaceholder.IsVisible = false;
 			UpdatePreviewStatus();
 			TransportPanel.IsEnabled = true;
 			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
-			OverlaySettings settings = OverlaySettingsStore.Load();
 			MomentsEditor.Attach(summary.Video.Fps, SourceFrames,
-				summary.DerivedFrames is { } derived
-					? OrientationTilt.Apply(SpeedCalibration.Apply(derived, settings.SpeedCorrectionPercent), summary.CameraFormat, settings.OrientationSource)
-					: null,
+				processedFrames,
 				UnitSystem.Metric);
 			RefreshCutViews();
 			RefreshMoments();
@@ -57,6 +76,9 @@ public partial class MainWindow
 			foreach (PreviewTimeline timeline in Timelines) timeline.FlightEvents = flightEvents;
 			IReadOnlyList<TimelineFile> files = TimelineFiles(summary);
 			foreach (PreviewTimeline timeline in Timelines) timeline.Files = files;
+			RefreshLayers();
+			AppLogger.Info($"Preview UI: preparation {preparationMs} ms, player {playerMs} ms, " +
+			               $"editors and timelines {openingTime.ElapsedMilliseconds - preparationMs - playerMs} ms, total {openingTime.ElapsedMilliseconds} ms");
 		}
 		catch (Exception ex)
 		{
@@ -79,6 +101,7 @@ public partial class MainWindow
 
 	private void ClosePreview()
 	{
+		CloseFullTelemetry(false);
 		_previewPlayer.Close();
 		ShowPlayingState(false);
 		TransportPanel.IsEnabled = false;
@@ -161,6 +184,12 @@ public partial class MainWindow
 			_suppressTimelineEvent = false;
 		}
 
+		if (_fullTelemetry is not null)
+		{
+			_fullTelemetryPosition = position;
+			UpdatePreviewTimeText();
+			return;
+		}
 		_previewPosition = position;
 		_previewFrame = FrameAt(position.TotalSeconds);
 		UpdateCutScrim(position);
@@ -212,9 +241,10 @@ public partial class MainWindow
 	private void ShowQualityPicker()
 	{
 		List<PreviewQualityOption> options = [.. PreviewQualityOptions];
-		if (_previewMaxWidth == AutoPreviewWidth && _openedPreviewMaxWidth > 0)
+		int openedWidth = _openedPreviewMaxWidth;
+		if (_previewMaxWidth == AutoPreviewWidth && openedWidth > 0)
 		{
-			string picked = _openedPreviewMaxWidth == int.MaxValue ? Strings.Preview_QualityFull : $"{_openedPreviewMaxWidth} px";
+			string picked = openedWidth == int.MaxValue ? Strings.Preview_QualityFull : $"{openedWidth} px";
 			options[0] = new PreviewQualityOption($"{Strings.Main_Auto} · {picked}", AutoPreviewWidth);
 		}
 
@@ -289,6 +319,20 @@ public partial class MainWindow
 	private async Task ReopenPreviewAsync()
 	{
 		if (_summary is not { } summary || _phase != UiPhase.SummaryReady) return;
+		if (_fullTelemetry is { } playback)
+		{
+			bool playing = _previewPlayer.IsPlaying;
+			OverlaySettings settings = OverlaySettingsStore.Load();
+			if (playback.SmoothGpsMotion != settings.SmoothGpsMotion || playback.SpeedCorrectionPercent != settings.SpeedCorrectionPercent)
+			{
+				ExternalTrackPlayback updated = await Task.Run(() => ExternalTrackPreview.Prepare(playback.Track, playback.Synchronization, playback.RecordingSeconds, settings));
+				if (_fullTelemetry != playback) return;
+				_fullTelemetry = playback = updated;
+			}
+			await OpenPreviewPlayerAsync(summary, _fullTelemetryPosition, trackPlayback: playback);
+			if (playing && _fullTelemetry == playback) _previewPlayer.Play(_fullTelemetryPosition);
+			return;
+		}
 
 		double position = PreviewTimeline.Value;
 		await OpenPreviewAsync(summary);
@@ -352,17 +396,20 @@ public partial class MainWindow
 	private void UpdatePreviewTimeText()
 	{
 		TimeSpan duration = _previewPlayer.Duration;
+		long totalFrames = _fullTelemetry is null ? SourceFrames : (long)Math.Ceiling(duration.TotalSeconds * _summary!.Video.Fps);
 		if (_timeEndText is not { } end || end.Format != _timeFormat || end.Duration != duration || !ReferenceEquals(end.Summary, _summary))
-			_timeEndText = end = (_timeFormat, duration, _summary, FormatTime(duration, SourceFrames));
+			_timeEndText = end = (_timeFormat, duration, _summary, FormatTime(duration, totalFrames));
 
-		PreviewTimeText.Text = $"{FormatTime(_previewPosition, _previewFrame)} / {end.Text}";
+		TimeSpan position = _fullTelemetry is null ? _previewPosition : _fullTelemetryPosition;
+		long frame = _fullTelemetry is null ? _previewFrame : PreviewFrames.IndexAt(position.TotalSeconds, _summary!.Video.Fps);
+		PreviewTimeText.Text = $"{FormatTime(position, frame)} / {end.Text}";
 	}
 
 	private string FormatTime(TimeSpan time, long frame)
 	{
 		return _summary is null
 			? PreviewTimeFormats.Format(PreviewTimeFormat.Seconds, time, 0, 0, null)
-			: PreviewTimeFormats.Format(_timeFormat, time, frame, _summary.Video.Fps, _summary.Video.Timecode);
+			: PreviewTimeFormats.Format(_timeFormat, time, frame, _summary.Video.Fps, _fullTelemetry is null ? _summary.Video.Timecode : null);
 	}
 
 	/// <summary>

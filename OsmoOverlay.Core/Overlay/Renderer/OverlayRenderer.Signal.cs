@@ -79,9 +79,15 @@ public sealed partial class OverlayRenderer
 		if (!element.ShowBars || links.Count == 0) return;
 
 		double[] known = [.. links.Where(l => l.Percent is not null).Select(l => l.Percent!.Value)];
-		float bottom = OverlayElementBounds.StatValueBaselineY;
-		DrawSignalBars(canvas, element, OverlayElementBounds.SignalTextX + widest + OverlayElementBounds.SignalBarsGap, bottom, known.Length > 0 ? BarsOf(known.Average()) : null,
-			known.Length > 0 ? SignalLevelColor(element, known.Average(), SignalGoodColor) : null);
+		float bottom = OverlayElementBounds.StatValueBaselineY, barsLeft = OverlayElementBounds.SignalTextX + widest + OverlayElementBounds.SignalBarsGap;
+		if (known.Length == 0)
+		{
+			DrawSignalBars(canvas, element, barsLeft, bottom, null);
+			return;
+		}
+
+		double average = known.Average();
+		DrawSignalBars(canvas, element, barsLeft, bottom, BarsOf(average), SignalLevelColor(element, average, SignalGoodColor));
 	}
 
 	/// <summary>An arrow up (uplink) or down (downlink), as tall as the line's capitals, left of the percent.</summary>

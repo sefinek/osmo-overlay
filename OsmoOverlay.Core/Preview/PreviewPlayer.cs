@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Localization;
@@ -6,6 +7,7 @@ using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 using SkiaSharp;
 
 namespace OsmoOverlay.Core.Preview;
@@ -113,30 +115,32 @@ public sealed class PreviewPlayer : IDisposable
 	/// <param name="processedFrames">Optional telemetry already processed with the supplied settings, on the recording's timeline.</param>
 	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight,
 		OverlaySettings? settingsOverride = null, IReadOnlyList<OverlayElement>? layoutOverride = null,
-		IReadOnlyList<DerivedFrame>? processedFrames = null)
+		IReadOnlyList<DerivedFrame>? processedFrames = null, TimeSpan? initialPosition = null, ExternalTrackPlayback? trackPlayback = null)
 	{
+		var openingTime = Stopwatch.StartNew();
 		Close();
 		int generation = _openGeneration;
 
 		// A recording without telemetry (not from a known camera) only plays: stand-in frames, no overlay.
 		bool plain = summary.TelemetryFrames is not { Count: > 0 };
-		IReadOnlyList<TelemetryFrame> rawFrames = plain ? PlainRecordingFrames.Create(summary.DurationSeconds) : summary.TelemetryFrames!;
+		IReadOnlyList<TelemetryFrame> rawFrames = trackPlayback?.RawFrames ?? (plain ? PlainRecordingFrames.Create(summary.DurationSeconds) : summary.TelemetryFrames!);
 
 		// Recomputed rather than taken from summary.DerivedFrames, so a changed SmoothGpsMotion applies on every open.
 		OverlaySettings settings = settingsOverride ?? OverlaySettingsStore.Load();
-		ICameraFormat? camera = summary.CameraFormat;
-		IReadOnlyList<DerivedFrame> recordingFrames = processedFrames ?? await Task.Run(() =>
+		ICameraFormat? camera = trackPlayback is null ? summary.CameraFormat : null;
+		IReadOnlyList<DerivedFrame> recordingFrames = trackPlayback?.DerivedFrames ?? processedFrames ?? await Task.Run(() =>
 			TelemetryProcessor.Process(rawFrames, camera, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource));
 		if (generation != _openGeneration) return;
+		long telemetryMs = openingTime.ElapsedMilliseconds;
 		var availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, camera);
 		List<PlaybackSegment> segments = PlaybackSegment.Of(summary);
-		var reframer = Reframer.For(summary.Fisheye, rawFrames, camera, _reframe);
+		var reframer = Reframer.For(summary.Fisheye, summary.TelemetryFrames, summary.CameraFormat, _reframe);
 		var pool = new FrameBufferPool(PooledFrames);
 
 		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread. The picture's and
 		// the sound's don't depend on each other, so they open at the same time.
-		var videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer));
-		var audioOpen = Task.Run(() => OpenAudio(segments));
+		var videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer, trackPlayback));
+		var audioOpen = Task.Run(() => trackPlayback is null ? OpenAudio(segments) : (null, (AudioOutput?)null));
 		try
 		{
 			await Task.WhenAll(videoOpen, audioOpen);
@@ -164,6 +168,7 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		AppLogger.Info($"Preview decoder: {video.DecoderDescription}");
+		long sourcesMs = openingTime.ElapsedMilliseconds - telemetryMs;
 		audioOutput?.SetGain(_audioGain);
 
 		(int width, int height) = (summary.Video.Width, summary.Video.Height);
@@ -176,20 +181,20 @@ public sealed class PreviewPlayer : IDisposable
 			layout = availability.Apply(presets.First(p => p.Id == activeId).Elements);
 		}
 
-		var routeIntro = RouteIntroSettings.ForRecording(settings, availability.GpsFix, camera);
+		var routeIntro = trackPlayback is null ? RouteIntroSettings.ForRecording(settings, availability.GpsFix, camera) : RouteIntroSettings.Disabled;
 		// Building it maps and summarizes the whole recording's telemetry - off the UI thread, handed back through the await.
-		OutputTimeline? outputTimeline = _outputTimeline;
+		OutputTimeline? outputTimeline = trackPlayback is null ? _outputTimeline : null;
 		bool showOverlay = _showOverlay;
 		OverlayCompositor compositor;
 		try
 		{
 			compositor = await Task.Run(() => new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
-					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain, summary.CameraModel,
+					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain && trackPlayback is null, trackPlayback?.Track.DeviceName ?? summary.CameraModel,
 					summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, outputTimeline))
 				{
 					DrawShadows = settings.PreviewDrawsShadows
 				},
-				recordingFrames, summary.TotalFrameCount / summary.Video.Fps, availability, outputTimeline, showOverlay, pool, settings.SpeedCorrectionPercent)
+				recordingFrames, trackPlayback?.DurationSeconds ?? summary.TotalFrameCount / summary.Video.Fps, availability, outputTimeline, showOverlay, pool, settings.SpeedCorrectionPercent)
 			{
 				SnapshotShadows = !settings.DisableShadows
 			});
@@ -212,13 +217,14 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		var recording = new OpenRecording(video, audioSource, audioOutput, pool, compositor, segments, width, height, summary.Video.Fps,
-			routeIntro, reframer);
+			routeIntro, reframer, trackPlayback);
 		_recording = recording;
+		long compositorMs = openingTime.ElapsedMilliseconds - telemetryMs - sourcesMs;
 
 		ComposedPreviewFrame? first;
 		try
 		{
-			first = await Task.Run(() => DecodeStill(recording, TimeSpan.Zero, SeekAccuracy.Exact, CancellationToken.None));
+			first = await Task.Run(() => DecodeStill(recording, initialPosition ?? TimeSpan.Zero, SeekAccuracy.Exact, CancellationToken.None));
 		}
 		catch (ObjectDisposedException) when (generation != _openGeneration)
 		{
@@ -227,6 +233,8 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		PublishStill(recording, first);
+		AppLogger.Info($"Preview open: telemetry {telemetryMs} ms, media sources {sourcesMs} ms, compositor {compositorMs} ms, " +
+		               $"first frame {openingTime.ElapsedMilliseconds - telemetryMs - sourcesMs - compositorMs} ms, total {openingTime.ElapsedMilliseconds} ms");
 
 		// Map and route-intro tiles are fetched in the background, not awaited here: a slow or unreachable tile server
 		// would otherwise hold up even the first frame. The widgets draw their placeholder until the tiles land.
@@ -325,7 +333,8 @@ public sealed class PreviewPlayer : IDisposable
 		// frame on screen again (StopSession).
 		recording.Compositor.ClearStill();
 
-		var plan = PlaybackPlan.For(_outputTimeline, fromPosition, recording.Video.Duration, Loop, LoopRange);
+		var plan = PlaybackPlan.For(recording.TrackPlayback is null ? _outputTimeline : null, fromPosition, recording.Video.Duration, Loop,
+			recording.TrackPlayback is null ? LoopRange : null);
 		var session = new PlaybackSession(recording.Video, recording.AudioSource, recording.AudioOutput, recording.Compositor,
 			recording.Pool, plan, PlaybackRate, Frames, () => Volatile.Read(ref _volume),
 			recording.AudioSource is { } audio
@@ -430,6 +439,7 @@ public sealed class PreviewPlayer : IDisposable
 		Pause();
 		_outputTimeline = timeline;
 		if (_recording is not { } recording) return;
+		if (recording.TrackPlayback is not null) return;
 
 		// Remapping a long recording's telemetry takes a while, so it runs off the UI thread - one at a time and in order, and a request
 		// a newer one has already replaced is skipped (the newer one applies its timeline anyway).
@@ -604,8 +614,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		return await Task.Run(() =>
 		{
-			using var source = new LibavVideoSource(recording.Segments, recording.Fps, recording.Width, recording.Height,
-				recording.Reframer is { } reframer ? reframer with { View = _reframe } : null);
+			using var source = new LibavVideoSource(recording.Segments, recording.Fps, recording.Width, recording.Height, null,
+				recording.Reframer is { } reframer ? reframer with { View = _reframe } : null, recording.TrackPlayback);
 			VideoFrame frame = source.GetFrame(position, SeekAccuracy.Exact, CancellationToken.None)
 			                   ?? throw new InvalidOperationException("The frame couldn't be decoded.");
 
@@ -845,8 +855,9 @@ public sealed class PreviewPlayer : IDisposable
 		int height,
 		double fps,
 		RouteIntroSettings routeIntro,
-		Reframer? reframer) : IDisposable
+		Reframer? reframer, ExternalTrackPlayback? trackPlayback = null) : IDisposable
 	{
+		public ExternalTrackPlayback? TrackPlayback { get; } = trackPlayback;
 		public LibavVideoSource Video { get; } = video;
 
 		// Both null when the recording has no audio track or there's no playback device - playback is then silent.

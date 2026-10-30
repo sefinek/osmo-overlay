@@ -52,12 +52,12 @@ public sealed class DjiFlightLogFormat : ITrackFormat
 		string?[] folders = [Path.GetDirectoryName(recordingPath), PhoneFlightLogs.CacheFolder];
 		string? best = null;
 		DateTime bestStart = DateTime.MinValue;
-		foreach (string candidate in folders.Where(f => f is not null && Directory.Exists(f)).Distinct().SelectMany(f => Directory.EnumerateFiles(f!, "FlightRecord_*.txt")))
+		foreach (string candidate in folders.Where(f => f is not null && Directory.Exists(f)).Distinct().SelectMany(f => Directory.EnumerateFiles(f!, "*.txt")).Where(c => PhoneFlightLogs.IsLogName(Path.GetFileName(c))))
 		{
-			FlightLog log;
+			FlightLogHeader log;
 			try
 			{
-				log = FlightLog.Read(candidate);
+				log = FlightLog.ReadHeader(candidate);
 			}
 			catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
 			{
@@ -94,21 +94,21 @@ public sealed class DjiFlightLogFormat : ITrackFormat
 
 		if (points.Count < 2) throw new InvalidDataException(CoreStrings.DjiLog_NoPositions);
 		AppLogger.Info($"DJI flight log: version {log.Version}, {data.Samples.Count} samples, {points.Count} with a fix, {data.Recordings.Count} recording(s) of the camera");
-		List<ExternalTrackEvent> events = [.. (data.Events ?? []).Select(e => new ExternalTrackEvent(start.AddSeconds(e.Seconds), e.Event))];
-		if (data.Home is { } takeOff && points.Count > 0 && events.Any(e => e.Event.Kind == FlightEventKind.MotorsOff))
+		List<ExternalTrackEvent> events = [.. data.Events.Select(e => new ExternalTrackEvent(start.AddSeconds(e.Seconds), e.Event))];
+		if (data.Home is { } takeOff && events.LastOrDefault(e => e.Event.Kind == FlightEventKind.MotorsOff) is { } motorsOff)
 		{
 			ExternalTrackPoint last = points[^1];
 			double away = TelemetryMath.HaversineMeters(takeOff.Latitude, takeOff.Longitude, last.Latitude, last.Longitude);
-			events.Add(new ExternalTrackEvent(events.Last(e => e.Event.Kind == FlightEventKind.MotorsOff).Utc, new FlightEvent(FlightEventKind.FinalPosition, Value: Math.Round(away, 1))));
+			events.Add(new ExternalTrackEvent(motorsOff.Utc, new FlightEvent(FlightEventKind.FinalPosition, Value: Math.Round(away, 1))));
 		}
 
 		IEnumerable<ExternalTrackRecording> recordings = data.Recordings.Select(r => new ExternalTrackRecording(start.AddSeconds(r.StartSeconds), start.AddSeconds(r.EndSeconds)));
 		return new ExternalTrack(points, recordings: recordings,
 			home: data.Home is { } home ? new ExternalTrackHome(home.Latitude, home.Longitude) : null,
-			droneBatteries: (data.Batteries ?? []).Select(b => new ExternalDroneBatteryReading(start.AddSeconds(b.Seconds), b.Battery)),
+			droneBatteries: data.Batteries.Select(b => new ExternalDroneBatteryReading(start.AddSeconds(b.Seconds), b.Battery)),
 			events: events,
-			droneSignals: (data.Signals ?? []).Select(r => new ExternalDroneSignalReading(start.AddSeconds(r.Seconds), r.Signal)),
+			droneSignals: data.Signals.Select(r => new ExternalDroneSignalReading(start.AddSeconds(r.Seconds), r.Signal)),
 			deviceName: data.AircraftName,
-			droneSticks: (data.Sticks ?? []).Select(r => new ExternalDroneSticksReading(start.AddSeconds(r.Seconds), r.Sticks)));
+			droneSticks: data.Sticks.Select(r => new ExternalDroneSticksReading(start.AddSeconds(r.Seconds), r.Sticks)));
 	}
 }

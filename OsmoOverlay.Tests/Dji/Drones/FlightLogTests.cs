@@ -282,4 +282,29 @@ public sealed class FlightLogTests
 		Assert.AreEqual(FlightLogFeaturePoints.Camera, FlightLogFeaturePoints.FromRecordType(25, 14));
 		Assert.AreEqual(FlightLogFeaturePoints.Plaintext, FlightLogFeaturePoints.FromRecordType(KeyStorage, 14));
 	}
+
+	[TestMethod]
+	[DataRow(12)]
+	[DataRow(14)]
+	public void ReadHeader_GivesTheSameStartAndTotalsAsParse(int version)
+	{
+		var builder = new FlightLogBuilder(version, Started) { DurationSeconds = 120 };
+		builder.Add(Osd, new byte[60]);
+		byte[] file = builder.Build();
+		string path = Path.Combine(Path.GetTempPath(), $"FlightRecord_{Guid.NewGuid():N}.txt");
+		File.WriteAllBytes(path, file);
+		try
+		{
+			FlightLog log = FlightLog.Parse(file);
+			FlightLogHeader header = FlightLog.ReadHeader(path);
+
+			Assert.AreEqual(log.StartedUtc, header.StartedUtc);
+			Assert.AreEqual(log.Totals, header.Totals);
+			Assert.IsNotNull(header.StartedUtc);
+		}
+		finally
+		{
+			File.Delete(path);
+		}
+	}
 }

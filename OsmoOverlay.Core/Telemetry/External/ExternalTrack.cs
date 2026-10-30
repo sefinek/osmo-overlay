@@ -128,65 +128,29 @@ public sealed class ExternalTrack
 	public IReadOnlyList<ExternalDroneSticksReading> DroneSticks { get; }
 
 	/// <summary>The latest stick reading at or before `utc`, held until the track's end.</summary>
-	public DroneSticks? DroneSticksAt(DateTime utc)
-	{
-		if (utc < StartUtc || utc > EndUtc) return null;
-
-		int low = 0, high = DroneSticks.Count;
-		while (low < high)
-		{
-			int middle = low + (high - low) / 2;
-			if (DroneSticks[middle].Utc <= utc) low = middle + 1;
-			else high = middle;
-		}
-
-		return low > 0 ? DroneSticks[low - 1].Sticks : null;
-	}
+	public DroneSticks? DroneSticksAt(DateTime utc) => LatestAt(DroneSticks, r => r.Utc, utc)?.Sticks;
 
 	/// <summary>The latest radio link reading at or before `utc`, held until the track's end.</summary>
-	public DroneSignal? DroneSignalAt(DateTime utc)
-	{
-		if (utc < StartUtc || utc > EndUtc) return null;
-
-		int low = 0, high = DroneSignals.Count;
-		while (low < high)
-		{
-			int middle = low + (high - low) / 2;
-			if (DroneSignals[middle].Utc <= utc) low = middle + 1;
-			else high = middle;
-		}
-
-		return low > 0 ? DroneSignals[low - 1].Signal : null;
-	}
+	public DroneSignal? DroneSignalAt(DateTime utc) => LatestAt(DroneSignals, r => r.Utc, utc)?.Signal;
 
 	/// <summary>The latest drone battery reading at or before `utc`, held until the track's end.</summary>
-	public DroneBattery? DroneBatteryAt(DateTime utc)
+	public DroneBattery? DroneBatteryAt(DateTime utc) => LatestAt(DroneBatteries, r => r.Utc, utc)?.Battery;
+
+	public double? BatteryAt(DateTime utc) => LatestAt(Batteries, r => r.Utc, utc)?.Percent;
+
+	private T? LatestAt<T>(IReadOnlyList<T> readings, Func<T, DateTime> utcOf, DateTime utc) where T : class
 	{
 		if (utc < StartUtc || utc > EndUtc) return null;
 
-		int low = 0, high = DroneBatteries.Count;
+		int low = 0, high = readings.Count;
 		while (low < high)
 		{
 			int middle = low + (high - low) / 2;
-			if (DroneBatteries[middle].Utc <= utc) low = middle + 1;
+			if (utcOf(readings[middle]) <= utc) low = middle + 1;
 			else high = middle;
 		}
 
-		return low > 0 ? DroneBatteries[low - 1].Battery : null;
-	}
-
-	public double? BatteryAt(DateTime utc)
-	{
-		if (utc < StartUtc || utc > EndUtc) return null;
-		int low = 0, high = Batteries.Count;
-		while (low < high)
-		{
-			int middle = low + (high - low) / 2;
-			if (Batteries[middle].Utc <= utc) low = middle + 1;
-			else high = middle;
-		}
-
-		return low > 0 ? Batteries[low - 1].Percent : null;
+		return low > 0 ? readings[low - 1] : null;
 	}
 
 	/// <summary>The time between two fixes from which the device is taken to have written nothing.</summary>

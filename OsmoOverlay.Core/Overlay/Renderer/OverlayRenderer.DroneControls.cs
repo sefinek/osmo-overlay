@@ -23,6 +23,8 @@ public sealed partial class OverlayRenderer
 	private const double HorizonPitchSpan = 40;
 	private const double OrientationViewElevationDegrees = 32;
 
+	private static readonly (double X, double Y)[] Rotors = [(-1, 1), (1, 1), (-1, -1), (1, -1)];
+
 	private readonly SKPaint _droneControlPaint = new() { IsAntialias = true, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
 
 	internal static SKColor StickColor(double x, double y)
@@ -119,13 +121,15 @@ public sealed partial class OverlayRenderer
 		double elevation = AngleMath.DegToRad(OrientationViewElevationDegrees);
 		(double sinE, double cosE) = (Math.Sin(elevation), Math.Cos(elevation));
 		float scale = radius * 0.88f;
+		(double sinR, double cosR) = Math.SinCos(AngleMath.DegToRad(attitude.RollDegrees));
+		(double sinP, double cosP) = Math.SinCos(AngleMath.DegToRad(attitude.PitchDegrees));
+		(double sinY, double cosY) = Math.SinCos(AngleMath.DegToRad(attitude.YawDegrees));
 
 		(double X, double Y, double Z) Place((double X, double Y, double Z) local)
 		{
-			double roll = AngleMath.DegToRad(attitude.RollDegrees), pitch = AngleMath.DegToRad(attitude.PitchDegrees), yaw = AngleMath.DegToRad(attitude.YawDegrees);
-			double x = local.X * Math.Cos(roll) + local.Z * Math.Sin(roll), z = -local.X * Math.Sin(roll) + local.Z * Math.Cos(roll), y = local.Y;
-			double y2 = y * Math.Cos(pitch) - z * Math.Sin(pitch), z2 = y * Math.Sin(pitch) + z * Math.Cos(pitch);
-			return (x * Math.Cos(yaw) + y2 * Math.Sin(yaw), -x * Math.Sin(yaw) + y2 * Math.Cos(yaw), z2);
+			double x = local.X * cosR + local.Z * sinR, z = -local.X * sinR + local.Z * cosR, y = local.Y;
+			double y2 = y * cosP - z * sinP, z2 = y * sinP + z * cosP;
+			return (x * cosY + y2 * sinY, -x * sinY + y2 * cosY, z2);
 		}
 
 		SKPoint Project((double X, double Y, double Z) world)
@@ -140,7 +144,7 @@ public sealed partial class OverlayRenderer
 
 		const double arm = 0.62, rotor = 0.34;
 		var parts = new List<(double Nearness, Action Draw)>();
-		foreach ((double sx, double sy) in new[] { (-1.0, 1.0), (1.0, 1.0), (-1.0, -1.0), (1.0, -1.0) })
+		foreach ((double sx, double sy) in Rotors)
 		{
 			(double X, double Y, double Z) tip = Place((sx * arm, sy * arm, 0.06));
 			bool front = sy > 0;

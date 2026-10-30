@@ -13,14 +13,14 @@ namespace OsmoOverlay.Dji.Drones;
 /// </summary>
 internal sealed class FlightEventTracker
 {
-	private const int ModeOffset = 30, FlagsOffset = 32;
-	private const byte ModeMask = 0x7F, MotorsOnFlag = 0x04;
+	// Type 4: five u16 (aileron, elevator, throttle, rudder, gimbal dial) from 364 to 1684 around 1024, as the remote's channels run.
+	private const double StickCenter = 1024, StickRange = 660;
+	private const int StickMinRaw = 200, StickMaxRaw = 1850;
 
-	// Cell voltage, lowest to highest severity: each is announced once on the way down and again after the voltage has come back 0.1 V above it.
+	// Flight Reader comparison: each downward crossing of the lowest cell triggers an alert, including equality. These are not DJI firmware limits.
 	private static readonly (double Volts, FlightEventKind Kind)[] VoltageSteps =
-		[(DroneBatteryHealth.LowCellVolts, FlightEventKind.LowVoltage), (3.35, FlightEventKind.LowVoltage), (DroneBatteryHealth.CriticalCellVolts, FlightEventKind.CriticalVoltage)];
+		[(DroneBatteryHealth.LowCellVolts, FlightEventKind.LowVoltage), (DroneBatteryHealth.CriticalCellVolts, FlightEventKind.CriticalVoltage)];
 
-	private const double VoltageRearm = 0.1;
 	private const int BatteryStep = 10;
 
 	// A message code from this one up is the app's own notice (the maximum altitude), not something to be careful about.
@@ -40,9 +40,6 @@ internal sealed class FlightEventTracker
 	public List<FlightSignalSample> Signals { get; } = [];
 	public List<FlightSticksSample> Sticks { get; } = [];
 
-	// Type 4: five u16 (aileron, elevator, throttle, rudder, gimbal dial) from 364 to 1684 around 1024, as the remote's channels run.
-	private const double StickCenter = 1024, StickRange = 660;
-
 	/// <summary>The sticks in the remote's order; a record that holds anything outside the channels' range is not a reading.</summary>
 	public void OnSticks(byte[] c, double seconds)
 	{
@@ -50,7 +47,7 @@ internal sealed class FlightEventTracker
 		for (int i = 0; i < channels.Length; i++)
 		{
 			int raw = BinaryPrimitives.ReadUInt16LittleEndian(c.AsSpan(i * 2));
-			if (raw is < 200 or > 1850) return;
+			if (raw is < StickMinRaw or > StickMaxRaw) return;
 
 			channels[i] = Math.Clamp((raw - StickCenter) / StickRange, -1, 1);
 		}
@@ -60,11 +57,11 @@ internal sealed class FlightEventTracker
 
 	public void OnOsd(byte[] c, double seconds)
 	{
-		int mode = c[ModeOffset] & ModeMask;
+		int mode = OsdLayout.FlightMode(c);
 		if (_mode != mode) Events.Add(new FlightLogEvent(seconds, new FlightEvent(FlightEventKind.FlightMode, FlightModes.Name(mode), mode)));
 		_mode = mode;
 
-		bool motors = (c[FlagsOffset] & MotorsOnFlag) != 0;
+		bool motors = OsdLayout.MotorsOn(c);
 		if (_motorsOn is { } before && before != motors)
 		{
 			Events.Add(new FlightLogEvent(seconds, new FlightEvent(motors ? FlightEventKind.MotorsOn : FlightEventKind.MotorsOff)));
@@ -93,6 +90,7 @@ internal sealed class FlightEventTracker
 	/// <summary>Type 22: record 2 holds the pack (voltage, current, charge, temperature), record 3 the cells.</summary>
 	public void OnBattery(byte[] c, double seconds)
 	{
+		bool cellsUpdated = false;
 		if (c.Length >= 22 && c[0] == 2 && c[21] <= 100)
 		{
 			_voltage = BinaryPrimitives.ReadInt32LittleEndian(c.AsSpan(2)) / 1000.0;
@@ -104,7 +102,10 @@ internal sealed class FlightEventTracker
 		else if (c.Length >= 3 && c[0] == 3)
 		{
 			int count = Math.Min(c[2], (c.Length - 3) / 2);
-			_cells = [.. Enumerable.Range(0, count).Select(i => BinaryPrimitives.ReadUInt16LittleEndian(c.AsSpan(3 + i * 2)) / 1000.0)];
+			double[] cells = new double[count];
+			for (int i = 0; i < count; i++) cells[i] = BinaryPrimitives.ReadUInt16LittleEndian(c.AsSpan(3 + i * 2)) / 1000.0;
+			_cells = cells;
+			cellsUpdated = true;
 		}
 		else return;
 
@@ -120,7 +121,7 @@ internal sealed class FlightEventTracker
 			_nextLevel = level - BatteryStep >= 0 ? level - BatteryStep : null;
 		}
 
-		if (battery.MinCellVoltage is { } cell) CheckVoltage(cell, seconds);
+		if (cellsUpdated && battery.MinCellVoltage is { } cell) CheckVoltage(cell, seconds);
 	}
 
 	/// <summary>
@@ -168,8 +169,9 @@ internal sealed class FlightEventTracker
 		int crossed = -1;
 		for (int i = 0; i < VoltageSteps.Length; i++)
 		{
-			if (cell > VoltageSteps[i].Volts + VoltageRearm) _disarmed[i] = false;
-			else if (cell < VoltageSteps[i].Volts && !_disarmed[i])
+			bool low = cell <= VoltageSteps[i].Volts;
+			if (!low) _disarmed[i] = false;
+			if (low && !_disarmed[i])
 			{
 				_disarmed[i] = true;
 				crossed = i;
@@ -258,29 +260,5 @@ internal sealed class FlightEventTracker
 		}
 
 		return false;
-	}
-}
-
-/// <summary>
-///     The flight mode's name by the OSD's state number. 6, 10, 31, 33 and 41 were checked against a real log; the rest come from
-///     the open dji-log-parser and are not yet confirmed.
-/// </summary>
-internal static class FlightModes
-{
-	public static string Name(int mode)
-	{
-		return mode switch
-		{
-			1 => "ATTI",
-			6 => "P-GPS",
-			10 => "Manual Takeoff",
-			11 => "Auto Takeoff",
-			12 => "Auto Landing",
-			15 => "Go Home",
-			31 => "Sport",
-			33 => "Confirm Landing",
-			41 => "Starting Motors",
-			_ => "Mode " + mode.ToString(CultureInfo.InvariantCulture)
-		};
 	}
 }

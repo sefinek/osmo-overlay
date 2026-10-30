@@ -23,6 +23,9 @@ public sealed record FlightSample(
 /// <summary>The flight's totals from the log's details: distance flown, time, the greatest height and horizontal speed.</summary>
 public sealed record FlightTotals(double DistanceKilometers, double DurationSeconds, double MaxHeightMeters, double MaxSpeedMs);
 
+/// <summary>A flight log's start and totals from its details block alone (FlightLog.ReadHeader).</summary>
+public sealed record FlightLogHeader(DateTime? StartedUtc, FlightTotals? Totals);
+
 /// <summary>The battery as the log last said it, `Seconds` on the same clock as FlightSample.Seconds.</summary>
 public sealed record FlightBatterySample(double Seconds, DroneBattery Battery);
 
@@ -46,6 +49,6 @@ public readonly record struct FlightRecording(double StartSeconds, double EndSec
 ///     (the middle of what its time stamps say) - null when the log has none. That clock is not always right; a recording's
 ///     place in the flight is more reliably told by `Recordings`.
 /// </summary>
-public sealed record FlightLogData(IReadOnlyList<FlightSample> Samples, IReadOnlyList<FlightRecording> Recordings, DateTime? ClockUtc, FlightHome? Home = null,
-	IReadOnlyList<FlightBatterySample>? Batteries = null, IReadOnlyList<FlightLogEvent>? Events = null, IReadOnlyList<FlightSignalSample>? Signals = null,
-	string? AircraftName = null, IReadOnlyList<FlightSticksSample>? Sticks = null);
+public sealed record FlightLogData(IReadOnlyList<FlightSample> Samples, IReadOnlyList<FlightRecording> Recordings, DateTime? ClockUtc, FlightHome? Home,
+	IReadOnlyList<FlightBatterySample> Batteries, IReadOnlyList<FlightLogEvent> Events, IReadOnlyList<FlightSignalSample> Signals,
+	string? AircraftName, IReadOnlyList<FlightSticksSample> Sticks);

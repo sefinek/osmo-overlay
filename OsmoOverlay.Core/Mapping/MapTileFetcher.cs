@@ -18,6 +18,8 @@ namespace OsmoOverlay.Core.Mapping;
 public static class MapTileFetcher
 {
 	private static readonly HttpClient Http = CreateHttpClient();
+	private static readonly MapTileHttpClient Downloads = new(Http, onCooldown: (host, cooldown) =>
+		AppLogger.Warn(string.Format(CoreStrings.Map_RateLimited, host, Math.Ceiling(cooldown.TotalSeconds))));
 
 	private static readonly string CacheDir = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OsmoOverlay", "map-tiles");
@@ -36,6 +38,9 @@ public static class MapTileFetcher
 	/// <summary>Null after MaxFetchAttempts failures (offline, 404, timeout, corrupt image) - callers draw a placeholder instead of failing the render.</summary>
 	public static async Task<SKBitmap?> FetchAsync(string urlTemplate, int zoom, int x, int y, TimeSpan? cacheMaxAge, CancellationToken ct)
 	{
+		ct.ThrowIfCancellationRequested();
+		if (!WebMercator.TryNormalizeTile(zoom, x, y, out int wrappedX)) return null;
+		x = wrappedX;
 		bool store = cacheMaxAge != TimeSpan.Zero;
 		string cachePath = CachePath(urlTemplate, zoom, x, y);
 		var cacheFile = new FileInfo(cachePath);
@@ -78,7 +83,7 @@ public static class MapTileFetcher
 			{
 				if (attempt == MaxFetchAttempts || !IsTransient(ex))
 				{
-					AppLogger.Warn(ex, string.Format(CoreStrings.Map_FetchTileFailed, $"z={zoom} x={x} y={y}", MaxFetchAttempts));
+					AppLogger.Warn(ex, string.Format(CoreStrings.Map_FetchTileFailed, $"z={zoom} x={x} y={y}", attempt));
 					return null;
 				}
 
@@ -108,7 +113,7 @@ public static class MapTileFetcher
 		if (!urlTemplate.Contains("{hz}"))
 		{
 			string url = urlTemplate.Replace("{z}", zoom.ToString()).Replace("{x}", x.ToString()).Replace("{y}", y.ToString());
-			byte[] bytes = store ? await Http.GetByteArrayAsync(url, ct) : await DownloadSharedAsync(url, ct);
+			byte[] bytes = store ? await Downloads.GetBytesAsync(url, ct) : await DownloadSharedAsync(url, ct);
 			SKBitmap bitmap = SKBitmap.Decode(bytes) ?? throw NotAnImage(bytes);
 			return (bitmap, store ? bytes : null);
 		}
@@ -132,71 +137,11 @@ public static class MapTileFetcher
 		return new InvalidDataException($"Tile response ({bytes.Length} bytes) is not a decodable image.");
 	}
 
-	// Downloads kept in memory only, never on disk: one download per 512 px tile for the four quarters fetched at once, and
-	// for a provider that forbids storing (no disk cache) the tiles two mosaics share, or one fetched again after a cancelled
-	// fetch. Short-lived and bounded; a failed download is dropped so a retry asks again.
-	private static readonly TimeSpan SharedDownloadLifetime = TimeSpan.FromMinutes(5);
-	private const long SharedDownloadBudgetBytes = 48L * 1024 * 1024;
-	private static readonly Dictionary<string, (Task<byte[]> Download, DateTime Added)> SharedDownloads = new();
-	private static readonly Lock SharedDownloadsLock = new();
+	private static readonly SharedTileDownloads SharedDownloads = new(Downloads.GetBytesAsync);
 
-	private static async Task<byte[]> DownloadSharedAsync(string url, CancellationToken ct)
+	private static Task<byte[]> DownloadSharedAsync(string url, CancellationToken ct)
 	{
-		Task<byte[]> download;
-		lock (SharedDownloadsLock)
-		{
-			TrimSharedDownloads();
-			if (!SharedDownloads.TryGetValue(url, out (Task<byte[]> Download, DateTime Added) entry))
-			{
-				entry = (Http.GetByteArrayAsync(url, CancellationToken.None), DateTime.UtcNow);
-				SharedDownloads[url] = entry;
-			}
-
-			download = entry.Download;
-		}
-
-		try
-		{
-			return await download.WaitAsync(ct);
-		}
-		catch when (!ct.IsCancellationRequested)
-		{
-			lock (SharedDownloadsLock)
-			{
-				if (SharedDownloads.TryGetValue(url, out (Task<byte[]> Download, DateTime Added) entry) && entry.Download == download) SharedDownloads.Remove(url);
-			}
-
-			throw;
-		}
-	}
-
-	// Under SharedDownloadsLock. Only finished downloads are ever dropped - one still running is what the others wait on.
-	private static void TrimSharedDownloads()
-	{
-		DateTime expired = DateTime.UtcNow - SharedDownloadLifetime;
-		long total = 0;
-		List<KeyValuePair<string, (Task<byte[]> Download, DateTime Added)>> finished = [];
-		foreach (KeyValuePair<string, (Task<byte[]> Download, DateTime Added)> pair in SharedDownloads)
-		{
-			if (!pair.Value.Download.IsCompleted) continue;
-			if (pair.Value.Added < expired || !pair.Value.Download.IsCompletedSuccessfully)
-			{
-				SharedDownloads.Remove(pair.Key);
-				continue;
-			}
-
-			total += pair.Value.Download.Result.Length;
-			finished.Add(pair);
-		}
-
-		if (total <= SharedDownloadBudgetBytes) return;
-
-		foreach (KeyValuePair<string, (Task<byte[]> Download, DateTime Added)> pair in finished.OrderBy(p => p.Value.Added))
-		{
-			SharedDownloads.Remove(pair.Key);
-			total -= pair.Value.Download.Result.Length;
-			if (total <= SharedDownloadBudgetBytes) break;
-		}
+		return SharedDownloads.GetAsync(url, ct);
 	}
 
 	/// <summary>

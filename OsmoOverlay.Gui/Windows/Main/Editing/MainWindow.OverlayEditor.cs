@@ -989,7 +989,7 @@ public partial class MainWindow
 			case OverlayElementType.MapWidget:
 			{
 				var x = (MapWidgetElement)el;
-				MapSourceEditor.Load(x.MapProviderId, OverlaySettingsStore.Load());
+				MapSourceEditor.Load(x.MapProviderId, OverlaySettingsStore.Load(), x.ShowEsriLabels, perMapLabels: true);
 				MapZoomBox.Value = x.MapZoom;
 				MapDynamicZoomCheck.IsChecked = x.MapDynamicZoom;
 				MapZoomOutMaxBox.Value = (decimal)x.MapDynamicZoomMaxFactor;

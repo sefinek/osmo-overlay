@@ -65,7 +65,7 @@ public static class DjiKeychains
 			{
 				blocks.Add(new JsonObject
 				{
-					["featurePoint"] = FlightLogFeaturePoints.Names[featurePoint is >= 1 and <= 15 ? featurePoint : FlightLogFeaturePoints.Plaintext],
+					["featurePoint"] = FlightLogFeaturePoints.Name(featurePoint),
 					["aesCiphertext"] = Convert.ToBase64String(data)
 				});
 			}

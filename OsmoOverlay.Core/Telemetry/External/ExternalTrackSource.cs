@@ -119,7 +119,14 @@ public sealed record ExternalTrackSource(string Path, double? OffsetSeconds = nu
 
 	public FileSummary Apply(FileSummary summary)
 	{
-		(IReadOnlyList<TelemetryFrame> frames, ExternalTrack track) = ApplyCore(summary.TelemetryFrames ?? [], summary.Video.Fps, summary.ContainerRecordingStartUtc);
+		Validate();
+		return Apply(summary, ExternalTrackReader.Read(Path));
+	}
+
+	/// <summary>Applies the track snapshot already read for this load operation, also used by the GUI's details.</summary>
+	public FileSummary Apply(FileSummary summary, ExternalTrack track)
+	{
+		IReadOnlyList<TelemetryFrame> frames = ApplyCore(summary.TelemetryFrames ?? [], summary.Video.Fps, summary.ContainerRecordingStartUtc, track).Frames;
 		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, summary.CameraFormat);
 		return summary with
 		{
@@ -138,10 +145,10 @@ public sealed record ExternalTrackSource(string Path, double? OffsetSeconds = nu
 		return ApplyCore(frames, fps, recordingStartUtc).Frames;
 	}
 
-	private (IReadOnlyList<TelemetryFrame> Frames, ExternalTrack Track) ApplyCore(IReadOnlyList<TelemetryFrame> frames, double fps, DateTime? recordingStartUtc)
+	private (IReadOnlyList<TelemetryFrame> Frames, ExternalTrack Track) ApplyCore(IReadOnlyList<TelemetryFrame> frames, double fps, DateTime? recordingStartUtc, ExternalTrack? loadedTrack = null)
 	{
 		Validate();
-		ExternalTrack track = ExternalTrackReader.Read(Path);
+		ExternalTrack track = loadedTrack ?? ExternalTrackReader.Read(Path);
 		string name = System.IO.Path.GetFileName(Path);
 		AppLogger.Info($"Track {name}: {track.Points.Count} fixes {track.StartUtc:HH:mm:ss}-{track.EndUtc:HH:mm:ss} UTC, " +
 		               $"{track.Pauses.Count} stop(s) of the timer, {(track.Points.Any(p => p.SpeedMs is not null) ? "with" : "without")} speed");

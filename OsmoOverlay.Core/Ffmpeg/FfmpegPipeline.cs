@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Core.Ffmpeg;
@@ -74,7 +75,12 @@ public static class FfmpegPipeline
 			if (ConfirmedEncoders.Contains(key)) return true;
 		}
 
-		if (ProcessHelper.RunCaptured(ProcessHelper.CreateHidden("ffmpeg", [.. args])).ExitCode != 0) return false;
+		(int exitCode, _, string stderr) = ProcessHelper.RunCaptured(ProcessHelper.CreateHidden("ffmpeg", [.. args]));
+		if (exitCode != 0)
+		{
+			AppLogger.Info($"Encoder probe failed for {encoder} (exit code {exitCode}): {stderr.Trim()}");
+			return false;
+		}
 
 		lock (ConfirmedEncoders) ConfirmedEncoders.Add(key);
 		return true;
@@ -480,7 +486,9 @@ public static class FfmpegPipeline
 		// source's own rate (1 s buffer) instead of VBR: VBR spent ~3 Mbps on the static route-intro card
 		// and then ran over the source's rate for the rest, so neither the average nor the per-second
 		// rate matched the original.
-		string bitRate = ((long)Math.Round(video.BitRate * encode.BitrateMultiplier)).ToString(CultureInfo.InvariantCulture);
+		long targetBitRate = (long)Math.Round(video.BitRate * encode.BitrateMultiplier);
+		string bitRate = targetBitRate.ToString(CultureInfo.InvariantCulture);
+		if (!h264) video = HevcEncodingLimits.For(video, targetBitRate);
 		int gop = video.KeyframeIntervalFrames ?? (int)Math.Round(num / (double)den);
 		string gopText = gop.ToString(CultureInfo.InvariantCulture);
 		EncoderFamily family = Family(encoder);

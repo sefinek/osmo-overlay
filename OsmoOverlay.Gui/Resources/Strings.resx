@@ -4348,7 +4348,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Slide in</value>
   </data>
   <data name="FlightAlerts_Hint" xml:space="preserve">
-    <value>Briefly displays notifications about events from the DJI flight log: flight mode changes, motors starting and stopping, battery status, and warnings and notices from the DJI app. Original warnings and notices remain in the language of the app used during the flight.</value>
+    <value>Shows events from the DJI flight log for a few seconds: mode changes, motor start and stop, battery status and DJI app messages. OsmoOverlay calculates voltage alerts from the lowest cell voltage: at or below 3.5 V and 3.3 V. These are approximate thresholds, not confirmation of a fault or a reproduction of DJI thresholds. Original DJI messages remain in the language of the app used during the flight.</value>
   </data>
   <data name="FlightAlerts_Announce" xml:space="preserve">
     <value>Show events</value>
@@ -5006,7 +5006,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Warning limits</value>
   </data>
   <data name="DroneBattery_LowCell" xml:space="preserve">
-    <value>Low cell voltage - below (V)</value>
+    <value>Low cell voltage - at or below (V)</value>
   </data>
   <data name="DroneBattery_CriticalCell" xml:space="preserve">
     <value>Critical cell voltage - at or below (V)</value>
@@ -5024,7 +5024,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Too hot, critical - from (°C)</value>
   </data>
   <data name="DroneBattery_LimitsHint" xml:space="preserve">
-    <value>The battery voltage and cell readings are colored according to the lowest cell voltage. The temperature color depends on its own thresholds. Set the warning and critical colors above. These thresholds apply only to the widget; flight alerts use separate thresholds.</value>
+    <value>Battery voltage and cell readings are colored according to the lowest cell voltage; temperature uses its own thresholds. Default voltage thresholds are at or below 3.5 V and 3.3 V per cell. These are approximate, not DJI firmware thresholds or a diagnosis of damage. Changes here affect only widget colors; flight alerts use fixed thresholds of 3.5 and 3.3 V.</value>
   </data>
   <data name="Signal_Levels" xml:space="preserve">
     <value>Signal levels</value>
@@ -5133,5 +5133,17 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Editor_StatMaxHomeDistance" xml:space="preserve">
     <value>Max distance from take-off (drone)</value>
+  </data>
+  <data name="FullTelemetry_Open" xml:space="preserve">
+    <value>Preview full telemetry</value>
+  </data>
+  <data name="FullTelemetry_Loading" xml:space="preserve">
+    <value>Preparing full telemetry...</value>
+  </data>
+  <data name="FullTelemetry_Recording" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="FullTelemetry_Error" xml:space="preserve">
+    <value>Could not prepare the preview: {0}</value>
   </data>
 </root>

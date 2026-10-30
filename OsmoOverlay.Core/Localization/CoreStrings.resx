@@ -214,7 +214,7 @@
     <value>Poland</value>
   </data>
   <data name="Map_FetchTileFailed" xml:space="preserve">
-    <value>Failed to fetch map tile {0} after {1} attempts</value>
+    <value>Failed to fetch map tile {0}. Attempts: {1}.</value>
   </data>
   <data name="Peak_HighestPoint" xml:space="preserve">
     <value>Highest point</value>
@@ -693,7 +693,7 @@
     <value>Final position was {0} m from take-off</value>
   </data>
   <data name="Overlay_DroneBattery" xml:space="preserve">
-    <value>Drone battery</value>
+    <value>Battery</value>
   </data>
   <data name="Overlay_FlightMode" xml:space="preserve">
     <value>Flight mode</value>
@@ -720,10 +720,10 @@
     <value>Battery reached {0}%</value>
   </data>
   <data name="Overlay_LowVoltage" xml:space="preserve">
-    <value>Low voltage</value>
+    <value>Low cell voltage</value>
   </data>
   <data name="Overlay_CriticalVoltage" xml:space="preserve">
-    <value>Critically low voltage</value>
+    <value>Critically low cell voltage</value>
   </data>
   <data name="Overlay_CellVoltageDetail" xml:space="preserve">
     <value>Lowest cell voltage: {0} V</value>
@@ -826,5 +826,8 @@
   </data>
   <data name="Overlay_MaxHomeDistance" xml:space="preserve">
     <value>Max distance</value>
+  </data>
+  <data name="Map_RateLimited" xml:space="preserve">
+    <value>Map server {0} limited the request rate. Downloads paused for at least {1} s.</value>
   </data>
 </root>

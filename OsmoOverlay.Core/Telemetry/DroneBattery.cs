@@ -12,7 +12,20 @@ public sealed record DroneBattery(
 	IReadOnlyList<double>? CellVoltages = null,
 	double? CapacityMah = null)
 {
-	public double? MinCellVoltage => CellVoltages is { Count: > 0 } cells ? cells.Min() : null;
+	public double? MinCellVoltage
+	{
+		get
+		{
+			if (CellVoltages is not { Count: > 0 } cells) return null;
+			double lowest = double.PositiveInfinity;
+			foreach (double cell in cells)
+			{
+				if (!double.IsFinite(cell) || cell is <= 0 or > 5) return null;
+				lowest = Math.Min(lowest, cell);
+			}
+			return lowest;
+		}
+	}
 }
 
 /// <summary>

@@ -97,7 +97,7 @@ public static class PhoneFlightLogs
 
 		try
 		{
-			if (new FileInfo(target).Length > FlightLog.PrefixSize && FlightLog.LooksLikeFlightLog(Head(target)) && FlightLog.Read(target).StartedUtc is not null) return true;
+			if (FlightLog.ReadHeader(target).StartedUtc is not null) return true;
 			File.Delete(target);
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
@@ -170,6 +170,7 @@ public static class PhoneFlightLogs
 		int copied = 0, kept = 0, checkedPlaces = 0;
 		List<PhoneLogPlace> places = [];
 		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, object?> folders = new(StringComparer.OrdinalIgnoreCase);
 		foreach (dynamic storage in found.GetFolder.Items())
 		{
 			foreach (string[] known in KnownFolders)
@@ -177,7 +178,7 @@ public static class PhoneFlightLogs
 				cancel.ThrowIfCancellationRequested();
 				checkedPlaces++;
 				string place = string.Join('/', known);
-				dynamic? folder = Descend(storage, known);
+				dynamic? folder = Descend(storage, known, folders);
 				if (folder is null)
 				{
 					places.Add(new PhoneLogPlace(place, 0));
@@ -202,7 +203,8 @@ public static class PhoneFlightLogs
 					}
 
 					destination.CopyHere(file, CopyNoUi);
-					WaitForCopy(target, cancel);
+					if (!WaitForCopy(target, cancel)) continue;
+
 					copied++;
 					progress?.Report(new PhoneProgress(null, null, name));
 				}
@@ -212,23 +214,35 @@ public static class PhoneFlightLogs
 		return new PhoneCopyResult(copied, kept, places, checkedPlaces);
 	}
 
-	private static dynamic? Descend(dynamic storage, string[] path)
+	/// <summary>Walks down `path` from the storage's root; `folders` keeps every folder reached (null for a missing one), because over MTP each listing is slow and the known paths share their beginnings.</summary>
+	private static dynamic? Descend(dynamic storage, string[] path, Dictionary<string, object?> folders)
 	{
-		dynamic current = storage.GetFolder;
+		dynamic? current = storage.GetFolder;
+		string key = (string)storage.Name;
 		foreach (string part in path)
 		{
-			dynamic? next = null;
-			foreach (dynamic item in current.Items())
+			key += '/' + part;
+			if (folders.TryGetValue(key, out object? known))
 			{
-				if (item.IsFolder && string.Equals((string)item.Name, part, StringComparison.OrdinalIgnoreCase))
+				current = known;
+			}
+			else
+			{
+				dynamic? next = null;
+				foreach (dynamic item in current!.Items())
 				{
-					next = item.GetFolder;
-					break;
+					if (item.IsFolder && string.Equals((string)item.Name, part, StringComparison.OrdinalIgnoreCase))
+					{
+						next = item.GetFolder;
+						break;
+					}
 				}
+
+				folders[key] = next;
+				current = next;
 			}
 
-			if (next is null) return null;
-			current = next;
+			if (current is null) return null;
 		}
 
 		return current;
@@ -255,8 +269,8 @@ public static class PhoneFlightLogs
 		return logs;
 	}
 
-	/// <summary>The shell copies in the background: the file is there once it has a size that stops changing.</summary>
-	private static void WaitForCopy(string target, CancellationToken cancel)
+	/// <summary>The shell copies in the background: the file is there once it has a size that stops changing. False (and the file removed) when it never does.</summary>
+	private static bool WaitForCopy(string target, CancellationToken cancel)
 	{
 		DateTime until = DateTime.UtcNow + CopyTimeout;
 		long last = -1;
@@ -266,7 +280,7 @@ public static class PhoneFlightLogs
 			cancel.ThrowIfCancellationRequested();
 			long size = File.Exists(target) ? new FileInfo(target).Length : -1;
 			stable = size > 0 && size == last ? stable + 1 : 0;
-			if (stable >= 3) return;
+			if (stable >= 3) return true;
 
 			last = size;
 			Thread.Sleep(200);
@@ -280,5 +294,7 @@ public static class PhoneFlightLogs
 		catch (IOException)
 		{
 		}
+
+		return false;
 	}
 }

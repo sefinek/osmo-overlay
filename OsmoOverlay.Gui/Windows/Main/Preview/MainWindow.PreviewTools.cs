@@ -49,7 +49,7 @@ public partial class MainWindow
 			await stream.WriteAsync(png);
 			AppendLog(string.Format(Strings.Frame_Saved, file.Path.LocalPath, $"{_summary.Video.Width}x{_summary.Video.Height}"));
 		}
-		catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
+		catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException or OperationCanceledException)
 		{
 			AppendLog(string.Format(Strings.Frame_SaveFailed, ex.Message), LogLevel.Error);
 		}

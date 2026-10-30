@@ -33,6 +33,8 @@ public sealed class FlightLog
 
 	private const byte OsdRecord = 1, HomeRecord = 2, RcRecord = 4, CustomRecord = 5, CameraRecord = 25, SmartBatteryGroupRecord = 22, AirLinkRecord = 49, ComponentRecord = 13, AppMessageRecord = 54, KeyStorageRecoverRecord = 50, KeyStorageRecord = 56;
 	private const byte EndByte = 0xFF;
+	private const long MinPlausibleMs = 1_262_304_000_000, MaxPlausibleMs = 4_102_444_800_000;
+	private const int DetailsReadSize = 512;
 
 	// The OSD record is written at 10 Hz; its own fly time stands still while the motors are off, so the sample index is the clock.
 	private const double SampleSeconds = 0.1;
@@ -116,6 +118,35 @@ public sealed class FlightLog
 		return Parse(File.ReadAllBytes(path));
 	}
 
+	/// <summary>
+	///     The start and the totals of a log's details block, read without the rest of the file (which is megabytes) - enough to tell
+	///     which flight a log is. Throws InvalidDataException or IOException for a file that isn't a whole log.
+	/// </summary>
+	public static FlightLogHeader ReadHeader(string path)
+	{
+		using FileStream stream = File.OpenRead(path);
+		byte[] prefix = new byte[PrefixSize];
+		if (stream.Read(prefix) < PrefixSize || !LooksLikeFlightLog(prefix)) throw new InvalidDataException("Not a DJI flight log.");
+
+		int version = prefix[10];
+		if (version < EncryptedFromVersion)
+		{
+			if (version < 12) stream.Seek((long)BinaryPrimitives.ReadUInt64LittleEndian(prefix), SeekOrigin.Begin);
+			byte[] details = new byte[DetailsReadSize];
+			int read = stream.Read(details);
+			return new FlightLogHeader(ReadStartTime(details.AsSpan(0, read)), ReadTotals(details.AsSpan(0, read)));
+		}
+
+		byte[] head = new byte[3];
+		stream.ReadExactly(head);
+		byte[] block = new byte[3 + BinaryPrimitives.ReadUInt16LittleEndian(head.AsSpan(1))];
+		head.CopyTo(block, 0);
+		stream.ReadExactly(block.AsSpan(3));
+		int at = 0;
+		byte[] info = ReadAuxiliaryInfo(block, ref at) ?? throw new InvalidDataException("The flight log has no details block.");
+		return new FlightLogHeader(ReadStartTime(info), ReadTotals(info));
+	}
+
 	private static byte[]? ReadAuxiliaryInfo(byte[] file, ref int at)
 	{
 		if (at + 4 > file.Length || file[at] != 0) return null;
@@ -137,7 +168,12 @@ public sealed class FlightLog
 		const int At = 4 * 20 + 3 + 2 * 4;
 		if (details.Length < At + 8) return null;
 		long milliseconds = BinaryPrimitives.ReadInt64LittleEndian(details[At..]);
-		return milliseconds is > 1_262_304_000_000 and < 4_102_444_800_000 ? DateTime.UnixEpoch.AddMilliseconds(milliseconds) : null;
+		return ToUtc(milliseconds);
+	}
+
+	private static DateTime? ToUtc(long milliseconds)
+	{
+		return milliseconds is > MinPlausibleMs and < MaxPlausibleMs ? DateTime.UnixEpoch.AddMilliseconds(milliseconds) : null;
 	}
 
 	/// <summary>The details' totals after the start time: position (2 doubles), distance flown (float, km), time (ms), maximum height, horizontal and vertical speed (floats, metres and m/s).</summary>
@@ -160,7 +196,7 @@ public sealed class FlightLog
 		if (!IsEncrypted) return request;
 
 		List<(int FeaturePoint, byte[] Data)> current = [];
-		foreach ((byte type, byte[] content) in ReadRecords(null))
+		foreach ((byte type, byte[] content) in ReadRecords(null, keyBlocksOnly: true))
 		{
 			if (type == KeyStorageRecord && content.Length >= 4)
 			{
@@ -198,7 +234,7 @@ public sealed class FlightLog
 			double now = Math.Max(osdRecords - 1, 0) * SampleSeconds;
 			switch (type)
 			{
-				case OsdRecord when content.Length >= 44:
+				case OsdRecord when content.Length >= OsdLayout.MinLength:
 					samples.Add(ReadSample(content, osdRecords * SampleSeconds, homeAltitude));
 					tracker.OnOsd(content, osdRecords * SampleSeconds);
 					osdRecords++;
@@ -221,13 +257,12 @@ public sealed class FlightLog
 				case HomeRecord when content.Length >= 20:
 					homeAltitude = BitConverter.ToSingle(content, 16) / 10.0;
 					tracker.OnHome(content, now);
-					FlightHome position = new(BitConverter.ToDouble(content, 8) * 180 / Math.PI, BitConverter.ToDouble(content, 0) * 180 / Math.PI);
+					FlightHome position = new(AngleMath.RadToDeg(BitConverter.ToDouble(content, 8)), AngleMath.RadToDeg(BitConverter.ToDouble(content, 0)));
 					if (home is null && Math.Abs(position.Latitude) is > 0 and <= 90 && Math.Abs(position.Longitude) <= 180) home = position;
 					break;
 				case CustomRecord when content.Length >= 18:
-					long ms = BinaryPrimitives.ReadInt64LittleEndian(content.AsSpan(10));
-					if (ms is > 1_262_304_000_000 and < 4_102_444_800_000 && osdRecords > 0)
-						clockOffsets.Add(DateTime.UnixEpoch.AddMilliseconds(ms).Ticks - (long)Math.Round(now * TimeSpan.TicksPerSecond));
+					if (ToUtc(BinaryPrimitives.ReadInt64LittleEndian(content.AsSpan(10))) is { } stamp && osdRecords > 0)
+						clockOffsets.Add(stamp.Ticks - (long)Math.Round(now * TimeSpan.TicksPerSecond));
 					break;
 				case CameraRecord when content.Length >= 1:
 					bool recording = (content[0] & 0xC0) != 0;
@@ -281,14 +316,15 @@ public sealed class FlightLog
 	/// <summary>One OSD record: radians and tenths of a unit, as the aircraft writes them (the battery is not in it, see FlightEventTracker.OnBattery).</summary>
 	private static FlightSample ReadSample(byte[] c, double seconds, double homeAltitude)
 	{
-		double longitude = BitConverter.ToDouble(c, 0) * 180 / Math.PI;
-		double latitude = BitConverter.ToDouble(c, 8) * 180 / Math.PI;
+		double longitude = AngleMath.RadToDeg(BitConverter.ToDouble(c, 0));
+		double latitude = AngleMath.RadToDeg(BitConverter.ToDouble(c, 8));
 		double height = BinaryPrimitives.ReadInt16LittleEndian(c.AsSpan(16)) / 10.0;
 		double speedX = BinaryPrimitives.ReadInt16LittleEndian(c.AsSpan(18)) / 10.0;
 		double speedY = BinaryPrimitives.ReadInt16LittleEndian(c.AsSpan(20)) / 10.0;
-		bool gpsValid = (c[33] & 0x80) != 0;
-		int satellites = c[36];
-		return new FlightSample(seconds, latitude, longitude, height, height + homeAltitude, Math.Sqrt(speedX * speedX + speedY * speedY), satellites, gpsValid, GpsLevel: (c[34] >> 2) & 0x0F, FlightMode: FlightModes.Name(c[30] & 0x7F), Attitude: ReadAttitude(c));
+		bool gpsValid = (c[OsdLayout.GpsFlags] & OsdLayout.GpsValidFlag) != 0;
+		int satellites = c[OsdLayout.Satellites];
+		return new FlightSample(seconds, latitude, longitude, height, height + homeAltitude, Math.Sqrt(speedX * speedX + speedY * speedY), satellites, gpsValid,
+			GpsLevel: (c[OsdLayout.GpsLevel] >> 2) & 0x0F, FlightMode: FlightModes.Name(OsdLayout.FlightMode(c)), Attitude: ReadAttitude(c));
 	}
 
 	/// <summary>Pitch, roll and yaw: three i16 in tenths of a degree at 24, 26 and 28.</summary>
@@ -301,9 +337,9 @@ public sealed class FlightLog
 	/// <summary>
 	///     The records in file order, decoded: type and content. The first byte of a record's body is the xor's seed and is left
 	///     out; the trailing byte is part of the content for the xor-only versions and removed for the AES ones. A damaged
-	///     stretch is skipped to the next record end.
+	///     stretch is skipped to the next record end. `keyBlocksOnly` leaves out everything but the key blocks (and the markers between sessions).
 	/// </summary>
-	private IEnumerable<(byte Type, byte[] Content)> ReadRecords(IReadOnlyList<Keychain>? keychains)
+	private IEnumerable<(byte Type, byte[] Content)> ReadRecords(IReadOnlyList<Keychain>? keychains, bool keyBlocksOnly = false)
 	{
 		int keychainIndex = 0;
 		Keychain? keychain = keychains is { Count: > 0 } ? keychains[0] : null;
@@ -338,6 +374,8 @@ public sealed class FlightLog
 				yield return (type, _file.AsSpan(body, length).ToArray());
 				continue;
 			}
+
+			if (keyBlocksOnly && type != KeyStorageRecord) continue;
 
 			if (Version <= 6)
 			{

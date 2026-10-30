@@ -755,6 +755,7 @@ public sealed record MapWidgetElement : TrailOverlayElement
 	}
 
 	public int MapZoom { get; init; } = 16;
+	public bool? ShowEsriLabels { get; init; }
 	public bool MapDynamicZoom { get; init; }
 	public double MapDynamicZoomMaxFactor { get; init; } = OverlayRenderer.MapDynamicZoomMaxFactorDefault;
 	public string? MapProviderId { get; init; }

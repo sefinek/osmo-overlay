@@ -818,7 +818,7 @@
 								<local:IconView Data="{StaticResource IconFullscreen}" Width="14" Height="14" />
 							</Button>
 						</StackPanel>
-						<StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+						<StackPanel Name="PreviewTools" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
 							<Button Name="ToggleGridButton" Classes="previewToolButton active"
 							        ToolTip.Tip="{x:Static local:Strings.Main_GridGuides}">
 								<local:IconView Name="GridIcon" Data="{StaticResource IconGrid}" Width="14" Height="14" />
@@ -877,6 +877,10 @@
 							<Button Name="ToggleMomentsButton" Classes="previewToolButton" Click="OnToggleMomentsPanelClick"
 							        ToolTip.Tip="{x:Static local:Strings.Main_KeyMomentsFlagsOnThe}">
 								<local:IconView Data="{StaticResource IconFlag}" Width="14" Height="14" />
+							</Button>
+							<Button Name="FullTelemetryButton" Classes="previewToolButton" Click="OnFullTelemetryClick" IsVisible="False"
+							        ToolTip.Tip="{x:Static local:Strings.FullTelemetry_Open}" AutomationProperties.Name="{x:Static local:Strings.FullTelemetry_Open}">
+								<local:IconView Data="{StaticResource IconTelemetry}" Width="14" Height="14" />
 							</Button>
 						</StackPanel>
 						<StackPanel Name="AudioPanel" Grid.Column="2" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -964,7 +968,7 @@
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="6">
+					<Grid Name="PreviewTransportRow" Grid.Row="2" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="6">
 						<StackPanel Grid.Column="0" Name="TransportPanel" Orientation="Horizontal" Spacing="4" IsEnabled="False">
 							<Button Classes="transport" Click="OnGoToStartClick" ToolTip.Tip="{x:Static local:Strings.Main_GoToStartHome}">
 								<local:IconView Data="{StaticResource IconSkipStart}" Width="14" Height="14" />

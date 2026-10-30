@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using FFmpeg.AutoGen;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Reframe;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Core.Preview;
 
@@ -38,6 +39,8 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	private readonly int _width;
 	private readonly int _height;
 	private readonly long _totalFrames;
+	private readonly ExternalTrackPlayback? _trackPlayback;
+	private long PlaybackFrameCount => _trackPlayback is { } track ? (long)Math.Ceiling(track.DurationSeconds * Fps) : _totalFrames;
 	// A 360 recording's flat picture - replaced by SetView, read under _lock.
 	private Reframer? _reframer;
 	private DecoderSession? _positioned;
@@ -57,11 +60,12 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	///     pass through; null for a pool of this source's own.
 	/// </param>
 	internal LibavVideoSource(IReadOnlyList<PlaybackSegment> segments, double fps, int width, int height, FrameBufferPool? buffers,
-		Reframer? reframer)
+		Reframer? reframer, ExternalTrackPlayback? trackPlayback = null)
 	{
 		if (LibavLoader.TryLoad() is { } failure) throw new InvalidOperationException(string.Format(CoreStrings.Libav_CantDecodeVideo, failure));
 
 		_reframer = reframer;
+		_trackPlayback = trackPlayback;
 		Fps = fps;
 		_width = width;
 		_height = height;
@@ -77,7 +81,7 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		}
 
 		_totalFrames = start;
-		Duration = TimeSpan.FromSeconds(start / fps);
+		Duration = TimeSpan.FromSeconds(trackPlayback?.DurationSeconds ?? start / fps);
 
 		// Opened up front: a broken file or a decoder that won't start should fail here, where the caller can
 		// still fall back, not on the first seek.
@@ -99,10 +103,11 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	/// <summary>The frame shown at a position (PreviewFrames.IndexAt), or null if <paramref name="ct" /> was cancelled first - a superseded seek is expected, not exceptional.</summary>
 	public VideoFrame? GetFrame(TimeSpan position, SeekAccuracy accuracy, CancellationToken ct)
 	{
-		long target = Math.Clamp(PreviewFrames.IndexAt(position.TotalSeconds, Fps), 0, _totalFrames - 1);
+		long target = Math.Clamp(PreviewFrames.IndexAt(position.TotalSeconds, Fps), 0, PlaybackFrameCount - 1);
 		lock (_lock)
 		{
 			ObjectDisposedException.ThrowIf(_disposed, this);
+			if (_trackPlayback is not null) return TrackFrame(target, accuracy, ct);
 			return DecodeAt(target, accuracy, ct)?.Frame;
 		}
 	}
@@ -110,7 +115,17 @@ public sealed unsafe class LibavVideoSource : IDisposable
 	/// <summary>Continuous decode from a position through to the end of the recording.</summary>
 	public PlaybackStream OpenPlaybackStream(TimeSpan from, CancellationToken ct)
 	{
-		return new PlaybackStream(this, Math.Clamp(PreviewFrames.IndexAt(from.TotalSeconds, Fps), 0, _totalFrames - 1), ct);
+		return new PlaybackStream(this, Math.Clamp(PreviewFrames.IndexAt(from.TotalSeconds, Fps), 0, PlaybackFrameCount - 1), ct);
+	}
+
+	private VideoFrame? TrackFrame(long index, SeekAccuracy accuracy, CancellationToken ct)
+	{
+		if (ct.IsCancellationRequested) return null;
+		if (_trackPlayback!.VideoPosition(index / Fps) is { } seconds)
+			return DecodeAt(Math.Clamp(PreviewFrames.IndexAt(seconds, Fps), 0, _totalFrames - 1), accuracy, ct)?.Frame;
+		byte[] pixels = _buffers.Rent(_width * _height * 4);
+		MemoryMarshal.Cast<byte, uint>(pixels.AsSpan(0, _width * _height * 4)).Fill(0xFF000000);
+		return new VideoFrame(pixels, _width, _height);
 	}
 
 	/// <summary>
@@ -373,6 +388,13 @@ public sealed unsafe class LibavVideoSource : IDisposable
 				lock (_source._lock)
 				{
 					if (_source._disposed || !SkipLocked(step - 1)) return null;
+					if (_source._trackPlayback is not null)
+					{
+						if (_next >= _source.PlaybackFrameCount) return null;
+						VideoFrame? trackFrame = _source.TrackFrame(_next, SeekAccuracy.Exact, _ct);
+						Position = TimeSpan.FromSeconds(_next++ / _source.Fps);
+						return trackFrame;
+					}
 
 					(VideoFrame Frame, long Index)? decoded = _source.DecodeNext(_next, _ct);
 					if (decoded is not { } frame) return null;
@@ -392,6 +414,11 @@ public sealed unsafe class LibavVideoSource : IDisposable
 		/// <summary>Under the source's lock.</summary>
 		private bool SkipLocked(int frames)
 		{
+			if (_source._trackPlayback is not null)
+			{
+				_next = Math.Min(_next + frames, _source.PlaybackFrameCount);
+				return !_ct.IsCancellationRequested && _next < _source.PlaybackFrameCount;
+			}
 			for (int i = 0; i < frames; i++)
 			{
 				if (_ct.IsCancellationRequested || !_source.SkipNext(_next, _ct)) return false;

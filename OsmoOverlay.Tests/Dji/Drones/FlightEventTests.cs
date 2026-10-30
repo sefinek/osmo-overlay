@@ -79,9 +79,106 @@ public sealed class FlightEventTests
 		FlightEvent[] voltage = [.. EventsOf(builder).Select(e => e.Event).Where(e => e.Kind is FlightEventKind.LowVoltage or FlightEventKind.CriticalVoltage)];
 
 		CollectionAssert.AreEqual(
-			new[] { FlightEventKind.LowVoltage, FlightEventKind.LowVoltage, FlightEventKind.CriticalVoltage }, voltage.Select(e => e.Kind).ToArray());
+			new[] { FlightEventKind.LowVoltage, FlightEventKind.CriticalVoltage }, voltage.Select(e => e.Kind).ToArray());
 		Assert.AreEqual(3.48, voltage[0].Value!.Value, 1e-9);
-		Assert.AreEqual(3.29, voltage[2].Value!.Value, 1e-9);
+		Assert.AreEqual(3.29, voltage[1].Value!.Value, 1e-9);
+	}
+
+	private static FlightEventTracker FlyingBatteryTracker()
+	{
+		var tracker = new FlightEventTracker();
+		tracker.OnBattery(BatteryRecord(60), 0);
+		tracker.OnOsd(OsdRecord(50, 20, 0, 0, 0, 10, true), 0);
+		tracker.OnOsd(OsdRecord(50, 20, 0, 0, 0, 10, true, motorsOn: true), 0.1);
+		return tracker;
+	}
+
+	private static FlightEvent[] VoltageEvents(FlightEventTracker tracker) =>
+		[.. tracker.Events.Select(e => e.Event).Where(e => e.Kind is FlightEventKind.LowVoltage or FlightEventKind.CriticalVoltage)];
+
+	[TestMethod]
+	[DataRow(3501, 0, FlightEventKind.LowVoltage)]
+	[DataRow(3500, 1, FlightEventKind.LowVoltage)]
+	[DataRow(3499, 1, FlightEventKind.LowVoltage)]
+	[DataRow(3350, 1, FlightEventKind.LowVoltage)]
+	[DataRow(3300, 1, FlightEventKind.CriticalVoltage)]
+	[DataRow(3280, 1, FlightEventKind.CriticalVoltage)]
+	public void VoltageBoundariesMatchTheWidgetAndReportTheActualMinimum(int millivolts, int count, FlightEventKind kind)
+	{
+		FlightEventTracker tracker = FlyingBatteryTracker();
+		tracker.OnBattery(CellsRecord(3800, millivolts, 3800), 1);
+		FlightEvent[] events = VoltageEvents(tracker);
+		Assert.HasCount(count, events);
+		if (count == 0) return;
+		Assert.AreEqual(kind, events[0].Kind);
+		Assert.AreEqual(millivolts / 1000.0, events[0].Value);
+		Assert.AreEqual(kind == FlightEventKind.CriticalVoltage ? BatteryCondition.Critical : BatteryCondition.Caution,
+			DroneBatteryHealth.Cells(new DroneBattery(60, CellVoltages: [3.8, millivolts / 1000.0, 3.8])));
+	}
+
+	[TestMethod]
+	public void VoltageAlertsRepeatAfterEachRecoveryButNotWhileVoltageRemainsLow()
+	{
+		FlightEventTracker tracker = FlyingBatteryTracker();
+		tracker.OnBattery(CellsRecord(3490), 1);
+		tracker.OnBattery(CellsRecord(3700), 2);
+		tracker.OnBattery(CellsRecord(3700), 2.5);
+		tracker.OnBattery(CellsRecord(3490), 3);
+		tracker.OnBattery(CellsRecord(3350), 3.1);
+		tracker.OnBattery(CellsRecord(3280), 3.2);
+		tracker.OnBattery(CellsRecord(3500), 4);
+		tracker.OnBattery(CellsRecord(3280), 4.2);
+		CollectionAssert.AreEqual(new[] { FlightEventKind.LowVoltage, FlightEventKind.LowVoltage, FlightEventKind.CriticalVoltage, FlightEventKind.CriticalVoltage },
+			VoltageEvents(tracker).Select(e => e.Kind).ToArray());
+	}
+
+	[TestMethod]
+	public void CriticalVoltageRearmsImmediatelyAboveItsOwnThreshold()
+	{
+		FlightEventTracker tracker = FlyingBatteryTracker();
+		tracker.OnBattery(CellsRecord(3280), 1);
+		tracker.OnBattery(CellsRecord(3301), 1.1);
+		tracker.OnBattery(CellsRecord(3300), 1.2);
+		Assert.HasCount(2, VoltageEvents(tracker));
+		Assert.IsTrue(VoltageEvents(tracker).All(e => e.Kind == FlightEventKind.CriticalVoltage));
+	}
+
+	[TestMethod]
+	public void PackReadingsCannotProveCellRecovery()
+	{
+		FlightEventTracker tracker = FlyingBatteryTracker();
+		tracker.OnBattery(CellsRecord(3280), 1);
+		for (int i = 3; i < 8; i++) tracker.OnBattery(BatteryRecord(60), i);
+		tracker.OnBattery(CellsRecord(3280), 8.1);
+		Assert.HasCount(1, VoltageEvents(tracker));
+	}
+
+	[TestMethod]
+	[DataRow(0.0)]
+	[DataRow(-1.0)]
+	[DataRow(double.NaN)]
+	[DataRow(double.PositiveInfinity)]
+	[DataRow(65.535)]
+	public void InvalidCellReadingsAreUnknownRatherThanCritical(double invalid)
+	{
+		var battery = new DroneBattery(60, CellVoltages: [3.8, invalid, 3.8]);
+		Assert.IsNull(battery.MinCellVoltage);
+		Assert.AreEqual(BatteryCondition.Normal, DroneBatteryHealth.Cells(battery));
+	}
+
+	[TestMethod]
+	public void InvalidCellsDoNotCountAsRecoveryOrCreateAnAlert()
+	{
+		FlightEventTracker tracker = FlyingBatteryTracker();
+		tracker.OnBattery(CellsRecord(0, 3800), 0.5);
+		Assert.IsEmpty(VoltageEvents(tracker));
+		tracker.OnBattery(CellsRecord(3280), 1);
+		tracker.OnBattery(CellsRecord(0), 3);
+		tracker.OnBattery(CellsRecord(3280), 4);
+		Assert.HasCount(1, VoltageEvents(tracker));
+		tracker.OnBattery(CellsRecord(3700), 5);
+		tracker.OnBattery(CellsRecord(3280), 6);
+		Assert.HasCount(2, VoltageEvents(tracker));
 	}
 
 	[TestMethod]
@@ -161,7 +258,7 @@ public sealed class FlightEventTests
 	}
 
 	[TestMethod]
-	public void Decode_TheBatteryAtTheLandingIsAnEvent()
+	public void Decode_TheBatteryAtMotorShutdownIsAnEvent()
 	{
 		var builder = new FlightLogBuilder(12, Started);
 		builder.Add(Osd, OsdRecord(50, 20, 0, 0, 0, 10, true));
@@ -172,7 +269,7 @@ public sealed class FlightEventTests
 		FlightEvent end = EventsOf(builder).Select(e => e.Event).Single(e => e.Kind == FlightEventKind.BatteryEnd);
 
 		Assert.AreEqual(19, end.Value);
-		Assert.AreEqual("Battery ended at 19%", OverlayRenderer.FlightAlertText(end).Detail);
+		Assert.AreEqual("Battery at motor shutdown: 19%", OverlayRenderer.FlightAlertText(end).Detail);
 	}
 
 	[TestMethod]
@@ -375,11 +472,30 @@ public sealed class FlightEventTests
 	}
 
 	[TestMethod]
+	public void FlightAlerts_NewFramesDropTheEventsOfTheOldOnes()
+	{
+		static List<DerivedFrame> Frames(bool withEvent) => TelemetryProcessor.Process(
+		[
+			.. Enumerable.Range(0, 100).Select(i => new TelemetryFrame(i, i / 10.0, 50, 20, 100, null, 0, 0, 1,
+				FlightEvents: withEvent && i == 20 ? [new FlightEvent(FlightEventKind.FlightMode, "Sport")] : null))
+		], null);
+
+		List<DerivedFrame> before = Frames(true), after = Frames(false);
+		using var renderer = new OverlayRenderer(1280, 720, 0, [], before, showWatermark: false);
+		var element = new FlightAlertsElement { X = 640, Y = 20, ShowSeconds = 3 };
+		Assert.IsNotNull(renderer.MeasureElement(element, before[30]));
+
+		renderer.SetFrames(after, 0, 0);
+
+		Assert.IsNull(renderer.MeasureElement(element, after[30]));
+	}
+
+	[TestMethod]
 	public void FlightAlertTextsNameTheKindAndTheDetail()
 	{
 		Assert.AreEqual("Sport", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.FlightMode, "Sport")).Detail);
 		Assert.AreEqual("Battery reached 40%", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.BatteryLevel, Value: 40)).Detail);
-		Assert.AreEqual("Lowest cell at 3.47 V", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.LowVoltage, Value: 3.466)).Detail);
+		Assert.AreEqual("Lowest cell voltage: 3.47 V", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.LowVoltage, Value: 3.466)).Detail);
 		Assert.AreEqual("Careful (code 180038)", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.Warning, "Careful", Code: "180038")).Detail);
 		Assert.AreEqual("In flight", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.Tip, "In flight")).Detail);
 	}

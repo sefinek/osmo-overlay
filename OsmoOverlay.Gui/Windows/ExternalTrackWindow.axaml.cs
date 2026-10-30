@@ -39,6 +39,7 @@ public partial class ExternalTrackWindow : Window
 
 	public bool Accepted { get; private set; }
 	public ExternalTrackSource? Source { get; private set; }
+	internal ExternalTrack? LoadedTrack => _track;
 
 	/// <summary>What the window does (reading, matching, a failure) - the main window puts it in its log, which stays visible behind the dialog.</summary>
 	public event Action<string, LogLevel>? Log;

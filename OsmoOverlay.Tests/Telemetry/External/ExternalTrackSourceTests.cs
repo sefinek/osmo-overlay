@@ -1,5 +1,7 @@
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
+using OsmoOverlay.Core;
+using OsmoOverlay.Core.Ffmpeg;
 
 namespace OsmoOverlay.Tests.Telemetry.External;
 
@@ -22,6 +24,34 @@ public sealed class ExternalTrackSourceTests
 	private static List<TelemetryFrame> Frames()
 	{
 		return [.. Enumerable.Range(0, (int)(20 * Fps)).Select(f => new TelemetryFrame(f, f / Fps, 0, 0, 0, null, 0, 0, 1, HasGpsFix: false))];
+	}
+
+	[TestMethod]
+	public void Apply_AnAlreadyLoadedTrackIsNotReadAgain()
+	{
+		string directory = Directory.CreateTempSubdirectory().FullName;
+		try
+		{
+			string path = WriteTrack(directory);
+			var source = new ExternalTrackSource(path, Synchronization: new TrackSynchronization(new TrackSyncAnchor(0, TrackStart)));
+			List<TelemetryFrame> frames = Frames();
+			var summary = new FileSummary(["synthetic.mp4"], [20], [frames.Count], null,
+				new VideoInfo("hevc", "Main", 640, 360, "25", "yuv420p", null, null, null, null, 1_000_000),
+				null, 20, 0, true, frames, null, null, frames.Count);
+			ExternalTrack loaded = ExternalTrackReader.Read(path);
+			FileSummary expected = source.Apply(summary);
+			File.Delete(path);
+
+			FileSummary actual = source.Apply(summary, loaded);
+
+			CollectionAssert.AreEqual(expected.TelemetryFrames!.ToArray(), actual.TelemetryFrames!.ToArray());
+			CollectionAssert.AreEqual(expected.DerivedFrames!.ToArray(), actual.DerivedFrames!.ToArray());
+			Assert.AreEqual(expected.Telemetry, actual.Telemetry);
+		}
+		finally
+		{
+			Directory.Delete(directory, true);
+		}
 	}
 
 	[TestMethod]

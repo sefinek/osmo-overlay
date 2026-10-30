@@ -4276,19 +4276,19 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Liczba satelitów odbiornika drona oraz poziom sygnału GPS przedstawiony za pomocą pasków. Dane pochodzą z dziennika lotu DJI.</value>
   </data>
   <data name="Widget_DroneBattery" xml:space="preserve">
-    <value>Bateria drona</value>
+    <value>Akumulator drona</value>
   </data>
   <data name="Widget_FlightAlerts" xml:space="preserve">
     <value>Alerty lotu</value>
   </data>
   <data name="DroneBattery_Hint" xml:space="preserve">
-    <value>Pokazuje poziom naładowania baterii drona jako ikonę i wartość procentową. Możesz też wyświetlić napięcie, temperaturę, prąd i napięcie poszczególnych ogniw. Dane pochodzą z dziennika lotu DJI.</value>
+    <value>Pokazuje poziom naładowania akumulatora drona jako ikonę i wartość procentową. Możesz też wyświetlić napięcie, temperaturę, prąd i napięcie poszczególnych ogniw. Dane pochodzą z dziennika lotu DJI.</value>
   </data>
   <data name="DroneBattery_Show" xml:space="preserve">
     <value>Pokazuj</value>
   </data>
   <data name="DroneBattery_Icon" xml:space="preserve">
-    <value>Ikona baterii</value>
+    <value>Ikona akumulatora</value>
   </data>
   <data name="DroneBattery_Voltage" xml:space="preserve">
     <value>Napięcie</value>
@@ -4348,7 +4348,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Wjazd z boku</value>
   </data>
   <data name="FlightAlerts_Hint" xml:space="preserve">
-    <value>Wyświetla przez kilka sekund powiadomienia o zdarzeniach z dziennika lotu DJI: zmianach trybu, włączeniu i wyłączeniu silników, stanie baterii oraz ostrzeżeniach i komunikatach aplikacji DJI. Oryginalne ostrzeżenia i komunikaty pozostają w języku aplikacji używanej podczas lotu.</value>
+    <value>Wyświetla przez kilka sekund zdarzenia z dziennika lotu DJI: zmiany trybu, włączenie i wyłączenie silników, stan baterii oraz komunikaty aplikacji DJI. Alerty napięcia wylicza OsmoOverlay z najniższego napięcia ogniwa: do 3,5 V i do 3,3 V. To orientacyjne progi, nie potwierdzenie awarii ani odtworzenie progów DJI. Oryginalne komunikaty DJI pozostają w języku aplikacji używanej podczas lotu.</value>
   </data>
   <data name="FlightAlerts_Announce" xml:space="preserve">
     <value>Pokazuj zdarzenia</value>
@@ -4360,7 +4360,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Włączenie i wyłączenie silników</value>
   </data>
   <data name="FlightAlerts_Battery" xml:space="preserve">
-    <value>Poziom i napięcie baterii</value>
+    <value>Poziom naładowania i napięcie akumulatora</value>
   </data>
   <data name="FlightAlerts_Warnings" xml:space="preserve">
     <value>Ostrzeżenia</value>
@@ -4985,7 +4985,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Kolor wartości procentowych zależny od siły sygnału</value>
   </data>
   <data name="DroneBattery_ColorByCharge" xml:space="preserve">
-    <value>Kolory zależne od stanu baterii</value>
+    <value>Kolory zależne od stanu akumulatora</value>
   </data>
   <data name="Main_Working" xml:space="preserve">
     <value>Aplikacja pracuje...</value>
@@ -5006,7 +5006,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Progi ostrzeżeń</value>
   </data>
   <data name="DroneBattery_LowCell" xml:space="preserve">
-    <value>Niskie napięcie ogniwa - poniżej (V)</value>
+    <value>Niskie napięcie ogniwa - do (V)</value>
   </data>
   <data name="DroneBattery_CriticalCell" xml:space="preserve">
     <value>Krytycznie niskie napięcie ogniwa - do (V)</value>
@@ -5024,7 +5024,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Za gorąco, krytyczne - od (°C)</value>
   </data>
   <data name="DroneBattery_LimitsHint" xml:space="preserve">
-    <value>Kolor napięcia baterii i odczytów ogniw zależy od najniższego napięcia ogniwa. Kolor temperatury zależy od jej progów. Kolory ostrzegawczy i krytyczny ustawisz wyżej. Te progi dotyczą tylko widżetu; alerty lotu mają osobne progi.</value>
+    <value>Kolor napięcia akumulatora i odczytów ogniw zależy od najniższego napięcia ogniwa, a kolor temperatury od jej progów. Domyślne progi napięcia to do 3,5 V i do 3,3 V na ogniwo. Są orientacyjne, nie są progami firmware DJI ani diagnozą uszkodzenia. Zmiany tutaj dotyczą tylko kolorów widżetu; alerty lotu używają stałych progów 3,5 i 3,3 V.</value>
   </data>
   <data name="Signal_Levels" xml:space="preserve">
     <value>Poziomy sygnału</value>
@@ -5133,5 +5133,17 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Editor_StatMaxHomeDistance" xml:space="preserve">
     <value>Maks. odległość od startu (dron)</value>
+  </data>
+  <data name="FullTelemetry_Open" xml:space="preserve">
+    <value>Podgląd pełnej telemetrii</value>
+  </data>
+  <data name="FullTelemetry_Loading" xml:space="preserve">
+    <value>Przygotowywanie pełnej telemetrii...</value>
+  </data>
+  <data name="FullTelemetry_Recording" xml:space="preserve">
+    <value>Nagranie</value>
+  </data>
+  <data name="FullTelemetry_Error" xml:space="preserve">
+    <value>Nie udało się przygotować podglądu: {0}</value>
   </data>
 </root>

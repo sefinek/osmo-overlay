@@ -29,6 +29,8 @@ public sealed partial class MapSourcePicker : UserControl
 	];
 
 	private bool _loading;
+	private bool _perMapLabels;
+	private bool? _showLabels;
 
 	public bool IsRouteIntro { get; set; }
 
@@ -40,13 +42,16 @@ public sealed partial class MapSourcePicker : UserControl
 
 	/// <summary>The provider id, after the user picked another one.</summary>
 	public event Action<string>? SelectionChanged;
+	public event Action<bool>? LabelsChanged;
 
 	/// <summary>A key or the custom server changed in the settings - the preview fetches again what it affects.</summary>
 	public event Action? SharedChanged;
 
-	public void Load(string? providerId, OverlaySettings settings)
+	public void Load(string? providerId, OverlaySettings settings, bool? showLabels = null, bool perMapLabels = false)
 	{
 		_loading = true;
+		_perMapLabels = perMapLabels;
+		_showLabels = showLabels;
 		string shown = providerId ?? settings.DefaultMapProvider ?? MapProviders.AutoSatelliteId;
 		ProviderCombo.SelectedItem = Options.FirstOrDefault(o => o.Id == shown) ?? Options[0];
 		CustomUrlBox.Text = settings.CustomMapUrlTemplate;
@@ -79,7 +84,7 @@ public sealed partial class MapSourcePicker : UserControl
 		EsriLabelsSwitch.IsVisible = sources.SupportsLabels(SelectedId);
 		bool loading = _loading;
 		_loading = true;
-		EsriLabelsSwitch.IsChecked = IsRouteIntro ? settings.RouteIntroShowEsriMapLabels : settings.ShowEsriMapLabels;
+		EsriLabelsSwitch.IsChecked = _showLabels ?? (IsRouteIntro ? settings.RouteIntroShowEsriMapLabels : settings.ShowEsriMapLabels);
 		_loading = loading;
 
 		AutoHint.IsVisible = best;
@@ -295,6 +300,12 @@ public sealed partial class MapSourcePicker : UserControl
 		if (_loading) return;
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		bool showLabels = EsriLabelsSwitch.IsChecked == true;
+		if (_perMapLabels)
+		{
+			_showLabels = showLabels;
+			LabelsChanged?.Invoke(showLabels);
+			return;
+		}
 		SaveShared(IsRouteIntro
 			? settings with { RouteIntroShowEsriMapLabels = showLabels }
 			: settings with { ShowEsriMapLabels = showLabels });
