@@ -1,7 +1,7 @@
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Tests.Dji.Drones;
+namespace OsmoOverlay.Tests.Drones.Dji;
 
 [TestClass]
 public sealed class DroneWidgetTests
@@ -109,7 +109,7 @@ public sealed class DroneWidgetTests
 	[TestMethod]
 	public void TheDroneFormatIsADroneAndTheOthersAreNot()
 	{
-		Assert.IsTrue(((OsmoOverlay.Core.Cameras.ICameraFormat)new OsmoOverlay.Dji.Drones.DjiDroneFormat()).IsDrone);
+		Assert.IsTrue(((OsmoOverlay.Core.Cameras.ICameraFormat)new OsmoOverlay.Drones.Dji.DjiDroneFormat()).IsDrone);
 		Assert.IsFalse(((OsmoOverlay.Core.Cameras.ICameraFormat)new OsmoOverlay.Cameras.Dji.DjiOsmoFormat()).IsDrone);
 	}
 

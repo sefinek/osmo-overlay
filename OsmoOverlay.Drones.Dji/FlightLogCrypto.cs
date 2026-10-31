@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     The two layers a flight log's records are hidden under: from version 7 an XOR whose key is derived from the record's

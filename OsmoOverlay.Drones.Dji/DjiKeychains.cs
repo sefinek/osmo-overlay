@@ -8,7 +8,7 @@ using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     The keychains of an encrypted flight log, from DJI's flight record API (needs the SDK key of an Open API app from

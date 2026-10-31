@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     A DJI flight log (DJI Fly's or GO 4's FlightRecord .txt): a 100-byte prefix, the details of the flight, and the records

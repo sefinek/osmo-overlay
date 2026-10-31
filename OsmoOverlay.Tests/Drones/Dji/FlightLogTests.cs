@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using OsmoOverlay.Core.Telemetry.External;
-using OsmoOverlay.Dji.Drones;
-using static OsmoOverlay.Tests.Dji.Drones.FlightLogBuilder;
+using OsmoOverlay.Drones.Dji;
+using static OsmoOverlay.Tests.Drones.Dji.FlightLogBuilder;
 
-namespace OsmoOverlay.Tests.Dji.Drones;
+namespace OsmoOverlay.Tests.Drones.Dji;
 
 [TestClass]
 public sealed class FlightLogTests

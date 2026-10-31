@@ -4,9 +4,9 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 
-namespace OsmoOverlay.Tests.Dji.Drones;
+namespace OsmoOverlay.Tests.Drones.Dji;
 
 [TestClass]
 public sealed class DjiDroneFormatTests

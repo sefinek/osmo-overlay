@@ -7,7 +7,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     The camera of a DJI drone (Mavic 2 and the like): its MP4 holds the picture and nothing else - no telemetry stream, no

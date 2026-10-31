@@ -4,7 +4,7 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     A DJI drone's flight log (FlightRecord_*.txt) as a track for a recording: position, altitude, speed and battery at 10 Hz.

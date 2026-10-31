@@ -8,7 +8,7 @@ OsmoOverlay burns a telemetry HUD (speed, heading, tilt, sun, stats) onto footag
 
 Projects in `OsmoOverlay.slnx` (net10.0):
 - `Core` - everything that isn't one camera's: telemetry processing, SkiaSharp overlay renderer, ffmpeg pipeline, preview, 360 reframing, `ICameraFormat`. Depends on no GUI/CLI and no camera.
-- `Cameras.Dji`, `Cameras.GoPro`, `Cameras.Insta360`, `Dji.Drones` - one maker each (`Dji.Drones`: `DjiDroneFormat`, an `ICameraFormat` with empty frames, and `DjiFlightLogFormat`, an `ITrackFormat`). They see Core's internals (`InternalsVisibleTo`).
+- `Cameras.Dji`, `Cameras.GoPro`, `Cameras.Insta360`, `Drones.Dji` - one maker each (`Drones.Dji`: `DjiDroneFormat`, an `ICameraFormat` with empty frames, and `DjiFlightLogFormat`, an `ITrackFormat`). They see Core's internals (`InternalsVisibleTo`).
 - `Cli` (thin wrapper around `RenderJob`), `Gui` (Avalonia), `Tests` (MSTest), `Build` (release packaging, references nothing).
 
 ## Build and test
@@ -70,7 +70,7 @@ Projects in `OsmoOverlay.slnx` (net10.0):
 - The preview toolbar offers full telemetry only when the loaded external track extends beyond the synchronized recording. It uses the same `PreviewPlayer`, `VideoView`, transport, timelines and compositor as the recording preview. `ExternalTrackPreview` prepares bounded 10 Hz telemetry without camera sensors; `ExternalTrackPlayback` carries those frames and the synchronization. `LibavVideoSource` maps track time back to recording time (including clock drift) and supplies an opaque blank frame outside the recording. Do not add a separate player, timer, renderer or transport for this mode. The recording summary, project and saved playhead stay untouched.
 - Full telemetry follows the normal quality picker, zoom/pan, layout edits, preset comparison, fullscreen and source-resolution snapshots through the shared preview. Quality changes reuse the prepared track frames and keep its position, rate, loop and playback state. Cuts and key-moment editing return to the matching recording position. The expanded timeline keeps the recording's filmstrip and waveform in this mode through `PreviewTimeline.RecordingTimeAt` (track time to recording time, null outside the recording); don't release them for it.
 
-### DJI drones (`Dji.Drones`)
+### DJI drones (`Drones.Dji`)
 - The flight log (`FlightRecord_*.txt`) is an `ITrackFormat` registered in both `Program`s (`ExternalTrackReader.Register`), tried before FIT/GPX. Layout from the open `dji-log-parser`; byte offsets and what was checked are in `FlightLog`'s docs, verified on real Mavic 2 / Air 2 logs (v14) and a Flight Reader CSV.
 - Version 13+ records are AES-encrypted; keys come from DJI's flight record API (`DjiKeychains`), cached per log in `dji-keychains/`. The SDK key is `OverlaySettings.DjiApiKey` (protected on disk like `MapApiKeys`, in `SharedSettings`, never in a preset, `.ovproj` or the keychain cache; env `OSMOOVERLAY_DJI_API_KEY` is the fallback). The request sends key blocks only, not positions. A record whose feature point has no key is skipped, never read as plain xor.
 - The drone's MP4 has no telemetry or DJI tag: `DjiDroneFormat` recognises it by name (`DJI_####.MP4`, one video stream; registered after the Osmo format) and gives empty frames, so the log is the only source. `ICameraFormat.Brand` is what the "no telemetry" message lists.

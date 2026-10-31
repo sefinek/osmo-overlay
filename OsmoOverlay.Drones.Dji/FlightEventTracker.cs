@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text;
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     What happened during the flight, from the records in file order: flight mode and motor changes (OSD), the battery's charge

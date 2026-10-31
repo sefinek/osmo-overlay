@@ -1,4 +1,4 @@
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     The groups ("feature points") a log's record types belong to, which decide the AES key of the record. The numbers are

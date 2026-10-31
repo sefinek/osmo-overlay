@@ -4,7 +4,7 @@ using Avalonia.Platform.Storage;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Telemetry.External;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 
 namespace OsmoOverlay.Gui;
 

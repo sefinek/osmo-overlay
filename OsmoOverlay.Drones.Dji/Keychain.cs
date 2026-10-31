@@ -1,4 +1,4 @@
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>The AES key and the first IV of one feature point.</summary>
 public readonly record struct FeatureKey(byte[] Key, byte[] Iv);

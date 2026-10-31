@@ -15,7 +15,7 @@
     <ProjectReference Include="..\OsmoOverlay.Core\OsmoOverlay.Core.csproj" />
     <ProjectReference Include="..\OsmoOverlay.Cameras.Dji\OsmoOverlay.Cameras.Dji.csproj" />
     <ProjectReference Include="..\OsmoOverlay.Cameras.GoPro\OsmoOverlay.Cameras.GoPro.csproj" />
-    <ProjectReference Include="..\OsmoOverlay.Dji.Drones\OsmoOverlay.Dji.Drones.csproj" />
+    <ProjectReference Include="..\OsmoOverlay.Drones.Dji\OsmoOverlay.Drones.Dji.csproj" />
     <ProjectReference Include="..\OsmoOverlay.Cameras.Insta360\OsmoOverlay.Cameras.Insta360.csproj" />
   </ItemGroup>
 

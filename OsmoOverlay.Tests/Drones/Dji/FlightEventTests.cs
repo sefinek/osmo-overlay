@@ -1,11 +1,11 @@
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 using SkiaSharp;
-using static OsmoOverlay.Tests.Dji.Drones.FlightLogBuilder;
+using static OsmoOverlay.Tests.Drones.Dji.FlightLogBuilder;
 
-namespace OsmoOverlay.Tests.Dji.Drones;
+namespace OsmoOverlay.Tests.Drones.Dji;
 
 [TestClass]
 public sealed class FlightEventTests

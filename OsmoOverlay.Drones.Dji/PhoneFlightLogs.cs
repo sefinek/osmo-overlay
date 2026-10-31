@@ -1,6 +1,6 @@
 using OsmoOverlay.Core.Logging;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>A phone (or any portable device) Windows shows under This PC.</summary>
 public sealed record PhoneDevice(string Name);

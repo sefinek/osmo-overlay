@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     The flight mode's name by the OSD's state number. 6, 10, 31, 33 and 41 were checked against a real log; the rest come from

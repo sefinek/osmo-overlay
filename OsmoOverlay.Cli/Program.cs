@@ -13,7 +13,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
 using OsmoOverlay.Core.Telemetry.External;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 
 UiLanguages.Apply(UiLanguages.English);
 

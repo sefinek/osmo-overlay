@@ -8,7 +8,7 @@ using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry.External;
 using OsmoOverlay.Core.Updates;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;

@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:OsmoOverlay.Gui"
-        xmlns:dji="using:OsmoOverlay.Dji.Drones"
+        xmlns:dji="using:OsmoOverlay.Drones.Dji"
         x:Class="OsmoOverlay.Gui.PhoneLogWindow"
         Width="560" MinWidth="460" Height="560" MinHeight="460"
         WindowStartupLocation="CenterOwner" Background="{StaticResource WindowBackgroundBrush}"

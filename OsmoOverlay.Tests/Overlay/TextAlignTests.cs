@@ -1,6 +1,6 @@
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 
 namespace OsmoOverlay.Tests.Overlay;
 

@@ -1,6 +1,6 @@
 using OsmoOverlay.Core.Telemetry;
 
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
 ///     One OSD record of the flight, `Seconds` from the log's first one (10 per second). Height is above the take-off point;

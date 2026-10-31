@@ -1,4 +1,4 @@
-namespace OsmoOverlay.Dji.Drones;
+namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>Byte offsets and masks inside an OSD record (type 1) - see the remarks of FlightLog for what was checked.</summary>
 internal static class OsdLayout

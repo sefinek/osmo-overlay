@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
-using OsmoOverlay.Dji.Drones;
+using OsmoOverlay.Drones.Dji;
 
-namespace OsmoOverlay.Tests.Dji.Drones;
+namespace OsmoOverlay.Tests.Drones.Dji;
 
 /// <summary>A synthetic flight log in DJI's layout: version 12 (xor only) or 14 (xor and AES with the given keys).</summary>
 internal sealed class FlightLogBuilder(int version, DateTime started)
