@@ -23,7 +23,8 @@ public sealed class SettingsPresetTests
 		nameof(OverlaySettings.PreviewMonitor), nameof(OverlaySettings.SecondScreenEnabled), nameof(OverlaySettings.SecondScreenMonitor),
 		nameof(OverlaySettings.ReopenLastProject), nameof(OverlaySettings.LastProject), nameof(OverlaySettings.AutoSaveMinutes),
 		nameof(OverlaySettings.CacheCleanupDays), nameof(OverlaySettings.LoopByDefault), nameof(OverlaySettings.PreviewShadows),
-		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode), nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.WorkingAnimation), nameof(OverlaySettings.TrackMap)
+		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode),
+		nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.DjiApiNoticeShown), nameof(OverlaySettings.WorkingAnimation), nameof(OverlaySettings.TrackMap)
 	];
 
 	[TestMethod]
@@ -54,7 +55,7 @@ public sealed class SettingsPresetTests
 	public void ApplyTo_WritesOnlyWhatThePresetCovers()
 	{
 		var other = new OverlaySettings(ActivePresetId: "layout", AppTheme: "Amoled", HardwareDecoding: false, DefaultOutputFolder: "out",
-			SpeedCorrectionPercent: 3);
+			SpeedCorrectionPercent: 3, DjiApiNoticeShown: true);
 		var values = new SettingsPresetValues(SpeedCorrectionPercent: 12.5, NoAudio: true, OutputCodec: "hevc", OutputAspect: "4:5", OutputPadToAspect: true, RouteIntroDurationSeconds: 20,
 			OrientationSource: OrientationSource.Quaternion);
 
@@ -71,6 +72,7 @@ public sealed class SettingsPresetTests
 		Assert.AreEqual("Amoled", applied.AppTheme);
 		Assert.IsFalse(applied.HardwareDecoding);
 		Assert.AreEqual("out", applied.DefaultOutputFolder);
+		Assert.IsTrue(applied.DjiApiNoticeShown);
 		Assert.AreEqual(values, SettingsPresetValues.From(applied) with { RouteIntroLabels = values.RouteIntroLabels });
 	}
 

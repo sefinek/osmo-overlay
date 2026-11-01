@@ -222,6 +222,11 @@ public partial class MainWindow : Window
 		_previewPlayer.PlaybackStopped += OnPreviewPlaybackStopped;
 		// Map tile progress arrives from thread-pool threads (see OverlayRenderer.BuildMapMosaicAsync).
 		_previewPlayer.Message += message => Dispatcher.UIThread.Post(() => AppendLog(message));
+		_previewPlayer.MapStatus += message => Dispatcher.UIThread.Post(() =>
+		{
+			LogBox.AppendLogLine(LogScroll, message, statusKey: "map");
+			_secondScreen?.AppendLog(message, LogLevel.Info, statusKey: "map");
+		});
 		_previewPlayer.MapDownloadProgress += share => Dispatcher.UIThread.Post(() => ShowMapDownload(share));
 
 		// See AppLogger.Notified. AppendLogLine (not AppendLog) doesn't log again - the raising call already did.
@@ -300,7 +305,7 @@ public partial class MainWindow : Window
 		{
 			if (File.Exists(last))
 			{
-				AppendLog(string.Format(Strings.Main_LogReopeningProject, last));
+				AppendLogPath(Strings.Main_LogReopeningProject, last);
 				await OpenProjectAsync(last);
 			}
 			else
@@ -327,7 +332,7 @@ public partial class MainWindow : Window
 		bool canInstall = AppUpdates.CanUpdateInPlace(release);
 		DialogChoice choice = await ConfirmDialog.AskOrSkipAsync(this, Strings.Main_UpdateAvailableTitle,
 			string.Format(canInstall ? Strings.Main_UpdateAvailableInstall : Strings.Main_UpdateAvailableDownload,
-				release.Version, AppUpdates.CurrentVersion),
+				release.Version, AppUpdates.CurrentVersionLabel),
 			canInstall ? Strings.Main_Update : Strings.Main_OpenGitHub, Strings.Main_SkipUpdate, DialogKind.Info);
 		if (choice == DialogChoice.Skip) OverlaySettingsStore.Save(settings with { SkippedAppUpdate = release.Version.ToString() });
 		if (choice != DialogChoice.Confirm) return;
@@ -479,6 +484,11 @@ public partial class MainWindow : Window
 		// window opened from it - whose values its controls show by then). Its own edits go on top, saved at once.
 		OverlaySettings saved = OverlaySettingsStore.Load();
 		OverlaySettings updated = settings.Apply(saved);
+		if (!updated.DjiApiNoticeShown && !string.IsNullOrWhiteSpace(updated.DjiApiKey))
+		{
+			await DjiApiNotice.ShowAsync(this);
+			updated = updated with { DjiApiNoticeShown = true };
+		}
 		if (updated != saved) OverlaySettingsStore.Save(updated);
 		SetDebugMode(updated.DebugMode);
 		ReloadPresetsAfterUnitsChange(before, saved);
@@ -707,10 +717,17 @@ public partial class MainWindow : Window
 		AppendLog(verbose ? Strings.Log_DebugModeOn : Strings.Log_DebugModeOff);
 	}
 
-	private void AppendLog(string message, LogLevel level = LogLevel.Info)
+	private void AppendLog(string message, LogLevel level = LogLevel.Info, string? details = null, string? fileMessage = null)
 	{
-		LogBox.AppendLog(LogScroll, message, level);
-		_secondScreen?.AppendLog(message, level);
+		LogBox.AppendLogLine(LogScroll, message, level, details);
+		_secondScreen?.AppendLog(message, level, details);
+		AppLogger.FileOnly(fileMessage ?? message);
+	}
+
+	private void AppendLogPath(string format, string path, LogLevel level = LogLevel.Info)
+	{
+		AppendLog(string.Format(format, AppLogger.Verbose ? path : Path.GetFileName(path)), level,
+			path, string.Format(format, path));
 	}
 
 	/// <summary>A line AppLogger already logged - to the LOG panel and the second screen's, not again to the file.</summary>
@@ -731,7 +748,6 @@ public partial class MainWindow : Window
 	{
 		foreach (string line in AppBanner.BuildLines("GUI"))
 			AppendLog(line);
-		AppendLog("");
 	}
 
 	protected override void OnClosed(EventArgs e)

@@ -255,28 +255,28 @@ Each option is measured multiple times, alternating with the others. Results sho
     <value>Slowest stage</value>
   </data>
   <data name="Benchmark_StageDecode" xml:space="preserve">
-    <value>Decoding...</value>
+    <value>Measuring video decoding speed on the graphics card and CPU...</value>
   </data>
   <data name="Benchmark_StageEncode" xml:space="preserve">
-    <value>Encoding...</value>
+    <value>Comparing video encoding speed across encoder settings...</value>
   </data>
   <data name="Benchmark_StageGraph" xml:space="preserve">
-    <value>Full FFmpeg pipeline...</value>
+    <value>Measuring the full FFmpeg pipeline: decoding video, overlaying a test image and encoding the result...</value>
   </data>
   <data name="Benchmark_StageOverlay" xml:space="preserve">
-    <value>Drawing the overlay...</value>
+    <value>Measuring overlay drawing speed at render and preview resolutions, with and without shadows...</value>
   </data>
   <data name="Benchmark_StagePipe" xml:space="preserve">
-    <value>Sending frames to FFmpeg...</value>
+    <value>Measuring raw frame transfer speed from the app to FFmpeg, without video encoding...</value>
   </data>
   <data name="Benchmark_StagePreparing" xml:space="preserve">
-    <value>Preparing...</value>
+    <value>Preparing the test: collecting computer information and selecting a video encoder...</value>
   </data>
   <data name="Benchmark_StageProgress" xml:space="preserve">
-    <value>{0} ({1} of {2})</value>
+    <value>Step {1} of {2}: {0}</value>
   </data>
   <data name="Benchmark_StageRender" xml:space="preserve">
-    <value>Short render...</value>
+    <value>Rendering a short clip with the overlay, comparing performance with graphics card and CPU decoding...</value>
   </data>
   <data name="Benchmark_Start" xml:space="preserve">
     <value>Run test</value>
@@ -2031,7 +2031,7 @@ The cuts, view settings and overlay will be applied once these files are located
     <value>Choose a settings preset</value>
   </data>
   <data name="SettingsPresets_Subtitle" xml:space="preserve">
-    <value>Settings for different uses, such as bike rides or driving. Each preset has its own speed calibration, render settings, route intro and widget layout.</value>
+    <value>Settings for different uses, such as bicycle or motorcycle rides. Each preset has its own speed calibration, render settings, route intro and widget layout.</value>
   </data>
   <data name="SettingsPresets_ThisPreset" xml:space="preserve">
     <value>This preset</value>
@@ -2537,6 +2537,9 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_PressMentions" xml:space="preserve">
     <value>Reviews and mentions</value>
   </data>
+  <data name="Settings_PrereleaseVersion" xml:space="preserve">
+    <value>Pre-release: {0}</value>
+  </data>
   <data name="Settings_Repository" xml:space="preserve">
     <value>Repository</value>
   </data>
@@ -2697,10 +2700,10 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Audio: none</value>
   </data>
   <data name="Summary_LogCacheHit" xml:space="preserve">
-    <value>Cache hit (format v{0}): using the cached analysis, file unchanged since last run</value>
+    <value>Loaded cached analysis (format v{0}) - files have not changed since the last analysis</value>
   </data>
   <data name="Summary_LogCacheMiss" xml:space="preserve">
-    <value>No cache for this file yet (or the file changed since) - analyzing...</value>
+    <value>No up-to-date analysis - analyzing recording...</value>
   </data>
   <data name="Summary_LogCacheSaved" xml:space="preserve">
     <value>New cache saved (format v{0})</value>
@@ -2736,22 +2739,22 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>GPS signal lost: {0} gap, {1:0.0} s in total. The gap is marked in amber below the preview timeline.|GPS signal lost: {0} gaps, {1:0.0} s in total. The gaps are marked in amber below the preview timeline.</value>
   </data>
   <data name="Summary_LogGpsNoLoss" xml:space="preserve">
-    <value>GPS signal: no loss detected</value>
+    <value>GPS signal: no gaps detected in the recording</value>
   </data>
   <data name="Summary_LogGpsClockShift" xml:space="preserve">
-    <value>GPS time shifted by {0} h: the camera wrote it in the wrong time zone, so it was matched to the camera's clock</value>
+    <value>Adjusted GPS time by {0} h: the camera recorded it in the wrong time zone, so it was aligned with the camera clock</value>
   </data>
   <data name="Summary_LogGpsSpeed" xml:space="preserve">
-    <value>Speed measured by the GPS receiver is available for {0}/{1} frames. For the remaining {2} frames, speed was calculated from position changes.</value>
+    <value>Speed measured by the GPS receiver is available for {0:N0}/{1:N0} frames. For the remaining {2:N0} frames, it was calculated from position changes.</value>
   </data>
   <data name="Summary_LogGpsSpeedNone" xml:space="preserve">
-    <value>GPS-measured speed: not available for this file - using derived speed for all frames</value>
+    <value>The recording contains no speed measurements from the GPS receiver. Speed is calculated from position changes.</value>
   </data>
   <data name="Summary_LogFileMissing" xml:space="preserve">
     <value>File not found: {0}</value>
   </data>
   <data name="Summary_LogInput" xml:space="preserve">
-    <value>Input: {0}</value>
+    <value>Input ({0}): {1}</value>
   </data>
   <data name="Summary_LogNoCameraAxes" xml:space="preserve">
     <value>Roll, pitch and G-meter widgets aren't available for this camera - its accelerometer's axes relative to the picture are unknown</value>
@@ -2781,10 +2784,28 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>Recorded at: unknown (no GPS timestamp in telemetry)</value>
   </data>
   <data name="Summary_LogTelemetryDetected" xml:space="preserve">
-    <value>Telemetry detected ({0}) - {1} raw samples, {2} derived frames</value>
+    <value>Telemetry detected ({0}): {1:N0} source samples, {2:N0} processed frames</value>
   </data>
   <data name="Summary_LogTelemetrySummary" xml:space="preserve">
-    <value>Telemetry summary: {0:0.00} km, max speed {1:0.#} km/h (as measured, before smoothing and the speed correction), altitude {2:0}-{3:0} m, max G {4:0.00}</value>
+    <value>Route summary: distance {0:0.00} km, altitude {1:0}-{2:0} m, max G-force {3:0.00} G</value>
+  </data>
+  <data name="Summary_LogMaxSpeed" xml:space="preserve">
+    <value>Max speed: {0:0.#} km/h (telemetry value before smoothing and speed correction)</value>
+  </data>
+  <data name="Summary_LogGpsSpeedAll" xml:space="preserve">
+    <value>Speed measured by the GPS receiver is available for all {0:N0} frames.</value>
+  </data>
+  <data name="Summary_LogVideo" xml:space="preserve">
+    <value>Video: {0} {1}, {2}×{3}, {4} fps, ~{5} Mbps</value>
+  </data>
+  <data name="Summary_AudioMono" xml:space="preserve">
+    <value>mono</value>
+  </data>
+  <data name="Summary_AudioStereo" xml:space="preserve">
+    <value>stereo</value>
+  </data>
+  <data name="Summary_AudioChannels" xml:space="preserve">
+    <value>{0} channel|{0} channels</value>
   </data>
   <data name="Summary_LogVerifyFailed" xml:space="preserve">
     <value>Could not verify the exported file: {0}</value>
@@ -4116,13 +4137,44 @@ Note: OsmoOverlay is provided free of charge. If someone asks you to pay for thi
     <value>DJI drones</value>
   </data>
   <data name="Settings_DjiApiKey" xml:space="preserve">
-    <value>DJI API key</value>
+    <value>DJI API key (App Key / SDK key)</value>
   </data>
   <data name="Settings_DjiApiKeyHint" xml:space="preserve">
-    <value>The SDK key of an Open API app from your DJI developer account. Used to retrieve decryption keys for flight logs (FlightRecord). Downloaded keys are saved on your computer for reuse. Only key blocks from the log&apos;s header are sent to DJI, without GPS positions.</value>
+    <value>DJI encrypts flight logs (FlightRecord_*.txt). To read them, you need a key from your own DJI developer account. Reading each log for the first time requires an internet connection; downloaded decryption keys are saved on your computer for reuse. Only key blocks from the log&apos;s header are sent to DJI, without GPS positions.</value>
   </data>
   <data name="Settings_DjiApiKeyGet" xml:space="preserve">
-    <value>Get a key at developer.dji.com</value>
+    <value>Open My Apps in the DJI developer portal</value>
+  </data>
+  <data name="Common_OpenDjiPortal" xml:space="preserve">
+    <value>Open DJI developer portal</value>
+  </data>
+  <data name="DjiApiNotice_Title" xml:space="preserve">
+    <value>DJI API - key terms</value>
+  </data>
+  <data name="DjiApiNotice_ReadTerms" xml:space="preserve">
+    <value>Full DJI terms</value>
+  </data>
+  <data name="DjiApiNotice_Message" xml:space="preserve">
+    <value>You have just entered your DJI API key. OsmoOverlay will use it to obtain the keys needed to read encrypted flight logs.
+
+Before using this feature, take a moment to review the key terms. Using the API means accepting DJI&apos;s terms:
+
+- Use your own key and do not share it.
+- Use the API lawfully and respect others&apos; rights.
+- DJI may change the API or revoke access; operation and support are not guaranteed.
+- You are responsible for API use; the terms require covering certain claims and costs incurred by DJI.
+- DJI may process data under its privacy policy.
+
+This is a summary. The full DJI terms govern and may change.</value>
+  </data>
+  <data name="Settings_DjiApiKeyInstructions" xml:space="preserve">
+    <value>How to get a key:
+1. Open the link below and sign in or create a DJI account. From the home page, go to Profile > My Apps.
+2. Click CREATE APP. Set App Type to Open API.
+3. Enter an App Name (e.g. OsmoOverlay), choose a category that fits your use, and add a Description (e.g. Read my DJI flight logs). Click CREATE.
+4. In My Apps, click Send Email on the newly created app&apos;s card. Open the email titled "Activate your app" from noreply@mailer-bbs.dji.com and click the activation link. If the email does not arrive, check your spam folder.
+5. The activation link opens the app&apos;s details (APP INFORMATION). Copy the value shown next to App Key (not APP ID) and paste it into the key field above.
+6. Close Settings to save the key, then load the flight log again.</value>
   </data>
   <data name="Settings_DebugModeHint" xml:space="preserve">
     <value>The log panel shows everything written to the log file, including technical entries. You can also start the app in this mode by holding Shift at launch (Windows only).</value>
@@ -5274,5 +5326,17 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="TrackMap_Unavailable" xml:space="preserve">
     <value>The background map couldn&apos;t be loaded, so the picture stays black.</value>
+  </data>
+  <data name="Presets_ActionCamerasHint" xml:space="preserve">
+    <value>For footage from bicycles, electric scooters, motorcycles and other vehicles equipped with an action camera.</value>
+  </data>
+  <data name="Presets_DjiDronesHint" xml:space="preserve">
+    <value>For DJI drone footage. A layout with flight data, battery status and alerts from the flight log.</value>
+  </data>
+  <data name="Presets_FpvDronesHint" xml:space="preserve">
+    <value>For drone footage. A layout loosely inspired by FPV goggles' OSD, but with more detail.</value>
+  </data>
+  <data name="Main_RingThemeHint" xml:space="preserve">
+    <value>A style inspired by the speedometer in the DJI Mimo app.</value>
   </data>
 </root>

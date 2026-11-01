@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
@@ -23,9 +25,49 @@ public enum LogLevel
 
 internal static class LogPanelExtensions
 {
+	private static readonly ConditionalWeakTable<SelectableTextBlock, LogState> States = new();
 	private static readonly IBrush WarnBrush = Palette.Warning;
 	private static readonly IBrush ErrorBrush = Palette.Danger;
 	private static readonly IBrush DebugBrush = Palette.TextMuted;
+
+	private sealed record Entry(Run Run, string? Details, string? Key)
+	{
+		public int Start { get; set; }
+	}
+
+	private sealed class LogState
+	{
+		public List<Entry> Entries { get; } = [];
+		public Dictionary<string, int> Statuses { get; } = [];
+		public int Length { get; set; }
+	}
+
+	private static LogState CreateState(SelectableTextBlock logBox)
+	{
+		var state = new LogState();
+		logBox.PointerMoved += (_, e) =>
+		{
+			Point point = e.GetPosition(logBox);
+			int position = logBox.TextLayout.HitTestPoint(new Point(point.X - logBox.Padding.Left, point.Y - logBox.Padding.Top)).TextPosition;
+			int low = 0, high = state.Entries.Count - 1;
+			string? details = null;
+			while (low <= high)
+			{
+				int mid = low + (high - low) / 2;
+				Entry entry = state.Entries[mid];
+				if (position < entry.Start) high = mid - 1;
+				else if (position >= entry.Start + (entry.Run.Text?.Length ?? 0)) low = mid + 1;
+				else
+				{
+					details = entry.Details;
+					break;
+				}
+			}
+			if (!Equals(ToolTip.GetTip(logBox), details)) ToolTip.SetTip(logBox, details);
+		};
+		logBox.PointerExited += (_, _) => ToolTip.SetTip(logBox, null);
+		return state;
+	}
 
 	extension(SelectableTextBlock logBox)
 	{
@@ -45,9 +87,21 @@ internal static class LogPanelExtensions
 		///     elsewhere (e.g. AppLogger.Notified, raised by AppLogger.Notify after it already logged the
 		///     message itself), so mirroring it into the GUI doesn't also duplicate the file log entry.
 		/// </summary>
-		public void AppendLogLine(ScrollViewer logScroll, string message, LogLevel level = LogLevel.Info)
+		public void AppendLogLine(ScrollViewer logScroll, string message, LogLevel level = LogLevel.Info, string? details = null, string? statusKey = null)
 		{
-			var run = new Run($"[{DateTime.Now:HH:mm:ss}] {message}");
+			LogState state = States.GetValue(logBox, CreateState);
+			string text = $"[{DateTime.Now:HH:mm:ss}] {message}";
+			if (statusKey is not null && state.Statuses.TryGetValue(statusKey, out int index))
+			{
+				Entry entry = state.Entries[index];
+				int difference = text.Length - (entry.Run.Text?.Length ?? 0);
+				entry.Run.Text = text;
+				state.Length += difference;
+				for (int i = index + 1; i < state.Entries.Count; i++) state.Entries[i].Start += difference;
+				logScroll.ScrollToEnd();
+				return;
+			}
+			var run = new Run(text);
 
 			// Only set Foreground for Warn/Error - leaving it untouched for Info means it stays
 			// unset (not a local value), so it properly inherits the theme's text color once added
@@ -61,6 +115,9 @@ internal static class LogPanelExtensions
 			InlineCollection inlines = logBox.Inlines ??= [];
 			inlines.Add(run);
 			inlines.Add(new LineBreak());
+			if (statusKey is not null) state.Statuses[statusKey] = state.Entries.Count;
+			state.Entries.Add(new Entry(run, details, statusKey) { Start = state.Length });
+			state.Length += text.Length + Environment.NewLine.Length;
 
 			logScroll.ScrollToEnd();
 		}
@@ -69,6 +126,30 @@ internal static class LogPanelExtensions
 		public void ClearLog()
 		{
 			logBox.Inlines?.Clear();
+			if (States.TryGetValue(logBox, out LogState? state))
+			{
+				state.Entries.Clear();
+				state.Statuses.Clear();
+				state.Length = 0;
+			}
+			ToolTip.SetTip(logBox, null);
+		}
+
+		public void CopyLogFrom(SelectableTextBlock source)
+		{
+			logBox.ClearLog();
+			if (!States.TryGetValue(source, out LogState? original)) return;
+			LogState copy = States.GetValue(logBox, CreateState);
+			InlineCollection inlines = logBox.Inlines ??= [];
+			foreach (Entry entry in original.Entries)
+			{
+				var run = new Run(entry.Run.Text) { Foreground = entry.Run.Foreground };
+				if (entry.Key is not null) copy.Statuses[entry.Key] = copy.Entries.Count;
+				copy.Entries.Add(new Entry(run, entry.Details, entry.Key) { Start = entry.Start });
+				inlines.Add(run);
+				inlines.Add(new LineBreak());
+			}
+			copy.Length = original.Length;
 		}
 	}
 }

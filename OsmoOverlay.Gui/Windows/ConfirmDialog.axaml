@@ -21,21 +21,19 @@
 			<Image Name="QuestionArt" Source="{local:AssetImage Path=Dialogs/Question.webp}" IsVisible="False" />
 		</Panel>
 		<StackPanel Grid.Column="1" Classes="dialogBody">
-			<StackPanel Spacing="2">
-				<Grid ColumnDefinitions="Auto,*">
-					<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" Margin="0,0,10,0" VerticalAlignment="Center">
-						<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
-						                HorizontalAlignment="Center" VerticalAlignment="Center" />
-					</Border>
-					<TextBlock Name="TitleText" Grid.Column="1" Classes="dialogTitle" VerticalAlignment="Center" />
-				</Grid>
-				<ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+			<Grid ColumnDefinitions="Auto,*">
+				<Border Name="KindDot" Width="22" Height="22" CornerRadius="11" Margin="0,0,10,0" VerticalAlignment="Top">
+					<local:IconView Name="KindIcon" Width="12" Height="12" Foreground="White"
+					                HorizontalAlignment="Center" VerticalAlignment="Center" />
+				</Border>
+				<ScrollViewer Grid.Column="1" MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 					<SelectableTextBlock Name="MessageText" Classes="dialogMessage" />
 				</ScrollViewer>
-			</StackPanel>
+			</Grid>
 			<WrapPanel Classes="dialogActions">
 				<Button Name="CancelButton" Content="{x:Static local:Strings.Common_Cancel}" Click="OnCancelClick" />
 				<Button Name="ExtraButton" Content="{x:Static local:Strings.ConfirmDialog_Extra}" Click="OnExtraClick" IsVisible="False" />
+				<local:MessageLinks Name="Links" Orientation="Horizontal" />
 				<Button Name="ConfirmButton" Content="{x:Static local:Strings.ConfirmDialog_Confirm}" Click="OnConfirmClick" />
 			</WrapPanel>
 		</StackPanel>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Xml;
 using OsmoOverlay.Core.Logging;
 
@@ -45,18 +46,46 @@ public static class ExternalTrackReader
 
 	public static ExternalTrack Read(string path)
 	{
-		byte[] start = new byte[128];
-		int read;
-		using (FileStream stream = File.OpenRead(path)) read = stream.Read(start);
+		(ITrackFormat? format, bool isFit) = Detect(path);
+		return format is not null ? format.Read(path) : ReadBuiltIn(path, isFit);
+	}
 
-		foreach (ITrackFormat format in _formats)
-		{
-			if (format.Recognizes(path, start.AsSpan(0, read))) return format.Read(path);
-		}
-
+	public static bool TryRead(string path, [NotNullWhen(true)] out ExternalTrack? track, out string? problem)
+	{
+		track = null;
+		problem = null;
 		try
 		{
-			return FitReader.LooksLikeFit(start.AsSpan(0, read)) ? FitReader.Read(path) : GpxReader.Read(path);
+			(ITrackFormat? format, bool isFit) = Detect(path);
+			if (format is not null) return format.TryRead(path, out track, out problem);
+			track = ReadBuiltIn(path, isFit);
+			return true;
+		}
+		catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+		{
+			problem = ex.Message;
+			return false;
+		}
+	}
+
+	private static (ITrackFormat? Format, bool IsFit) Detect(string path)
+	{
+		Span<byte> start = stackalloc byte[128];
+		int read;
+		using (FileStream stream = File.OpenRead(path)) read = stream.Read(start);
+		foreach (ITrackFormat format in _formats)
+		{
+			if (format.Recognizes(path, start[..read])) return (format, false);
+		}
+
+		return (null, FitReader.LooksLikeFit(start[..read]));
+	}
+
+	private static ExternalTrack ReadBuiltIn(string path, bool isFit)
+	{
+		try
+		{
+			return isFit ? FitReader.Read(path) : GpxReader.Read(path);
 		}
 		catch (XmlException ex)
 		{

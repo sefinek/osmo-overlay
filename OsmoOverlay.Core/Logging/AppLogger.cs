@@ -59,7 +59,7 @@ public static class AppLogger
 		Logger.Info(Scrub(message));
 	}
 
-	/// <summary>Like Info, but also raises Notified - use for a line the GUI should surface live (an executed command, a one-off status) that isn't already reaching the screen some other way.</summary>
+	/// <summary>Like Info, but also raises Notified - use for a status the GUI should surface live that isn't already reaching the screen some other way.</summary>
 	public static void Notify(string message)
 	{
 		Logger.Info(Scrub(message));

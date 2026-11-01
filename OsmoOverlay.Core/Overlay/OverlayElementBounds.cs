@@ -365,7 +365,7 @@ public static class OverlayElementBounds
 		for (int i = 0; i < details.Length; i++)
 			text = Math.Max(text, LineExtent(OverlayRenderer.GpsDetailAtWidest(details[i], (GpsAlertMessage)i), GpsAlertDetailSize, fontFamily).Width);
 
-		float width = GpsAlertGap * 2 + GpsAlertIcon + GpsAlertGap + text;
+		float width = GpsAlertGap * 2 + GpsAlertIcon + text + GpsAlertHeight / 2;
 		return new SKRect(-width / 2, 0, width / 2, GpsAlertHeight);
 	}
 

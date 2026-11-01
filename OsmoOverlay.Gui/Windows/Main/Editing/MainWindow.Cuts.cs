@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Localization;
 
 namespace OsmoOverlay.Gui;
@@ -253,7 +254,7 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppendLog(string.Format(Strings.Preview_Unavailable, ex.Message));
+			AppLogger.Error(ex, string.Format(Strings.Preview_Unavailable, ex.Message));
 		}
 	}
 

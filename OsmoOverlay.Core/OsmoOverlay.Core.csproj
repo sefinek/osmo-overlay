@@ -40,6 +40,7 @@
   <ItemGroup>
     <PackageReference Include="FFmpeg.AutoGen" />
     <PackageReference Include="NLog" />
+    <PackageReference Include="NuGet.Versioning" />
     <PackageReference Include="ppy.SDL3-CS" />
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" />

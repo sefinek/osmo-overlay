@@ -48,8 +48,10 @@ public partial class MainWindow
 		// Indeterminate rather than a percentage - probing/extraction/preview-open (which may itself
 		// fetch map tiles) has no single reliable "done fraction" to report, unlike the render below.
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Indeterminate);
-		foreach (string path in inputPaths)
-			AppendLog(string.Format(Strings.Summary_LogInput, path));
+		string inputs = string.Join(", ", inputPaths.Select(path => AppLogger.Verbose ? path : Path.GetFileName(path)));
+		AppendLog(string.Format(Strings.Summary_LogInput, inputPaths.Count, inputs),
+			details: string.Join(Environment.NewLine, inputPaths),
+			fileMessage: string.Format(Strings.Summary_LogInput, inputPaths.Count, string.Join(", ", inputPaths)));
 
 		// Cache events arrive on the worker thread, mid-Read - posted through the same UI context the
 		// await below resumes on, so they land in the log in order and before the results.
@@ -87,7 +89,7 @@ public partial class MainWindow
 					try
 					{
 						trackSource.Validate();
-						loadedTrack = ExternalTrackReader.Read(trackSource.Path);
+						if (!ExternalTrackReader.TryRead(trackSource.Path, out loadedTrack, out string? error)) return error;
 						withTrack = trackSource.Apply(withTrack, loadedTrack);
 						return null;
 					}
@@ -104,7 +106,7 @@ public partial class MainWindow
 				}
 				else
 				{
-					AppendLog(trackProblem, LogLevel.Error);
+					AppendLog(trackProblem, LogLevel.Warn);
 					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, trackProblem, kind: DialogKind.Warning);
 				}
 			}
@@ -114,13 +116,15 @@ public partial class MainWindow
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
-			var encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
+			Task<string> encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
 			Task speedsRead = Task.Run(() => RecordingSpeeds(summary));
 
-			AppendLog(
+			AppLogger.Info(
 				$"ffprobe: {summary.Video.CodecName} {summary.Video.Profile}, {summary.Video.Width}x{summary.Video.Height}, " +
 				$"{FormatFps(summary.Video.Fps)} fps, {summary.Video.PixFmt}, ~{summary.Video.BitRate / 1_000_000} Mbps");
-			AppendLog(
+			AppendLog(string.Format(Strings.Summary_LogVideo, summary.Video.CodecName.ToUpperInvariant(), summary.Video.Profile,
+				summary.Video.Width, summary.Video.Height, FormatFps(summary.Video.Fps), summary.Video.BitRate / 1_000_000));
+			AppLogger.Info(
 				string.Format(Strings.Summary_LogColor, $"{summary.Video.ColorPrimaries ?? "?"} / {summary.Video.ColorTransfer ?? "?"} / " +
 				                                        $"{summary.Video.ColorSpace ?? "?"} ({summary.Video.ColorRange ?? "?"})"));
 			if (summary.Fisheye is { } lenses)
@@ -132,7 +136,8 @@ public partial class MainWindow
 			AppendLog(string.Format(Strings.Summary_LogDuration, TimeSpan.FromSeconds(summary.DurationSeconds).ToString(@"hh\:mm\:ss"),
 				FormatHelper.FormatBytes(summary.FileSizeBytes)));
 			AppendLog(summary.Audio is { } audio
-				? string.Format(Strings.Summary_LogAudio, $"{audio.CodecName}, {audio.SampleRate} Hz, {audio.Channels}ch")
+				? string.Format(Strings.Summary_LogAudio, $"{audio.CodecName.ToUpperInvariant()}, {audio.SampleRate / 1000.0:0.###} kHz, " +
+					(audio.Channels == 1 ? Strings.Summary_AudioMono : audio.Channels == 2 ? Strings.Summary_AudioStereo : Plural.Format(Strings.Summary_AudioChannels, audio.Channels)))
 				: Strings.Summary_LogAudioNone);
 
 			AppendLog(string.Format(Strings.Summary_LogCameraModel, summary.CameraModel ?? Strings.Common_Unknown));
@@ -152,7 +157,7 @@ public partial class MainWindow
 				_availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, summary.CameraFormat);
 
 				int withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
-				AppendLog(withGpsSpeed > 0
+				AppendLog(withGpsSpeed == rawFrames.Count ? string.Format(Strings.Summary_LogGpsSpeedAll, rawFrames.Count) : withGpsSpeed > 0
 					? string.Format(Strings.Summary_LogGpsSpeed, withGpsSpeed, rawFrames.Count, rawFrames.Count - withGpsSpeed)
 					: Strings.Summary_LogGpsSpeedNone);
 
@@ -206,8 +211,9 @@ public partial class MainWindow
 
 			if (summary.Telemetry is { } tele)
 			{
-				AppendLog(string.Format(Strings.Summary_LogTelemetrySummary, tele.TotalDistanceMeters / 1000.0, tele.MaxSpeedKmh,
+				AppendLog(string.Format(Strings.Summary_LogTelemetrySummary, tele.TotalDistanceMeters / 1000.0,
 					tele.MinAltitudeMeters, tele.MaxAltitudeMeters, tele.MaxGForce));
+				AppendLog(string.Format(Strings.Summary_LogMaxSpeed, tele.MaxSpeedKmh));
 				AppendLog(tele.RecordedAtUtc is { } recordedUtc
 					? string.Format(Strings.Summary_LogRecordedAt, recordedUtc.ToLocalFromUtc().ToString("yyyy-MM-dd HH:mm:ss"))
 					: Strings.Summary_LogRecordedAtUnknown);
@@ -216,7 +222,8 @@ public partial class MainWindow
 			AppendLog(Strings.Summary_LogCheckingGpuEncoder);
 			string encoder = await encoderProbe;
 			await speedsRead;
-			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder, FfmpegPipeline.EncoderCard(encoder) ?? "GPU"));
+			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu,
+				EncoderDisplayName(encoder), FfmpegPipeline.EncoderCard(encoder) ?? "GPU"));
 
 			_summary = summary;
 			AdoptCameraLayout(summary);
@@ -250,6 +257,20 @@ public partial class MainWindow
 		}
 	}
 
+	private static string EncoderDisplayName(string encoder)
+	{
+		string codec = encoder.StartsWith("hevc", StringComparison.Ordinal) || encoder == "libx265" ? "HEVC" : "H.264";
+		return encoder switch
+		{
+			"h264_nvenc" or "hevc_nvenc" => $"NVIDIA NVENC {codec}",
+			"h264_amf" or "hevc_amf" => $"AMD AMF {codec}",
+			"h264_qsv" or "hevc_qsv" => $"Intel Quick Sync {codec}",
+			"libx264" => "x264 (H.264)",
+			"libx265" => "x265 (HEVC)",
+			_ => encoder
+		};
+	}
+
 	/// <summary>The stretches the GPS lost or had repaired, found once off the UI thread (a long recording has hundreds of thousands of frames) for the log and the timelines.</summary>
 	private async Task<(IReadOnlyList<GpsAnomaly> Anomalies, IReadOnlyList<(double Start, double End)> LossRanges)> FindGpsAsync(FileSummary summary)
 	{
@@ -280,8 +301,14 @@ public partial class MainWindow
 			await ConfirmDialog.ShowAsync(this, string.Format(Strings.Summary_LimitedSupportTitle, summary.CameraFormat.DisplayName), notice,
 				kind: DialogKind.Warning);
 		}
-		else if (!summary.HasTelemetry) await ShowNoTelemetryNoticeAsync();
-		else if (!_availability.GpsFix) await ShowNoGpsNoticeAsync();
+		else if (!summary.HasTelemetry)
+		{
+			await ShowNoTelemetryNoticeAsync();
+		}
+		else if (!_availability.GpsFix)
+		{
+			await ShowNoGpsNoticeAsync();
+		}
 	}
 
 	internal Task ShowNoTelemetryNoticeAsync()

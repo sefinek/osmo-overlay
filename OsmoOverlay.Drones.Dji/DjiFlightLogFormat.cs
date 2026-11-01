@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
@@ -27,11 +28,20 @@ public sealed class DjiFlightLogFormat : ITrackFormat
 
 	public ExternalTrack Read(string path)
 	{
+		return TryRead(path, out ExternalTrack? track, out string? problem) ? track : throw new InvalidDataException(problem);
+	}
+
+	public bool TryRead(string path, [NotNullWhen(true)] out ExternalTrack? track, out string? problem)
+	{
+		track = null;
+		problem = null;
 		var log = FlightLog.Read(path);
-		FlightLogData data = log.Decode(log.IsEncrypted ? DjiKeychains.Obtain(log) : null);
-		ExternalTrack track = ToTrack(log, data);
+		IReadOnlyList<Keychain>? keychains = null;
+		if (log.IsEncrypted && !DjiKeychains.TryObtain(log, out keychains, out problem)) return false;
+		FlightLogData data = log.Decode(keychains);
+		track = ToTrack(log, data);
 		NotifySummary(log, data);
-		return track;
+		return true;
 	}
 
 	private static void NotifySummary(FlightLog log, FlightLogData data)

@@ -59,6 +59,9 @@ public partial class DeveloperWindow : Window
 			case "show":
 				await ConfirmDialog.ShowAsync(this, SampleTitle, SampleMessage, kind: Enum.Parse<DialogKind>(argument));
 				break;
+			case "dji-api-notice":
+				await DjiApiNotice.ShowAsync(this);
+				break;
 			case "show-actions":
 				await ConfirmDialog.ShowAsync(this, SampleTitle, SampleMessage, kind: DialogKind.Success,
 					secondaryText: "Secondary", onSecondary: () => SetStatus("Secondary clicked"),

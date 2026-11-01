@@ -1,5 +1,6 @@
-using System.Reflection;
 using System.Runtime.InteropServices;
+using OsmoOverlay.Core.Localization;
+using OsmoOverlay.Core.Updates;
 
 namespace OsmoOverlay.Core;
 
@@ -8,17 +9,10 @@ public static class AppBanner
 {
 	public static IReadOnlyList<string> BuildLines(string appLabel)
 	{
-		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
-		string coreVersion = typeof(RenderJob).Assembly.GetName().Version?.ToString(3) ?? "?";
-
 		return
 		[
-			"==================================================",
-			$"     OsmoOverlay | {appLabel} v{appVersion} | Core v{coreVersion}",
-			$"             Build {BuildInfo.Describe()}",
-			" Telemetry HUD burner for DJI Osmo Action footage",
-			$" {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}, .NET {Environment.Version}",
-			"=================================================="
+			string.Format(CoreStrings.AppBanner_Version, AppUpdates.CurrentVersionLabel, appLabel, BuildInfo.Describe()),
+			$"{RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}, .NET {Environment.Version}"
 		];
 	}
 }

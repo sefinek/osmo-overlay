@@ -159,6 +159,7 @@
 		<StackPanel Grid.Row="2">
 			<TextBlock Name="LoadingText" IsVisible="False" Classes="rowHint" Margin="0,12,0,0" />
 			<TextBlock Name="ProblemText" IsVisible="False" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,12,0,0" />
+			<local:MessageLinks Name="ProblemLinks" Margin="0,12,0,0" />
 			<ProgressBar Name="Busy" IsIndeterminate="True" IsVisible="False" Margin="0,12,0,0" />
 		</StackPanel>
 

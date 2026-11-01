@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Text.Json.Nodes;
+using NuGet.Versioning;
 using OsmoOverlay.Core.Updates;
 
 namespace OsmoOverlay.Tests.Updates;
@@ -30,9 +32,31 @@ public sealed class AppUpdatesTests
 	[TestMethod]
 	public void CurrentVersion_InitializesTheTypeAndItsHttpClient()
 	{
-		Version assembly = typeof(AppUpdates).Assembly.GetName().Version!;
+		string expected = typeof(AppUpdates).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+		Assert.AreEqual(expected, AppUpdates.CurrentVersion.ToFullString());
+		Assert.AreEqual(NuGetVersion.Parse(expected).ToNormalizedString(), AppUpdates.CurrentVersionLabel);
+		Assert.IsFalse(AppUpdates.IsNewer(new AppRelease(AppUpdates.CurrentVersion, "https://example.test", null, null)));
+	}
 
-		Assert.AreEqual(new Version(assembly.Major, assembly.Minor, assembly.Build), AppUpdates.CurrentVersion);
+	[TestMethod]
+	[DataRow("0.5.0", "0.5.0-beta.1", true)]
+	[DataRow("0.5.0", "0.5.0-beta.2+abc123", true)]
+	[DataRow("0.5.0", "0.5.0-rc.1", true)]
+	[DataRow("0.5.0", "0.5.0", false)]
+	[DataRow("0.5.0", "0.5.0+build-with-hyphens", false)]
+	[DataRow("0.5.0", "0.5.0.0", false)]
+	[DataRow("0.5.0", "0.4.0", true)]
+	[DataRow("0.5.0", "0.6.0-beta.1", false)]
+	[DataRow("0.5.0", "0.6.0", false)]
+	[DataRow("0.5.1", "0.5.0-beta.1", true)]
+	[DataRow("0.5.0-beta.10", "0.5.0-beta.2", true)]
+	[DataRow("0.5.0-beta.2", "0.5.0-beta.10", false)]
+	[DataRow("0.5.0-rc.1", "0.5.0-beta.10", true)]
+	[DataRow("0.5.0-beta.1+new", "0.5.0-beta.1+old", false)]
+	[DataRow("0.5.0+new", "0.5.0+old", false)]
+	public void IsNewer_UsesReleasePrecedenceWithoutBuildMetadata(string available, string current, bool expected)
+	{
+		Assert.AreEqual(expected, AppUpdates.IsNewer(NuGetVersion.Parse(available), NuGetVersion.Parse(current)));
 	}
 
 	[TestMethod]
@@ -45,7 +69,7 @@ public sealed class AppUpdatesTests
 
 		(AppRelease release, string? sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
 
-		Assert.AreEqual(new Version(0, 2, 0), release.Version);
+		Assert.AreEqual(new NuGetVersion(0, 2, 0), release.Version);
 		Assert.AreEqual("OsmoOverlay-0.2.0-win-x64-setup.exe", release.Installer?.Name);
 		Assert.AreEqual(new string('a', 64), release.Installer?.Sha256);
 		Assert.AreEqual(1234, release.Installer?.Size);
@@ -71,8 +95,17 @@ public sealed class AppUpdatesTests
 	{
 		(AppRelease release, _) = AppUpdates.ParseRelease(Release("v1.4.2-beta", Asset("OsmoOverlay-1.4.2-linux-x64.tar.gz")), Suffix);
 
-		Assert.AreEqual(new Version(1, 4, 2), release.Version);
+		Assert.AreEqual(NuGetVersion.Parse("1.4.2-beta"), release.Version);
 		Assert.IsNull(release.Installer);
+	}
+
+	[TestMethod]
+	public void ParseRelease_PreservesPrereleaseAndMetadata()
+	{
+		(AppRelease release, _) = AppUpdates.ParseRelease(Release("v0.5.0-beta.10+abc123", ""), null);
+		Assert.AreEqual("beta.10", release.Version.Release);
+		Assert.AreEqual("abc123", release.Version.Metadata);
+		Assert.AreEqual("0.5.0-beta.10", release.Version.ToNormalizedString());
 	}
 
 	[TestMethod]

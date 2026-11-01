@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.Net;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using Microsoft.Win32;
+using NuGet.Versioning;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 
@@ -13,7 +15,7 @@ namespace OsmoOverlay.Core.Updates;
 public sealed record ReleaseAsset(string Name, string DownloadUrl, long Size, string? Sha256);
 
 /// <param name="Installer">The Windows installer for this machine's architecture, null when the release has none (or off Windows).</param>
-public sealed record AppRelease(Version Version, string PageUrl, DateTimeOffset? PublishedAt, ReleaseAsset? Installer);
+public sealed record AppRelease(NuGetVersion Version, string PageUrl, DateTimeOffset? PublishedAt, ReleaseAsset? Installer);
 
 /// <summary>
 ///     The app's own updates, from the GitHub repository's latest release (prereleases and drafts excluded by the API).
@@ -38,14 +40,17 @@ public static class AppUpdates
 	private const string LatestReleaseApi = "https://api.github.com/repos/sefinek/osmo-overlay/releases/latest";
 
 	// Before Http: static initializers run in declaration order, and the User-Agent reads it.
-	public static Version CurrentVersion { get; } = ThreeParts(typeof(AppUpdates).Assembly.GetName().Version ?? new Version(0, 0, 0));
+	public static NuGetVersion CurrentVersion { get; } = NuGetVersion.Parse(typeof(AppUpdates).Assembly
+		.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+		?? typeof(AppUpdates).Assembly.GetName().Version?.ToString() ?? "0.0.0");
+	public static string CurrentVersionLabel { get; } = CurrentVersion.ToNormalizedString();
 
 	private static readonly HttpClient Http = CreateHttpClient();
 
 	private static HttpClient CreateHttpClient()
 	{
 		var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
-		client.DefaultRequestHeaders.UserAgent.ParseAdd($"OsmoOverlay/{CurrentVersion} (+{RepositoryUrl})");
+		client.DefaultRequestHeaders.UserAgent.ParseAdd($"OsmoOverlay/{CurrentVersionLabel} (+{RepositoryUrl})");
 		client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
 		return client;
 	}
@@ -53,14 +58,14 @@ public static class AppUpdates
 	/// <summary>Null when the repository has no release yet. Throws on network/API failures. Logs the check and its outcome.</summary>
 	public static async Task<AppRelease?> GetLatestAsync(CancellationToken ct)
 	{
-		AppLogger.Info($"Checking for a new version of OsmoOverlay (current: {CurrentVersion})...");
+		AppLogger.Info($"Checking for a new version of OsmoOverlay (current: {CurrentVersionLabel})...");
 		AppRelease? release = await FetchLatestAsync(ct);
 
 		AppLogger.Notify(release switch
 		{
 			null => CoreStrings.Updates_NoRelease,
-			_ when IsNewer(release) => string.Format(CoreStrings.Updates_Available, release.Version, CurrentVersion),
-			_ => string.Format(CoreStrings.Updates_UpToDate, CurrentVersion)
+			_ when IsNewer(release) => string.Format(CoreStrings.Updates_Available, release.Version, CurrentVersionLabel),
+			_ => string.Format(CoreStrings.Updates_UpToDate, CurrentVersionLabel)
 		});
 		return release;
 	}
@@ -90,7 +95,7 @@ public static class AppUpdates
 	internal static (AppRelease Release, string? SumsUrl) ParseRelease(JsonNode release, string? installerSuffix)
 	{
 		string tag = release["tag_name"]?.GetValue<string>() ?? throw new InvalidDataException("Release has no tag.");
-		if (!Version.TryParse(tag.TrimStart('v', 'V').Split('-', '+')[0], out Version? version))
+		if (!NuGetVersion.TryParse(tag.TrimStart('v', 'V'), out NuGetVersion? version))
 			throw new InvalidDataException($"Release tag '{tag}' isn't a version number.");
 
 		List<JsonNode> assets = [.. (release["assets"]?.AsArray() ?? []).OfType<JsonNode>()];
@@ -106,7 +111,7 @@ public static class AppUpdates
 			installer = new ReleaseAsset(name, asset["browser_download_url"]!.GetValue<string>(), asset["size"]?.GetValue<long>() ?? 0, sha256);
 		}
 
-		return (new AppRelease(ThreeParts(version), release["html_url"]?.GetValue<string>() ?? ReleasesUrl,
+		return (new AppRelease(version, release["html_url"]?.GetValue<string>() ?? ReleasesUrl,
 			release["published_at"]?.GetValue<DateTimeOffset>(), installer), sumsUrl);
 	}
 
@@ -125,7 +130,12 @@ public static class AppUpdates
 
 	public static bool IsNewer(AppRelease release)
 	{
-		return release.Version > CurrentVersion;
+		return IsNewer(release.Version, CurrentVersion);
+	}
+
+	internal static bool IsNewer(NuGetVersion available, NuGetVersion current)
+	{
+		return VersionComparer.VersionRelease.Compare(available, current) > 0;
 	}
 
 	/// <summary>
@@ -235,10 +245,5 @@ public static class AppUpdates
 		}
 
 		return null;
-	}
-
-	private static Version ThreeParts(Version version)
-	{
-		return new Version(version.Major, version.Minor, Math.Max(0, version.Build));
 	}
 }

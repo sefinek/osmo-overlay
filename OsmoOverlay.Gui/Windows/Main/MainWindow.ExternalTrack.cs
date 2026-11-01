@@ -243,10 +243,24 @@ public partial class MainWindow
 		try
 		{
 			OverlaySettings settings = OverlaySettingsStore.Load();
+			(ExternalTrack? track, string? problem) = await Task.Run(() =>
+			{
+				ExternalTrackReader.TryRead(path, out ExternalTrack? read, out string? error);
+				return (read, error);
+			});
+			if (track is null)
+			{
+				AppendLog(string.Format(Strings.TrackOnly_Failed, problem), LogLevel.Warn);
+				SetPhase(UiPhase.Idle);
+				ActionButton.IsEnabled = false;
+				await ConfirmDialog.ShowAsync(this, Strings.Track_Title, problem ?? "", kind: DialogKind.Warning);
+				return;
+			}
+
 			(FileSummary summary, ExternalTrackPlayback playback, IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges) =
 				await Task.Run(() =>
 				{
-					(FileSummary created, ExternalTrackPlayback prepared) = TrackOnlyRecording.Create(ExternalTrackReader.Read(path), settings, format);
+					(FileSummary created, ExternalTrackPlayback prepared) = TrackOnlyRecording.Create(track, settings, format);
 					return (created, prepared, (IReadOnlyList<GpsAnomaly>)TelemetryProcessor.FindGpsAnomalies(prepared.RawFrames),
 						(IReadOnlyList<(double Start, double End)>)TelemetryProcessor.FindGpsLossRanges(prepared.RawFrames));
 				});

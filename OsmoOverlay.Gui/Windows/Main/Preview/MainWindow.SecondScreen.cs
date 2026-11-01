@@ -63,7 +63,7 @@ public partial class MainWindow
 		}
 
 		var window = new SecondScreenWindow(screen);
-		window.CopyLogFrom(LogBox.Inlines);
+		window.CopyLogFrom(LogBox);
 		window.AddHandler(KeyDownEvent, OnPreviewSpaceKeyDown, RoutingStrategies.Tunnel);
 		window.AddHandler(KeyUpEvent, OnPreviewSpaceKeyUp, RoutingStrategies.Tunnel);
 		window.KeyDown += OnPreviewShortcutKeyDown;

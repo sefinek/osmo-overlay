@@ -175,17 +175,10 @@ public partial class ExternalTrackWindow : Window
 		Log?.Invoke(string.Format(Strings.Track_ReadingFile, name), LogLevel.Info);
 		try
 		{
-			// Caught inside the task: a file that isn't a usable track is expected, and an exception crossing Task.Run stops the debugger as user-unhandled.
 			(ExternalTrack? read, string? problem) = await Task.Run<(ExternalTrack?, string?)>(() =>
 			{
-				try
-				{
-					return (ExternalTrackReader.Read(path), null);
-				}
-				catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
-				{
-					return (null, ex.Message);
-				}
+				ExternalTrackReader.TryRead(path, out ExternalTrack? track, out string? error);
+				return (track, error);
 			});
 			if (_closed) return false;
 			if (read is not { } track)
@@ -423,10 +416,11 @@ public partial class ExternalTrackWindow : Window
 	}
 
 	/// <summary>A message line is there only while it has something to say - an empty one would leave a gap in the layout.</summary>
-	private static void Show(TextBlock line, string text)
+	private void Show(TextBlock line, string text)
 	{
 		line.Text = text;
 		line.IsVisible = !string.IsNullOrEmpty(text);
+		if (line == ProblemText) line.Text = ProblemLinks.SetMessage(text);
 	}
 
 	private void SetBusy(bool busy)

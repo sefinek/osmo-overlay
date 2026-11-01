@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace OsmoOverlay.Core.Telemetry.External;
 
 /// <summary>
@@ -17,6 +19,13 @@ public interface ITrackFormat
 
 	/// <summary>Throws InvalidDataException for a file that can't be read as a track.</summary>
 	ExternalTrack Read(string path);
+
+	bool TryRead(string path, [NotNullWhen(true)] out ExternalTrack? track, out string? problem)
+	{
+		track = Read(path);
+		problem = null;
+		return true;
+	}
 
 	/// <summary>
 	///     The log of the flight a recording belongs to, kept beside it, or null (the default). Only for a format whose files can be

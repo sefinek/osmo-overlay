@@ -15,6 +15,18 @@
   <data name="Audio_VerificationFailed" xml:space="preserve">
     <value>Weryfikacja nie powiodła się: po dekodowaniu skonwertowany dźwięk daje inne próbki niż plik źródłowy.</value>
   </data>
+  <data name="AppBanner_Version" xml:space="preserve">
+    <value>OsmoOverlay {0} ({1}), kompilacja {2}</value>
+  </data>
+  <data name="Preview_MapReady" xml:space="preserve">
+    <value>Mapa: gotowa</value>
+  </data>
+  <data name="Preview_OverviewReady" xml:space="preserve">
+    <value>Mapa wstępu: gotowa</value>
+  </data>
+  <data name="Preview_MapCancelled" xml:space="preserve">
+    <value>Mapa: anulowano pobieranie</value>
+  </data>
   <data name="Cache_DeleteFailed" xml:space="preserve">
     <value>Nie udało się usunąć nieaktualnej analizy {0}</value>
   </data>
@@ -468,7 +480,7 @@
     <value>ścieżka timecode (godzina nagrania)</value>
   </data>
   <data name="Updates_Available" xml:space="preserve">
-    <value>Dostępny jest OsmoOverlay {0} (masz {1})</value>
+    <value>OsmoOverlay {1} - dostępna aktualizacja do {0}</value>
   </data>
   <data name="Updates_HashMismatch" xml:space="preserve">
     <value>{0} nie zgadza się z opublikowaną sumą SHA-256 - pobrany plik jest uszkodzony lub został zmieniony.</value>
@@ -480,25 +492,25 @@
     <value>Nie opublikowano jeszcze żadnego wydania OsmoOverlay</value>
   </data>
   <data name="Updates_UpToDate" xml:space="preserve">
-    <value>OsmoOverlay jest aktualny ({0})</value>
+    <value>OsmoOverlay {0} - aktualna wersja</value>
   </data>
   <data name="Versions_LatestUnknown" xml:space="preserve">
-    <value>{0}: zainstalowana {1} (nie udało się ustalić najnowszej wersji)</value>
+    <value>{0} {1} - nie udało się sprawdzić aktualizacji</value>
   </data>
   <data name="Versions_NotInstalled" xml:space="preserve">
-    <value>{0}: niezainstalowany albo nie udało się odczytać wersji</value>
+    <value>{0} - brak instalacji lub nie udało się odczytać wersji</value>
   </data>
   <data name="Versions_Unsupported" xml:space="preserve">
     <value>Dostępny jest już {0} {1}, ale ta wersja OsmoOverlay obsługuje tylko {2}.x</value>
   </data>
   <data name="Versions_UpdateAvailable" xml:space="preserve">
-    <value>{0}: zainstalowana {1}, dostępna aktualizacja ({2})</value>
+    <value>{0} {1} - dostępna aktualizacja do {2}</value>
   </data>
   <data name="Versions_UpdateManually" xml:space="preserve">
-    <value>{0}: zainstalowana {1}, dostępna {2} - nie zainstalowano przez menedżer pakietów, zaktualizuj ręcznie</value>
+    <value>{0} {1} - dostępna wersja {2}; zaktualizuj ręcznie (instalacja spoza menedżera pakietów)</value>
   </data>
   <data name="Versions_UpToDate" xml:space="preserve">
-    <value>{0}: zainstalowana {1} - aktualna</value>
+    <value>{0} {1} - aktualna wersja</value>
   </data>
   <data name="Synthetic_Name" xml:space="preserve">
     <value>Nagranie testowe</value>
@@ -624,10 +636,18 @@
     <value>Po tym dopasowaniu trasa GPS nie obejmuje żadnego fragmentu nagrania.</value>
   </data>
   <data name="DjiLog_NeedsApiKey" xml:space="preserve">
-    <value>Ten dziennik lotu DJI jest zaszyfrowany. Aby go odczytać, podaj klucz API DJI (SDK key z developer.dji.com) w Ustawieniach.</value>
+    <value>Ten dziennik lotu DJI jest zaszyfrowany. Aby go odczytać, skonfiguruj klucz API DJI.
+
+Otwórz Ustawienia > Zachowanie > Drony DJI. Znajdziesz tam instrukcję uzyskania klucza. W panelu DJI (https://developer.dji.com/user/apps/#all) wybierz CREATE APP > App Type: Open API, aktywuj aplikację przez e-mail i skopiuj jej App Key (klucz SDK).
+
+Wklej klucz w ustawieniach OsmoOverlay, zamknij je i ponownie wczytaj dziennik lotu. Pierwszy odczyt wymaga połączenia z internetem.</value>
   </data>
   <data name="DjiLog_KeyRejected" xml:space="preserve">
-    <value>DJI odrzuciło klucz API. Sprawdź, czy to SDK key aktywowanej aplikacji typu Open API.</value>
+    <value>DJI odrzuciło podany klucz API.
+
+W panelu DJI (https://developer.dji.com/user/apps/#all) sprawdź, czy aplikacja ma typ Open API i została aktywowana przez link w e-mailu od DJI. Ze szczegółów aplikacji skopiuj App Key (klucz SDK).
+
+W OsmoOverlay otwórz Ustawienia > Zachowanie > Drony DJI i zastąp wpisany klucz. Zamknij ustawienia i ponownie wczytaj dziennik lotu.</value>
   </data>
   <data name="DjiLog_KeychainFailed" xml:space="preserve">
     <value>Nie udało się pobrać kluczy do dziennika lotu z DJI: {0}</value>

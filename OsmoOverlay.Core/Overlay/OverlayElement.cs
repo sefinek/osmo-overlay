@@ -527,6 +527,8 @@ public sealed record MapAttributionElement : StyledOverlayElement
 /// </summary>
 public sealed record WatermarkElement : StyledOverlayElement
 {
+	public const float MinimumOpacity = 0.30f;
+
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Watermark;
 }
 

@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
@@ -60,9 +59,9 @@ internal sealed class SecondScreenWindow : Window
 		_viewportHost.Children.Clear();
 	}
 
-	public void AppendLog(string message, LogLevel level)
+	public void AppendLog(string message, LogLevel level, string? details = null, string? statusKey = null)
 	{
-		_log.AppendLogLine(_logScroll, message, level);
+		_log.AppendLogLine(_logScroll, message, level, details, statusKey);
 	}
 
 	public void ClearLog()
@@ -71,16 +70,9 @@ internal sealed class SecondScreenWindow : Window
 	}
 
 	/// <summary>The lines the main window's LOG panel already has - a copy, as an inline belongs to one text block.</summary>
-	public void CopyLogFrom(InlineCollection? source)
+	public void CopyLogFrom(SelectableTextBlock source)
 	{
-		if (source is null) return;
-
-		InlineCollection inlines = _log.Inlines ??= [];
-		foreach (Inline inline in source)
-		{
-			if (inline is Run run) inlines.Add(new Run(run.Text) { Foreground = run.Foreground });
-			else if (inline is LineBreak) inlines.Add(new LineBreak());
-		}
+		_log.CopyLogFrom(source);
 
 		_logScroll.ScrollToEnd();
 	}

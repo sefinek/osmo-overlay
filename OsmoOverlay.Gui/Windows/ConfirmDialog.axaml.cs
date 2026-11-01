@@ -67,13 +67,8 @@ public partial class ConfirmDialog : Window
 			DialogKind.Danger => UiSound.Error,
 			_ => UiSound.Question
 		};
-		// windowTitle (the OS window chrome/taskbar text) is deliberately separate from `title` (the
-		// heading shown in the body) - a caller that shows several outcomes for the same action (e.g.
-		// ToolsWindow's color tag fixer) wants a stable window title across all of them while the
-		// heading changes per outcome, instead of both saying the same thing twice on screen.
 		Title = windowTitle ?? title;
-		TitleText.Text = title;
-		MessageText.Text = message;
+		MessageText.Text = Links.SetMessage(message);
 		ConfirmButton.Content = confirmText;
 		ConfirmButton.Classes.Add(ButtonClassFor(kind));
 		KindDot.Background = DotBrushFor(look);

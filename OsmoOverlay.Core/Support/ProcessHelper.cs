@@ -9,32 +9,26 @@ internal static class ProcessHelper
 {
 	public static ProcessStartInfo CreateHidden(string command, params string[] args)
 	{
-		return Create(command, args, true, true, false);
+		return Create(command, args, true, false);
 	}
 
-	/// <summary>
-	///     Like CreateHidden, but for routine background commands nobody is watching (probing, version
-	///     checks) - still reaches the file log (AppLogger.Info), but skips AppLogger.Notify so it doesn't
-	///     flood the GUI's log panel.
-	/// </summary>
 	public static ProcessStartInfo CreateHiddenQuiet(string command, params string[] args)
 	{
-		return Create(command, args, false, true, false);
+		return CreateHidden(command, args);
 	}
 
 	/// <summary>Like CreateHidden, but pipes into stdin instead of redirecting stdout - for a tool that's fed data (e.g. ffmpeg's overlay compositing, which reads raw frames from stdin) rather than one whose stdout is read.</summary>
 	public static ProcessStartInfo CreateHiddenWithStdin(string command, IEnumerable<string> args)
 	{
-		return Create(command, args, true, false, true);
+		return Create(command, args, false, true);
 	}
 
-	/// <summary>CreateHiddenWithStdin for a background run nobody watches - file log only, like CreateHiddenQuiet.</summary>
 	public static ProcessStartInfo CreateHiddenQuietWithStdin(string command, IEnumerable<string> args)
 	{
-		return Create(command, args, false, false, true);
+		return CreateHiddenWithStdin(command, args);
 	}
 
-	private static ProcessStartInfo Create(string command, IEnumerable<string> args, bool notify, bool redirectStandardOutput, bool redirectStandardInput)
+	private static ProcessStartInfo Create(string command, IEnumerable<string> args, bool redirectStandardOutput, bool redirectStandardInput)
 	{
 		IReadOnlyCollection<string> argList = args as IReadOnlyCollection<string> ?? args.ToList();
 		var psi = new ProcessStartInfo(DependencyChecker.ResolveCommand(command))
@@ -48,9 +42,7 @@ internal static class ProcessHelper
 		};
 		foreach (string arg in argList) psi.ArgumentList.Add(arg);
 
-		string line = $"Running: {FormatCommand(command, argList)}";
-		if (notify) AppLogger.Notify(line);
-		else AppLogger.Info(line);
+		AppLogger.Info($"Running: {FormatCommand(command, argList)}");
 
 		return psi;
 	}

@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using OsmoOverlay.Core.Telemetry.External;
@@ -244,6 +245,39 @@ public sealed class FlightLogTests
 		Assert.IsFalse(format.Recognizes("notes.txt", Encoding.ASCII.GetBytes("just some notes, long enough to look at")));
 		Assert.IsFalse(format.Recognizes("track.gpx", new FlightLogBuilder(12, Started).Build().AsSpan(0, 128)));
 		Assert.IsTrue(format.Recognizes("FlightRecord.TXT", new FlightLogBuilder(12, Started).Build().AsSpan(0, 128)));
+	}
+
+	[TestMethod]
+	[DoNotParallelize]
+	public void TryRead_EncryptedLogWithoutApiKey_ReturnsProblemWithoutThrowing()
+	{
+		ExternalTrackReader.Register(new DjiFlightLogFormat());
+		byte[] file = new FlightLogBuilder(14, Started).AddKeyBlock(FlightLogFeaturePoints.Base, Guid.NewGuid().ToByteArray()).Build();
+		string path = Path.Combine(Path.GetTempPath(), $"FlightRecord_{Guid.NewGuid():N}.txt");
+		File.WriteAllBytes(path, file);
+		Func<string?> original = DjiKeychains.ApiKey;
+		int thread = Environment.CurrentManagedThreadId;
+		bool dataExceptionThrown = false;
+		void OnException(object? sender, FirstChanceExceptionEventArgs args)
+		{
+			if (Environment.CurrentManagedThreadId == thread && args.Exception is InvalidDataException) dataExceptionThrown = true;
+		}
+
+		try
+		{
+			DjiKeychains.ApiKey = () => null;
+			AppDomain.CurrentDomain.FirstChanceException += OnException;
+			Assert.IsFalse(ExternalTrackReader.TryRead(path, out ExternalTrack? track, out string? problem));
+			Assert.IsNull(track);
+			Assert.IsFalse(string.IsNullOrWhiteSpace(problem));
+			Assert.IsFalse(dataExceptionThrown, "A missing API key must not throw, even if the exception would be caught.");
+		}
+		finally
+		{
+			AppDomain.CurrentDomain.FirstChanceException -= OnException;
+			DjiKeychains.ApiKey = original;
+			File.Delete(path);
+		}
 	}
 
 	[TestMethod]

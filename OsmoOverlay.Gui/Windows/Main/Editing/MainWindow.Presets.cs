@@ -3,6 +3,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using OsmoOverlay.Core.Overlay;
 
@@ -215,8 +216,25 @@ public partial class MainWindow
 	{
 		return new FuncDataTemplate<PresetOption>((option, _) =>
 		{
-			var text = new TextBlock { Text = option?.Name, VerticalAlignment = VerticalAlignment.Center };
-			if (option is not null) ToolTip.SetTip(text, PresetDatesTooltip(option.Id));
+			var text = new TextBlock
+			{
+				Text = option?.Name,
+				VerticalAlignment = VerticalAlignment.Stretch,
+				HorizontalAlignment = HorizontalAlignment.Stretch,
+				Background = Brushes.Transparent
+			};
+			if (option is not null)
+			{
+				string? tip = option.Id switch
+				{
+					OverlayPresetStore.DefaultPresetId => Strings.Presets_ActionCamerasHint,
+					OverlayPresetStore.DronePresetId => Strings.Presets_DjiDronesHint,
+					OverlayPresetStore.FpvPresetId => Strings.Presets_FpvDronesHint,
+					_ => PresetDatesTooltip(option.Id)
+				};
+				ToolTip.SetTip(text, tip);
+				ToolTip.SetShowDelay(text, 300);
+			}
 			return text;
 		});
 	}

@@ -99,6 +99,7 @@ public partial class ElementStyleEditor : UserControl
 		TextColorBox.Text = element.TextColor ?? OverlayRenderer.DefaultTextColorHex;
 		OutlineColorBox.Text = element.OutlineColor ?? OverlayRenderer.DefaultOutlineColorHex;
 		OutlineWidthBox.Value = (decimal)element.OutlineWidth;
+		OpacityBox.Minimum = element is WatermarkElement ? (decimal)(WatermarkElement.MinimumOpacity * 100) : 0;
 		OpacityBox.Value = (decimal)Math.Round(element.Opacity * 100);
 		ReadoutPanel.IsVisible = OverlayElementBounds.SupportsStatParts(element);
 		DecimalsPanel.IsVisible = OverlayElementBounds.SupportsDecimals(element);

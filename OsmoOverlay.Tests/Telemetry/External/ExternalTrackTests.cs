@@ -100,13 +100,42 @@ public sealed class ExternalTrackTests
 
 			Assert.AreEqual(2, ExternalTrackReader.Read(fit).Points.Count);
 			Assert.AreEqual(2, ExternalTrackReader.Read(gpx).Points.Count);
-			Assert.ThrowsExactly<InvalidDataException>(() => ExternalTrackReader.Read(neither));
+			InvalidDataException invalid = Assert.ThrowsExactly<InvalidDataException>(() => ExternalTrackReader.Read(neither));
+			Assert.IsInstanceOfType<XmlException>(invalid.InnerException);
 			Assert.IsTrue(ExternalTrackReader.IsTrackFile("a.FIT"));
 			Assert.IsFalse(ExternalTrackReader.IsTrackFile("a.mp4"));
 		}
 		finally
 		{
 			Directory.Delete(directory, true);
+		}
+	}
+
+	[TestMethod]
+	public void Reader_MissingFile_PreservesExceptionAndTryReadReturnsProblem()
+	{
+		string path = Path.Combine(Path.GetTempPath(), $"missing-track-{Guid.NewGuid():N}.gpx");
+		FileNotFoundException missing = Assert.ThrowsExactly<FileNotFoundException>(() => ExternalTrackReader.Read(path));
+		Assert.AreEqual(path, missing.FileName);
+		Assert.IsFalse(ExternalTrackReader.TryRead(path, out ExternalTrack? track, out string? problem));
+		Assert.IsNull(track);
+		Assert.AreEqual(missing.Message, problem);
+	}
+
+	[TestMethod]
+	public void Reader_Directory_PreservesAccessExceptionAndTryReadReturnsProblem()
+	{
+		string directory = Directory.CreateTempSubdirectory().FullName;
+		try
+		{
+			UnauthorizedAccessException denied = Assert.ThrowsExactly<UnauthorizedAccessException>(() => ExternalTrackReader.Read(directory));
+			Assert.IsFalse(ExternalTrackReader.TryRead(directory, out ExternalTrack? track, out string? problem));
+			Assert.IsNull(track);
+			Assert.AreEqual(denied.Message, problem);
+		}
+		finally
+		{
+			Directory.Delete(directory);
 		}
 	}
 

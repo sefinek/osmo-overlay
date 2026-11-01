@@ -37,18 +37,20 @@ public partial class MainWindow
 		{
 			var openingTime = Stopwatch.StartNew();
 			LoadOverlayPresets();
-			if (project is not null)
-			{
-				await ApplyProjectPresetAsync(project);
-				ApplyProjectEdits(project, restorePosition: false);
-			}
-
 			OverlaySettings settings = OverlaySettingsStore.Load();
 			IReadOnlyList<DerivedFrame>? processedFrames = await Task.Run(() =>
 			{
 				IReadOnlyList<DerivedFrame>? measured = RecordingSpeeds(summary, settings.SmoothGpsMotion).Frames;
 				return measured is null ? null : OrientationTilt.Apply(SpeedCalibration.Apply(measured, settings.SpeedCorrectionPercent), summary.CameraFormat, settings.OrientationSource);
 			});
+			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
+			MomentsEditor.Attach(summary.Video.Fps, SourceFrames, processedFrames, UnitPreferences.Current);
+			if (project is not null)
+			{
+				await ApplyProjectPresetAsync(project);
+				ApplyProjectEdits(project, restorePosition: false);
+			}
+
 			long preparationMs = openingTime.ElapsedMilliseconds;
 			TimeSpan position = previewPosition ?? TimeSpan.FromSeconds(Math.Clamp(project?.PreviewFrame ?? 0, 0, Math.Max(0, summary.TotalFrameCount - 1)) / summary.Video.Fps);
 			foreach (PreviewTimeline timeline in Timelines) timeline.Maximum = summary.TotalFrameCount / summary.Video.Fps;
@@ -58,10 +60,6 @@ public partial class MainWindow
 			PreviewPlaceholder.IsVisible = false;
 			UpdatePreviewStatus();
 			TransportPanel.IsEnabled = true;
-			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
-			MomentsEditor.Attach(summary.Video.Fps, SourceFrames,
-				processedFrames,
-				UnitPreferences.Current);
 			RefreshCutViews();
 			RefreshMoments();
 			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;
@@ -81,7 +79,7 @@ public partial class MainWindow
 		}
 		catch (Exception ex)
 		{
-			AppendLog(string.Format(Strings.Preview_Unavailable, ex.Message));
+			AppLogger.Error(ex, string.Format(Strings.Preview_Unavailable, ex.Message));
 			ClosePreview();
 		}
 	}

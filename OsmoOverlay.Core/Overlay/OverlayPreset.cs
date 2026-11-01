@@ -229,7 +229,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			// fading in where it was as soon as it's gone (both counted from the route overview card's end when it's on).
 			new WatermarkElement
 			{
-				X = width / 2f, Y = watermarkY, DisappearAtSeconds = WatermarkSeconds, OutAnimationType = OverlayAnimationType.Fade
+				X = width / 2f, Y = watermarkY, Opacity = 0.85f, DisappearAtSeconds = WatermarkSeconds, OutAnimationType = OverlayAnimationType.Fade
 			},
 			new TripProgressBarElement
 			{

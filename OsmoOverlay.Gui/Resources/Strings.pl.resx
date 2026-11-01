@@ -255,28 +255,28 @@ Każdy wariant jest mierzony wielokrotnie, na zmianę z pozostałymi. Wyniki pok
     <value>Najwolniejszy etap</value>
   </data>
   <data name="Benchmark_StageDecode" xml:space="preserve">
-    <value>Dekodowanie...</value>
+    <value>Mierzę szybkość dekodowania nagrania na karcie graficznej i procesorze...</value>
   </data>
   <data name="Benchmark_StageEncode" xml:space="preserve">
-    <value>Kodowanie...</value>
+    <value>Porównuję szybkość kodowania wideo przy różnych ustawieniach enkoderów...</value>
   </data>
   <data name="Benchmark_StageGraph" xml:space="preserve">
-    <value>Cały proces FFmpeg...</value>
+    <value>Mierzę wydajność całego procesu w FFmpeg: dekodowania wideo, nakładania obrazu testowego i kodowania wyniku...</value>
   </data>
   <data name="Benchmark_StageOverlay" xml:space="preserve">
-    <value>Rysowanie nakładki...</value>
+    <value>Mierzę szybkość rysowania nakładki w rozdzielczości renderowania i podglądu, z cieniami i bez nich...</value>
   </data>
   <data name="Benchmark_StagePipe" xml:space="preserve">
-    <value>Przesył klatek do ffmpeg...</value>
+    <value>Mierzę szybkość przesyłania surowych klatek z aplikacji do FFmpeg, bez kodowania wideo...</value>
   </data>
   <data name="Benchmark_StagePreparing" xml:space="preserve">
-    <value>Przygotowanie...</value>
+    <value>Przygotowuję test: zbieram informacje o komputerze i dobieram enkoder wideo...</value>
   </data>
   <data name="Benchmark_StageProgress" xml:space="preserve">
-    <value>{0} ({1} z {2})</value>
+    <value>Etap {1} z {2}: {0}</value>
   </data>
   <data name="Benchmark_StageRender" xml:space="preserve">
-    <value>Krótki render...</value>
+    <value>Renderuję krótki fragment z nakładką, porównując wydajność przy dekodowaniu na karcie graficznej i procesorze...</value>
   </data>
   <data name="Benchmark_Start" xml:space="preserve">
     <value>Uruchom test</value>
@@ -1654,7 +1654,7 @@ Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. W
     <value>Ustawienia widżetu</value>
   </data>
   <data name="Main_WidgetSettingsHeader" xml:space="preserve">
-    <value>USTAWIENIA WIDŻETU -</value>
+    <value>USTAWIE. WIDŻETU -</value>
   </data>
   <data name="Main_Zoom219" xml:space="preserve">
     <value>Zoom (2-19)</value>
@@ -2031,7 +2031,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Wybierz preset ustawień</value>
   </data>
   <data name="SettingsPresets_Subtitle" xml:space="preserve">
-    <value>Zestawy ustawień do różnych zastosowań, np. jazdy rowerem lub samochodem. Każdy ma własną kalibrację prędkości, ustawienia renderowania, wstęp z trasą i układ widżetów.</value>
+    <value>Zestawy ustawień do różnych zastosowań, np. jazdy rowerem lub motocyklem. Każdy ma własną kalibrację prędkości, ustawienia renderowania, wstęp z trasą i układ widżetów.</value>
   </data>
   <data name="SettingsPresets_ThisPreset" xml:space="preserve">
     <value>Ten preset</value>
@@ -2537,6 +2537,9 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Settings_PressMentions" xml:space="preserve">
     <value>Napisali o programie</value>
   </data>
+  <data name="Settings_PrereleaseVersion" xml:space="preserve">
+    <value>Wydanie testowe: {0}</value>
+  </data>
   <data name="Settings_Repository" xml:space="preserve">
     <value>Repozytorium</value>
   </data>
@@ -2697,10 +2700,10 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Dźwięk: brak</value>
   </data>
   <data name="Summary_LogCacheHit" xml:space="preserve">
-    <value>Analiza z pamięci podręcznej (format v{0}): plik nie zmienił się od ostatniego razu</value>
+    <value>Wczytano zapisaną analizę (format v{0}) - pliki nie zmieniły się od ostatniej analizy</value>
   </data>
   <data name="Summary_LogCacheMiss" xml:space="preserve">
-    <value>Brak zapisanej analizy tego pliku (albo plik się zmienił) - analizuję...</value>
+    <value>Brak aktualnej analizy - analizuję nagranie...</value>
   </data>
   <data name="Summary_LogCacheSaved" xml:space="preserve">
     <value>Zapisano nową analizę (format v{0})</value>
@@ -2736,22 +2739,22 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Utrata sygnału GPS: {0} przerwa, łącznie {1:0.0} s. Miejsce przerwy oznaczono na bursztynowo pod osią czasu podglądu.|Utrata sygnału GPS: {0} przerwy, łącznie {1:0.0} s. Miejsca przerw oznaczono na bursztynowo pod osią czasu podglądu.|Utrata sygnału GPS: {0} przerw, łącznie {1:0.0} s. Miejsca przerw oznaczono na bursztynowo pod osią czasu podglądu.</value>
   </data>
   <data name="Summary_LogGpsNoLoss" xml:space="preserve">
-    <value>Sygnał GPS: nie wykryto przerw</value>
+    <value>Sygnał GPS: nie wykryto przerw w nagraniu</value>
   </data>
   <data name="Summary_LogGpsClockShift" xml:space="preserve">
-    <value>Czas GPS przesunięty o {0} h: kamera zapisała go w złej strefie czasowej, więc dopasowano go do jej zegara</value>
+    <value>Skorygowano czas GPS o {0} h: kamera zapisała go w niewłaściwej strefie czasowej, więc dopasowano go do jej zegara</value>
   </data>
   <data name="Summary_LogGpsSpeed" xml:space="preserve">
-    <value>Prędkość zmierzona przez odbiornik GPS jest dostępna dla {0}/{1} klatek. Dla pozostałych {2} klatek prędkość obliczono na podstawie zmian pozycji.</value>
+    <value>Prędkość zmierzona przez odbiornik GPS jest dostępna dla {0:N0}/{1:N0} klatek. Dla pozostałych {2:N0} klatek obliczono ją ze zmian pozycji.</value>
   </data>
   <data name="Summary_LogGpsSpeedNone" xml:space="preserve">
-    <value>Nagranie nie zawiera prędkości zmierzonej przez odbiornik GPS. Prędkość jest obliczana na podstawie zmian pozycji.</value>
+    <value>Nagranie nie zawiera pomiarów prędkości z odbiornika GPS. Prędkość jest obliczana na podstawie zmian pozycji.</value>
   </data>
   <data name="Summary_LogFileMissing" xml:space="preserve">
     <value>Nie znaleziono pliku: {0}</value>
   </data>
   <data name="Summary_LogInput" xml:space="preserve">
-    <value>Wejście: {0}</value>
+    <value>Wejście ({0}): {1}</value>
   </data>
   <data name="Summary_LogNoCameraAxes" xml:space="preserve">
     <value>Widżety przechyłu, pochylenia i miernika G są niedostępne dla tej kamery - osie jej akcelerometru względem obrazu nie są znane</value>
@@ -2781,10 +2784,28 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
     <value>Data nagrania: nieznana (brak czasu GPS w telemetrii)</value>
   </data>
   <data name="Summary_LogTelemetryDetected" xml:space="preserve">
-    <value>Wykryto telemetrię ({0}) - surowe próbki: {1}, przeliczone klatki: {2}</value>
+    <value>Wykryto telemetrię ({0}): {1:N0} próbek źródłowych, {2:N0} klatek po przetworzeniu</value>
   </data>
   <data name="Summary_LogTelemetrySummary" xml:space="preserve">
-    <value>Podsumowanie telemetrii: {0:0.00} km, prędkość maks. {1:0.#} km/h (zmierzona, przed wygładzeniem i korektą prędkości), wysokość {2:0}-{3:0} m, maks. G {4:0.00}</value>
+    <value>Podsumowanie trasy: długość {0:0.00} km, wysokość {1:0}-{2:0} m, maks. przeciążenie {3:0.00} G</value>
+  </data>
+  <data name="Summary_LogMaxSpeed" xml:space="preserve">
+    <value>Prędkość maks.: {0:0.#} km/h (wartość z telemetrii przed wygładzeniem i korektą prędkości)</value>
+  </data>
+  <data name="Summary_LogGpsSpeedAll" xml:space="preserve">
+    <value>Prędkość zmierzona przez odbiornik GPS jest dostępna dla wszystkich {0:N0} klatek.</value>
+  </data>
+  <data name="Summary_LogVideo" xml:space="preserve">
+    <value>Wideo: {0} {1}, {2}×{3}, {4} fps, ~{5} Mbps</value>
+  </data>
+  <data name="Summary_AudioMono" xml:space="preserve">
+    <value>mono</value>
+  </data>
+  <data name="Summary_AudioStereo" xml:space="preserve">
+    <value>stereo</value>
+  </data>
+  <data name="Summary_AudioChannels" xml:space="preserve">
+    <value>{0} kanał|{0} kanały|{0} kanałów</value>
   </data>
   <data name="Summary_LogVerifyFailed" xml:space="preserve">
     <value>Nie udało się sprawdzić wyeksportowanego pliku: {0}</value>
@@ -4116,13 +4137,44 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Drony DJI</value>
   </data>
   <data name="Settings_DjiApiKey" xml:space="preserve">
-    <value>Klucz API DJI</value>
+    <value>Klucz API DJI (App Key / SDK key)</value>
   </data>
   <data name="Settings_DjiApiKeyHint" xml:space="preserve">
-    <value>Klucz SDK aplikacji typu Open API z konta deweloperskiego DJI. Służy do pobierania kluczy odszyfrowujących dzienniki lotu (FlightRecord). Pobrane klucze są zapisywane na komputerze do ponownego użycia. Do DJI wysyłane są tylko bloki kluczy z nagłówka dziennika, bez pozycji GPS.</value>
+    <value>DJI szyfruje dzienniki lotu (FlightRecord_*.txt). Do ich odczytania potrzebujesz klucza z własnego konta deweloperskiego DJI. Pierwszy odczyt danego dziennika wymaga internetu; pobrane klucze odszyfrowujące są zapisywane na komputerze do ponownego użycia. Do DJI wysyłane są tylko bloki kluczy z nagłówka dziennika, bez pozycji GPS.</value>
   </data>
   <data name="Settings_DjiApiKeyGet" xml:space="preserve">
-    <value>Zdobądź klucz na developer.dji.com</value>
+    <value>Otwórz My Apps w panelu DJI</value>
+  </data>
+  <data name="Common_OpenDjiPortal" xml:space="preserve">
+    <value>Otwórz panel DJI</value>
+  </data>
+  <data name="DjiApiNotice_Title" xml:space="preserve">
+    <value>API DJI - najważniejsze zasady</value>
+  </data>
+  <data name="DjiApiNotice_ReadTerms" xml:space="preserve">
+    <value>Pełny regulamin DJI</value>
+  </data>
+  <data name="DjiApiNotice_Message" xml:space="preserve">
+    <value>Właśnie podałeś swój klucz API DJI. OsmoOverlay będzie go używać do pobierania kluczy potrzebnych do odczytania zaszyfrowanych dzienników lotu.
+
+Zanim skorzystasz z tej funkcji, poznaj najważniejsze zasady. Korzystanie z API oznacza akceptację warunków DJI:
+
+- Używaj własnego klucza i nie udostępniaj go innym.
+- Korzystaj z API zgodnie z prawem i prawami innych osób.
+- DJI może zmienić API lub cofnąć dostęp; nie gwarantuje działania ani wsparcia.
+- Odpowiadasz za użycie API; regulamin przewiduje pokrycie określonych roszczeń i kosztów DJI.
+- DJI może przetwarzać dane zgodnie ze swoją polityką prywatności.
+
+To skrót. Wiążący jest pełny regulamin DJI, który może się zmieniać.</value>
+  </data>
+  <data name="Settings_DjiApiKeyInstructions" xml:space="preserve">
+    <value>Jak uzyskać klucz:
+1. Otwórz poniższy link i zaloguj się lub załóż konto DJI. Z głównej strony wejdziesz tam przez Profile > My Apps.
+2. Kliknij CREATE APP. W polu App Type wybierz Open API.
+3. Wpisz App Name (np. OsmoOverlay), wybierz kategorię odpowiadającą zastosowaniu i dodaj Description (np. Read my DJI flight logs). Kliknij CREATE.
+4. Na liście My Apps kliknij Send Email na kafelku utworzonej aplikacji. Otwórz wiadomość o tytule „Activate your app” od noreply@mailer-bbs.dji.com i kliknij link aktywacyjny. Jeśli wiadomość nie dotrze, sprawdź folder spam.
+5. Link aktywacyjny otworzy szczegóły aplikacji (APP INFORMATION). Skopiuj wartość z pola App Key (nie APP ID) i wklej ją w pole klucza powyżej.
+6. Zamknij ustawienia, aby zapisać klucz, i ponownie wczytaj dziennik lotu.</value>
   </data>
   <data name="Settings_DebugModeHint" xml:space="preserve">
     <value>Panel logów pokazuje wszystko, co trafia do pliku logu, także wpisy techniczne. Możesz też uruchomić aplikację w tym trybie, przytrzymując Shift podczas startu (tylko Windows).</value>
@@ -5274,5 +5326,17 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="TrackMap_Unavailable" xml:space="preserve">
     <value>Nie udało się pobrać mapy tła, więc obraz zostaje czarny.</value>
+  </data>
+  <data name="Presets_ActionCamerasHint" xml:space="preserve">
+    <value>Do nagrań z rowerów, hulajnóg elektrycznych, motocykli i innych pojazdów z kamerą sportową.</value>
+  </data>
+  <data name="Presets_DjiDronesHint" xml:space="preserve">
+    <value>Do nagrań z dronów DJI. Układ z parametrami lotu, stanem akumulatora i alertami z dziennika lotu.</value>
+  </data>
+  <data name="Presets_FpvDronesHint" xml:space="preserve">
+    <value>Do nagrań z dronów. Układ nieco inspirowany OSD gogli FPV, ale zawierający więcej szczegółów.</value>
+  </data>
+  <data name="Main_RingThemeHint" xml:space="preserve">
+    <value>Styl inspirowany prędkościomierzem z aplikacji DJI Mimo.</value>
   </data>
 </root>

@@ -105,6 +105,7 @@ public sealed class PreviewPlayer : IDisposable
 
 	public event Action? PlaybackStopped;
 	public event Action<string>? Message;
+	public event Action<string>? MapStatus;
 
 	/// <summary>
 	///     The map tiles' download as one process (the route overview's, then the Map widget's): the share done, 0..1, and
@@ -139,8 +140,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread. The picture's and
 		// the sound's don't depend on each other, so they open at the same time.
-		var videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer, trackPlayback));
-		var audioOpen = Task.Run(() => trackPlayback is null ? OpenAudio(segments) : (null, null));
+		Task<LibavVideoSource> videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer, trackPlayback));
+		Task<(LibavAudioSource?, AudioOutput?)> audioOpen = Task.Run(() => trackPlayback is null ? OpenAudio(segments) : (null, null));
 		try
 		{
 			await Task.WhenAll(videoOpen, audioOpen);
@@ -174,7 +175,9 @@ public sealed class PreviewPlayer : IDisposable
 		(int width, int height) = (summary.Video.Width, summary.Video.Height);
 		IReadOnlyList<OverlayElement> layout = [];
 		if (!plain && layoutOverride is not null)
+		{
 			layout = availability.Apply(layoutOverride);
+		}
 		else if (!plain)
 		{
 			(List<OverlayPreset> presets, string activeId) = OverlayPresetStore.Load();
@@ -746,14 +749,14 @@ public sealed class PreviewPlayer : IDisposable
 					token = Restart(ref _routeIntroPrepareCts);
 					await PrepareMosaicAsync(current, static (r, progress, ct) => r.BuildRouteIntroMosaicAsync(progress, ct),
 						static (r, mosaic, key) => r.ApplyRouteIntroMapMosaic(mosaic, key), CoreStrings.Preview_FetchingOverview,
-						CoreStrings.Preview_OverviewFailed, ReportMosaicProgress, token);
+						CoreStrings.Preview_OverviewReady, CoreStrings.Preview_OverviewFailed, ReportMosaicProgress, token);
 				}
 				else
 				{
 					_mapMosaicPending = false;
 					token = Restart(ref _mapPrepareCts);
 					await PrepareMosaicAsync(current, static (r, progress, ct) => r.BuildMapMosaicAsync(progress, ct),
-						static (r, mosaic, key) => r.ApplyMapMosaic(mosaic, key), CoreStrings.Preview_FetchingTiles, CoreStrings.Preview_MapFailed,
+						static (r, mosaic, key) => r.ApplyMapMosaic(mosaic, key), CoreStrings.Preview_FetchingTiles, CoreStrings.Preview_MapReady, CoreStrings.Preview_MapFailed,
 						ReportMosaicProgress, token);
 				}
 
@@ -790,7 +793,7 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	private async Task PrepareMosaicAsync<TKey>(OpenRecording recording,
 		Func<OverlayRenderer, Action<int, int>, CancellationToken, Task<(RouteMapMosaic?, TKey)>> build,
-		Action<OverlayRenderer, RouteMapMosaic?, TKey> apply, string progressText, string failureText, Action<int, int> progress,
+		Action<OverlayRenderer, RouteMapMosaic?, TKey> apply, string progressText, string completeText, string failureText, Action<int, int> progress,
 		CancellationToken ct)
 	{
 		RouteMapMosaic? mosaic;
@@ -800,17 +803,22 @@ public sealed class PreviewPlayer : IDisposable
 			(mosaic, key) = await build(recording.Compositor.Renderer,
 				(fetched, total) =>
 				{
-					Message?.Invoke($"{progressText}: {fetched}/{total}");
+					if (!ReferenceEquals(_recording, recording) || ct.IsCancellationRequested) return;
+					string message = $"{progressText}: {fetched}/{total}";
+					AppLogger.Info(message);
+					MapStatus?.Invoke(message);
 					progress(fetched, total);
 				}, ct);
 		}
 		catch (OperationCanceledException)
 		{
+			if (ReferenceEquals(_recording, recording)) MapStatus?.Invoke(CoreStrings.Preview_MapCancelled);
 			return;
 		}
 		catch (Exception ex)
 		{
-			Message?.Invoke($"{failureText}: {ex.Message}");
+			if (ReferenceEquals(_recording, recording)) MapStatus?.Invoke(failureText);
+			AppLogger.Warn(ex, failureText);
 			return;
 		}
 
@@ -821,6 +829,9 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		PublishStill(recording, recording.Compositor.Change(r => apply(r, mosaic, key)));
+		string result = mosaic is not null ? completeText : failureText;
+		AppLogger.Info(result);
+		MapStatus?.Invoke(result);
 	}
 
 	/// <summary>A composed still goes on screen unless playback is showing its own frames by now.</summary>

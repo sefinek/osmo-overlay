@@ -197,7 +197,7 @@ public partial class BenchmarkWindow : Window
 		StartButton.Content = Strings.Benchmark_Stop;
 		FullscreenCheck.IsEnabled = false;
 		RecordingCheck.IsEnabled = false;
-		IsVisible = true;
+		Progress.IsVisible = true;
 		Progress.IsIndeterminate = true;
 		ResultsPanel.IsVisible = false;
 		CopyReportButton.IsEnabled = false;
@@ -273,7 +273,7 @@ public partial class BenchmarkWindow : Window
 			StartButton.Content = Strings.Benchmark_Start;
 			FullscreenCheck.IsEnabled = true;
 			RecordingCheck.IsEnabled = true;
-			IsVisible = false;
+			Progress.IsVisible = false;
 			LivePanel.IsVisible = false;
 			ClearLiveFrame();
 		}
@@ -481,6 +481,7 @@ public partial class BenchmarkWindow : Window
 		_liveStage = stage;
 		FpsChart.Clear();
 		FpsLegend.Text = "";
+		LiveCaption.Text = "";
 		switch (stage)
 		{
 			case BenchmarkStage.Overlay:
@@ -494,7 +495,6 @@ public partial class BenchmarkWindow : Window
 				break;
 			default:
 				ShowScreenText(Strings.Benchmark_LiveFfmpeg);
-				LiveCaption.Text = StageText(stage);
 				break;
 		}
 	}

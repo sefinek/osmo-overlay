@@ -39,7 +39,7 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(anchorX + offsetX, anchorY + offsetY);
 		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
-		float alpha = state.Progress * Math.Clamp(element.Opacity, 0f, 1f);
+		float alpha = state.Progress * Math.Clamp(element.Opacity, element is WatermarkElement ? WatermarkElement.MinimumOpacity : 0f, 1f);
 
 		drawn = content;
 		if (shadowed)

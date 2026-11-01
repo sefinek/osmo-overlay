@@ -15,6 +15,18 @@
   <data name="Audio_VerificationFailed" xml:space="preserve">
     <value>Verification failed: the converted audio doesn't decode to the same samples as the source.</value>
   </data>
+  <data name="AppBanner_Version" xml:space="preserve">
+    <value>OsmoOverlay {0} ({1}), build {2}</value>
+  </data>
+  <data name="Preview_MapReady" xml:space="preserve">
+    <value>Map: ready</value>
+  </data>
+  <data name="Preview_OverviewReady" xml:space="preserve">
+    <value>Route intro map: ready</value>
+  </data>
+  <data name="Preview_MapCancelled" xml:space="preserve">
+    <value>Map: download cancelled</value>
+  </data>
   <data name="Cache_DeleteFailed" xml:space="preserve">
     <value>Failed to delete stale cache entry {0}</value>
   </data>
@@ -468,7 +480,7 @@
     <value>timecode track (time of day)</value>
   </data>
   <data name="Updates_Available" xml:space="preserve">
-    <value>OsmoOverlay {0} is available (you have {1})</value>
+    <value>OsmoOverlay {1} - update to {0} available</value>
   </data>
   <data name="Updates_HashMismatch" xml:space="preserve">
     <value>{0} doesn't match its published SHA-256 - the download is corrupt or was tampered with.</value>
@@ -480,25 +492,25 @@
     <value>No OsmoOverlay release has been published yet</value>
   </data>
   <data name="Updates_UpToDate" xml:space="preserve">
-    <value>OsmoOverlay is up to date ({0})</value>
+    <value>OsmoOverlay {0} - up to date</value>
   </data>
   <data name="Versions_LatestUnknown" xml:space="preserve">
-    <value>{0}: installed {1} (couldn't determine the latest version)</value>
+    <value>{0} {1} - couldn't check for updates</value>
   </data>
   <data name="Versions_NotInstalled" xml:space="preserve">
-    <value>{0}: not installed, or its version could not be read</value>
+    <value>{0} - not installed or unable to read its version</value>
   </data>
   <data name="Versions_Unsupported" xml:space="preserve">
     <value>{0} {1} is out, but this version of OsmoOverlay supports only {2}.x</value>
   </data>
   <data name="Versions_UpdateAvailable" xml:space="preserve">
-    <value>{0}: installed {1}, update available ({2})</value>
+    <value>{0} {1} - update to {2} available</value>
   </data>
   <data name="Versions_UpdateManually" xml:space="preserve">
-    <value>{0}: installed {1}, {2} is available - not installed through the package manager, update it manually</value>
+    <value>{0} {1} - version {2} available; update manually (installed outside the package manager)</value>
   </data>
   <data name="Versions_UpToDate" xml:space="preserve">
-    <value>{0}: installed {1} - up to date</value>
+    <value>{0} {1} - up to date</value>
   </data>
   <data name="Synthetic_Name" xml:space="preserve">
     <value>Test recording</value>
@@ -624,10 +636,18 @@
     <value>The aligned GPS track does not cover any part of the recording.</value>
   </data>
   <data name="DjiLog_NeedsApiKey" xml:space="preserve">
-    <value>This DJI flight log is encrypted. To read it, enter a DJI API key (the SDK key from developer.dji.com) in Settings.</value>
+    <value>This DJI flight log is encrypted. To read it, set up a DJI API key.
+
+Open Settings > Behavior > DJI drones for step-by-step instructions. In the DJI developer portal (https://developer.dji.com/user/apps/#all), choose CREATE APP > App Type: Open API, activate the app by email, and copy its App Key (SDK key).
+
+Paste the key into OsmoOverlay Settings, close Settings, and load the flight log again. The first read requires an internet connection.</value>
   </data>
   <data name="DjiLog_KeyRejected" xml:space="preserve">
-    <value>DJI rejected the API key. Check that it is the SDK key of an activated Open API app.</value>
+    <value>DJI rejected the API key you entered.
+
+In the DJI developer portal (https://developer.dji.com/user/apps/#all), check that the app&apos;s type is Open API and that you activated it using the link in the email from DJI. Copy the App Key (SDK key) from the app&apos;s details.
+
+In OsmoOverlay, open Settings > Behavior > DJI drones and replace the key. Close Settings and load the flight log again.</value>
   </data>
   <data name="DjiLog_KeychainFailed" xml:space="preserve">
     <value>The keys for the flight log could not be fetched from DJI: {0}</value>

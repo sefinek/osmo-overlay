@@ -157,7 +157,7 @@ public partial class MainWindow
 		SaveCursorShield.IsVisible = false;
 		SetProjectPath(path, DateTime.Now);
 		MarkClean(project);
-		AppendLog(string.Format(Strings.Project_Saved, path));
+		AppendLogPath(Strings.Project_Saved, path);
 	}
 
 	private OverlayProject BuildProject()
@@ -224,7 +224,7 @@ public partial class MainWindow
 		await RunGetSummaryAsync(project);
 		if (_phase != UiPhase.SummaryReady || _summary is null) return;
 
-		AppendLog(string.Format(Strings.Project_Opened, path));
+		AppendLogPath(Strings.Project_Opened, path);
 		ResetHistory();
 		MarkClean();
 	}

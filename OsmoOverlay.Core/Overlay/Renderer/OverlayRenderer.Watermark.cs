@@ -1,3 +1,4 @@
+using OsmoOverlay.Core.Updates;
 using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -9,7 +10,7 @@ public sealed partial class OverlayRenderer
 	private const float WatermarkBottomMargin = 110f;
 
 	private static readonly string WatermarkSubtitle =
-		$"github.com/sefinek/osmo-overlay  •  v{FormatVersion(typeof(OverlayRenderer).Assembly.GetName().Version)}";
+		$"github.com/sefinek/osmo-overlay  •  v{AppUpdates.CurrentVersionLabel}";
 
 	/// <summary>
 	///     On the route overview card: right-aligned to the margin the stats column and map panel use - centered under the
@@ -23,7 +24,7 @@ public sealed partial class OverlayRenderer
 		canvas.Save();
 		canvas.Translate(_width - OverlayElementBounds.Margin * _scale, _height - WatermarkBottomMargin * _scale);
 		canvas.Scale(_scale, _scale);
-		DrawWatermarkLines(canvas, _watermarkTitleFont, _watermarkSubtitleFont, White, Accent, Shadow, 1f, SKTextAlign.Right, alpha);
+		DrawWatermarkLines(canvas, _watermarkTitleFont, _watermarkSubtitleFont, White, Accent, Shadow, 1f, SKTextAlign.Right, alpha * 0.85f);
 		canvas.Restore();
 	}
 
@@ -56,10 +57,5 @@ public sealed partial class OverlayRenderer
 		if (sampleTimeSeconds < fadeOutStart) return 1f;
 
 		return (float)(1.0 - (sampleTimeSeconds - fadeOutStart) / (fadeOutEnd - fadeOutStart));
-	}
-
-	private static string FormatVersion(Version? version)
-	{
-		return version is null ? "" : $"{version.Major}.{version.Minor}.{version.Build}";
 	}
 }

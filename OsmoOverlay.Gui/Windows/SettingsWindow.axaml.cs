@@ -1,4 +1,4 @@
-using System.Reflection;
+using System.Globalization;
 using System.Security;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -130,11 +130,20 @@ public partial class SettingsWindow : Window
 		_pages = [PresetsPanel, RenderingPanel, SpeedPanel, RouteIntroPanel, InterfacePanel, BehaviorPanel, AboutPanel];
 		RouteIntroMapSource.SelectionChanged += provider => _routeIntroProvider = provider;
 
-		string appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "?";
+		string appVersion = AppUpdates.CurrentVersion.Version.ToString(3);
 		AppVersionText.Text = SidebarVersionText.Text = $"OsmoOverlay v{appVersion}";
+		bool prerelease = AppUpdates.CurrentVersion.IsPrerelease;
+		AppPrereleaseText.IsVisible = SidebarPrereleaseText.IsVisible = prerelease;
+		if (prerelease)
+			AppPrereleaseText.Text = SidebarPrereleaseText.Text = string.Format(Strings.Settings_PrereleaseVersion, AppUpdates.CurrentVersion.Release);
+		string build = string.Format(Strings.Settings_BuildDate, BuildInfo.Describe());
+		string versionDetails = $"{AppUpdates.CurrentVersion.ToFullString()}\n{build}";
+		ToolTip.SetTip(AppVersionPanel, versionDetails);
+		ToolTip.SetTip(SidebarVersionPanel, versionDetails);
+		PressMentionsTitle.Text = Strings.Settings_PressMentions.ToUpper(CultureInfo.CurrentUICulture);
 
 		FillPressMentions();
-		CoreVersionText.Text = string.Format(Strings.Settings_BuildDate, BuildInfo.Describe());
+		CoreVersionText.Text = build;
 		DependencyStatusRows.ShowChecking(DependencyStatusGrid, RequiredTools.All);
 
 	}

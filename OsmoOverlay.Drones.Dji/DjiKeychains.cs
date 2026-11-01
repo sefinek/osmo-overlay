@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -28,20 +29,25 @@ public static class DjiKeychains
 	public static Func<string?> ApiKey { get; set; } = () =>
 		OverlaySettingsStore.Load().DjiApiKey is { Length: > 0 } key ? key : Environment.GetEnvironmentVariable("OSMOOVERLAY_DJI_API_KEY");
 
-	/// <summary>Keychains of the log - cached ones first, else from DJI. Throws InvalidDataException with a message for the user.</summary>
-	public static IReadOnlyList<Keychain> Obtain(FlightLog log)
+	public static bool TryObtain(FlightLog log, [NotNullWhen(true)] out IReadOnlyList<Keychain>? keychains, out string? problem)
 	{
+		problem = null;
 		KeychainsRequest request = log.BuildKeychainsRequest();
 		string body = RequestJson(request).ToJsonString();
 		string cache = Path.Combine(CacheFolder, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(body))) + ".json");
 
-		if (TryReadCache(cache) is { } cached) return cached;
+		keychains = TryReadCache(cache);
+		if (keychains is not null) return true;
 
 		string apiKey = ApiKey()?.Trim() ?? "";
-		if (apiKey.Length == 0) throw new InvalidDataException(CoreStrings.DjiLog_NeedsApiKey);
+		if (apiKey.Length == 0)
+		{
+			problem = CoreStrings.DjiLog_NeedsApiKey;
+			return false;
+		}
 
 		JsonNode data = Fetch(apiKey, body);
-		IReadOnlyList<Keychain> keychains = ParseResponse(data);
+		keychains = ParseResponse(data);
 		try
 		{
 			Directory.CreateDirectory(CacheFolder);
@@ -52,7 +58,7 @@ public static class DjiKeychains
 			AppLogger.Warn(ex, "The flight log's keys could not be kept for next time.");
 		}
 
-		return keychains;
+		return true;
 	}
 
 	internal static JsonObject RequestJson(KeychainsRequest request)
