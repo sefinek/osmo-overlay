@@ -364,7 +364,8 @@ public sealed partial class OverlayRenderer
 		else
 		{
 			canvas.Save();
-			canvas.ClipRoundRect(new SKRoundRect(SKRect.Create(-radius, -radius, radius * 2, radius * 2), radius), antialias: true);
+			using var clip = new SKRoundRect(SKRect.Create(-radius, -radius, radius * 2, radius * 2), radius);
+			canvas.ClipRoundRect(clip, antialias: true);
 
 			SKPoint center = _mapMosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
 			// Computed once and shared with GetMapZoomFactor (when dynamic zoom needs it) and the trail

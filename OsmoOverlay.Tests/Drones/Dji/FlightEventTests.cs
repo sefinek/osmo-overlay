@@ -493,6 +493,27 @@ public sealed class FlightEventTests
 	}
 
 	[TestMethod]
+	public void ActiveFlightAlertsMatchTheNewestVisibleEventsIncludingAfterASeek()
+	{
+		List<OverlayRenderer.FlightAlertNotice> notices = [.. Enumerable.Range(0, 1000).Select(i =>
+			new OverlayRenderer.FlightAlertNotice(i / 2, new FlightEvent(i % 3 == 0 ? FlightEventKind.Warning : FlightEventKind.FlightMode)))];
+		Span<int> active = stackalloc int[OverlayElementBounds.FlightAlertsMaxLines];
+		foreach (int lines in new[] { 1, 3, 5 })
+		foreach (bool warnings in new[] { false, true })
+		foreach (double time in new[] { -1.0, 0, 10, 10.5, 499, 510, 2.5 })
+		{
+			var element = new FlightAlertsElement { X = 0, Y = 0, MaxLines = lines, ShowWarnings = warnings };
+			int[] expected = [.. notices.Select((notice, index) => (notice, index))
+				.Where(p => p.notice.Start <= time && time < p.notice.Start + 3 && OverlayRenderer.IsAnnounced(element, p.notice.Event.Kind))
+				.Select(p => p.index).TakeLast(lines).Reverse()];
+			int count = OverlayRenderer.ActiveFlightAlerts(notices, element, time, 3, active);
+			CollectionAssert.AreEqual(expected, active[..count].ToArray(), $"time={time}, lines={lines}, warnings={warnings}");
+		}
+
+		Assert.AreEqual(0, OverlayRenderer.ActiveFlightAlerts([], new FlightAlertsElement { X = 0, Y = 0 }, 0, 3, active));
+	}
+
+	[TestMethod]
 	public void FlightAlertTextsNameTheKindAndTheDetail()
 	{
 		Assert.AreEqual("Sport", OverlayRenderer.FlightAlertText(new FlightEvent(FlightEventKind.FlightMode, "Sport")).Detail);

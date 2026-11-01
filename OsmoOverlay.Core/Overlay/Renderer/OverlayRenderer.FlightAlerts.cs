@@ -116,19 +116,12 @@ public sealed partial class OverlayRenderer
 		double t = frame.Raw.SampleTimeSeconds, fade = Math.Clamp(element.FadeSeconds, 0.02, 2), seconds = Math.Max(element.ShowSeconds, 2 * fade);
 		List<FlightAlertNotice> notices = _flightAlerts ??= FindFlightAlerts(_allFrames);
 
-		List<FlightAlertNotice> active = [];
-		foreach (FlightAlertNotice notice in notices)
-		{
-			if (notice.Start > t) break;
-			if (t < notice.Start + seconds && IsAnnounced(element, notice.Event.Kind)) active.Add(notice);
-		}
+		Span<int> active = stackalloc int[OverlayElementBounds.FlightAlertsMaxLines];
+		int count = ActiveFlightAlerts(notices, element, t, seconds, active);
 
-		int lines = Math.Clamp(element.MaxLines, 1, OverlayElementBounds.FlightAlertsMaxLines);
-		if (active.Count > lines) active.RemoveRange(0, active.Count - lines);
-
-		for (int i = 0; i < active.Count; i++)
+		for (int i = 0; i < count; i++)
 		{
-			FlightAlertNotice notice = active[i];
+			FlightAlertNotice notice = notices[active[count - 1 - i]];
 			float alpha = (float)Math.Clamp(Math.Min((t - notice.Start) / fade, (notice.Start + seconds - t) / fade), 0, 1);
 			if (alpha <= 0f) continue;
 
@@ -137,6 +130,27 @@ public sealed partial class OverlayRenderer
 			DrawFlightAlert(canvas, element, notice.Event, alpha);
 			canvas.Restore();
 		}
+	}
+
+	internal static int ActiveFlightAlerts(IReadOnlyList<FlightAlertNotice> notices, FlightAlertsElement element, double t, double seconds, Span<int> active)
+	{
+		int low = 0, high = notices.Count;
+		while (low < high)
+		{
+			int middle = low + (high - low) / 2;
+			if (notices[middle].Start <= t) low = middle + 1;
+			else high = middle;
+		}
+
+		int count = 0, limit = Math.Min(active.Length, Math.Clamp(element.MaxLines, 1, OverlayElementBounds.FlightAlertsMaxLines));
+		for (int i = low - 1; i >= 0 && count < limit; i--)
+		{
+			FlightAlertNotice notice = notices[i];
+			if (t >= notice.Start + seconds) break;
+			if (IsAnnounced(element, notice.Event.Kind)) active[count++] = i;
+		}
+
+		return count;
 	}
 
 	private void DrawFlightAlert(SKCanvas canvas, FlightAlertsElement element, FlightEvent flightEvent, float alpha)

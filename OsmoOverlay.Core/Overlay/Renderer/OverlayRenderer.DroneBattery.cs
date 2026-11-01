@@ -31,7 +31,7 @@ public sealed partial class OverlayRenderer
 		if (percent is not { } charge || !element.ColorByCharge) return AccentColorOf(element);
 
 		double critical = element.CriticalPercent, low = Math.Max(element.LowPercent, critical);
-		(double At, SKColor Color)[] stops =
+		ReadOnlySpan<(double At, SKColor Color)> stops =
 		[
 			(critical, ResolveColor(element.CriticalColor, DroneBatteryCriticalDefault)),
 			(low, ResolveColor(element.LowColor, DroneBatteryLowDefault)),
@@ -138,7 +138,8 @@ public sealed partial class OverlayRenderer
 			if (height > 0)
 			{
 				canvas.Save();
-				canvas.ClipRoundRect(new SKRoundRect(inner, radius - stroke / 2));
+				using var clip = new SKRoundRect(inner, radius - stroke / 2);
+				canvas.ClipRoundRect(clip);
 				_droneBatteryPaint.Color = fill;
 				canvas.DrawRect(new SKRect(inner.Left, inner.Bottom - height, inner.Right, inner.Bottom), _droneBatteryPaint);
 				canvas.Restore();
