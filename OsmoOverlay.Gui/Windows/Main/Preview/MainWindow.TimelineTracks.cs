@@ -89,6 +89,7 @@ public partial class MainWindow
 	private async Task LoadTimelineTracksAsync(FileSummary summary)
 	{
 		double aspect = (double)summary.Video.Width / summary.Video.Height;
+		ExpandedTimeline.HasAudioTrack = AudioTrackLabel.IsVisible = summary.Audio is not null;
 		if (ReferenceEquals(_timelineTracksFor, summary))
 		{
 			ExpandedTimeline.SetSources(_timelineThumbnails, _timelineWaveform, summary.Video.Fps, aspect);

@@ -7,8 +7,8 @@ using OsmoOverlay.Core.Overlay;
 namespace OsmoOverlay.Gui;
 
 /// <summary>
-///     Saving and opening a project (OverlayProject, .ovproj). Opening puts the recordings back and runs Get Summary, then
-///     applies what needs a loaded recording: the overlay, the cuts, the 360 view and the position. The overlay is the
+///     Saving and opening a project (OverlayProject, .ovproj). Opening loads the recording's summary and applies the overlay,
+///     cuts and 360 view before opening the preview at the saved position. The overlay is the
 ///     project's own copy - an unchanged preset is just activated again (so edits keep going to it), a changed or deleted
 ///     one is the user's call (ApplyProjectPresetAsync).
 /// </summary>
@@ -131,6 +131,12 @@ public partial class MainWindow
 
 	private async Task SaveProjectAsync(string path)
 	{
+		if (_trackOnly)
+		{
+			AppendLog(Strings.TrackOnly_CantSave, LogLevel.Warn);
+			return;
+		}
+
 		OverlayProject project;
 		try
 		{
@@ -215,17 +221,15 @@ public partial class MainWindow
 			return;
 		}
 
-		await RunGetSummaryAsync();
+		await RunGetSummaryAsync(project);
 		if (_phase != UiPhase.SummaryReady || _summary is null) return;
 
 		AppendLog(string.Format(Strings.Project_Opened, path));
-		await ApplyProjectPresetAsync(project);
-		ApplyProjectEdits(project);
 		ResetHistory();
 		MarkClean();
 	}
 
-	private void ApplyProjectEdits(OverlayProject project)
+	private void ApplyProjectEdits(OverlayProject project, bool restorePosition = true)
 	{
 		List<FrameRange> cuts = CutList.Normalize(project.Cuts, SourceFrames);
 		if (cuts.Count > 0)
@@ -256,10 +260,10 @@ public partial class MainWindow
 		if (project.Reframe is { } view && Is360)
 		{
 			ApplyReframe(view);
-			ScheduleThumbnailReload();
+			if (restorePosition) ScheduleThumbnailReload();
 		}
 
-		if (_previewFrameSize is not null && project.PreviewFrame > 0) SeekToFrame(project.PreviewFrame);
+		if (restorePosition && _previewFrameSize is not null && project.PreviewFrame > 0) SeekToFrame(project.PreviewFrame);
 	}
 
 	private async Task ApplyProjectPresetAsync(OverlayProject project)
@@ -354,6 +358,19 @@ public partial class MainWindow
 		if (settings.ActivePresetId is not { } layoutId || layoutId == _activePresetId || _overlayPresets.All(p => p.Id != layoutId)) return;
 
 		SwitchToPreset(layoutId);
+	}
+
+	/// <summary>
+	///     A built-in layout follows the recording's camera (a drone's footage gets the drone layout, anything else the default one);
+	///     a layout of the user's own is left alone. A project opened after this brings its own.
+	/// </summary>
+	private void AdoptCameraLayout(FileSummary summary)
+	{
+		string wanted = summary.CameraFormat?.PreferredPresetId ?? OverlayPresetStore.DefaultPresetId;
+		if (!OverlayPresetStore.IsBuiltIn(_activePresetId) || _activePresetId == wanted || _overlayPresets.All(p => p.Id != wanted)) return;
+		if (OverlayPresetStore.IsDronePreset(_activePresetId) && OverlayPresetStore.IsDronePreset(wanted)) return;
+
+		SwitchToPreset(wanted);
 	}
 
 	private void SwitchToPreset(string id)

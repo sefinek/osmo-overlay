@@ -30,7 +30,7 @@ public partial class MainWindow
 		if (_summary is null) return;
 
 		string id = Guid.NewGuid().ToString("N");
-		var preset = OverlayPreset.CreateDefault(id, string.Format(Strings.Presets_NewName, _overlayPresets.Count + 1));
+		OverlayPreset preset = UnitPreferences.Current.ApplyTo(OverlayPreset.CreateDefault(id, string.Format(Strings.Presets_NewName, _overlayPresets.Count + 1)));
 		_overlayPresets.Add(preset);
 		_activePresetId = id;
 
@@ -88,7 +88,7 @@ public partial class MainWindow
 			string.Format(Strings.Presets_ResetMessage, presetName), Strings.Presets_Reset, DialogKind.Danger);
 		if (!confirmed) return;
 
-		_overlayPresets[index] = OverlayPreset.CreateDefault(_activePresetId, presetName);
+		_overlayPresets[index] = UnitPreferences.Current.ApplyTo(OverlayPreset.CreateDefault(_activePresetId, presetName));
 
 		RefreshWidgetList();
 		ShowLayout();

@@ -31,7 +31,7 @@ public partial class WelcomeWindow : Window
 	private static readonly string[] StepNames =
 	[
 		Strings.Welcome_StepWelcome, Strings.Welcome_SupportedCameras, Strings.Common_Tools, Strings.Welcome_YourComputer, Strings.Welcome_MapTitle,
-		Strings.Common_SpeedCalibration, Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
+		Strings.Common_Units, Strings.Common_SpeedCalibration, Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
 	];
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
@@ -48,6 +48,7 @@ public partial class WelcomeWindow : Window
 	private readonly string? _defaultMapProvider;
 	private string? _mapPreviewKey;
 	private int _step;
+	private bool _hardwareChecked;
 
 	public WelcomeWindow() : this(false)
 	{
@@ -59,8 +60,8 @@ public partial class WelcomeWindow : Window
 	{
 		InitializeComponent();
 		_offerOpenRecording = offerOpenRecording;
-		_steps = [WelcomeStep, CameraStep, ToolsStep, HardwareStep, MapStep, SpeedStep, PreferencesStep, FinishStep];
-		_arts = [WelcomeArt, CameraArt, ToolsArt, HardwareArt, MapArt, SpeedArt, PreferencesArt, FinishArt];
+		_steps = [WelcomeStep, CameraStep, ToolsStep, HardwareStep, MapStep, UnitsStep, SpeedStep, PreferencesStep, FinishStep];
+		_arts = [WelcomeArt, CameraArt, ToolsArt, HardwareArt, MapArt, UnitsArt, SpeedArt, PreferencesArt, FinishArt];
 		_dots = [.. _steps.Select((_, i) => StepDot(i))];
 		VersionText.Text = string.Format(Strings.Welcome_Version, AppUpdates.CurrentVersion);
 
@@ -74,13 +75,14 @@ public partial class WelcomeWindow : Window
 		_mapApiKeys = settings.MapApiKeys;
 		_defaultMapProvider = settings.DefaultMapProvider;
 		ShowMapStyle();
+		ShowUnits(settings.MeasurementUnits ?? UnitPreferences.ForCurrentRegion());
+		UnitsSuggestionHint.IsVisible = settings.MeasurementUnits is null;
 
 		ProjectAssociationCheck.IsEnabled = ProjectFileAssociation.IsSupported;
 		ProjectAssociationCheck.Classes.Set("muted", !ProjectFileAssociation.IsSupported);
 		ProjectAssociationCheck.IsChecked = ProjectFileAssociation.IsSupported && ProjectFileAssociation.IsRegistered();
 
 		ShowTools();
-		ShowHardware();
 		ShowStep(0);
 		AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Bubble, true);
 		AddHandler(KeyDownEvent, OnWindowArrowKeyDown, RoutingStrategies.Tunnel);
@@ -141,6 +143,45 @@ public partial class WelcomeWindow : Window
 		}
 	}
 
+	private void ShowUnits(UnitPreferences units)
+	{
+		UnitsSpeedMetricRadio.IsChecked = units.Speed == UnitSystem.Metric;
+		UnitsSpeedImperialRadio.IsChecked = units.Speed == UnitSystem.Imperial;
+		UnitsDistanceMetricRadio.IsChecked = units.Distance == UnitSystem.Metric;
+		UnitsDistanceImperialRadio.IsChecked = units.Distance == UnitSystem.Imperial;
+		UnitsAltitudeMetricRadio.IsChecked = units.Altitude == UnitSystem.Metric;
+		UnitsAltitudeImperialRadio.IsChecked = units.Altitude == UnitSystem.Imperial;
+		UnitsTemperatureMetricRadio.IsChecked = units.Temperature == UnitSystem.Metric;
+		UnitsTemperatureImperialRadio.IsChecked = units.Temperature == UnitSystem.Imperial;
+	}
+
+	private UnitPreferences ChosenUnits()
+	{
+		return new UnitPreferences(Chosen(UnitsSpeedImperialRadio), Chosen(UnitsDistanceImperialRadio), Chosen(UnitsAltitudeImperialRadio), Chosen(UnitsTemperatureImperialRadio));
+
+		static UnitSystem Chosen(RadioButton imperial)
+		{
+			return imperial.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric;
+		}
+	}
+
+	private void OnUnitsQuickChoiceClick(object? sender, RoutedEventArgs e)
+	{
+		ShowUnits((sender as Control)?.Tag switch
+		{
+			"UnitedStates" => UnitPreferences.UnitedStates,
+			"UnitedKingdom" => UnitPreferences.UnitedKingdom,
+			_ => UnitPreferences.Metric
+		});
+		UnitsSuggestionHint.IsVisible = false;
+	}
+
+	private static string UnitsSummary(UnitPreferences units)
+	{
+		return string.Join(" · ", units.Speed == UnitSystem.Imperial ? "mph" : "km/h", units.Distance == UnitSystem.Imperial ? "mi, ft" : "km, m",
+			units.Altitude == UnitSystem.Imperial ? "ft" : "m", units.Temperature == UnitSystem.Imperial ? "°F" : "°C");
+	}
+
 	/// <summary>Finished with "Open a recording": the caller opens the file picker once this window is closed.</summary>
 	public bool OpenRecordingRequested { get; private set; }
 
@@ -179,11 +220,11 @@ public partial class WelcomeWindow : Window
 
 		StepScrollViewer.Offset = default;
 		StepLabel.Text = string.Format(Strings.Welcome_StepOf, step + 1, _steps.Length);
+		if (_steps[step] == HardwareStep && !_hardwareChecked) ShowHardware();
 		if (_steps[step] == MapStep) ShowMapPreviews();
 		if (_steps[step] == PreferencesStep) _ = UpdateOutputDiskSpaceAsync();
 		if (IsLastStep) ShowSummary();
 
-		SkipButton.IsVisible = !IsLastStep;
 		BackButton.IsVisible = step > 0;
 		NextButton.Content = IsLastStep ? Strings.Welcome_Finish : Strings.Welcome_Next;
 		NextButton.Classes.Set("accent", !(IsLastStep && _offerOpenRecording));
@@ -263,11 +304,6 @@ public partial class WelcomeWindow : Window
 	{
 		OpenRecordingRequested = true;
 		Save();
-	}
-
-	private void OnSkipClick(object? sender, RoutedEventArgs e)
-	{
-		Close();
 	}
 
 	// Found tools show up at once; their versions follow when the tools have answered.
@@ -399,8 +435,8 @@ public partial class WelcomeWindow : Window
 		if (result.Success)
 		{
 			ShowTools();
-			// FFmpeg is what the encoder and decoder checks run.
-			ShowHardware();
+			// FFmpeg is what the encoder and decoder checks run: one that ran without it has to run again.
+			if (_hardwareChecked) ShowHardware();
 			return;
 		}
 
@@ -409,9 +445,11 @@ public partial class WelcomeWindow : Window
 		ToolsHint.Text = result.Message;
 	}
 
-	// Rows show "Checking..." until HardwareCheck has answered (the encoder and decoder runs take a second or two).
+	// Rows show "Checking..." until HardwareCheck has answered (the encoder and decoder runs take a second or two). It runs when its step is first
+	// shown, not with the window: it starts ffmpeg, and the window would wait for that to open.
 	private async void ShowHardware()
 	{
+		_hardwareChecked = true;
 		HardwareRows.Children.Clear();
 		HardwareRows.Children.Add(new TextBlock { Text = Strings.Welcome_Checking, Classes = { "rowText" } });
 		HardwareHint.Text = "";
@@ -604,7 +642,7 @@ public partial class WelcomeWindow : Window
 		image.Source = preview;
 		credit.Text = sources.Attribution(providerId);
 		credit.IsVisible = preview is not null;
-		status.Text = preview is null ? Strings.Welcome_MapPreviewFailed : "";
+		status.Text = preview is not null ? "" : sources.Resolve(providerId) == MapProviders.EsriStreetsId ? Strings.Welcome_MapPreviewFailedKey : Strings.Welcome_MapPreviewFailed;
 		return preview is not null;
 	}
 
@@ -642,6 +680,7 @@ public partial class WelcomeWindow : Window
 				: SatelliteChoice.IsChecked == true ? Strings.Welcome_MapSatellite
 				: Strings.Welcome_SummaryMapOwn,
 				string.IsNullOrWhiteSpace(EsriKeyBox.Text) ? Strings.Welcome_SummaryMapNoKey : Strings.Welcome_SummaryMapEsriKey)),
+			(Strings.Common_Units, UnitsSummary(ChosenUnits())),
 			(Strings.Welcome_SummaryWatermark, WatermarkCheck.IsChecked == true ? Strings.Common_On : Strings.Main_Off),
 			(Strings.Welcome_SummaryOutputFolder,
 				string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? Strings.Welcome_NextToTheSourceFile : OutputFolderBox.Text)
@@ -720,8 +759,10 @@ public partial class WelcomeWindow : Window
 		if (esriKey.Length == 0) keys.Remove(MapProviders.EsriKeyGroup);
 		else keys[MapProviders.EsriKeyGroup] = esriKey;
 
+		UnitPreferences units = ChosenUnits();
 		OverlaySettingsStore.Save(settings with
 		{
+			MeasurementUnits = units,
 			MapApiKeys = keys.Count == 0 ? null : keys,
 			DefaultMapProvider = StreetsChoice.IsChecked == true ? MapProviders.StreetsAutoId
 			: SatelliteChoice.IsChecked == true ? null

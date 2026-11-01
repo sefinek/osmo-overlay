@@ -53,7 +53,9 @@ public partial class MainWindow
 			OverlayElementType.Distance => DistanceSettingsPanel,
 			OverlayElementType.CameraInfo => CameraInfoSettingsPanel,
 			OverlayElementType.AmbientTemperature or OverlayElementType.ImuTemperature or OverlayElementType.DeviceDistance or OverlayElementType.DeviceBattery
-				or OverlayElementType.AudioLevel or OverlayElementType.WindProcessing or OverlayElementType.ImageLuma => SensorSettingsPanel,
+				or OverlayElementType.AudioLevel or OverlayElementType.WindProcessing or OverlayElementType.ImageLuma
+				or OverlayElementType.Height or OverlayElementType.HomeDistance or OverlayElementType.VerticalSpeed or OverlayElementType.Satellites
+				or OverlayElementType.FlightMode => SensorSettingsPanel,
 			OverlayElementType.Compass => CompassSettingsPanel,
 			OverlayElementType.SunWidget => SunSettingsPanel,
 			OverlayElementType.RollGauge => RollSettingsPanel,
@@ -71,6 +73,12 @@ public partial class MainWindow
 			OverlayElementType.MapAttribution => MapCreditSettingsPanel,
 			OverlayElementType.Watermark => WatermarkSettingsPanel,
 			OverlayElementType.GpsAlert => GpsAlertSettingsPanel,
+			OverlayElementType.DroneBattery => DroneBatterySettingsPanel,
+			OverlayElementType.FlightAlerts => FlightAlertsSettingsPanel,
+			OverlayElementType.Signal => SignalSettingsPanel,
+			OverlayElementType.RcSticks => RcSticksSettingsPanel,
+			OverlayElementType.AttitudeIndicator => AttitudeSettingsPanel,
+			OverlayElementType.Orientation3D => Orientation3DSettingsPanel,
 			_ => null
 		};
 	}

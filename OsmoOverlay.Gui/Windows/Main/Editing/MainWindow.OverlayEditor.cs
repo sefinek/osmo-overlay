@@ -47,7 +47,9 @@ public partial class MainWindow
 		new(Strings.Editor_StatAverageSpeed, TripStatKind.AverageSpeed),
 		new(Strings.Settings_ElevationGain, TripStatKind.ElevationGain),
 		new(Strings.Editor_StatElevationLoss, TripStatKind.ElevationLoss),
-		new(Strings.Editor_StatMovingTime, TripStatKind.MovingTime)
+		new(Strings.Editor_StatMovingTime, TripStatKind.MovingTime),
+		new(Strings.Editor_StatMaxHeight, TripStatKind.MaxHeight),
+		new(Strings.Editor_StatMaxHomeDistance, TripStatKind.MaxHomeDistance)
 	];
 
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
@@ -74,11 +76,11 @@ public partial class MainWindow
 		_overlayPresets.FirstOrDefault(p => p.Id == _activePresetId)?.Elements ?? [];
 
 	/// <summary>
-	///     The built-in "Default" preset is read-only, so there's always one untouched baseline layout
+	///     The built-in presets (Default and the drone one) are read-only, so there's always one untouched baseline layout
 	///     to fall back to or Duplicate from - editing it directly would mean losing that baseline the
 	///     first time someone drags a widget.
 	/// </summary>
-	private bool IsActivePresetDefault => _activePresetId == OverlayPresetStore.DefaultPresetId;
+	private bool IsActivePresetDefault => OverlayPresetStore.IsBuiltIn(_activePresetId);
 
 	private void LoadOverlayPresets()
 	{
@@ -90,6 +92,18 @@ public partial class MainWindow
 		// Re-evaluate SetPhase's visibility now that _overlayPresetsLoaded flipped - the Overlay
 		// panel (New/Duplicate/etc.) only actually appears from this point on, see the field's doc.
 		SetPhase(_phase);
+	}
+
+	/// <summary>The built-in layouts are made with the saved units, so a change of them (the welcome window, opened from Settings) reads the list again.</summary>
+	private void ReloadPresetsAfterUnitsChange(OverlaySettings before, OverlaySettings after)
+	{
+		if (UnitPreferences.From(before) == UnitPreferences.From(after)) return;
+
+		MomentsEditor.SetUnits(UnitPreferences.From(after));
+		if (!_overlayPresetsLoaded) return;
+
+		SaveOverlayPresets();
+		LoadOverlayPresets();
 	}
 
 	private void SaveOverlayPresets()
@@ -158,6 +172,7 @@ public partial class MainWindow
 		DeletePresetButton.IsEnabled = editable;
 		ResetPresetButton.IsEnabled = editable;
 		DefaultPresetLockedHint.IsVisible = !editable;
+		UpdateWidgetSettingsLock();
 
 		return;
 
@@ -239,6 +254,9 @@ public partial class MainWindow
 			OverlayElementType.AudioLevel => Strings.Editor_UnavailableAudioLevel,
 			OverlayElementType.WindProcessing => Strings.Editor_UnavailableWindProcessing,
 			OverlayElementType.ImageLuma => Strings.Editor_UnavailableImageLuma,
+			OverlayElementType.Height or OverlayElementType.HomeDistance or OverlayElementType.VerticalSpeed or OverlayElementType.Satellites or OverlayElementType.DroneBattery
+				or OverlayElementType.FlightAlerts or OverlayElementType.Signal or OverlayElementType.FlightMode or OverlayElementType.RcSticks
+				or OverlayElementType.AttitudeIndicator or OverlayElementType.Orientation3D => Strings.Editor_UnavailableDroneLog,
 			_ => Strings.Editor_UnavailableGps
 		};
 	}
@@ -265,6 +283,11 @@ public partial class MainWindow
 			OverlayElementType.AudioLevel => AudioLevelListItem,
 			OverlayElementType.WindProcessing => WindProcessingListItem,
 			OverlayElementType.ImageLuma => ImageLumaListItem,
+			OverlayElementType.Height => HeightListItem,
+			OverlayElementType.HomeDistance => HomeDistanceListItem,
+			OverlayElementType.VerticalSpeed => VerticalSpeedListItem,
+			OverlayElementType.FlightMode => FlightModeListItem,
+			OverlayElementType.Satellites => SatellitesListItem,
 			OverlayElementType.Compass => CompassListItem,
 			OverlayElementType.SunWidget => SunListItem,
 			OverlayElementType.RollGauge => RollListItem,
@@ -282,6 +305,12 @@ public partial class MainWindow
 			OverlayElementType.MapAttribution => MapCreditListItem,
 			OverlayElementType.Watermark => WatermarkListItem,
 			OverlayElementType.GpsAlert => GpsAlertListItem,
+			OverlayElementType.DroneBattery => DroneBatteryListItem,
+			OverlayElementType.FlightAlerts => FlightAlertsListItem,
+			OverlayElementType.Signal => SignalListItem,
+			OverlayElementType.RcSticks => RcSticksListItem,
+			OverlayElementType.AttitudeIndicator => AttitudeListItem,
+			OverlayElementType.Orientation3D => Orientation3DListItem,
 			_ => null
 		};
 	}
@@ -312,20 +341,31 @@ public partial class MainWindow
 		AddedWidgetsEmptyHint.IsVisible = visible.Count == 0;
 	}
 
+	/// <summary>
+	///     A widget's name before any numbering: its palette name, and for a statistic what it counts - "Trip stat: Average speed" - so several of
+	///     them are told apart by what they show instead of by "(2)" and "(3)".
+	/// </summary>
+	private string BaseWidgetName(OverlayElement element)
+	{
+		string name = GetWidgetLabel(element.Type);
+		return element is TripStatElement stat ? $"{name}: {stat.Label ?? OverlayRenderer.DefaultTripStatLabel(stat.Stat)}" : name;
+	}
+
 	/// <summary>The widgets on the overlay in layout (draw) order, named as the "on overlay" list and the layers show them.</summary>
 	private List<(OverlayElement Element, string Name)> VisibleWidgetNames()
 	{
 		List<OverlayElement> visible = [.. ActiveElements.Where(e => e.Visible)];
 
-		Dictionary<OverlayElementType, int> totalByType = [];
-		foreach (OverlayElement el in visible) totalByType[el.Type] = totalByType.GetValueOrDefault(el.Type) + 1;
+		string[] baseNames = [.. visible.Select(BaseWidgetName)];
+		Dictionary<string, int> total = [];
+		foreach (string name in baseNames) total[name] = total.GetValueOrDefault(name) + 1;
 
-		Dictionary<OverlayElementType, int> seenByType = [];
+		Dictionary<string, int> seen = [];
 		List<(OverlayElement, string)> named = [];
-		foreach (OverlayElement el in visible)
+		for (int i = 0; i < visible.Count; i++)
 		{
-			int index = seenByType[el.Type] = seenByType.GetValueOrDefault(el.Type) + 1;
-			named.Add((el, GetWidgetLabel(el.Type) + (totalByType[el.Type] > 1 ? $" ({index})" : "")));
+			int index = seen[baseNames[i]] = seen.GetValueOrDefault(baseNames[i]) + 1;
+			named.Add((visible[i], baseNames[i] + (total[baseNames[i]] > 1 ? $" ({index})" : "")));
 		}
 
 		return named;
@@ -483,7 +523,7 @@ public partial class MainWindow
 		return OverlayElementBounds.GetBounds(element.Type, x, y, scale,
 			(element as TimeTextElementBase)?.DateFormat, (element as TimeTextElementBase)?.Locale,
 			(element as LabeledStatElement)?.Label ?? (element as ElapsedTimeTextElement)?.Label, _summary?.CameraModel, (element as StyledOverlayElement)?.FontFamily,
-			(element as TextElement)?.Text, (element as ImageElement)?.ImagePath, (element as GpsAlertElement)?.Texts);
+			(element as TextElement)?.Text, (element as ImageElement)?.ImagePath, (element as GpsAlertElement)?.Texts, element);
 	}
 
 	/// <summary>
@@ -524,6 +564,10 @@ public partial class MainWindow
 			DistanceElement e => e with { Units = units },
 			TemperatureElementBase e => e with { Units = units },
 			DeviceDistanceElement e => e with { Units = units },
+			HeightElement e => e with { Units = units },
+			HomeDistanceElement e => e with { Units = units },
+			VerticalSpeedElement e => e with { Units = units },
+			DroneBatteryElement e => e with { Units = units },
 			TripProgressBarElement e => e with { Units = units },
 			ProfileChartElement e => e with { Units = units },
 			TripStatElement e => e with { Units = units },
@@ -557,7 +601,7 @@ public partial class MainWindow
 	{
 		if (_summary is null || IsActivePresetDefault) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory");
+		OverlayPreset factory = UnitPreferences.Current.ApplyTo(OverlayPreset.CreateDefault("factory", "Factory"));
 		if (factory.Elements.FirstOrDefault(e => e.Type == type) is not { } template) return;
 
 		(float refX, float refY) = OverlayElementBounds.ToReference(x, y, _summary.Video.Width, _summary.Video.Height);
@@ -609,7 +653,7 @@ public partial class MainWindow
 		OverlayElement? existing = ActiveElements.FirstOrDefault(e => e.Id == id);
 		if (existing is null) return;
 
-		var factory = OverlayPreset.CreateDefault("factory", "Factory");
+		OverlayPreset factory = UnitPreferences.Current.ApplyTo(OverlayPreset.CreateDefault("factory", "Factory"));
 		if (factory.Elements.FirstOrDefault(e => e.Type == existing.Type) is not { } defaults) return;
 
 		UpdateElement(id, el => defaults with { Id = el.Id, X = el.X, Y = el.Y, Visible = el.Visible, LayerId = el.LayerId });
@@ -669,8 +713,18 @@ public partial class MainWindow
 		MomentsColumnScroll.IsVisible = false;
 		UpdateMomentsButton();
 		SourceColumnScroll.IsVisible = false;
+		UpdateWidgetSettingsLock();
 		WidgetSettingsColumnScroll.IsVisible = true;
 		WidgetSettingsColumnScroll.Offset = default;
+	}
+
+	/// <summary>A built-in layout can't be edited, so its widget's settings are shown but dimmed, with the way to a copy that can - instead of controls that take a change and silently drop it.</summary>
+	private void UpdateWidgetSettingsLock()
+	{
+		bool locked = IsActivePresetDefault;
+		WidgetSettingsPanelHost.IsEnabled = !locked;
+		WidgetSettingsResetButton.IsEnabled = !locked;
+		BuiltInSettingsNotice.IsVisible = locked;
 	}
 
 	private void OnWidgetSettingsBackClick(object? sender, RoutedEventArgs e)
@@ -780,15 +834,57 @@ public partial class MainWindow
 			case OverlayElementType.AudioLevel:
 			case OverlayElementType.WindProcessing:
 			case OverlayElementType.ImageLuma:
+			case OverlayElementType.Height:
+			case OverlayElementType.HomeDistance:
+			case OverlayElementType.VerticalSpeed:
+			case OverlayElementType.Satellites:
+			case OverlayElementType.FlightMode:
 			{
 				var x = (LabeledStatElement)el;
 				SensorLabelBox.Text = x.Label;
 				SensorLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
-				SensorUnitsPanel.IsVisible = el is TemperatureElementBase or DeviceDistanceElement;
+				SensorUnitsPanel.IsVisible = el is TemperatureElementBase or DeviceDistanceElement or HeightElement or HomeDistanceElement or VerticalSpeedElement;
 				SensorMetricRadio.Content = el is TemperatureElementBase ? "°C" : Strings.Common_Metric;
 				SensorImperialRadio.Content = el is TemperatureElementBase ? "°F" : Strings.Common_Imperial;
-				UnitSystem units = el switch { TemperatureElementBase t => t.Units, DeviceDistanceElement d => d.Units, _ => UnitSystem.Metric };
+				UnitSystem units = el switch
+				{
+					TemperatureElementBase t => t.Units, DeviceDistanceElement d => d.Units, HeightElement h => h.Units, HomeDistanceElement a => a.Units,
+					VerticalSpeedElement v => v.Units, _ => UnitSystem.Metric
+				};
 				SetUnitsRadio(SensorMetricRadio, SensorImperialRadio, units);
+				SensorBarsPanel.IsVisible = el is SatellitesElement;
+				SensorLimitsGroup.IsVisible = el is RangeLimitedElement;
+				SensorGpsGroup.IsVisible = el is SatellitesElement;
+				SensorModeGroup.IsVisible = el is FlightModeElement;
+				SensorClimbGroup.IsVisible = el is VerticalSpeedElement;
+				SensorStateColorsGroup.IsVisible = el is ThresholdStatElement;
+				switch (el)
+				{
+					case RangeLimitedElement limited:
+						SensorWarnAboveBox.Value = (decimal?)limited.WarnAboveMeters;
+						SensorAlertAboveBox.Value = (decimal?)limited.AlertAboveMeters;
+						break;
+					case SatellitesElement sats:
+						SensorColorByCountCheck.IsChecked = sats.ColorByCount;
+						SensorWarnBelowBox.Value = sats.WarnBelow;
+						SensorAlertBelowBox.Value = sats.AlertBelow;
+						break;
+					case FlightModeElement mode:
+						SensorColorByModeCheck.IsChecked = mode.ColorByMode;
+						break;
+					case VerticalSpeedElement vertical:
+						SensorClimbColorBox.Text = vertical.ClimbColor;
+						SensorSinkColorBox.Text = vertical.SinkColor;
+						break;
+				}
+
+				if (el is ThresholdStatElement threshold)
+				{
+					SensorWarnColorBox.Text = threshold.WarnColor;
+					SensorAlertColorBox.Text = threshold.AlertColor;
+				}
+
+				if (el is SatellitesElement gps) SatellitesBarsCheck.IsChecked = gps.ShowBars;
 				SensorDescription.Text = el switch
 				{
 					AmbientTemperatureElement => Strings.Widget_AmbientTemperatureDescription,
@@ -797,6 +893,11 @@ public partial class MainWindow
 					AudioLevelElement => Strings.Widget_AudioLevelDescription,
 					WindProcessingElement => Strings.Widget_WindProcessingDescription,
 					ImageLumaElement => Strings.Widget_ImageLumaDescription,
+					HeightElement => Strings.Widget_HeightDescription,
+					HomeDistanceElement => Strings.Widget_HomeDistanceDescription,
+					VerticalSpeedElement => Strings.Widget_VerticalSpeedDescription,
+					SatellitesElement => Strings.Widget_SatellitesDescription,
+					FlightModeElement => Strings.Widget_FlightModeDescription,
 					_ => Strings.Widget_DeviceBatteryDescription
 				};
 				SensorStyle.Populate(x);
@@ -850,6 +951,36 @@ public partial class MainWindow
 				break;
 			}
 
+			case OverlayElementType.RcSticks:
+			{
+				var x = (RcSticksElement)el;
+				RcSticksStyle.Populate(x);
+				RcSticksPanelFill.Populate(x);
+				RcSticksTiming.Populate(x);
+				RcSticksShadow.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.AttitudeIndicator:
+			{
+				var x = (AttitudeIndicatorElement)el;
+				AttitudeStyle.Populate(x);
+				AttitudePanelFill.Populate(x);
+				AttitudeTiming.Populate(x);
+				AttitudeShadow.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.Orientation3D:
+			{
+				var x = (Orientation3DElement)el;
+				Orientation3DStyle.Populate(x);
+				Orientation3DPanelFill.Populate(x);
+				Orientation3DTiming.Populate(x);
+				Orientation3DShadow.Populate(x);
+				break;
+			}
+
 			case OverlayElementType.GMeter:
 			{
 				var x = (GMeterElement)el;
@@ -881,7 +1012,7 @@ public partial class MainWindow
 			case OverlayElementType.MapWidget:
 			{
 				var x = (MapWidgetElement)el;
-				MapSourceEditor.Load(x.MapProviderId, OverlaySettingsStore.Load());
+				MapSourceEditor.Load(x.MapProviderId, OverlaySettingsStore.Load(), x.ShowEsriLabels, perMapLabels: true);
 				MapZoomBox.Value = x.MapZoom;
 				MapDynamicZoomCheck.IsChecked = x.MapDynamicZoom;
 				MapZoomOutMaxBox.Value = (decimal)x.MapDynamicZoomMaxFactor;
@@ -922,6 +1053,72 @@ public partial class MainWindow
 				MapCreditTiming.Populate(x);
 				MapCreditShadow.Populate(x);
 				UpdateMapCreditPanel();
+				break;
+			}
+
+			case OverlayElementType.DroneBattery:
+			{
+				var x = (DroneBatteryElement)el;
+				DroneBatteryLabelBox.Text = x.Label;
+				DroneBatteryLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
+				DroneBatteryIconCheck.IsChecked = x.ShowIcon;
+				DroneBatteryColorCheck.IsChecked = x.ColorByCharge;
+				DroneBatteryVoltageCheck.IsChecked = x.ShowVoltage;
+				DroneBatteryTemperatureCheck.IsChecked = x.ShowTemperature;
+				DroneBatteryCurrentCheck.IsChecked = x.ShowCurrent;
+				DroneBatteryCellsCheck.IsChecked = x.ShowCells;
+				SetUnitsRadio(DroneBatteryMetricRadio, DroneBatteryImperialRadio, x.Units);
+				DroneBatteryLowBox.Value = x.LowPercent;
+				DroneBatteryCriticalBox.Value = x.CriticalPercent;
+				DroneBatteryLowColorBox.Text = x.LowColor;
+				DroneBatteryCriticalColorBox.Text = x.CriticalColor;
+				DroneBatteryLowCellBox.Value = (decimal)x.LowCellVolts;
+				DroneBatteryCriticalCellBox.Value = (decimal)x.CriticalCellVolts;
+				DroneBatteryColdWarnBox.Value = (decimal)x.ColdCautionCelsius;
+				DroneBatteryColdCriticalBox.Value = (decimal)x.ColdCriticalCelsius;
+				DroneBatteryHotWarnBox.Value = (decimal)x.HotCautionCelsius;
+				DroneBatteryHotCriticalBox.Value = (decimal)x.HotCriticalCelsius;
+				DroneBatteryStyle.Populate(x);
+				DroneBatteryTiming.Populate(x);
+				DroneBatteryShadow.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.Signal:
+			{
+				var x = (SignalElement)el;
+				SignalLabelBox.Text = x.Label;
+				SignalLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
+				SignalUplinkCheck.IsChecked = x.ShowUplink;
+				SignalDownlinkCheck.IsChecked = x.ShowDownlink;
+				SignalBarsCheck.IsChecked = x.ShowBars;
+				SignalColorCheck.IsChecked = x.ColorByLevel;
+				SignalGoodBox.Value = x.GoodPercent;
+				SignalFairBox.Value = x.FairPercent;
+				SignalFairColorBox.Text = x.FairColor;
+				SignalPoorColorBox.Text = x.PoorColor;
+				SignalStyle.Populate(x);
+				SignalTiming.Populate(x);
+				SignalShadow.Populate(x);
+				break;
+			}
+
+			case OverlayElementType.FlightAlerts:
+			{
+				var x = (FlightAlertsElement)el;
+				FlightAlertsModesCheck.IsChecked = x.ShowFlightModes;
+				FlightAlertsMotorsCheck.IsChecked = x.ShowMotors;
+				FlightAlertsBatteryCheck.IsChecked = x.ShowBattery;
+				FlightAlertsWarningsCheck.IsChecked = x.ShowWarnings;
+				FlightAlertsNoticesCheck.IsChecked = x.ShowTips;
+				FlightAlertsSecondsBox.Value = (decimal)x.ShowSeconds;
+				FlightAlertsLinesBox.Value = x.MaxLines;
+				FlightAlertsFadeBox.Value = (decimal)x.FadeSeconds;
+				FlightAlertsSlideCheck.IsChecked = x.SlideIn;
+				FlightAlertsStyle.Populate(x);
+				FlightAlertsPanelFill.Populate(x);
+				FlightAlertsTiming.Populate(x);
+				FlightAlertsShadow.Populate(x);
 				break;
 			}
 
@@ -974,11 +1171,16 @@ public partial class MainWindow
 				var x = (ProfileChartElement)el;
 				ProfileElevationRadio.IsChecked = x.Series == ProfileSeries.Elevation;
 				ProfileSpeedRadio.IsChecked = x.Series == ProfileSeries.Speed;
+				ProfileHeightRadio.IsChecked = x.Series == ProfileSeries.Height;
 				ProfileDistanceRadio.IsChecked = x.Axis == ProfileAxis.Distance;
 				ProfileTimeRadio.IsChecked = x.Axis == ProfileAxis.Time;
 				ProfileLabelBox.Text = x.Label;
 				ProfileLabelBox.PlaceholderText = OverlayRenderer.DefaultLabel(x);
 				SetUnitsRadio(ProfileMetricRadio, ProfileImperialRadio, x.Units);
+				ProfileAutoHeightCheck.IsChecked = x.AutoHeight;
+				ProfileMarkerCheck.IsChecked = x.ShowMarker;
+				ProfileMinMaxCheck.IsChecked = x.ShowMinMax;
+				ProfileLineWidthBox.Value = (decimal)x.LineWidth;
 				ProfileChartStyle.Populate(x);
 				ProfileChartPanelFill.Populate(x);
 				ProfileChartTiming.Populate(x);
@@ -1039,7 +1241,14 @@ public partial class MainWindow
 
 		UpdateElement(id, el => el switch
 		{
-			LabeledStatElement stat => ApplyStyle(stat) with { AccentColor = style.AccentColor },
+			LabeledStatElement stat => ApplyStyle(stat) with
+			{
+				AccentColor = style.AccentColor,
+				Decimals = OverlayElementBounds.SupportsDecimals(stat) ? style.Decimals : stat.Decimals,
+				ShowLabel = OverlayElementBounds.SupportsStatParts(stat) ? style.ShowLabel : stat.ShowLabel,
+				ShowUnit = OverlayElementBounds.SupportsStatParts(stat) ? style.ShowUnit : stat.ShowUnit,
+				UppercaseLabel = OverlayElementBounds.SupportsStatParts(stat) ? style.UppercaseLabel : stat.UppercaseLabel
+			},
 			StyledOverlayElement styled => ApplyStyle(styled),
 			_ => el
 		});
@@ -1052,7 +1261,9 @@ public partial class MainWindow
 				Scale = style.Scale is { } scale ? OverlayElementBounds.ClampScale(element, scale) : element.Scale,
 				TextColor = style.TextColor,
 				OutlineColor = style.OutlineColor,
-				OutlineWidth = style.OutlineWidth ?? element.OutlineWidth
+				OutlineWidth = style.OutlineWidth ?? element.OutlineWidth,
+				TextAlign = OverlayElementBounds.SupportsTextAlign(element) ? style.Align : element.TextAlign,
+				Opacity = style.Opacity ?? element.Opacity
 			};
 		}
 	}

@@ -7,6 +7,7 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
+using OsmoOverlay.Core.Telemetry.External;
 using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
@@ -51,6 +52,9 @@ public partial class DeveloperWindow : Window
 			case "config-preset-picker":
 				List<SettingsPreset> samples = SettingsPresetStore.Load().Presets;
 				result = await SettingsPresetPickerWindow.PickAsync(this, SampleMessage, samples, samples[0].Id);
+				break;
+			case "track-format":
+				result = await TrackFormatWindow.AskAsync(this, TrackOnlyFormat.Default);
 				break;
 			case "show":
 				await ConfirmDialog.ShowAsync(this, SampleTitle, SampleMessage, kind: Enum.Parse<DialogKind>(argument));

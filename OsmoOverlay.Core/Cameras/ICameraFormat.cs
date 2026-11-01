@@ -30,6 +30,12 @@ public interface ICameraFormat
 
 	string DisplayName { get; }
 
+	/// <summary>True for a drone: the recording has no camera of its own to name, the aircraft is what the model and the label are about.</summary>
+	bool IsDrone => false;
+
+	/// <summary>The make alone ("DJI"), for a list of what the app reads - several formats of one maker are listed once.</summary>
+	string Brand => DisplayName;
+
 	/// <summary>Whether this camera recorded the file, from ffprobe's stream list and the file itself - null when it didn't.</summary>
 	CameraRecording? Detect(string path, JsonArray streams);
 
@@ -54,6 +60,12 @@ public interface ICameraFormat
 	{
 		return null;
 	}
+
+	/// <summary>
+	///     The built-in overlay preset (OverlayPresetStore) laid out for this camera's footage, which the GUI switches to when such a
+	///     recording is opened and a built-in layout is on - null: the default one.
+	/// </summary>
+	string? PreferredPresetId => null;
 
 	/// <summary>A line for the log saying what the telemetry was read from and what it holds.</summary>
 	string DescribeTelemetry(IReadOnlyList<TelemetryFrame> frames);

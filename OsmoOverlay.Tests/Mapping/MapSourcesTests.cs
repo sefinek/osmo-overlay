@@ -158,6 +158,9 @@ public sealed class MapSourcesTests
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.MapTilerSatelliteId));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.CustomId));
 		Assert.IsNull((sources with { ShowEsriLabels = false }).LabelsUrlTemplate(null));
+		Assert.IsNull(sources.LabelsUrlTemplate(null, showLabels: false));
+		Assert.AreEqual(labels, (sources with { ShowEsriLabels = false }).LabelsUrlTemplate(null, showLabels: true));
+		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.MapTilerSatelliteId, showLabels: true));
 		Assert.IsNull(new MapSources().LabelsUrlTemplate(MapProviders.EsriImageryId), "a keyed provider never requests labels without its key");
 		Assert.Contains("/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", new MapSources().LabelsUrlTemplate(null)!);
 	}

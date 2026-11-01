@@ -27,7 +27,7 @@ public sealed class OverlayDefaultTextsTests
 		Assert.AreEqual("FINISH", In("en", () => OverlayRenderer.DefaultTripArrivedLabel));
 		Assert.AreEqual("META", In("pl", () => OverlayRenderer.DefaultTripArrivedLabel));
 		Assert.AreEqual("Elevation", In("en", () => OverlayRenderer.DefaultLabel(new ElevationElement { X = 0, Y = 0 })));
-		Assert.AreEqual("Wysokość", In("pl", () => OverlayRenderer.DefaultLabel(new ElevationElement { X = 0, Y = 0 })));
+		Assert.AreEqual("Wysokość n.p.m.", In("pl", () => OverlayRenderer.DefaultLabel(new ElevationElement { X = 0, Y = 0 })));
 		Assert.AreEqual("DISTANCE", In("en", () => RouteIntroStat.DefaultLabel(RouteIntroStats.Distance)));
 		Assert.AreEqual("DYSTANS", In("pl", () => RouteIntroStat.DefaultLabel(RouteIntroStats.Distance)));
 	}

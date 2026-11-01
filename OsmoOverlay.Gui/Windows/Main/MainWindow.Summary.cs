@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -5,8 +6,10 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Cameras;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
+using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 using OsmoOverlay.Gui.Native;
 
 namespace OsmoOverlay.Gui;
@@ -14,7 +17,7 @@ namespace OsmoOverlay.Gui;
 /// <summary>"Get Summary" (probing/telemetry extraction) and populating the Input/Telemetry/Output info cards from the resulting FileSummary.</summary>
 public partial class MainWindow
 {
-	private async Task RunGetSummaryAsync()
+	private async Task RunGetSummaryAsync(OverlayProject? project = null)
 	{
 		if (_inputPaths.Count == 0) return;
 
@@ -27,6 +30,9 @@ public partial class MainWindow
 		}
 
 		List<string> inputPaths = [.. _inputPaths];
+		var loadingTime = Stopwatch.StartNew();
+		_externalTrackDetails = null;
+		_measuredSpeeds = null;
 
 		ClosePreview();
 		ResetReframe();
@@ -63,22 +69,48 @@ public partial class MainWindow
 			}
 
 			_cameraSummary = summary;
+			long summaryMs = loadingTime.ElapsedMilliseconds;
 			_externalTrackApplied = false;
+			if (_externalTrack is null && ExternalTrackSource.FindFor(summary.CameraFormat, inputPaths[0], summary.ContainerRecordingStartUtc) is { } found)
+			{
+				_externalTrack = found;
+				AppendLog(string.Format(Strings.Track_Applying, Path.GetFileName(found.Path)));
+			}
+
 			if (_externalTrack is { } trackSource)
 			{
-				try
+				FileSummary withTrack = summary;
+				ExternalTrack? loadedTrack = null;
+				// Caught inside the task: a track that doesn't fit the recording is expected, and an exception crossing Task.Run stops the debugger as user-unhandled.
+				string? trackProblem = await Task.Run(() =>
 				{
-					summary = await Task.Run(() => trackSource.Apply(summary));
+					try
+					{
+						trackSource.Validate();
+						loadedTrack = ExternalTrackReader.Read(trackSource.Path);
+						withTrack = trackSource.Apply(withTrack, loadedTrack);
+						return null;
+					}
+					catch (Exception ex) when (ex is InvalidOperationException or InvalidDataException or IOException or UnauthorizedAccessException)
+					{
+						return ex.Message;
+					}
+				});
+				if (trackProblem is null)
+				{
+					summary = withTrack;
+					_externalTrackDetails = (trackSource.Path, loadedTrack!);
 					_externalTrackApplied = true;
 				}
-				catch (Exception ex)
+				else
 				{
-					AppendLog(ex.Message, LogLevel.Error);
-					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, ex.Message, kind: DialogKind.Warning);
+					AppendLog(trackProblem, LogLevel.Error);
+					await ConfirmDialog.ShowAsync(this, Strings.Track_Title, trackProblem, kind: DialogKind.Warning);
 				}
 			}
 
 			RefreshExternalTrack();
+			long trackMs = loadingTime.ElapsedMilliseconds - summaryMs;
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
@@ -111,7 +143,7 @@ public partial class MainWindow
 			}
 			else
 			{
-				AppendLog(string.Format(Strings.Summary_LogNoTelemetry, string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))),
+				AppendLog(string.Format(Strings.Summary_LogNoTelemetry, string.Join(", ", CameraFormats.All.Select(c => c.Brand).Distinct())),
 					LogLevel.Warn);
 			}
 
@@ -163,7 +195,7 @@ public partial class MainWindow
 
 				if (summary.CameraFormat is { } camera)
 				{
-					AppendLog(camera.DescribeTelemetry(_cameraSummary.TelemetryFrames ?? rawFrames));
+					if (!(camera.IsDrone && _externalTrackApplied)) AppendLog(camera.DescribeTelemetry(_cameraSummary.TelemetryFrames ?? rawFrames));
 					if (_externalTrackApplied && _externalTrack is { } external) AppendLog(string.Format(Strings.Track_Applied, Path.GetFileName(external.Path)));
 					if (!_availability.CameraAxes)
 					{
@@ -184,9 +216,10 @@ public partial class MainWindow
 			AppendLog(Strings.Summary_LogCheckingGpuEncoder);
 			string encoder = await encoderProbe;
 			await speedsRead;
-			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder));
+			AppendLog(string.Format(FfmpegPipeline.IsGpuEncoder(encoder) ? Strings.Summary_LogEncoderGpu : Strings.Summary_LogEncoderCpu, encoder, FfmpegPipeline.EncoderCard(encoder) ?? "GPU"));
 
 			_summary = summary;
+			AdoptCameraLayout(summary);
 			_mapSourcesForRoute = null;
 			_detectedEncoder = encoder;
 
@@ -194,10 +227,12 @@ public partial class MainWindow
 			PopulateTelemetryInfo(summary);
 			PopulateOutputInfo(summary, encoder);
 
+			long analysisMs = loadingTime.ElapsedMilliseconds - summaryMs - trackMs;
+			await OpenPreviewAsync(summary, project);
 			SetPhase(UiPhase.SummaryReady);
 			SetRenderButtons(CanRenderTelemetry);
-
-			await OpenPreviewAsync(summary);
+			AppLogger.Info($"Recording load: summary {summaryMs} ms, track {trackMs} ms, analysis and controls {analysisMs} ms, " +
+			               $"preview {loadingTime.ElapsedMilliseconds - summaryMs - trackMs - analysisMs} ms, total {loadingTime.ElapsedMilliseconds} ms");
 			ResetHistory();
 			MarkClean();
 
@@ -233,6 +268,8 @@ public partial class MainWindow
 	/// </summary>
 	private async Task ShowSupportNoticeAsync(FileSummary summary, List<string> inputPaths)
 	{
+		if (summary.CameraFormat?.IsDrone == true && _externalTrackApplied) return;
+
 		string key = string.Join('|', inputPaths);
 		if (key == _supportNoticeShownFor) return;
 		_supportNoticeShownFor = key;
@@ -250,7 +287,7 @@ public partial class MainWindow
 	internal Task ShowNoTelemetryNoticeAsync()
 	{
 		return ConfirmDialog.ShowAsync(this, Strings.Summary_NoTelemetryTitle,
-			string.Format(Strings.Summary_NoTelemetryMessage, string.Join(", ", CameraFormats.All.Select(c => c.DisplayName))),
+			string.Format(Strings.Summary_NoTelemetryMessage, string.Join(", ", CameraFormats.All.Select(c => c.Brand).Distinct())),
 			kind: DialogKind.Warning);
 	}
 
@@ -260,8 +297,19 @@ public partial class MainWindow
 			art: DialogArt.NoGps);
 	}
 
+	/// <summary>The colour tags as one line - "no tags (tv)" for a file with none (a drone's MP4), "?" for a missing one among the others.</summary>
+	private static string ColorText(VideoInfo video)
+	{
+		string range = video.ColorRange ?? "?";
+		if (video.ColorPrimaries is null && video.ColorTransfer is null && video.ColorSpace is null) return string.Format(Strings.Summary_ColorUntagged, range);
+
+		string primaries = video.ColorPrimaries ?? "?", transfer = video.ColorTransfer ?? "?", colorSpace = video.ColorSpace ?? "?";
+		return primaries == transfer && transfer == colorSpace ? $"{primaries} ({range})" : $"{primaries} / {transfer} / {colorSpace} ({range})";
+	}
+
 	private void PopulateInputInfo(FileSummary summary)
 	{
+		InfoCameraLabel.Text = summary.CameraFormat?.IsDrone == true ? Strings.Main_Drone : Strings.Main_Camera;
 		InfoCamera.Text = summary.CameraModel ?? Strings.Common_UnknownCapital;
 
 		UpdateSupportIcon(summary);
@@ -289,13 +337,7 @@ public partial class MainWindow
 			Check(r => r.Codec(summary.Video.CodecName, summary.Video.PixFmt)),
 			recommended is { TenBitRecommended: true } ? "HEVC (H.265), 10-bit" : "HEVC (H.265)");
 
-		string primaries = summary.Video.ColorPrimaries ?? "?";
-		string transfer = summary.Video.ColorTransfer ?? "?";
-		string colorSpace = summary.Video.ColorSpace ?? "?";
-		string range = summary.Video.ColorRange ?? "?";
-		InfoColor.Text = primaries == transfer && transfer == colorSpace
-			? $"{primaries} ({range})"
-			: $"{primaries} / {transfer} / {colorSpace} ({range})";
+		InfoColor.Text = ColorText(summary.Video);
 		SetCheck(InfoColorCheck,
 			Check(r => r.Color(summary.Video.ColorPrimaries, summary.Video.ColorTransfer, summary.Video.ColorSpace, summary.Video.ColorRange)),
 			recommended is { FullRangeColor: true } ? Strings.Summary_RecommendedColorFullRange : Strings.Summary_RecommendedColor);
@@ -530,18 +572,10 @@ public partial class MainWindow
 		SetMatchCheck(OutPixFmtCheck,
 			output.Video.PixFmt.Equals(inputSummary.Video.PixFmt, StringComparison.OrdinalIgnoreCase));
 
-		string primaries = output.Video.ColorPrimaries ?? "?";
-		string transfer = output.Video.ColorTransfer ?? "?";
-		string colorSpace = output.Video.ColorSpace ?? "?";
-		string range = output.Video.ColorRange ?? "?";
-		OutColor.Text = primaries == transfer && transfer == colorSpace
-			? $"{primaries} ({range})"
-			: $"{primaries} / {transfer} / {colorSpace} ({range})";
+		OutColor.Text = ColorText(output.Video);
 		SetMatchCheck(OutColorCheck,
-			primaries == (inputSummary.Video.ColorPrimaries ?? "?") &&
-			transfer == (inputSummary.Video.ColorTransfer ?? "?") &&
-			colorSpace == (inputSummary.Video.ColorSpace ?? "?") &&
-			range == (inputSummary.Video.ColorRange ?? "?"));
+			output.Video.ColorPrimaries == inputSummary.Video.ColorPrimaries && output.Video.ColorTransfer == inputSummary.Video.ColorTransfer &&
+			output.Video.ColorSpace == inputSummary.Video.ColorSpace && output.Video.ColorRange == inputSummary.Video.ColorRange);
 
 		OutBitrate.Text = $"{output.Video.BitRate / 1_000_000.0:0.#} Mbps";
 		// The encoder's rate lands near the source's, not exactly on it - "matches" means close.

@@ -109,6 +109,44 @@ public sealed class KeyMomentsTests
 		CollectionAssert.AreEqual(new long[] { 0, 120, 299 }, markers.ToArray());
 	}
 
+	/// <summary>A flight: the altitude is above the sea (the take-off's own height in it), the height and the climb rate are the log's.</summary>
+	private static List<DerivedFrame> Flight()
+	{
+		List<DerivedFrame> frames = [];
+		for (int i = 0; i < 10; i++)
+		{
+			double height = i == 4 ? 119 : 10 + i;
+			var raw = new TelemetryFrame(i * 30, i, 50, 20, height - 33, null, 0, 0, 1, HeightAboveHomeMeters: height, VerticalSpeedMs: i == 2 ? 4 : i == 6 ? -5 : 0.1);
+			frames.Add(new DerivedFrame(raw, 20, 0, 0, i * 100.0, 0, 0, default, 0, 0, 1, 0, 0));
+		}
+
+		return frames;
+	}
+
+	[TestMethod]
+	public void Flight_HighestPointIsTheHeightAboveTheTakeOff_AndHasNoSlopesOrLowestPoint()
+	{
+		List<DerivedFrame> frames = Flight();
+
+		Assert.IsTrue(KeyMoments.IsFlight(frames));
+		Assert.AreEqual(119, KeyMoments.Find(frames, PeakKind.HighestPoint, Fps, Total)!.Value.Value, 1e-9, "what the Height widget shows");
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.SteepestClimb, Fps, Total));
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.SteepestDescent, Fps, Total));
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.LowestPoint, Fps, Total));
+		Assert.AreEqual(4, KeyMoments.Find(frames, PeakKind.FastestAscent, Fps, Total)!.Value.Value, 1e-9);
+		Assert.AreEqual(-5, KeyMoments.Find(frames, PeakKind.FastestDescent, Fps, Total)!.Value.Value, 1e-9);
+	}
+
+	[TestMethod]
+	public void ARide_HasNoClimbRates()
+	{
+		List<DerivedFrame> frames = Frames(_ => 20, i => 100 + i);
+
+		Assert.IsFalse(KeyMoments.IsFlight(frames));
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.FastestAscent, Fps, Total));
+		Assert.IsNull(KeyMoments.Find(frames, PeakKind.FastestDescent, Fps, Total));
+	}
+
 	// 2 m per sample (about 7 km/h at 1 sample a second), `altitude` per sample index.
 	private static List<DerivedFrame> Walk(int count, Func<int, double> altitude)
 	{

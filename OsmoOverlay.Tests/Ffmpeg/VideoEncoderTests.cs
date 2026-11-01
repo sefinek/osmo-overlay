@@ -101,6 +101,42 @@ public sealed class VideoEncoderTests
 	}
 
 	[TestMethod]
+	[DataRow("hevc_nvenc")]
+	[DataRow("hevc_amf")]
+	[DataRow("libx265")]
+	public void Hevc_MavicBitrate_PromotesMainTierWithoutReducingBitrate(string encoder)
+	{
+		VideoInfo mavic = Osmo with { Profile = "Main", PixFmt = "yuv420p", BitRate = 121_959_622, Level = 153, HighTier = false };
+		List<string> args = EncoderArgs(encoder, mavic);
+
+		Assert.AreEqual("121959622", args[args.IndexOf("-b:v") + 1]);
+		Assert.AreEqual("121959622", args[args.IndexOf("-bufsize") + 1]);
+		if (encoder == "libx265")
+		{
+			StringAssert.Contains(args[args.IndexOf("-x265-params") + 1], "level-idc=5.1:high-tier=1");
+		}
+		else
+		{
+			Assert.AreEqual("high", args[args.IndexOf("-tier") + 1]);
+			Assert.AreEqual(encoder == "hevc_nvenc" ? "153" : "5.1", args[args.IndexOf("-level") + 1]);
+		}
+	}
+
+	[TestMethod]
+	[DataRow(40_000_000L, 1.0, "153", "main")]
+	[DataRow(40_000_001L, 1.0, "153", "high")]
+	[DataRow(80_000_000L, 2.0, "153", "high")]
+	[DataRow(80_000_001L, 2.0, "156", "high")]
+	public void Hevc_UsesTheRequestedBitrateForLevelAndTier(long sourceBitrate, double multiplier, string level, string tier)
+	{
+		VideoInfo video = Osmo with { BitRate = sourceBitrate, Level = 153, HighTier = false };
+		List<string> args = EncoderArgs("hevc_nvenc", video, Encode with { BitrateMultiplier = multiplier });
+
+		Assert.AreEqual(level, args[args.IndexOf("-level") + 1]);
+		Assert.AreEqual(tier, args[args.IndexOf("-tier") + 1]);
+	}
+
+	[TestMethod]
 	public void AmfAndQsv_RunOnTheirVendorsCard_ByVendorWithoutTheAdapterList()
 	{
 		CollectionAssert.AreEqual(new[] { "-init_hw_device", "d3d11va=enc:,vendor_id=0x1002" }, FfmpegPipeline.EncoderDeviceArgs("hevc_amf", []));

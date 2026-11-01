@@ -9,6 +9,16 @@ public sealed class RecommendedRecordingTests
 	private static readonly RecommendedRecording GoPro = new(3840, 2160, 50, 59.94, 60_000_000, 128_000, true, false);
 
 	[TestMethod]
+	public void Color_UntaggedIsGoodOnlyWhereTheCameraNeverTagsIt()
+	{
+		var drone = new RecommendedRecording(3840, 2160, 50, 59.94, 100_000_000, 0, false, false, true);
+		Assert.AreEqual(CheckLevel.Good, drone.Color(null, null, null, "tv"));
+		Assert.AreEqual(CheckLevel.Warning, drone.Color(null, null, null, "pc"));
+		Assert.AreEqual(CheckLevel.Warning, drone.Color("bt2020", null, null, "tv"));
+		Assert.AreEqual(CheckLevel.Warning, Dji.Color(null, null, null, "tv"));
+	}
+
+	[TestMethod]
 	public void Resolution_FourKIsGood_FullHdIsAWarning_LessIsBad()
 	{
 		Assert.AreEqual(CheckLevel.Good, Dji.Resolution(3840, 2160));

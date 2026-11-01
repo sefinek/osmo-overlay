@@ -300,21 +300,25 @@ public sealed record MapSources(
 		return Resolve(providerId) is MapProviders.EsriImageryId or MapProviders.EsriPublicId;
 	}
 
-	public string? LabelsUrlTemplate(string? providerId, bool routeIntro = false)
+	public string? LabelsUrlTemplate(string? providerId, bool routeIntro = false, bool? showLabels = null)
 	{
-		if (!(routeIntro ? ShowRouteIntroEsriLabels : ShowEsriLabels) || !SupportsLabels(providerId)) return null;
+		if (!(showLabels ?? (routeIntro ? ShowRouteIntroEsriLabels : ShowEsriLabels)) || !SupportsLabels(providerId)) return null;
 		if (Resolve(providerId) == MapProviders.EsriPublicId)
-			return "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
+			// Place names alone show nothing at a street map's zoom: the street names are Esri's separate transportation layer.
+		{
+			return MapLabelLayers.Join("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+				"https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}");
+		}
 
 		if (ApiKey(MapProviders.EsriKeyGroup) is not { } key) return null;
 		return "https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=" + Uri.EscapeDataString(key);
 	}
 
 	/// <summary>The credit line the provider requires - null for a custom server given none.</summary>
-	public string? Attribution(string? providerId, bool routeIntro = false)
+	public string? Attribution(string? providerId, bool routeIntro = false, bool? showLabels = null)
 	{
 		string id = Resolve(providerId);
-		if (LabelsUrlTemplate(providerId, routeIntro) is not null)
+		if (LabelsUrlTemplate(providerId, routeIntro, showLabels) is not null)
 		{
 			return id == MapProviders.EsriPublicId
 				? "Esri, Vantor, Earthstar Geographics, HERE, Garmin,\n© OpenStreetMap contributors, and the GIS User Community"
@@ -328,7 +332,12 @@ public sealed record MapSources(
 	/// <summary>The credit line of several maps shown at once: each provider's once, one per line - null with none to credit.</summary>
 	public string? Credit(IEnumerable<string?> providerIds)
 	{
-		string[] texts = [.. providerIds.Select(id => Attribution(id)).OfType<string>().Distinct()];
+		return Credit(providerIds.Select(id => (id, (bool?)null)));
+	}
+
+	public string? Credit(IEnumerable<(string? ProviderId, bool? ShowLabels)> maps)
+	{
+		string[] texts = [.. maps.Select(map => Attribution(map.ProviderId, showLabels: map.ShowLabels)).OfType<string>().Distinct()];
 		return texts.Length == 0 ? null : string.Join("\n", texts);
 	}
 

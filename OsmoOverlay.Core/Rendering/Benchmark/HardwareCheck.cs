@@ -102,8 +102,8 @@ public static class HardwareCheck
 				: Environment.CurrentDirectory;
 		long? free = RenderDiskSpace.AvailableBytes(Path.Combine(folder, "render.mp4"));
 
-		string? card = encoder is not null && FfmpegPipeline.GpuVendor(encoder) is { } vendor ? GpuAdapters.Pick(GpuAdapters.All, vendor)?.Name : null;
-		return new HardwareReport(system, Environment.Is64BitOperatingSystem, encoder, string.IsNullOrEmpty(card) ? null : card, decode, method, folder, free);
+		string? card = encoder is null ? null : FfmpegPipeline.EncoderCard(encoder);
+		return new HardwareReport(system, Environment.Is64BitOperatingSystem, encoder, card, decode, method, folder, free);
 	}
 
 	/// <summary>The platform's own hardware decoding, as `-hwaccel` and the frames it hands over in GPU memory.</summary>

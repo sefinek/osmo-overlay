@@ -124,7 +124,8 @@ public partial class MainWindow : Window
 			DateTimeTiming, UtcTimeTiming, CameraInfoTiming, CompassTiming, MapTiming,
 			SpeedTiming, RollTiming, PitchTiming, SunTiming, GMeterTiming, ElapsedTimeTiming,
 			CameraModelTiming, TripProgressBarTiming, ElevationTiming, GradientTiming, DistanceTiming,
-			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming, SensorTiming
+			ProfileChartTiming, TripStatTiming, TextTiming, ImageTiming, MapCreditTiming, WatermarkTiming, GpsAlertTiming, SensorTiming, DroneBatteryTiming, FlightAlertsTiming, SignalTiming,
+			RcSticksTiming, AttitudeTiming, Orientation3DTiming
 		];
 		foreach (ElementTimingEditor timing in _timingEditors) timing.TimingChanged += OnElementTimingChanged;
 
@@ -133,7 +134,8 @@ public partial class MainWindow : Window
 			DateTimeShadow, UtcTimeShadow, CameraInfoShadow, CompassShadow, MapShadow,
 			SpeedShadow, RollShadow, PitchShadow, SunShadow, GMeterShadow, ElapsedTimeShadow,
 			CameraModelShadow, TripProgressBarShadow, ElevationShadow, GradientShadow, DistanceShadow,
-			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow, SensorShadow
+			ProfileChartShadow, TripStatShadow, TextShadow, ImageShadow, MapCreditShadow, WatermarkShadow, GpsAlertShadow, SensorShadow, DroneBatteryShadow, FlightAlertsShadow, SignalShadow,
+			RcSticksShadow, AttitudeShadow, Orientation3DShadow
 		];
 		foreach (ElementShadowEditor shadow in _shadowEditors)
 		{
@@ -146,7 +148,8 @@ public partial class MainWindow : Window
 		ElementPanelEditor[] panelEditors =
 		[
 			SunPanelFill, RollPanelFill, PitchPanelFill, GMeterPanelFill, SpeedPanelFill,
-			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill, GpsAlertPanelFill
+			CompassPanelFill, TripProgressBarPanelFill, ProfileChartPanelFill, GpsAlertPanelFill, FlightAlertsPanelFill,
+			RcSticksPanelFill, AttitudePanelFill, Orientation3DPanelFill
 		];
 		foreach (ElementPanelEditor panel in panelEditors)
 		{
@@ -155,6 +158,11 @@ public partial class MainWindow : Window
 		}
 
 		MapSourceEditor.SelectionChanged += OnMapSourceChanged;
+		MapSourceEditor.LabelsChanged += show =>
+		{
+			if (_editingElementId is { } id)
+				UpdateElement(id, el => el is MapWidgetElement map ? map with { ShowEsriLabels = show } : el);
+		};
 		foreach (TrailStyleEditor trail in new[] { CompassTrail, MapTrail }) trail.Changed += OnTrailStyleChanged;
 		foreach (MarkerStyleEditor marker in new[] { CompassMarker, MapMarker }) marker.Changed += OnMarkerStyleChanged;
 		MapSourceEditor.SharedChanged += OnMapSourcesShared;
@@ -165,7 +173,8 @@ public partial class MainWindow : Window
 		[
 			DateTimeStyle, UtcTimeStyle, CameraInfoStyle, SpeedStyle, RollStyle, PitchStyle, SunStyle,
 			GMeterStyle, ElapsedTimeStyle, CameraModelStyle, ElevationStyle, GradientStyle, DistanceStyle,
-			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle, SensorStyle
+			ProfileChartStyle, TripStatStyle, TextStyle, MapCreditStyle, WatermarkStyle, GpsAlertStyle, SensorStyle, DroneBatteryStyle, FlightAlertsStyle, SignalStyle,
+			RcSticksStyle, AttitudeStyle, Orientation3DStyle
 		];
 		foreach (ElementStyleEditor style in styleEditors)
 		{
@@ -202,6 +211,7 @@ public partial class MainWindow : Window
 		WireAutoSave();
 		WireQueue();
 		WireUnsaved();
+		WireTrackMap();
 		WireCompare();
 		WireReframe();
 		WireDeveloperWindow();
@@ -422,7 +432,7 @@ public partial class MainWindow : Window
 		ActionButton.IsEnabled = _inputPaths.Count > 0;
 	}
 
-	private sealed record MeasuredSpeeds(double? PeakKmh, double? CruisingKmh);
+	private sealed record MeasuredSpeeds(double? PeakKmh, double? CruisingKmh, IReadOnlyList<DerivedFrame>? Frames = null);
 
 	/// <summary>
 	///     The loaded recording's speeds as the GPS measured them - processed like the preview (GPS smoothing included) but
@@ -434,17 +444,17 @@ public partial class MainWindow : Window
 		return _summary is { } summary ? RecordingSpeeds(summary) : new MeasuredSpeeds(null, null);
 	}
 
-	private MeasuredSpeeds RecordingSpeeds(FileSummary summary)
+	private MeasuredSpeeds RecordingSpeeds(FileSummary summary, bool? smoothGpsOverride = null)
 	{
 		if (summary.TelemetryFrames is not { Count: > 0 } frames) return new MeasuredSpeeds(null, null);
-		bool smoothGps = _smoothGpsMotion;
+		bool smoothGps = smoothGpsOverride ?? _smoothGpsMotion;
 		if (_measuredSpeeds is { } cached && ReferenceEquals(cached.Summary, summary) && cached.SmoothGps == smoothGps)
 			return cached.Speeds;
 
-		List<DerivedFrame> derived = TelemetryProcessor.Process(frames, summary.CameraFormat, smoothGps);
+		IReadOnlyList<DerivedFrame> derived = TelemetryProcessor.MeasuredFrames(summary, smoothGps);
 		double peak = derived.Max(f => f.SpeedKmh);
 		double cruising = SpeedCalibration.CruisingSpeedKmh(derived);
-		var speeds = new MeasuredSpeeds(peak > 0 ? peak : null, cruising > 0 ? cruising : null);
+		var speeds = new MeasuredSpeeds(peak > 0 ? peak : null, cruising > 0 ? cruising : null, derived);
 		_measuredSpeeds = (summary, smoothGps, speeds);
 		return speeds;
 	}
@@ -471,6 +481,7 @@ public partial class MainWindow : Window
 		OverlaySettings updated = settings.Apply(saved);
 		if (updated != saved) OverlaySettingsStore.Save(updated);
 		SetDebugMode(updated.DebugMode);
+		ReloadPresetsAfterUnitsChange(before, saved);
 
 		AdoptLayout(updated);
 		UpdateTitle();
@@ -640,6 +651,13 @@ public partial class MainWindow : Window
 	{
 		UiPhase previous = _phase;
 		_phase = phase;
+		if (phase != UiPhase.SummaryReady) CloseFullTelemetry(false);
+		if (phase != UiPhase.SummaryReady && _trackOnly)
+		{
+			_trackOnly = false;
+			_summary = null;
+		}
+
 		UpdateTitle();
 
 		// The log while there's no recording on the timeline or a render runs; a freshly loaded summary brings back
@@ -647,11 +665,18 @@ public partial class MainWindow : Window
 		if (phase != UiPhase.SummaryReady) SetTimelineExpanded(false, false);
 		else if (previous == UiPhase.LoadingSummary) SetTimelineExpanded(_timelineWanted, false);
 
+		// While the summary is read the panels have nothing to do: the console is all there is, under the aurora.
+		bool working = phase == UiPhase.LoadingSummary && OverlaySettingsStore.Load().WorkingAnimation;
+		TopGrid.IsVisible = !working;
+		WorkingView.IsVisible = working;
+		Aurora.Running = working;
+
 		bool summaryVisible = phase is UiPhase.SummaryReady or UiPhase.Rendering;
 		SummaryPanel.IsVisible = summaryVisible;
-		OutputInfoCard.IsVisible = summaryVisible;
-		FileInfoCard.IsVisible = phase == UiPhase.SummaryReady;
+		OutputInfoCard.IsVisible = summaryVisible && !_trackOnly;
+		FileInfoCard.IsVisible = phase == UiPhase.SummaryReady && !_trackOnly;
 		TelemetryCard.IsVisible = phase == UiPhase.SummaryReady && _summary?.Telemetry is not null;
+		TrackMapCard.IsVisible = phase == UiPhase.SummaryReady && _trackOnly;
 		bool overlayReady = summaryVisible && _summary?.HasTelemetry == true && _overlayPresetsLoaded;
 		OverlayContent.IsVisible = overlayReady;
 		OverlayPlaceholder.IsVisible = !overlayReady;
@@ -711,6 +736,7 @@ public partial class MainWindow : Window
 
 	protected override void OnClosed(EventArgs e)
 	{
+		CloseFullTelemetry(false);
 		if (_presetSaveDelay.IsEnabled) SaveOverlayPresets();
 		SavePlacement();
 		_previewPlayer.Dispose();

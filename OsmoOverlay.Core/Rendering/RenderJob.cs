@@ -11,6 +11,7 @@ using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Reframe;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Core;
 
@@ -97,7 +98,8 @@ public static class RenderJob
 			{
 				Report(RenderPhase.ExtractingTelemetry, CoreStrings.Render_Extracting);
 				TelemetryExtractionResult extraction = TelemetryExtraction.ExtractCombined(segments);
-				rawFrames = options.ExternalTrack is { } externalTrack
+				ExternalTrackSource? track = options.ExternalTrack ?? ExternalTrackSource.FindFor(camera, first.InputPath, first.Source.ContainerCreationTimeUtc);
+				rawFrames = track is { } externalTrack
 					? externalTrack.Apply(extraction.Frames, first.Source.Video.Fps, first.Source.ContainerCreationTimeUtc)
 					: extraction.Frames;
 				cameraModel ??= extraction.CameraModel;
@@ -132,7 +134,7 @@ public static class RenderJob
 			string encoderMessage = FfmpegPipeline.IsGpuEncoder(encoder) ? CoreStrings.Render_EncoderGpu
 				: options.Alpha is not null ? CoreStrings.Render_EncoderCpuOnly
 				: CoreStrings.Render_EncoderCpu;
-			Report(RenderPhase.SelectingEncoder, string.Format(encoderMessage, encoder));
+			Report(RenderPhase.SelectingEncoder, string.Format(encoderMessage, encoder, FfmpegPipeline.EncoderCard(encoder) ?? "GPU"));
 
 			int totalFrames = (int)plan.TotalFrames;
 			Report(RenderPhase.Rendering, plan.IsPartial

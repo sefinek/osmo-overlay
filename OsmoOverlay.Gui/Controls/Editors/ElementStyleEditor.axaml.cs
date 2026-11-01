@@ -11,11 +11,17 @@ public sealed record ElementStyle(
 	string? TextColor,
 	string? AccentColor,
 	string? OutlineColor,
-	float? OutlineWidth);
+	float? OutlineWidth,
+	TextAlign Align,
+	float? Opacity,
+	int? Decimals,
+	bool ShowLabel,
+	bool ShowUnit,
+	bool UppercaseLabel);
 
 /// <summary>
-///     Font/Text size/Text color/Outline color/Outline width for every text-based widget and every round
-///     gauge's readout. HasAccentColor adds the Value color the four LabeledStatElement widgets
+///     Font/Text size/Text color/Outline color/Outline width/Opacity for every text-based widget and every round
+///     gauge's readout, and the text alignment for the widgets that line up several lines (OverlayElementBounds.SupportsTextAlign). HasAccentColor adds the Value color the four LabeledStatElement widgets
 ///     (Elevation/Gradient/Distance/CameraInfo) have, and renames Text color to Label color there.
 /// </summary>
 public partial class ElementStyleEditor : UserControl
@@ -25,6 +31,7 @@ public partial class ElementStyleEditor : UserControl
 
 	private bool _hasAccentColor;
 	private bool _populating;
+	private TextAlign _align;
 
 	public ElementStyleEditor()
 	{
@@ -38,7 +45,33 @@ public partial class ElementStyleEditor : UserControl
 		TextColorBox.LostFocus += (_, _) => OnChanged();
 		AccentColorBox.LostFocus += (_, _) => OnChanged();
 		OutlineColorBox.LostFocus += (_, _) => OnChanged();
+		OpacityBox.ValueChanged += (_, _) => OnChanged();
+		DecimalsCombo.ItemsSource = new[] { Strings.ElementStyle_DecimalsAuto, "0", "1", "2", "3" };
+		DecimalsCombo.SelectionChanged += (_, _) => OnChanged();
+		ShowLabelCheck.Click += (_, _) => OnChanged();
+		ShowUnitCheck.Click += (_, _) => OnChanged();
+		UppercaseCheck.Click += (_, _) => OnChanged();
+		// One group per editor: every widget has its own, and a shared name would make them one choice.
+		string group = $"Align{Guid.NewGuid():N}";
+		AlignLeftButton.GroupName = AlignCenterButton.GroupName = AlignRightButton.GroupName = group;
+		AlignLeftButton.Click += (_, _) => SetAlign(TextAlign.Left);
+		AlignCenterButton.Click += (_, _) => SetAlign(TextAlign.Center);
+		AlignRightButton.Click += (_, _) => SetAlign(TextAlign.Right);
 		ApplyToAllButton.Click += (_, _) => ApplyToAllRequested?.Invoke();
+	}
+
+	private void SetAlign(TextAlign align)
+	{
+		_align = align;
+		ShowAlign();
+		OnChanged();
+	}
+
+	private void ShowAlign()
+	{
+		AlignLeftButton.IsChecked = _align == TextAlign.Left;
+		AlignCenterButton.IsChecked = _align == TextAlign.Center;
+		AlignRightButton.IsChecked = _align == TextAlign.Right;
 	}
 
 	public bool HasAccentColor
@@ -66,6 +99,20 @@ public partial class ElementStyleEditor : UserControl
 		TextColorBox.Text = element.TextColor ?? OverlayRenderer.DefaultTextColorHex;
 		OutlineColorBox.Text = element.OutlineColor ?? OverlayRenderer.DefaultOutlineColorHex;
 		OutlineWidthBox.Value = (decimal)element.OutlineWidth;
+		OpacityBox.Value = (decimal)Math.Round(element.Opacity * 100);
+		ReadoutPanel.IsVisible = OverlayElementBounds.SupportsStatParts(element);
+		DecimalsPanel.IsVisible = OverlayElementBounds.SupportsDecimals(element);
+		if (element is LabeledStatElement stat)
+		{
+			DecimalsCombo.SelectedIndex = stat.Decimals is { } digits ? Math.Clamp(digits, 0, 3) + 1 : 0;
+			ShowLabelCheck.IsChecked = stat.ShowLabel;
+			ShowUnitCheck.IsChecked = stat.ShowUnit;
+			UppercaseCheck.IsChecked = stat.UppercaseLabel;
+		}
+
+		_align = element.TextAlign;
+		AlignPanel.IsVisible = OverlayElementBounds.SupportsTextAlign(element);
+		ShowAlign();
 		if (_hasAccentColor) AccentColorBox.Text = (element as LabeledStatElement)?.AccentColor ?? OverlayRenderer.DefaultAccentColorHex;
 		UpdateSwatches();
 		_populating = false;
@@ -82,7 +129,13 @@ public partial class ElementStyleEditor : UserControl
 			NormalizeHex(TextColorBox.Text),
 			_hasAccentColor ? NormalizeHex(AccentColorBox.Text) : null,
 			NormalizeHex(OutlineColorBox.Text),
-			OutlineWidthBox.Value is { } width ? (float)width : null));
+			OutlineWidthBox.Value is { } width ? (float)width : null,
+			_align,
+			OpacityBox.Value is { } opacity ? (float)opacity / 100f : null,
+			DecimalsCombo.SelectedIndex > 0 ? DecimalsCombo.SelectedIndex - 1 : null,
+			ShowLabelCheck.IsChecked != false,
+			ShowUnitCheck.IsChecked != false,
+			UppercaseCheck.IsChecked != false));
 	}
 
 	private void UpdateSwatches()

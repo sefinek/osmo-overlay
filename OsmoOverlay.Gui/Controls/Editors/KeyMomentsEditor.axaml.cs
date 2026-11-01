@@ -27,7 +27,9 @@ public partial class KeyMomentsEditor : UserControl
 	// What Attach was given, so the peaks can be found again when "only while riding" is switched.
 	private long _totalFrames;
 	private IReadOnlyList<DerivedFrame>? _frames;
-	private UnitSystem _units;
+	private UnitPreferences _units = UnitPreferences.Metric;
+	// Only a recording with a ride's G-force or lean has anything for "only while riding" to filter.
+	private bool _hasRidePeaks;
 
 	public KeyMomentsEditor()
 	{
@@ -40,14 +42,28 @@ public partial class KeyMomentsEditor : UserControl
 	public event Action<List<KeyMoment>>? MomentsEdited;
 	public event Action<long>? SeekRequested;
 
+	/// <summary>The units changed while a recording is loaded: the peaks stay, their values are written again.</summary>
+	public void SetUnits(UnitPreferences units)
+	{
+		if (_units == units) return;
+
+		_units = units;
+		PeakRows.Children.Clear();
+		ShowPeaks();
+	}
+
 	/// <summary>Binds the panel to a loaded recording and finds its peaks, or disables it (no frames) when there is none.</summary>
-	public void Attach(double fps, long totalFrames, IReadOnlyList<DerivedFrame>? frames, UnitSystem units)
+	public void Attach(double fps, long totalFrames, IReadOnlyList<DerivedFrame>? frames, UnitPreferences units)
 	{
 		_fps = fps;
 		_totalFrames = totalFrames;
 		_frames = frames;
 		_units = units;
 		IsEnabled = totalFrames > 0;
+		_hasRidePeaks = frames is { Count: > 0 } && totalFrames > 0 && fps > 0
+		                && new[] { PeakKind.StrongestG, PeakKind.MaxLean }.Any(kind => KeyMoments.FindTop(frames, kind, fps, totalFrames, 1).Count > 0);
+		MovingOnlyCheck.IsVisible = _hasRidePeaks;
+		RidingFromPanel.IsVisible = _hasRidePeaks && MovingOnlyCheck.IsChecked == true;
 		PeakRows.Children.Clear();
 		ShowPeaks();
 	}
@@ -59,7 +75,7 @@ public partial class KeyMomentsEditor : UserControl
 	/// </summary>
 	private void ShowPeaks()
 	{
-		double? ridingFrom = MovingOnlyCheck.IsChecked == true ? (double)(RidingFromBox.Value ?? 2) : null;
+		double? ridingFrom = _hasRidePeaks && MovingOnlyCheck.IsChecked == true ? (double)(RidingFromBox.Value ?? 2) : null;
 		bool any = false;
 		int position = 0;
 		foreach (PeakKind kind in PeakKinds)
@@ -128,7 +144,7 @@ public partial class KeyMomentsEditor : UserControl
 	}
 
 	/// <summary>A category's name and its best value, on its expander's header.</summary>
-	private static Grid CategoryHeader(PeakKind kind, List<Peak> peaks, UnitSystem units)
+	private static Grid CategoryHeader(PeakKind kind, List<Peak> peaks, UnitPreferences units)
 	{
 		var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
 		var best = new TextBlock
@@ -145,14 +161,14 @@ public partial class KeyMomentsEditor : UserControl
 	}
 
 	/// <summary>A category's top peaks, each with its own jump and flag.</summary>
-	private StackPanel CategoryRows(PeakKind kind, List<Peak> peaks, UnitSystem units)
+	private StackPanel CategoryRows(PeakKind kind, List<Peak> peaks, UnitPreferences units)
 	{
 		var rows = new StackPanel { Spacing = 6 };
 		for (int i = 0; i < peaks.Count; i++) rows.Children.Add(CreatePeakRow(kind, peaks[i], i, units));
 		return rows;
 	}
 
-	private Grid CreatePeakRow(PeakKind kind, Peak peak, int rank, UnitSystem units)
+	private Grid CreatePeakRow(PeakKind kind, Peak peak, int rank, UnitPreferences units)
 	{
 		string label = KeyMoments.Label(kind);
 		var value = new TextBlock { Text = $"{rank + 1}.  {FormatValue(kind, peak.Value, units)}", VerticalAlignment = VerticalAlignment.Center };
@@ -250,17 +266,17 @@ public partial class KeyMomentsEditor : UserControl
 		MomentRows.Children.Add(row);
 	}
 
-	private static string FormatValue(PeakKind kind, double value, UnitSystem units)
+	private static string FormatValue(PeakKind kind, double value, UnitPreferences units)
 	{
-		bool imperial = units == UnitSystem.Imperial;
 		CultureInfo c = CultureInfo.InvariantCulture;
 		return kind switch
 		{
-			PeakKind.TopSpeed => imperial ? $"{(value * 0.621371).ToString("0", c)} mph" : $"{value.ToString("0", c)} km/h",
-			PeakKind.HighestPoint or PeakKind.LowestPoint => imperial ? $"{(value * 3.28084).ToString("0", c)} ft" : $"{value.ToString("0", c)} m",
+			PeakKind.TopSpeed => units.Speed == UnitSystem.Imperial ? $"{(value * 0.621371).ToString("0", c)} mph" : $"{value.ToString("0", c)} km/h",
+			PeakKind.HighestPoint or PeakKind.LowestPoint => units.Altitude == UnitSystem.Imperial ? $"{(value * 3.28084).ToString("0", c)} ft" : $"{value.ToString("0", c)} m",
 			PeakKind.StrongestG => $"{value.ToString("0.00", c)} G",
 			PeakKind.SteepestClimb or PeakKind.SteepestDescent => $"{value.ToString("0.0", c)}%",
 			PeakKind.MaxLean => $"{value.ToString("0", c)}°",
+			PeakKind.FastestAscent or PeakKind.FastestDescent => units.Altitude == UnitSystem.Imperial ? $"{(value * 3.28084).ToString("0.0", c)} ft/s" : $"{value.ToString("0.0", c)} m/s",
 			_ => value.ToString("0.##", c)
 		};
 	}

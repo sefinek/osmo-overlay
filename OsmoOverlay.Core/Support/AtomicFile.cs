@@ -25,8 +25,7 @@ internal static class AtomicFile
 		string tempPath = TempPathFor(path);
 		try
 		{
-			using (FileStream stream = File.Create(tempPath))
-				write(stream);
+			using (FileStream stream = File.Create(tempPath)) write(stream);
 			File.Move(tempPath, path, true);
 		}
 		catch

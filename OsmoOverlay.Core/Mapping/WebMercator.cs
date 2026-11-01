@@ -28,4 +28,15 @@ public static class WebMercator
 	{
 		return ((int)Math.Floor(worldX / TileSize), (int)Math.Floor(worldY / TileSize));
 	}
+
+	/// <summary>Longitude wraps around the world; tiles beyond either pole do not exist.</summary>
+	internal static bool TryNormalizeTile(int zoom, int x, int y, out int wrappedX)
+	{
+		wrappedX = x;
+		if (zoom is < 0 or > 30) return false;
+		long tiles = 1L << zoom;
+		if (y < 0 || y >= tiles) return false;
+		wrappedX = (int)((x % tiles + tiles) % tiles);
+		return true;
+	}
 }

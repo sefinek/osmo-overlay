@@ -9,9 +9,35 @@ public sealed record ExternalTrackPoint(
 	double? SpeedMs = null,
 	bool StartsAfterGap = false,
 	double? TemperatureCelsius = null,
-	double? DistanceMeters = null);
+	double? DistanceMeters = null,
+	// Height above where the flight began (a drone) - not the altitude, which is above sea level.
+	double? HeightMeters = null,
+	// Climb rate, up is positive (a drone).
+	double? VerticalSpeedMs = null,
+	int? Satellites = null,
+	int? GpsLevel = null,
+	string? FlightMode = null,
+	DroneAttitude? Attitude = null);
+
+/// <summary>Where a flight began (a drone's take-off point), for the distance from it.</summary>
+public readonly record struct ExternalTrackHome(double Latitude, double Longitude);
 
 public sealed record ExternalBatteryReading(DateTime Utc, double Percent);
+
+/// <summary>A drone's battery at a moment (a flight log) - kept apart from ExternalBatteryReading, which feeds the device battery widget.</summary>
+public sealed record ExternalDroneBatteryReading(DateTime Utc, DroneBattery Battery);
+
+/// <summary>A drone's radio links at a moment (a flight log).</summary>
+public sealed record ExternalDroneSignalReading(DateTime Utc, DroneSignal Signal);
+
+/// <summary>The remote controller's sticks at a moment (a flight log).</summary>
+public sealed record ExternalDroneSticksReading(DateTime Utc, DroneSticks Sticks);
+
+/// <summary>Something that happened at a moment on the track's clock (a flight log's mode changes, warnings, battery levels).</summary>
+public sealed record ExternalTrackEvent(DateTime Utc, FlightEvent Event);
+
+/// <summary>A stretch of time the device says its camera was recording, on the track's own clock - a log's way of telling where a recording lies on it.</summary>
+public readonly record struct ExternalTrackRecording(DateTime StartUtc, DateTime EndUtc);
 
 /// <summary>A stretch of time the other device's timer was stopped, without implying that the device stood still.</summary>
 public readonly record struct ExternalTrackPause(DateTime FromUtc, DateTime ToUtc);
@@ -32,7 +58,13 @@ public readonly record struct ExternalTrackSample(
 	double? AltitudeMeters,
 	double? SpeedMs,
 	double? TemperatureCelsius = null,
-	double? DistanceMeters = null);
+	double? DistanceMeters = null,
+	double? HeightMeters = null,
+	double? VerticalSpeedMs = null,
+	int? Satellites = null,
+	int? GpsLevel = null,
+	string? FlightMode = null,
+	DroneAttitude? Attitude = null);
 
 /// <summary>
 ///     A track on its own UTC clock. Gaps and timer pauses preserve elapsed time and do not imply a standstill,
@@ -45,8 +77,17 @@ public sealed class ExternalTrack
 
 	private const double MinGapSeconds = 3;
 
-	public ExternalTrack(IEnumerable<ExternalTrackPoint> points, IEnumerable<ExternalTrackPause>? pauses = null, IEnumerable<ExternalBatteryReading>? batteries = null)
+	public ExternalTrack(IEnumerable<ExternalTrackPoint> points, IEnumerable<ExternalTrackPause>? pauses = null, IEnumerable<ExternalBatteryReading>? batteries = null,
+		IEnumerable<ExternalTrackRecording>? recordings = null,
+		ExternalTrackHome? home = null, IEnumerable<ExternalDroneBatteryReading>? droneBatteries = null, IEnumerable<ExternalTrackEvent>? events = null,
+		IEnumerable<ExternalDroneSignalReading>? droneSignals = null, string? deviceName = null, IEnumerable<ExternalDroneSticksReading>? droneSticks = null)
 	{
+		Home = home;
+		DeviceName = string.IsNullOrWhiteSpace(deviceName) ? null : deviceName.Trim();
+		DroneBatteries = [.. (droneBatteries ?? []).Where(b => double.IsFinite(b.Battery.Percent)).OrderBy(b => b.Utc)];
+		Events = [.. (events ?? []).OrderBy(e => e.Utc)];
+		DroneSignals = [.. (droneSignals ?? []).OrderBy(r => r.Utc)];
+		DroneSticks = [.. (droneSticks ?? []).OrderBy(r => r.Utc)];
 		var sorted = new List<ExternalTrackPoint>();
 		foreach (ExternalTrackPoint point in points.OrderBy(p => p.Utc))
 		{
@@ -58,6 +99,7 @@ public sealed class ExternalTrack
 
 		Points = sorted;
 		Pauses = [.. (pauses ?? []).OrderBy(p => p.FromUtc)];
+		Recordings = [.. (recordings ?? []).Where(r => r.EndUtc > r.StartUtc).OrderBy(r => r.StartUtc)];
 		Batteries = [.. (batteries ?? []).Where(b => double.IsFinite(b.Percent) && b.Percent is >= 0 and <= 100).OrderBy(b => b.Utc)];
 		double[] intervals = [.. sorted.Zip(sorted.Skip(1), (a, b) => (b.Utc - a.Utc).TotalSeconds).Order()];
 		GapSeconds = Math.Max(MinGapSeconds, GapIntervals * intervals[intervals.Length / 2]);
@@ -67,18 +109,48 @@ public sealed class ExternalTrack
 	public IReadOnlyList<ExternalTrackPause> Pauses { get; }
 	public IReadOnlyList<ExternalBatteryReading> Batteries { get; }
 
-	public double? BatteryAt(DateTime utc)
+	/// <summary>Where the flight began - null for a track that has no such point (FIT, GPX).</summary>
+	public ExternalTrackHome? Home { get; }
+
+	/// <summary>What the device calls itself - a drone's name as its owner gave it (a flight log); null for a track that doesn't say.</summary>
+	public string? DeviceName { get; }
+
+	/// <summary>When the device's camera recorded - empty for a track that doesn't say (FIT, GPX).</summary>
+	public IReadOnlyList<ExternalTrackRecording> Recordings { get; }
+
+	/// <summary>The drone's battery readings and the events of its flight - empty for a track that has none (FIT, GPX).</summary>
+	public IReadOnlyList<ExternalDroneBatteryReading> DroneBatteries { get; }
+
+	public IReadOnlyList<ExternalTrackEvent> Events { get; }
+
+	public IReadOnlyList<ExternalDroneSignalReading> DroneSignals { get; }
+
+	public IReadOnlyList<ExternalDroneSticksReading> DroneSticks { get; }
+
+	/// <summary>The latest stick reading at or before `utc`, held until the track's end.</summary>
+	public DroneSticks? DroneSticksAt(DateTime utc) => LatestAt(DroneSticks, r => r.Utc, utc)?.Sticks;
+
+	/// <summary>The latest radio link reading at or before `utc`, held until the track's end.</summary>
+	public DroneSignal? DroneSignalAt(DateTime utc) => LatestAt(DroneSignals, r => r.Utc, utc)?.Signal;
+
+	/// <summary>The latest drone battery reading at or before `utc`, held until the track's end.</summary>
+	public DroneBattery? DroneBatteryAt(DateTime utc) => LatestAt(DroneBatteries, r => r.Utc, utc)?.Battery;
+
+	public double? BatteryAt(DateTime utc) => LatestAt(Batteries, r => r.Utc, utc)?.Percent;
+
+	private T? LatestAt<T>(IReadOnlyList<T> readings, Func<T, DateTime> utcOf, DateTime utc) where T : class
 	{
 		if (utc < StartUtc || utc > EndUtc) return null;
-		int low = 0, high = Batteries.Count;
+
+		int low = 0, high = readings.Count;
 		while (low < high)
 		{
 			int middle = low + (high - low) / 2;
-			if (Batteries[middle].Utc <= utc) low = middle + 1;
+			if (utcOf(readings[middle]) <= utc) low = middle + 1;
 			else high = middle;
 		}
 
-		return low > 0 ? Batteries[low - 1].Percent : null;
+		return low > 0 ? readings[low - 1] : null;
 	}
 
 	/// <summary>The time between two fixes from which the device is taken to have written nothing.</summary>
@@ -121,7 +193,9 @@ public sealed class ExternalTrack
 		double? speed = from.SpeedMs is { } s0 && to.SpeedMs is { } s1 ? s0 + (s1 - s0) * fraction : Displacement(from, to) / span;
 		double? temperature = Interpolate(from.TemperatureCelsius, to.TemperatureCelsius, fraction);
 		double? distance = to.DistanceMeters >= from.DistanceMeters ? Interpolate(from.DistanceMeters, to.DistanceMeters, fraction) : null;
-		return new ExternalTrackSample(ExternalTrackState.Fix, latitude, longitude, altitude, speed, temperature, distance);
+		double? height = Interpolate(from.HeightMeters, to.HeightMeters, fraction);
+		return new ExternalTrackSample(ExternalTrackState.Fix, latitude, longitude, altitude, speed, temperature, distance, height,
+			Interpolate(from.VerticalSpeedMs, to.VerticalSpeedMs, fraction), from.Satellites, from.GpsLevel, from.FlightMode, from.Attitude);
 	}
 
 	private ExternalTrackSample FixAt(int index)
@@ -139,7 +213,8 @@ public sealed class ExternalTrack
 			}
 		}
 
-		return new ExternalTrackSample(ExternalTrackState.Fix, point.Latitude, point.Longitude, point.AltitudeMeters, speed, point.TemperatureCelsius, point.DistanceMeters);
+		return new ExternalTrackSample(ExternalTrackState.Fix, point.Latitude, point.Longitude, point.AltitudeMeters, speed, point.TemperatureCelsius, point.DistanceMeters, point.HeightMeters,
+			point.VerticalSpeedMs, point.Satellites, point.GpsLevel, point.FlightMode, point.Attitude);
 	}
 
 	private static double? Interpolate(double? from, double? to, double fraction) => from is { } a && to is { } b ? a + (b - a) * fraction : null;

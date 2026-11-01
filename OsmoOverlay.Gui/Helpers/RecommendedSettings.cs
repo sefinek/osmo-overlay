@@ -21,20 +21,35 @@ public static class RecommendedSettings
 	/// </summary>
 	private static readonly RecommendedRecording GoPro4K = new(3840, 2160, 50, 59.94, 60_000_000, 128_000, true, false);
 
+	/// <summary>
+	///     Mavic Air 2: 4K up to 60 frames a second in 8-bit HEVC at up to 120 Mbps (DJI's specification), so 100 Mbps is the floor. No sound,
+	///     and the MP4 carries no colour tags (Rec.709 limited range is what it records). The drone is known by the aircraft's name in the flight log -
+	///     the owner's own name, which stays the model's until it is renamed.
+	/// </summary>
+	private static readonly RecommendedRecording MavicAir2 = new(3840, 2160, 50, 59.94, 100_000_000, 0, false, false, true);
+
 	private const string GoProHero12Black = "HERO12 Black";
+	private const string DjiMavicAir2 = "Mavic Air 2";
 
 	private static readonly Dictionary<string, RecommendedRecording> ByCameraModel =
 		new(StringComparer.OrdinalIgnoreCase)
 		{
 			[DjiModels.OsmoAction5Pro] = DjiOsmo4K,
 			[DjiModels.OsmoAction6] = DjiOsmo4K,
-			[GoProHero12Black] = GoPro4K
+			[GoProHero12Black] = GoPro4K,
+			[DjiMavicAir2] = MavicAir2
 		};
 
+	/// <summary>
+	///     The model's entry: by the name as it is, else by a known model's name within it - a drone's name is its owner's ("Mavic Air 2 Jan",
+	///     "My Mavic Air 2"). The longest known name is tried first, so one that holds another stays its own.
+	/// </summary>
 	public static RecommendedRecording? ForCameraModel(string? cameraModel)
 	{
-		return cameraModel is not null && ByCameraModel.TryGetValue(cameraModel, out RecommendedRecording? settings)
-			? settings
-			: null;
+		if (cameraModel is null) return null;
+		if (ByCameraModel.TryGetValue(cameraModel, out RecommendedRecording? settings)) return settings;
+
+		string? known = ByCameraModel.Keys.OrderByDescending(name => name.Length).FirstOrDefault(name => cameraModel.Contains(name, StringComparison.OrdinalIgnoreCase));
+		return known is null ? null : ByCameraModel[known];
 	}
 }

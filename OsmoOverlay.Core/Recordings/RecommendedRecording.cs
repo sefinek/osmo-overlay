@@ -22,7 +22,8 @@ public sealed record RecommendedRecording(
 	long MinVideoBitrate,
 	long MinAudioBitrate,
 	bool FullRangeColor = false,
-	bool TenBitRecommended = true)
+	bool TenBitRecommended = true,
+	bool UntaggedColorAccepted = false)
 {
 	/// <summary>Full HD is the least that still reads as sharp on a 4K recommendation.</summary>
 	private const int MinWarningWidth = 1920;
@@ -68,13 +69,15 @@ public sealed record RecommendedRecording(
 
 	/// <summary>
 	///     Rec.709 primaries, transfer and matrix, limited range (full range too where the camera writes it - FullRangeColor). Other
-	///     or missing tags are a warning, not worse: they only change how a player guesses the colours.
+	///     or missing tags are a warning, not worse: they only change how a player guesses the colours. A camera that never writes the tags
+	///     (a drone's MP4: UntaggedColorAccepted) is right with none at all, as long as the range is limited.
 	/// </summary>
 	public CheckLevel Color(string? primaries, string? transfer, string? colorSpace, string? range)
 	{
 		bool rec709 = primaries == "bt709" && transfer == "bt709" && colorSpace == "bt709";
 		bool rangeOk = range == "tv" || (FullRangeColor && range == "pc");
-		return rec709 && rangeOk ? CheckLevel.Good : CheckLevel.Warning;
+		bool untagged = UntaggedColorAccepted && primaries is null && transfer is null && colorSpace is null;
+		return (rec709 || untagged) && rangeOk ? CheckLevel.Good : CheckLevel.Warning;
 	}
 
 	public CheckLevel VideoBitrate(long bitsPerSecond)

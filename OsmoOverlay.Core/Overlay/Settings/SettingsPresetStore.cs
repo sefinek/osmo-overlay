@@ -193,7 +193,8 @@ public static class SettingsPresetStore
 			NvencPreset = NvencPresets.Contains(values.NvencPreset) ? values.NvencPreset : "p7",
 			OutputBitrateMultiplier = double.IsFinite(values.OutputBitrateMultiplier) ? Math.Clamp(values.OutputBitrateMultiplier, 1, 4) : 1,
 			OutputResolution = values.OutputResolution is { } r && OutputVideo.Resolutions.Contains(r) ? r : null,
-			OutputCodec = values.OutputCodec is "h264" or "hevc" ? values.OutputCodec : null
+			OutputCodec = values.OutputCodec is "h264" or "hevc" ? values.OutputCodec : null,
+			OutputAspect = values.OutputAspect is { } aspect && OutputVideo.Aspects.Contains(aspect) ? aspect : null
 		};
 	}
 

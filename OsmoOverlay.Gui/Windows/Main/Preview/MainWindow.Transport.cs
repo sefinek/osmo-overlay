@@ -136,6 +136,7 @@ public partial class MainWindow
 
 		Action? action = e.Key switch
 		{
+			Key.Escape when _fullTelemetry is not null && !_trackOnly && !_previewFullscreen && !_viewportOnSecondScreen => CloseFullTelemetry,
 			Key.Left => () => StepFrames(-1),
 			Key.Right => () => StepFrames(1),
 			Key.Home => GoToStart,
@@ -223,7 +224,8 @@ public partial class MainWindow
 	/// <summary>Up/Down: to the previous/next edge of a cut, the selection or a GPS loss, a key moment, or the start/end (TimelineMarkers).</summary>
 	private void JumpToMarker(int direction)
 	{
-		if (_summary is null) return;
+		if (_summary is null || _trackOnly) return;
+		ReturnToRecordingPreview();
 
 		double fps = _summary.Video.Fps;
 		IEnumerable<FrameRange> gpsLoss = PreviewTimeline.GpsLoss.Select(r =>
@@ -244,10 +246,7 @@ public partial class MainWindow
 		_suppressSpeedEvent = false;
 	}
 
-	private static string FormatRate(double rate)
-	{
-		return $"{rate.ToString("0.##", CultureInfo.InvariantCulture)}x";
-	}
+	private static string FormatRate(double rate) => rate.ToString("0.##", CultureInfo.InvariantCulture) + "x";
 
 	private void OnSpeedChanged(object? sender, SelectionChangedEventArgs e)
 	{
@@ -318,13 +317,14 @@ public partial class MainWindow
 	{
 		if (_summary is null) return;
 
-		SeekToFrame(Math.Max(0, CurrentFrame() + delta));
+		long current = _fullTelemetry is null ? CurrentFrame() : PreviewFrames.IndexAt(PreviewTimeline.Value, _summary.Video.Fps);
+		SeekToFrame(Math.Max(0, current + delta));
 	}
 
 	/// <summary>The frame on screen.</summary>
 	private long CurrentFrame()
 	{
-		return FrameAt(PreviewTimeline.Value);
+		return _fullTelemetry is null ? FrameAt(PreviewTimeline.Value) : _previewFrame;
 	}
 
 	/// <summary>The frame shown at `seconds` - the same rule the decoders use (PreviewFrames.IndexAt), within the recording.</summary>

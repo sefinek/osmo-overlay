@@ -56,7 +56,7 @@ public static class AlphaOverlay
 		(int num, int den) = FfmpegPipeline.ParseFrameRate(source.FrameRate);
 		List<string> args =
 		[
-			"-hide_banner", overwrite ? "-y" : "-n",
+			"-hide_banner", overwrite ? "-y" : "-n", "-nostats",
 			"-f", "rawvideo",
 			"-pix_fmt", "bgra",
 			"-s", $"{output.Width}x{output.Height}",

@@ -27,6 +27,8 @@ public sealed class RouteIntroTimingTests
 		Assert.AreEqual(5, withCard.IntroShiftSeconds(new WatermarkElement { X = 0, Y = 0 }));
 		Assert.AreEqual(0, without.IntroShiftSeconds(new WatermarkElement { X = 0, Y = 0 }));
 		Assert.AreEqual(0, withCard.IntroShiftSeconds(new TextElement { X = 0, Y = 0 }), "the rest keep the video's own times");
+		Assert.AreEqual(5, withCard.IntroShiftSeconds(new ProfileChartElement { X = 0, Y = 0, LayerId = nameof(OverlayElementType.Watermark) }), "the profile that follows the watermark");
+		Assert.AreEqual(0, withCard.IntroShiftSeconds(new ProfileChartElement { X = 0, Y = 0 }), "a profile of its own timing");
 	}
 
 	[TestMethod]

@@ -32,4 +32,6 @@ public sealed record TrackSynchronization(TrackSyncAnchor First, TrackSyncAnchor
 	public double Rate => Second is { } second ? (second.TrackUtc - First.TrackUtc).TotalSeconds / (second.VideoSeconds - First.VideoSeconds) : 1;
 
 	public DateTime At(double videoSeconds) => First.TrackUtc.AddSeconds((videoSeconds - First.VideoSeconds) * Rate);
+
+	public double VideoSecondsAt(DateTime trackUtc) => First.VideoSeconds + (trackUtc - First.TrackUtc).TotalSeconds / Rate;
 }

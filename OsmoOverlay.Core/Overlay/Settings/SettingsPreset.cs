@@ -30,7 +30,6 @@ public sealed record SettingsPresetValues(
 	double RouteIntroDurationSeconds = 12.0,
 	RouteIntroStats RouteIntroStats = RouteIntroStats.Default,
 	Dictionary<string, string>? RouteIntroLabels = null,
-	UnitSystem RouteIntroUnits = UnitSystem.Metric,
 	bool RouteIntroColorBySpeed = false,
 	RouteJoin RouteIntroGpsLossJoin = RouteJoins.Default,
 	bool RouteIntroShowStartFinish = true,
@@ -50,6 +49,8 @@ public sealed record SettingsPresetValues(
 	int? OutputResolution = null,
 	string? OutputCodec = null,
 	bool OutputEightBit = false,
+	string? OutputAspect = null,
+	bool OutputPadToAspect = false,
 	bool FastStart = false,
 	bool NoAudio = false,
 	int? RouteIntroMapZoom = null,
@@ -64,12 +65,13 @@ public sealed record SettingsPresetValues(
 	public static SettingsPresetValues From(OverlaySettings settings)
 	{
 		return new SettingsPresetValues(settings.ShowWatermark, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource,
-			settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats, settings.RouteIntroLabels, settings.RouteIntroUnits,
+			settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats, settings.RouteIntroLabels,
 			settings.RouteIntroColorBySpeed, settings.RouteIntroGpsLossJoin, settings.RouteIntroShowStartFinish, settings.RouteIntroWhenTrimmed,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel, settings.RouteIntroMapProvider, settings.RouteIntroShowEsriMapLabels,
 			settings.PreserveCameraMetadata, settings.TagExportedVideo, settings.MetadataKeepTelemetry, settings.MetadataKeepDebugTrack,
 			settings.MetadataKeepThumbnails, settings.MetadataKeepSerialNumber, settings.NvencPreset, settings.OutputBitrateMultiplier,
-			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.FastStart, settings.NoAudio, settings.RouteIntroMapZoom,
+			settings.OutputResolution, settings.OutputCodec, settings.OutputEightBit, settings.OutputAspect, settings.OutputPadToAspect, settings.FastStart, settings.NoAudio,
+			settings.RouteIntroMapZoom,
 			settings.RouteIntroTitle, settings.RouteIntroSubtitle, settings.RouteIntroElevationProfile,
 			settings.RouteIntroMapZoomIn, settings.RouteIntroMapZoomInFactor, settings.RouteIntroMapZoomInSeconds, settings.RouteIntroMapZoomInDelaySeconds);
 	}
@@ -87,7 +89,6 @@ public sealed record SettingsPresetValues(
 			RouteIntroDurationSeconds = RouteIntroDurationSeconds,
 			RouteIntroStats = RouteIntroStats,
 			RouteIntroLabels = RouteIntroLabels,
-			RouteIntroUnits = RouteIntroUnits,
 			RouteIntroColorBySpeed = RouteIntroColorBySpeed,
 			RouteIntroGpsLossJoin = RouteIntroGpsLossJoin,
 			RouteIntroShowStartFinish = RouteIntroShowStartFinish,
@@ -115,6 +116,8 @@ public sealed record SettingsPresetValues(
 			OutputResolution = OutputResolution,
 			OutputCodec = OutputCodec,
 			OutputEightBit = OutputEightBit,
+			OutputAspect = OutputAspect,
+			OutputPadToAspect = OutputPadToAspect,
 			FastStart = FastStart,
 			NoAudio = NoAudio
 		};

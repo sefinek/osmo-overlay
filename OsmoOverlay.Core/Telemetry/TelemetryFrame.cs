@@ -41,7 +41,24 @@ public sealed record TelemetryFrame(
 	double? AudioPeakDbfs = null,
 	bool? WindProcessingActive = null,
 	double? WindProcessingLevel = null,
-	double? ImageLuma = null)
+	double? ImageLuma = null,
+	// A drone's flight log: height above the take-off point and the distance from it (an external track, ExternalTrackMerge).
+	double? HeightAboveHomeMeters = null,
+	double? DistanceFromHomeMeters = null,
+	// ... and its climb rate (up is positive) and the satellites the aircraft had.
+	double? VerticalSpeedMs = null,
+	int? GpsSatellites = null,
+	// ... its battery, and what the log says happened at this frame (FlightEvent), for the drone battery and flight alerts widgets.
+	DroneBattery? DroneBattery = null,
+	IReadOnlyList<FlightEvent>? FlightEvents = null,
+	// ... how good its GPS is (0-5 bars, the aircraft's own level) and its radio links.
+	int? GpsLevel = null,
+	DroneSignal? DroneSignal = null,
+	// ... and the flight mode it is in (P-GPS, Sport).
+	string? FlightMode = null,
+	// ... the remote controller's sticks and the aircraft's attitude (the sticks, attitude indicator and 3D orientation widgets).
+	DroneSticks? DroneSticks = null,
+	DroneAttitude? DroneAttitude = null)
 {
 	public double GForce => Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
 

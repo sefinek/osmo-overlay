@@ -26,7 +26,7 @@ public sealed partial class OverlayRenderer
 	///     Sets the canvas up for one widget and returns the save count to restore it to: the origin on the widget's
 	///     anchor (element.X/Y, so every widget draws around (0, 0)), scaled by the resolution's scale times the
 	///     widget's own element.Scale (pivoted on the anchor, so resizing never shifts it), slid and faded by
-	///     `state` (ElementAnimation.At). The fade's SaveLayer only exists while a widget is fading in or out - a
+	///     `state` (ElementAnimation.At) and the widget's own Opacity. The fade's SaveLayer only exists while a widget is fading in or out - a
 	///     widget with no timing set, or between its two ramps, draws straight onto the frame. `content` is what the widget
 	///     draws: its fade and, when `shadowed` (IsShadowed), its shadow (OverlayRenderer.Shadow.cs) use a layer just that big.
 	///     `drawn` is everything the widget will put on the frame, its shadow included, in the canvas's coordinates as set up.
@@ -39,18 +39,19 @@ public sealed partial class OverlayRenderer
 		canvas.Translate(anchorX + offsetX, anchorY + offsetY);
 		float scale = _scale * element.Scale;
 		canvas.Scale(scale, scale);
+		float alpha = state.Progress * Math.Clamp(element.Opacity, 0f, 1f);
 
 		drawn = content;
 		if (shadowed)
 		{
 			ShadowStyle shadow = ShadowStyleOf(element);
 			drawn = ShadowArea(shadow, content);
-			if (state.Progress < 1f) canvas.SaveLayer(drawn, AlphaPaint(state.Progress));
+			if (alpha < 1f) canvas.SaveLayer(drawn, AlphaPaint(alpha));
 			BeginShadow(canvas, shadow, drawn);
 		}
-		else if (state.Progress < 1f)
+		else if (alpha < 1f)
 		{
-			canvas.SaveLayer(content, AlphaPaint(state.Progress));
+			canvas.SaveLayer(content, AlphaPaint(alpha));
 		}
 
 		return saveCount;

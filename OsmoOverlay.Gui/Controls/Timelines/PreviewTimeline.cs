@@ -11,6 +11,7 @@ using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.Threading;
 using OsmoOverlay.Core;
+using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry;
 
@@ -21,6 +22,9 @@ public sealed record TimelineMoment(double Seconds, string Name);
 
 /// <summary>One of the recording's files, in recording seconds - AfterGap: recorded after the camera had stopped, not a split.</summary>
 public sealed record TimelineFile(double StartSeconds, double EndSeconds, string Name, bool AfterGap);
+
+/// <summary>An event of the drone's flight log at `Seconds` of the recording, marked on the timeline.</summary>
+public sealed record TimelineFlightEvent(double Seconds, FlightEvent Event);
 
 /// <summary>
 ///     The preview's timeline, in two forms of one control (MainWindow has one of each - the compact one in the
@@ -62,6 +66,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private const double CompactThumbRadius = 7;
 	private const double CompactTrackHeight = 6;
 	private const double CompactCutHeight = 16;
+	private const double CompactMarkWidth = 4;
 	private const double CompactSelectionHeight = 24;
 	private const double MomentGrabPixels = 7;
 	// Room after the recording's end on the expanded timeline, so the end - and whatever ends there, a cut or a widget's
@@ -90,7 +95,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private static readonly IPen FileGapPen = new Pen(Palette.TextMuted, 1.5, new DashStyle([3, 3], 0));
 	private static readonly IPen RouteIntroPen = new Pen(Palette.Accent);
 	// How far off its 3 px line a GPS loss still shows its tip.
-	private const double GpsLossHoverPixels = 4;
+	private const double GpsLossHoverPixels = 6;
+	// A flight event is a moment, not a stretch: a line the track's height with a pointer on top, so it reads next to a filmstrip.
+	private const double EventPointerWidth = 12, EventPointerHeight = 9, EventLineWidth = 2, EventLineOpacity = 0.6;
+	private static readonly IPen EventPointerPen = new Pen(Palette.SurfaceSunken, 1.5);
 	private static readonly IBrush MomentBrush = Palette.Caution;
 	private static readonly IPen MomentPen = new Pen(Palette.Caution, 1.5);
 	private static readonly IBrush CutFill = Palette.Tint(Palette.SurfaceSunken, 0.6);
@@ -130,6 +138,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private IReadOnlyList<TimeRange> _cuts = [];
 	private IReadOnlyList<TimeRange> _gpsLoss = [];
 	private IReadOnlyList<GpsAnomaly> _gpsAnomalies = [];
+	private IReadOnlyList<TimelineFlightEvent> _flightEvents = [];
+	private List<(TimeRange Range, IBrush Brush)>? _marks;
 	private IReadOnlyList<TimelineMoment> _moments = [];
 	private string? _tip;
 	private (double FadeFrom, double End)? _routeIntro;
@@ -161,6 +171,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private (Point At, string Text)? _volumeLabel;
 	private static readonly IBrush VolumeHandleBrush = Palette.TextPrimary;
 	private bool _expanded;
+	private bool _hasAudioTrack = true;
 	// The tracks' static part (ruler, filmstrip, waveform, GPS loss) drawn once into a bitmap and redrawn only when
 	// the view or the generated content changes. Playback moves the playhead every frame; repainting the thumbnails
 	// and a waveform column per pixel on each of those made the preview stutter.
@@ -218,6 +229,21 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	/// <summary>The visible stretch changed (zoom, scroll, resize) - see ViewStart/ViewLength.</summary>
 	public event Action? ViewChanged;
+
+	/// <summary>False for a recording with no sound: the expanded timeline then has no audio lane (and no volume line to edit).</summary>
+	public bool HasAudioTrack
+	{
+		get => _hasAudioTrack;
+		set
+		{
+			if (_hasAudioTrack == value) return;
+
+			_hasAudioTrack = value;
+			_contentVersion++;
+			InvalidateMeasure();
+			InvalidateVisual();
+		}
+	}
 
 	/// <summary>False: the compact track (whole recording, no zoom). True: ruler, filmstrip, waveform, zoom.</summary>
 	public bool Expanded
@@ -293,6 +319,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_gpsLoss = value;
+			_marks = null;
 			_contentVersion++;
 			InvalidateVisual();
 		}
@@ -305,6 +332,20 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_gpsAnomalies = value;
+			_marks = null;
+			_contentVersion++;
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>What the drone's flight log says happened (FlightEvent) - marked like the GPS losses whether or not a Flight alerts widget is on the overlay.</summary>
+	public IReadOnlyList<TimelineFlightEvent> FlightEvents
+	{
+		get => _flightEvents;
+		set
+		{
+			_flightEvents = value;
+			_marks = null;
 			_contentVersion++;
 			InvalidateVisual();
 		}
@@ -328,6 +369,50 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		set
 		{
 			_selection = value;
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>A stretch tinted like the selection but with no brackets and nothing to grab - for what the timeline only points out (the full telemetry view's recording).</summary>
+	public TimeRange? Highlight
+	{
+		get;
+		set
+		{
+			field = value;
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>
+	///     The timeline only shows and scrubs: its selection, cuts and volume line can't be edited, because its seconds aren't the recording's
+	///     (the full telemetry view's track) and whatever was dragged would land in the wrong place.
+	/// </summary>
+	public bool IsReadOnly
+	{
+		get;
+		set
+		{
+			if (field == value) return;
+
+			field = value;
+			InvalidateVisual();
+		}
+	}
+
+	/// <summary>
+	///     The recording's second shown at a second of this timeline, null where it shows none. Null (the default) means the two are the same;
+	///     it is set while the timeline's seconds are another clock's (the full telemetry view's track), so the filmstrip and the waveform
+	///     follow the recording where it lies and leave the rest empty.
+	/// </summary>
+	public Func<double, double?>? RecordingTimeAt
+	{
+		get;
+		set
+		{
+			field = value;
+			_contentVersion++;
+			RequestVisibleThumbnails();
 			InvalidateVisual();
 		}
 	}
@@ -370,7 +455,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 	protected override Size MeasureOverride(Size availableSize)
 	{
-		return new Size(0, _expanded ? RulerHeight + TrackGap + VideoTrackHeight + TrackGap + AudioTrackHeight : CompactSelectionHeight + 4);
+		return new Size(0, _expanded ? RulerHeight + TrackGap + VideoTrackHeight + (_hasAudioTrack ? TrackGap + AudioTrackHeight : 0) : CompactSelectionHeight + 4);
 	}
 
 	protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -405,11 +490,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		// The part already played, up to the thumb - under the cuts and the selection, which stay readable on top.
 		context.DrawRectangle(PlayedBrush, null, track.WithWidth(Math.Max(0, X(Value) - Inset)), CompactTrackHeight / 2, CompactTrackHeight / 2);
 
-		foreach ((TimeRange range, IBrush brush) in GpsMarks())
-		{
-			(double x1, double x2) = Span(range, 3);
-			context.DrawRectangle(brush, null, new Rect(x1, middle + CompactTrackHeight / 2 + 3, x2 - x1, 3), 1.5, 1.5);
-		}
+		foreach ((TimeRange range, IBrush brush) in GpsMarks()) DrawCompactMark(context, range, brush, middle);
 
 		if (_files.Count > 1)
 		{
@@ -422,6 +503,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			context.DrawRectangle(RouteIntroBrush, null, new Rect(X(0), CompactIntroTop(middle), Math.Max(3, X(intro.End) - X(0)), 3), 1.5, 1.5);
 
 		DrawCuts(context, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
+		if (Highlight is { } highlight) DrawSelection(context, highlight, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2, brackets: false);
 		if (_selection is { } selection)
 			DrawSelection(context, selection, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2);
 		DrawMoments(context, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2 - 4);
@@ -429,6 +511,28 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		// Disabled, the thumb is drawn solid outside the dimmed layer: at the layer's opacity the track showed through it.
 		opacity.Dispose();
 		context.DrawEllipse(IsEffectivelyEnabled ? PlayedBrush : Palette.StrokeStrong, null, new Point(X(Value), middle), CompactThumbRadius, CompactThumbRadius);
+	}
+
+	/// <summary>
+	///     One kind of mark on the compact track: an event is a tick across it, a stretch (a GPS loss, a repaired jump) the same tick at each end
+	///     with the track itself colored between - so a stretch doesn't hide the track under a block as tall as a cut.
+	/// </summary>
+	private void DrawCompactMark(DrawingContext context, TimeRange range, IBrush brush, double middle)
+	{
+		double top = middle - CompactCutHeight / 2;
+		if (IsPoint(range))
+		{
+			context.DrawRectangle(brush, null, new Rect(X(range.StartSeconds) - CompactMarkWidth / 2, top, CompactMarkWidth, CompactCutHeight), CompactMarkWidth / 2, CompactMarkWidth / 2);
+			return;
+		}
+
+		(double x1, double x2) = Span(range, CompactMarkWidth);
+		if (x2 - x1 > 2 * CompactMarkWidth)
+			context.DrawRectangle(brush, null, new Rect(x1, middle - CompactTrackHeight / 2, x2 - x1, CompactTrackHeight), CompactTrackHeight / 2, CompactTrackHeight / 2);
+
+		context.DrawRectangle(brush, null, new Rect(x1, top, CompactMarkWidth, CompactCutHeight), CompactMarkWidth / 2, CompactMarkWidth / 2);
+		if (x2 - x1 > CompactMarkWidth)
+			context.DrawRectangle(brush, null, new Rect(x2 - CompactMarkWidth, top, CompactMarkWidth, CompactCutHeight), CompactMarkWidth / 2, CompactMarkWidth / 2);
 	}
 
 	private void RenderExpanded(DrawingContext context)
@@ -439,7 +543,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		double videoTop = RulerHeight + TrackGap;
 		double audioTop = videoTop + VideoTrackHeight + TrackGap;
-		double bottom = audioTop + AudioTrackHeight;
+		double bottom = _hasAudioTrack ? audioTop + AudioTrackHeight : videoTop + VideoTrackHeight;
 
 		double scaling = UiScale.DeviceScaling(TopLevel.GetTopLevel(this));
 		(double, double, Size, double, int) key = (ViewStart, PixelsPerSecond, Bounds.Size, scaling, _contentVersion);
@@ -459,6 +563,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		DrawRouteIntro(context, videoTop);
 		DrawFiles(context, videoTop, bottom);
 		DrawCuts(context, videoTop, bottom);
+		if (Highlight is { } highlight) DrawSelection(context, highlight, videoTop, bottom, brackets: false);
 		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
 		DrawVolume(context, width);
 		DrawMoments(context, 0, bottom);
@@ -562,22 +667,50 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 
 		context.FillRectangle(RulerBrush, new Rect(0, 0, width, RulerHeight));
 		context.FillRectangle(TrackBrush, new Rect(0, videoTop, width, VideoTrackHeight));
-		context.FillRectangle(TrackBrush, new Rect(0, audioTop, width, AudioTrackHeight));
+		if (_hasAudioTrack) context.FillRectangle(TrackBrush, new Rect(0, audioTop, width, AudioTrackHeight));
 		if (Duration <= 0 || PixelsPerSecond <= 0) return layer;
 
 		DrawRuler(context, width);
 		DrawFilmstrip(context, videoTop, width);
-		DrawWaveform(context, audioTop, width, scaling);
+		if (_hasAudioTrack) DrawWaveform(context, audioTop, width, scaling);
 
 		// Over the video's picture there: a bar along its top edge, the stretch tinted.
 		foreach ((TimeRange range, IBrush brush) in GpsMarks())
 		{
+			if (IsPoint(range))
+			{
+				DrawEventMark(context, X(range.StartSeconds), videoTop, brush);
+				continue;
+			}
+
 			(double x1, double x2) = Span(range, 3);
 			context.FillRectangle(Palette.Tint(brush, 0.22), new Rect(x1, videoTop, x2 - x1, VideoTrackHeight));
 			context.FillRectangle(brush, new Rect(x1, videoTop, x2 - x1, GpsBarHeight));
 		}
 
 		return layer;
+	}
+
+	/// <summary>A mark with no length is an event; with one, a stretch (a GPS loss, a repaired jump).</summary>
+	private static bool IsPoint(TimeRange range)
+	{
+		return range.EndSeconds <= range.StartSeconds;
+	}
+
+	private static void DrawEventMark(DrawingContext context, double x, double top, IBrush brush)
+	{
+		// A hairline through the picture, not a bar: many events in a row would otherwise cover the thumbnails.
+		context.FillRectangle(Palette.Tint(brush, EventLineOpacity), new Rect(x - EventLineWidth / 2, top, EventLineWidth, VideoTrackHeight));
+		var pointer = new StreamGeometry();
+		using (StreamGeometryContext shape = pointer.Open())
+		{
+			shape.BeginFigure(new Point(x - EventPointerWidth / 2, top));
+			shape.LineTo(new Point(x + EventPointerWidth / 2, top));
+			shape.LineTo(new Point(x, top + EventPointerHeight));
+			shape.EndFigure(true);
+		}
+
+		context.DrawGeometry(brush, EventPointerPen, pointer);
 	}
 
 	private void DrawRuler(DrawingContext context, double width)
@@ -626,7 +759,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			if (x >= endX) break;
 
 			var dest = new Rect(x + 1, top + 2, tileWidth - 2, tileHeight);
-			int slot = TileSlot(tile, tileWidth);
+			if (TileSlot(tile, tileWidth) is not { } slot) continue;
+
 			if ((Thumbnail(slot) ?? StandIn(slot, tileWidth)) is { } bitmap)
 				context.DrawImage(bitmap, new Rect(bitmap.Size), dest);
 			else
@@ -644,9 +778,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		return Thumbnail(nearest);
 	}
 
-	private int TileSlot(int tile, double tileWidth)
+	/// <summary>The thumbnail (the recording's second) a tile shows - null for a tile on a stretch of the timeline the recording doesn't cover.</summary>
+	private int? TileSlot(int tile, double tileWidth)
 	{
-		return (int)Math.Floor((tile + 0.5) * tileWidth / PixelsPerSecond);
+		return RecordingSecond((tile + 0.5) * tileWidth / PixelsPerSecond) is { } seconds ? (int)Math.Floor(seconds) : null;
 	}
 
 	private Bitmap? Thumbnail(int slot)
@@ -707,8 +842,10 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		double opacity = color.A / 255.0 * WaveformBrush.Opacity;
 		for (int px = 0; px < pixelWidth; px++)
 		{
-			int from = (int)(TimeAt(px / scaling) * AudioWaveform.BucketsPerSecond);
-			int to = Math.Max(from + 1, (int)(TimeAt((px + 1) / scaling) * AudioWaveform.BucketsPerSecond));
+			if (RecordingSecond(TimeAt(px / scaling)) is not { } fromSeconds) continue;
+
+			int from = (int)(fromSeconds * AudioWaveform.BucketsPerSecond);
+			int to = Math.Max(from + 1, (int)((RecordingSecond(TimeAt((px + 1) / scaling)) ?? fromSeconds) * AudioWaveform.BucketsPerSecond));
 			for (int lane = 0; lane < lanes; lane++)
 			{
 				double middle = laneHeight * (lane + 0.5);
@@ -742,9 +879,15 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		}
 	}
 
+	/// <summary>The recording's second at a second of the timeline - null where the recording isn't (RecordingTimeAt).</summary>
+	private double? RecordingSecond(double seconds)
+	{
+		return RecordingTimeAt is { } map ? map(seconds) : seconds;
+	}
+
 	private double AudioTop => RulerHeight + TrackGap + VideoTrackHeight + TrackGap;
 
-	private bool VolumeEditable => _expanded && _waveform is not null && Duration > 0;
+	private bool VolumeEditable => !IsReadOnly && _expanded && _hasAudioTrack && _waveform is not null && Duration > 0;
 
 	private double VolumeY(double db)
 	{
@@ -943,10 +1086,11 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		context.DrawRectangle(null, selected ? SelectedCutBorder : CutBorder, band.Deflate(selected ? 1 : 0.5));
 	}
 
-	private void DrawSelection(DrawingContext context, TimeRange selection, double top, double bottom)
+	private void DrawSelection(DrawingContext context, TimeRange selection, double top, double bottom, bool brackets = true)
 	{
 		(double x1, double x2) = Span(selection, 2);
 		context.FillRectangle(SelectionFill, new Rect(x1, top, x2 - x1, bottom - top));
+		if (!brackets) return;
 
 		const double tick = 6;
 		foreach ((double x, double direction) in new[] { (x1 + 1, 1.0), (x2 - 1, -1.0) })
@@ -1039,7 +1183,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		double viewLeft = ViewStart * PixelsPerSecond;
 		int firstTile = (int)Math.Floor(viewLeft / tileWidth);
 		int lastTile = (int)Math.Ceiling((viewLeft + Bounds.Width) / tileWidth);
-		_thumbnails.Request(Enumerable.Range(firstTile, Math.Max(0, lastTile - firstTile + 1)).Select(t => TileSlot(t, tileWidth)));
+		_thumbnails.Request(Enumerable.Range(firstTile, Math.Max(0, lastTile - firstTile + 1)).Select(t => TileSlot(t, tileWidth)).OfType<int>());
 	}
 
 	/// <summary>The generators report from their own threads; reports collapse into one redraw per ContentRefreshInterval.</summary>
@@ -1173,7 +1317,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			return;
 		}
 
-		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+		if (e.KeyModifiers.HasFlag(KeyModifiers.Shift) && !IsReadOnly)
 		{
 			_drag = DragMode.NewSelection;
 			_dragAnchor = Snap(ValueAt(x));
@@ -1277,6 +1421,8 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	/// <summary>A selection or cut edge within grabbing distance of x - the selection's first, it's the one being worked on.</summary>
 	private (DragMode Mode, int Cut)? EdgeAt(double x)
 	{
+		if (IsReadOnly) return null;
+
 		if (_selection is { } selection)
 		{
 			if (Math.Abs(X(selection.StartSeconds) - x) <= EdgeGrabPixels) return (DragMode.SelectionStart, -1);
@@ -1342,10 +1488,24 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		return middle - CompactTrackHeight / 2 - 6;
 	}
 
-	/// <summary>The GPS losses (warning) and the repaired anomalies (alert), each with its color.</summary>
-	private IEnumerable<(TimeRange Range, IBrush Brush)> GpsMarks()
+	private static IBrush FlightEventBrush(FlightEventKind kind)
 	{
-		return _gpsLoss.Select(l => (l, GpsLossBrush)).Concat(_gpsAnomalies.Select(a => (new TimeRange(a.Start, a.End), GpsAnomalyBrush)));
+		return kind switch
+		{
+			FlightEventKind.Warning or FlightEventKind.CriticalVoltage => Palette.Danger,
+			FlightEventKind.LowVoltage => Palette.Alert,
+			_ => Palette.Accent
+		};
+	}
+
+	/// <summary>The GPS losses (warning), the repaired anomalies (alert) and the flight log's events, each with its color.</summary>
+	private List<(TimeRange Range, IBrush Brush)> GpsMarks()
+	{
+		return _marks ??=
+		[
+			.. _gpsLoss.Select(l => (l, GpsLossBrush)).Concat(_gpsAnomalies.Select(a => (new TimeRange(a.Start, a.End), GpsAnomalyBrush)))
+				.Concat(_flightEvents.Select(e => (new TimeRange(e.Seconds, e.Seconds), FlightEventBrush(e.Event.Kind))))
+		];
 	}
 
 	/// <summary>
@@ -1363,6 +1523,14 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		{
 			(double x1, double x2) = Span(range, 3);
 			return point.X >= x1 - GpsLossHoverPixels && point.X <= x2 + GpsLossHoverPixels;
+		}
+
+		foreach (TimelineFlightEvent flight in _flightEvents)
+		{
+			if (!Hit(new TimeRange(flight.Seconds, flight.Seconds))) continue;
+
+			(string title, string detail) = OverlayRenderer.FlightAlertText(flight.Event);
+			return string.Format(Strings.Timeline_FlightEventTip, TimeText.Format(flight.Seconds), title, detail);
 		}
 
 		foreach (GpsAnomaly anomaly in _gpsAnomalies)
