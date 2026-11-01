@@ -59,9 +59,10 @@ public sealed class StatWidgetSettingsTests
 		var element = new HeightElement { X = Anchor * 3, Y = Anchor * 3, ShadowEnabled = false };
 		List<DerivedFrame> frames = Frames(Flight());
 
-		(int top, int right) = Ink(Draw(element, frames));
+		(int top, _) = Ink(Draw(element, frames));
 		Assert.IsTrue(Ink(Draw(element with { ShowLabel = false }, frames)).Top > top + 6, "no caption over the value");
-		Assert.IsTrue(Ink(Draw(element with { ShowUnit = false }, frames)).Right < right - 6, "no unit after it");
+		int right = Ink(Draw(element with { ShowLabel = false }, frames)).Right;
+		Assert.IsTrue(Ink(Draw(element with { ShowLabel = false, ShowUnit = false }, frames)).Right < right - 6, "no unit after it");
 		CollectionAssert.AreNotEqual(Draw(element, frames), Draw(element with { UppercaseLabel = false }, frames));
 	}
 

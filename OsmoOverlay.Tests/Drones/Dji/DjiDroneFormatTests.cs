@@ -22,7 +22,7 @@ public sealed class DjiDroneFormatTests
 	{
 		var format = new DjiDroneFormat();
 
-		Assert.IsNotNull(format.Detect(@"C:\flights\DJI_0992.MP4", Streams("video")));
+		Assert.IsNotNull(format.Detect(Path.Combine(Path.GetTempPath(), "flights", "DJI_0992.MP4"), Streams("video")));
 		Assert.IsNotNull(format.Detect("/sd/dji_0001.mov", Streams("video")));
 		Assert.IsNull(format.Detect("DJI_0992.MP4", Streams("video", "data")), "a telemetry stream is another DJI camera's");
 		Assert.IsNull(format.Detect("DJI_0992.MP4", Streams("video", "video")));
