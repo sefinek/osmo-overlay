@@ -125,7 +125,7 @@
 						<Image Name="HardwareArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Hardware.webp}" />
 						<Image Name="SpeedArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Speed.webp}" />
 						<Image Name="MapArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Map.webp}" />
-						<Image Name="UnitsArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Speed.webp}" />
+						<Image Name="UnitsArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Units.webp}" />
 						<Image Name="PreferencesArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Preferences.webp}" />
 						<Image Name="FinishArt" Classes="art" Opacity="0" Source="{local:AssetImage Path=Welcome/Support.webp}" />
 					</Panel>
