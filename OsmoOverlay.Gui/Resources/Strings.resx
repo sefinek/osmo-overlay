@@ -5271,7 +5271,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Preview format</value>
   </data>
   <data name="TrackFormat_Message" xml:space="preserve">
-    <value>There is no recording to read this from, so pick the picture size and frame rate of the track preview.</value>
+    <value>Play back a GPS track and preview widgets displaying its data without a video recording. Choose the preview resolution and frame rate, then select a track file.</value>
   </data>
   <data name="TrackFormat_Resolution" xml:space="preserve">
     <value>Resolution</value>
@@ -5301,7 +5301,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Couldn&apos;t load the track: {0}</value>
   </data>
   <data name="TrackOnly_Opened" xml:space="preserve">
-    <value>Track {0}: a widgets preview with no recording. Rendering is off.</value>
+    <value>Track {0}: widget preview without a video recording. Rendering is disabled.</value>
   </data>
   <data name="TrackOnly_CantSave" xml:space="preserve">
     <value>A track-only preview can&apos;t be saved as a project.</value>

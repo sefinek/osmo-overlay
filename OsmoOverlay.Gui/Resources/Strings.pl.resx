@@ -5271,7 +5271,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Format podglądu</value>
   </data>
   <data name="TrackFormat_Message" xml:space="preserve">
-    <value>Nie ma nagrania, z którego dałoby się to odczytać, więc wybierz rozmiar obrazu i liczbę klatek podglądu trasy.</value>
+    <value>Odtwórz trasę GPS i podejrzyj widżety wyświetlające jej dane bez nagrania wideo. Wybierz rozdzielczość podglądu i liczbę klatek na sekundę, a następnie wskaż plik trasy.</value>
   </data>
   <data name="TrackFormat_Resolution" xml:space="preserve">
     <value>Rozdzielczość</value>
@@ -5301,7 +5301,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Nie udało się wczytać trasy: {0}</value>
   </data>
   <data name="TrackOnly_Opened" xml:space="preserve">
-    <value>Trasa {0}: podgląd widgetów bez nagrania. Renderowanie jest wyłączone.</value>
+    <value>Trasa {0}: podgląd widżetów bez nagrania wideo. Renderowanie jest wyłączone.</value>
   </data>
   <data name="TrackOnly_CantSave" xml:space="preserve">
     <value>Podglądu samej trasy nie można zapisać jako projektu.</value>
