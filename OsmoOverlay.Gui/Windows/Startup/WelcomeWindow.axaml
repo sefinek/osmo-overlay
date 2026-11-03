@@ -2,10 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="680"
+        mc:Ignorable="d" d:DesignWidth="1160" d:DesignHeight="760"
         xmlns:local="using:OsmoOverlay.Gui"
         x:Class="OsmoOverlay.Gui.WelcomeWindow"
-        Width="1000" Height="680" MinWidth="900" MinHeight="560" CanResize="True"
+        Width="1160" Height="760" MinWidth="960" MinHeight="600" CanResize="True"
         FontSize="14"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource WindowBackgroundBrush}"
@@ -100,7 +100,7 @@
 		</Style>
 	</Window.Styles>
 
-	<Grid ColumnDefinitions="260,*">
+	<Grid ColumnDefinitions="320,*">
 		<Border Grid.Column="0" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="0,0,1,0">
 			<Border.Background>
 				<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
@@ -110,8 +110,8 @@
 			</Border.Background>
 			<Grid RowDefinitions="*,Auto" Margin="20,24">
 				<StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="14">
-					<Panel Width="220" Height="220">
-						<Ellipse Width="220" Height="220" Opacity="0.6">
+					<Panel Width="280" Height="280">
+						<Ellipse Opacity="0.6">
 							<Ellipse.Fill>
 								<RadialGradientBrush>
 									<GradientStop Offset="0" Color="{StaticResource AccentCalloutBorderColor}" />
