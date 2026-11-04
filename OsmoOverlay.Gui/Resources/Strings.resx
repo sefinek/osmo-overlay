@@ -361,7 +361,6 @@ Each option is measured multiple times, alternating with the others. Results sho
   </data>
   <data name="Close_RenderInProgressMessage" xml:space="preserve">
     <value>Closing the app will stop rendering. The output file may be left incomplete.
-
 Close OsmoOverlay?</value>
   </data>
   <data name="Close_RenderInProgressTitle" xml:space="preserve">
@@ -1914,7 +1913,6 @@ Last updated: {1:g}</value>
   </data>
   <data name="Project_RecordingsMissing" xml:space="preserve">
     <value>The following recordings used by the project could not be found:
-
 {0}
 
 The cuts, view settings and overlay will be applied once these files are located.</value>
@@ -2083,7 +2081,6 @@ The cuts, view settings and overlay will be applied once these files are located
   </data>
   <data name="Render_CpuBusyMessage" xml:space="preserve">
     <value>CPU usage is {0}. Rendering uses the CPU encoder, so it will take longer under the current load.
-
 Continue rendering?</value>
   </data>
   <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
@@ -3040,7 +3037,6 @@ Current tags:
   </data>
   <data name="Tools_CantReadMessage" xml:space="preserve">
     <value>Unable to read the video file. It may be damaged, still being written or in an unsupported format.
-
 Details: {0}</value>
   </data>
   <data name="Tools_CantReadTitle" xml:space="preserve">
@@ -3060,7 +3056,6 @@ Details: {0}</value>
   </data>
   <data name="Tools_ConversionFailedMessage" xml:space="preserve">
     <value>No output was saved for the file whose conversion failed.
-
 Details: {0}</value>
   </data>
   <data name="Tools_ConversionFailedTitle" xml:space="preserve">
@@ -3123,7 +3118,6 @@ Saved file: {3}</value>
   </data>
   <data name="Tools_FixFailedMessage" xml:space="preserve">
     <value>Fixing "{0}" failed.
-
 Details: {1}</value>
   </data>
   <data name="Tools_FixFailedTitle" xml:space="preserve">
@@ -3214,7 +3208,6 @@ Replace them with the new files?</value>
   </data>
   <data name="Tools_StripFailedMessage" xml:space="preserve">
     <value>Unable to save a copy without metadata.
-
 Details: {0}</value>
   </data>
   <data name="Tools_StripFailedTitle" xml:space="preserve">

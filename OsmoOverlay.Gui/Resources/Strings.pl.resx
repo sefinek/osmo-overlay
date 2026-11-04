@@ -361,7 +361,6 @@ Każdy wariant jest mierzony wielokrotnie, na zmianę z pozostałymi. Wyniki pok
   </data>
   <data name="Close_RenderInProgressMessage" xml:space="preserve">
     <value>Zamknięcie aplikacji przerwie renderowanie. Plik wyjściowy może pozostać niekompletny.
-
 Zamknąć OsmoOverlay?</value>
   </data>
   <data name="Close_RenderInProgressTitle" xml:space="preserve">
@@ -1914,7 +1913,6 @@ Ostatnia zmiana: {1:g}</value>
   </data>
   <data name="Project_RecordingsMissing" xml:space="preserve">
     <value>Nie znaleziono nagrań używanych w projekcie:
-
 {0}
 
 Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych plików.</value>
@@ -2083,7 +2081,6 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
   </data>
   <data name="Render_CpuBusyMessage" xml:space="preserve">
     <value>Obciążenie procesora wynosi {0}. Renderowanie korzysta z enkodera CPU, więc przy obecnym obciążeniu potrwa dłużej.
-
 Kontynuować renderowanie?</value>
   </data>
   <data name="Render_CpuBusyGpuEncoderMessage" xml:space="preserve">
@@ -3040,7 +3037,6 @@ Obecne znaczniki:
   </data>
   <data name="Tools_CantReadMessage" xml:space="preserve">
     <value>Nie udało się odczytać pliku wideo. Plik może być uszkodzony, nadal zapisywany lub mieć nieobsługiwany format.
-
 Szczegóły: {0}</value>
   </data>
   <data name="Tools_CantReadTitle" xml:space="preserve">
@@ -3060,7 +3056,6 @@ Szczegóły: {0}</value>
   </data>
   <data name="Tools_ConversionFailedMessage" xml:space="preserve">
     <value>Nie zapisano wyniku dla pliku, którego konwersja się nie powiodła.
-
 Szczegóły: {0}</value>
   </data>
   <data name="Tools_ConversionFailedTitle" xml:space="preserve">
@@ -3123,7 +3118,6 @@ Zapisany plik: {3}</value>
   </data>
   <data name="Tools_FixFailedMessage" xml:space="preserve">
     <value>Naprawa „{0}” nie powiodła się.
-
 Szczegóły: {1}</value>
   </data>
   <data name="Tools_FixFailedTitle" xml:space="preserve">
@@ -3214,7 +3208,6 @@ Zastąpić je nowymi plikami?</value>
   </data>
   <data name="Tools_StripFailedMessage" xml:space="preserve">
     <value>Nie udało się zapisać kopii bez metadanych.
-
 Szczegóły: {0}</value>
   </data>
   <data name="Tools_StripFailedTitle" xml:space="preserve">

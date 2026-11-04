@@ -292,7 +292,7 @@ public partial class MainWindow
 			? string.Format(Strings.Project_PresetGone, embedded.Name)
 			: string.Format(Strings.Project_PresetChanged, original.Name);
 		bool useProjects = await ConfirmDialog.AskAsync(this, Strings.Project_OverlayTitle,
-			reason + "\n\n" + (original is null ? Strings.Project_UseOverlayGone : Strings.Project_UseOverlayChanged),
+			reason + "\n" + (original is null ? Strings.Project_UseOverlayGone : Strings.Project_UseOverlayChanged),
 			Strings.Project_UseProjects, DialogKind.Info);
 		if (!useProjects) return;
 
