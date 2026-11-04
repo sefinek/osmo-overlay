@@ -656,7 +656,7 @@ W OsmoOverlay otwórz Ustawienia > Zachowanie > Drony DJI i zastąp wpisany kluc
     <value>Dziennik lotu nie zawiera pozycji GPS.</value>
   </data>
   <data name="DjiDrone_NeedsLog" xml:space="preserve">
-    <value>Drony DJI nie zapisują telemetrii w pliku wideo. Aby uzyskać pozycję, wysokość i prędkość, dodaj dziennik lotu (FlightRecord). Na Androidzie znajdziesz go w Pobrane/product_data/flightRecords.</value>
+    <value>Nagrania z dronów DJI nie zawierają telemetrii. Aby wyświetlić pozycję, wysokość i prędkość drona, potrzebny jest dziennik lotu (FlightRecord). Jeśli używasz Windows i telefonu z Androidem, podłącz telefon przez USB i skorzystaj z wyszukiwania dzienników w aplikacji, zamiast szukać pliku ręcznie. Możesz też samodzielnie wskazać dziennik skopiowany na komputer. Na Androidzie jest on zapisywany m.in. w folderze Pobrane/product_data/flightRecords.</value>
   </data>
   <data name="DjiDrone_Name" xml:space="preserve">
     <value>Drony DJI</value>

@@ -4853,7 +4853,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Znajdź dziennik lotu w telefonie</value>
   </data>
   <data name="Phone_Steps" xml:space="preserve">
-    <value>Podłącz telefon kablem USB, odblokuj go i wybierz w powiadomieniu „Przesyłanie plików”. Wybierz telefon poniżej i kliknij „Szukaj dzienników”. Aplikacja zapisze kopie znalezionych dzienników DJI Fly na komputerze, aby automatycznie dopasowywać je do kolejnych nagrań.</value>
+    <value>Jeśli korzystasz z telefonu z Androidem, podłącz go do komputera kablem USB i odblokuj ekran. Następnie dotknij powiadomienia o połączeniu USB i wybierz tryb „Przesyłanie plików / Android Auto”. Wybierz telefon poniżej i kliknij „Szukaj dzienników”. Aplikacja zapisze kopie znalezionych dzienników DJI Fly na komputerze, aby automatycznie dopasowywać je do kolejnych nagrań.</value>
   </data>
   <data name="Phone_Devices" xml:space="preserve">
     <value>Telefony</value>

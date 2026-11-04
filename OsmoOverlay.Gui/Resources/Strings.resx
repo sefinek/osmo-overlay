@@ -4853,7 +4853,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Find a flight log on your phone</value>
   </data>
   <data name="Phone_Steps" xml:space="preserve">
-    <value>Connect your phone with a USB cable, unlock it and select &quot;File transfer&quot; in the notification. Select the phone below and click &quot;Search for logs&quot;. The app saves copies of the DJI Fly logs it finds on your computer so it can automatically match them to future recordings.</value>
+    <value>If you use an Android phone, connect it to the computer with a USB cable and unlock the screen. Then tap the USB connection notification and select &quot;File transfer / Android Auto&quot;. Select the phone below and click &quot;Search for logs&quot;. The app saves copies of the DJI Fly logs it finds on your computer so it can automatically match them to future recordings.</value>
   </data>
   <data name="Phone_Devices" xml:space="preserve">
     <value>Phones</value>

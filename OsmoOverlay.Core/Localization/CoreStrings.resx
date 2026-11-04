@@ -656,7 +656,7 @@ In OsmoOverlay, open Settings > Behavior > DJI drones and replace the key. Close
     <value>The flight log holds no GPS positions.</value>
   </data>
   <data name="DjiDrone_NeedsLog" xml:space="preserve">
-    <value>DJI drones do not write telemetry into the video file. To get position, height and speed, add the flight log (FlightRecord). On Android you can find it in Download/product_data/flightRecords.</value>
+    <value>DJI drone recordings do not contain telemetry. A flight log (FlightRecord) is needed to display the drone's position, height and speed. If you use Windows and an Android phone, connect the phone via USB and use the app's log search instead of finding the file manually. You can also select a log you have copied to your computer. On Android, logs are stored in locations such as Download/product_data/flightRecords.</value>
   </data>
   <data name="DjiDrone_Name" xml:space="preserve">
     <value>DJI drone</value>
