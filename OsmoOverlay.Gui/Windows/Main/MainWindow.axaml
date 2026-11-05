@@ -1365,6 +1365,15 @@
 														<CheckBox Name="MapRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
 														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_MapHeadingUpHint}" />
+														<CheckBox Name="MapStabilizeHeadingCheck" Content="{x:Static local:Strings.Main_MapStabilizeHeading}" Click="OnMapStabilizeHeadingChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														           Text="{x:Static local:Strings.Main_MapStabilizeHeadingHint}" />
+														<CheckBox Name="MapDotWhenNotFacingCheck" Content="{x:Static local:Strings.Main_MapDotWhenNotFacing}" Click="OnMapDotWhenNotFacingChanged" />
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														           Text="{x:Static local:Strings.Main_MapDotWhenNotFacingHint}" />
+														<TextBlock Name="MapFacingToleranceLabel" Text="{x:Static local:Strings.Main_MapFacingTolerance}" Classes="infoLabel" Margin="0" />
+														<NumericUpDown Name="MapFacingToleranceBox" Increment="5" FormatString="0" HorizontalAlignment="Stretch"
+														               ValueChanged="OnMapFacingToleranceChanged" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

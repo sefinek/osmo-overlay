@@ -551,6 +551,27 @@ public partial class MainWindow
 		UpdateElement(id, el => el is TrailOverlayElement t ? t with { RotateWithHeading = rotate } : el);
 	}
 
+	private void OnMapStabilizeHeadingChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || sender is not CheckBox check) return;
+		bool stabilize = check.IsChecked == true;
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { StabilizeHeading = stabilize } : el);
+	}
+
+	private void OnMapDotWhenNotFacingChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || sender is not CheckBox check) return;
+		bool dot = check.IsChecked == true;
+		MapFacingToleranceLabel.IsVisible = MapFacingToleranceBox.IsVisible = dot;
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { DotWhenNotFacingTravel = dot } : el);
+	}
+
+	private void OnMapFacingToleranceChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || MapFacingToleranceBox.Value is not { } degrees) return;
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { DroneFacingToleranceDegrees = (double)degrees } : el);
+	}
+
 	private void OnCompassOptionChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id) return;

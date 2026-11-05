@@ -1073,13 +1073,19 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 	private void DrawCut(DrawingContext context, TimeRange cut, double top, double bottom, bool selected)
 	{
 		(double x1, double x2) = Span(cut, 3);
+		if (x2 < 0 || x1 > Bounds.Width) return;
+
 		var band = new Rect(x1, top, x2 - x1, bottom - top);
 		context.FillRectangle(CutFill, band);
 
 		using (context.PushClip(band))
 		{
-			// Diagonal stripes (the usual "removed" hatching), shifted by the animation offset.
-			for (double x = band.Left - band.Height - StripeSpacing + _stripeOffset; x < band.Right; x += StripeSpacing)
+			// Diagonal stripes (the usual "removed" hatching), shifted by the animation offset. Only the visible part is drawn,
+			// but the grid starts at the band's edge so scrolling doesn't change the pattern's phase.
+			double gridStart = band.Left - band.Height - StripeSpacing + _stripeOffset;
+			double visibleLeft = Math.Max(band.Left, 0), visibleRight = Math.Min(band.Right, Bounds.Width);
+			double skipped = Math.Max(0, Math.Floor((visibleLeft - band.Height - gridStart) / StripeSpacing));
+			for (double x = gridStart + skipped * StripeSpacing; x < visibleRight; x += StripeSpacing)
 				context.DrawLine(CutStripe, new Point(x, band.Bottom), new Point(x + band.Height, band.Top));
 		}
 

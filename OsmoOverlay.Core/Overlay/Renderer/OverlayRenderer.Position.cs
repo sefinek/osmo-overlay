@@ -330,17 +330,23 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.MapRadius;
 
+		double maxFactor = ClampZoomOutFactor(element.MapDynamicZoomMaxFactor);
+		double capRadius = maxFactor * radius * MapTrailFitFraction;
+		double capDistSq = capRadius * capRadius;
+
+		// Once one point demands the maximum zoom-out, no farther point can change the clamped target.
 		double maxDistSq = 0;
 		foreach (SKPoint pixel in trailPixels)
 		{
 			double dx = pixel.X - center.X, dy = pixel.Y - center.Y;
 			maxDistSq = Math.Max(maxDistSq, dx * dx + dy * dy);
+			if (maxDistSq >= capDistSq) break;
 		}
 
 		// The farthest trail point should land at MapTrailFitFraction of the crop radius, not right at
 		// its edge, so it stays comfortably inside the circle instead of grazing the rim.
 		double requiredRadius = Math.Sqrt(maxDistSq) / MapTrailFitFraction;
-		double target = Math.Clamp(requiredRadius / radius, 1.0, ClampZoomOutFactor(element.MapDynamicZoomMaxFactor));
+		double target = Math.Clamp(requiredRadius / radius, 1.0, maxFactor);
 
 		if (!_mapZoomEmas.TryGetValue(element.Id, out ResettableEma? ema)) _mapZoomEmas[element.Id] = ema = new ResettableEma();
 		return ema.Update(frame.Raw.SampleTimeSeconds, target, MapZoomSmoothingSeconds);
@@ -378,7 +384,7 @@ public sealed partial class OverlayRenderer
 			float cropRadius = radius * (float)zoomFactor;
 
 			// The circle looks the same from every angle, so the square it is cut from covers it turned too.
-			if (element.RotateWithHeading) canvas.RotateDegrees((float)-frame.HeadingDegrees);
+			if (element.RotateWithHeading) canvas.RotateDegrees((float)-(element.StabilizeHeading ? frame.SteadyHeadingDegrees : frame.HeadingDegrees));
 			var src = SKRect.Create(center.X - cropRadius, center.Y - cropRadius, cropRadius * 2, cropRadius * 2);
 			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
 			canvas.DrawImage(_mapMosaic.Image, src, dest, MapSampling);
@@ -396,7 +402,7 @@ public sealed partial class OverlayRenderer
 			// Same marker choice/paint as the Compass (DrawTrailMarker) by default - both widgets are
 			// north-up, so "pointing in the direction of travel" means the same thing in both - but each
 			// widget's TrailUseArrow is its own independent setting, so they can be styled differently.
-			DrawTrailMarker(canvas, 0, 0, element.RotateWithHeading ? 0 : frame.HeadingDegrees, element);
+			DrawTrailMarker(canvas, 0, 0, element.RotateWithHeading ? 0 : frame.HeadingDegrees, element, DroneNotFacingTravel(frame, element));
 
 			// The provider's credit isn't drawn inside this small circle (unreadable over busy map tiles) - it's a
 			// widget of its own next to it (MapAttributionElement).
@@ -440,7 +446,7 @@ public sealed partial class OverlayRenderer
 	}
 
 	/// <summary>Heading arrow (matches the driving direction, north-up) when useArrow, a static dot otherwise - shared by Compass and MapWidget so the two draw identically for whichever style each picks.</summary>
-	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, TrailOverlayElement element)
+	private void DrawTrailMarker(SKCanvas canvas, float cx, float cy, double headingDegrees, TrailOverlayElement element, bool forceDot = false)
 	{
 		SKPaint fill = _dotFillAccent;
 		if (element.MarkerColor is not null)
@@ -452,7 +458,7 @@ public sealed partial class OverlayRenderer
 		canvas.Save();
 		canvas.Translate(cx, cy);
 		canvas.Scale(Math.Clamp(element.MarkerScale, 0.3f, 4f));
-		if (element.TrailUseArrow)
+		if (element.TrailUseArrow && !forceDot)
 		{
 			// Clockwise from north, the way a heading turns on screen (y grows down).
 			canvas.RotateDegrees((float)headingDegrees);
@@ -466,6 +472,18 @@ public sealed partial class OverlayRenderer
 		}
 
 		canvas.Restore();
+	}
+
+	public const double DroneFacingToleranceDefault = 60;
+	public const double DroneFacingToleranceMin = 15;
+	public const double DroneFacingToleranceMax = 170;
+
+	/// <summary>True when a drone's nose points further than the element's tolerance from where it travels - depends on the frame alone.</summary>
+	internal static bool DroneNotFacingTravel(DerivedFrame frame, MapWidgetElement element)
+	{
+		if (!element.DotWhenNotFacingTravel || frame.Raw.DroneAttitude is not { } attitude) return false;
+		double travel = element.StabilizeHeading ? frame.SteadyHeadingDegrees : frame.HeadingDegrees;
+		return AngleMath.DifferenceDegrees(attitude.YawDegrees, travel) > Math.Clamp(element.DroneFacingToleranceDegrees, DroneFacingToleranceMin, DroneFacingToleranceMax);
 	}
 
 	/// <summary>The heading arrow pointing north around (0, 0), built once - DrawHeadingArrow rotates it.</summary>

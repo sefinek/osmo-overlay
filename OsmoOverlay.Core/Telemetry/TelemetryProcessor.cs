@@ -91,6 +91,7 @@ public static class TelemetryProcessor
 					: 0;
 		}
 
+		double[] stableHeadings = HeadingStabilizer.Compute(frames, speeds, headings);
 		Direction[]? gravity = GravityOf(frames, camera);
 		(double[] roll, double[] pitch) = gravity is null
 			? (new double[frames.Count], new double[frames.Count])
@@ -131,7 +132,7 @@ public static class TelemetryProcessor
 			(double lateral, double longitudinal) = gravity is null ? (0, 0) : (gravity[i].X, -gravity[i].Z);
 
 			result.Add(new DerivedFrame(current, speeds[i] * speedFactor, headings[i], gradients[i], cumulativeDistances[i], roll[i], pitch[i],
-				sun, localEast, localNorth, smoothedGForce, lateral, longitudinal, current.StartsAfterGap));
+				sun, localEast, localNorth, smoothedGForce, lateral, longitudinal, current.StartsAfterGap, StableHeadingDegrees: stableHeadings[i]));
 		}
 
 		return orientationSource == OrientationSource.Accelerometer ? result : [.. OrientationTilt.Apply(result, camera, orientationSource)];

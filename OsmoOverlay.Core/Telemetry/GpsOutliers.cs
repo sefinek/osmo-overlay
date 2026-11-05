@@ -155,14 +155,26 @@ internal static class GpsOutliers
 	/// <summary>Each rejected run's position by time between the accepted fixes around it - the last one held at the segment's end.</summary>
 	private static void RepairPositions(List<TelemetryFrame> frames, int start, int end, bool[] bad)
 	{
+		// The neighbours are tracked along the pass, so a long run is repaired in one sweep: `before` is the last accepted fix,
+		// `after` the next one (`end` once there is none) and is searched for only when the previous one has been passed.
+		int before = -1, after = start;
 		for (int i = start; i < end; i++)
 		{
-			if (!bad[i]) continue;
+			if (!bad[i])
+			{
+				if (frames[i].HasGpsFix) before = i;
+				continue;
+			}
+
+			if (after <= i)
+			{
+				after = Next(frames, i, end, j => frames[j].HasGpsFix && !bad[j]);
+				if (after < 0) after = end;
+			}
 
 			// A fix is only ever rejected against an accepted one before it.
-			TelemetryFrame from = frames[Previous(frames, start, i, j => frames[j].HasGpsFix && !bad[j])];
-			int after = Next(frames, i, end, j => frames[j].HasGpsFix && !bad[j]);
-			TelemetryFrame to = after >= 0 ? frames[after] : from;
+			TelemetryFrame from = frames[before];
+			TelemetryFrame to = after < end ? frames[after] : from;
 			double share = Share(from, frames[i], to);
 			frames[i] = frames[i] with
 			{
@@ -176,14 +188,23 @@ internal static class GpsOutliers
 
 	private static void RepairSpeeds(List<TelemetryFrame> frames, int start, int end, bool[] bad)
 	{
+		int before = -1, after = start;
 		for (int i = start; i < end; i++)
 		{
-			if (!bad[i]) continue;
+			if (!bad[i])
+			{
+				if (frames[i].GpsSpeedMs is not null) before = i;
+				continue;
+			}
 
-			int before = Previous(frames, start, i, j => frames[j].GpsSpeedMs is not null && !bad[j]);
-			int after = Next(frames, i, end, j => frames[j].GpsSpeedMs is not null && !bad[j]);
+			if (after <= i)
+			{
+				after = Next(frames, i, end, j => frames[j].GpsSpeedMs is not null && !bad[j]);
+				if (after < 0) after = end;
+			}
+
 			TelemetryFrame? from = before >= 0 ? frames[before] : null;
-			TelemetryFrame? to = after >= 0 ? frames[after] : null;
+			TelemetryFrame? to = after < end ? frames[after] : null;
 			double? speed = (from, to) switch
 			{
 				({ } a, { } b) => Lerp(a.GpsSpeedMs!.Value, b.GpsSpeedMs!.Value, Share(a, frames[i], b)),
@@ -193,16 +214,6 @@ internal static class GpsOutliers
 			};
 			frames[i] = frames[i] with { GpsSpeedMs = speed, GpsCorrected = frames[i].GpsCorrected | GpsCorrection.Speed };
 		}
-	}
-
-	private static int Previous(List<TelemetryFrame> frames, int start, int i, Func<int, bool> good)
-	{
-		for (int j = i - 1; j >= start; j--)
-		{
-			if (good(j)) return j;
-		}
-
-		return -1;
 	}
 
 	private static int Next(List<TelemetryFrame> frames, int i, int end, Func<int, bool> good)

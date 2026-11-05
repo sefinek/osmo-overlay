@@ -21,7 +21,6 @@ public partial class MainWindow
 	private TimeSpan _fullTelemetryPosition;
 	private int _fullTelemetryGeneration;
 	private bool _trackOnly;
-	private TrackOnlyFormat _trackOnlyFormat = TrackOnlyFormat.Default;
 	private bool CanRenderTelemetry => !_trackOnly && _summary?.HasTelemetry == true && (_externalTrack is null || _externalTrackApplied);
 
 	private async void OnExternalTrackClick(object? sender, RoutedEventArgs e)
@@ -208,9 +207,10 @@ public partial class MainWindow
 	private async void OnOpenTrackOnlyClick(object? sender, RoutedEventArgs e)
 	{
 		if (_phase is UiPhase.LoadingSummary or UiPhase.Rendering || _previewTestRunning) return;
-		if (await TrackFormatWindow.AskAsync(this, _trackOnlyFormat) is not { } format) return;
+		OverlaySettings settings = OverlaySettingsStore.Load();
+		if (await TrackFormatWindow.AskAsync(this, settings.TrackFormat ?? TrackOnlyFormat.Default) is not { } format) return;
 
-		_trackOnlyFormat = format;
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { TrackFormat = format });
 		IReadOnlyList<IStorageFile> files = await StorageProvider.OpenRememberedAsync("gps-track", new FilePickerOpenOptions
 		{
 			Title = Strings.Track_Title,

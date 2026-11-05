@@ -404,7 +404,7 @@ public partial class MainWindow
 			grid.Children.Add(warning);
 		}
 
-		if (editable)
+		if (editable || supported)
 		{
 			var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Margin = new Thickness(6, 0, 0, 0) };
 			if (supported)
@@ -415,10 +415,13 @@ public partial class MainWindow
 				buttons.Children.Add(settingsButton);
 			}
 
-			var removeButton = new Button { Content = new IconView { Data = Icons.Close, Width = 10, Height = 10 }, Classes = { "addedWidgetAction", "remove" } };
-			ToolTip.SetTip(removeButton, Strings.Main_RemoveFromOverlay);
-			removeButton.Click += (_, _) => RemoveElementInstance(id);
-			buttons.Children.Add(removeButton);
+			if (editable)
+			{
+				var removeButton = new Button { Content = new IconView { Data = Icons.Close, Width = 10, Height = 10 }, Classes = { "addedWidgetAction", "remove" } };
+				ToolTip.SetTip(removeButton, Strings.Main_RemoveFromOverlay);
+				removeButton.Click += (_, _) => RemoveElementInstance(id);
+				buttons.Children.Add(removeButton);
+			}
 
 			Grid.SetColumn(buttons, 2);
 			grid.Children.Add(buttons);
@@ -1020,6 +1023,10 @@ public partial class MainWindow
 				MapZoomOutMaxBox.IsVisible = x.MapDynamicZoom;
 				MapZoomOutMaxHint.IsVisible = x.MapDynamicZoom;
 				MapRotateCheck.IsChecked = x.RotateWithHeading;
+				MapStabilizeHeadingCheck.IsChecked = x.StabilizeHeading;
+				MapDotWhenNotFacingCheck.IsChecked = x.DotWhenNotFacingTravel;
+				MapFacingToleranceBox.Value = (decimal)x.DroneFacingToleranceDegrees;
+				MapFacingToleranceLabel.IsVisible = MapFacingToleranceBox.IsVisible = x.DotWhenNotFacingTravel;
 				MapTrail.Populate(x);
 				MapMarker.Populate(x);
 				MapTiming.Populate(x);

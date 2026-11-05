@@ -187,7 +187,9 @@ public partial class MainWindow : Window
 		// XAML, so the two can't silently drift apart if either constant ever changes.
 		MapZoomBox.Minimum = RouteMapMosaic.MinZoom;
 		MapZoomBox.Maximum = RouteMapMosaic.MaxZoom;
-		MapZoomOutMaxBox.Minimum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
+		MapFacingToleranceBox.Minimum = (decimal)OverlayRenderer.DroneFacingToleranceMin;
+		MapFacingToleranceBox.Maximum = (decimal)OverlayRenderer.DroneFacingToleranceMax;
+		MapZoomOutMaxBox.Minimum =(decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
 		SpeedMaxBox.Minimum = (decimal)OverlayRenderer.SpeedGaugeMaxMin;
 		SpeedMaxBox.Maximum = (decimal)OverlayRenderer.SpeedGaugeMaxMax;

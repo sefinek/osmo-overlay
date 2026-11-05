@@ -103,6 +103,41 @@ public sealed class GpsOutliersTests
 	}
 
 	[TestMethod]
+	public void RunsOfBadSpeeds_AreFilledInByTimeBetweenTheGoodOnes()
+	{
+		List<TelemetryFrame> frames = Ride(10, t => t < 5 ? 10 : 20);
+		for (int i = 40; i <= 59; i++) frames[i] = frames[i] with { GpsSpeedMs = 500 };
+		for (int i = 90; i < frames.Count; i++) frames[i] = frames[i] with { GpsSpeedMs = null };
+
+		IReadOnlyList<TelemetryFrame> repaired = GpsOutliers.Repair(frames);
+
+		Assert.AreEqual(10, repaired[39].GpsSpeedMs!.Value, 1e-9);
+		for (int i = 40; i <= 59; i++)
+		{
+			double expected = 10 + (20 - 10) * (i - 39) / 21.0;
+			Assert.AreEqual(expected, repaired[i].GpsSpeedMs!.Value, 0.6, $"frame {i}");
+			Assert.IsTrue(repaired[i].GpsCorrected.HasFlag(GpsCorrection.Speed));
+		}
+
+		Assert.IsFalse(repaired[70].GpsCorrected.HasFlag(GpsCorrection.Speed));
+		Assert.IsNull(repaired[95].GpsSpeedMs, "a missing reading is not a bad one");
+	}
+
+	[TestMethod]
+	public void LongRunOfBadSpeeds_IsRepairedInLinearTime()
+	{
+		List<TelemetryFrame> frames = Ride(1500, _ => 10);
+		for (int i = 1; i < frames.Count; i++) frames[i] = frames[i] with { GpsSpeedMs = 200 };
+
+		var watch = System.Diagnostics.Stopwatch.StartNew();
+		IReadOnlyList<TelemetryFrame> repaired = GpsOutliers.Repair(frames);
+		watch.Stop();
+
+		Assert.IsTrue(repaired.Skip(1).All(f => f.GpsSpeedMs == 10), "held at the last good reading");
+		Assert.IsTrue(watch.ElapsedMilliseconds < 2000, $"{frames.Count} frames took {watch.ElapsedMilliseconds} ms");
+	}
+
+	[TestMethod]
 	public void SpeedAboveAnyVehicle_IsAlwaysASpike()
 	{
 		List<TelemetryFrame> frames = Ride(10, _ => 10);

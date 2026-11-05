@@ -13,7 +13,7 @@ internal static class FileSummaryCache
 {
 	// Bump whenever telemetry extraction or derivation logic changes, so stale cache
 	// entries computed with the old logic are treated as a cache miss automatically.
-	public const int FormatVersion = 38;
+	public const int FormatVersion = 39;
 
 	private const string CompressedSuffix = ".br";
 
@@ -271,20 +271,21 @@ internal static class FileSummaryCache
 		double LocalNorthMeters,
 		double SmoothedGForce,
 		double LateralAccelG,
-		double LongitudinalAccelG)
+		double LongitudinalAccelG,
+		double? StableHeadingDegrees = null)
 	{
 		public static CachedDerivedFrame From(DerivedFrame frame)
 		{
 			return new CachedDerivedFrame(frame.SpeedKmh, frame.HeadingDegrees, frame.GradientPercent,
 				frame.CumulativeDistanceMeters, frame.RollDegrees, frame.PitchDegrees, frame.Sun, frame.LocalEastMeters,
-				frame.LocalNorthMeters, frame.SmoothedGForce, frame.LateralAccelG, frame.LongitudinalAccelG);
+				frame.LocalNorthMeters, frame.SmoothedGForce, frame.LateralAccelG, frame.LongitudinalAccelG, frame.StableHeadingDegrees);
 		}
 
 		public DerivedFrame ToDerivedFrame(TelemetryFrame raw)
 		{
 			return new DerivedFrame(raw, SpeedKmh, HeadingDegrees, GradientPercent, CumulativeDistanceMeters,
 				RollDegrees, PitchDegrees, Sun, LocalEastMeters, LocalNorthMeters, SmoothedGForce, LateralAccelG, LongitudinalAccelG,
-				raw.StartsAfterGap);
+				raw.StartsAfterGap, StableHeadingDegrees: StableHeadingDegrees);
 		}
 	}
 }

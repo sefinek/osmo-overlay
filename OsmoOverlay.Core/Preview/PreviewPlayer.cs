@@ -542,7 +542,7 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	public SKRect? MeasureElement(OverlayElement element, TimeSpan position)
 	{
-		return _recording?.Compositor.MeasureElement(element, position);
+		return _recording?.Compositor.MeasureElement(element, position, approximate: IsPlaying);
 	}
 
 	/// <summary>

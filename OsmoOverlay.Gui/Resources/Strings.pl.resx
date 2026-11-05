@@ -1305,6 +1305,21 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   <data name="Main_MapHeadingUpHint" xml:space="preserve">
     <value>Na górze jest zawsze kierunek jazdy, a nie północ.</value>
   </data>
+  <data name="Main_MapStabilizeHeading" xml:space="preserve">
+    <value>Stabilizuj kierunek</value>
+  </data>
+  <data name="Main_MapDotWhenNotFacing" xml:space="preserve">
+    <value>Kropka, gdy dron nie leci przodem</value>
+  </data>
+  <data name="Main_MapFacingTolerance" xml:space="preserve">
+    <value>Odchylenie nosa od toru lotu (°)</value>
+  </data>
+  <data name="Main_MapDotWhenNotFacingHint" xml:space="preserve">
+    <value>Gdy dron leci do tyłu lub bokiem (nos odchylony od toru lotu o więcej niż ustawiona wartość), zamiast strzałki jest kropka, bo kierunek lotu nie pokrywa się wtedy z tym, co widać w kadrze. Działa tylko z logiem lotu drona.</value>
+  </data>
+  <data name="Main_MapStabilizeHeadingHint" xml:space="preserve">
+    <value>Na postoju i przy bardzo małej prędkości zostaje ostatni wiarygodny kierunek, a skoki GPS są ignorowane, więc mapa się nie trzęsie.</value>
+  </data>
   <data name="Main_MapSource" xml:space="preserve">
     <value>ŹRÓDŁO MAPY</value>
   </data>

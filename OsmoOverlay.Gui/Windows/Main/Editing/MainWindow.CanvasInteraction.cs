@@ -405,20 +405,21 @@ public partial class MainWindow
 		const double labelGap = 4;
 		bool editable = !IsActivePresetDefault;
 		// Clear of the buttons on the right corner.
-		HoverLabel.MaxWidth = Math.Max(60, width - (editable ? RemoveWidgetButton.Width + WidgetGearHoverButton.Width : 0));
+		HoverLabel.MaxWidth = Math.Max(60, width - (editable ? RemoveWidgetButton.Width + WidgetGearHoverButton.Width : WidgetGearHoverButton.Width));
 		double labelTop = topLeft.Y - HoverLabel.Height - labelGap;
 		Canvas.SetLeft(HoverLabel, topLeft.X);
 		Canvas.SetTop(HoverLabel, labelTop >= 0 ? labelTop : bottomRight.Y + labelGap);
 		HoverLabel.Classes.Set("shown", true);
 
 		RemoveWidgetButton.IsVisible = editable;
-		WidgetGearHoverButton.IsVisible = editable;
-		if (!editable) return;
+		WidgetGearHoverButton.IsVisible = true;
 
 		const double gap = 4;
 		Canvas.SetLeft(RemoveWidgetButton, bottomRight.X - RemoveWidgetButton.Width / 2);
 		Canvas.SetTop(RemoveWidgetButton, topLeft.Y - RemoveWidgetButton.Height / 2);
-		Canvas.SetLeft(WidgetGearHoverButton, bottomRight.X - RemoveWidgetButton.Width / 2 - gap - WidgetGearHoverButton.Width);
+		Canvas.SetLeft(WidgetGearHoverButton, editable
+			? bottomRight.X - RemoveWidgetButton.Width / 2 - gap - WidgetGearHoverButton.Width
+			: bottomRight.X - WidgetGearHoverButton.Width / 2);
 		Canvas.SetTop(WidgetGearHoverButton, topLeft.Y - WidgetGearHoverButton.Height / 2);
 	}
 

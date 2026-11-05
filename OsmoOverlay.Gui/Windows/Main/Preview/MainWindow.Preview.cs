@@ -204,7 +204,9 @@ public partial class MainWindow
 		UpdateCutScrim(position);
 		UpdatePreviewTimeText();
 		UpdateFrameStatus();
-		RefreshWidgetFrames();
+		// Measuring a widget takes the compositor's lock, which it holds while drawing a whole frame: asked for at every played frame
+		// the UI thread stands in that queue and the window freezes while the video goes on. The still shown on pause brings the frames.
+		if (!_previewPlayer.IsPlaying) RefreshWidgetFrames();
 	}
 
 	private void OnPreviewPlaybackStopped()

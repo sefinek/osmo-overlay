@@ -46,7 +46,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 					DateTimeTextElement or ElevationElement or GradientElement or RollGaugeElement or GMeterElement or CompassElement or SunWidgetElement or GpsAlertElement
 						or TripProgressBarElement => e with { Visible = false },
 					ProfileChartElement chart => chart with { Y = chartY, Visible = true, Series = ProfileSeries.Height, Axis = ProfileAxis.Time, AutoHeight = true },
-					MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false },
+					MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false, RotateWithHeading = true, DotWhenNotFacingTravel = true },
 					DroneBatteryElement => e with { X = m, Y = top, Visible = true },
 					SignalElement => e with { X = signalX, Y = top, Visible = true },
 					SatellitesElement => e with { X = gpsX, Y = top, Visible = true },
@@ -121,7 +121,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 						RcSticksElement => e with { X = sticksX, Y = bottom - OverlayElementBounds.StickPadSize, Visible = true },
 						AttitudeIndicatorElement => e with { X = width / 2f - dial - FpvDialGap / 2, Y = bottom - dial, Visible = true },
 						Orientation3DElement => e with { X = width / 2f + dial + FpvDialGap / 2, Y = bottom - dial, Visible = true },
-						MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false },
+						MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false, RotateWithHeading = true, DotWhenNotFacingTravel = true },
 						SpeedGaugeElement or MapAttributionElement => e,
 						_ => e with { Visible = false }
 					};

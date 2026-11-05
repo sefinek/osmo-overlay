@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
@@ -35,7 +36,7 @@ internal sealed class OverlayCompositor : IDisposable
 	private bool _disposed;
 	// MeasureElement's results for the frame measured last - elements are immutable records, so an edited widget is a new
 	// key; anything changing how the renderer draws (Change, SetTimeline) empties it.
-	private readonly Dictionary<OverlayElement, SKRect?> _measured = new(ReferenceEqualityComparer.Instance);
+	private readonly ConcurrentDictionary<OverlayElement, SKRect?> _measured = new(ReferenceEqualityComparer.Instance);
 	private DerivedFrame? _measuredFrame;
 
 	/// <param name="recordingFrames">Telemetry on the recording's own timeline - mapped per the output timeline from here on.</param>
@@ -309,23 +310,44 @@ internal sealed class OverlayCompositor : IDisposable
 	///     What a widget draws at a position, around its anchor in reference pixels (OverlayRenderer.MeasureElement) - for
 	///     the editor's hit-testing and outlines. A cut-out position measures the frame the output goes on with.
 	/// </summary>
-	public SKRect? MeasureElement(OverlayElement element, TimeSpan position)
+	/// <param name="approximate">
+	///     While playing: the lock is held for most of the time by drawing a played frame, and a caller waiting for it (the UI thread) would stall
+	///     with it. What was measured before is returned as it is (a widget's box hardly changes from frame to frame), an unmeasured widget is
+	///     measured only if the lock is free right now - null otherwise, for the caller's estimate.
+	/// </param>
+	public SKRect? MeasureElement(OverlayElement element, TimeSpan position, bool approximate = false)
 	{
-		lock (_lock)
+		if (!approximate)
 		{
-			if (_disposed) return null;
-
-			double seconds = _timeline is { } timeline ? timeline.NearestOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
-			DerivedFrame frame = TelemetryProcessor.FindNearest(_frames, seconds);
-			if (!ReferenceEquals(frame, _measuredFrame))
-			{
-				_measured.Clear();
-				_measuredFrame = frame;
-			}
-
-			if (!_measured.TryGetValue(element, out SKRect? bounds)) _measured[element] = bounds = Renderer.MeasureElement(element, frame);
-			return bounds;
+			lock (_lock) return MeasureLocked(element, position, false);
 		}
+
+		if (_measured.TryGetValue(element, out SKRect? known)) return known;
+		if (!_lock.TryEnter()) return null;
+		try
+		{
+			return MeasureLocked(element, position, true);
+		}
+		finally
+		{
+			_lock.Exit();
+		}
+	}
+
+	private SKRect? MeasureLocked(OverlayElement element, TimeSpan position, bool keepEarlier)
+	{
+		if (_disposed) return null;
+
+		double seconds = _timeline is { } timeline ? timeline.NearestOutputSeconds(position.TotalSeconds) : position.TotalSeconds;
+		DerivedFrame frame = TelemetryProcessor.FindNearest(_frames, seconds);
+		if (!keepEarlier && !ReferenceEquals(frame, _measuredFrame))
+		{
+			_measured.Clear();
+			_measuredFrame = frame;
+		}
+
+		if (!_measured.TryGetValue(element, out SKRect? bounds)) _measured[element] = bounds = Renderer.MeasureElement(element, frame);
+		return bounds;
 	}
 
 	private ComposedPreviewFrame? RecomposeLocked()

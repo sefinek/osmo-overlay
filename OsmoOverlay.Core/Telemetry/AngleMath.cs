@@ -18,6 +18,13 @@ public static class AngleMath
 		return deg < 0 ? deg + 360 : deg;
 	}
 
+	/// <summary>The smaller angle between two directions, 0..180.</summary>
+	public static double DifferenceDegrees(double a, double b)
+	{
+		double delta = NormalizeDegrees(a - b);
+		return delta > 180 ? 360 - delta : delta;
+	}
+
 	/// <summary>The angle `fraction` of the way from `from` to `to`, the shorter way round.</summary>
 	public static double LerpDegrees(double from, double to, double fraction)
 	{

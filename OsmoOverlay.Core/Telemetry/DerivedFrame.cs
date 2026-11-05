@@ -22,8 +22,13 @@ public sealed record DerivedFrame(
 	// The first frame after a cut (OutputTimeline.MapFrames) or after a gap between files (TelemetryFrame.StartsAfterGap) -
 	// where a drawn route must not simply carry on (RouteJoin) - CutJoin is the cut's own choice, null for the default (and for a gap between files).
 	bool StartsAfterCut = false,
-	RouteJoin? CutJoin = null)
+	RouteJoin? CutJoin = null,
+	// The heading steadied for a widget that turns with it (HeadingStabilizer); null (frames made by hand) = HeadingDegrees.
+	double? StableHeadingDegrees = null)
 {
+	/// <summary>The direction of travel a map turning with it uses when its heading is steadied.</summary>
+	public double SteadyHeadingDegrees => StableHeadingDegrees ?? HeadingDegrees;
+
 	/// <summary>How the route reaches this frame from the one before - null when it simply carries on.</summary>
 	public RouteJoin? JoinBefore => StartsAfterCut ? CutJoin ?? RouteJoins.Default : null;
 }

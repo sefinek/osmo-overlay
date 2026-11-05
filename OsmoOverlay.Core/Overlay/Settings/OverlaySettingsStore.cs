@@ -4,6 +4,7 @@ using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Localization;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 
 namespace OsmoOverlay.Core.Overlay;
 
@@ -175,7 +176,9 @@ public sealed record OverlaySettings(
 	// The units new widgets and the built-in layouts start with (UnitPreferences); null = metric, until the welcome window's Units step is saved.
 	UnitPreferences? MeasurementUnits = null,
 	// The map behind a GPS track viewed with no recording (TrackMapSettings); null = its defaults.
-	TrackMapSettings? TrackMap = null)
+	TrackMapSettings? TrackMap = null,
+	// The resolution and frame rate last chosen for a GPS track viewed with no recording; null = TrackOnlyFormat.Default.
+	TrackOnlyFormat? TrackFormat = null)
 {
 	/// <summary>Whether the preview draws the widgets' shadows: on in the preview and not turned off everywhere.</summary>
 	[JsonIgnore]
