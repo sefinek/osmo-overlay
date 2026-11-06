@@ -46,8 +46,28 @@ internal static class Palette
 	/// <summary>A palette color as a translucent fill, e.g. a status pill's background behind text in the same color.</summary>
 	public static IBrush Tint(IBrush brush, double opacity)
 	{
-		return new SolidColorBrush(((ISolidColorBrush)brush).Color, opacity);
+		var source = (ISolidColorBrush)brush;
+		var tint = new SolidColorBrush(source.Color, opacity);
+		lock (Tints) Tints.Add((new WeakReference<SolidColorBrush>(tint), source, opacity));
+		return tint;
 	}
+
+	/// <summary>Tints are copies of a palette color, so a theme change (AppThemes.Apply) has to recolor them in place.</summary>
+	public static void RefreshTints()
+	{
+		lock (Tints)
+		{
+			Tints.RemoveAll(t => !t.Tint.TryGetTarget(out _));
+			foreach ((WeakReference<SolidColorBrush> reference, ISolidColorBrush source, double opacity) in Tints)
+			{
+				if (!reference.TryGetTarget(out SolidColorBrush? tint)) continue;
+				tint.Color = source.Color;
+				tint.Opacity = opacity;
+			}
+		}
+	}
+
+	private static readonly List<(WeakReference<SolidColorBrush> Tint, ISolidColorBrush Source, double Opacity)> Tints = [];
 
 	private static IBrush Brush(string key)
 	{

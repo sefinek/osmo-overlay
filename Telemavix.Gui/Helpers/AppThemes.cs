@@ -47,5 +47,7 @@ internal static class AppThemes
 			accent.GradientStops[0].Color = (Color)app.Resources["AccentColor"]!;
 			accent.GradientStops[1].Color = (Color)app.Resources["AccentGlowColor"]!;
 		}
+
+		Palette.RefreshTints();
 	}
 }
