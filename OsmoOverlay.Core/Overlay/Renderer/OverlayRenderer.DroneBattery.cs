@@ -18,6 +18,8 @@ public sealed partial class OverlayRenderer
 	private static readonly SKColor DroneBatteryFullColor = SKColor.Parse("#4CAF50");
 	private static readonly SKColor DroneBatteryMidColor = SKColor.Parse("#FFC107");
 
+	private const string CurrentSeparator = " · ";
+
 	internal static readonly DroneBattery SampleDroneBattery = new(100, 99.9, 99.9, 99.9, [3.99, 3.99, 3.99]);
 
 	private readonly SKPaint _droneBatteryPaint = new() { IsAntialias = true };
@@ -68,14 +70,20 @@ public sealed partial class OverlayRenderer
 	{
 		List<(string, BatteryCondition)> rows = [];
 		BatteryCondition cells = DroneBatteryHealth.Cells(battery, element.LowCellVolts, element.CriticalCellVolts);
-		if (element.ShowVoltage) rows.Add((battery?.VoltageV is { } volts ? $"{F(volts, "0.0")} V" : "-- V", cells));
+		string current = battery?.CurrentA is { } amps ? $"{F(amps, "0.0")} A" : "-- A";
+		bool beside = element is { ShowVoltage: true, ShowCurrent: true, CurrentBesideVoltage: true };
+		if (element.ShowVoltage)
+		{
+			string voltage = battery?.VoltageV is { } volts ? $"{F(volts, "0.0")} V" : "-- V";
+			rows.Add((beside ? voltage + CurrentSeparator + current : voltage, cells));
+		}
 		if (element.ShowTemperature)
 		{
 			(string value, string unit) = FormatTemperature(battery?.TemperatureCelsius, element.Units);
 			rows.Add(($"{value} {unit}", DroneBatteryHealth.Temperature(battery?.TemperatureCelsius, element.ColdCautionCelsius, element.ColdCriticalCelsius, element.HotCautionCelsius, element.HotCriticalCelsius)));
 		}
 
-		if (element.ShowCurrent) rows.Add((battery?.CurrentA is { } amps ? $"{F(amps, "0.0")} A" : "-- A", BatteryCondition.Normal));
+		if (element.ShowCurrent && !beside) rows.Add((current, BatteryCondition.Normal));
 		if (element.ShowCells) rows.Add((battery?.CellVoltages is { Count: > 0 } list ? string.Join(" / ", list.Select(c => F(c, "0.00"))) + " V" : "-- V", cells));
 		return [.. rows];
 	}
@@ -113,8 +121,20 @@ public sealed partial class OverlayRenderer
 		(string Text, BatteryCondition Condition)[] rows = DroneBatteryRows(element, battery);
 		for (int i = 0; i < rows.Length; i++)
 		{
-			DrawOutlined(canvas, rows[i].Text, left, OverlayElementBounds.DroneBatteryLineBaseline + i * OverlayElementBounds.DroneBatteryLineStep, lineFont,
-				DroneBatteryLineColor(element, rows[i].Condition, textColor), outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+			float baseline = OverlayElementBounds.DroneBatteryLineBaseline + i * OverlayElementBounds.DroneBatteryLineStep;
+			string text = rows[i].Text;
+			SKColor color = DroneBatteryLineColor(element, rows[i].Condition, textColor);
+			// The current on the voltage's line keeps the plain color: the voltage's condition says nothing about it.
+			int split = i == 0 && element is { ShowVoltage: true, ShowCurrent: true, CurrentBesideVoltage: true } ? text.IndexOf(CurrentSeparator, StringComparison.Ordinal) : -1;
+			if (split < 0)
+			{
+				DrawOutlined(canvas, text, left, baseline, lineFont, color, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+				continue;
+			}
+
+			string voltage = text[..split];
+			DrawOutlined(canvas, voltage, left, baseline, lineFont, color, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+			DrawOutlined(canvas, text[split..], left + lineFont.MeasureText(voltage), baseline, lineFont, textColor, outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
 		}
 	}
 

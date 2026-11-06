@@ -22,7 +22,7 @@ public sealed class TrackBackdropTests
 		}
 
 		var mosaic = new RouteMapMosaic(bitmap, 0, 0, Zoom, new GeoBounds(0, 1, 0, 1), new SKRect(0, 0, 2048, 2048), 1);
-		return new TrackBackdrop(mosaic, "Credit", options, 1920, route);
+		return new TrackBackdrop(mosaic, options, 1920, route);
 	}
 
 	// 10 Hz for a minute, moving east across the map; the aircraft's attitude only where asked for.

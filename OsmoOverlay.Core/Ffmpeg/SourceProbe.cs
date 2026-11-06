@@ -151,20 +151,44 @@ public static partial class SourceProbe
 		return new SourceInfo(video, audio, duration, containerCreationTimeUtc, camera);
 	}
 
-	/// <summary>A music file's length in seconds; throws when ffprobe can't read it or it has no sound.</summary>
-	public static double ProbeAudioDuration(string path)
+	/// <summary>
+	///     A music file's length in seconds. False with the reason in `problem` when ffprobe can't read it, it has no sound (a video
+	///     without an audio stream is a normal thing to pick) or its length is unknown; only a failure to run ffprobe at all throws.
+	/// </summary>
+	public static bool TryProbeAudioDuration(string path, out double seconds, out string problem)
 	{
+		seconds = 0;
 		ProcessStartInfo psi = ProcessHelper.CreateHidden("ffprobe",
 			"-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_type:format=duration", "-of", "json", path);
 		(int exitCode, string stdout, string stderr) = ProcessHelper.RunCaptured(psi);
-		if (exitCode != 0) throw new InvalidOperationException($"ffprobe exited with an error ({exitCode}): {stderr}");
+		if (exitCode != 0)
+		{
+			problem = $"ffprobe exited with an error ({exitCode}): {stderr}";
+			return false;
+		}
 
-		JsonNode root = JsonNode.Parse(stdout) ?? throw new InvalidOperationException("Empty ffprobe output.");
-		if (root["streams"]?.AsArray().Count is null or 0) throw new InvalidOperationException($"No audio stream found in {path}.");
+		JsonNode? root = JsonNode.Parse(stdout);
+		if (root is null)
+		{
+			problem = "Empty ffprobe output.";
+			return false;
+		}
 
-		return double.TryParse(root["format"]?["duration"]?.GetValue<string>(), NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds) && seconds > 0
-			? seconds
-			: throw new InvalidOperationException($"The length of {path} is unknown.");
+		if (root["streams"]?.AsArray().Count is null or 0)
+		{
+			problem = $"No audio stream found in {path}.";
+			return false;
+		}
+
+		if (!double.TryParse(root["format"]?["duration"]?.GetValue<string>(), NumberStyles.Float, CultureInfo.InvariantCulture, out seconds) || seconds <= 0)
+		{
+			seconds = 0;
+			problem = $"The length of {path} is unknown.";
+			return false;
+		}
+
+		problem = "";
+		return true;
 	}
 
 	/// <summary>The flat picture reframed from the lenses - its size, and the lenses' bitrate per pixel kept at that size.</summary>

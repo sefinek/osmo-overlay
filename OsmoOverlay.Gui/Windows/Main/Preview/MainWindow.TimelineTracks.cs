@@ -85,11 +85,17 @@ public partial class MainWindow
 		TimelineScrollBar.Value = ExpandedTimeline.ViewStart;
 	}
 
+	/// <summary>The sound's lane (and its label) only where there is sound to show: a recording without any, or a GPS track alone, has none.</summary>
+	private void ShowAudioLane(bool visible)
+	{
+		ExpandedTimeline.HasAudioTrack = AudioTrackLabel.IsVisible = visible;
+	}
+
 	/// <summary>With the preview: starts the generators for a newly loaded recording, or hands the timeline the ones it already has.</summary>
 	private async Task LoadTimelineTracksAsync(FileSummary summary)
 	{
 		double aspect = (double)summary.Video.Width / summary.Video.Height;
-		ExpandedTimeline.HasAudioTrack = AudioTrackLabel.IsVisible = summary.Audio is not null;
+		ShowAudioLane(summary.Audio is not null);
 		if (ReferenceEquals(_timelineTracksFor, summary))
 		{
 			ExpandedTimeline.SetSources(_timelineThumbnails, _timelineWaveform, summary.Video.Fps, aspect);

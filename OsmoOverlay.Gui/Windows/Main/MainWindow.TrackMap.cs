@@ -13,6 +13,7 @@ public partial class MainWindow
 {
 	private readonly DispatcherTimer _trackMapDelay = new() { Interval = TimeSpan.FromMilliseconds(500) };
 	private CancellationTokenSource? _trackMapBuild;
+	private TrackMapSettings? _pendingTrackMap;
 	private bool _loadingTrackMap;
 
 	private void WireTrackMap()
@@ -25,6 +26,12 @@ public partial class MainWindow
 		_trackMapDelay.Tick += async (_, _) =>
 		{
 			_trackMapDelay.Stop();
+			if (_pendingTrackMap is { } pending)
+			{
+				_pendingTrackMap = null;
+				OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { TrackMap = pending });
+			}
+
 			await RebuildTrackBackdropAsync();
 		};
 	}
@@ -41,13 +48,12 @@ public partial class MainWindow
 		_loadingTrackMap = false;
 	}
 
-	/// <summary>Saved at once, the map fetched again once the changes stop (a spin of the zoom box is several).</summary>
+	/// <summary>Kept until the changes stop (a spin of the zoom box is several), then saved and the map fetched again.</summary>
 	private void ChangeTrackMap(Func<TrackMapSettings, TrackMapSettings> change)
 	{
 		if (_loadingTrackMap) return;
 
-		OverlaySettings settings = OverlaySettingsStore.Load();
-		OverlaySettingsStore.Save(settings with { TrackMap = change(TrackMapSettings.From(settings)).Sanitized() });
+		_pendingTrackMap = change(_pendingTrackMap ?? TrackMapSettings.From(OverlaySettingsStore.Load())).Sanitized();
 		_trackMapDelay.Stop();
 		_trackMapDelay.Start();
 	}
@@ -83,7 +89,7 @@ public partial class MainWindow
 		TrackMapStatus.IsVisible = true;
 		try
 		{
-			TrackBackdrop? backdrop = await Task.Run(() => TrackBackdrop.BuildAsync(playback.DerivedFrames, settings, TrackOnlyFormat.Of(summary.Video), build.Token), build.Token);
+			TrackBackdrop? backdrop = await Task.Run(() => TrackBackdrop.BuildAsync(playback.DerivedFrames, settings, _trackOnlyFormat, build.Token), build.Token);
 			if (build != _trackMapBuild || _fullTelemetry != playback)
 			{
 				backdrop?.Dispose();
@@ -115,7 +121,13 @@ public partial class MainWindow
 		}
 		finally
 		{
-			if (build == _trackMapBuild) TrackMapStatus.IsVisible = false;
+			if (build == _trackMapBuild)
+			{
+				_trackMapBuild = null;
+				TrackMapStatus.IsVisible = false;
+			}
+
+			build.Dispose();
 		}
 	}
 }

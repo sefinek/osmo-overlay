@@ -34,7 +34,7 @@
 				<NumericUpDown Name="OutDurationBox" Width="136" Increment="0.1" FormatString="0.0" />
 			</StackPanel>
 		</Grid>
-		<TextBlock Classes="infoLabel" Margin="0" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+		<TextBlock Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 		           Text="{x:Static local:Strings.ElementTiming_TimesAreInTheRendered}" />
 	</StackPanel>
 </UserControl>

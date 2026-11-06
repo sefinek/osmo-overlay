@@ -379,6 +379,8 @@ public sealed record DroneBatteryElement : LabeledStatElement
 	public bool ShowVoltage { get; init; } = true;
 	public bool ShowTemperature { get; init; }
 	public bool ShowCurrent { get; init; }
+	/// <summary>The current on the voltage's line ("11.4 V · 7.1 A") instead of a line of its own; only with both shown.</summary>
+	public bool CurrentBesideVoltage { get; init; }
 	public bool ShowCells { get; init; }
 	/// <summary>The icon and the percent follow the charge from green to red and the voltage, cell and temperature lines turn orange or red when poor; off, all keep their plain colors.</summary>
 	public bool ColorByCharge { get; init; } = true;
@@ -454,8 +456,8 @@ public sealed record AttitudeIndicatorElement : StyledOverlayElement, IPanelElem
 }
 
 /// <summary>
-///     The aircraft drawn at its pitch, roll and heading (a flight log), seen from the south with north toward the back of the
-///     dial: the front is blue, the rear orange. Circle-centered.
+///     The aircraft (DroneModel, the track map's own) drawn at its pitch, roll and heading (a flight log), seen from the south and
+///     above with north toward the back of the dial. Its rotors stand still unless SpinRotors is on. Circle-centered.
 /// </summary>
 public sealed record Orientation3DElement : StyledOverlayElement, IPanelElement
 {
@@ -468,6 +470,8 @@ public sealed record Orientation3DElement : StyledOverlayElement, IPanelElement
 
 	public string? PanelColor { get; init; }
 	public float PanelOpacity { get; init; } = OverlayRenderer.PanelOpacityDefault;
+	/// <summary>The rotors turn (and smear) as the flight's pace and tilt say; off, they stand still. Costs drawing time, so off by default.</summary>
+	public bool SpinRotors { get; init; }
 }
 
 /// <summary>No Units - CameraInfo shows ISO/shutter/color-temperature, none of which are metric/imperial.</summary>

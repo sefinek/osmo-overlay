@@ -68,8 +68,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 
 	/// <summary>
 	///     An FPV goggles' OSD, not the DJI layout: everything that is shown is white, text on a see-through ground. The aircraft's own state
-	///     is along the edges - battery, radio link and GPS in a row top left, the flight timer and the height, distance and climb rate in a
-	///     column top right, the flight mode top center over the alerts (three, 3 s, fading in 0.12 s and sliding in) - and the instruments
+	///     is along the edges - battery, radio link and GPS in a row top left, the flight timer and the height, the distance to home, the distance flown and the
+	///     average speed in a column top right, the records (top speed, highest point, farthest from home) and the climb rate below them in a column down the left under the battery, the flight mode top center over the alerts (three, 3 s, fading in 0.12 s and sliding in) - and the instruments
 	///     are along the bottom: the remote's sticks left, the attitude indicator and the 3D orientation in the middle, the speed gauge right.
 	///     The map is bottom left (with its credit), the sticks next to it. The date and time sit under the flight timer. No profile, sun or camera gauges.
 	/// </summary>
@@ -106,7 +106,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 				{
 					OverlayElement placed = e switch
 					{
-						DroneBatteryElement battery => battery with { X = m, Y = top, Visible = true, ShowTemperature = true, ShowCurrent = true, ShowCells = true },
+						DroneBatteryElement battery => battery with { X = m, Y = top, Visible = true, ShowTemperature = true, ShowCurrent = true, CurrentBesideVoltage = true, ShowCells = true },
 						SignalElement => e with { X = signalX, Y = top, Visible = true },
 						SatellitesElement => e with { X = gpsX, Y = top, Visible = true },
 						FlightModeElement f => AtTopCenter(f),
@@ -115,9 +115,9 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 						DateTimeTextElement d => OnRightEdge(d, top + FpvDateBelowTime),
 						HeightElement h => OnRightEdge(h, top + FpvRightColumnTop),
 						HomeDistanceElement d => OnRightEdge(d, top + FpvRightColumnTop + FpvRowStep),
-						VerticalSpeedElement v => OnRightEdge(v, top + FpvRightColumnTop + 2 * FpvRowStep),
-						DistanceElement => e with { X = m, Y = leftY, Visible = true },
-						TripStatElement => e with { X = m, Y = leftY + FpvRowStep, Visible = true },
+						DistanceElement d => OnRightEdge(d, top + FpvRightColumnTop + 2 * FpvRowStep),
+						VerticalSpeedElement => e with { X = m, Y = leftY + 3 * FpvRowStep, Visible = true },
+						TripStatElement => e with { X = m, Y = leftY, Visible = true },
 						RcSticksElement => e with { X = sticksX, Y = bottom - OverlayElementBounds.StickPadSize, Visible = true },
 						AttitudeIndicatorElement => e with { X = width / 2f - dial - FpvDialGap / 2, Y = bottom - dial, Visible = true },
 						Orientation3DElement => e with { X = width / 2f + dial + FpvDialGap / 2, Y = bottom - dial, Visible = true },
@@ -131,9 +131,9 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 						_ => placed
 					};
 				}),
-				new TripStatElement { X = m, Y = leftY + 2 * FpvRowStep, Stat = TripStatKind.AverageSpeed, AccentColor = white, Id = "TripStat.AverageSpeed" },
-				new TripStatElement { X = m, Y = leftY + 3 * FpvRowStep, Stat = TripStatKind.MaxHeight, AccentColor = white, Id = "TripStat.MaxHeight" },
-				new TripStatElement { X = m, Y = leftY + 4 * FpvRowStep, Stat = TripStatKind.MaxHomeDistance, AccentColor = white, Id = "TripStat.MaxHomeDistance" }
+				OnRightEdge(new TripStatElement { X = m, Y = 0, Stat = TripStatKind.AverageSpeed, AccentColor = white, Id = "TripStat.AverageSpeed" }, top + FpvRightColumnTop + 3 * FpvRowStep),
+				new TripStatElement { X = m, Y = leftY + FpvRowStep, Stat = TripStatKind.MaxHeight, AccentColor = white, Id = "TripStat.MaxHeight" },
+				new TripStatElement { X = m, Y = leftY + 2 * FpvRowStep, Stat = TripStatKind.MaxHomeDistance, AccentColor = white, Id = "TripStat.MaxHomeDistance" }
 			]
 		};
 	}
@@ -142,7 +142,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	private const float DroneGpsWidth = 240;
 	private const float DroneSignalWidth = 280;
 	private const float DroneTopGap = 60;
-	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 502, FpvSignalWidth = 242, FpvLeftColumnTop = 340, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvMapToSticks = 110;
+	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 502, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvMapToSticks = 110;
 	private const float DroneColumnStep = 220;
 
 	// The sticks and the two dials stacked down the right edge under the top row: where the first starts, and the gap between them.

@@ -224,7 +224,7 @@ public partial class MainWindow
 	/// <summary>Up/Down: to the previous/next edge of a cut, the selection or a GPS loss, a key moment, or the start/end (TimelineMarkers).</summary>
 	private void JumpToMarker(int direction)
 	{
-		if (_summary is null || _trackOnly) return;
+		if (_summary is null) return;
 		ReturnToRecordingPreview();
 
 		double fps = _summary.Video.Fps;
@@ -324,7 +324,7 @@ public partial class MainWindow
 	/// <summary>The frame on screen.</summary>
 	private long CurrentFrame()
 	{
-		return _fullTelemetry is null ? FrameAt(PreviewTimeline.Value) : _previewFrame;
+		return _fullTelemetry is null || _trackOnly ? FrameAt(PreviewTimeline.Value) : _previewFrame;
 	}
 
 	/// <summary>The frame shown at `seconds` - the same rule the decoders use (PreviewFrames.IndexAt), within the recording.</summary>

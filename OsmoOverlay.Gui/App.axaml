@@ -331,6 +331,12 @@
 		<Style Selector="TextBlock.infoLabel">
 			<Setter Property="Opacity" Value="0.55" />
 		</Style>
+		<Style Selector="TextBlock.infoLabel.checkHint">
+			<Setter Property="Margin" Value="0,-10,0,0" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Opacity" Value="0.45" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
 		<Style Selector="Window.contentDialog">
 			<Setter Property="SizeToContent" Value="WidthAndHeight" />
 			<Setter Property="MinWidth" Value="640" />

@@ -169,12 +169,19 @@ public sealed class OverlayPresetTests
 		var fpv = OverlayPreset.CreateFpv("y", "FPV");
 		const float edge = OverlayElementBounds.ReferenceWidth - OverlayElementBounds.Margin;
 
-		foreach (OverlayElementType type in new[] { OverlayElementType.Height, OverlayElementType.HomeDistance, OverlayElementType.VerticalSpeed, OverlayElementType.ElapsedTimeText, OverlayElementType.DateTimeText })
+		foreach (OverlayElementType type in new[] { OverlayElementType.Height, OverlayElementType.HomeDistance, OverlayElementType.Distance, OverlayElementType.ElapsedTimeText, OverlayElementType.DateTimeText })
 		{
 			var element = (StyledOverlayElement)Get(fpv, type);
 			Assert.AreEqual(TextAlign.Right, element.TextAlign, type.ToString());
 			Assert.AreEqual(edge, element.X + OverlayElementBounds.TextBoxRight(element), 0.5, $"{type} ends on the margin");
 		}
+
+		var average = fpv.Elements.OfType<TripStatElement>().Single(e => e.Stat == TripStatKind.AverageSpeed);
+		Assert.AreEqual(TextAlign.Right, average.TextAlign);
+		Assert.AreEqual(edge, average.X + OverlayElementBounds.TextBoxRight(average), 0.5, "the average speed ends on the margin");
+
+		var climb = Get(fpv, OverlayElementType.VerticalSpeed);
+		Assert.AreEqual(OverlayElementBounds.Margin, climb.X, "the climb rate is in the left column");
 
 		var mode = (StyledOverlayElement)Get(fpv, OverlayElementType.FlightMode);
 		Assert.AreEqual(TextAlign.Center, mode.TextAlign);

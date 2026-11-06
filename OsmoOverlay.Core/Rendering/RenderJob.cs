@@ -231,122 +231,40 @@ public static class RenderJob
 			// or it's orphaned (forever, for a green-screen render with its infinite input).
 			try
 			{
-				Stream stdin = ffmpeg.StandardInput.BaseStream;
-				Task<string> stderrTask = ffmpeg.StandardError.ReadToEndAsync(ct);
-
-				// stdin.Write can't be cancelled; killing ffmpeg breaks the pipe and unblocks it as an IOException (caught below).
-				using CancellationTokenRegistration killOnCancel = ct.Register(() => KillFfmpegIfRunning(ffmpeg));
-
 				// Drawing (CPU) and feeding ffmpeg (I/O) overlap on two threads. RenderInto() isn't safe to call
 				// concurrently - only the producer thread calls it.
-				var channel = Channel.CreateBounded<byte[]>(
-					new BoundedChannelOptions(RenderPrefetchFrames) { SingleReader = true, SingleWriter = true });
-
-				// Linked so the consumer's finally can always unblock the producer, even when the consumer stopped
-				// for a reason other than `ct` (ffmpeg crashing) and nobody drains the channel any more.
-				using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-				CancellationToken producerCt = producerCts.Token;
-
 				// Written frames' buffers come back here; the bounded channel caps how many exist.
 				var freeBuffers = new ConcurrentQueue<byte[]>();
 				int frameBufferSize = renderer.FrameBufferSize();
-
-				var producer = Task.Run(async () =>
-				{
-					try
-					{
-						if (pictures is not null)
-							await ProduceComposedAsync(pictures, plan, derived, renderer, fps, channel.Writer, producerCt);
-						else
-							await ProduceOverlayAsync(totalFrames, derived, renderer, fps, freeBuffers, frameBufferSize, channel.Writer, producerCt);
-
-						channel.Writer.TryComplete();
-					}
-					catch (OperationCanceledException)
-					{
-						channel.Writer.TryComplete();
-					}
-					catch (Exception ex)
-					{
-						channel.Writer.TryComplete(ex);
-					}
-				}, producerCt);
-
-				int written = 0;
 				var rate = new RenderRateEstimator(fps);
-				try
-				{
-					await foreach (byte[] pixels in channel.Reader.ReadAllAsync(ct))
+
+				FrameFeedResult feed = await FfmpegFrameFeed.RunAsync(ffmpeg, RenderPrefetchFrames,
+					(writer, producerCt) => pictures is not null
+						? ProduceComposedAsync(pictures, plan, derived, renderer, fps, writer, producerCt)
+						: ProduceOverlayAsync(totalFrames, derived, renderer, fps, freeBuffers, frameBufferSize, writer, producerCt),
+					(pixels, count) =>
 					{
-						stdin.Write(pixels, 0, pixels.Length);
 						if (pictures is not null) pictures.Recycle(new VideoFrame(pixels, output.Width, output.Height));
 						else freeBuffers.Enqueue(pixels);
-						written++;
-						rate.Add(written);
+						rate.Add(count);
 
-						if (written % 60 == 0)
+						if (count % 60 == 0)
 						{
-							Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Frame, written, totalFrames) + rate.Describe(written, totalFrames),
-								written, totalFrames);
+							Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Frame, count, totalFrames) + rate.Describe(count, totalFrames),
+								count, totalFrames);
 						}
-					}
+					}, ct);
 
-					stdin.Flush();
-				}
-				catch (OperationCanceledException)
+				if (feed.Cancelled) return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);
+
+				if (feed.ExitCode != 0)
 				{
-					// The cancelled check below decides whether to report it - the producer may also stop first and end the channel normally.
-				}
-				catch (IOException)
-				{
-					// ffmpeg's pipe broke - either it died on its own, or killOnCancel above just killed it
-					// because of a cancellation already in flight; the checks below sort out which.
-				}
-				finally
-				{
-					producerCts.Cancel();
-					stdin.Close();
-
-					try
-					{
-						await producer;
-					}
-					catch
-					{
-						// Any real failure was already observed via the channel (ReadAllAsync rethrows it
-						// above) - a second throw here would only be a duplicate.
-					}
-				}
-
-				bool cancelled = ct.IsCancellationRequested;
-				if (cancelled)
-				{
-					// killOnCancel already killed ffmpeg - closing stdin alone wouldn't stop it: the overlay's eof_action
-					// repeats the last frame against the rest of the main input (endless for a green screen). Not ct here,
-					// it's cancelled and this wait must finish.
-					await ffmpeg.WaitForExitAsync(CancellationToken.None);
-					try
-					{
-						await stderrTask;
-					}
-					catch (Exception)
-					{
-						// A killed process's stderr can fault (broken pipe, the token) - it's a cancellation either way.
-					}
-
-					return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);
-				}
-
-				await ffmpeg.WaitForExitAsync(CancellationToken.None);
-				string stderr = await stderrTask;
-
-				if (ffmpeg.ExitCode != 0)
-				{
-					AppLogger.Error(string.Format(CoreStrings.Render_FfmpegFailed, ffmpeg.ExitCode, stderr));
+					AppLogger.Error(string.Format(CoreStrings.Render_FfmpegFailed, feed.ExitCode, feed.StandardError));
 					return new RenderResult(false,
-						string.Format(CoreStrings.Render_FfmpegFailedSummary, ffmpeg.ExitCode, FfmpegErrorSummary(stderr)), sw.Elapsed);
+						string.Format(CoreStrings.Render_FfmpegFailedSummary, feed.ExitCode, FfmpegErrorSummary(feed.StandardError)), sw.Elapsed);
 				}
 
+				int written = feed.FramesWritten;
 				// Short renders are dominated by the route intro and ffmpeg's spin-up, not representative of
 				// a full one - only a render long enough to reach steady state updates the estimate.
 				if (written >= MinFramesForSpeedHistory && rate.AverageFps(written) is { } averageFps)
@@ -515,7 +433,7 @@ public static class RenderJob
 		return string.Join(", ", plan.Pieces.Select(p => $"{TimeText.Format(p.SourceStartFrame / fps)} - {TimeText.Format(p.SourceEndFrame / fps)}"));
 	}
 
-	private static void DeleteIncompleteOutput(Process ffmpeg, string outputPath)
+	internal static void DeleteIncompleteOutput(Process ffmpeg, string outputPath)
 	{
 		try
 		{
@@ -532,7 +450,7 @@ public static class RenderJob
 		}
 	}
 
-	private static void KillFfmpegIfRunning(Process ffmpeg)
+	internal static void KillFfmpegIfRunning(Process ffmpeg)
 	{
 		try
 		{

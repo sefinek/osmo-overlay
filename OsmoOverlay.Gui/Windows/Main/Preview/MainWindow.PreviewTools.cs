@@ -28,7 +28,8 @@ public partial class MainWindow
 		if (_summary is null) return;
 
 		var position = TimeSpan.FromSeconds(PreviewTimeline.Value);
-		string source = _summary.InputPaths[0];
+		string? source = _summary.InputPaths.Count > 0 ? _summary.InputPaths[0] : _trackOnlyPath;
+		if (source is null) return;
 		string suggestedName = $"{Path.GetFileNameWithoutExtension(source)}_{TimeText.Format(position.TotalSeconds).Replace(':', '-')}.png";
 
 		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions

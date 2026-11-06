@@ -33,14 +33,23 @@ public partial class MainWindow
 		if (_editingElementId is { } id) SetElementUnits(id, DroneBatteryImperialRadio.IsChecked == true ? UnitSystem.Imperial : UnitSystem.Metric);
 	}
 
+	private void OnOrientation3DSpinChanged(object? sender, RoutedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
+
+		bool spin = Orientation3DSpinCheck.IsChecked == true;
+		UpdateElement(id, el => el is Orientation3DElement o ? o with { SpinRotors = spin } : el);
+	}
+
 	private void OnDroneBatteryOptionChanged(object? sender, RoutedEventArgs e)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
 
 		bool icon = DroneBatteryIconCheck.IsChecked == true, voltage = DroneBatteryVoltageCheck.IsChecked == true, temperature = DroneBatteryTemperatureCheck.IsChecked == true;
 		bool current = DroneBatteryCurrentCheck.IsChecked == true, cells = DroneBatteryCellsCheck.IsChecked == true, colored = DroneBatteryColorCheck.IsChecked == true;
+		bool beside = DroneBatteryCurrentBesideCheck.IsChecked == true;
 		UpdateElement(id, el => el is DroneBatteryElement b
-			? b with { ShowIcon = icon, ShowVoltage = voltage, ShowTemperature = temperature, ShowCurrent = current, ShowCells = cells, ColorByCharge = colored }
+			? b with { ShowIcon = icon, ShowVoltage = voltage, ShowTemperature = temperature, ShowCurrent = current, CurrentBesideVoltage = beside, ShowCells = cells, ColorByCharge = colored }
 			: el);
 	}
 

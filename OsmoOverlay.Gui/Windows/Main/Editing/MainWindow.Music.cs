@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -221,15 +222,21 @@ public partial class MainWindow
 			return;
 		}
 
-		double sourceSeconds;
-		try
+		(bool usable, double sourceSeconds, string problem) = await Task.Run(() =>
 		{
-			sourceSeconds = await Task.Run(() => SourceProbe.ProbeAudioDuration(path));
-		}
-		catch (Exception ex)
+			try
+			{
+				return (SourceProbe.TryProbeAudioDuration(path, out double seconds, out string reason), seconds, reason);
+			}
+			catch (Exception ex) when (ex is Win32Exception or IOException or InvalidOperationException)
+			{
+				return (false, 0, ex.Message);
+			}
+		});
+		if (!usable)
 		{
-			AppLogger.Warn(ex, string.Format(Strings.Music_CantUse, Path.GetFileName(path), ex.Message));
-			await ConfirmDialog.ShowAsync(this, Strings.Music_CantUseTitle, string.Format(Strings.Music_CantUse, Path.GetFileName(path), ex.Message),
+			AppLogger.Warn(string.Format(Strings.Music_CantUse, Path.GetFileName(path), problem));
+			await ConfirmDialog.ShowAsync(this, Strings.Music_CantUseTitle, string.Format(Strings.Music_CantUse, Path.GetFileName(path), problem),
 				kind: DialogKind.Warning);
 			HideEmptyMusicTrack();
 			ShowMusic();

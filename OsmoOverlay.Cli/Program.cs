@@ -407,9 +407,14 @@ foreach (string spec in musicSpecs)
 	}
 
 	double length;
+	string musicProblem;
 	try
 	{
-		length = SourceProbe.ProbeAudioDuration(musicFile);
+		if (!SourceProbe.TryProbeAudioDuration(musicFile, out length, out musicProblem))
+		{
+			Console.Error.WriteLine($"Error: {musicFile} can't be read as sound: {musicProblem}");
+			return 1;
+		}
 	}
 	catch (Exception ex) when (ex is InvalidOperationException or Win32Exception or IOException)
 	{

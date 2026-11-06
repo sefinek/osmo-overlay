@@ -215,6 +215,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	{
 		_gpsAlertPaint.Dispose();
 		_droneBatteryPaint.Dispose();
+		_droneControlPaint.Dispose();
+		_droneModel.Dispose();
 		_flightAlertPaint.Dispose();
 		_signalPaint.Dispose();
 		_hudTypeface.Dispose();
@@ -314,6 +316,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	private void ResetFrameCaches()
 	{
+		_rotorPhases = null;
 		_trail.Clear();
 		_trailPixels.Clear();
 		DisposeRoutes(_compassRoutes);
@@ -486,6 +489,24 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		bool parallel = ParallelWidgets && drawn.Any(e => (e.Visible || e is MapAttributionElement) && IsShadowed(e));
 		List<(SKPicture Picture, SKRect Bounds)> widgets = [];
+
+		void Emit(OverlayElement element, ElementState state)
+		{
+			if (!parallel)
+			{
+				DrawWidget(canvas, element, state, frame);
+				return;
+			}
+
+			using var recorder = new SKPictureRecorder();
+			SKCanvas widget = recorder.BeginRecording(canvas.LocalClipBounds);
+			widget.SetMatrix(canvas.TotalMatrix);
+			SKRect? bounds = DrawWidget(widget, element, state, frame);
+			SKPicture picture = recorder.EndRecording();
+			if (bounds is { } device) widgets.Add((picture, device));
+			else picture.Dispose();
+		}
+
 		try
 		{
 			foreach (OverlayElement element in drawn)
@@ -507,20 +528,14 @@ public sealed partial class OverlayRenderer : IDisposable
 
 				if (state.Progress <= 0f) continue;
 
-				if (!parallel)
-				{
-					DrawWidget(canvas, element, state, frame);
-				}
-				else
-				{
-					using var recorder = new SKPictureRecorder();
-					SKCanvas widget = recorder.BeginRecording(canvas.LocalClipBounds);
-					widget.SetMatrix(canvas.TotalMatrix);
-					SKRect? bounds = DrawWidget(widget, element, state, frame);
-					SKPicture picture = recorder.EndRecording();
-					if (bounds is { } device) widgets.Add((picture, device));
-					else picture.Dispose();
-				}
+				Emit(element, state);
+			}
+
+			// The map under the picture itself, when it isn't the one a widget's credit already says.
+			if (BackdropCredit(creditPlaced ? credit?.Text : null) is var (backdropElement, backdropText))
+			{
+				_mapCreditText = backdropText;
+				Emit(backdropElement, ElementState.Shown);
 			}
 
 			Composite(canvas, widgets);

@@ -1,4 +1,5 @@
 using OsmoOverlay.Core.Telemetry;
+using OsmoOverlay.Core.Telemetry.External;
 using SkiaSharp;
 
 namespace OsmoOverlay.Core.Overlay;
@@ -13,17 +14,20 @@ public sealed partial class OverlayRenderer
 	private static readonly SKColor StickMidColor = SKColor.Parse("#FF9A2E");
 	private static readonly SKColor StickEndColor = SKColor.Parse("#FF1F1F");
 	private static readonly SKColor HorizonGroundColor = SKColor.Parse("#1873B8");
-	private static readonly SKColor AircraftFrontColor = SKColor.Parse("#1E9BE6");
-	private static readonly SKColor AircraftRearColor = SKColor.Parse("#FF8A1F");
 
 	// A dot is yellow while the stick is within this share of its travel from the center, red from the second, orange between.
 	private const double StickCenterShare = 0.2, StickEndShare = 0.92;
 
-	// Degrees of pitch the attitude indicator shows from its center to its edge, and the elevation the 3D view looks from.
+	// Degrees of pitch the attitude indicator shows from its center to its edge.
 	private const double HorizonPitchSpan = 40;
+
+	// The elevation the Orientation3D widget looks at the aircraft from.
 	private const double OrientationViewElevationDegrees = 32;
 
-	private static readonly (double X, double Y)[] Rotors = [(-1, 1), (1, 1), (-1, -1), (1, -1)];
+	// The aircraft of the Orientation3D widget is the track map's (DroneModel), in perspective; its rotors' turn is a function of the frame set, kept until it changes.
+	private readonly DroneModel _droneModel = new();
+	private double[,]? _rotorPhases;
+	private double _rotorReferenceKmh;
 
 	private readonly SKPaint _droneControlPaint = new() { IsAntialias = true, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
 
@@ -118,77 +122,14 @@ public sealed partial class OverlayRenderer
 		SKFont font = TextFont(element, OverlayElementBounds.LabelFontSize);
 		DrawOutlined(canvas, "N", 0, -radius + 38, font, TextColorOf(element), SKTextAlign.Center, outlineColor: OutlineColorOf(element), outlineWidthScale: element.OutlineWidth);
 
-		double elevation = AngleMath.DegToRad(OrientationViewElevationDegrees);
-		(double sinE, double cosE) = (Math.Sin(elevation), Math.Cos(elevation));
-		float scale = radius * 0.88f;
-		(double sinR, double cosR) = Math.SinCos(AngleMath.DegToRad(attitude.RollDegrees));
-		(double sinP, double cosP) = Math.SinCos(AngleMath.DegToRad(attitude.PitchDegrees));
-		(double sinY, double cosY) = Math.SinCos(AngleMath.DegToRad(attitude.YawDegrees));
-
-		(double X, double Y, double Z) Place((double X, double Y, double Z) local)
+		if (_rotorPhases is null)
 		{
-			double x = local.X * cosR + local.Z * sinR, z = -local.X * sinR + local.Z * cosR, y = local.Y;
-			double y2 = y * cosP - z * sinP, z2 = y * sinP + z * cosP;
-			return (x * cosY + y2 * sinY, -x * sinY + y2 * cosY, z2);
+			_rotorReferenceKmh = TrackCamera.ReferenceKmh(_allFrames);
+			_rotorPhases = RotorSpin.Phases(_allFrames, _rotorReferenceKmh);
 		}
 
-		SKPoint Project((double X, double Y, double Z) world)
-		{
-			return new SKPoint((float)(world.X * scale), (float)(-(world.Z * cosE + world.Y * sinE) * scale) + 12);
-		}
-
-		double Nearness((double X, double Y, double Z) world)
-		{
-			return -world.Y * cosE + world.Z * sinE;
-		}
-
-		const double arm = 0.62, rotor = 0.34;
-		var parts = new List<(double Nearness, Action Draw)>();
-		foreach ((double sx, double sy) in Rotors)
-		{
-			(double X, double Y, double Z) tip = Place((sx * arm, sy * arm, 0.06));
-			bool front = sy > 0;
-			parts.Add((Nearness(tip), () =>
-			{
-				SKPoint from = Project(Place((0, 0, 0))), to = Project(tip);
-				_droneControlPaint.Style = SKPaintStyle.Stroke;
-				_droneControlPaint.StrokeWidth = 7;
-				_droneControlPaint.Color = new SKColor(70, 78, 88);
-				canvas.DrawLine(from, to, _droneControlPaint);
-
-				using var builder = new SKPathBuilder();
-				const int steps = 28;
-				for (int i = 0; i < steps; i++)
-				{
-					double a = i * 2 * Math.PI / steps;
-					SKPoint p = Project(Place((sx * arm + Math.Cos(a) * rotor, sy * arm + Math.Sin(a) * rotor, 0.06)));
-					if (i == 0) builder.MoveTo(p);
-					else builder.LineTo(p);
-				}
-
-				builder.Close();
-				using SKPath disc = builder.Detach();
-				_droneControlPaint.Style = SKPaintStyle.Fill;
-				_droneControlPaint.Color = new SKColor(200, 210, 220, 90);
-				canvas.DrawPath(disc, _droneControlPaint);
-				_droneControlPaint.Style = SKPaintStyle.Stroke;
-				_droneControlPaint.StrokeWidth = 3;
-				_droneControlPaint.Color = front ? AircraftFrontColor.WithAlpha(230) : new SKColor(210, 218, 226, 230);
-				canvas.DrawPath(disc, _droneControlPaint);
-			}));
-		}
-
-		parts.Add((Nearness(Place((0, 0, 0))), () =>
-		{
-			SKPoint rear = Project(Place((0, -0.42, 0.06))), center = Project(Place((0, 0, 0.06))), front = Project(Place((0, 0.42, 0.06)));
-			_droneControlPaint.Style = SKPaintStyle.Stroke;
-			_droneControlPaint.StrokeWidth = 24;
-			_droneControlPaint.Color = AircraftRearColor;
-			canvas.DrawLine(rear, center, _droneControlPaint);
-			_droneControlPaint.Color = AircraftFrontColor;
-			canvas.DrawLine(center, front, _droneControlPaint);
-		}));
-
-		foreach ((double _, Action draw) in parts.OrderBy(p => p.Nearness)) draw();
+		Span<RotorSpin.RotorPose> rotors = stackalloc RotorSpin.RotorPose[RotorSpin.Count];
+		if (element.SpinRotors) RotorSpin.At(_allFrames, _rotorPhases, frame.Raw.SampleTimeSeconds, _rotorReferenceKmh, rotors);
+		_droneModel.DrawPerspective(canvas, new SKPoint(0, 12), radius * 0.88f, attitude, rotors, OrientationViewElevationDegrees);
 	}
 }

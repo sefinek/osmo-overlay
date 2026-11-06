@@ -195,6 +195,7 @@ public partial class MainWindow
 		if (_fullTelemetry is not null)
 		{
 			_fullTelemetryPosition = position;
+			if (_trackOnly) UpdateCutScrim(position);
 			UpdatePreviewTimeText();
 			return;
 		}

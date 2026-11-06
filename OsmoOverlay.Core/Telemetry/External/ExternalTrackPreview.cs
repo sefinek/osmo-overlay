@@ -14,6 +14,9 @@ public sealed record ExternalTrackPlayback(
 	/// <summary>The map shown instead of black where there is no recording (TrackOnlyRecording) - null for the black picture.</summary>
 	public TrackBackdrop? Backdrop { get; init; }
 
+	/// <summary>A track with no recording (TrackOnlyRecording): its own time is the timeline's, so cuts apply to it like to a recording.</summary>
+	public bool IsTrackOnly => RecordingSeconds <= 0;
+
 	public double DurationSeconds => (Track.EndUtc - Track.StartUtc).TotalSeconds;
 	public double? VideoPosition(double seconds) => ExternalTrackPreview.VideoPosition(Track, Synchronization, seconds, RecordingSeconds);
 }

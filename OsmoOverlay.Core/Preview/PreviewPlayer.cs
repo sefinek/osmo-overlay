@@ -186,7 +186,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		RouteIntroSettings routeIntro = trackPlayback is null ? RouteIntroSettings.ForRecording(settings, availability.GpsFix, camera) : RouteIntroSettings.Disabled;
 		// Building it maps and summarizes the whole recording's telemetry - off the UI thread, handed back through the await.
-		OutputTimeline? outputTimeline = trackPlayback is null ? _outputTimeline : null;
+		OutputTimeline? outputTimeline = trackPlayback is null or { IsTrackOnly: true } ? _outputTimeline : null;
 		bool showOverlay = _showOverlay;
 		OverlayCompositor compositor;
 		try
@@ -195,7 +195,8 @@ public sealed class PreviewPlayer : IDisposable
 					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain && trackPlayback is null, trackPlayback?.Track.DeviceName ?? summary.CameraModel,
 					summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, outputTimeline))
 				{
-					DrawShadows = settings.PreviewDrawsShadows
+					DrawShadows = settings.PreviewDrawsShadows,
+					Backdrop = trackPlayback?.Backdrop?.Map
 				},
 				recordingFrames, trackPlayback?.DurationSeconds ?? summary.TotalFrameCount / summary.Video.Fps, availability, outputTimeline, showOverlay, pool, settings.SpeedCorrectionPercent)
 			{
@@ -336,8 +337,8 @@ public sealed class PreviewPlayer : IDisposable
 		// frame on screen again (StopSession).
 		recording.Compositor.ClearStill();
 
-		var plan = PlaybackPlan.For(recording.TrackPlayback is null ? _outputTimeline : null, fromPosition, recording.Video.Duration, Loop,
-			recording.TrackPlayback is null ? LoopRange : null);
+		bool cutsApply = recording.TrackPlayback is null or { IsTrackOnly: true };
+		var plan = PlaybackPlan.For(cutsApply ? _outputTimeline : null, fromPosition, recording.Video.Duration, Loop, cutsApply ? LoopRange : null);
 		var session = new PlaybackSession(recording.Video, recording.AudioSource, recording.AudioOutput, recording.Compositor,
 			recording.Pool, plan, PlaybackRate, Frames, () => Volatile.Read(ref _volume),
 			recording.AudioSource is { } audio
@@ -442,7 +443,7 @@ public sealed class PreviewPlayer : IDisposable
 		Pause();
 		_outputTimeline = timeline;
 		if (_recording is not { } recording) return;
-		if (recording.TrackPlayback is not null) return;
+		if (recording.TrackPlayback is { IsTrackOnly: false }) return;
 
 		// Remapping a long recording's telemetry takes a while, so it runs off the UI thread - one at a time and in order, and a request
 		// a newer one has already replaced is skipped (the newer one applies its timeline anyway).

@@ -24,6 +24,16 @@ public class DroneMarkerTests
 	}
 
 	[TestMethod]
+	public void DronePresetsTurnTheDotOn_OthersDoNot()
+	{
+		static bool On(OverlayPreset preset) => preset.Elements.OfType<MapWidgetElement>().Single().DotWhenNotFacingTravel;
+
+		Assert.IsTrue(On(OverlayPreset.CreateDrone("d", "d")));
+		Assert.IsTrue(On(OverlayPreset.CreateFpv("f", "f")));
+		Assert.IsFalse(On(OverlayPreset.CreateDefault("x", "x")));
+	}
+
+	[TestMethod]
 	public void NoDotWithoutSettingOrAttitude()
 	{
 		Assert.IsFalse(OverlayRenderer.DroneNotFacingTravel(Frame(0, new DroneAttitude(0, 0, 180)), new MapWidgetElement { X = 0, Y = 0 }));

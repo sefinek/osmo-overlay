@@ -977,6 +977,7 @@ public partial class MainWindow
 			case OverlayElementType.Orientation3D:
 			{
 				var x = (Orientation3DElement)el;
+				Orientation3DSpinCheck.IsChecked = x.SpinRotors;
 				Orientation3DStyle.Populate(x);
 				Orientation3DPanelFill.Populate(x);
 				Orientation3DTiming.Populate(x);
@@ -1073,6 +1074,7 @@ public partial class MainWindow
 				DroneBatteryVoltageCheck.IsChecked = x.ShowVoltage;
 				DroneBatteryTemperatureCheck.IsChecked = x.ShowTemperature;
 				DroneBatteryCurrentCheck.IsChecked = x.ShowCurrent;
+				DroneBatteryCurrentBesideCheck.IsChecked = x.CurrentBesideVoltage;
 				DroneBatteryCellsCheck.IsChecked = x.ShowCells;
 				SetUnitsRadio(DroneBatteryMetricRadio, DroneBatteryImperialRadio, x.Units);
 				DroneBatteryLowBox.Value = x.LowPercent;

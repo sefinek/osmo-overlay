@@ -34,13 +34,20 @@ public partial class MainWindow
 		finally
 		{
 			_renderStarting = false;
-			if (_phase == UiPhase.SummaryReady) SetRenderButtons(CanRenderTelemetry);
+			if (_phase == UiPhase.SummaryReady) SetRenderButtons(CanRenderTelemetry || _trackOnly);
 		}
 	}
 
 	private async Task RunRenderCoreAsync(bool greenScreen, FrameRange? range, AlphaCodec? alpha)
 	{
-		if (_phase != UiPhase.SummaryReady || !CanRenderTelemetry) return;
+		if (_phase != UiPhase.SummaryReady) return;
+		if (_trackOnly)
+		{
+			if (!greenScreen && range is null && alpha is null) await RunTrackRenderAsync();
+			return;
+		}
+
+		if (!CanRenderTelemetry) return;
 
 		if (QueueBusy)
 		{
@@ -160,7 +167,8 @@ public partial class MainWindow
 	/// <summary>The buttons that start a render (the whole video, a range, the overlay alone) and the one that queues it.</summary>
 	private void SetRenderButtons(bool enabled)
 	{
-		ActionButton.IsEnabled = GreenScreenButton.IsEnabled = RenderRangeButton.IsEnabled = QueueAddButton.IsEnabled = enabled;
+		ActionButton.IsEnabled = enabled;
+		GreenScreenButton.IsEnabled = RenderRangeButton.IsEnabled = QueueAddButton.IsEnabled = enabled && !_trackOnly;
 	}
 
 	private static string BuildCliCommand(IReadOnlyList<string> inputPaths, string outputPath, IReadOnlyList<TimeRange> cutOuts,

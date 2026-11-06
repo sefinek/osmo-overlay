@@ -663,8 +663,9 @@ public partial class MainWindow : Window
 	{
 		UiPhase previous = _phase;
 		_phase = phase;
-		if (phase != UiPhase.SummaryReady) CloseFullTelemetry(false);
-		if (phase != UiPhase.SummaryReady && _trackOnly)
+		bool trackRender = phase == UiPhase.Rendering && _trackOnly;
+		if (phase != UiPhase.SummaryReady && !trackRender) CloseFullTelemetry(false);
+		if (phase != UiPhase.SummaryReady && !trackRender && _trackOnly)
 		{
 			_trackOnly = false;
 			_summary = null;

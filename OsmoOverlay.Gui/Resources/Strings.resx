@@ -4362,6 +4362,9 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="DroneBattery_Current" xml:space="preserve">
     <value>Current</value>
   </data>
+  <data name="DroneBattery_CurrentBeside" xml:space="preserve">
+    <value>On the voltage's line</value>
+  </data>
   <data name="DroneBattery_Cells" xml:space="preserve">
     <value>Voltage of each cell</value>
   </data>
@@ -4858,6 +4861,12 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="Widget_AttitudeDescription" xml:space="preserve">
     <value>Shows the drone&apos;s attitude relative to the horizon using the DJI flight log. When the nose rises, the horizon line moves down. When the drone banks, the line rotates.</value>
   </data>
+  <data name="Orientation3D_SpinRotors" xml:space="preserve">
+    <value>Spin the rotors</value>
+  </data>
+  <data name="Orientation3D_SpinRotorsInfo" xml:space="preserve">
+    <value>Spinning rotors add to the drawing load, so the preview may become less responsive.</value>
+  </data>
   <data name="Widget_Orientation3D" xml:space="preserve">
     <value>3D orientation</value>
   </data>
@@ -5309,7 +5318,10 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Couldn&apos;t load the track: {0}</value>
   </data>
   <data name="TrackOnly_Opened" xml:space="preserve">
-    <value>Track {0}: widget preview without a video recording. Rendering is disabled.</value>
+    <value>Track {0}: widget preview without a video recording. Rendering saves a video with the map and the overlay.</value>
+  </data>
+  <data name="TrackRender_SaveTitle" xml:space="preserve">
+    <value>Save the track's video</value>
   </data>
   <data name="TrackOnly_CantSave" xml:space="preserve">
     <value>A track-only preview can&apos;t be saved as a project.</value>

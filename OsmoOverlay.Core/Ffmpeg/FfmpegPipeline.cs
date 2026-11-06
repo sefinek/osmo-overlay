@@ -398,6 +398,40 @@ public static class FfmpegPipeline
 	}
 
 	/// <summary>
+	///     A GPS track's render (TrackRenderJob): finished pictures from stdin, only turned into YUV, and the music (already normalized
+	///     to the output's length) as the sound - there is no source file to take a picture, sound or metadata from.
+	/// </summary>
+	public static Process StartTrackRender(string outputPath, string encoder, VideoInfo output, bool overwrite, RenderEncodeSettings encode,
+		DateTime startUtc, IReadOnlyList<MusicClip>? music, double durationSeconds)
+	{
+		(int num, int den) = ParseFrameRate(output.FrameRate);
+		var args = new List<string> { "-hide_banner", overwrite ? "-y" : "-n", "-nostats" };
+		args.AddRange(EncoderDeviceArgs(encoder));
+		args.AddRange(["-f", "rawvideo", "-pix_fmt", "bgra", "-s", $"{output.Width}x{output.Height}", "-r", $"{num}/{den}", "-i", "pipe:0"]);
+
+		bool withMusic = music is { Count: > 0 };
+		if (withMusic)
+		{
+			foreach (MusicClip clip in music!) args.AddRange(["-i", clip.Path]);
+		}
+
+		string graph = FilterGraph("", 0, output, output, false, true);
+		if (withMusic) graph += ";" + MusicTrack.FfmpegGraph(music!, 1, null);
+		args.AddRange(["-filter_complex", graph, "-map", "[v]"]);
+		if (withMusic)
+			args.AddRange(["-map", "[mus]", "-c:a", "aac", "-t", durationSeconds.ToString("R", CultureInfo.InvariantCulture)]);
+
+		AddVideoEncoderArgs(args, output, encoder, encode, num, den);
+		args.AddRange(["-metadata", "creation_time=" + startUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ", CultureInfo.InvariantCulture)]);
+		if (encode.FfmpegFastStart) args.AddRange(["-movflags", "+faststart"]);
+		args.AddRange(["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv"]);
+		if (!IsH264Encoder(encoder)) args.AddRange(["-tag:v", "hvc1"]);
+		args.Add(outputPath);
+
+		return Process.Start(ProcessHelper.CreateHiddenWithStdin("ffmpeg", args)) ?? throw new InvalidOperationException("Failed to start ffmpeg.");
+	}
+
+	/// <summary>
 	///     The render's filter graph, ending in [v]: the source (`mainVideo`, an input label or a chain ending in a comma) tagged
 	///     with its colors and brought to the output's size and depth, and the overlay from input `overlayInput` (raw BGRA) turned
 	///     into YUV and laid on it - or, for a picture already composed in C# (`composedPicture`, a 360 recording's), only turned

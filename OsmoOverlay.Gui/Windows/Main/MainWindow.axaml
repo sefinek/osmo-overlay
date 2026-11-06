@@ -406,7 +406,7 @@
 								<StackPanel Name="InputPanel" Spacing="4">
 									<TextBlock Text="{x:Static local:Strings.Main_InputFileS}" Classes="infoLabel" Margin="0" />
 									<TextBlock Text="{x:Static local:Strings.Main_AddSeveralSegmentsOfThe}"
-									           Classes="infoLabel" Margin="0,0,0,4" FontSize="12" Opacity="0.4"
+									           Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4"
 									           TextWrapping="Wrap" />
 									<ListBox Name="InputFilesList" MinHeight="40" MaxHeight="136" SelectionMode="Single">
 										<ListBox.ItemTemplate>
@@ -656,14 +656,14 @@
 									<TextBlock Text="{x:Static local:Strings.Main_MapSource}" Classes="infoLabel" Margin="0" />
 									<local:MapSourcePicker Name="TrackMapSource" />
 									<CheckBox Name="TrackMapFollowCheck" Content="{x:Static local:Strings.TrackMap_Follow}" Click="OnTrackMapFollowChanged" />
-									<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+									<TextBlock Classes="infoLabel checkHint"
 									           Text="{x:Static local:Strings.TrackMap_FollowHint}" />
 									<TextBlock Text="{x:Static local:Strings.TrackMap_MaxZoom}" Classes="infoLabel" Margin="0" />
 									<NumericUpDown Name="TrackMapZoomBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch"
 									               ValueChanged="OnTrackMapZoomChanged" />
 									<CheckBox Name="TrackMapTrailCheck" Content="{x:Static local:Strings.TrackMap_ShowTrail}" Click="OnTrackMapTrailChanged" />
-									<TextBlock Name="TrackMapStatus" Classes="infoLabel" Margin="0" FontSize="12" Opacity="0.6" TextWrapping="Wrap" IsVisible="False" />
-									<TextBlock Classes="infoLabel" Margin="0" FontSize="12" Opacity="0.4" TextWrapping="Wrap"
+									<TextBlock Name="TrackMapStatus" Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.6" TextWrapping="Wrap" IsVisible="False" />
+									<TextBlock Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 									           Text="{x:Static local:Strings.Main_FetchesTilesOverTheNetwork}" />
 								</StackPanel>
 							</Border>
@@ -684,7 +684,7 @@
 										<TextBlock Grid.Row="3" Grid.Column="1" Classes="infoValue" Name="OutEstimatedTime" />
 									</Grid>
 
-									<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,6,0,0" FontSize="11" Opacity="0.6"
+									<TextBlock Name="OutPlanText" Classes="infoLabel" Margin="0,6,0,0" FontSize="13" Opacity="0.6"
 									           TextWrapping="Wrap" />
 
 									<StackPanel Name="OutMeasuredPanel" Spacing="4" IsVisible="False">
@@ -780,8 +780,8 @@
 						<Border Height="1" Background="{StaticResource StrokeBrush}" Margin="0,0,0,2" />
 						<Border Name="BuiltInSettingsNotice" Classes="card" Padding="12,10" IsVisible="False">
 							<StackPanel Spacing="8">
-								<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Main_BuiltInSettingsLocked}" />
-								<Button Content="{x:Static local:Strings.Main_DuplicateToEdit}" HorizontalAlignment="Left" Click="OnDuplicatePresetClick" />
+								<TextBlock Classes="hint" TextAlignment="Center" TextWrapping="Wrap" Text="{x:Static local:Strings.Main_BuiltInSettingsLocked}" />
+								<Button Content="{x:Static local:Strings.Main_DuplicateToEdit}" HorizontalAlignment="Center" Click="OnDuplicatePresetClick" />
 							</StackPanel>
 						</Border>
 						<ContentControl Name="WidgetSettingsPanelHost" HorizontalContentAlignment="Stretch" />
@@ -932,7 +932,7 @@
 							<local:IconView Data="{StaticResource IconFullscreen}" Width="28" Height="28" Opacity="0.5"
 							                HorizontalAlignment="Center" />
 							<TextBlock Name="PreviewFullscreenNoticeTitle" Text="{x:Static local:Strings.Main_ThePreviewIsFullScreen}" FontSize="14" HorizontalAlignment="Center" />
-							<TextBlock Name="PreviewFullscreenNoticeText" Opacity="0.55" FontSize="12" TextWrapping="Wrap" MaxWidth="360"
+							<TextBlock Name="PreviewFullscreenNoticeText" Opacity="0.55" FontSize="13" TextWrapping="Wrap" MaxWidth="360"
 							           TextAlignment="Center" />
 							<Button Content="{x:Static local:Strings.Main_BringItBack}" HorizontalAlignment="Center" Padding="14,6" Click="OnToggleFullscreenClick" />
 						</StackPanel>
@@ -1068,7 +1068,7 @@
 
 					<StackPanel Grid.Row="1" Name="OverlayPlaceholder" Spacing="8" Margin="0,20,0,0">
 						<TextBlock Text="{x:Static local:Strings.Main_NoFileLoaded}" Opacity="0.4" FontSize="13" HorizontalAlignment="Center" />
-						<TextBlock Text="{x:Static local:Strings.Main_PickAFileAndGet}" Opacity="0.3" FontSize="12"
+						<TextBlock Text="{x:Static local:Strings.Main_PickAFileAndGet}" Opacity="0.3" FontSize="13"
 						           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="200"
 						           TextAlignment="Center" />
 					</StackPanel>
@@ -1107,18 +1107,18 @@
 								</UniformGrid>
 								<TextBlock Name="DefaultPresetLockedHint"
 								           Text="{x:Static local:Strings.Main_ThisIsTheBuiltIn}"
-								           Classes="infoLabel" Margin="0" FontSize="12"
+								           Classes="infoLabel" Margin="0" FontSize="13" TextAlignment="Center"
 								           TextWrapping="Wrap" IsVisible="False" />
 							</StackPanel>
 
 							<StackPanel Spacing="10">
 								<TextBlock Text="{x:Static local:Strings.Main_Widgets}" Classes="sectionLabel" Margin="0" />
 								<TextBlock Text="{x:Static local:Strings.Main_DragAWidgetFromThe}"
-								           Classes="infoLabel" Margin="0,-6,0,0" FontSize="12" TextWrapping="Wrap" />
+								           Classes="infoLabel" Margin="0,-6,0,0" FontSize="13" TextWrapping="Wrap" />
 
 								<TextBlock Text="{x:Static local:Strings.Main_OnOverlay}" Classes="sectionLabel" Margin="0,6,0,0" />
 								<StackPanel Name="AddedWidgetsList" Spacing="4" />
-								<TextBlock Name="AddedWidgetsEmptyHint" Classes="infoLabel" Margin="0" FontSize="11" Opacity="0.4"
+								<TextBlock Name="AddedWidgetsEmptyHint" Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.4"
 								           TextWrapping="Wrap"
 								           Text="{x:Static local:Strings.Main_NothingOnTheOverlayYet}" />
 
@@ -1275,10 +1275,10 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Dial}" Classes="settingsGroupTitle" />
 														<CheckBox Name="CompassCenterCheck" Content="{x:Static local:Strings.Main_KeepTheMarkerInThe}" Click="OnCompassOptionChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_TheMarkerStaysInThe}" />
 														<CheckBox Name="CompassRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_CompassHeadingUpHint}" />
 														<CheckBox Name="CompassNorthCheck" Content="{x:Static local:Strings.Main_ShowTheNLabel}" Click="OnCompassOptionChanged" />
 														<CheckBox Name="CompassHeadingTextCheck" Content="{x:Static local:Strings.Main_ShowTheHeadingEG}" Click="OnCompassOptionChanged" />
@@ -1343,17 +1343,17 @@
 														               ValueChanged="OnMapZoomChanged" />
 														<CheckBox Name="MapDynamicZoomCheck" Content="{x:Static local:Strings.Main_AutoZoomToFitRoute}"
 														          Click="OnMapDynamicZoomChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45"
+														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="13" Opacity="0.45"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_ZoomsOutAsTheDriven}" />
 														<TextBlock Name="MapZoomOutMaxLabel" Text="{x:Static local:Strings.Main_MaxZoomOutX}" Classes="infoLabel" Margin="0" />
 														<NumericUpDown Name="MapZoomOutMaxBox" Increment="1"
 														               FormatString="0" HorizontalAlignment="Stretch"
 														               ValueChanged="OnMapZoomOutMaxChanged" />
-														<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,-4,0,0" FontSize="12"
+														<TextBlock Name="MapZoomOutMaxHint" Classes="infoLabel" Margin="0,-4,0,0" FontSize="13"
 														           Opacity="0.45" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_HowFarOutTheMap}" />
-														<TextBlock Classes="infoLabel" Margin="0" FontSize="12" Opacity="0.4"
+														<TextBlock Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_FetchesTilesOverTheNetwork}" />
 													</StackPanel>
@@ -1363,13 +1363,13 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_View}" Classes="settingsGroupTitle" />
 														<CheckBox Name="MapRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_MapHeadingUpHint}" />
 														<CheckBox Name="MapStabilizeHeadingCheck" Content="{x:Static local:Strings.Main_MapStabilizeHeading}" Click="OnMapStabilizeHeadingChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_MapStabilizeHeadingHint}" />
 														<CheckBox Name="MapDotWhenNotFacingCheck" Content="{x:Static local:Strings.Main_MapDotWhenNotFacing}" Click="OnMapDotWhenNotFacingChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,-4,0,0" FontSize="12" Opacity="0.45" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_MapDotWhenNotFacingHint}" />
 														<TextBlock Name="MapFacingToleranceLabel" Text="{x:Static local:Strings.Main_MapFacingTolerance}" Classes="infoLabel" Margin="0" />
 														<NumericUpDown Name="MapFacingToleranceBox" Increment="5" FormatString="0" HorizontalAlignment="Stretch"
@@ -1499,7 +1499,7 @@
 														<TextBox Name="GpsAlertTitleBox" MaxLength="60" LostFocus="OnGpsAlertTextChanged" />
 														<TextBlock Text="{x:Static local:Strings.GpsAlert_Detail}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="GpsAlertDetailBox" MaxLength="60" LostFocus="OnGpsAlertTextChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.GpsAlert_TextsHint}" />
 													</StackPanel>
 												</Border>
@@ -1553,6 +1553,7 @@
 														<CheckBox Name="DroneBatteryVoltageCheck" Content="{x:Static local:Strings.DroneBattery_Voltage}" Click="OnDroneBatteryOptionChanged" />
 														<CheckBox Name="DroneBatteryTemperatureCheck" Content="{x:Static local:Strings.DroneBattery_Temperature}" Click="OnDroneBatteryOptionChanged" />
 														<CheckBox Name="DroneBatteryCurrentCheck" Content="{x:Static local:Strings.DroneBattery_Current}" Click="OnDroneBatteryOptionChanged" />
+														<CheckBox Name="DroneBatteryCurrentBesideCheck" Margin="24,0,0,0" Content="{x:Static local:Strings.DroneBattery_CurrentBeside}" Click="OnDroneBatteryOptionChanged" />
 														<CheckBox Name="DroneBatteryCellsCheck" Content="{x:Static local:Strings.DroneBattery_Cells}" Click="OnDroneBatteryOptionChanged" />
 														<TextBlock Text="{x:Static local:Strings.Common_Units}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
@@ -1572,7 +1573,7 @@
 														<TextBox Name="DroneBatteryLowColorBox" PlaceholderText="#FF9800" LostFocus="OnDroneBatteryColorChanged" />
 														<TextBlock Text="{x:Static local:Strings.DroneBattery_CriticalColor}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="DroneBatteryCriticalColorBox" PlaceholderText="#F44336" LostFocus="OnDroneBatteryColorChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_LevelsHint}" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_LevelsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1590,7 +1591,7 @@
 														<NumericUpDown Name="DroneBatteryHotWarnBox" Minimum="0" Maximum="100" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
 														<TextBlock Text="{x:Static local:Strings.DroneBattery_HotCritical}" Classes="infoLabel" Margin="0" />
 														<NumericUpDown Name="DroneBatteryHotCriticalBox" Minimum="0" Maximum="100" Increment="1" FormatString="0" HorizontalAlignment="Stretch" ValueChanged="OnDroneBatteryLimitsChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_LimitsHint}" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.DroneBattery_LimitsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1701,7 +1702,7 @@
 														<TextBox Name="SignalFairColorBox" PlaceholderText="#F7C51E" LostFocus="OnSignalColorChanged" />
 														<TextBlock Text="{x:Static local:Strings.Signal_PoorColor}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="SignalPoorColorBox" PlaceholderText="#FF4D4D" LostFocus="OnSignalColorChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Signal_LevelsHint}" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Signal_LevelsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -1973,6 +1974,12 @@
 												</Border>
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
+														<CheckBox Name="Orientation3DSpinCheck" Content="{x:Static local:Strings.Orientation3D_SpinRotors}" Click="OnOrientation3DSpinChanged" />
+														<TextBlock Text="{x:Static local:Strings.Orientation3D_SpinRotorsInfo}" Classes="infoLabel checkHint" />
+													</StackPanel>
+												</Border>
+												<Border Classes="settingsGroup">
+													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Style}" Classes="settingsGroupTitle" />
 														<local:ElementStyleEditor Name="Orientation3DStyle" />
 													</StackPanel>
@@ -2050,7 +2057,7 @@
 														<NumericUpDown Name="GMeterFullScaleBox" Minimum="0.1" Maximum="5"
 														               Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch"
 														               ValueChanged="OnGMeterFullScaleChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_HowManyGSPut}" />
 													</StackPanel>
@@ -2097,7 +2104,7 @@
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="ElapsedTimeLabelBox" PlaceholderText="{x:Static local:Strings.Main_NoneJustTheTime}"
 														         LostFocus="OnElapsedTimeLabelChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_ACaptionAboveTheTime}" />
 													</StackPanel>
 												</Border>
@@ -2177,7 +2184,7 @@
 														<NumericUpDown Name="TripProgressToleranceBox" Minimum="0" Maximum="100"
 														               Increment="0.5" FormatString="0.0" HorizontalAlignment="Stretch"
 														               ValueChanged="OnTripProgressToleranceChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_HowCloseToTheTotal}" />
 														<TextBlock Text="{x:Static local:Strings.Main_ArrivedLabel}" Classes="infoLabel" Margin="0" />
@@ -2188,7 +2195,7 @@
 														<NumericUpDown Name="TripProgressSpeedGateBox" Minimum="0.5" Maximum="50"
 														               Increment="0.5" FormatString="0.0" HorizontalAlignment="Stretch"
 														               ValueChanged="OnTripProgressSpeedGateValueChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_TripProgressSpeedGateHint}" />
 														<CheckBox Name="TripProgressHideCheck" Content="{x:Static local:Strings.Main_TripProgressHideAfterArrival}"
@@ -2196,7 +2203,7 @@
 														<NumericUpDown Name="TripProgressHideBox" Minimum="0" Maximum="600"
 														               Increment="1" FormatString="0.0" HorizontalAlignment="Stretch"
 														               ValueChanged="OnTripProgressHideValueChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4"
 														           TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_TripProgressHideAfterArrivalHint}" />
 													</StackPanel>
@@ -2234,7 +2241,7 @@
 												<Border Classes="settingsGroup">
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Main_Chart}" Classes="settingsGroupTitle" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_TheWholeRecordingSProfile}" />
 														<TextBlock Text="{x:Static local:Strings.Main_Shows}" Classes="infoLabel" Margin="0" />
 														<StackPanel Orientation="Horizontal" Spacing="12">
@@ -2313,7 +2320,7 @@
 														<TextBlock Text="{x:Static local:Strings.Main_Statistic}" Classes="infoLabel" Margin="0" />
 														<ComboBox Name="TripStatCombo" HorizontalAlignment="Stretch"
 														          SelectionChanged="OnTripStatKindChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_CountedUpToTheMoment}" />
 														<TextBlock Text="{x:Static local:Strings.Main_Label}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="TripStatLabelBox" LostFocus="OnTripStatLabelChanged" />
@@ -2578,7 +2585,7 @@
 														<NumericUpDown Name="SensorWarnAboveBox" Minimum="0" Maximum="100000" Increment="10" FormatString="0" HorizontalAlignment="Stretch" PlaceholderText="{x:Static local:Strings.Sensor_LimitOff}" ValueChanged="OnSensorThresholdNumberChanged" />
 														<TextBlock Text="{x:Static local:Strings.Sensor_AlertAbove}" Classes="infoLabel" Margin="0" />
 														<NumericUpDown Name="SensorAlertAboveBox" Minimum="0" Maximum="100000" Increment="10" FormatString="0" HorizontalAlignment="Stretch" PlaceholderText="{x:Static local:Strings.Sensor_LimitOff}" ValueChanged="OnSensorThresholdNumberChanged" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_LimitsHint}" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_LimitsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Name="SensorGpsGroup" Classes="settingsGroup" IsVisible="False">
@@ -2595,7 +2602,7 @@
 													<StackPanel Spacing="8">
 														<TextBlock Text="{x:Static local:Strings.Sensor_FlightMode}" Classes="settingsGroupTitle" />
 														<CheckBox Name="SensorColorByModeCheck" Content="{x:Static local:Strings.Sensor_ColorByMode}" Click="OnSensorThresholdClick" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_ColorByModeHint}" />
+														<TextBlock Classes="infoLabel checkHint" Text="{x:Static local:Strings.Sensor_ColorByModeHint}" />
 													</StackPanel>
 												</Border>
 												<Border Name="SensorStateColorsGroup" Classes="settingsGroup" IsVisible="False">
@@ -2605,7 +2612,7 @@
 														<TextBox Name="SensorWarnColorBox" PlaceholderText="#FF9800" LostFocus="OnSensorThresholdLostFocus" />
 														<TextBlock Text="{x:Static local:Strings.Sensor_AlertColor}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="SensorAlertColorBox" PlaceholderText="#F44336" LostFocus="OnSensorThresholdLostFocus" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_StateColorsHint}" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_StateColorsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Name="SensorClimbGroup" Classes="settingsGroup" IsVisible="False">
@@ -2615,7 +2622,7 @@
 														<TextBox Name="SensorClimbColorBox" LostFocus="OnSensorThresholdLostFocus" />
 														<TextBlock Text="{x:Static local:Strings.Sensor_SinkColor}" Classes="infoLabel" Margin="0" />
 														<TextBox Name="SensorSinkColorBox" LostFocus="OnSensorThresholdLostFocus" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_ValueColorsHint}" />
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap" Text="{x:Static local:Strings.Sensor_ValueColorsHint}" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">
@@ -2697,10 +2704,10 @@
 															<Button Grid.Column="1" Classes="toolbar" Content="{x:Static local:Strings.Main_Choose}" Padding="14,0"
 															        VerticalAlignment="Stretch" VerticalContentAlignment="Center" Click="OnImageBrowseClick" />
 														</Grid>
-														<TextBlock Name="ImageUnreadableHint" Classes="infoLabel" Margin="0" FontSize="12"
+														<TextBlock Name="ImageUnreadableHint" Classes="infoLabel" Margin="0" FontSize="13"
 														           Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" IsVisible="False"
 														           Text="{x:Static local:Strings.Main_CanTReadThisFile}" />
-														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="11" Opacity="0.4" TextWrapping="Wrap"
+														<TextBlock Classes="infoLabel" Margin="0,0,0,4" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
 														           Text="{x:Static local:Strings.Main_DrawnAtItsOwnPixel}" />
 														<TextBlock Text="{x:Static local:Strings.Common_Opacity}" Classes="infoLabel" Margin="0" />
 														<NumericUpDown Name="ImageOpacityBox" Minimum="0" Maximum="100" Increment="5"

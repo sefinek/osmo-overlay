@@ -4362,6 +4362,9 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="DroneBattery_Current" xml:space="preserve">
     <value>Prąd</value>
   </data>
+  <data name="DroneBattery_CurrentBeside" xml:space="preserve">
+    <value>W linii z napięciem</value>
+  </data>
   <data name="DroneBattery_Cells" xml:space="preserve">
     <value>Napięcie każdego ogniwa</value>
   </data>
@@ -4858,6 +4861,12 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="Widget_AttitudeDescription" xml:space="preserve">
     <value>Pokazuje położenie drona względem horyzontu na podstawie dziennika lotu DJI. Gdy dron unosi przód, linia horyzontu przesuwa się w dół. Przy przechyle na bok linia się obraca.</value>
   </data>
+  <data name="Orientation3D_SpinRotors" xml:space="preserve">
+    <value>Obracaj śmigła</value>
+  </data>
+  <data name="Orientation3D_SpinRotorsInfo" xml:space="preserve">
+    <value>Obracające się śmigła obciążają rysowanie, więc podgląd może stać się mniej responsywny.</value>
+  </data>
   <data name="Widget_Orientation3D" xml:space="preserve">
     <value>Orientacja 3D</value>
   </data>
@@ -5309,7 +5318,10 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Nie udało się wczytać trasy: {0}</value>
   </data>
   <data name="TrackOnly_Opened" xml:space="preserve">
-    <value>Trasa {0}: podgląd widżetów bez nagrania wideo. Renderowanie jest wyłączone.</value>
+    <value>Trasa {0}: podgląd widżetów bez nagrania wideo. Renderowanie zapisuje film z mapą i nakładką.</value>
+  </data>
+  <data name="TrackRender_SaveTitle" xml:space="preserve">
+    <value>Zapisz film z trasy</value>
   </data>
   <data name="TrackOnly_CantSave" xml:space="preserve">
     <value>Podglądu samej trasy nie można zapisać jako projektu.</value>
