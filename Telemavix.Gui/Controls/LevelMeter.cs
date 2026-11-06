@@ -62,7 +62,8 @@ public sealed class LevelMeter : Control
 
 	private static double ToFraction(float peak)
 	{
-		if (peak <= 0) return 0;
+		// Written so that NaN lands here too: it would stick in the bar for good (every comparison with it is false).
+		if (!(peak > 0)) return 0;
 
 		double db = 20 * Math.Log10(peak);
 		return Math.Clamp((db - FloorDb) / -FloorDb, 0, 1);
@@ -165,7 +166,8 @@ public sealed class LevelMeter : Control
 
 	private void DrawReadout(DrawingContext context, int i, double x, double width, double y)
 	{
-		int tenths = _hold[i] > 0.02 ? (int)Math.Round((FloorDb + _hold[i] * -FloorDb) * 10) : int.MinValue;
+		// -inf only once the peak has fallen to the floor of the scale, not at an arbitrary level above it.
+		int tenths = _hold[i] > 0 ? (int)Math.Round((FloorDb + _hold[i] * -FloorDb) * 10) : int.MinValue;
 		if (_readouts[i] is not { } cached || cached.Tenths != tenths)
 			_readouts[i] = cached = (tenths, Label(tenths == int.MinValue ? "-inf" : (tenths / 10.0).ToString("0.0"), 11, ReadoutBrush));
 
