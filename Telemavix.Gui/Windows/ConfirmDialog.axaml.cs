@@ -1,0 +1,234 @@
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Telemavix.Gui.Native;
+
+namespace Telemavix.Gui;
+
+/// <summary>Severity/intent of a ConfirmDialog - drives the primary button's color and the small dot next to the title.</summary>
+/// <summary>The illustration beside a dialog's text: the kind's own, or one for a particular situation.</summary>
+public enum DialogArt
+{
+	ForKind,
+	NoGps
+}
+
+public enum DialogChoice
+{
+	Cancel,
+	Confirm,
+	Skip
+}
+
+public enum DialogKind
+{
+	Neutral,
+	Info,
+	Success,
+	Warning,
+	Danger
+}
+
+public partial class ConfirmDialog : Window
+{
+	private static readonly IBrush NeutralDotBrush = Palette.TextMuted;
+	private static readonly IBrush InfoDotBrush = Palette.Accent;
+	private static readonly IBrush SuccessDotBrush = Palette.Success;
+	private static readonly IBrush WarningDotBrush = Palette.Warning;
+	private static readonly IBrush DangerDotBrush = Palette.Danger;
+
+	private readonly Func<Task>? _onConfirm;
+	private readonly Action? _onExtra;
+	private readonly Action? _onSecondary;
+	private readonly string? _workingText;
+	private readonly UiSound _sound = UiSound.Question;
+	private bool _extraClosesDialog;
+	private DialogChoice _choice = DialogChoice.Cancel;
+
+	public ConfirmDialog()
+	{
+		InitializeComponent();
+		Opened += (_, _) => AppSound.Play(_sound);
+	}
+
+	private ConfirmDialog(string title, string message, string confirmText, DialogKind kind, bool alert,
+		string? windowTitle, Func<Task>? onConfirm, string? workingText, string? secondaryText, Action? onSecondary,
+		string? extraText, Action? onExtra, DialogArt art = DialogArt.ForKind, UiSound? sound = null) : this()
+	{
+		// Asked before something that can't be undone (deleting a preset), Danger is a question, not an error or a warning:
+		// only the confirm button stays red - the error's or warning's picture and sound read as if something had gone wrong.
+		// Info asked is a question too (a choice to make), not a notice to acknowledge.
+		DialogKind look = !alert && kind is DialogKind.Danger or DialogKind.Info ? DialogKind.Neutral : kind;
+		_sound = sound ?? look switch
+		{
+			DialogKind.Info => UiSound.Info,
+			DialogKind.Success => UiSound.Success,
+			DialogKind.Warning => UiSound.Warning,
+			DialogKind.Danger => UiSound.Error,
+			_ => UiSound.Question
+		};
+		Title = windowTitle ?? title;
+		MessageText.Text = Links.SetMessage(message);
+		ConfirmButton.Content = confirmText;
+		ConfirmButton.Classes.Add(ButtonClassFor(kind));
+		KindDot.Background = DotBrushFor(look);
+		KindIcon.Data = IconFor(look);
+		ShowArt(look, art, !alert);
+		_onConfirm = onConfirm;
+		_workingText = workingText;
+		_onSecondary = onSecondary;
+		_onExtra = onExtra;
+
+		// Alert mode (ShowAsync) is normally a single-button "OK" notice, not a Cancel/Confirm choice,
+		// so Cancel is hidden - unless the caller gave it a secondary action (e.g. "Show in folder"),
+		// in which case it's repurposed into that action button instead of a Cancel.
+		if (onSecondary is not null)
+			CancelButton.Content = secondaryText ?? Strings.Common_Cancel;
+		else if (alert) CancelButton.IsVisible = false;
+
+		if (onExtra is not null)
+		{
+			ExtraButton.Content = extraText ?? Strings.ConfirmDialog_Extra;
+			ExtraButton.IsVisible = true;
+		}
+	}
+
+	/// <summary>
+	///     Shows a modal Cancel/Confirm prompt over `owner` and returns true only if Confirm was clicked.
+	///     If `onConfirm` is given, clicking Confirm disables both buttons, switches the Confirm button's
+	///     label to `workingText`, awaits `onConfirm`, and only then closes - so a caller that runs a
+	///     slow operation from Confirm (e.g. an ffmpeg pass) can show its own progress on this dialog
+	///     instead of the dialog vanishing immediately and the caller having to signal progress elsewhere.
+	/// </summary>
+	public static Task<bool> AskAsync(Window owner, string title, string message, string? confirmText = null,
+		DialogKind kind = DialogKind.Neutral, string? windowTitle = null, Func<Task>? onConfirm = null, string? workingText = null)
+	{
+		return new ConfirmDialog(title, message, confirmText ?? Strings.ConfirmDialog_Confirm, kind, false, windowTitle, onConfirm, workingText,
+			null, null, null, null).ShowDialog<bool>(owner);
+	}
+
+	/// <summary>
+	///     Like AskAsync with a third button that closes the dialog too: Cancel and the window's X are both
+	///     <see cref="DialogChoice.Cancel" />, so a caller can tell "not now" from an explicit "never".
+	/// </summary>
+	public static async Task<DialogChoice> AskOrSkipAsync(Window owner, string title, string message, string confirmText, string skipText,
+		DialogKind kind = DialogKind.Neutral)
+	{
+		var dialog = new ConfirmDialog(title, message, confirmText, kind, false, null, null, null, null, null, null, null)
+		{
+			_extraClosesDialog = true
+		};
+		dialog.ExtraButton.Content = skipText;
+		dialog.ExtraButton.IsVisible = true;
+		await dialog.ShowDialog<bool>(owner);
+		return dialog._choice;
+	}
+
+	/// <summary>
+	///     Shows a modal single-button notice over `owner` - no Cancel/decision, just an acknowledgement.
+	///     If `onSecondary`/`onExtra` are given, one or two extra buttons appear next to the close button
+	///     (e.g. "Show in folder", "Compare files") - clicking either runs its action without closing the
+	///     dialog, so the caller can still read the rest of the message or click another action afterwards.
+	/// </summary>
+	public static Task ShowAsync(Window owner, string title, string message, string? closeText = null,
+		DialogKind kind = DialogKind.Info, string? windowTitle = null, string? secondaryText = null, Action? onSecondary = null,
+		string? extraText = null, Action? onExtra = null, DialogArt art = DialogArt.ForKind, UiSound? sound = null)
+	{
+		return new ConfirmDialog(title, message, closeText ?? Strings.ConfirmDialog_Ok, kind, true, windowTitle, null, null, secondaryText,
+			onSecondary, extraText, onExtra, art, sound).ShowDialog(owner);
+	}
+
+	/// <summary>
+	///     The kind's illustration on the left, in place of the small dot by the title - for the kinds that have one, and for a
+	///     plain question (AskAsync's Neutral, which a question before something that can't be undone, or an Info one, is shown as).
+	/// </summary>
+	private void ShowArt(DialogKind kind, DialogArt situation, bool question)
+	{
+		Control? art = (situation, kind) switch
+		{
+			(DialogArt.NoGps, _) => NoGpsArt,
+			(_, DialogKind.Neutral) when question => QuestionArt,
+			(_, DialogKind.Info) => InfoArt,
+			(_, DialogKind.Success) => SuccessArt,
+			(_, DialogKind.Warning) => WarningArt,
+			(_, DialogKind.Danger) => DangerArt,
+			_ => null
+		};
+		if (art is null || art is Image { Source: null }) return;
+
+		art.IsVisible = true;
+		KindArt.IsVisible = true;
+		KindDot.IsVisible = false;
+	}
+
+	private static string ButtonClassFor(DialogKind kind)
+	{
+		return kind switch
+		{
+			DialogKind.Danger => "danger",
+			DialogKind.Warning => "warning",
+			DialogKind.Success => "success",
+			_ => "accent"
+		};
+	}
+
+	private static IBrush DotBrushFor(DialogKind kind)
+	{
+		return kind switch
+		{
+			DialogKind.Info => InfoDotBrush,
+			DialogKind.Success => SuccessDotBrush,
+			DialogKind.Warning => WarningDotBrush,
+			DialogKind.Danger => DangerDotBrush,
+			_ => NeutralDotBrush
+		};
+	}
+
+	private static Geometry IconFor(DialogKind kind)
+	{
+		return kind switch
+		{
+			DialogKind.Success => Icons.Check,
+			DialogKind.Warning => Icons.Exclamation,
+			DialogKind.Danger => Icons.Close,
+			_ => Icons.Info
+		};
+	}
+
+	private void OnCancelClick(object? sender, RoutedEventArgs e)
+	{
+		if (_onSecondary is not null)
+		{
+			_onSecondary();
+			return;
+		}
+
+		Close(false);
+	}
+
+	private void OnExtraClick(object? sender, RoutedEventArgs e)
+	{
+		if (_extraClosesDialog)
+		{
+			_choice = DialogChoice.Skip;
+			Close(false);
+			return;
+		}
+
+		_onExtra?.Invoke();
+	}
+
+	private async void OnConfirmClick(object? sender, RoutedEventArgs e)
+	{
+		if (_onConfirm is not null)
+		{
+			CancelButton.IsEnabled = false;
+			ConfirmButton.IsEnabled = false;
+			ConfirmButton.Content = _workingText ?? Strings.Common_Working;
+			await _onConfirm();
+		}
+
+		_choice = DialogChoice.Confirm;
+		Close(true);
+	}
+}

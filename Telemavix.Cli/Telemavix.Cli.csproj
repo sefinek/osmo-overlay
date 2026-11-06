@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+
+    <AssemblyName>Telemavix.Cli</AssemblyName>
+    <RootNamespace>Telemavix.Cli</RootNamespace>
+    <ApplicationIcon>Assets\Telemavix.Cli.ico</ApplicationIcon>
+
+    <AssemblyTitle>Telemavix Studio CLI</AssemblyTitle>
+    <Description>Command-line renderer for Telemavix Studio.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Telemavix.Core\Telemavix.Core.csproj" />
+    <ProjectReference Include="..\Telemavix.Cameras.Dji\Telemavix.Cameras.Dji.csproj" />
+    <ProjectReference Include="..\Telemavix.Cameras.GoPro\Telemavix.Cameras.GoPro.csproj" />
+    <ProjectReference Include="..\Telemavix.Drones.Dji\Telemavix.Drones.Dji.csproj" />
+    <ProjectReference Include="..\Telemavix.Cameras.Insta360\Telemavix.Cameras.Insta360.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="NLog.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

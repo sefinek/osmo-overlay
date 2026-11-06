@@ -1,0 +1,131 @@
+using System.Reflection;
+using System.Text.Json.Nodes;
+using NuGet.Versioning;
+using Telemavix.Core.Updates;
+
+namespace Telemavix.Tests.Updates;
+
+/// <summary>ParseRelease on hand-made GitHub API responses shaped like a real "latest release".</summary>
+[TestClass]
+public sealed class AppUpdatesTests
+{
+	private const string Suffix = "-win-x64-setup.exe";
+
+	private static JsonNode Release(string tag, string assets)
+	{
+		return JsonNode.Parse($$"""
+		                        {
+		                          "tag_name": "{{tag}}",
+		                          "html_url": "https://github.com/sefinek/telemavix-studio/releases/tag/{{tag}}",
+		                          "published_at": "2026-10-01T12:00:00Z",
+		                          "assets": [{{assets}}]
+		                        }
+		                        """)!;
+	}
+
+	private static string Asset(string name, string? digest = null)
+	{
+		string digestField = digest is null ? "" : $"\"digest\": \"{digest}\",";
+		return $$"""{ "name": "{{name}}", {{digestField}} "size": 1234, "browser_download_url": "https://example.test/{{name}}" }""";
+	}
+
+	[TestMethod]
+	public void CurrentVersion_InitializesTheTypeAndItsHttpClient()
+	{
+		string expected = typeof(AppUpdates).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+		Assert.AreEqual(expected, AppUpdates.CurrentVersion.ToFullString());
+		Assert.AreEqual(NuGetVersion.Parse(expected).ToNormalizedString(), AppUpdates.CurrentVersionLabel);
+		Assert.IsFalse(AppUpdates.IsNewer(new AppRelease(AppUpdates.CurrentVersion, "https://example.test", null, null)));
+	}
+
+	[TestMethod]
+	[DataRow("0.5.0", "0.5.0-beta.1", true)]
+	[DataRow("0.5.0", "0.5.0-beta.2+abc123", true)]
+	[DataRow("0.5.0", "0.5.0-rc.1", true)]
+	[DataRow("0.5.0", "0.5.0", false)]
+	[DataRow("0.5.0", "0.5.0+build-with-hyphens", false)]
+	[DataRow("0.5.0", "0.5.0.0", false)]
+	[DataRow("0.5.0", "0.4.0", true)]
+	[DataRow("0.5.0", "0.6.0-beta.1", false)]
+	[DataRow("0.5.0", "0.6.0", false)]
+	[DataRow("0.5.1", "0.5.0-beta.1", true)]
+	[DataRow("0.5.0-beta.10", "0.5.0-beta.2", true)]
+	[DataRow("0.5.0-beta.2", "0.5.0-beta.10", false)]
+	[DataRow("0.5.0-rc.1", "0.5.0-beta.10", true)]
+	[DataRow("0.5.0-beta.1+new", "0.5.0-beta.1+old", false)]
+	[DataRow("0.5.0+new", "0.5.0+old", false)]
+	public void IsNewer_UsesReleasePrecedenceWithoutBuildMetadata(string available, string current, bool expected)
+	{
+		Assert.AreEqual(expected, AppUpdates.IsNewer(NuGetVersion.Parse(available), NuGetVersion.Parse(current)));
+	}
+
+	[TestMethod]
+	public void ParseRelease_PicksThisArchitecturesInstaller_WithItsDigest()
+	{
+		JsonNode json = Release("v0.2.0", string.Join(',',
+			Asset("Telemavix-0.2.0-win-arm64-setup.exe", "sha256:" + new string('b', 64)),
+			Asset("Telemavix-0.2.0-win-x64-setup.exe", "sha256:" + new string('A', 64)),
+			Asset("Telemavix-0.2.0-win-x64-self-contained.zip")));
+
+		(AppRelease release, string? sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
+
+		Assert.AreEqual(new NuGetVersion(0, 2, 0), release.Version);
+		Assert.AreEqual("Telemavix-0.2.0-win-x64-setup.exe", release.Installer?.Name);
+		Assert.AreEqual(new string('a', 64), release.Installer?.Sha256);
+		Assert.AreEqual(1234, release.Installer?.Size);
+		Assert.AreEqual(new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero), release.PublishedAt);
+		Assert.IsNull(sumsUrl);
+	}
+
+	[TestMethod]
+	public void ParseRelease_WithoutDigest_PointsAtTheSumsFile()
+	{
+		JsonNode json = Release("0.2.0", string.Join(',',
+			Asset("Telemavix-0.2.0-win-x64-setup.exe"),
+			Asset("Telemavix-0.2.0-SHA256SUMS.txt")));
+
+		(AppRelease release, string? sumsUrl) = AppUpdates.ParseRelease(json, Suffix);
+
+		Assert.IsNull(release.Installer?.Sha256);
+		Assert.AreEqual("https://example.test/Telemavix-0.2.0-SHA256SUMS.txt", sumsUrl);
+	}
+
+	[TestMethod]
+	public void ParseRelease_NoInstallerForThisMachine_StillGivesTheVersion()
+	{
+		(AppRelease release, _) = AppUpdates.ParseRelease(Release("v1.4.2-beta", Asset("Telemavix-1.4.2-linux-x64.tar.gz")), Suffix);
+
+		Assert.AreEqual(NuGetVersion.Parse("1.4.2-beta"), release.Version);
+		Assert.IsNull(release.Installer);
+	}
+
+	[TestMethod]
+	public void ParseRelease_PreservesPrereleaseAndMetadata()
+	{
+		(AppRelease release, _) = AppUpdates.ParseRelease(Release("v0.5.0-beta.10+abc123", ""), null);
+		Assert.AreEqual("beta.10", release.Version.Release);
+		Assert.AreEqual("abc123", release.Version.Metadata);
+		Assert.AreEqual("0.5.0-beta.10", release.Version.ToNormalizedString());
+	}
+
+	[TestMethod]
+	public void ParseRelease_TagThatIsNotAVersion_Throws()
+	{
+		Assert.ThrowsExactly<InvalidDataException>(() => AppUpdates.ParseRelease(Release("latest-build", ""), Suffix));
+	}
+
+	[TestMethod]
+	public void FindChecksum_ReadsSha256sumLines()
+	{
+		const string sums = """
+		                    4E7C1820F503A9F601D412272DBEB9DE4009F8E5B76F9AEB08FB04DE80FD8DBE  Telemavix-0.2.0-win-x64-self-contained.zip
+		                    1ecb9d12135baf762e30a948250c83e2f2bbe28dc5420a22775d15e3af9da54b *Telemavix-0.2.0-win-x64-setup.exe
+		                    """;
+
+		Assert.AreEqual("1ecb9d12135baf762e30a948250c83e2f2bbe28dc5420a22775d15e3af9da54b",
+			AppUpdates.FindChecksum(sums.ReplaceLineEndings("\r\n"), "Telemavix-0.2.0-win-x64-setup.exe"));
+		Assert.AreEqual("4e7c1820f503a9f601d412272dbeb9de4009f8e5b76f9aeb08fb04de80fd8dbe",
+			AppUpdates.FindChecksum(sums, "Telemavix-0.2.0-win-x64-self-contained.zip"));
+		Assert.IsNull(AppUpdates.FindChecksum(sums, "Telemavix-0.2.0-win-arm64-setup.exe"));
+	}
+}

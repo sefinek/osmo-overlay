@@ -39,12 +39,12 @@ jobs:
         uses: ./.github/actions/install-ffmpeg
 
       - name: Build
-        run: dotnet build OsmoOverlay.Gui -c Release
+        run: dotnet build Telemavix.Gui -c Release
 
       - name: Start the app
         if: runner.os != 'Linux'
-        run: dotnet run --project OsmoOverlay.Gui -c Release --no-build -- --smoke-test
+        run: dotnet run --project Telemavix.Gui -c Release --no-build -- --smoke-test
 
       - name: Start the app (virtual display)
         if: runner.os == 'Linux'
-        run: xvfb-run -a dotnet run --project OsmoOverlay.Gui -c Release --no-build -- --smoke-test
+        run: xvfb-run -a dotnet run --project Telemavix.Gui -c Release --no-build -- --smoke-test

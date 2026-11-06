@@ -1,0 +1,22 @@
+<Project Sdk="MSTest.Sdk/4.5.2">
+
+  <PropertyGroup>
+    <AssemblyName>Telemavix.Tests</AssemblyName>
+    <RootNamespace>Telemavix.Tests</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyTitle>Telemavix Studio Tests</AssemblyTitle>
+    <Description>Unit tests for Telemavix.Core and the camera formats.</Description>
+
+    <MicrosoftTestingExtensionsCodeCoverageVersion>18.12.0</MicrosoftTestingExtensionsCodeCoverageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Telemavix.Core\Telemavix.Core.csproj" />
+    <ProjectReference Include="..\Telemavix.Cameras.Dji\Telemavix.Cameras.Dji.csproj" />
+    <ProjectReference Include="..\Telemavix.Cameras.GoPro\Telemavix.Cameras.GoPro.csproj" />
+    <ProjectReference Include="..\Telemavix.Drones.Dji\Telemavix.Drones.Dji.csproj" />
+    <ProjectReference Include="..\Telemavix.Cameras.Insta360\Telemavix.Cameras.Insta360.csproj" />
+  </ItemGroup>
+
+</Project>

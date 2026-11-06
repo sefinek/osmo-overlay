@@ -56,10 +56,10 @@ jobs:
           global-json-file: global.json
 
       - name: Build
-        run: dotnet build OsmoOverlay.slnx -c Release
+        run: dotnet build Telemavix.slnx -c Release
 
       - name: Test
-        run: dotnet test --project OsmoOverlay.Tests -c Release --no-build
+        run: dotnet test --project Telemavix.Tests -c Release --no-build
 
       - name: Install Inno Setup 7
         shell: pwsh
@@ -71,13 +71,13 @@ jobs:
           if (-not (Test-Path "$env:RUNNER_TEMP\InnoSetup7\ISCC.exe")) { throw 'ISCC.exe not found after installing Inno Setup' }
 
       - name: Build packages
-        run: dotnet run --project OsmoOverlay.Build -- --iscc "${{ runner.temp }}\InnoSetup7\ISCC.exe"
+        run: dotnet run --project Telemavix.Build -- --iscc "${{ runner.temp }}\InnoSetup7\ISCC.exe"
 
       - name: Upload packages
         uses: actions/upload-artifact@v7
         with:
           name: packages
-          path: artifacts/OsmoOverlay-*
+          path: artifacts/Telemavix-*
           if-no-files-found: error
           retention-days: 1
 
@@ -119,10 +119,10 @@ jobs:
         run: |
           $archive = Get-ChildItem packages -Filter '*-${{ matrix.package }}-self-contained.zip' | Select-Object -First 1
           Expand-Archive $archive.FullName -DestinationPath app
-          $exe = Get-ChildItem app -Recurse -Filter OsmoOverlay.exe | Select-Object -First 1
+          $exe = Get-ChildItem app -Recurse -Filter Telemavix.exe | Select-Object -First 1
           $process = Start-Process $exe.FullName -ArgumentList '--smoke-test' -Wait -PassThru
           if ($process.ExitCode -ne 0) {
-            Get-ChildItem (Join-Path $env:LOCALAPPDATA 'OsmoOverlay\logs') -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1 | Get-Content
+            Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Telemavix\logs') -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1 | Get-Content
             throw "Smoke test exited with $($process.ExitCode)"
           }
 
@@ -132,8 +132,8 @@ jobs:
         run: |
           mkdir app
           tar -xzf packages/*-${{ matrix.package }}-self-contained.tar.gz -C app
-          exe=$(find app -type f -name OsmoOverlay -perm -u+x | head -n 1)
-          [ -n "$exe" ] || { echo "::error::no executable OsmoOverlay in the package"; exit 1; }
+          exe=$(find app -type f -name Telemavix -perm -u+x | head -n 1)
+          [ -n "$exe" ] || { echo "::error::no executable Telemavix in the package"; exit 1; }
           if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a "$exe" --smoke-test; else "$exe" --smoke-test; fi
 
   publish:
@@ -158,4 +158,4 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.build.outputs.tag }}
           VERSION: ${{ needs.build.outputs.version }}
-        run: gh release create "$TAG" packages/OsmoOverlay-* --draft --target "$GITHUB_SHA" --title "OsmoOverlay $VERSION" --generate-notes
+        run: gh release create "$TAG" packages/Telemavix-* --draft --target "$GITHUB_SHA" --title "Telemavix Studio $VERSION" --generate-notes

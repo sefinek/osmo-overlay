@@ -40,7 +40,7 @@ jobs:
           build-mode: manual
 
       - name: Build
-        run: dotnet build OsmoOverlay.slnx -c Release
+        run: dotnet build Telemavix.slnx -c Release
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4

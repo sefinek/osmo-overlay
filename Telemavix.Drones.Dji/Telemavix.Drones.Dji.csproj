@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Telemavix.Drones.Dji</AssemblyName>
+    <RootNamespace>Telemavix.Drones.Dji</RootNamespace>
+
+    <AssemblyTitle>Telemavix Studio DJI drones</AssemblyTitle>
+    <Description>DJI drone support for Telemavix Studio: the flight log (DJI Fly / GO 4 FlightRecord) read as a track for any recording - position, height, speed and battery, decrypted with the keys DJI hands out for a log.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Telemavix.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Telemavix.Core\Telemavix.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Telemavix.Cameras.GoPro</AssemblyName>
+    <RootNamespace>Telemavix.Cameras.GoPro</RootNamespace>
+
+    <AssemblyTitle>Telemavix Studio GoPro</AssemblyTitle>
+    <Description>GoPro support for Telemavix Studio: GPMF telemetry read from the MP4's sample table (motion sensors, the camera's own gravity vector, GPS where the camera has it) and the camera's axes.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Telemavix.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Telemavix.Core\Telemavix.Core.csproj" />
+  </ItemGroup>
+
+</Project>

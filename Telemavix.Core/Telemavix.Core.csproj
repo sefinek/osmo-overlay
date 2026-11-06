@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyName>Telemavix.Core</AssemblyName>
+    <RootNamespace>Telemavix.Core</RootNamespace>
+
+    <AssemblyTitle>Telemavix Studio Core</AssemblyTitle>
+    <Description>Telemetry processing, HUD rendering, 360 reframing and the ffmpeg pipeline - the camera formats plug in (Telemavix.Cameras.*).</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_SHA)' != ''">
+    <BuildCommit>$(GITHUB_SHA.Substring(0, 7))</BuildCommit>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BUILD_DATE)' != ''">
+    <AssemblyMetadata Include="BuildDate" Value="$(BUILD_DATE)" />
+    <AssemblyMetadata Include="Commit" Value="$(BuildCommit)" Condition="'$(BuildCommit)' != ''" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Telemavix.Tests" />
+    <InternalsVisibleTo Include="Telemavix.Cameras.Dji" />
+    <InternalsVisibleTo Include="Telemavix.Cameras.Insta360" />
+    <InternalsVisibleTo Include="Telemavix.Cameras.GoPro" />
+    <InternalsVisibleTo Include="Telemavix.Drones.Dji" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Localization\CoreStrings.resx"
+                      StronglyTypedLanguage="C#"
+                      StronglyTypedNamespace="Telemavix.Core.Localization"
+                      StronglyTypedClassName="CoreStrings"
+                      StronglyTypedFileName="$(IntermediateOutputPath)CoreStrings.g.cs" />
+    <Compile Include="$(IntermediateOutputPath)CoreStrings.g.cs"
+             Condition="'$(DesignTimeBuild)' == 'true' and Exists('$(IntermediateOutputPath)CoreStrings.g.cs')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FFmpeg.AutoGen" />
+    <PackageReference Include="NLog" />
+    <PackageReference Include="NuGet.Versioning" />
+    <PackageReference Include="ppy.SDL3-CS" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+  </ItemGroup>
+
+</Project>

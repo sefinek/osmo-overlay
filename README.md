@@ -2,15 +2,15 @@
 Add a modern telemetry HUD (speed, map, route, tilt and more) to DJI Osmo, GoPro and DJI drone footage using camera telemetry, DJI flight logs and optional external GPS tracks. Videos are re-encoded with the source's codec and settings to keep the result as close to the original as possible.
 
 If you find this repository useful, I would greatly appreciate it if you could give it a **star** ⭐. Thank you!
-Using OsmoOverlay in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
+Using Telemavix Studio in your videos? A mention (e.g. in your YouTube video description) would make my day 💖
 Pull requests are welcome too - bug fixes, new widgets, support for other cameras, anything that makes the app better.
 
-![](.github/OsmoOverlay_I0MRYO1Z.jpg)
+![](.github/Telemavix_I0MRYO1Z.jpg)
 
 ## Features
 - **Encoded like the original** - export settings are taken from the source to preserve its codec, 10-bit color, bitrate, keyframe interval and timecode. Burning in an overlay always means encoding the picture once more, but with the camera's own settings the difference is practically invisible.
 - **Rendered on your computer, not your phone** - unlike the overlay in DJI Mimo: no drop to 8-bit H.264 at a lower bitrate, audio untouched, no long wait with the phone unlocked and the app open, no phone as hot as an oven.
-- **Joins split recordings** - the camera splits long recordings into files of about 25 minutes, and OsmoOverlay joins them into one video without breaking the route.
+- **Joins split recordings** - the camera splits long recordings into files of about 25 minutes, and Telemavix Studio joins them into one video without breaking the route.
 - **Telemetry straight from the MP4** - GPS, speed, accelerometer, ISO, shutter speed and white balance.
 - **DJI drones** - the drone's MP4 carries no telemetry, so everything comes from the flight log (`FlightRecord_*.txt`): position, speed, height, climb rate, attitude, satellites, battery, flight mode, signal, remote sticks and flight alerts. The app matches the recording's time to logs in the same folder or saved from your phone, then aligns the video using the recording events in the log.
 - **External GPS tracks** - add FIT or GPX from a bike computer or watch, or a DJI flight log. Match an event in the video to its GPS time, with an optional second point to correct clock drift. No camera date is needed; alignment is saved in your project.
@@ -49,18 +49,18 @@ Pick the archive for your system:
 
 | System        | CPU                  | Installer                                                                                                                | `self-contained`                                                                                                               | `framework-dependent`                                                                                                               |
 |:--------------|:---------------------|:-------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------|
-| Windows 10/11 | Intel / AMD (x64)    | [Download (exe)](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-x64-setup.exe)   | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-x64-self-contained.zip)           | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-x64-framework-dependent.zip)           |
-| Windows 11    | ARM64 (Snapdragon)   | [Download (exe)](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-arm64-setup.exe) | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-arm64-self-contained.zip)         | [zip](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-arm64-framework-dependent.zip)         |
-| Linux         | Intel / AMD (x64)    | -                                                                                                                        | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-x64-self-contained.tar.gz)   | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-x64-framework-dependent.tar.gz)   |
-| Linux         | ARM64 (Raspberry Pi) | -                                                                                                                        | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-arm64-self-contained.tar.gz) | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-arm64-framework-dependent.tar.gz) |
-| macOS         | Intel (x64)          | -                                                                                                                        | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-x64-self-contained.tar.gz)     | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-x64-framework-dependent.tar.gz)     |
-| macOS         | Apple Silicon (M1+)  | -                                                                                                                        | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-arm64-self-contained.tar.gz)   | [tar.gz](https://github.com/sefinek/osmo-overlay/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-arm64-framework-dependent.tar.gz)   |
+| Windows 10/11 | Intel / AMD (x64)    | [Download (exe)](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-x64-setup.exe)   | [zip](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-x64-self-contained.zip)           | [zip](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-x64-framework-dependent.zip)           |
+| Windows 11    | ARM64 (Snapdragon)   | [Download (exe)](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-arm64-setup.exe) | [zip](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-arm64-self-contained.zip)         | [zip](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-win-arm64-framework-dependent.zip)         |
+| Linux         | Intel / AMD (x64)    | -                                                                                                                        | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-x64-self-contained.tar.gz)   | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-x64-framework-dependent.tar.gz)   |
+| Linux         | ARM64 (Raspberry Pi) | -                                                                                                                        | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-arm64-self-contained.tar.gz) | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-linux-arm64-framework-dependent.tar.gz) |
+| macOS         | Intel (x64)          | -                                                                                                                        | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-x64-self-contained.tar.gz)     | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-x64-framework-dependent.tar.gz)     |
+| macOS         | Apple Silicon (M1+)  | -                                                                                                                        | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-arm64-self-contained.tar.gz)   | [tar.gz](https://github.com/sefinek/telemavix-studio/releases/download/v0.4.0/OsmoOverlay-0.4.0-osx-arm64-framework-dependent.tar.gz)   |
 
-All files are also listed on the [latest release page](https://github.com/sefinek/osmo-overlay/releases/latest). Not sure which CPU you have?
+All files are also listed on the [latest release page](https://github.com/sefinek/telemavix-studio/releases/latest). Not sure which CPU you have?
 On Windows see *Settings* → *System* → *About* → *System type*; on Linux and macOS run `uname -m` (`x86_64` = x64, `arm64`/`aarch64` = ARM64).
 
-Each package contains both the app (`OsmoOverlay`) and the command-line renderer (`OsmoOverlay.Cli`).
-Checksums are in `OsmoOverlay-<version>-SHA256SUMS.txt`.
+Each package contains both the app (`Telemavix`) and the command-line renderer (`Telemavix.Cli`).
+Checksums are in `Telemavix-<version>-SHA256SUMS.txt`.
 
 ### Hardware
 The first-run guide checks your computer against these hardware requirements for rendering 4K Osmo Action footage:
@@ -77,32 +77,32 @@ The first-run guide checks your computer against these hardware requirements for
 The built-in performance test (*Tools*) measures what your computer can actually do and suggests settings.
 
 ### Windows
-The easiest way is the installer: `OsmoOverlay-<version>-win-x64-setup.exe` (or `win-arm64`).
-It installs into `%LocalAppData%\Programs\OsmoOverlay` for your user account without administrator rights, and includes desktop and Start menu shortcuts and an uninstaller.
+The easiest way is the installer: `Telemavix-<version>-win-x64-setup.exe` (or `win-arm64`).
+It installs into `%LocalAppData%\Programs\Telemavix Studio` for your user account without administrator rights, and includes desktop and Start menu shortcuts and an uninstaller.
 It's based on the `self-contained` variant, so nothing else is needed.
 An installed copy checks for new versions on startup and can update itself (also from *Settings* → *About*): it downloads the new installer, verifies it, replaces the old version and starts again.
 
-Alternatively, extract the zip and run `OsmoOverlay.exe`.
+Alternatively, extract the zip and run `Telemavix.exe`.
 
 The builds aren't code-signed yet, so SmartScreen may warn on first launch - choose *More info* → *Run anyway*.
 
 ### Linux
 ```sh
-tar -xzf OsmoOverlay-<version>-linux-x64-self-contained.tar.gz
-./OsmoOverlay-<version>-linux-x64-self-contained/OsmoOverlay
+tar -xzf Telemavix-<version>-linux-x64-self-contained.tar.gz
+./Telemavix-<version>-linux-x64-self-contained/Telemavix
 ```
-To add OsmoOverlay (with its icon) to your application menu, run `./install-desktop-entry.sh` from the extracted folder. Use `--remove` to remove the menu entry.
+To add Telemavix Studio (with its icon) to your application menu, run `./install-desktop-entry.sh` from the extracted folder. Use `--remove` to remove the menu entry.
 Run it again if you move the folder.
 
 ### macOS
-Extract the archive and move `OsmoOverlay.app` to *Applications*.
-The app isn't signed or notarized yet, so macOS blocks the first launch, usually with "OsmoOverlay is damaged and can't be opened".
+Extract the archive and move `Telemavix.app` to *Applications*.
+The app isn't signed or notarized yet, so macOS blocks the first launch, usually with "Telemavix Studio is damaged and can't be opened".
 The app isn't damaged - remove the quarantine flag macOS puts on downloaded files:
 ```sh
-xattr -dr com.apple.quarantine /Applications/OsmoOverlay.app
+xattr -dr com.apple.quarantine /Applications/Telemavix.app
 ```
 If you only see a warning about an unidentified developer, right-clicking the app and choosing *Open* works too.
-The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
+The command-line renderer is inside the bundle: `Telemavix.app/Contents/MacOS/Telemavix.Cli`.
 
 ## Supported devices
 Use the original files from the memory card. Footage exported from DJI Mimo has no telemetry.
@@ -132,7 +132,7 @@ The log uses the phone's clock, so check that it belongs to the recording.
 You can always add a log manually using **GPS track** in the Source card.
 
 Logs from newer firmware (version 13 and up) are encrypted.
-To read them, enter a DJI API key (the SDK key for an Open API app in your DJI developer account at [developer.dji.com](https://developer.dji.com)) in *Settings*, or set `OSMOOVERLAY_DJI_API_KEY`.
+To read them, enter a DJI API key (the SDK key for an Open API app in your DJI developer account at [developer.dji.com](https://developer.dji.com)) in *Settings*, or set `TELEMAVIX_DJI_API_KEY`.
 Only key blocks from the log's header are sent to DJI, without GPS positions, and the downloaded keys are kept on your computer.
 Tested with Mavic Air 2, Mavic 4 Pro, Flip and Avata 360 logs; other aircraft are unverified.
 
@@ -161,7 +161,7 @@ Original tracks contain location data and should be shared carefully.
 The CLI accepts the same alignment, using video time before cuts:
 
 ```sh
-OsmoOverlay.Cli recording.MP4 --track ride.fit --track-anchor 18.5=2026-01-01T12:00:00Z -o result.mp4
+Telemavix.Cli recording.MP4 --track ride.fit --track-anchor 18.5=2026-01-01T12:00:00Z -o result.mp4
 ```
 
 Repeat `--track-anchor` once with a later video/GPS time to correct drift.
@@ -169,20 +169,20 @@ Repeat `--track-anchor` once with a later video/GPS time to correct drift.
 Without anchors or an offset, the CLI attempts approximate motion alignment and reports a warning to verify it visually.
 
 ## Command line
-`OsmoOverlay.Cli` renders what the app renders:
+`Telemavix.Cli` renders what the app renders:
 
 ```sh
-OsmoOverlay.Cli recording.MP4 -o result.mp4 --cut 1:00-1:10@fade --volume 0:off,2:0 --music "song.mp3;start=5;db=-6;loop;len=60"
-OsmoOverlay.Cli ride1.ovproj ride2.ovproj --profile web1080
-OsmoOverlay.Cli recording.MP4 --alpha prores
-OsmoOverlay.Cli recording.MP4 --export-telemetry ride.gpx --telemetry-interval 1
+Telemavix.Cli recording.MP4 -o result.mp4 --cut 1:00-1:10@fade --volume 0:off,2:0 --music "song.mp3;start=5;db=-6;loop;len=60"
+Telemavix.Cli ride1.ovproj ride2.ovproj --profile web1080
+Telemavix.Cli recording.MP4 --alpha prores
+Telemavix.Cli recording.MP4 --export-telemetry ride.gpx --telemetry-interval 1
 ```
 
 Saved projects (`.ovproj`) are rendered one after another using their saved cuts, overlay, sound, music, GPS track and settings preset.
 You can also pass recording files alongside projects. These are rendered after the projects, combined into one recording by default, or separately with `--each`.
 A failed render doesn't stop the remaining jobs. Projects with an existing output file are skipped unless you use `--existing overwrite` or `--existing number`.
 The queue window also accepts projects and recordings through **Add projects...** and **Add recordings...**.
-`--list-presets` lists the preset names accepted by `--settings-preset`, `--layout` and `--profile`. `OsmoOverlay.Cli --help` lists all options.
+`--list-presets` lists the preset names accepted by `--settings-preset`, `--layout` and `--profile`. `Telemavix.Cli --help` lists all options.
 
 To check an untested camera, use `--report` to inspect a recording's telemetry (GPS fix, accelerometer scale, tilt range). Add `--expect-lean right|left|nose-up|nose-down` to check that roll and pitch have the expected sign in a recording made with the camera tilted in that direction.
 To check a graphics card, `--encoder-test` tests each video encoder with the settings used for rendering and reports ffmpeg's error if it fails.
@@ -190,7 +190,7 @@ To check a graphics card, `--encoder-test` tests each video encoder with the set
 ## Important information
 Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit H.264 at a lower bitrate, which reduces its quality.
 
-| Comparison      | Original footage from the camera    | Rendered with OsmoOverlay                        | Footage exported from DJI Mimo            |
+| Comparison      | Original footage from the camera    | Rendered with Telemavix Studio                        | Footage exported from DJI Mimo            |
 |:----------------|:------------------------------------|:-------------------------------------------------|:------------------------------------------|
 | Image quality   | Full quality recorded by the camera | Encoded once more with the camera's own settings | Lower - re-encoded to 8-bit H.264 at a lower bitrate |
 | Resolution      | 3840 × 2160 (4K UHD)                | 3840 × 2160 (4K UHD)                             | 3840 × 2160 (4K UHD)                      |
@@ -203,7 +203,7 @@ Do not add the overlay in the DJI Mimo app. It re-encodes your footage to 8-bit 
 \* With parts cut out, the audio is re-encoded at the source's own bitrate, since a copy can't span the joins.
 
 Adding anything to the picture means it has to be encoded again - no program can avoid that.
-OsmoOverlay keeps the source's codec, 10-bit color, bitrate, keyframe interval and HEVC level to minimize the visible difference from the original. DJI Mimo instead converts the footage to 8-bit H.264 at a lower bitrate.
+Telemavix Studio keeps the source's codec, 10-bit color, bitrate, keyframe interval and HEVC level to minimize the visible difference from the original. DJI Mimo instead converts the footage to 8-bit H.264 at a lower bitrate.
 
 ## Good to know
 - GPS data and the camera's serial number are stored directly in the MP4 file. Be careful who you share it with.
@@ -228,10 +228,10 @@ It's only used as a fallback for cameras whose telemetry format the app can't re
 Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```sh
-dotnet run --project OsmoOverlay.Gui                     # run the app
-dotnet test --project OsmoOverlay.Tests                  # run the unit tests
-dotnet run --project OsmoOverlay.Build                   # build every release package into artifacts/
-dotnet run --project OsmoOverlay.Build -- --help         # options: platforms, variant, version, output directory
+dotnet run --project Telemavix.Gui                     # run the app
+dotnet test --project Telemavix.Tests                  # run the unit tests
+dotnet run --project Telemavix.Build                   # build every release package into artifacts/
+dotnet run --project Telemavix.Build -- --help         # options: platforms, variant, version, output directory
 ```
 Packages for all platforms can be built on any system (Windows, Linux or macOS).
 
@@ -242,7 +242,7 @@ Packages for all platforms can be built on any system (Windows, Linux or macOS).
 - [VIDEOAKTIV](https://www.videoaktiv.tv/news/editing/osmooverlay-telemetrie-einblendungen-fuer-dji-videos)
 
 ## License
-OsmoOverlay is free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE), with source code on [GitHub](https://github.com/sefinek/osmo-overlay).
+Telemavix Studio is free for non-commercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE), with source code on [GitHub](https://github.com/sefinek/telemavix-studio).
 You may use, modify and share it under its terms, which also permit uses covered by the **Noncommercial Organizations** section.
 
 Commercial use beyond those permissions, including monetized videos, sponsored content, paid client work and paid rendering or editing services, requires separate permission.

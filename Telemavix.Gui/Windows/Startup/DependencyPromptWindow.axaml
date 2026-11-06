@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Telemavix.Gui"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="360"
+        x:Class="Telemavix.Gui.DependencyPromptWindow"
+        Classes="contentDialog" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Icon="{x:Static local:AppAssets.Icon}"
+        Title="{x:Static local:Strings.DependencyPrompt_MissingDependencies}">
+
+	<Grid Classes="dialogLayout" ColumnDefinitions="Auto,*">
+		<Image Grid.Column="0" Source="{local:AssetImage Path=Dialogs/MissingDependencies.webp}" Width="160" Margin="0,0,20,0" VerticalAlignment="Center" />
+		<StackPanel Grid.Column="1" Classes="dialogBody">
+			<StackPanel Spacing="2">
+				<TextBlock Text="{x:Static local:Strings.DependencyPrompt_MissingDependencies}" Classes="dialogTitle" />
+				<TextBlock Name="MessageText" Classes="dialogMessage" />
+			</StackPanel>
+			<StackPanel Name="ToolPanel" Spacing="6" />
+
+			<Border Name="LogPanel" Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6" Padding="10" IsVisible="False" MaxHeight="160">
+				<ScrollViewer Name="LogScroll">
+					<SelectableTextBlock Name="LogBox" TextWrapping="Wrap"
+					                     FontFamily="Cascadia Mono,Consolas,monospace" FontSize="12" />
+				</ScrollViewer>
+			</Border>
+
+			<WrapPanel Classes="dialogActions">
+				<Button Name="SkipButton" Content="{x:Static local:Strings.Common_Skip}" Click="OnSkipClick" />
+				<Button Name="InstallButton" Content="{x:Static local:Strings.DependencyPrompt_Install}" Classes="accent" Click="OnInstallClick" />
+			</WrapPanel>
+		</StackPanel>
+	</Grid>
+</Window>

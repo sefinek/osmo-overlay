@@ -1,0 +1,14 @@
+﻿
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+
+		<AssemblyName>Telemavix.Build</AssemblyName>
+		<RootNamespace>Telemavix.Build</RootNamespace>
+
+		<AssemblyTitle>Telemavix Studio Build</AssemblyTitle>
+		<Description>Builds the Telemavix Studio release packages for every supported OS and architecture.</Description>
+	</PropertyGroup>
+
+</Project>

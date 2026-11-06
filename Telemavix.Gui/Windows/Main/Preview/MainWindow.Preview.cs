@@ -1,0 +1,470 @@
+using System.Diagnostics;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Threading;
+using Telemavix.Core;
+using Telemavix.Core.Logging;
+using Telemavix.Core.Overlay;
+using Telemavix.Core.Preview;
+using Telemavix.Core.Telemetry;
+using Telemavix.Core.Telemetry.External;
+
+namespace Telemavix.Gui;
+
+/// <summary>Live preview: opening/closing PreviewPlayer for a loaded file, its timeline (PreviewTimeline: scrubbing, GPS loss, cuts) and the frame display.</summary>
+public partial class MainWindow
+{
+	private async Task OpenPreviewPlayerAsync(FileSummary summary, TimeSpan position, IReadOnlyList<DerivedFrame>? frames = null,
+		ExternalTrackPlayback? trackPlayback = null)
+	{
+		_openedPreviewMaxWidth = ResolvePreviewMaxWidth(summary);
+		ShowQualityPicker();
+		double scale = Math.Min(1.0, _openedPreviewMaxWidth / (double)summary.Video.Width);
+		int width = Math.Max(2, (int)(summary.Video.Width * scale) & ~1);
+		int height = Math.Max(2, (int)(summary.Video.Height * scale) & ~1);
+		_previewFrameSize = new PixelSize(width, height);
+		ApplyPreviewLayout();
+		await _previewPlayer.OpenAsync(summary, width, height, OverlaySettingsStore.Load(), ShownLayout(), frames, position, trackPlayback);
+	}
+
+	private async Task OpenPreviewAsync(FileSummary summary, OverlayProject? project = null, TimeSpan? previewPosition = null)
+	{
+		ClosePreview();
+
+		try
+		{
+			var openingTime = Stopwatch.StartNew();
+			LoadOverlayPresets();
+			OverlaySettings settings = OverlaySettingsStore.Load();
+			IReadOnlyList<DerivedFrame>? processedFrames = await Task.Run(() =>
+			{
+				IReadOnlyList<DerivedFrame>? measured = RecordingSpeeds(summary, settings.SmoothGpsMotion).Frames;
+				return measured is null ? null : OrientationTilt.Apply(SpeedCalibration.Apply(measured, settings.SpeedCorrectionPercent), summary.CameraFormat, settings.OrientationSource);
+			});
+			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
+			MomentsEditor.Attach(summary.Video.Fps, SourceFrames, processedFrames, UnitPreferences.Current);
+			if (project is not null)
+			{
+				await ApplyProjectPresetAsync(project);
+				ApplyProjectEdits(project, restorePosition: false);
+			}
+
+			long preparationMs = openingTime.ElapsedMilliseconds;
+			TimeSpan position = previewPosition ?? TimeSpan.FromSeconds(Math.Clamp(project?.PreviewFrame ?? 0, 0, Math.Max(0, summary.TotalFrameCount - 1)) / summary.Video.Fps);
+			foreach (PreviewTimeline timeline in Timelines) timeline.Maximum = summary.TotalFrameCount / summary.Video.Fps;
+			await OpenPreviewPlayerAsync(summary, position, processedFrames);
+			long playerMs = openingTime.ElapsedMilliseconds - preparationMs;
+
+			PreviewPlaceholder.IsVisible = false;
+			UpdatePreviewStatus();
+			TransportPanel.IsEnabled = true;
+			RefreshCutViews();
+			RefreshMoments();
+			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;
+			UpdateAudioPanel();
+			_ = LoadTimelineTracksAsync(summary);
+
+			// No fix at all isn't an anomaly worth flagging on the timeline, just this file's normal state (see RunGetSummaryAsync).
+			(IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges) = await FindGpsAsync(summary);
+			ShowGpsMarks(anomalies, lossRanges);
+			IReadOnlyList<TimelineFlightEvent> flightEvents = await FindFlightEventsAsync(summary);
+			foreach (PreviewTimeline timeline in Timelines) timeline.FlightEvents = flightEvents;
+			IReadOnlyList<TimelineFile> files = TimelineFiles(summary);
+			foreach (PreviewTimeline timeline in Timelines) timeline.Files = files;
+			RefreshLayers();
+			AppLogger.Info($"Preview UI: preparation {preparationMs} ms, player {playerMs} ms, " +
+			               $"editors and timelines {openingTime.ElapsedMilliseconds - preparationMs - playerMs} ms, total {openingTime.ElapsedMilliseconds} ms");
+		}
+		catch (Exception ex)
+		{
+			AppLogger.Error(ex, string.Format(Strings.Preview_Unavailable, ex.Message));
+			ClosePreview();
+		}
+	}
+
+	/// <summary>Both timelines mark the stretches the GPS lost or had repaired.</summary>
+	private void ShowGpsMarks(IReadOnlyList<GpsAnomaly> anomalies, IReadOnlyList<(double Start, double End)> lossRanges)
+	{
+		IReadOnlyList<TimeRange> gpsLoss = [.. lossRanges.Select(r => new TimeRange(r.Start, r.End))];
+		foreach (PreviewTimeline timeline in Timelines)
+		{
+			timeline.GpsLoss = gpsLoss;
+			timeline.GpsAnomalies = anomalies;
+		}
+	}
+
+	/// <summary>The events of the drone's flight log, found off the UI thread - only a recording with a log has any.</summary>
+	private static Task<IReadOnlyList<TimelineFlightEvent>> FindFlightEventsAsync(FileSummary summary)
+	{
+		if (summary.TelemetryFrames is not { Count: > 0 } frames) return Task.FromResult<IReadOnlyList<TimelineFlightEvent>>([]);
+
+		return Task.Run<IReadOnlyList<TimelineFlightEvent>>(() =>
+		[
+			.. frames.Where(f => f.FlightEvents is { Count: > 0 })
+				.SelectMany(f => f.FlightEvents!.Select(e => new TimelineFlightEvent(f.SampleTimeSeconds, e)))
+		]);
+	}
+
+	private void ClosePreview()
+	{
+		CloseFullTelemetry(false);
+		_previewPlayer.Close();
+		ShowPlayingState(false);
+		TransportPanel.IsEnabled = false;
+		CutsEditor.Attach(0, 0);
+		MomentsEditor.Attach(0, 0, null, UnitPreferences.Metric);
+		foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = false;
+		UpdateAudioPanel();
+
+		_previewFrameSize = null;
+		PreviewVideo.Clear();
+		UpdatePreviewStatus();
+		CutScrim.IsVisible = false;
+		PreviewPlaceholder.IsVisible = true;
+		_overlayPresetsLoaded = false;
+		foreach (PreviewTimeline timeline in Timelines)
+		{
+			timeline.GpsLoss = [];
+			timeline.GpsAnomalies = [];
+			timeline.FlightEvents = [];
+			timeline.RouteIntro = null;
+			timeline.Files = [];
+		}
+	}
+
+	/// <summary>
+	///     The recording's files on the timeline: each after the previous ones' frames, as they're joined (VideoSegments.Join), and
+	///     whether it was recorded after a stop (its first telemetry frame StartsAfterGap).
+	/// </summary>
+	private static IReadOnlyList<TimelineFile> TimelineFiles(FileSummary summary)
+	{
+		double fps = summary.Video.Fps > 0 ? summary.Video.Fps : 30;
+		List<TimelineFile> files = [];
+		double start = 0;
+		for (int i = 0; i < summary.InputPaths.Count && i < summary.SegmentFrameCounts.Count; i++)
+		{
+			double end = start + summary.SegmentFrameCounts[i] / fps;
+			double from = start;
+			bool afterGap = i > 0 && summary.TelemetryFrames?.FirstOrDefault(f => f.SampleTimeSeconds >= from - 0.5 / fps) is { StartsAfterGap: true };
+			files.Add(new TimelineFile(start, end, Path.GetFileName(summary.InputPaths[i]), afterGap));
+			start = end;
+		}
+
+		return files;
+	}
+
+	/// <summary>A still (paused, seeking) - played frames go to PreviewVideo on the render thread, see OnPlaybackFrameShown.</summary>
+	private void OnPreviewFrameReady(ComposedPreviewFrame frame)
+	{
+		if (_previewFrameSize is null) return;
+
+		PreviewVideo.ShowStill(frame);
+		ShowPreviewPosition(frame.Position);
+	}
+
+	/// <summary>
+	///     The newest played frame reached the screen. Posted from the render thread, so it can land just after playback
+	///     stopped - the still decoded for the pause brings the position then.
+	/// </summary>
+	private void OnPlaybackFrameShown(TimeSpan position, double framesPerSecond)
+	{
+		if (!_previewPlayer.IsPlaying) return;
+
+		ShowPreviewPosition(position);
+		ShowPlaybackFps(framesPerSecond);
+	}
+
+	private void OnPreviewPlaybackStarted()
+	{
+		PreviewVideo.StartPlayback(_previewPlayer.Frames);
+		ResetPlaybackFps();
+		OnSecondScreenPlaybackStarted();
+	}
+
+	private void ShowPreviewPosition(TimeSpan position)
+	{
+		if (!_timelineScrubbing)
+		{
+			_suppressTimelineEvent = true;
+			PreviewTimeline.Value = position.TotalSeconds;
+			_suppressTimelineEvent = false;
+		}
+
+		if (_fullTelemetry is not null)
+		{
+			_fullTelemetryPosition = position;
+			if (_trackOnly) UpdateCutScrim(position);
+			UpdatePreviewTimeText();
+			return;
+		}
+
+		_previewPosition = position;
+		_previewFrame = FrameAt(position.TotalSeconds);
+		UpdateCutScrim(position);
+		UpdatePreviewTimeText();
+		UpdateFrameStatus();
+		// Measuring a widget takes the compositor's lock, which it holds while drawing a whole frame: asked for at every played frame
+		// the UI thread stands in that queue and the window freezes while the video goes on. The still shown on pause brings the frames.
+		if (!_previewPlayer.IsPlaying) RefreshWidgetFrames();
+	}
+
+	private void OnPreviewPlaybackStopped()
+	{
+		ShowPlayingState(false);
+		UpdatePreviewTimeText();
+		ResetPlaybackFps();
+		QueueAutoQuality();
+		OnSecondScreenPlaybackStopped();
+	}
+
+	// Width-based (not "720p" height labels): _previewMaxWidth caps the preview by width (OpenPreviewAsync), and a
+	// height would depend on the recording's aspect ratio.
+	private static readonly List<PreviewQualityOption> PreviewQualityOptions =
+	[
+		new(Strings.Main_Auto, AutoPreviewWidth),
+		new($"{Strings.Preview_QualityLow} · 640 px", 640),
+		new($"{Strings.Preview_QualityMedium} · 960 px", 960),
+		new($"{Strings.Preview_QualityHigh} · 1280 px", 1280),
+		new($"{Strings.Preview_QualityVeryHigh} · 1920 px", 1920),
+		new(Strings.Preview_QualityFull, int.MaxValue)
+	];
+
+	// OverlaySettings.PreviewMaxWidth of "Auto": the preview is sized to how big it is on screen (ResolvePreviewMaxWidth).
+	private const int AutoPreviewWidth = 0;
+
+	// A quality counts as enough when it has at least this share of the pixels the preview takes on screen - a step
+	// up for the last few percent would only cost decoding speed.
+	private const double AutoQualityTolerance = 0.9;
+
+	private readonly DispatcherTimer _autoQualityDelay = new() { Interval = TimeSpan.FromMilliseconds(800) };
+	private bool _suppressPreviewQualityEvent;
+	// The width cap the open preview was sized with - what Auto compares a new size against.
+	private int _openedPreviewMaxWidth;
+
+	private void WirePreviewQuality()
+	{
+		ShowQualityPicker();
+		_autoQualityDelay.Tick += (_, _) => ApplyAutoQuality();
+	}
+
+	/// <summary>The picker with the chosen quality selected - and while it's Auto, the quality it picked in its label ("Auto · 1280 px"), once a preview is open.</summary>
+	private void ShowQualityPicker()
+	{
+		List<PreviewQualityOption> options = [.. PreviewQualityOptions];
+		int openedWidth = _openedPreviewMaxWidth;
+		if (_previewMaxWidth == AutoPreviewWidth && openedWidth > 0)
+		{
+			string picked = openedWidth == int.MaxValue ? Strings.Preview_QualityFull : $"{openedWidth} px";
+			options[0] = new PreviewQualityOption($"{Strings.Main_Auto} · {picked}", AutoPreviewWidth);
+		}
+
+		_suppressPreviewQualityEvent = true;
+		PreviewQualityCombo.ItemsSource = options;
+		PreviewQualityCombo.SelectedItem = options.FirstOrDefault(o => o.MaxWidth == _previewMaxWidth) ?? options[3];
+		_suppressPreviewQualityEvent = false;
+	}
+
+	/// <summary>The width cap to open `summary`'s preview at: the chosen quality's, or for Auto the smallest one that fills the preview's size on screen.</summary>
+	private int ResolvePreviewMaxWidth(FileSummary summary)
+	{
+		if (_previewMaxWidth != AutoPreviewWidth) return _previewMaxWidth;
+
+		double needed = NeededPreviewWidth(summary);
+		foreach (PreviewQualityOption option in PreviewQualityOptions)
+		{
+			if (option.MaxWidth == AutoPreviewWidth) continue;
+
+			if (Math.Min(option.MaxWidth, summary.Video.Width) >= needed * AutoQualityTolerance) return option.MaxWidth;
+		}
+
+		return int.MaxValue;
+	}
+
+	/// <summary>The preview's width in device pixels as it's shown now: the fitted frame, or at a zoom the source's width times it (100% is one source pixel per device pixel).</summary>
+	private double NeededPreviewWidth(FileSummary summary)
+	{
+		if (_previewZoom is { } zoom) return summary.Video.Width * zoom;
+
+		double aspect = summary.Video.Width / (double)summary.Video.Height;
+		double fitted = Math.Min(OverlayDragCanvas.Bounds.Width, OverlayDragCanvas.Bounds.Height * aspect);
+		// Not laid out yet - the same width the quality was fixed at before Auto.
+		return fitted > 0 ? fitted * UiScale.DeviceScaling(this) : 1280;
+	}
+
+	/// <summary>The preview's size on screen changed (the window, the zoom, full screen) - once it settles, Auto may need another quality.</summary>
+	private void QueueAutoQuality()
+	{
+		if (_previewMaxWidth != AutoPreviewWidth) return;
+
+		_autoQualityDelay.Stop();
+		_autoQualityDelay.Start();
+	}
+
+	private void ApplyAutoQuality()
+	{
+		_autoQualityDelay.Stop();
+		if (_previewTestRunning || _summary is not { } summary || _phase != UiPhase.SummaryReady || _previewMaxWidth != AutoPreviewWidth) return;
+
+		// Reopening stops the playback - it's looked at again when the playback ends (OnPreviewPlaybackStopped).
+		if (_previewPlayer.IsPlaying || _timelineScrubbing || ResolvePreviewMaxWidth(summary) == _openedPreviewMaxWidth) return;
+
+		_ = ReopenPreviewAsync();
+	}
+
+	/// <summary>The decoder and the preview bitmap are sized at open, so a new quality reopens the preview - where it was.</summary>
+	private async void OnPreviewQualityChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_suppressPreviewQualityEvent || PreviewQualityCombo.SelectedItem is not PreviewQualityOption option ||
+		    option.MaxWidth == _previewMaxWidth)
+		{
+			return;
+		}
+
+		_previewMaxWidth = option.MaxWidth;
+		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewMaxWidth = _previewMaxWidth });
+		await ReopenPreviewAsync();
+	}
+
+	/// <summary>Reopens the preview for a setting baked in at open (quality, GPS smoothing, map/route intro), back at the same moment of the recording.</summary>
+	private async Task ReopenPreviewAsync()
+	{
+		if (_summary is not { } summary || _phase != UiPhase.SummaryReady) return;
+		if (_fullTelemetry is { } playback)
+		{
+			bool playing = _previewPlayer.IsPlaying;
+			OverlaySettings settings = OverlaySettingsStore.Load();
+			if (playback.SmoothGpsMotion != settings.SmoothGpsMotion || playback.SpeedCorrectionPercent != settings.SpeedCorrectionPercent)
+			{
+				ExternalTrackPlayback updated = await Task.Run(() => ExternalTrackPreview.Prepare(playback.Track, playback.Synchronization, playback.RecordingSeconds, settings));
+				if (_fullTelemetry != playback) return;
+				_fullTelemetry = playback = updated with { Backdrop = playback.Backdrop };
+			}
+
+			await OpenPreviewPlayerAsync(summary, _fullTelemetryPosition, trackPlayback: playback);
+			if (playing && _fullTelemetry == playback) _previewPlayer.Play(_fullTelemetryPosition);
+			return;
+		}
+
+		double position = PreviewTimeline.Value;
+		await OpenPreviewAsync(summary);
+		if (PreviewTimeline.IsEnabled && position > 0) PreviewTimeline.Value = position;
+	}
+
+	private sealed record PreviewQualityOption(string Display, int MaxWidth)
+	{
+		public override string ToString()
+		{
+			return Display;
+		}
+	}
+
+	/// <summary>The time format flyout's entries, one per PreviewTimeFormats option (the format in the button's Tag).</summary>
+	private void BuildTimeFormatMenu()
+	{
+		foreach (ChoiceOption<PreviewTimeFormat> option in PreviewTimeFormats.Options)
+		{
+			var button = new Button { Classes = { "toolbar" }, Content = option.Label, Tag = option.Value };
+			button.Click += (_, _) =>
+			{
+				TimeFormatButton.Flyout?.Hide();
+				SetTimeFormat(option.Value);
+			};
+			TimeFormatMenu.Children.Add(button);
+		}
+
+		ApplyTimeFormatButtonClasses();
+	}
+
+	private void OnPreviewTimeTextPressed(object? sender, PointerPressedEventArgs e)
+	{
+		if (!e.GetCurrentPoint(PreviewTimeText).Properties.IsLeftButtonPressed) return;
+
+		SetTimeFormat(PreviewTimeFormats.Next(_timeFormat));
+		e.Handled = true;
+	}
+
+	private void SetTimeFormat(PreviewTimeFormat format, bool save = true)
+	{
+		if (format == _timeFormat) return;
+
+		_timeFormat = format;
+		ApplyTimeFormatButtonClasses();
+		if (save) OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { PreviewTimeFormat = format.ToString() });
+		UpdatePreviewTimeText();
+	}
+
+	private void ApplyTimeFormatButtonClasses()
+	{
+		foreach (Button button in TimeFormatMenu.Children.OfType<Button>())
+			button.Classes.Set("active", button.Tag is PreviewTimeFormat format && format == _timeFormat);
+		TimeFormatButton.Classes.Set("active", _timeFormat != PreviewTimeFormat.Seconds);
+	}
+
+	/// <summary>
+	///     The readout's column is Auto next to the timeline's *, so the timeline takes whatever width the text leaves.
+	///     Runs for every frame shown while playing - the end of the recording is formatted once per recording and format.
+	/// </summary>
+	private void UpdatePreviewTimeText()
+	{
+		TimeSpan duration = _previewPlayer.Duration;
+		long totalFrames = _fullTelemetry is null ? SourceFrames : (long)Math.Ceiling(duration.TotalSeconds * _summary!.Video.Fps);
+		if (_timeEndText is not { } end || end.Format != _timeFormat || end.Duration != duration || !ReferenceEquals(end.Summary, _summary))
+			_timeEndText = end = (_timeFormat, duration, _summary, FormatTime(duration, totalFrames));
+
+		TimeSpan position = _fullTelemetry is null ? _previewPosition : _fullTelemetryPosition;
+		long frame = _fullTelemetry is null ? _previewFrame : PreviewFrames.IndexAt(position.TotalSeconds, _summary!.Video.Fps);
+		PreviewTimeText.Text = $"{FormatTime(position, frame)} / {end.Text}";
+	}
+
+	private string FormatTime(TimeSpan time, long frame)
+	{
+		return _summary is null
+			? PreviewTimeFormats.Format(PreviewTimeFormat.Seconds, time, 0, 0, null)
+			: PreviewTimeFormats.Format(_timeFormat, time, frame, _summary.Video.Fps, _fullTelemetry is null ? _summary.Video.Timecode : null);
+	}
+
+	/// <summary>
+	///     The compact timeline in the transport row stays there, and the expanded one (in the log's place, see
+	///     SetTimelineExpanded) shows the same: whatever describes the recording goes to both. The compact one holds the
+	///     position everything reads (PreviewTimeline.Value); the expanded one follows it and hands a drag back to it.
+	/// </summary>
+	private PreviewTimeline[] Timelines => [PreviewTimeline, ExpandedTimeline];
+
+	private void WirePreviewTimeline()
+	{
+		foreach (PreviewTimeline timeline in Timelines)
+		{
+			timeline.ScrubStarted += BeginTimelineScrub;
+			timeline.ScrubEnded += EndTimelineScrub;
+		}
+	}
+
+	/// <summary>A drag moving the playhead - from either timeline or the layers: playback pauses until it ends, then goes on from there.</summary>
+	private void BeginTimelineScrub()
+	{
+		_timelineScrubbing = true;
+		_previewPlayer.BeginScrubDrag();
+	}
+
+	private void EndTimelineScrub()
+	{
+		_timelineScrubbing = false;
+		_previewPlayer.EndScrubDrag(TimeSpan.FromSeconds(PreviewTimeline.Value));
+	}
+
+	private void OnExpandedTimelineValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+	{
+		PreviewTimeline.Value = e.NewValue;
+	}
+
+	private void OnPreviewTimelineValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+	{
+		ExpandedTimeline.Value = e.NewValue;
+		if (_suppressTimelineEvent) return;
+
+		// Keyframes while dragging keep up with the pointer; the exact frame follows on release (EndScrubDrag).
+		_previewPlayer.RequestSeek(TimeSpan.FromSeconds(e.NewValue), _timelineScrubbing ? SeekAccuracy.Keyframe : SeekAccuracy.Exact);
+	}
+}

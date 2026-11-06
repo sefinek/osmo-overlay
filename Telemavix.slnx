@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+  </Configurations>
+  <Project Path="Telemavix.Core/Telemavix.Core.csproj" />
+  <Project Path="Telemavix.Cameras.Dji/Telemavix.Cameras.Dji.csproj" />
+  <Project Path="Telemavix.Drones.Dji/Telemavix.Drones.Dji.csproj" />
+  <Project Path="Telemavix.Cameras.GoPro/Telemavix.Cameras.GoPro.csproj" />
+  <Project Path="Telemavix.Cameras.Insta360/Telemavix.Cameras.Insta360.csproj" />
+  <Project Path="Telemavix.Cli/Telemavix.Cli.csproj" />
+  <Project Path="Telemavix.Gui/Telemavix.Gui.csproj" />
+  <Project Path="Telemavix.Tests/Telemavix.Tests.csproj" />
+  <Project Path="Telemavix.Build/Telemavix.Build.csproj" />
+</Solution>
