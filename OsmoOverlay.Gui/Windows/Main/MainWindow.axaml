@@ -32,6 +32,12 @@
 		<Style Selector="TextBlock.infoLabel">
 			<Setter Property="Margin" Value="0,5" />
 		</Style>
+		<Style Selector="TextBlock.checkHint">
+			<Setter Property="Margin" Value="0,-10,0,0" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Opacity" Value="0.45" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+		</Style>
 		<Style Selector="TextBlock.infoValue">
 			<Setter Property="FontWeight" Value="Medium" />
 			<Setter Property="Margin" Value="0,5" />
@@ -655,16 +661,20 @@
 									</StackPanel>
 									<TextBlock Text="{x:Static local:Strings.Main_MapSource}" Classes="infoLabel" Margin="0" />
 									<local:MapSourcePicker Name="TrackMapSource" />
+									<TextBlock Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
+									           Text="{x:Static local:Strings.Main_FetchesTilesOverTheNetwork}" />
 									<CheckBox Name="TrackMapFollowCheck" Content="{x:Static local:Strings.TrackMap_Follow}" Click="OnTrackMapFollowChanged" />
 									<TextBlock Classes="infoLabel checkHint"
 									           Text="{x:Static local:Strings.TrackMap_FollowHint}" />
 									<TextBlock Text="{x:Static local:Strings.TrackMap_MaxZoom}" Classes="infoLabel" Margin="0" />
 									<NumericUpDown Name="TrackMapZoomBox" Increment="1" FormatString="0" HorizontalAlignment="Stretch"
 									               ValueChanged="OnTrackMapZoomChanged" />
-									<CheckBox Name="TrackMapTrailCheck" Content="{x:Static local:Strings.TrackMap_ShowTrail}" Click="OnTrackMapTrailChanged" />
-									<TextBlock Name="TrackMapStatus" Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.6" TextWrapping="Wrap" IsVisible="False" />
-									<TextBlock Classes="infoLabel" Margin="0" FontSize="13" Opacity="0.4" TextWrapping="Wrap"
-									           Text="{x:Static local:Strings.Main_FetchesTilesOverTheNetwork}" />
+									<local:TrailStyleEditor Name="TrackMapTrail" GpsLossVisible="False" />
+									<CheckBox Name="TrackMapAheadCheck" Content="{x:Static local:Strings.TrackMap_ShowAhead}" Click="OnTrackMapAheadChanged" />
+									<TextBlock Classes="infoLabel checkHint" Text="{x:Static local:Strings.TrackMap_ShowAheadHint}" />
+									<TextBlock Text="{x:Static local:Strings.TrackMap_MarkerSize}" Classes="infoLabel" Margin="0" />
+									<NumericUpDown Name="TrackMapMarkerBox" Increment="0.1" FormatString="0.0" HorizontalAlignment="Stretch"
+									               ValueChanged="OnTrackMapMarkerChanged" />
 								</StackPanel>
 							</Border>
 
@@ -1280,6 +1290,7 @@
 														<CheckBox Name="CompassRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
 														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_CompassHeadingUpHint}" />
+														<local:HeadingOptionsEditor Name="CompassHeading" />
 														<CheckBox Name="CompassNorthCheck" Content="{x:Static local:Strings.Main_ShowTheNLabel}" Click="OnCompassOptionChanged" />
 														<CheckBox Name="CompassHeadingTextCheck" Content="{x:Static local:Strings.Main_ShowTheHeadingEG}" Click="OnCompassOptionChanged" />
 													</StackPanel>
@@ -1365,15 +1376,7 @@
 														<CheckBox Name="MapRotateCheck" Content="{x:Static local:Strings.Main_RotateWithTheDirectionOf}" Click="OnRotateWithHeadingChanged" />
 														<TextBlock Classes="infoLabel checkHint"
 														           Text="{x:Static local:Strings.Main_MapHeadingUpHint}" />
-														<CheckBox Name="MapStabilizeHeadingCheck" Content="{x:Static local:Strings.Main_MapStabilizeHeading}" Click="OnMapStabilizeHeadingChanged" />
-														<TextBlock Classes="infoLabel checkHint"
-														           Text="{x:Static local:Strings.Main_MapStabilizeHeadingHint}" />
-														<CheckBox Name="MapDotWhenNotFacingCheck" Content="{x:Static local:Strings.Main_MapDotWhenNotFacing}" Click="OnMapDotWhenNotFacingChanged" />
-														<TextBlock Classes="infoLabel checkHint"
-														           Text="{x:Static local:Strings.Main_MapDotWhenNotFacingHint}" />
-														<TextBlock Name="MapFacingToleranceLabel" Text="{x:Static local:Strings.Main_MapFacingTolerance}" Classes="infoLabel" Margin="0" />
-														<NumericUpDown Name="MapFacingToleranceBox" Increment="5" FormatString="0" HorizontalAlignment="Stretch"
-														               ValueChanged="OnMapFacingToleranceChanged" />
+														<local:HeadingOptionsEditor Name="MapHeading" />
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

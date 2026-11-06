@@ -10,13 +10,15 @@ namespace OsmoOverlay.Core.Overlay;
 /// </summary>
 public sealed partial class OverlayRenderer
 {
-	private static readonly SKColor StickCenterColor = SKColor.Parse("#F2D31B");
-	private static readonly SKColor StickMidColor = SKColor.Parse("#FF9A2E");
-	private static readonly SKColor StickEndColor = SKColor.Parse("#FF1F1F");
 	private static readonly SKColor HorizonGroundColor = SKColor.Parse("#1873B8");
 
-	// A dot is yellow while the stick is within this share of its travel from the center, red from the second, orange between.
-	private const double StickCenterShare = 0.2, StickEndShare = 0.92;
+	// A stick's dot runs through these colors as the stick moves from the center to the end of its travel: the attitude indicator's blue at rest,
+	// straight to red at the end (blended in Oklab, so it passes violet on its own, never green: that would read as another state).
+	private static readonly (double Travel, SKColor Color)[] StickGradient =
+	[
+		(0, SKColor.Parse("#1873B8")),
+		(1, SKColor.Parse("#FF1F1F"))
+	];
 
 	// Degrees of pitch the attitude indicator shows from its center to its edge.
 	private const double HorizonPitchSpan = 40;
@@ -33,8 +35,17 @@ public sealed partial class OverlayRenderer
 
 	internal static SKColor StickColor(double x, double y)
 	{
-		double travel = Math.Max(Math.Abs(x), Math.Abs(y));
-		return travel < StickCenterShare ? StickCenterColor : travel < StickEndShare ? StickMidColor : StickEndColor;
+		double travel = Math.Clamp(Math.Max(Math.Abs(x), Math.Abs(y)), 0, 1);
+		for (int i = 1; i < StickGradient.Length; i++)
+		{
+			(double end, SKColor to) = StickGradient[i];
+			if (travel > end) continue;
+
+			(double start, SKColor from) = StickGradient[i - 1];
+			return SpeedColorScale.Mix(from, to, (travel - start) / (end - start));
+		}
+
+		return StickGradient[^1].Color;
 	}
 
 	private void DrawRcSticks(SKCanvas canvas, DerivedFrame frame, RcSticksElement element)
@@ -130,6 +141,6 @@ public sealed partial class OverlayRenderer
 
 		Span<RotorSpin.RotorPose> rotors = stackalloc RotorSpin.RotorPose[RotorSpin.Count];
 		if (element.SpinRotors) RotorSpin.At(_allFrames, _rotorPhases, frame.Raw.SampleTimeSeconds, _rotorReferenceKmh, rotors);
-		_droneModel.DrawPerspective(canvas, new SKPoint(0, 12), radius * 0.88f, attitude, rotors, OrientationViewElevationDegrees);
+		_droneModel.DrawPerspective(canvas, new SKPoint(0, 14), radius * 0.74f, attitude, rotors, OrientationViewElevationDegrees);
 	}
 }

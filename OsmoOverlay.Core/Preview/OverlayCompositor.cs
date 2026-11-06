@@ -29,6 +29,9 @@ internal sealed class OverlayCompositor : IDisposable
 	private readonly OverlayAvailability _availability;
 	private readonly double _recordingDurationSeconds;
 	private IReadOnlyList<DerivedFrame> _frames;
+
+	/// <summary>For telemetry sparser than the picture (a GPS track's): the overlay is drawn from a frame between two (FrameInterpolation), not the nearest.</summary>
+	public bool InterpolateFrames { get; init; }
 	private OutputTimeline? _timeline;
 	private bool _showOverlay;
 	private VideoFrame? _still;
@@ -366,7 +369,7 @@ internal sealed class OverlayCompositor : IDisposable
 		if (_timeline?.TransitionAt(position.TotalSeconds) is { } fade) CutTransitionFade.Apply(bgra, fade.Amount, fade.White);
 		if (!_showOverlay || OutputSeconds(position) is not { } seconds) return;
 
-		Renderer.RenderOnto(TelemetryProcessor.FindNearest(_frames, seconds), bgra, width, height);
+		Renderer.RenderOnto(InterpolateFrames ? FrameInterpolation.At(_frames, seconds) : TelemetryProcessor.FindNearest(_frames, seconds), bgra, width, height);
 	}
 
 	/// <summary>Preview positions are on the recording's timeline, the telemetry on the output's - null where cut out.</summary>

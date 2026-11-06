@@ -20,6 +20,12 @@ public partial class MainWindow
 	{
 		TrackMapZoomBox.Minimum = RouteMapMosaic.MinZoom;
 		TrackMapZoomBox.Maximum = RouteMapMosaic.MaxZoom;
+		TrackMapMarkerBox.Minimum = (decimal)TrackMapSettings.MinMarkerScale;
+		TrackMapMarkerBox.Maximum = (decimal)TrackMapSettings.MaxMarkerScale;
+		TrackMapTrail.Changed += style => ChangeTrackMap(map => map with
+		{
+			ShowTrail = style.Visible, TrailColor = style.Color, ColorBySpeed = style.BySpeed, TrailWidth = style.Width
+		});
 		TrackMapSource.SelectionChanged += providerId => ChangeTrackMap(map => map with { ProviderId = providerId });
 		TrackMapSource.LabelsChanged += show => ChangeTrackMap(map => map with { ShowLabels = show });
 		TrackMapSource.SharedChanged += () => _trackMapDelay.Start();
@@ -44,7 +50,9 @@ public partial class MainWindow
 		TrackMapSource.Load(map.ProviderId, settings, map.ShowLabels, perMapLabels: true);
 		TrackMapFollowCheck.IsChecked = map.Follow;
 		TrackMapZoomBox.Value = map.MaxZoom;
-		TrackMapTrailCheck.IsChecked = map.ShowTrail;
+		TrackMapTrail.Populate(map.ShowTrail, map.TrailColor, map.ColorBySpeed, map.TrailWidth);
+		TrackMapAheadCheck.IsChecked = map.ShowAhead;
+		TrackMapMarkerBox.Value = (decimal)map.MarkerScale;
 		_loadingTrackMap = false;
 	}
 
@@ -71,10 +79,17 @@ public partial class MainWindow
 		ChangeTrackMap(map => map with { MaxZoom = (int)zoom });
 	}
 
-	private void OnTrackMapTrailChanged(object? sender, RoutedEventArgs e)
+	private void OnTrackMapAheadChanged(object? sender, RoutedEventArgs e)
 	{
-		bool show = TrackMapTrailCheck.IsChecked == true;
-		ChangeTrackMap(map => map with { ShowTrail = show });
+		bool show = TrackMapAheadCheck.IsChecked == true;
+		ChangeTrackMap(map => map with { ShowAhead = show });
+	}
+
+	private void OnTrackMapMarkerChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (TrackMapMarkerBox.Value is not { } scale) return;
+
+		ChangeTrackMap(map => map with { MarkerScale = (float)scale });
 	}
 
 	/// <summary>A new map for the open track, shown where the preview was; one still being fetched is dropped for it.</summary>
@@ -85,8 +100,6 @@ public partial class MainWindow
 		_trackMapBuild?.Cancel();
 		CancellationTokenSource build = _trackMapBuild = new CancellationTokenSource();
 		OverlaySettings settings = OverlaySettingsStore.Load();
-		TrackMapStatus.Text = Strings.TrackMap_Loading;
-		TrackMapStatus.IsVisible = true;
 		try
 		{
 			TrackBackdrop? backdrop = await Task.Run(() => TrackBackdrop.BuildAsync(playback.DerivedFrames, settings, _trackOnlyFormat, build.Token), build.Token);
@@ -121,11 +134,7 @@ public partial class MainWindow
 		}
 		finally
 		{
-			if (build == _trackMapBuild)
-			{
-				_trackMapBuild = null;
-				TrackMapStatus.IsVisible = false;
-			}
+			if (build == _trackMapBuild) _trackMapBuild = null;
 
 			build.Dispose();
 		}

@@ -77,6 +77,9 @@ public sealed class ExternalTrack
 
 	private const double MinGapSeconds = 3;
 
+	// Two stick readings further apart than this are not one movement (the log wrote nothing between them).
+	private const double MaxStickSpanSeconds = 0.35;
+
 	public ExternalTrack(IEnumerable<ExternalTrackPoint> points, IEnumerable<ExternalTrackPause>? pauses = null, IEnumerable<ExternalBatteryReading>? batteries = null,
 		IEnumerable<ExternalTrackRecording>? recordings = null,
 		ExternalTrackHome? home = null, IEnumerable<ExternalDroneBatteryReading>? droneBatteries = null, IEnumerable<ExternalTrackEvent>? events = null,
@@ -129,6 +132,37 @@ public sealed class ExternalTrack
 
 	/// <summary>The latest stick reading at or before `utc`, held until the track's end.</summary>
 	public DroneSticks? DroneSticksAt(DateTime utc) => LatestAt(DroneSticks, r => r.Utc, utc)?.Sticks;
+
+	/// <summary>
+	///     The sticks at `utc` carried between the two readings around it, for a picture that moves more often than the log writes
+	///     (a reading is held instead where the next is more than MaxStickSpanSeconds away - the log dropped some).
+	/// </summary>
+	public DroneSticks? DroneSticksBetween(DateTime utc)
+	{
+		if (utc < StartUtc || utc > EndUtc) return null;
+
+		int low = 0, high = DroneSticks.Count;
+		while (low < high)
+		{
+			int middle = low + (high - low) / 2;
+			if (DroneSticks[middle].Utc <= utc) low = middle + 1;
+			else high = middle;
+		}
+
+		if (low == 0) return null;
+
+		ExternalDroneSticksReading before = DroneSticks[low - 1];
+		if (low >= DroneSticks.Count) return before.Sticks;
+
+		ExternalDroneSticksReading after = DroneSticks[low];
+		double span = (after.Utc - before.Utc).TotalSeconds;
+		if (span <= 0 || span > MaxStickSpanSeconds) return before.Sticks;
+
+		double fraction = (utc - before.Utc).TotalSeconds / span;
+		DroneSticks a = before.Sticks, b = after.Sticks;
+		return new DroneSticks(a.Aileron + (b.Aileron - a.Aileron) * fraction, a.Elevator + (b.Elevator - a.Elevator) * fraction,
+			a.Throttle + (b.Throttle - a.Throttle) * fraction, a.Rudder + (b.Rudder - a.Rudder) * fraction);
+	}
 
 	/// <summary>The latest radio link reading at or before `utc`, held until the track's end.</summary>
 	public DroneSignal? DroneSignalAt(DateTime utc) => LatestAt(DroneSignals, r => r.Utc, utc)?.Signal;
@@ -195,7 +229,7 @@ public sealed class ExternalTrack
 		double? distance = to.DistanceMeters >= from.DistanceMeters ? Interpolate(from.DistanceMeters, to.DistanceMeters, fraction) : null;
 		double? height = Interpolate(from.HeightMeters, to.HeightMeters, fraction);
 		return new ExternalTrackSample(ExternalTrackState.Fix, latitude, longitude, altitude, speed, temperature, distance, height,
-			Interpolate(from.VerticalSpeedMs, to.VerticalSpeedMs, fraction), from.Satellites, from.GpsLevel, from.FlightMode, from.Attitude);
+			Interpolate(from.VerticalSpeedMs, to.VerticalSpeedMs, fraction), from.Satellites, from.GpsLevel, from.FlightMode, Interpolate(from.Attitude, to.Attitude, fraction));
 	}
 
 	private ExternalTrackSample FixAt(int index)
@@ -218,6 +252,15 @@ public sealed class ExternalTrack
 	}
 
 	private static double? Interpolate(double? from, double? to, double fraction) => from is { } a && to is { } b ? a + (b - a) * fraction : null;
+
+	/// <summary>Carried between the two records like the position (not held at the earlier one: a 10 Hz grid over a 10 Hz log would repeat a record now and then, a stall in a turn); the yaw the short way round.</summary>
+	private static DroneAttitude? Interpolate(DroneAttitude? from, DroneAttitude? to, double fraction)
+	{
+		if (from is not { } a || to is not { } b) return from;
+
+		return new DroneAttitude(a.PitchDegrees + (b.PitchDegrees - a.PitchDegrees) * fraction, a.RollDegrees + (b.RollDegrees - a.RollDegrees) * fraction,
+			AngleMath.LerpDegrees(a.YawDegrees, b.YawDegrees, fraction));
+	}
 
 	private bool Connected(ExternalTrackPoint from, ExternalTrackPoint to) => !to.StartsAfterGap &&
 	                                                                          (to.Utc - from.Utc).TotalSeconds <= GapSeconds && !Pauses.Any(p => p.FromUtc < to.Utc && p.ToUtc > from.Utc);

@@ -85,16 +85,20 @@ public sealed class DroneControlsTests
 	}
 
 	[TestMethod]
-	[DataRow(0.0, 0.0, 0)]
-	[DataRow(0.1, -0.15, 0)]
-	[DataRow(0.5, 0.0, 1)]
-	[DataRow(-0.8, 0.9, 1)]
-	[DataRow(1.0, -0.2, 2)]
-	[DataRow(0.0, -1.0, 2)]
-	public void ADotIsYellowNearTheCenterOrangeInBetweenAndRedAtTheEnd(double x, double y, int level)
+	public void ADotIsBlueAtRestAndRedAtTheEnd_AndGoesBetweenWithoutJumps()
 	{
-		SKColor[] colors = [SKColor.Parse("#F2D31B"), SKColor.Parse("#FF9A2E"), SKColor.Parse("#FF1F1F")];
-		Assert.AreEqual(colors[level], OverlayRenderer.StickColor(x, y));
+		Assert.AreEqual(SKColor.Parse("#1873B8"), OverlayRenderer.StickColor(0, 0));
+		Assert.AreEqual(SKColor.Parse("#FF1F1F"), OverlayRenderer.StickColor(1, -0.2));
+		Assert.AreEqual(OverlayRenderer.StickColor(0, -1), OverlayRenderer.StickColor(1, 1));
+
+		SKColor previous = OverlayRenderer.StickColor(0, 0);
+		for (double travel = 0.01; travel <= 1; travel += 0.01)
+		{
+			SKColor color = OverlayRenderer.StickColor(travel, 0);
+			Assert.IsTrue(Math.Abs(color.Red - previous.Red) + Math.Abs(color.Green - previous.Green) + Math.Abs(color.Blue - previous.Blue) < 40, $"a jump at {travel}");
+			Assert.IsTrue(color.Green <= Math.Max(color.Red, color.Blue), $"green at {travel}");
+			previous = color;
+		}
 	}
 
 	[TestMethod]

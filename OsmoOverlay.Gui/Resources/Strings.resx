@@ -1305,20 +1305,20 @@ Each category lists up to three moments with extreme values. You can jump to a m
   <data name="Main_MapHeadingUpHint" xml:space="preserve">
     <value>Your direction of travel is always at the top, instead of north.</value>
   </data>
-  <data name="Main_MapStabilizeHeading" xml:space="preserve">
+  <data name="Heading_Stabilize" xml:space="preserve">
     <value>Steady the direction</value>
   </data>
-  <data name="Main_MapDotWhenNotFacing" xml:space="preserve">
+  <data name="Heading_DotWhenNotFacing" xml:space="preserve">
     <value>Dot when the drone isn't flying forward</value>
   </data>
-  <data name="Main_MapFacingTolerance" xml:space="preserve">
+  <data name="Heading_FacingTolerance" xml:space="preserve">
     <value>Nose offset from the track (°)</value>
   </data>
-  <data name="Main_MapDotWhenNotFacingHint" xml:space="preserve">
+  <data name="Heading_DotWhenNotFacingHint" xml:space="preserve">
     <value>When the drone flies backwards or sideways (nose off its track by more than the set value), a dot replaces the arrow, because the direction of travel then differs from what the picture shows. Works only with a drone flight log.</value>
   </data>
-  <data name="Main_MapStabilizeHeadingHint" xml:space="preserve">
-    <value>Holds the last reliable direction when standing or crawling and ignores GPS jumps, so the map does not shake.</value>
+  <data name="Heading_StabilizeHint" xml:space="preserve">
+    <value>Holds the last reliable direction when standing or crawling and ignores GPS jumps, so the view does not shake.</value>
   </data>
   <data name="Main_MapSource" xml:space="preserve">
     <value>MAP SOURCE</value>
@@ -1616,6 +1616,9 @@ Each category lists up to three moments with extreme values. You can jump to a m
   </data>
   <data name="Main_TripStatistic" xml:space="preserve">
     <value>Trip statistic</value>
+  </data>
+  <data name="Main_TripStatisticShort" xml:space="preserve">
+    <value>Stat.</value>
   </data>
   <data name="Main_Units" xml:space="preserve">
     <value>UNITS</value>
@@ -4865,7 +4868,7 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Spin the rotors</value>
   </data>
   <data name="Orientation3D_SpinRotorsInfo" xml:space="preserve">
-    <value>Spinning rotors add to the drawing load, so the preview may become less responsive.</value>
+    <value>Spinning rotors can put more load on the preview, so it may become less smooth and responsive.</value>
   </data>
   <data name="Widget_Orientation3D" xml:space="preserve">
     <value>3D orientation</value>
@@ -5338,11 +5341,14 @@ GPS points: {2} · timer pauses: {3}</value>
   <data name="TrackMap_MaxZoom" xml:space="preserve">
     <value>Closest zoom (2-19)</value>
   </data>
-  <data name="TrackMap_ShowTrail" xml:space="preserve">
-    <value>Show the track</value>
+  <data name="TrackMap_ShowAhead" xml:space="preserve">
+    <value>Show the rest of the route</value>
   </data>
-  <data name="TrackMap_Loading" xml:space="preserve">
-    <value>Loading the background map...</value>
+  <data name="TrackMap_ShowAheadHint" xml:space="preserve">
+    <value>The dimmed stretch the aircraft has yet to fly.</value>
+  </data>
+  <data name="TrackMap_MarkerSize" xml:space="preserve">
+    <value>Aircraft size</value>
   </data>
   <data name="TrackMap_Unavailable" xml:space="preserve">
     <value>The background map couldn&apos;t be loaded, so the picture stays black.</value>

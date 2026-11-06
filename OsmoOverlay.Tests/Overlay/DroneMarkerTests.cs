@@ -26,11 +26,12 @@ public class DroneMarkerTests
 	[TestMethod]
 	public void DronePresetsTurnTheDotOn_OthersDoNot()
 	{
-		static bool On(OverlayPreset preset) => preset.Elements.OfType<MapWidgetElement>().Single().DotWhenNotFacingTravel;
+		static bool On(OverlayPreset preset) => preset.Elements.OfType<TrailOverlayElement>().All(e => e.DotWhenNotFacingTravel);
+		static bool Off(OverlayPreset preset) => preset.Elements.OfType<TrailOverlayElement>().All(e => !e.DotWhenNotFacingTravel);
 
-		Assert.IsTrue(On(OverlayPreset.CreateDrone("d", "d")));
+		Assert.IsTrue(On(OverlayPreset.CreateDrone("d", "d")), "the map and the compass");
 		Assert.IsTrue(On(OverlayPreset.CreateFpv("f", "f")));
-		Assert.IsFalse(On(OverlayPreset.CreateDefault("x", "x")));
+		Assert.IsTrue(Off(OverlayPreset.CreateDefault("x", "x")));
 	}
 
 	[TestMethod]
@@ -38,5 +39,26 @@ public class DroneMarkerTests
 	{
 		Assert.IsFalse(OverlayRenderer.DroneNotFacingTravel(Frame(0, new DroneAttitude(0, 0, 180)), new MapWidgetElement { X = 0, Y = 0 }));
 		Assert.IsFalse(OverlayRenderer.DroneNotFacingTravel(Frame(0, null), new MapWidgetElement { X = 0, Y = 0, DotWhenNotFacingTravel = true }));
+	}
+
+	[TestMethod]
+	public void TheCompassDecidesTheSameWay()
+	{
+		var compass = new CompassElement { X = 0, Y = 0, DotWhenNotFacingTravel = true };
+
+		Assert.IsTrue(OverlayRenderer.DroneNotFacingTravel(Frame(0, new DroneAttitude(0, 0, 90)), compass));
+		Assert.IsFalse(OverlayRenderer.DroneNotFacingTravel(Frame(0, new DroneAttitude(0, 0, 20)), compass));
+		Assert.IsFalse(OverlayRenderer.DroneNotFacingTravel(Frame(0, new DroneAttitude(0, 0, 90)), compass with { DotWhenNotFacingTravel = false }));
+	}
+
+	[TestMethod]
+	public void TheDjiDronePresetShowsTheBatteryAsVoltageWithCurrentOnOneLine()
+	{
+		DroneBatteryElement battery = OverlayPreset.CreateDrone("d", "d").Elements.OfType<DroneBatteryElement>().Single();
+
+		Assert.IsTrue(battery is { Visible: true, ShowIcon: true, ColorByCharge: true, ShowVoltage: true, ShowCurrent: true, CurrentBesideVoltage: true });
+		Assert.IsFalse(battery.ShowTemperature);
+		Assert.IsFalse(battery.ShowCells);
+		Assert.AreEqual(UnitSystem.Metric, battery.Units);
 	}
 }

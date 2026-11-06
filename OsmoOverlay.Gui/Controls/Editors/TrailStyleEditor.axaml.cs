@@ -28,16 +28,28 @@ public partial class TrailStyleEditor : UserControl
 	/// <summary>Raised on user edits only, not while Populate fills the controls.</summary>
 	public event Action<TrailStyle>? Changed;
 
+	/// <summary>False where the route has no join to choose (a map drawn from the track alone breaks the line at a gap).</summary>
+	public bool GpsLossVisible
+	{
+		get => GpsLossPanel.IsVisible;
+		set => GpsLossPanel.IsVisible = value;
+	}
+
 	public void Populate(TrailOverlayElement element)
 	{
+		Populate(element.TrailVisible, element.TrailColor, element.TrailColorBySpeed, element.TrailWidth, element.GpsLossJoin);
+	}
+
+	public void Populate(bool visible, string? color, bool bySpeed, float width, RouteJoin? gpsLossJoin = null)
+	{
 		_populating = true;
-		VisibleCheck.IsChecked = element.TrailVisible;
-		OptionsPanel.IsEnabled = element.TrailVisible;
-		ColorBox.Text = element.TrailColor ?? OverlayRenderer.DefaultTrailColorHex;
-		ColorSwatch.Update(SwatchBorder, element.TrailColor, OverlayRenderer.DefaultTrailColorHex);
-		BySpeedCheck.IsChecked = element.TrailColorBySpeed;
-		WidthBox.Value = (decimal)element.TrailWidth;
-		GpsLossCombo.SelectedIndex = RouteJoinOptions.IndexOf(element.GpsLossJoin);
+		VisibleCheck.IsChecked = visible;
+		OptionsPanel.IsEnabled = visible;
+		ColorBox.Text = color ?? OverlayRenderer.DefaultTrailColorHex;
+		ColorSwatch.Update(SwatchBorder, color, OverlayRenderer.DefaultTrailColorHex);
+		BySpeedCheck.IsChecked = bySpeed;
+		WidthBox.Value = (decimal)width;
+		if (gpsLossJoin is { } join) GpsLossCombo.SelectedIndex = RouteJoinOptions.IndexOf(join);
 		_populating = false;
 	}
 

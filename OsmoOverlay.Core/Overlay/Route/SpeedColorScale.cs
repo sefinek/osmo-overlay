@@ -36,6 +36,20 @@ internal static class SpeedColorScale
 		return (int)Math.Round(Math.Clamp(fraction, 0, 1) * (Buckets - 1));
 	}
 
+	/// <summary>The color at a speed fraction between two neighbouring buckets (a plain blend: they are close), for lines that fade instead of stepping.</summary>
+	public static SKColor At(SKColor slowColor, double fraction)
+	{
+		SKColor[] colors = Colors(slowColor);
+		double x = double.IsNaN(fraction) ? 0 : Math.Clamp(fraction, 0, 1) * (Buckets - 1);
+		int i = (int)x;
+		if (i >= Buckets - 1) return colors[^1];
+
+		SKColor a = colors[i], b = colors[i + 1];
+		double t = x - i;
+		return new SKColor((byte)Math.Round(a.Red + (b.Red - a.Red) * t), (byte)Math.Round(a.Green + (b.Green - a.Green) * t),
+			(byte)Math.Round(a.Blue + (b.Blue - a.Blue) * t), (byte)Math.Round(a.Alpha + (b.Alpha - a.Alpha) * t));
+	}
+
 	private static SKColor[] BuildColors(SKColor slowColor)
 	{
 		(double At, SKColor Color)[] stops = [(0, slowColor), (SlowHold, slowColor), .. WarmStops];
@@ -53,7 +67,8 @@ internal static class SpeedColorScale
 		return colors;
 	}
 
-	private static SKColor Mix(SKColor a, SKColor b, double t)
+	/// <summary>Two colors blended in Oklab: even in brightness, and with no muddy middle.</summary>
+	internal static SKColor Mix(SKColor a, SKColor b, double t)
 	{
 		if (a == b) return a;
 		(double l1, double a1, double b1) = ToOklab(a);

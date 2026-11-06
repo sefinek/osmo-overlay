@@ -32,7 +32,7 @@ public static class ExternalTrackMerge
 				DeviceBatteryPercent = track.BatteryAt(utc),
 				DroneBattery = track.DroneBatteryAt(utc),
 				DroneSignal = track.DroneSignalAt(utc),
-				DroneSticks = track.DroneSticksAt(utc),
+				DroneSticks = track.DroneSticksBetween(utc),
 				DroneAttitude = reading is { State: ExternalTrackState.Fix } attitude ? attitude.Attitude : null,
 				FlightMode = reading is { State: ExternalTrackState.Fix } moded ? moded.FlightMode : null,
 				GpsLevel = reading is { State: ExternalTrackState.Fix } leveled ? leveled.GpsLevel : null,

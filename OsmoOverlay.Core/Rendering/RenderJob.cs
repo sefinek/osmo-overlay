@@ -30,7 +30,15 @@ public sealed record RenderStatus(
 	string Message,
 	int CurrentFrame,
 	int TotalFrames,
-	TimeSpan Elapsed);
+	TimeSpan Elapsed,
+	string? ReplaceKey = null);
+
+/// <summary>Progress lines that are one line updated in place (RenderStatus.ReplaceKey), not a new line per report.</summary>
+public static class RenderProgressKeys
+{
+	public const string Tiles = "render-tiles";
+	public const string Frames = "render-frames";
+}
 
 public sealed record RenderResult(bool Success, string? ErrorMessage, TimeSpan Elapsed);
 
@@ -54,9 +62,9 @@ public static class RenderJob
 	{
 		var sw = Stopwatch.StartNew();
 
-		void Report(RenderPhase phase, string message, int current = 0, int total = 0)
+		void Report(RenderPhase phase, string message, int current = 0, int total = 0, string? replaceKey = null)
 		{
-			progress?.Report(new RenderStatus(phase, message, current, total, sw.Elapsed));
+			progress?.Report(new RenderStatus(phase, message, current, total, sw.Elapsed, replaceKey));
 		}
 
 		foreach (string path in options.InputPaths)
@@ -167,7 +175,7 @@ public static class RenderJob
 				try
 				{
 					await renderer.PrepareMapAsync(
-						(fetched, total) => Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_FetchingTilesProgress, fetched, total), fetched, total),
+						(fetched, total) => Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_FetchingTilesProgress, fetched, total), fetched, total, RenderProgressKeys.Tiles),
 						ct);
 				}
 				catch (OperationCanceledException)
@@ -251,7 +259,7 @@ public static class RenderJob
 						if (count % 60 == 0)
 						{
 							Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Frame, count, totalFrames) + rate.Describe(count, totalFrames),
-								count, totalFrames);
+								count, totalFrames, RenderProgressKeys.Frames);
 						}
 					}, ct);
 

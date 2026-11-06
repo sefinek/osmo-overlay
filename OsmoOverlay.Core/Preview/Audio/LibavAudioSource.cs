@@ -10,7 +10,7 @@ namespace OsmoOverlay.Core.Preview;
 ///     stops exactly at the given end, so the kept stretches of a cut recording join the way the render joins them.
 ///     Thread-safe; after Dispose every read returns nothing.
 /// </summary>
-public sealed unsafe class LibavAudioSource : IDisposable
+internal sealed unsafe class LibavAudioSource : IAudioSamples
 {
 	private readonly Lock _lock = new();
 	private readonly List<(string Path, double StartSeconds)> _segments;

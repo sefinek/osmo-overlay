@@ -86,4 +86,44 @@ public sealed class TrackBackdropTests
 
 		Assert.IsTrue(Draw(backdrop, frames, 10).All(b => b == 0));
 	}
+
+	[TestMethod]
+	public void TheLineIsColoredBySpeedOrOneColor_AsAsked()
+	{
+		List<DerivedFrame> frames = [.. Frames(false).Select((f, i) => f with { SpeedKmh = i / 6.0 })];
+		using TrackBackdrop bySpeed = Backdrop(new TrackMapSettings(Follow: false, ColorBySpeed: true), frames);
+		using TrackBackdrop flat = Backdrop(new TrackMapSettings(Follow: false, ColorBySpeed: false), frames);
+
+		CollectionAssert.AreNotEqual(Draw(bySpeed, frames, 59), Draw(flat, frames, 59));
+	}
+
+	[TestMethod]
+	public void TheColorOfTheLineIsTheOneAsked()
+	{
+		List<DerivedFrame> frames = Frames(false);
+		using TrackBackdrop green = Backdrop(new TrackMapSettings(Follow: false, ColorBySpeed: false, TrailColor: "#00FF00"), frames);
+		using TrackBackdrop red = Backdrop(new TrackMapSettings(Follow: false, ColorBySpeed: false, TrailColor: "#FF0000"), frames);
+
+		CollectionAssert.AreNotEqual(Draw(green, frames, 30), Draw(red, frames, 30));
+	}
+
+	[TestMethod]
+	public void WithoutTheRestOfTheRoute_OnlyWhatWasFlownIsDrawn()
+	{
+		List<DerivedFrame> frames = Frames(false);
+		using TrackBackdrop with = Backdrop(new TrackMapSettings(Follow: false, ShowAhead: true), frames);
+		using TrackBackdrop without = Backdrop(new TrackMapSettings(Follow: false, ShowAhead: false), frames);
+
+		CollectionAssert.AreNotEqual(Draw(with, frames, 5), Draw(without, frames, 5));
+	}
+
+	[TestMethod]
+	public void TheMarkerSizeIsTheOneAsked()
+	{
+		List<DerivedFrame> frames = Frames(true);
+		using TrackBackdrop small = Backdrop(new TrackMapSettings(Follow: true, MarkerScale: 0.5f), frames);
+		using TrackBackdrop large = Backdrop(new TrackMapSettings(Follow: true, MarkerScale: 2), frames);
+
+		CollectionAssert.AreNotEqual(Draw(small, frames, 20), Draw(large, frames, 20));
+	}
 }

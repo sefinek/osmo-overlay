@@ -21,6 +21,9 @@ internal sealed class DroneModel : IDisposable
 	private static readonly SKColor RearRotor = new(0xE8, 0xE8, 0xEC, 190);
 	private static readonly SKColor Hub = new(0x22, 0x22, 0x26);
 	private static readonly SKColor Blade = new(0x18, 0x18, 0x1C);
+	private static readonly SKColor BodyLight = new(0x4A, 0x4A, 0x52);
+	private static readonly SKColor LensGlint = new(0x4A, 0x9B, 0xFF, 220);
+	private readonly SKColor[] _gradientColors = new SKColor[2];
 
 	private readonly SKPaint _droneOutline = new() { Color = new SKColor(0, 0, 0, 200), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round };
 	private readonly SKPaint _droneArm = new() { Color = new SKColor(0x30, 0x30, 0x34), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round };
@@ -33,14 +36,19 @@ internal sealed class DroneModel : IDisposable
 	private readonly SKPaint _shadowPaint = new() { Color = new SKColor(0, 0, 0, 120), IsAntialias = true };
 	private readonly SKPaint _beamPaint = new() { IsAntialias = true };
 	private readonly SKPath _nose = NoseOf(1);
+	private readonly SKPath _bladeShape = BladeOf();
 	private readonly SKPath _beam = BeamOf();
 	private readonly SKShader _beamShader = SKShader.CreateLinearGradient(new SKPoint(0, -0.3f), new SKPoint(0, -3f),
 		[new SKColor(255, 255, 255, 70), new SKColor(255, 255, 255, 0)], SKShaderTileMode.Clamp);
+	private readonly SKPaint _bodyPaint = new() { IsAntialias = true };
+	private readonly SKShader _bodyShader = SKShader.CreateLinearGradient(new SKPoint(0, -0.38f), new SKPoint(0, 0.38f),
+		[BodyLight, Hub], SKShaderTileMode.Clamp);
 	private float _shadowSize;
 
 	public DroneModel()
 	{
 		_beamPaint.Shader = _beamShader;
+		_bodyPaint.Shader = _bodyShader;
 	}
 
 	private static SKPath BeamOf()
@@ -49,6 +57,18 @@ internal sealed class DroneModel : IDisposable
 		builder.MoveTo(0, -0.3f);
 		builder.LineTo(-0.85f, -3f);
 		builder.LineTo(0.85f, -3f);
+		builder.Close();
+		return builder.Detach();
+	}
+
+	/// <summary>One blade from the hub outward in a unit box (length 0..1, half-width -1..1): narrow at the root, widest two thirds out, a rounded tip.</summary>
+	private static SKPath BladeOf()
+	{
+		using var builder = new SKPathBuilder();
+		builder.MoveTo(0.05f, -0.28f);
+		builder.CubicTo(0.3f, -0.85f, 0.75f, -1f, 0.97f, -0.45f);
+		builder.QuadTo(1.03f, 0f, 0.97f, 0.45f);
+		builder.CubicTo(0.75f, 1f, 0.3f, 0.85f, 0.05f, 0.28f);
 		builder.Close();
 		return builder.Detach();
 	}
@@ -112,7 +132,7 @@ internal sealed class DroneModel : IDisposable
 			canvas.DrawLine(0, 0, end.X, end.Y, _droneArm);
 		}
 
-		float bladeLength = rotorRadius * 0.92f, bladeWidth = size * 0.1f;
+		float bladeLength = rotorRadius * 0.92f, bladeHalfWidth = size * 0.036f;
 		for (int i = 0; i < RotorSpin.Count; i++)
 		{
 			(int x, int y) = RotorSpin.Corners[i];
@@ -139,7 +159,10 @@ internal sealed class DroneModel : IDisposable
 				_blade.Color = Blade.WithAlpha((byte)((235 - 110 * Math.Min(pace, 1)) * fade));
 				canvas.Save();
 				canvas.RotateDegrees((float)(angle - behind * direction));
-				canvas.DrawRoundRect(-bladeLength, -bladeWidth / 2, bladeLength * 2, bladeWidth, bladeWidth / 2, bladeWidth / 2, _blade);
+				canvas.Scale(bladeLength, bladeHalfWidth);
+				canvas.DrawPath(_bladeShape, _blade);
+				canvas.RotateDegrees(180);
+				canvas.DrawPath(_bladeShape, _blade);
 				canvas.Restore();
 			}
 
@@ -148,10 +171,21 @@ internal sealed class DroneModel : IDisposable
 			canvas.DrawCircle(cx, cy, rotorRadius * 0.2f, _droneFill);
 		}
 
-		_droneFill.Color = Hub;
 		var body = SKRect.Create(-size * 0.27f, -size * 0.38f, size * 0.54f, size * 0.76f);
-		canvas.DrawRoundRect(body, size * 0.2f, size * 0.2f, _droneFill);
+		// The body lit from the front: lighter at the nose, darker at the tail, drawn in the unit space the gradient is in.
+		canvas.Save();
+		canvas.Scale(size);
+		canvas.DrawRoundRect(-0.27f, -0.38f, 0.54f, 0.76f, 0.2f, 0.2f, _bodyPaint);
+		canvas.Restore();
 		canvas.DrawRoundRect(body, size * 0.2f, size * 0.2f, _droneRim);
+
+		// The camera on its gimbal at the nose: a dark lens with a blue glint, where the beam starts.
+		float lens = size * 0.085f;
+		_droneFill.Color = Blade;
+		canvas.DrawCircle(0, -size * 0.38f, lens, _droneFill);
+		_droneFill.Color = LensGlint;
+		canvas.DrawCircle(-lens * 0.25f, -size * 0.38f - lens * 0.25f, lens * 0.38f, _droneFill);
+
 		_droneFill.Color = SKColors.White;
 		canvas.Save();
 		canvas.Scale(size);
@@ -270,9 +304,21 @@ internal sealed class DroneModel : IDisposable
 			}
 
 			using SKPath body = Polygon(outline);
-			_droneFill.Color = Hub;
-			canvas.DrawPath(body, _droneFill);
+			SKPoint front = Project(0, halfLength, level + 0.02), rear = Project(0, -halfLength, level + 0.02);
+			_gradientColors[0] = BodyLight;
+			_gradientColors[1] = Hub;
+			using (SKShader shader = SKShader.CreateLinearGradient(front, rear, _gradientColors, SKShaderTileMode.Clamp))
+			using (var paint = new SKPaint { IsAntialias = true, Shader = shader })
+				canvas.DrawPath(body, paint);
+
 			canvas.DrawPath(body, _droneRim);
+
+			float lens = scale * 0.136f;
+			SKPoint lensAt = Project(0, halfLength, level + 0.03);
+			_droneFill.Color = Blade;
+			canvas.DrawCircle(lensAt, lens, _droneFill);
+			_droneFill.Color = LensGlint;
+			canvas.DrawCircle(lensAt.X - lens * 0.25f, lensAt.Y - lens * 0.25f, lens * 0.38f, _droneFill);
 			using SKPath nose = Polygon([Project(0, 0.23, level + 0.03), Project(0.12, -0.06, level + 0.03), Project(-0.12, -0.06, level + 0.03)]);
 			_droneFill.Color = SKColors.White;
 			canvas.DrawPath(nose, _droneFill);
@@ -284,10 +330,12 @@ internal sealed class DroneModel : IDisposable
 	public void Dispose()
 	{
 		_nose.Dispose();
+		_bladeShape.Dispose();
 		_beam.Dispose();
 		_beamShader.Dispose();
+		_bodyShader.Dispose();
 		_shadowPaint.MaskFilter?.Dispose();
-		foreach (SKPaint paint in new[] { _droneOutline, _droneArm, _droneFill, _droneRim, _rotorFill, _rotorRing, _blade, _bladeLine, _shadowPaint, _beamPaint })
+		foreach (SKPaint paint in new[] { _bodyPaint, _droneOutline, _droneArm, _droneFill, _droneRim, _rotorFill, _rotorRing, _blade, _bladeLine, _shadowPaint, _beamPaint })
 			paint.Dispose();
 	}
 }

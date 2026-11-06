@@ -48,7 +48,7 @@ internal sealed class PlaybackSession
 	private const double MaxLateIntervals = 1.5;
 
 	private readonly LibavVideoSource _video;
-	private readonly LibavAudioSource? _audioSource;
+	private readonly IAudioSamples? _audioSource;
 	private readonly AudioOutput? _audioOutput;
 	private readonly Func<IReadOnlyList<VolumePoint>> _volume;
 	private float[] _gained = [];
@@ -86,7 +86,7 @@ internal sealed class PlaybackSession
 	private double _lateTotal;
 	private double _lateMax;
 
-	public PlaybackSession(LibavVideoSource video, LibavAudioSource? audioSource, AudioOutput? audioOutput, OverlayCompositor compositor,
+	public PlaybackSession(LibavVideoSource video, IAudioSamples? audioSource, AudioOutput? audioOutput, OverlayCompositor compositor,
 		FrameBufferPool pool, PlaybackPlan plan, double rate, PlaybackFrameSource frames, Func<IReadOnlyList<VolumePoint>>? volume = null,
 		MusicMixer? music = null)
 	{
@@ -430,7 +430,7 @@ internal sealed class PlaybackSession
 	/// </summary>
 	private async Task FeedAudioAsync()
 	{
-		LibavAudioSource source = _audioSource!;
+		IAudioSamples source = _audioSource!;
 		AudioOutput output = _audioOutput!;
 		IEnumerable<PlaybackStretch> stretches = _plan.Stretches();
 		double rate = Rate;
@@ -480,7 +480,7 @@ internal sealed class PlaybackSession
 	}
 
 	/// <summary>True when every stretch's sound went out; false when `ct` was cancelled first (a stop, or a speed change).</summary>
-	private async Task<bool> FeedAsync(LibavAudioSource source, AudioOutput output, IEnumerable<PlaybackStretch> stretches, double rate,
+	private async Task<bool> FeedAsync(IAudioSamples source, AudioOutput output, IEnumerable<PlaybackStretch> stretches, double rate,
 		CancellationToken ct)
 	{
 		using AudioTempo? tempo = rate != 1 ? new AudioTempo(rate, source.SampleRate, source.Channels) : null;

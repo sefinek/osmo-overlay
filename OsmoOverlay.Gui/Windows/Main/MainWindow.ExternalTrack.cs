@@ -290,6 +290,8 @@ public partial class MainWindow
 			SetRenderButtons(true);
 			LoadOverlayPresets();
 			ShowTrackMapSettings();
+			CutsEditor.Attach(summary.Video.Fps, SourceFrames);
+			MomentsEditor.Attach(summary.Video.Fps, SourceFrames, playback.DerivedFrames, UnitPreferences.Current);
 			PreviewPlaceholder.IsVisible = false;
 			TransportPanel.IsEnabled = true;
 			foreach (PreviewTimeline timeline in Timelines) timeline.IsEnabled = true;

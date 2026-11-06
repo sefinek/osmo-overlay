@@ -165,6 +165,7 @@ public partial class MainWindow : Window
 		};
 		foreach (TrailStyleEditor trail in new[] { CompassTrail, MapTrail }) trail.Changed += OnTrailStyleChanged;
 		foreach (MarkerStyleEditor marker in new[] { CompassMarker, MapMarker }) marker.Changed += OnMarkerStyleChanged;
+		foreach (HeadingOptionsEditor heading in new[] { CompassHeading, MapHeading }) heading.Changed += OnHeadingOptionsChanged;
 		MapSourceEditor.SharedChanged += OnMapSourcesShared;
 		_presetSaveDelay.Tick += (_, _) => SaveOverlayPresets();
 
@@ -187,8 +188,6 @@ public partial class MainWindow : Window
 		// XAML, so the two can't silently drift apart if either constant ever changes.
 		MapZoomBox.Minimum = RouteMapMosaic.MinZoom;
 		MapZoomBox.Maximum = RouteMapMosaic.MaxZoom;
-		MapFacingToleranceBox.Minimum = (decimal)OverlayRenderer.DroneFacingToleranceMin;
-		MapFacingToleranceBox.Maximum = (decimal)OverlayRenderer.DroneFacingToleranceMax;
 		MapZoomOutMaxBox.Minimum =(decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
 		SpeedMaxBox.Minimum = (decimal)OverlayRenderer.SpeedGaugeMaxMin;
@@ -720,10 +719,10 @@ public partial class MainWindow : Window
 		AppendLog(verbose ? Strings.Log_DebugModeOn : Strings.Log_DebugModeOff);
 	}
 
-	private void AppendLog(string message, LogLevel level = LogLevel.Info, string? details = null, string? fileMessage = null)
+	private void AppendLog(string message, LogLevel level = LogLevel.Info, string? details = null, string? fileMessage = null, string? statusKey = null)
 	{
-		LogBox.AppendLogLine(LogScroll, message, level, details);
-		_secondScreen?.AppendLog(message, level, details);
+		LogBox.AppendLogLine(LogScroll, message, level, details, statusKey);
+		_secondScreen?.AppendLog(message, level, details, statusKey);
 		AppLogger.FileOnly(fileMessage ?? message);
 	}
 

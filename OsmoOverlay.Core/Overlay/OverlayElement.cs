@@ -722,6 +722,15 @@ public abstract record TrailOverlayElement : OverlayElement
 	public string? MarkerColor { get; init; }
 	// The widget turns so the direction of travel is always up (north then moves around instead of staying at the top).
 	public bool RotateWithHeading { get; init; }
+
+	// What the widget turns by and points with: the heading steadied against GPS noise (HeadingStabilizer) - held while standing or
+	// crawling, a doubted jump ignored - instead of the measured one.
+	public bool StabilizeHeading { get; init; } = true;
+
+	// A drone's track direction is not where its camera looks: with the nose turned more than DroneFacingToleranceDegrees away from it
+	// (flying backwards or sideways) the marker is a dot, as an arrow would claim a direction the picture doesn't show.
+	public bool DotWhenNotFacingTravel { get; init; }
+	public double DroneFacingToleranceDegrees { get; init; } = OverlayRenderer.DroneFacingToleranceDefault;
 }
 
 /// <summary>
@@ -760,13 +769,6 @@ public sealed record MapWidgetElement : TrailOverlayElement
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
 	}
 
-	// The map turns by the heading steadied against GPS noise (HeadingStabilizer): held while standing or crawling, a doubted jump ignored.
-	public bool StabilizeHeading { get; init; } = true;
-
-	// A drone's track direction is not where its camera looks: with the nose turned more than DroneFacingToleranceDegrees away from it
-	// (flying backwards or sideways) the marker is a dot, as an arrow would claim a direction the picture doesn't show.
-	public bool DotWhenNotFacingTravel { get; init; }
-	public double DroneFacingToleranceDegrees { get; init; } = OverlayRenderer.DroneFacingToleranceDefault;
 	public int MapZoom { get; init; } = 16;
 	public bool? ShowEsriLabels { get; init; }
 	public bool MapDynamicZoom { get; init; }

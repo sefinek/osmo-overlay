@@ -37,9 +37,9 @@ public static class TrackRenderJob
 	{
 		var sw = Stopwatch.StartNew();
 
-		void Report(RenderPhase phase, string message, int current = 0, int total = 0)
+		void Report(RenderPhase phase, string message, int current = 0, int total = 0, string? replaceKey = null)
 		{
-			progress?.Report(new RenderStatus(phase, message, current, total, sw.Elapsed));
+			progress?.Report(new RenderStatus(phase, message, current, total, sw.Elapsed, replaceKey));
 		}
 
 		try
@@ -76,7 +76,7 @@ public static class TrackRenderJob
 			using TrackBackdrop? backdrop = await TrackBackdrop.BuildAsync(derived, settings, options.Format, ct);
 
 			using var renderer = new OverlayRenderer(width, height, shown[0].Raw.AltitudeMeters, layout, shown, TelemetryProcessor.Summarize(shown).MaxSpeedKmh,
-				false, options.Track.DeviceName, summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroSettings.Disabled)
+				settings.ShowWatermark, options.Track.DeviceName, summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroSettings.Disabled)
 			{
 				OutputDurationSeconds = totalFrames / fps,
 				CutCaptions = outputTimeline.Captions,
@@ -84,7 +84,7 @@ public static class TrackRenderJob
 				Backdrop = backdrop?.Map
 			};
 			if (layout.Any(e => e is MapWidgetElement { Visible: true }))
-				await renderer.PrepareMapAsync((fetched, total) => Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_FetchingTilesProgress, fetched, total), fetched, total), ct);
+				await renderer.PrepareMapAsync((fetched, total) => Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_FetchingTilesProgress, fetched, total), fetched, total, RenderProgressKeys.Tiles), ct);
 
 			Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Rendering, totalFrames, options.OutputPath), 0, totalFrames);
 			IReadOnlyList<MusicClip>? music = options.Music is { Count: > 0 }
@@ -98,6 +98,7 @@ public static class TrackRenderJob
 
 			try
 			{
+				var rate = new RenderRateEstimator(options.Format.Fps);
 				var freeBuffers = new ConcurrentQueue<byte[]>();
 				int bufferSize = renderer.FrameBufferSize();
 
@@ -113,7 +114,7 @@ public static class TrackRenderJob
 
 					async Task Send(byte[] pixels, int outputFrame)
 					{
-						renderer.RenderOnto(TelemetryProcessor.FindNearest(shown, outputFrame / fps), pixels, width, height);
+						renderer.RenderOnto(FrameInterpolation.At(shown, outputFrame / fps), pixels, width, height);
 						await writer.WriteAsync(pixels, token);
 					}
 
@@ -146,8 +147,9 @@ public static class TrackRenderJob
 				}, (pixels, count) =>
 				{
 					freeBuffers.Enqueue(pixels);
+					rate.Add(count);
 					if (count % 60 == 0)
-						Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Frame, count, totalFrames), count, totalFrames);
+						Report(RenderPhase.Rendering, string.Format(CoreStrings.Render_Frame, count, totalFrames) + rate.Describe(count, totalFrames), count, totalFrames, RenderProgressKeys.Frames);
 				}, ct);
 
 				if (feed.Cancelled) return new RenderResult(false, CoreStrings.Render_Cancelled, sw.Elapsed);

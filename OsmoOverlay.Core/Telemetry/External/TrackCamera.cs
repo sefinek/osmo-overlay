@@ -62,24 +62,10 @@ public static class TrackCamera
 	{
 		if (frames.Count == 0) return null;
 
-		(int index, double fraction, _) = Locate(frames, seconds);
-		TelemetryFrame before = frames[index].Raw;
-		if (index + 1 >= frames.Count) return before.HasGpsFix ? before : null;
-
-		TelemetryFrame after = frames[index + 1].Raw;
-		TelemetryFrame nearest = fraction < 0.5 ? before : after;
-		if (!nearest.HasGpsFix) return null;
-		if (!before.HasGpsFix || !after.HasGpsFix || after.StartsAfterGap) return nearest;
-
-		return nearest with
-		{
-			Latitude = before.Latitude + (after.Latitude - before.Latitude) * fraction,
-			Longitude = before.Longitude + (after.Longitude - before.Longitude) * fraction,
-			DroneAttitude = before.DroneAttitude is { } a && after.DroneAttitude is { } b
-				? new DroneAttitude(a.PitchDegrees + (b.PitchDegrees - a.PitchDegrees) * fraction, a.RollDegrees + (b.RollDegrees - a.RollDegrees) * fraction,
-					AngleMath.LerpDegrees(a.YawDegrees, b.YawDegrees, fraction))
-				: nearest.DroneAttitude
-		};
+		// The same carrying between frames as the widgets' (FrameInterpolation): found by the frames' own times, the attitude through a curve
+		// (the yaw across 360 included), so the marker turns as smoothly as the Orientation3D widget does.
+		TelemetryFrame frame = FrameInterpolation.At(frames, seconds).Raw;
+		return frame.HasGpsFix ? frame : null;
 	}
 
 	/// <summary>The frames are evenly spaced: the one at or before a time, how far past it the time is (0 to 1) and the spacing.</summary>

@@ -1305,20 +1305,20 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   <data name="Main_MapHeadingUpHint" xml:space="preserve">
     <value>Na górze jest zawsze kierunek jazdy, a nie północ.</value>
   </data>
-  <data name="Main_MapStabilizeHeading" xml:space="preserve">
+  <data name="Heading_Stabilize" xml:space="preserve">
     <value>Stabilizuj kierunek</value>
   </data>
-  <data name="Main_MapDotWhenNotFacing" xml:space="preserve">
+  <data name="Heading_DotWhenNotFacing" xml:space="preserve">
     <value>Kropka, gdy dron nie leci przodem</value>
   </data>
-  <data name="Main_MapFacingTolerance" xml:space="preserve">
+  <data name="Heading_FacingTolerance" xml:space="preserve">
     <value>Odchylenie nosa od toru lotu (°)</value>
   </data>
-  <data name="Main_MapDotWhenNotFacingHint" xml:space="preserve">
+  <data name="Heading_DotWhenNotFacingHint" xml:space="preserve">
     <value>Gdy dron leci do tyłu lub bokiem (nos odchylony od toru lotu o więcej niż ustawiona wartość), zamiast strzałki jest kropka, bo kierunek lotu nie pokrywa się wtedy z tym, co widać w kadrze. Działa tylko z logiem lotu drona.</value>
   </data>
-  <data name="Main_MapStabilizeHeadingHint" xml:space="preserve">
-    <value>Na postoju i przy bardzo małej prędkości zostaje ostatni wiarygodny kierunek, a skoki GPS są ignorowane, więc mapa się nie trzęsie.</value>
+  <data name="Heading_StabilizeHint" xml:space="preserve">
+    <value>Na postoju i przy bardzo małej prędkości zostaje ostatni wiarygodny kierunek, a skoki GPS są ignorowane, więc widok się nie trzęsie.</value>
   </data>
   <data name="Main_MapSource" xml:space="preserve">
     <value>ŹRÓDŁO MAPY</value>
@@ -1616,6 +1616,9 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   </data>
   <data name="Main_TripStatistic" xml:space="preserve">
     <value>Statystyka trasy</value>
+  </data>
+  <data name="Main_TripStatisticShort" xml:space="preserve">
+    <value>Stat.</value>
   </data>
   <data name="Main_Units" xml:space="preserve">
     <value>JEDNOSTKI</value>
@@ -4865,7 +4868,7 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Obracaj śmigła</value>
   </data>
   <data name="Orientation3D_SpinRotorsInfo" xml:space="preserve">
-    <value>Obracające się śmigła obciążają rysowanie, więc podgląd może stać się mniej responsywny.</value>
+    <value>Obracające się śmigła mogą bardziej obciążyć podgląd, więc może on stać się mniej płynny i responsywny.</value>
   </data>
   <data name="Widget_Orientation3D" xml:space="preserve">
     <value>Orientacja 3D</value>
@@ -5338,11 +5341,14 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="TrackMap_MaxZoom" xml:space="preserve">
     <value>Największe przybliżenie (2-19)</value>
   </data>
-  <data name="TrackMap_ShowTrail" xml:space="preserve">
-    <value>Pokaż ślad trasy</value>
+  <data name="TrackMap_ShowAhead" xml:space="preserve">
+    <value>Pokaż resztę trasy</value>
   </data>
-  <data name="TrackMap_Loading" xml:space="preserve">
-    <value>Pobieram mapę tła...</value>
+  <data name="TrackMap_ShowAheadHint" xml:space="preserve">
+    <value>Przyciemniony odcinek, który dron jeszcze przeleci.</value>
+  </data>
+  <data name="TrackMap_MarkerSize" xml:space="preserve">
+    <value>Rozmiar drona</value>
   </data>
   <data name="TrackMap_Unavailable" xml:space="preserve">
     <value>Nie udało się pobrać mapy tła, więc obraz zostaje czarny.</value>

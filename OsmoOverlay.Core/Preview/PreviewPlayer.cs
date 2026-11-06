@@ -141,7 +141,7 @@ public sealed class PreviewPlayer : IDisposable
 		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread. The picture's and
 		// the sound's don't depend on each other, so they open at the same time.
 		Task<LibavVideoSource> videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer, trackPlayback));
-		Task<(LibavAudioSource?, AudioOutput?)> audioOpen = Task.Run(() => trackPlayback is null ? OpenAudio(segments) : (null, null));
+		Task<(IAudioSamples?, AudioOutput?)> audioOpen = Task.Run(() => trackPlayback is null or { IsTrackOnly: true } ? OpenAudio(segments) : (null, null));
 		try
 		{
 			await Task.WhenAll(videoOpen, audioOpen);
@@ -159,7 +159,7 @@ public sealed class PreviewPlayer : IDisposable
 		}
 
 		LibavVideoSource video = videoOpen.Result;
-		(LibavAudioSource? audioSource, AudioOutput? audioOutput) = audioOpen.Result;
+		(IAudioSamples? audioSource, AudioOutput? audioOutput) = audioOpen.Result;
 		if (generation != _openGeneration)
 		{
 			video.Dispose();
@@ -192,7 +192,7 @@ public sealed class PreviewPlayer : IDisposable
 		try
 		{
 			compositor = await Task.Run(() => new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
-					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain && trackPlayback is null, trackPlayback?.Track.DeviceName ?? summary.CameraModel,
+					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain && trackPlayback is null or { IsTrackOnly: true }, trackPlayback?.Track.DeviceName ?? summary.CameraModel,
 					summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, outputTimeline))
 				{
 					DrawShadows = settings.PreviewDrawsShadows,
@@ -200,7 +200,8 @@ public sealed class PreviewPlayer : IDisposable
 				},
 				recordingFrames, trackPlayback?.DurationSeconds ?? summary.TotalFrameCount / summary.Video.Fps, availability, outputTimeline, showOverlay, pool, settings.SpeedCorrectionPercent)
 			{
-				SnapshotShadows = !settings.DisableShadows
+				SnapshotShadows = !settings.DisableShadows,
+				InterpolateFrames = trackPlayback is not null
 			});
 		}
 		catch
@@ -291,33 +292,39 @@ public sealed class PreviewPlayer : IDisposable
 		Volatile.Write(ref _volume, volume);
 	}
 
-	/// <summary>The music on the output's timeline (MusicTrack); heard in the preview only with a recording that has sound.</summary>
+	/// <summary>The music on the output's timeline (MusicTrack); mixed into the recording's sound, or into silence when it has none.</summary>
 	public void SetMusic(IReadOnlyList<MusicClip> music)
 	{
 		Volatile.Write(ref _music, music);
 	}
 
-	/// <summary>The audio track and the playback device, or (null, null) - the preview then plays without sound.</summary>
-	private static (LibavAudioSource?, AudioOutput?) OpenAudio(IReadOnlyList<PlaybackSegment> segments)
+	/// <summary>
+	///     The recording's sound (or, with none, silence for the music to be mixed into) and the playback device, or (null, null)
+	///     when the device can't be opened - the preview then plays without sound.
+	/// </summary>
+	private static (IAudioSamples?, AudioOutput?) OpenAudio(IReadOnlyList<PlaybackSegment> segments)
 	{
-		LibavAudioSource? source;
-		try
-		{
-			source = LibavAudioSource.TryOpen(segments);
-		}
-		catch (InvalidOperationException ex)
-		{
-			AppLogger.Warn(ex, CoreStrings.Preview_AudioTrackFailed);
-			return (null, null);
-		}
-
-		if (source is null) return (null, null);
-
+		IAudioSamples source = (IAudioSamples?)TryOpenRecordingAudio(segments) ?? new SilentAudioSource();
 		var output = AudioOutput.TryOpen(source.SampleRate, source.Channels);
 		if (output is not null) return (source, output);
 
 		source.Dispose();
 		return (null, null);
+	}
+
+	private static LibavAudioSource? TryOpenRecordingAudio(IReadOnlyList<PlaybackSegment> segments)
+	{
+		if (segments.Count == 0) return null;
+
+		try
+		{
+			return LibavAudioSource.TryOpen(segments);
+		}
+		catch (InvalidOperationException ex)
+		{
+			AppLogger.Warn(ex, CoreStrings.Preview_AudioTrackFailed);
+			return null;
+		}
 	}
 
 	public void TogglePlayPause(TimeSpan currentPosition)
@@ -858,7 +865,7 @@ public sealed class PreviewPlayer : IDisposable
 	/// <summary>Everything one opened recording holds - closed together, in the background (DisposeWhenStoppedAsync).</summary>
 	private sealed class OpenRecording(
 		LibavVideoSource video,
-		LibavAudioSource? audioSource,
+		IAudioSamples? audioSource,
 		AudioOutput? audioOutput,
 		FrameBufferPool pool,
 		OverlayCompositor compositor,
@@ -874,7 +881,7 @@ public sealed class PreviewPlayer : IDisposable
 		public LibavVideoSource Video { get; } = video;
 
 		// Both null when the recording has no audio track or there's no playback device - playback is then silent.
-		public LibavAudioSource? AudioSource { get; } = audioSource;
+		public IAudioSamples? AudioSource { get; } = audioSource;
 		public AudioOutput? AudioOutput { get; } = audioOutput;
 
 		// Shared by the decoder, the compositor and playback - every preview frame buffer comes from here.

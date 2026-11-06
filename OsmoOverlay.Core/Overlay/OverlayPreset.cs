@@ -43,19 +43,20 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			[
 				.. basis.Elements.Select(e => e switch
 				{
-					DateTimeTextElement or ElevationElement or GradientElement or RollGaugeElement or GMeterElement or CompassElement or SunWidgetElement or GpsAlertElement
+					DateTimeTextElement or ElevationElement or GradientElement or RollGaugeElement or GMeterElement or SunWidgetElement or GpsAlertElement
 						or TripProgressBarElement => e with { Visible = false },
+					CompassElement compass => compass with { Visible = false, DotWhenNotFacingTravel = true },
 					ProfileChartElement chart => chart with { Y = chartY, Visible = true, Series = ProfileSeries.Height, Axis = ProfileAxis.Time, AutoHeight = true },
 					MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false, RotateWithHeading = true, DotWhenNotFacingTravel = true },
-					DroneBatteryElement => e with { X = m, Y = top, Visible = true },
+					DroneBatteryElement battery => battery with { X = m, Y = top, Visible = true, ShowIcon = true, ColorByCharge = true, ShowVoltage = true, ShowTemperature = false, ShowCurrent = true, CurrentBesideVoltage = true, ShowCells = false },
 					SignalElement => e with { X = signalX, Y = top, Visible = true },
 					SatellitesElement => e with { X = gpsX, Y = top, Visible = true },
 					FlightAlertsElement alerts => alerts with { Visible = true, ShowSeconds = 5, MaxLines = 2 },
 					RcSticksElement => e with { X = sticksX, Y = top + DroneControlsTop, Visible = true },
 					AttitudeIndicatorElement => e with { X = dialX, Y = top + DroneControlsTop + OverlayElementBounds.StickPadSize + DroneControlsGap + OverlayElementBounds.DroneDialRadius, Visible = true },
-					Orientation3DElement => e with
+					Orientation3DElement orientation => orientation with
 					{
-						X = dialX, Y = top + DroneControlsTop + OverlayElementBounds.StickPadSize + 2 * DroneControlsGap + OverlayElementBounds.DroneDialRadius * 3, Visible = true
+						X = dialX, Y = top + DroneControlsTop + OverlayElementBounds.StickPadSize + 2 * DroneControlsGap + OverlayElementBounds.DroneDialRadius * 3, Visible = true, SpinRotors = true
 					},
 					HeightElement or HomeDistanceElement => e with { Visible = false },
 					DistanceElement => e with { X = m, Y = top + DroneColumnStep },
@@ -70,8 +71,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	///     An FPV goggles' OSD, not the DJI layout: everything that is shown is white, text on a see-through ground. The aircraft's own state
 	///     is along the edges - battery, radio link and GPS in a row top left, the flight timer and the height, the distance to home, the distance flown and the
 	///     average speed in a column top right, the records (top speed, highest point, farthest from home) and the climb rate below them in a column down the left under the battery, the flight mode top center over the alerts (three, 3 s, fading in 0.12 s and sliding in) - and the instruments
-	///     are along the bottom: the remote's sticks left, the attitude indicator and the 3D orientation in the middle, the speed gauge right.
-	///     The map is bottom left (with its credit), the sticks next to it. The date and time sit under the flight timer. No profile, sun or camera gauges.
+	///     are along the bottom: the attitude indicator and the 3D orientation in the middle, the remote's sticks and the speed gauge right.
+	///     The map is bottom left (with its credit). The date and time sit under the flight timer. No profile, sun or camera gauges.
 	/// </summary>
 	public static OverlayPreset CreateFpv(string id, string name)
 	{
@@ -95,7 +96,10 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		}
 
 		const float dial = OverlayElementBounds.DroneDialRadius;
-		float sticksX = basis.Elements.First(e => e is MapWidgetElement).X + OverlayElementBounds.MapRadius + FpvMapToSticks;
+		// Centered in the gap between the 3D orientation's right edge and the speed gauge's left edge.
+		float orientationRight = width / 2f + dial + FpvDialGap / 2 + dial;
+		float speedLeft = basis.Elements.First(e => e is SpeedGaugeElement).X - OverlayElementBounds.SpeedRadius;
+		float sticksX = (orientationRight + speedLeft) / 2 - (OverlayElementBounds.StickPadSize * 2 + OverlayElementBounds.StickPadGap) / 2;
 		const string white = "#FFFFFF";
 
 		return basis with
@@ -120,8 +124,9 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 						TripStatElement => e with { X = m, Y = leftY, Visible = true },
 						RcSticksElement => e with { X = sticksX, Y = bottom - OverlayElementBounds.StickPadSize, Visible = true },
 						AttitudeIndicatorElement => e with { X = width / 2f - dial - FpvDialGap / 2, Y = bottom - dial, Visible = true },
-						Orientation3DElement => e with { X = width / 2f + dial + FpvDialGap / 2, Y = bottom - dial, Visible = true },
+						Orientation3DElement orientation => orientation with { X = width / 2f + dial + FpvDialGap / 2, Y = bottom - dial, Visible = true, SpinRotors = true },
 						MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false, RotateWithHeading = true, DotWhenNotFacingTravel = true },
+						CompassElement compass => compass with { Visible = false, DotWhenNotFacingTravel = true },
 						SpeedGaugeElement or MapAttributionElement => e,
 						_ => e with { Visible = false }
 					};
@@ -142,7 +147,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	private const float DroneGpsWidth = 240;
 	private const float DroneSignalWidth = 280;
 	private const float DroneTopGap = 60;
-	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 502, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvMapToSticks = 110;
+	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 450, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60;
 	private const float DroneColumnStep = 220;
 
 	// The sticks and the two dials stacked down the right edge under the top row: where the first starts, and the gap between them.
@@ -264,8 +269,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new SignalElement { X = 1200, Y = 2000, Visible = false },
 			new FlightModeElement { X = 2900, Y = 1700, Visible = false },
 			new RcSticksElement { X = 2900, Y = 1960, Visible = false },
-			new AttitudeIndicatorElement { X = 2430, Y = 1880, Visible = false },
-			new Orientation3DElement { X = 2760, Y = 1880, Visible = false }
+			new AttitudeIndicatorElement { X = 2448, Y = 1880, Visible = false },
+			new Orientation3DElement { X = 2740, Y = 1880, Visible = false }
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid, so a

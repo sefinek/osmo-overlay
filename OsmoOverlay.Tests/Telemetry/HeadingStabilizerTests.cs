@@ -102,4 +102,27 @@ public sealed class HeadingStabilizerTests
 		Func<int, double> heading = i => (i * 3) % 360;
 		Assert.IsTrue(Compute(frames, _ => 25, heading).SequenceEqual(Compute(frames, _ => 25, heading)));
 	}
+
+	[TestMethod]
+	public void AfterAHold_TheNewDirectionIsTurnedToAtALimitedPace()
+	{
+		TelemetryFrame[] frames = Frames(400);
+		double[] result = Compute(frames, i => i is >= 50 and < 100 ? 0 : 40, i => i < 100 ? 90 : 180);
+
+		for (int i = 101; i < 400; i++) Assert.IsTrue(Diff(result[i], result[i - 1]) <= 18.0001, $"frame {i}: a step of {Diff(result[i], result[i - 1])} degrees");
+		Assert.IsTrue(Diff(result[399], 180) < 1);
+	}
+
+	[TestMethod]
+	public void AFlightLogs_DirectionIsTrustedAtAWalkingPace_ACamerasIsNot()
+	{
+		TelemetryFrame[] camera = Frames(200);
+		TelemetryFrame[] aircraft = [.. camera.Select(f => f with { DroneAttitude = new DroneAttitude(0, 0, 0) })];
+
+		double[] slowCamera = Compute(camera, i => i < 50 ? 30 : 2.5, i => i < 50 ? 90 : 180);
+		double[] slowAircraft = Compute(aircraft, i => i < 50 ? 30 : 2.5, i => i < 50 ? 90 : 180);
+
+		Assert.IsTrue(Diff(slowCamera[199], 90) < 1, "a camera at 2.5 km/h keeps the last reliable direction");
+		Assert.IsTrue(Diff(slowAircraft[199], 180) < 5, "an aircraft at 2.5 km/h follows");
+	}
 }

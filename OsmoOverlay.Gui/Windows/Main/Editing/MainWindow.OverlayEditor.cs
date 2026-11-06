@@ -347,8 +347,9 @@ public partial class MainWindow
 	/// </summary>
 	private string BaseWidgetName(OverlayElement element)
 	{
-		string name = GetWidgetLabel(element.Type);
-		return element is TripStatElement stat ? $"{name}: {stat.Label ?? OverlayRenderer.DefaultTripStatLabel(stat.Stat)}" : name;
+		if (element is TripStatElement stat) return $"{Strings.Main_TripStatisticShort}: {stat.Label ?? OverlayRenderer.DefaultTripStatLabel(stat.Stat)}";
+
+		return GetWidgetLabel(element.Type);
 	}
 
 	/// <summary>The widgets on the overlay in layout (draw) order, named as the "on overlay" list and the layers show them.</summary>
@@ -916,6 +917,7 @@ public partial class MainWindow
 				CompassRotateCheck.IsChecked = x.RotateWithHeading;
 				CompassNorthCheck.IsChecked = x.ShowNorthLabel;
 				CompassHeadingTextCheck.IsChecked = x.ShowHeadingText;
+				CompassHeading.Populate(x);
 				CompassTrail.Populate(x);
 				CompassMarker.Populate(x);
 				CompassPanelFill.Populate(x);
@@ -1024,10 +1026,7 @@ public partial class MainWindow
 				MapZoomOutMaxBox.IsVisible = x.MapDynamicZoom;
 				MapZoomOutMaxHint.IsVisible = x.MapDynamicZoom;
 				MapRotateCheck.IsChecked = x.RotateWithHeading;
-				MapStabilizeHeadingCheck.IsChecked = x.StabilizeHeading;
-				MapDotWhenNotFacingCheck.IsChecked = x.DotWhenNotFacingTravel;
-				MapFacingToleranceBox.Value = (decimal)x.DroneFacingToleranceDegrees;
-				MapFacingToleranceLabel.IsVisible = MapFacingToleranceBox.IsVisible = x.DotWhenNotFacingTravel;
+				MapHeading.Populate(x);
 				MapTrail.Populate(x);
 				MapMarker.Populate(x);
 				MapTiming.Populate(x);

@@ -225,7 +225,7 @@ public partial class MainWindow
 
 	private void OnProgress(RenderStatus status)
 	{
-		AppendLog(status.Message);
+		AppendLog(status.Message, statusKey: status.ReplaceKey);
 
 		if (status.TotalFrames > 0)
 		{

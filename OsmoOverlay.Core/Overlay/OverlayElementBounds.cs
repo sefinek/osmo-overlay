@@ -385,7 +385,7 @@ public static class OverlayElementBounds
 	// The remote's sticks and the two dials of the aircraft's attitude (OverlayRenderer.DroneControls.cs).
 	public const float StickPadSize = 130;
 	public const float StickPadGap = 24;
-	public const float DroneDialRadius = 110;
+	public const float DroneDialRadius = 128;
 
 	public const float FlightModeSize = 56;
 	public const float FlightModeBaseline = 66;

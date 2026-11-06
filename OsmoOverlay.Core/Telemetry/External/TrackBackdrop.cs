@@ -20,21 +20,28 @@ public sealed class TrackBackdrop : IDisposable
 	// Tiles around the track's own, so a view following its edge still has map in it.
 	private const int FollowPaddingTiles = 3;
 	private const int MaxTrailPoints = 4000;
+	// No mipmaps: Skia builds them for a raster image by the hundreds of MB and drops them from its small cache again, so every frame
+	// paid for it (33 ms against 6 at 1080p). Half and quarter size copies (_levels) do the same job once.
 	private static readonly SKSamplingOptions MapSampling = new(SKFilterMode.Linear, SKMipmapMode.None);
-	private static readonly SKColor TrailPassedOutline = new(0, 0, 0, 170);
-	private static readonly SKColor TrailPassedLine = new(0xFF, 0xB0, 0x20);
-	private static readonly SKColor TrailAheadOutline = new(0, 0, 0, 60);
-	private static readonly SKColor TrailAheadLine = new(0xFF, 0xB0, 0x20, 105);
+	private const int FollowLevels = 3;
+	// The line is a soft dark edge, the color (a gradient from one point's speed to the next, so it fades instead of stepping) and a thin light core.
+	private static readonly SKColor TrailEdge = new(0, 0, 0, 110);
+	private static readonly SKColor TrailCore = new(255, 255, 255, 70);
+	private const float EdgeWidthFactor = 1.55f, CoreWidthFactor = 0.3f;
+	private const byte TrailPassedAlpha = 255, TrailAheadAlpha = 120;
 
 	private readonly Lock _lock = new();
 	// Drawn once per frame at 30 fps, so kept - only what depends on the picture's size is set at each draw.
 	private readonly SKPaint _imagePaint = new() { IsAntialias = true };
 	private readonly SKPaint _trailOutline = new() { Style = SKPaintStyle.Stroke, IsAntialias = true, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round };
 	private readonly SKPaint _trailLine = new() { Style = SKPaintStyle.Stroke, IsAntialias = true, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round };
+	private readonly SKPaint _layerPaint = new();
 	private readonly SKPaint _dotRing = new() { Color = SKColors.White, IsAntialias = true };
 	private readonly SKPaint _dotFill = new() { Color = new SKColor(0x2F, 0x80, 0xFF), IsAntialias = true };
 	private readonly DroneModel _drone = new();
 	private readonly RouteMapMosaic _mosaic;
+	// The map at full, half and quarter size, for a following view that is zoomed out (see MapSampling); only the first is the mosaic's own.
+	private readonly SKImage[] _levels;
 	private readonly TrackMapSettings _options;
 	private readonly int _baseWidth;
 	// The route as the map's pixels, its stretches (a break is where a gap starts) and when each point was; the whole of it is the
@@ -42,7 +49,12 @@ public sealed class TrackBackdrop : IDisposable
 	private readonly SKPoint[] _trailPoints = [];
 	private readonly bool[] _trailBreaks = [];
 	private readonly double[] _trailTimes = [];
-	private readonly SKPath? _trail;
+	// The color of the line at each point (by its smoothed speed); the stretches blend from one point's to the next's.
+	private readonly SKColor[] _trailColors = [];
+	private readonly SKColor _baseColor;
+	private readonly SKColor[] _gradientColors = new SKColor[2];
+	// All of the route - for a fixed view, where it is the same in every frame.
+	private readonly TrailShape? _trail;
 	// With the view fixed, the map and the line ahead are the same in every frame of a size: drawn once, copied after.
 	private byte[]? _still;
 	private int _stillWidth, _stillHeight;
@@ -57,6 +69,8 @@ public sealed class TrackBackdrop : IDisposable
 		_mosaic = mosaic;
 		_baseWidth = baseWidth;
 		_options = options;
+		_levels = options.Follow ? HalvedImages(mosaic.Image, FollowLevels) : [mosaic.Image];
+		_baseColor = SKColor.TryParse(options.TrailColor, out SKColor parsed) ? parsed : SKColor.Parse(OverlayRenderer.DefaultTrailColorHex);
 		if (!options.ShowTrail) return;
 
 		// A stretch with no fix is a break in the line, not a straight one across it.
@@ -64,6 +78,7 @@ public sealed class TrackBackdrop : IDisposable
 		List<SKPoint> points = [];
 		List<bool> breaks = [];
 		List<double> times = [];
+		List<double> speeds = [];
 		for (int i = 0; i < route.Count; i++)
 		{
 			bool restart = i == 0 || route[i].Raw.StartsAfterGap;
@@ -72,60 +87,118 @@ public sealed class TrackBackdrop : IDisposable
 			points.Add(mosaic.GetPixel(route[i].Raw.Latitude, route[i].Raw.Longitude));
 			breaks.Add(restart);
 			times.Add(route[i].Raw.SampleTimeSeconds);
+			speeds.Add(double.IsFinite(route[i].SpeedKmh) ? route[i].SpeedKmh : 0);
 		}
 
 		_trailPoints = [.. points];
 		_trailBreaks = [.. breaks];
 		_trailTimes = [.. times];
-		_trail = TrailPath(_trailPoints.Length, null);
+		if (options.ColorBySpeed)
+		{
+			double scaleKmh = TrackCamera.ReferenceKmh(route);
+			_trailColors = [.. SmoothedSpeeds(speeds, breaks).Select(v => SpeedColorScale.At(_baseColor, v / scaleKmh))];
+		}
+
+		_trail = TrailPaths(_trailPoints.Length, null);
+	}
+
+	/// <summary>A moving average over the neighbouring points of a stretch, so GPS speed noise doesn't flip the line between colors every few points.</summary>
+	private static double[] SmoothedSpeeds(List<double> speeds, List<bool> breaks)
+	{
+		const int Radius = 3;
+		double[] result = new double[speeds.Count];
+		for (int i = 0; i < speeds.Count; i++)
+		{
+			double sum = speeds[i];
+			int count = 1;
+			for (int j = i - 1; j >= Math.Max(0, i - Radius) && !breaks[j + 1]; j--) (sum, count) = (sum + speeds[j], count + 1);
+			for (int j = i + 1; j <= Math.Min(speeds.Count - 1, i + Radius) && !breaks[j]; j++) (sum, count) = (sum + speeds[j], count + 1);
+			result[i] = sum / count;
+		}
+
+		return result;
+	}
+
+	private static SKImage[] HalvedImages(SKImage full, int count)
+	{
+		var levels = new SKImage[count];
+		levels[0] = full;
+		for (int i = 1; i < count; i++)
+		{
+			SKImage previous = levels[i - 1];
+			var info = new SKImageInfo(Math.Max(1, previous.Width / 2), Math.Max(1, previous.Height / 2), SKColorType.Bgra8888, SKAlphaType.Premul);
+			using var surface = SKSurface.Create(info);
+			surface.Canvas.DrawImage(previous, new SKRect(0, 0, info.Width, info.Height), MapSampling);
+			levels[i] = surface.Snapshot();
+		}
+
+		return levels;
+	}
+
+	private readonly record struct TrailSegment(SKPoint From, SKPoint To, SKColor FromColor, SKColor ToColor);
+
+	/// <summary>A route to stroke: the whole of it as one path (the edge, and the line when it has one color) and, colored by speed, its stretches with the colors at their ends.</summary>
+	private sealed class TrailShape(SKPath path, List<TrailSegment> segments) : IDisposable
+	{
+		public SKPath Path { get; } = path;
+		public List<TrailSegment> Segments { get; } = segments;
+
+		public void Dispose()
+		{
+			Path.Dispose();
+		}
 	}
 
 	/// <summary>
-	///     The line through the first `count` points of the route, carried on to `tip` (the position now) when there is one. With
-	///     `visible`, only the stretches that touch it are in the path: a following view shows a small part of a long route, and
+	///     The line through the first `count` points of the route from `from`, carried on to `tip` (the position now) when there is one. With
+	///     `visible`, only the stretches that touch it are in the shape: a following view shows a small part of a long route, and
 	///     stroking all of it in every frame was most of the drawing time. What shows is the same - a stretch is cut only where
-	///     it is wholly outside, and the rest keeps its joins.
+	///     it is wholly outside, and the rest keeps its joins. Points closer than `minGap` to the last one kept are left out.
 	/// </summary>
-	private SKPath TrailPath(int count, SKPoint? tip, SKRect? visible = null)
+	private TrailShape TrailPaths(int count, SKPoint? tip, SKRect? visible = null, int from = 0, float minGap = 0)
 	{
+		bool bySpeed = _trailColors.Length > 0;
+		List<TrailSegment> segments = [];
 		using var builder = new SKPathBuilder();
-		bool open = false;
-		for (int i = 0; i < count; i++)
+		// Where the stretch being drawn ends (a point's index), so one that carries on isn't started again.
+		int end = -1;
+		SKPoint last = default;
+		SKColor lastColor = default;
+		float minGapSquared = minGap * minGap;
+
+		for (int i = Math.Max(from, 1); i < count; i++)
 		{
-			SKPoint point = _trailPoints[i];
-			if (_trailBreaks[i])
-			{
-				if (visible is { } view && !view.Contains(point))
-				{
-					open = false;
-					continue;
-				}
+			if (_trailBreaks[i]) continue;
 
-				builder.MoveTo(point);
-				open = true;
-				continue;
-			}
-
-			SKPoint previous = _trailPoints[i - 1];
+			SKPoint point = _trailPoints[i], previous = _trailPoints[i - 1];
 			if (visible is { } window && !window.IntersectsWith(SKRect.Create(Math.Min(previous.X, point.X), Math.Min(previous.Y, point.Y),
 				    Math.Abs(point.X - previous.X), Math.Abs(point.Y - previous.Y))))
-			{
-				open = false;
 				continue;
+
+			if (end != i - 1)
+			{
+				builder.MoveTo(previous);
+				(last, lastColor) = (previous, bySpeed ? _trailColors[i - 1] : default);
 			}
 
-			if (!open) builder.MoveTo(previous);
+			end = i;
+			// Points closer than a pixel of the picture add vertices to the stroke and nothing to what is seen.
+			if (i < count - 1 && SKPoint.DistanceSquared(point, last) < minGapSquared) continue;
+
 			builder.LineTo(point);
-			open = true;
+			if (bySpeed) segments.Add(new TrailSegment(last, point, lastColor, _trailColors[i]));
+			(last, lastColor) = (point, bySpeed ? _trailColors[i] : default);
 		}
 
-		if (tip is { } end && count > 0)
+		if (tip is { } now && count > 0)
 		{
-			if (!open) builder.MoveTo(_trailPoints[count - 1]);
-			builder.LineTo(end);
+			SKPoint start = _trailPoints[count - 1];
+			if (end != count - 1) builder.MoveTo(start);
+			builder.LineTo(now);
+			if (bySpeed) segments.Add(new TrailSegment(start, now, _trailColors[count - 1], _trailColors[count - 1]));
 		}
 
-		return builder.Detach();
+		return new TrailShape(builder.Detach(), segments);
 	}
 
 	/// <summary>How many points of the route are at or before a time.</summary>
@@ -213,7 +286,7 @@ public sealed class TrackBackdrop : IDisposable
 				}
 
 				SKCanvas canvas = surface.Canvas;
-				if (!still) DrawBase(canvas, window, scale, width, height);
+				if (!still) DrawBase(canvas, window, scale, width, height, _options.Follow ? Math.Max(0, PassedPoints(trackSeconds) - 1) : 0);
 
 				TelemetryFrame? fix = TrackCamera.FixAt(frames, trackSeconds);
 				SKPoint? tip = fix is null ? null : _mosaic.GetPixel(fix.Latitude, fix.Longitude);
@@ -227,7 +300,7 @@ public sealed class TrackBackdrop : IDisposable
 						Span<RotorSpin.RotorPose> rotors = stackalloc RotorSpin.RotorPose[RotorSpin.Count];
 						_rotorPhases ??= RotorSpin.Phases(frames, _referenceKmh);
 						RotorSpin.At(frames, _rotorPhases, trackSeconds, _referenceKmh, rotors);
-						_drone.Draw(canvas, point, height / 20f, attitude, rotors, beam: true);
+						_drone.Draw(canvas, point, height / 20f * _options.MarkerScale, attitude, rotors, beam: true);
 					}
 					else DrawDot(canvas, point, height);
 				}
@@ -235,33 +308,37 @@ public sealed class TrackBackdrop : IDisposable
 		}
 	}
 
-	/// <summary>What is the same whatever the time: the map, and the whole route as the dim line ahead.</summary>
-	private void DrawBase(SKCanvas canvas, SKRect window, float scale, int width, int height)
+	/// <summary>The map and the dim line ahead: all of the route with the view fixed (the same at any time), only what is still to come while following.</summary>
+	private void DrawBase(SKCanvas canvas, SKRect window, float scale, int width, int height, int aheadFrom = 0)
 	{
 		canvas.Clear(SKColors.Black);
-		canvas.DrawImage(_mosaic.Image, window, new SKRect(0, 0, width, height), MapSampling, _imagePaint);
-		if (_trail is null) return;
+		int level = scale >= 0.5f ? 0 : Math.Min(_levels.Length - 1, (int)Math.Floor(Math.Log2(1.0 / scale)));
+		float factor = 1f / (1 << level);
+		var source = new SKRect(window.Left * factor, window.Top * factor, window.Right * factor, window.Bottom * factor);
+		canvas.DrawImage(_levels[level], source, new SKRect(0, 0, width, height), MapSampling, _imagePaint);
+		if (_trail is null || !_options.ShowAhead) return;
 
 		if (!_options.Follow)
 		{
-			StrokeTrail(canvas, _trail, window, scale, height, TrailAheadOutline, TrailAheadLine);
+			StrokeTrail(canvas, _trail, window, scale, height, TrailAheadAlpha);
 			return;
 		}
 
-		using SKPath ahead = TrailPath(_trailPoints.Length, null, Visible(window, scale, height));
-		StrokeTrail(canvas, ahead, window, scale, height, TrailAheadOutline, TrailAheadLine);
+		using TrailShape ahead = TrailPaths(_trailPoints.Length, null, Visible(window, scale, height), aheadFrom, 1 / scale);
+		StrokeTrail(canvas, ahead, window, scale, height, TrailAheadAlpha);
 	}
 
 	/// <summary>The window in the map's pixels with a margin for the line's width, outside which no stroke can reach the picture.</summary>
-	private static SKRect Visible(SKRect window, float scale, int height)
+	private SKRect Visible(SKRect window, float scale, int height)
 	{
 		float margin = StrokeWidth(scale, height) * 2;
 		return SKRect.Inflate(window, margin, margin);
 	}
 
-	private static float StrokeWidth(float scale, int height)
+	/// <summary>The line's width in the map's pixels: its own (of a 1080-pixel-high picture) in the picture's, whatever the zoom.</summary>
+	private float StrokeWidth(float scale, int height)
 	{
-		return Math.Max(3, height / 270f) / scale;
+		return _options.TrailWidth * height / 1080f / scale;
 	}
 
 	/// <summary>Draws the base once for a size (the view being fixed) into a buffer of its own; false when it couldn't be.</summary>
@@ -306,28 +383,81 @@ public sealed class TrackBackdrop : IDisposable
 		int passed = PassedPoints(trackSeconds);
 		if (passed == 0) return;
 
-		using SKPath path = TrailPath(passed, tip, _options.Follow ? Visible(window, scale, height) : null);
-		StrokeTrail(canvas, path, window, scale, height, TrailPassedOutline, TrailPassedLine);
+		using TrailShape shape = TrailPaths(passed, tip, _options.Follow ? Visible(window, scale, height) : null, 0, 1 / scale);
+		StrokeTrail(canvas, shape, window, scale, height, TrailPassedAlpha);
 	}
 
-	private void StrokeTrail(SKCanvas canvas, SKPath path, SKRect window, float scale, int height, SKColor outline, SKColor line)
+	private const int SolidColorTolerance = 4;
+
+	private static bool IsNearlyOneColor(SKColor a, SKColor b)
+	{
+		return Math.Abs(a.Red - b.Red) <= SolidColorTolerance && Math.Abs(a.Green - b.Green) <= SolidColorTolerance && Math.Abs(a.Blue - b.Blue) <= SolidColorTolerance;
+	}
+
+	private static SKColor Average(SKColor a, SKColor b)
+	{
+		return new SKColor((byte)((a.Red + b.Red) / 2), (byte)((a.Green + b.Green) / 2), (byte)((a.Blue + b.Blue) / 2), (byte)((a.Alpha + b.Alpha) / 2));
+	}
+
+	private void StrokeTrail(SKCanvas canvas, TrailShape shape, SKRect window, float scale, int height, byte lineAlpha)
 	{
 		float stroke = StrokeWidth(scale, height);
-		_trailOutline.StrokeWidth = stroke * 2;
-		_trailOutline.Color = outline;
-		_trailLine.StrokeWidth = stroke;
-		_trailLine.Color = line;
 		canvas.Save();
 		canvas.Scale(scale);
 		canvas.Translate(-window.Left, -window.Top);
-		canvas.DrawPath(path, _trailOutline);
-		canvas.DrawPath(path, _trailLine);
+
+		// A part is drawn opaque into a layer and made translucent as a whole: round caps of neighbouring stretches overlap,
+		// and translucent strokes would add up there into dots along the line.
+		bool layered = lineAlpha < 255;
+		if (layered)
+		{
+			_layerPaint.Color = SKColors.White.WithAlpha(lineAlpha);
+			canvas.SaveLayer(_layerPaint);
+		}
+
+		_trailOutline.StrokeWidth = stroke * EdgeWidthFactor;
+		_trailOutline.Color = TrailEdge;
+		canvas.DrawPath(shape.Path, _trailOutline);
+
+		_trailLine.StrokeWidth = stroke;
+		if (shape.Segments.Count == 0)
+		{
+			_trailLine.Color = _baseColor;
+			canvas.DrawPath(shape.Path, _trailLine);
+		}
+		else
+		{
+				// In the route's order, so where it crosses itself the later stretch is on top. A stretch whose ends are about one color is
+				// drawn plain: a gradient shader per stretch is the costly part, and most stretches of a smoothed route are that close.
+				foreach (TrailSegment segment in shape.Segments)
+				{
+					if (IsNearlyOneColor(segment.FromColor, segment.ToColor) || segment.From == segment.To)
+					{
+						_trailLine.Color = Average(segment.FromColor, segment.ToColor);
+						canvas.DrawLine(segment.From, segment.To, _trailLine);
+						continue;
+					}
+
+					_gradientColors[0] = segment.FromColor;
+					_gradientColors[1] = segment.ToColor;
+					using SKShader shader = SKShader.CreateLinearGradient(segment.From, segment.To, _gradientColors, SKShaderTileMode.Clamp);
+					_trailLine.Shader = shader;
+					canvas.DrawLine(segment.From, segment.To, _trailLine);
+					_trailLine.Shader = null;
+				}
+		}
+
+		_trailOutline.StrokeWidth = stroke * CoreWidthFactor;
+		_trailOutline.Color = TrailCore;
+		canvas.DrawPath(shape.Path, _trailOutline);
+
+		if (layered) canvas.Restore();
 		canvas.Restore();
 	}
 
 	private void DrawDot(SKCanvas canvas, SKPoint point, int height)
 	{
-		float radius = Math.Max(6, height / 120f);
+		float radius = Math.Max(6, height / 120f) * _options.MarkerScale;
 		canvas.DrawCircle(point, radius * 1.5f, _dotRing);
 		canvas.DrawCircle(point, radius, _dotFill);
 	}
@@ -343,9 +473,10 @@ public sealed class TrackBackdrop : IDisposable
 
 			_disposed = true;
 			_trail?.Dispose();
+			for (int i = 1; i < _levels.Length; i++) _levels[i].Dispose();
 			_still = null;
 			_drone.Dispose();
-			foreach (SKPaint paint in new[] { _imagePaint, _trailOutline, _trailLine, _dotRing, _dotFill })
+			foreach (SKPaint paint in new[] { _imagePaint, _trailOutline, _trailLine, _layerPaint, _dotRing, _dotFill })
 				paint.Dispose();
 			_mosaic.Dispose();
 		}

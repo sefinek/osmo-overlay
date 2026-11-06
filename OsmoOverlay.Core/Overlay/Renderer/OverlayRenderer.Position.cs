@@ -153,16 +153,17 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(0, 0, radius, _ringStroke3White160);
 
 		// Turning the dial: the trail and the marker go with it (the arrow ends up pointing up), the labels stay readable.
+		double heading = ShownHeading(frame, element);
 		int saveCount = canvas.Save();
-		if (element.RotateWithHeading) canvas.RotateDegrees((float)-frame.HeadingDegrees);
+		if (element.RotateWithHeading) canvas.RotateDegrees((float)-heading);
 		SKPoint marker = DrawTrail(canvas, frame, element);
-		DrawTrailMarker(canvas, marker.X, marker.Y, frame.HeadingDegrees, element);
+		DrawTrailMarker(canvas, marker.X, marker.Y, heading, element, DroneNotFacingTravel(frame, element));
 		canvas.RestoreToCount(saveCount);
 
 		if (element.ShowNorthLabel)
 		{
 			SKPoint north = element.RotateWithHeading
-				? SKMatrix.CreateRotationDegrees((float)-frame.HeadingDegrees).MapPoint(0, -radius + 46)
+				? SKMatrix.CreateRotationDegrees((float)-heading).MapPoint(0, -radius + 46)
 				: new SKPoint(0, -radius + 46);
 			DrawOutlined(canvas, "N", north.X, north.Y, _labelFont, White, SKTextAlign.Center);
 		}
@@ -170,7 +171,7 @@ public sealed partial class OverlayRenderer
 		if (element.ShowHeadingText)
 		{
 			// Rounded before wrapping, or 359.6 reads "360°N".
-			string headingText = $"{F(Math.Round(AngleMath.NormalizeDegrees(frame.HeadingDegrees)) % 360, "0")}°{CardinalDirection(frame.HeadingDegrees)}";
+			string headingText = $"{F(Math.Round(AngleMath.NormalizeDegrees(heading)) % 360, "0")}°{CardinalDirection(heading)}";
 			DrawOutlined(canvas, headingText, radius * 0.55f, radius * 0.7f, _labelFont, White, SKTextAlign.Right);
 		}
 	}
@@ -384,7 +385,7 @@ public sealed partial class OverlayRenderer
 			float cropRadius = radius * (float)zoomFactor;
 
 			// The circle looks the same from every angle, so the square it is cut from covers it turned too.
-			if (element.RotateWithHeading) canvas.RotateDegrees((float)-(element.StabilizeHeading ? frame.SteadyHeadingDegrees : frame.HeadingDegrees));
+			if (element.RotateWithHeading) canvas.RotateDegrees((float)-ShownHeading(frame, element));
 			var src = SKRect.Create(center.X - cropRadius, center.Y - cropRadius, cropRadius * 2, cropRadius * 2);
 			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
 			canvas.DrawImage(_mapMosaic.Image, src, dest, MapSampling);
@@ -402,7 +403,7 @@ public sealed partial class OverlayRenderer
 			// Same marker choice/paint as the Compass (DrawTrailMarker) by default - both widgets are
 			// north-up, so "pointing in the direction of travel" means the same thing in both - but each
 			// widget's TrailUseArrow is its own independent setting, so they can be styled differently.
-			DrawTrailMarker(canvas, 0, 0, element.RotateWithHeading ? 0 : frame.HeadingDegrees, element, DroneNotFacingTravel(frame, element));
+			DrawTrailMarker(canvas, 0, 0, element.RotateWithHeading ? 0 : ShownHeading(frame, element), element, DroneNotFacingTravel(frame, element));
 
 			// The provider's credit isn't drawn inside this small circle (unreadable over busy map tiles) - it's a
 			// widget of its own next to it (MapAttributionElement).
@@ -474,16 +475,21 @@ public sealed partial class OverlayRenderer
 		canvas.Restore();
 	}
 
+	/// <summary>The direction of travel the widget turns by and points with: the steadied one, or the measured one without StabilizeHeading.</summary>
+	private static double ShownHeading(DerivedFrame frame, TrailOverlayElement element)
+	{
+		return element.StabilizeHeading ? frame.SteadyHeadingDegrees : frame.HeadingDegrees;
+	}
+
 	public const double DroneFacingToleranceDefault = 60;
 	public const double DroneFacingToleranceMin = 15;
 	public const double DroneFacingToleranceMax = 170;
 
 	/// <summary>True when a drone's nose points further than the element's tolerance from where it travels - depends on the frame alone.</summary>
-	internal static bool DroneNotFacingTravel(DerivedFrame frame, MapWidgetElement element)
+	internal static bool DroneNotFacingTravel(DerivedFrame frame, TrailOverlayElement element)
 	{
 		if (!element.DotWhenNotFacingTravel || frame.Raw.DroneAttitude is not { } attitude) return false;
-		double travel = element.StabilizeHeading ? frame.SteadyHeadingDegrees : frame.HeadingDegrees;
-		return AngleMath.DifferenceDegrees(attitude.YawDegrees, travel) > Math.Clamp(element.DroneFacingToleranceDegrees, DroneFacingToleranceMin, DroneFacingToleranceMax);
+		return AngleMath.DifferenceDegrees(attitude.YawDegrees, ShownHeading(frame, element)) > Math.Clamp(element.DroneFacingToleranceDegrees, DroneFacingToleranceMin, DroneFacingToleranceMax);
 	}
 
 	/// <summary>The heading arrow pointing north around (0, 0), built once - DrawHeadingArrow rotates it.</summary>

@@ -10,6 +10,10 @@ namespace OsmoOverlay.Core.Telemetry;
 internal static class HeadingStabilizer
 {
 	internal const double MinSpeedKmh = 4;
+	// A flight log's positions are the aircraft's own fused ones, far steadier than a camera's GPS: its direction is trustworthy at a walking pace.
+	private const double FlightLogMinSpeedKmh = 1.5;
+	// A direction that comes back after a hold (or a sharp turn of the track) is turned to at this pace at most, so it is seen turning, not jumping.
+	private const double MaxTurnDegreesPerSecond = 180;
 	private const double FastKmh = 15;
 	private const double FastTimeConstantSeconds = 0.25;
 	private const double SlowTimeConstantSeconds = 1.2;
@@ -25,19 +29,20 @@ internal static class HeadingStabilizer
 	public static double[] Compute(IReadOnlyList<TelemetryFrame> frames, IReadOnlyList<double> speedKmh, IReadOnlyList<double> headingDegrees)
 	{
 		double[] result = new double[frames.Count];
+		double minSpeed = frames.Any(f => f.DroneAttitude is not null) ? FlightLogMinSpeedKmh : MinSpeedKmh;
 		int segmentStart = 0;
 		for (int i = 1; i <= frames.Count; i++)
 		{
 			if (i < frames.Count && !frames[i].StartsAfterGap) continue;
 
-			Segment(frames, speedKmh, headingDegrees, segmentStart, i, result);
+			Segment(frames, speedKmh, headingDegrees, segmentStart, i, minSpeed, result);
 			segmentStart = i;
 		}
 
 		return result;
 	}
 
-	private static void Segment(IReadOnlyList<TelemetryFrame> frames, IReadOnlyList<double> speedKmh, IReadOnlyList<double> headingDegrees, int start, int end, double[] result)
+	private static void Segment(IReadOnlyList<TelemetryFrame> frames, IReadOnlyList<double> speedKmh, IReadOnlyList<double> headingDegrees, int start, int end, double minSpeed, double[] result)
 	{
 		double? held = null;
 		double lastUpdate = 0;
@@ -48,7 +53,7 @@ internal static class HeadingStabilizer
 		for (int i = start; i < end; i++)
 		{
 			double t = frames[i].SampleTimeSeconds;
-			bool trusted = frames[i].HasGpsFix && speedKmh[i] >= MinSpeedKmh;
+			bool trusted = frames[i].HasGpsFix && speedKmh[i] >= minSpeed;
 			if (trusted)
 			{
 				double target = headingDegrees[i];
@@ -79,11 +84,13 @@ internal static class HeadingStabilizer
 
 					if (trusted)
 					{
-						double constant = TimeConstant(speedKmh[i]);
+						double constant = TimeConstant(speedKmh[i], minSpeed);
 						// A long wait since the last update (standing, a doubted jump) is not time the heading spent turning:
 						// the way back to the current direction stays smooth.
-						double step = 1 - Math.Exp(-Math.Clamp(t - lastUpdate, 0, MaxStepSeconds) / constant);
-						held = AngleMath.NormalizeDegrees(current + Signed(target - current) * step);
+						double elapsed = Math.Clamp(t - lastUpdate, 0, MaxStepSeconds);
+						double step = 1 - Math.Exp(-elapsed / constant);
+						double turn = Math.Clamp(Signed(target - current) * step, -MaxTurnDegreesPerSecond * elapsed, MaxTurnDegreesPerSecond * elapsed);
+						held = AngleMath.NormalizeDegrees(current + turn);
 						lastUpdate = t;
 						pendingTarget = null;
 					}
@@ -105,9 +112,9 @@ internal static class HeadingStabilizer
 	}
 
 	/// <summary>Slower the slower the vehicle goes: its direction is less certain then.</summary>
-	private static double TimeConstant(double speedKmh)
+	private static double TimeConstant(double speedKmh, double minSpeed)
 	{
-		double share = Math.Clamp((speedKmh - MinSpeedKmh) / (FastKmh - MinSpeedKmh), 0, 1);
+		double share = Math.Clamp((speedKmh - minSpeed) / (FastKmh - minSpeed), 0, 1);
 		return SlowTimeConstantSeconds + (FastTimeConstantSeconds - SlowTimeConstantSeconds) * share;
 	}
 
