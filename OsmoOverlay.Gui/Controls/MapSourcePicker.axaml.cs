@@ -255,14 +255,7 @@ public sealed partial class MapSourcePicker : UserControl
 
 	private static string UseText(MapUse use)
 	{
-		return use switch
-		{
-			MapUse.Allowed => Strings.MapTerms_Allowed,
-			MapUse.PaidPlanOnly => Strings.MapTerms_PaidPlanOnly,
-			MapUse.NotAllowed => Strings.MapTerms_NotAllowed,
-			MapUse.Conditional => Strings.MapTerms_Conditional,
-			_ => Strings.MapTerms_NotStated
-		};
+		return ExportNotice.UseText(use);
 	}
 
 	// CARTO's own basemap keys follow a fixed "<id>_<id>_<n>_<24 hex chars>" shape.

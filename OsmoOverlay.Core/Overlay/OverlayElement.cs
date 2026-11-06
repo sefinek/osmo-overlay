@@ -767,6 +767,7 @@ public sealed record MapWidgetElement : TrailOverlayElement
 	public MapWidgetElement()
 	{
 		ShadowRadius = OverlayRenderer.ShadowRadiusLarge;
+		RotateWithHeading = true;
 	}
 
 	public int MapZoom { get; init; } = 16;

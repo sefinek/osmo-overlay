@@ -150,6 +150,8 @@ public partial class MainWindow
 			return;
 		}
 
+		if (!await ConfirmExportRightsAsync(QueuedExportMaps)) return;
+
 		_previewPlayer.Pause();
 		_queueCts = new CancellationTokenSource();
 		TaskbarProgress.SetState(this, TaskbarProgress.State.Normal);

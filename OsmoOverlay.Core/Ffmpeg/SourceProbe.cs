@@ -167,7 +167,7 @@ public static partial class SourceProbe
 			return false;
 		}
 
-		JsonNode? root = JsonNode.Parse(stdout);
+		var root = JsonNode.Parse(stdout);
 		if (root is null)
 		{
 			problem = "Empty ffprobe output.";

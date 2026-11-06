@@ -46,6 +46,7 @@
 					<Button Content="With extra buttons" Tag="show-actions" Click="OnActionClick" />
 					<Button Content="Long message" Tag="show-long" Click="OnActionClick" />
 					<Button Content="DJI API terms" Tag="dji-api-notice" Click="OnActionClick" />
+					<Button Content="Export rights" Tag="export-notice" Click="OnActionClick" />
 				</WrapPanel>
 			</StackPanel>
 		</Border>

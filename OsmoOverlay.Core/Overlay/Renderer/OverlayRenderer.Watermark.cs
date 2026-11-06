@@ -42,6 +42,8 @@ public sealed partial class OverlayRenderer
 		DrawOutlined(canvas, OverlayElementBounds.WatermarkTitle, 0, -OverlayElementBounds.WatermarkLineGap, titleFont, title, align, alpha,
 			outline, outlineWidth);
 		DrawOutlined(canvas, WatermarkSubtitle, 0, 0, subtitleFont, subtitle, align, alpha, outline, outlineWidth);
+		DrawOutlined(canvas, OverlayElementBounds.WatermarkNotice, 0, OverlayElementBounds.WatermarkNoticeGap, subtitleFont, title, align, alpha * 0.8f,
+			outline, outlineWidth);
 	}
 
 	/// <summary>

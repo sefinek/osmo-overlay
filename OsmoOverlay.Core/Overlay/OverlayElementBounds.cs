@@ -40,7 +40,10 @@ public static class OverlayElementBounds
 	public const float WatermarkSubtitleFontSize = 30f;
 	// From the subtitle's baseline (the watermark's Y) up to the title's.
 	public const float WatermarkLineGap = 46f;
+	// From the subtitle's baseline down to the licence note's.
+	public const float WatermarkNoticeGap = 36f;
 	public static string WatermarkTitle => CoreStrings.Overlay_Watermark;
+	public static string WatermarkNotice => CoreStrings.Overlay_WatermarkNotice;
 	private const string SampleWatermarkSubtitle = "github.com/sefinek/osmo-overlay  •  v0.0.0";
 	// The map credit: a source note the terms ask to be readable, not a part of the HUD - smaller and fainter than its text.
 	public const float CreditFontSize = 24f;
@@ -213,8 +216,10 @@ public static class OverlayElementBounds
 			OverlayElementType.MapAttribution => MeasureCredit(text ?? SampleMapCredit, fontFamily),
 			OverlayElementType.GpsAlert => GpsAlertBox(fontFamily, gpsAlertTexts),
 			OverlayElementType.Watermark => SKRect.Union(
-				OffsetY(Centered(MeasureLine(WatermarkTitle, WatermarkTitleFontSize, fontFamily)), -WatermarkLineGap),
-				Centered(MeasureLine(text ?? SampleWatermarkSubtitle, WatermarkSubtitleFontSize, fontFamily))),
+				SKRect.Union(
+					OffsetY(Centered(MeasureLine(WatermarkTitle, WatermarkTitleFontSize, fontFamily)), -WatermarkLineGap),
+					Centered(MeasureLine(text ?? SampleWatermarkSubtitle, WatermarkSubtitleFontSize, fontFamily))),
+				OffsetY(Centered(MeasureLine(WatermarkNotice, WatermarkSubtitleFontSize, fontFamily)), WatermarkNoticeGap)),
 			OverlayElementType.Elevation => MeasureStat(label ?? CoreStrings.Overlay_Elevation, SampleElevationValue, "M", fontFamily),
 			OverlayElementType.Gradient => MeasureStat(label ?? CoreStrings.Overlay_Gradient, SampleGradientValue, "%", fontFamily),
 			OverlayElementType.Distance => MeasureStat(label ?? CoreStrings.Overlay_TotalDistance, SampleDistanceValue, "KM", fontFamily),

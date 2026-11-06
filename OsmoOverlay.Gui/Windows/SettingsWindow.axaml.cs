@@ -227,7 +227,6 @@ public partial class SettingsWindow : Window
 		MetadataDebugCheck.IsChecked = settings.MetadataKeepDebugTrack;
 		MetadataThumbnailsCheck.IsChecked = settings.MetadataKeepThumbnails;
 		PreserveCameraMetadataCheck.IsChecked = settings.PreserveCameraMetadata;
-		TagExportedVideoCheck.IsChecked = settings.TagExportedVideo;
 		UpdateMetadataOptionsEnabled();
 		string theme = AppThemes.Normalize(settings.AppTheme);
 		ThemeCombo.SelectedItem = AppThemes.Options.First(o => o.Value == theme);
@@ -326,7 +325,6 @@ public partial class SettingsWindow : Window
 			FastStart = FastStartCheck.IsChecked == true,
 			NoAudio = NoAudioCheck.IsChecked == true,
 			PreserveCameraMetadata = PreserveCameraMetadataCheck.IsChecked == true,
-			TagExportedVideo = TagExportedVideoCheck.IsChecked == true,
 			MetadataKeepTelemetry = MetadataTelemetryCheck.IsChecked == true,
 			MetadataKeepSerialNumber = MetadataSerialCheck.IsChecked == true,
 			MetadataKeepDebugTrack = MetadataDebugCheck.IsChecked == true,

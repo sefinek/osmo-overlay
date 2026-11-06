@@ -2460,7 +2460,7 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
     <value>OsmoOverlay tag in the file</value>
   </data>
   <data name="Settings_TagExportedVideoHint" xml:space="preserve">
-    <value>Writes the app name and version, telemetry calculation version, tilt measurement source and project links to the exported file's metadata. This helps compare videos rendered with different OsmoOverlay versions.</value>
+    <value>Writes the app name and version, telemetry calculation version, tilt measurement source, project links and the licence note (non-commercial use only) to the exported file's metadata. This helps compare videos rendered with different OsmoOverlay versions. Always on.</value>
   </data>
   <data name="Settings_OutputAspect" xml:space="preserve">
     <value>Aspect ratio</value>
@@ -5364,5 +5364,71 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="Main_RingThemeHint" xml:space="preserve">
     <value>A style inspired by the speedometer in the DJI Mimo app.</value>
+  </data>
+  <data name="ExportNotice_Title" xml:space="preserve">
+    <value>Rights to the exported film</value>
+  </data>
+  <data name="ExportNotice_Confirm" xml:space="preserve">
+    <value>I understand</value>
+  </data>
+  <data name="Main_ExportRights" xml:space="preserve">
+    <value>Export rights</value>
+  </data>
+  <data name="Main_ExportRightsHint" xml:space="preserve">
+    <value>What may be done with the exported film and the terms of the maps in the current export.</value>
+  </data>
+  <data name="ExportNotice_Intro" xml:space="preserve">
+    <value>What you may do with the exported film. The program's licence covers the program, not your recording, your music or the maps.</value>
+  </data>
+  <data name="ExportNotice_ProgramHeader" xml:space="preserve">
+    <value>The program - PolyForm Noncommercial 1.0.0</value>
+  </data>
+  <data name="ExportNotice_Allow_Private" xml:space="preserve">
+    <value>Private use, for your own purposes</value>
+  </data>
+  <data name="ExportNotice_Allow_Free" xml:space="preserve">
+    <value>Publishing a film you do not earn from (e.g. YouTube with monetization turned off)</value>
+  </data>
+  <data name="ExportNotice_Deny_Monetized" xml:space="preserve">
+    <value>Publishing a film on a channel with monetization turned on (e.g. the YouTube Partner Programme)</value>
+  </data>
+  <data name="ExportNotice_Deny_Earning" xml:space="preserve">
+    <value>Earning from a film: ads, sponsorship, selling it</value>
+  </data>
+  <data name="ExportNotice_Deny_Paid" xml:space="preserve">
+    <value>Paid rendering of films for other people</value>
+  </data>
+  <data name="ExportNotice_Deny_Business" xml:space="preserve">
+    <value>Using the program in a business or for any other commercial purpose</value>
+  </data>
+  <data name="ExportNotice_ProgramNote" xml:space="preserve">
+    <value>Commercial use needs the author's permission, unless an exception named in the licence applies. The full licence text decides.</value>
+  </data>
+  <data name="ExportNotice_MaterialsHeader" xml:space="preserve">
+    <value>Your recording, music and maps</value>
+  </data>
+  <data name="ExportNotice_MaterialsText" xml:space="preserve">
+    <value>The program's licence is not a licence for the exported film and does not grant or transfer rights to your materials. You answer for your rights to the recording, the music and the maps. A map provider's permission for commercial use covers the maps only and does not lift the program's licence limits.</value>
+  </data>
+  <data name="ExportNotice_MapsHeader" xml:space="preserve">
+    <value>Maps in this export</value>
+  </data>
+  <data name="ExportNotice_NoMaps" xml:space="preserve">
+    <value>None, so no map provider's terms apply to it. Green screen and alpha exports can contain maps if a map widget is on.</value>
+  </data>
+  <data name="ExportNotice_CustomMap" xml:space="preserve">
+    <value>Your own source: the app does not know its licence and declares no rights - check the provider's terms.</value>
+  </data>
+  <data name="ExportNotice_ShareAlike" xml:space="preserve">
+    <value>The map images are CC BY-SA. The share-alike duty concerns the map as used; whether it reaches your whole film depends on how the map is included - the app does not assume it does.</value>
+  </data>
+  <data name="ExportNotice_Footer" xml:space="preserve">
+    <value>This notice does not promise rights for future exports - you may change a map, a plan or your materials. Use the "Export rights" button to see the terms of the current export. The map credit stays in the picture, and the obligations also apply when you lay a green screen or alpha export over a film in another editor.</value>
+  </data>
+  <data name="ExportNotice_LicenseLink" xml:space="preserve">
+    <value>Program licence (PolyForm)</value>
+  </data>
+  <data name="ExportNotice_LicenseFileLink" xml:space="preserve">
+    <value>LICENSE file in the repository</value>
   </data>
 </root>

@@ -853,4 +853,7 @@ In OsmoOverlay, open Settings > Behavior > DJI drones and replace the key. Close
   <data name="Map_RateLimited" xml:space="preserve">
     <value>Map server {0} limited the request rate. Downloads paused for at least {1} s.</value>
   </data>
+  <data name="Overlay_WatermarkNotice" xml:space="preserve">
+    <value>For non-commercial use only</value>
+  </data>
 </root>

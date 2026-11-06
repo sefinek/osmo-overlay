@@ -853,4 +853,7 @@ W OsmoOverlay otwórz Ustawienia > Zachowanie > Drony DJI i zastąp wpisany kluc
   <data name="Map_RateLimited" xml:space="preserve">
     <value>Serwer map {0} ograniczył liczbę zapytań. Pobieranie wstrzymane na co najmniej {1} s.</value>
   </data>
+  <data name="Overlay_WatermarkNotice" xml:space="preserve">
+    <value>Tylko do użytku niekomercyjnego</value>
+  </data>
 </root>

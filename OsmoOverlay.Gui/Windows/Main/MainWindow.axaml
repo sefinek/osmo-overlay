@@ -507,6 +507,9 @@
 									<Button Grid.Column="1" Name="QueueOpenButton" Content="{x:Static local:Strings.Main_Queue}"
 									        Click="OnOpenQueueClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 								</Grid>
+								<Button Name="ExportRightsButton" Content="{x:Static local:Strings.Main_ExportRights}" Click="OnExportRightsClick"
+								        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+								        ToolTip.Tip="{x:Static local:Strings.Main_ExportRightsHint}" />
 								<ProgressBar Name="Progress" Minimum="0" Maximum="100" Height="16" IsVisible="False" />
 							</StackPanel>
 						</Border>

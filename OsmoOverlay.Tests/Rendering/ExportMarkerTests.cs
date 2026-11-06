@@ -56,8 +56,8 @@ public sealed class ExportMarkerTests
 	}
 
 	[TestMethod]
-	public void TheTag_IsOnUnlessTurnedOff()
+	public void TheComment_NamesTheProgramsLicence()
 	{
-		Assert.IsTrue(new OverlaySettings().TagExportedVideo);
+		StringAssert.Contains(ExportMarker.Comment(OrientationSource.Accelerometer), "PolyForm Noncommercial 1.0.0");
 	}
 }

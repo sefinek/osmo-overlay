@@ -5,6 +5,7 @@ using OsmoOverlay.Core;
 using OsmoOverlay.Core.Dependencies;
 using OsmoOverlay.Core.Ffmpeg;
 using OsmoOverlay.Core.Logging;
+using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Overlay;
 using OsmoOverlay.Core.Preview;
 using OsmoOverlay.Core.Telemetry.External;
@@ -58,6 +59,9 @@ public partial class DeveloperWindow : Window
 				break;
 			case "show":
 				await ConfirmDialog.ShowAsync(this, SampleTitle, SampleMessage, kind: Enum.Parse<DialogKind>(argument));
+				break;
+			case "export-notice":
+				await ExportNotice.AskAsync(this, ExportMaps.Used([new MapWidgetElement { X = 0, Y = 0, MapProviderId = "thunderforest-cycle" }, new MapWidgetElement { X = 0, Y = 0, MapProviderId = MapProviders.CustomId }], OverlaySettingsStore.Load()));
 				break;
 			case "dji-api-notice":
 				await DjiApiNotice.ShowAsync(this);

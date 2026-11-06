@@ -19,7 +19,7 @@ public static partial class ExportMarker
 	public static string Comment(OrientationSource orientation)
 	{
 		string source = orientation == OrientationSource.Quaternion ? "camera orientation" : "accelerometer";
-		return $"OsmoOverlay {AppUpdates.CurrentVersion} (telemetry {FileSummaryCache.FormatVersion}, tilt from {source}) - {AppUpdates.RepositoryUrl} - {AppUpdates.WebsiteUrl}";
+		return $"OsmoOverlay {AppUpdates.CurrentVersion} (telemetry {FileSummaryCache.FormatVersion}, tilt from {source}) - {AppUpdates.RepositoryUrl} - {AppUpdates.WebsiteUrl} - licence: PolyForm Noncommercial 1.0.0 (non-commercial use only)";
 	}
 
 	/// <summary>The marker in a comment, null for one this program didn't write (or a file without a comment).</summary>

@@ -27,7 +27,7 @@ public enum MapCreditRule
 
 /// <summary>
 ///     A tile server's terms as the app follows them - shown in the map picker (MapSourcePicker) and acted on: the credit's
-///     rule by the renderer, CacheDays by MapTileFetcher. Checked against each provider's own terms on 2026-10-04 (the
+///     rule by the renderer, CacheDays by MapTileFetcher. Checked against each provider's own terms on 2026-10-04 (MapTiler, Thunderforest and Esri's attribution rule again on 2026-11-06) (the
 ///     quotes are next to each provider in MapProviders.BuiltIn). Region null = the whole world.
 /// </summary>
 public sealed record MapTerms(
@@ -38,7 +38,9 @@ public sealed record MapTerms(
 	// Null: for as long as wanted; 0: never stored on disk.
 	int? CacheDays = null,
 	MapRegion? Region = null,
-	string? Note = null);
+	string? Note = null,
+	// The map images are CC BY-SA: the share-alike duty covers the map as used, which the export notice says without extending it to the whole film.
+	bool ShareAlike = false);
 
 /// <summary>A provider covering one area only - a latitude/longitude box around it.</summary>
 public sealed record MapRegion(string Name, double South, double West, double North, double East)

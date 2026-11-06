@@ -20,6 +20,8 @@ public partial class MainWindow
 			return;
 		}
 
+		if (!await ConfirmExportRightsAsync(CurrentExportMaps)) return;
+
 		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
 			Title = Strings.TrackRender_SaveTitle,

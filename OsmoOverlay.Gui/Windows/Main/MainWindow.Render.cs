@@ -55,6 +55,8 @@ public partial class MainWindow
 			return;
 		}
 
+		if (!await ConfirmExportRightsAsync(CurrentExportMaps)) return;
+
 		string normalOutputPath = OutputPathBox.Text ?? "";
 
 		if (string.IsNullOrWhiteSpace(normalOutputPath))

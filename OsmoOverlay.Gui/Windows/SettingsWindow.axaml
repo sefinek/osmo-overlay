@@ -455,7 +455,7 @@
 									<TextBlock Text="{x:Static local:Strings.Settings_TagExportedVideo}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TagExportedVideoHint}" />
 								</StackPanel>
-								<ToggleSwitch Grid.Column="1" Name="TagExportedVideoCheck" />
+								<ToggleSwitch Grid.Column="1" Name="TagExportedVideoCheck" IsChecked="True" IsEnabled="False" />
 							</Grid>
 						</StackPanel>
 					</Border>

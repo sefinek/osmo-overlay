@@ -212,7 +212,7 @@ public static class RenderJob
 			bool preserveMetadata = settings.PreserveCameraMetadata && camera.HasMetadataToCopy && metadataSelection.Any && !overlayOnly;
 			RenderEncodeSettings encode = FfmpegPipeline.EncodeSettingsFrom(settings, preserveMetadata) with
 			{
-				Comment = settings.TagExportedVideo ? ExportMarker.Comment(OrientationTilt.Effective(rawFrames, camera, settings.OrientationSource)) : null
+				Comment = ExportMarker.Comment(OrientationTilt.Effective(rawFrames, camera, settings.OrientationSource))
 			};
 			// Only a file this render wrote may be deleted if it fails - never one that was already there and
 			// wasn't meant to be overwritten.
