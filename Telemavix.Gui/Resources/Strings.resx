@@ -51,6 +51,18 @@
   <data name="AppUpdate_StartingInstaller" xml:space="preserve">
     <value>Starting the installer...</value>
   </data>
+  <data name="RemoteAccess_Repository" xml:space="preserve">
+    <value>Repository</value>
+  </data>
+  <data name="RemoteAccess_Title" xml:space="preserve">
+    <value>This version has been switched off</value>
+  </data>
+  <data name="RemoteAccess_Message" xml:space="preserve">
+    <value>Telemavix Studio {0} is no longer allowed to run. Version {1} or newer is required.</value>
+  </data>
+  <data name="RemoteAccess_Open" xml:space="preserve">
+    <value>Open website</value>
+  </data>
   <data name="AppUpdate_Title" xml:space="preserve">
     <value>Update Telemavix Studio</value>
   </data>

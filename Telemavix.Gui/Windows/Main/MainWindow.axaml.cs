@@ -266,6 +266,8 @@ public partial class MainWindow : Window
 			return;
 		}
 
+		if (await RemoteAccessFlow.EnforceAsync(this, () => _phase == UiPhase.Rendering)) return;
+
 		AppendBanner();
 		_ = Task.Run(FfmpegPipeline.DeleteStaleTempFiles);
 		if (OverlaySettingsStore.Load().CacheCleanupDays is > 0 and var cacheDays)

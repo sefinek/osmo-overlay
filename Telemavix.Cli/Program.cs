@@ -13,6 +13,7 @@ using Telemavix.Core.Overlay;
 using Telemavix.Core.Reframe;
 using Telemavix.Core.Telemetry;
 using Telemavix.Core.Telemetry.External;
+using Telemavix.Core.Updates;
 using Telemavix.Drones.Dji;
 
 LegacyDataFolder.Migrate();
@@ -75,6 +76,12 @@ const string usage = "Usage: Telemavix.Cli <input1> [input2 ...] [-o <output.mp4
 if (args.Length == 0)
 {
 	Console.WriteLine(usage);
+	return 1;
+}
+
+if (await RemoteAccess.CheckAsync(CancellationToken.None) is { Blocked: true } access)
+{
+	AppLogger.Error($"Telemavix Studio {AppUpdates.CurrentVersionLabel} is switched off. Version {access.MinVersion} or newer is required.{(access.Url is null ? "" : $" See {access.Url}")}");
 	return 1;
 }
 
