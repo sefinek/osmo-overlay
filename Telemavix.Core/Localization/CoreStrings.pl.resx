@@ -488,6 +488,12 @@
   <data name="Updates_NoHash" xml:space="preserve">
     <value>{0} nie ma opublikowanej sumy SHA-256, więc nie można go zweryfikować - zainstaluj go ze strony wydania.</value>
   </data>
+  <data name="RemoteAccess_KeepFailed" xml:space="preserve">
+    <value>Nie udało się zapisać odpowiedzi kontroli dostępu</value>
+  </data>
+  <data name="RemoteAccess_SwitchedOff" xml:space="preserve">
+    <value>Wersja {0} została wyłączona przez serwer (minimum: {1})</value>
+  </data>
   <data name="Updates_NoRelease" xml:space="preserve">
     <value>Nie opublikowano jeszcze żadnego wydania Telemavix Studio</value>
   </data>

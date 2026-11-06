@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using NuGet.Versioning;
+using Telemavix.Core.Localization;
 using Telemavix.Core.Logging;
 
 namespace Telemavix.Core.Updates;
@@ -61,7 +62,7 @@ public static class RemoteAccess
 			AccessDecision decision = Evaluate(response, now, true);
 			if (IsReplay(decision, Cached(), now)) throw new InvalidDataException("Access response is older than the one already kept.");
 			Save(response);
-			if (decision.Blocked) AppLogger.Warn($"Version {AppUpdates.CurrentVersionLabel} is switched off by the server (minimum: {decision.MinVersion}).");
+			if (decision.Blocked) AppLogger.Warn(string.Format(CoreStrings.RemoteAccess_SwitchedOff, AppUpdates.CurrentVersionLabel, decision.MinVersion));
 			return decision;
 		}
 		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or System.Text.Json.JsonException
@@ -105,7 +106,7 @@ public static class RemoteAccess
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{
-			AppLogger.Warn(ex, "Could not keep the access answer.");
+			AppLogger.Warn(ex, CoreStrings.RemoteAccess_KeepFailed);
 		}
 	}
 

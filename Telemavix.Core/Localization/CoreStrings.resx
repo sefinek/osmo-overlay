@@ -488,6 +488,12 @@
   <data name="Updates_NoHash" xml:space="preserve">
     <value>{0} has no published SHA-256, so it can't be verified - install it from the release page.</value>
   </data>
+  <data name="RemoteAccess_KeepFailed" xml:space="preserve">
+    <value>Could not keep the answer of the access check</value>
+  </data>
+  <data name="RemoteAccess_SwitchedOff" xml:space="preserve">
+    <value>Version {0} has been switched off by the server (minimum: {1})</value>
+  </data>
   <data name="Updates_NoRelease" xml:space="preserve">
     <value>No Telemavix Studio release has been published yet</value>
   </data>

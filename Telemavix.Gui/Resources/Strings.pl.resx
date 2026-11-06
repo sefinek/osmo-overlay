@@ -58,7 +58,7 @@
     <value>Ta wersja została wyłączona</value>
   </data>
   <data name="RemoteAccess_Message" xml:space="preserve">
-    <value>Telemavix Studio {0} nie może już być uruchamiane. Wymagana jest wersja {1} lub nowsza.</value>
+    <value>Telemavix Studio {0} nie może już być uruchamiany. Wymagana jest wersja {1} lub nowsza.</value>
   </data>
   <data name="RemoteAccess_Open" xml:space="preserve">
     <value>Otwórz stronę</value>
