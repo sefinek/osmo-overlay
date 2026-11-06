@@ -286,8 +286,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new SignalElement { X = 1200, Y = 2000, Visible = false },
 			new FlightModeElement { X = 2900, Y = 1700, Visible = false },
 			new RcSticksElement { X = 2900, Y = 1960, Visible = false },
-			new AttitudeIndicatorElement { X = 2448, Y = 1880, Visible = false },
-			new Orientation3DElement { X = 2740, Y = 1880, Visible = false }
+			new AttitudeIndicatorElement { X = 2448, Y = 1810, Visible = false },
+			new Orientation3DElement { X = 2740, Y = 1810, Visible = false }
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid, so a
