@@ -18,14 +18,16 @@ public enum MapKeyVerdict
 ///     Asks Esri whether a key is one. Its image service (ibasemaps-api) hands tiles to any non-empty token, so the check goes to
 ///     the basemap styles service the Navigation map is served from, which answers 401 (code 498/499) to a token it doesn't know. A
 ///     rejected key counts as no key (MapSources.ApiKey) - the public server is used, with the terms that come with it - for as long as
-///     the process lives; an answer that says nothing (offline, a server's trouble) is not remembered and asked again.
+///     the process lives; an answer that says nothing (offline, a server's trouble) is not remembered and asked again. One key is asked
+///     about once at a time, whoever wants to know (startup, the settings, a render).
 /// </summary>
 public static class MapKeyCheck
 {
 	private const string ProbeUrl = "https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/navigation/static/tile/0/0/0?token=";
 
 	private static readonly HttpClient Http = CreateHttpClient();
-	private static readonly ConcurrentDictionary<string, MapKeyVerdict> Verdicts = new(StringComparer.Ordinal);
+	private static readonly ConcurrentDictionary<string, Lazy<Task<MapKeyVerdict>>> Checks = new(StringComparer.Ordinal);
+	private static readonly ConcurrentDictionary<string, byte> Rejected = new(StringComparer.Ordinal);
 
 	private static HttpClient CreateHttpClient()
 	{
@@ -34,10 +36,13 @@ public static class MapKeyCheck
 		return client;
 	}
 
-	/// <summary>True only for a key Esri has said it doesn't know - an unchecked one is taken as good.</summary>
+	/// <summary>
+	///     True only for a key Esri has said it doesn't know - an unchecked one is taken as good. Asked by everything that picks a map
+	///     (per frame in a render's credit), so with nothing rejected - nearly always - it costs one emptiness check.
+	/// </summary>
 	public static bool IsRejected(string? group, string? key)
 	{
-		return group == MapProviders.EsriKeyGroup && !string.IsNullOrWhiteSpace(key) && Verdicts.TryGetValue(key.Trim(), out MapKeyVerdict verdict) && verdict == MapKeyVerdict.Rejected;
+		return !Rejected.IsEmpty && group == MapProviders.EsriKeyGroup && !string.IsNullOrWhiteSpace(key) && Rejected.ContainsKey(key.Trim());
 	}
 
 	/// <summary>The stored Esri key is asked about once per run; nothing to do without one.</summary>
@@ -51,13 +56,23 @@ public static class MapKeyCheck
 	{
 		key = key.Trim();
 		if (key.Length == 0) return MapKeyVerdict.Unverified;
-		if (Verdicts.TryGetValue(key, out MapKeyVerdict known)) return known;
 
-		MapKeyVerdict verdict = await CheckAsync(Http, key, ct);
-		if (verdict == MapKeyVerdict.Unverified) return verdict;
+		Lazy<Task<MapKeyVerdict>> check = Checks.GetOrAdd(key, static k => new Lazy<Task<MapKeyVerdict>>(() => AskAsync(k)));
+		MapKeyVerdict verdict = await check.Value.WaitAsync(ct);
+		if (verdict == MapKeyVerdict.Unverified) Checks.TryRemove(KeyValuePair.Create(key, check));
+		return verdict;
+	}
 
-		Verdicts[key] = verdict;
-		if (verdict == MapKeyVerdict.Rejected) AppLogger.Warn(CoreStrings.Map_EsriKeyRejected);
+	// Not tied to one caller's token: others may be waiting on the same answer, and the request has its own timeout.
+	private static async Task<MapKeyVerdict> AskAsync(string key)
+	{
+		MapKeyVerdict verdict = await CheckAsync(Http, key, CancellationToken.None);
+		if (verdict == MapKeyVerdict.Rejected)
+		{
+			Rejected[key] = 0;
+			AppLogger.Warn(CoreStrings.Map_EsriKeyRejected);
+		}
+
 		return verdict;
 	}
 
@@ -97,11 +112,16 @@ public static class MapKeyCheck
 
 	internal static void Remember(string key, MapKeyVerdict verdict)
 	{
-		Verdicts[key.Trim()] = verdict;
+		key = key.Trim();
+		Checks[key] = new Lazy<Task<MapKeyVerdict>>(Task.FromResult(verdict));
+		if (verdict == MapKeyVerdict.Rejected) Rejected[key] = 0;
+		else Rejected.TryRemove(key, out _);
 	}
 
 	internal static void Forget(string key)
 	{
-		Verdicts.TryRemove(key.Trim(), out _);
+		key = key.Trim();
+		Checks.TryRemove(key, out _);
+		Rejected.TryRemove(key, out _);
 	}
 }

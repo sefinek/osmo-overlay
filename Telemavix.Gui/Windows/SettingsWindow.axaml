@@ -290,15 +290,6 @@
 						<StackPanel>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
 								<StackPanel>
-									<TextBlock Text="{x:Static local:Strings.Settings_AttributionWatermark}" Classes="rowTitle" />
-									<TextBlock Classes="rowHint"
-									           Text="{x:Static local:Strings.Settings_MadeWithTelemavixAndThe}" />
-								</StackPanel>
-								<ToggleSwitch Grid.Column="1" Name="ShowWatermarkCheck" />
-							</Grid>
-							<Border Classes="divider" />
-							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
-								<StackPanel>
 									<TextBlock Text="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint"
 									           Text="{x:Static local:Strings.Settings_TheGpsReportsAFew}" />

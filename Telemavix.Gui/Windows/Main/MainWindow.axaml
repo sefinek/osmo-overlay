@@ -1476,8 +1476,6 @@
 										<Border Name="WatermarkSettingsPanel" Grid.Column="1" IsVisible="False">
 											<StackPanel Classes="settingsFlyout" Spacing="12">
 												<TextBlock Classes="hint" TextWrapping="Wrap" Text="{x:Static local:Strings.Watermark_Hint}" />
-												<TextBlock Name="WatermarkOffHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
-												           Text="{x:Static local:Strings.Watermark_OffInSettings}" />
 												<TextBlock Name="WatermarkIntroHint" Classes="hint" TextWrapping="Wrap" IsVisible="False"
 												           Text="{x:Static local:Strings.Watermark_AfterRouteIntro}" />
 												<Border Classes="settingsGroup">

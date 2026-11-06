@@ -338,16 +338,10 @@ public partial class MainWindow
 		AdoptSettings(SettingsPresetStore.Activate(preset));
 	}
 
-	/// <summary>What the window keeps from settings.json for itself, brought up to date after a preset switch: watermark, GPS smoothing and the overlay layout.</summary>
+	/// <summary>What the window keeps from settings.json for itself, brought up to date after a preset switch: GPS smoothing and the overlay layout.</summary>
 	private void AdoptSettings(OverlaySettings settings)
 	{
 		_smoothGpsMotion = settings.SmoothGpsMotion;
-		if (settings.ShowWatermark != _showWatermark)
-		{
-			_showWatermark = settings.ShowWatermark;
-			_previewPlayer.SetShowWatermark(_showWatermark);
-		}
-
 		AdoptLayout(settings);
 		UpdateTitle();
 	}

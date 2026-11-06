@@ -22,7 +22,6 @@ public sealed record SettingsPreset(string Id, string Name, SettingsPresetValues
 ///     OverlaySettings' own, which a missing field of an older file falls back to.
 /// </summary>
 public sealed record SettingsPresetValues(
-	bool ShowWatermark = true,
 	bool SmoothGpsMotion = true,
 	double SpeedCorrectionPercent = 0,
 	OrientationSource OrientationSource = OrientationSource.Accelerometer,
@@ -63,7 +62,7 @@ public sealed record SettingsPresetValues(
 {
 	public static SettingsPresetValues From(OverlaySettings settings)
 	{
-		return new SettingsPresetValues(settings.ShowWatermark, settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource,
+		return new SettingsPresetValues(settings.SmoothGpsMotion, settings.SpeedCorrectionPercent, settings.OrientationSource,
 			settings.ShowRouteIntro, settings.RouteIntroDurationSeconds, settings.RouteIntroStats, settings.RouteIntroLabels,
 			settings.RouteIntroColorBySpeed, settings.RouteIntroGpsLossJoin, settings.RouteIntroShowStartFinish, settings.RouteIntroWhenTrimmed,
 			settings.RouteIntroStartLabel, settings.RouteIntroFinishLabel, settings.RouteIntroMapProvider, settings.RouteIntroShowEsriMapLabels,
@@ -80,7 +79,6 @@ public sealed record SettingsPresetValues(
 	{
 		return settings with
 		{
-			ShowWatermark = ShowWatermark,
 			SmoothGpsMotion = SmoothGpsMotion,
 			SpeedCorrectionPercent = SpeedCorrectionPercent,
 			OrientationSource = OrientationSource,

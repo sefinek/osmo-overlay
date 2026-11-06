@@ -77,7 +77,6 @@ public partial class MainWindow : Window
 	private string? _resizingElementId;
 	private float _resizeStartScale = 1f;
 	private double _resizeStartDistance = 1;
-	private bool _showWatermark;
 	private bool _smoothGpsMotion;
 	private FileSummary? _summary;
 	// MeasuredSpeeds' result for this summary and GPS smoothing - the whole recording is processed for it.
@@ -108,7 +107,6 @@ public partial class MainWindow : Window
 		_timeFormat = PreviewTimeFormats.Parse(settings.PreviewTimeFormat);
 		_audioMuted = settings.PreviewAudioMuted;
 		_audioVolume = settings.PreviewAudioVolume;
-		_showWatermark = settings.ShowWatermark;
 		_smoothGpsMotion = settings.SmoothGpsMotion;
 
 		DateTimeFormatCombo.ItemsSource = DateFormatOptions;
@@ -285,7 +283,6 @@ public partial class MainWindow : Window
 			await welcome.ShowDialog(this);
 			openRecording = welcome.OpenRecordingRequested;
 			OverlaySettings welcomed = OverlaySettingsStore.Load();
-			_showWatermark = welcomed.ShowWatermark;
 			_smoothGpsMotion = welcomed.SmoothGpsMotion;
 		}
 
@@ -506,17 +503,11 @@ public partial class MainWindow : Window
 		ApplySecondScreenSettings(updated);
 		ApplyAutoSave(updated.AutoSaveMinutes);
 
-		if (updated.ShowWatermark != _showWatermark)
-		{
-			_showWatermark = updated.ShowWatermark;
-			_previewPlayer.SetShowWatermark(_showWatermark);
-		}
-
 		if (updated.PreviewDrawsShadows != saved.PreviewDrawsShadows || updated.DisableShadows != saved.DisableShadows)
 			_previewPlayer.SetShadows(updated.PreviewDrawsShadows, !updated.DisableShadows);
 		if (updated.DisableShadows != saved.DisableShadows) LockShadowEditors(updated.DisableShadows);
 
-		// Unlike ShowWatermark, GPS smoothing, the speed correction and the route-intro card are baked in at OpenAsync,
+		// GPS smoothing, the speed correction and the route-intro card are baked in at OpenAsync,
 		// so a change reopens the preview.
 		bool needsPreviewReopen = updated.SmoothGpsMotion != _smoothGpsMotion ||
 		                          Math.Abs(updated.SpeedCorrectionPercent - before.SpeedCorrectionPercent) > 1e-9 ||

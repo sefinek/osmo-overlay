@@ -524,14 +524,18 @@ public sealed record MapAttributionElement : StyledOverlayElement
 }
 
 /// <summary>
-///     The "Made with Telemavix Studio" watermark, centered on X with the second line's baseline on Y. OverlaySettings.ShowWatermark
-///     turns it on and off for every preset (the default one can't hide a widget); this only places, styles and times it.
-///     A preset without one gets it at the default spot (OverlayRenderer.DrawWidgets); the route overview card shows it in
-///     its own corner instead (DrawWatermark).
+///     The app's credit, "Made with Telemavix Studio", centered on X with the second line's baseline on Y. It can't be turned
+///     off: this widget only places, styles and times it, within limits (MinimumOpacity, OverlayElementBounds.MinWatermarkScale,
+///     MinimumSeconds), and the renderer draws it whatever its Visible says (OverlayRenderer.EnforcedCredit). A layout with no
+///     watermark widget at all gets it at the default spot (OverlayRenderer.DrawWidgets), which is why the last one can't be
+///     removed; the route overview card shows it in its own corner instead (DrawWatermark).
 /// </summary>
 public sealed record WatermarkElement : StyledOverlayElement
 {
 	public const float MinimumOpacity = 0.30f;
+
+	/// <summary>The least time, in seconds, the credit is on screen: its own times can't shrink it to nothing.</summary>
+	public const double MinimumSeconds = 3;
 
 	[JsonIgnore] public override OverlayElementType Type => OverlayElementType.Watermark;
 }

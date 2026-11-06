@@ -10,7 +10,7 @@ namespace Telemavix.Core.Overlay;
 
 /// <summary>
 ///     Small pieces of overlay-related state that aren't tied to any single preset's layout: which
-///     preset is active, whether the attribution watermark is shown, and whether GPS-derived
+///     preset is active, and whether GPS-derived
 ///     position (Compass trail, Map pan/center) is smoothed between real GPS fixes instead of
 ///     holding each one for several video frames - see GpsInterpolation. On by default: it only
 ///     interpolates between two already-real, already-known fixes (never extrapolates into unknown
@@ -29,7 +29,6 @@ namespace Telemavix.Core.Overlay;
 /// </summary>
 public sealed record OverlaySettings(
 	string? ActivePresetId = null,
-	bool ShowWatermark = true,
 	bool SmoothGpsMotion = true,
 	// Percent added to every speed the camera's GPS gives, for a receiver that reads low (TelemetryProcessor.Process).
 	double SpeedCorrectionPercent = 0,

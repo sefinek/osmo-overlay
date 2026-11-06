@@ -79,6 +79,8 @@
 		<Style Selector="TextBlock.statusText">
 			<Setter Property="FontSize" Value="13" />
 			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="HorizontalAlignment" Value="Right" />
+			<Setter Property="TextAlignment" Value="Right" />
 		</Style>
 		<Style Selector="Border.iconBadge">
 			<Setter Property="Width" Value="32" />
@@ -177,7 +179,7 @@
 										<TextBlock Text="{x:Static local:Strings.Welcome_ConnectionDescription}" Classes="rowText" />
 									</StackPanel>
 									<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="12">
-										<TextBlock Text="DNS (server.arcgisonline.com)" />
+										<TextBlock Text="DNS" />
 										<TextBlock Name="ConnectionDnsStatus" Grid.Column="1" Classes="statusText" Text="{x:Static local:Strings.Welcome_Checking}" />
 										<TextBlock Grid.Row="1" Text="{x:Static local:Strings.Welcome_ConnectionHttpsLabel}" />
 										<TextBlock Name="ConnectionHttpsStatus" Grid.Row="1" Grid.Column="1" Classes="statusText" Text="{x:Static local:Strings.Welcome_Checking}" />
@@ -251,7 +253,7 @@
 							<Border Classes="card">
 								<StackPanel Spacing="10">
 									<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_UseTheOriginalFilesFrom}" />
-									<Border CornerRadius="8" ClipToBounds="True" HorizontalAlignment="Center" MaxWidth="560"
+									<Border CornerRadius="8" ClipToBounds="True" HorizontalAlignment="Stretch"
 									        BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1">
 										<Image Stretch="Uniform" Source="{local:AssetImage Path=Welcome/GpsIndicator.webp}" />
 									</Border>
@@ -267,7 +269,7 @@
 								           Text="{x:Static local:Strings.Welcome_TelemavixRendersWithFFmpegExifTool}" />
 							</StackPanel>
 							<StackPanel Name="ToolRows" Spacing="10" Margin="0,4,0,0" />
-							<TextBlock Name="ToolsHint" Classes="hint" />
+							<TextBlock Name="ToolsHint" Classes="hint" TextAlignment="Center" TextWrapping="Wrap" />
 						</StackPanel>
 
 						<StackPanel Name="HardwareStep" Classes="step" Opacity="0">
@@ -488,12 +490,6 @@
 										<StackPanel Classes="rowDetails">
 											<TextBlock Text="{x:Static local:Strings.Common_SmoothGpsDerivedMotion}" />
 											<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_SmoothGpsHint}" />
-										</StackPanel>
-									</CheckBox>
-									<CheckBox Name="WatermarkCheck">
-										<StackPanel Classes="rowDetails">
-											<TextBlock Text="{x:Static local:Strings.Welcome_ShowAttributionWatermark}" />
-											<TextBlock Classes="rowText" Text="{x:Static local:Strings.Welcome_WatermarkHint}" />
 										</StackPanel>
 									</CheckBox>
 									<CheckBox Name="ProjectAssociationCheck">

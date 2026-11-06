@@ -1972,7 +1972,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>{0} - kopia</value>
   </data>
   <data name="SettingsPresets_Covers" xml:space="preserve">
-    <value>Preset obejmuje: kalibrację prędkości, orientację i płynność GPS, znak wodny, wstęp z trasą oraz ustawienia renderu (jakość, kodek, rozdzielczość, dźwięk, metadane). Interfejs, zachowanie programu, dekodowanie sprzętowe, cienie i klucze map są wspólne dla wszystkich presetów.</value>
+    <value>Preset obejmuje: kalibrację prędkości, orientację i płynność GPS, wstęp z trasą oraz ustawienia renderu (jakość, kodek, rozdzielczość, dźwięk, metadane). Interfejs, zachowanie programu, dekodowanie sprzętowe, cienie i klucze map są wspólne dla wszystkich presetów.</value>
   </data>
   <data name="SettingsPresets_DeleteMessage" xml:space="preserve">
     <value>Czy na pewno chcesz usunąć preset ustawień „{0}”? Układy widżetów pozostaną bez zmian. Tej operacji nie da się cofnąć.</value>
@@ -2228,9 +2228,6 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Settings_AssociationRegistered" xml:space="preserve">
     <value>Zarejestrowane dla tej aplikacji</value>
   </data>
-  <data name="Settings_AttributionWatermark" xml:space="preserve">
-    <value>Znak wodny Telemavix Studio</value>
-  </data>
   <data name="Settings_Author" xml:space="preserve">
     <value>Autor</value>
   </data>
@@ -2413,9 +2410,6 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   </data>
   <data name="Settings_LoopsTheInOutSelection" xml:space="preserve">
     <value>Zapętla zaznaczony fragment lub całe nagranie, jeśli nic nie zaznaczono. Zapętlanie możesz w każdej chwili przełączyć przyciskiem Pętla lub klawiszem Q.</value>
-  </data>
-  <data name="Settings_MadeWithTelemavixAndThe" xml:space="preserve">
-    <value>Wyświetla napis „Stworzono w Telemavix Studio” i link do projektu u dołu filmu przez kilka pierwszych sekund, a następnie stopniowo je wygasza.</value>
   </data>
   <data name="Settings_Map" xml:space="preserve">
     <value>MAPA</value>
@@ -3286,10 +3280,7 @@ Szczegóły: {0}</value>
     <value>Dostępne aktualizacje zależności: {0} - zobacz Ustawienia &gt; O programie</value>
   </data>
   <data name="Watermark_Hint" xml:space="preserve">
-    <value>Napis „Stworzono w Telemavix Studio” z adresem projektu. Włączysz go w ustawieniach aplikacji, a tutaj zmienisz położenie, wygląd i czas wyświetlania. We wstępie z trasą znak wodny jest umieszczony w prawym dolnym rogu planszy.</value>
-  </data>
-  <data name="Watermark_OffInSettings" xml:space="preserve">
-    <value>Znak wodny jest wyłączony w Ustawieniach, więc nie pojawi się na filmie.</value>
+    <value>Napis „Stworzono w Telemavix Studio” z adresem projektu. Tutaj zmienisz jego położenie, wygląd i czas wyświetlania. We wstępie z trasą znak wodny jest umieszczony w prawym dolnym rogu planszy.</value>
   </data>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>Nagrania 360° w formacie .insv są wyświetlane jako standardowy kadr z regulowanym kierunkiem i polem widzenia. Obsługę przetestowano na X4. Aplikacja nie odczytuje jeszcze danych GPS z tych plików.</value>
@@ -3453,7 +3444,7 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
     <value>Miejsce zapisu gotowych filmów. Puste pole oznacza zapis obok nagrania źródłowego.</value>
   </data>
   <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
-    <value>Dwukrotne kliknięcie pliku .ovproj otworzy projekt z zapisanymi ustawieniami nakładki, cięciami, kluczowymi momentami itp.</value>
+    <value>Dwukrotne kliknięcie pliku .ovproj otworzy projekt nagrania z zapisanymi ustawieniami nakładki, cięciami, kluczowymi momentami itp.</value>
   </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Renderowanie i pliki</value>
@@ -3544,9 +3535,6 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
   <data name="Welcome_RunBenchmark" xml:space="preserve">
     <value>Test wydajności</value>
   </data>
-  <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
-    <value>Pokazuj znak wodny Telemavix Studio</value>
-  </data>
   <data name="Welcome_SmoothGpsHint" xml:space="preserve">
     <value>Pozycja GPS jest aktualizowana rzadziej niż klatki nagrania, dlatego ślad w kompasie i mapa mogą poruszać się skokowo. Wygładzanie zapewnia płynny ruch między kolejnymi pozycjami.</value>
   </data>
@@ -3583,9 +3571,6 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
   <data name="Welcome_SummarySpeedCorrection" xml:space="preserve">
     <value>Korekta prędkości</value>
   </data>
-  <data name="Welcome_SummaryWatermark" xml:space="preserve">
-    <value>Znak wodny</value>
-  </data>
   <data name="Welcome_SupportedDevices" xml:space="preserve">
     <value>Obsługiwane urządzenia</value>
   </data>
@@ -3603,9 +3588,6 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Wersja {0}</value>
-  </data>
-  <data name="Welcome_WatermarkHint" xml:space="preserve">
-    <value>Wyświetla napis „Stworzono w Telemavix Studio” z linkiem do projektu u dołu filmu przez kilka pierwszych sekund.</value>
   </data>
   <data name="Welcome_WelcomeToTelemavix" xml:space="preserve">
     <value>Witaj w Telemavix Studio</value>
@@ -3686,13 +3668,13 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
     <value>Mało miejsca na dłuższe rendery. Renderowanie godziny filmu 4K może wymagać około {0}, łącznie z miejscem na czas zapisu. Dokładne zapotrzebowanie zależy od nagrania i ustawień renderu.</value>
   </data>
   <data name="Welcome_ConnectionTitle" xml:space="preserve">
-    <value>Połączenie z mapami</value>
+    <value>Test połączenia z internetem</value>
   </data>
   <data name="Welcome_ConnectionDescription" xml:space="preserve">
-    <value>Mapy wymagają internetu. Test sprawdza DNS i pobranie kafelka z serwera Esri przez HTTPS.</value>
+    <value>Sprawdź, czy aplikacja może połączyć się z internetem i pobierać dane.</value>
   </data>
   <data name="Welcome_ConnectionHttpsLabel" xml:space="preserve">
-    <value>HTTPS i kafelki map</value>
+    <value>Pobieranie danych (HTTPS)</value>
   </data>
   <data name="Welcome_ConnectionRetry" xml:space="preserve">
     <value>Sprawdź ponownie</value>
@@ -3707,10 +3689,10 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
     <value>Połączenie z internetem działa. Pobieranie map powinno być możliwe.</value>
   </data>
   <data name="Welcome_ConnectionDnsHelp" xml:space="preserve">
-    <value>Nie udało się rozwiązać nazwy serwera ani pobrać mapy. Sprawdź połączenie, ustawienia DNS i VPN. Jeśli sieć wymaga logowania, otwórz przeglądarkę i zaloguj się. Potem ponów test.</value>
+    <value>Nie udało się połączyć z internetem. Sprawdź połączenie, ustawienia DNS i VPN. Jeśli sieć wymaga logowania, otwórz przeglądarkę i zaloguj się, a następnie ponów test.</value>
   </data>
   <data name="Welcome_ConnectionHttpsHelp" xml:space="preserve">
-    <value>DNS działa, ale nie udało się pobrać mapy. Sprawdź zaporę, proxy, VPN i ewentualne logowanie do sieci. Przy błędzie TLS sprawdź także datę i godzinę systemową. Serwer Esri może być chwilowo niedostępny.</value>
+    <value>DNS działa, ale nie udało się pobrać danych przez HTTPS. Sprawdź zaporę, proxy, VPN i ewentualne logowanie do sieci. Przy błędzie TLS sprawdź także datę i godzinę systemową.</value>
   </data>
   <data name="Welcome_ConnectionDnsFailed" xml:space="preserve">
     <value>Błąd DNS</value>
@@ -3725,7 +3707,7 @@ Uwaga: Telemavix Studio jest udostępniany bezpłatnie. Jeśli ktoś żąda od c
     <value>Błąd połączenia</value>
   </data>
   <data name="Welcome_ConnectionInvalidResponse" xml:space="preserve">
-    <value>Nieprawidłowy kafelek</value>
+    <value>Nieprawidłowa odpowiedź serwera</value>
   </data>
   <data name="Calibration_LoadPreview" xml:space="preserve">
     <value>Wczytaj nagranie i sprawdź korektę</value>

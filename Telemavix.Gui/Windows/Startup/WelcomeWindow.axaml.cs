@@ -71,7 +71,6 @@ public partial class WelcomeWindow : Window
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		SpeedEditor.Load(settings.SpeedCorrectionPercent, recordingCruisingSpeedKmh);
 		SmoothGpsCheck.IsChecked = settings.SmoothGpsMotion;
-		WatermarkCheck.IsChecked = settings.ShowWatermark;
 		OutputFolderBox.Text = settings.DefaultOutputFolder;
 		EsriKeyBox.Text = new MapSources(settings.MapApiKeys).StoredApiKey(MapProviders.EsriKeyGroup);
 		ShowMapKeyStatus();
@@ -699,7 +698,6 @@ public partial class WelcomeWindow : Window
 				: Strings.Welcome_SummaryMapOwn,
 				string.IsNullOrWhiteSpace(EsriKeyBox.Text) ? Strings.Welcome_SummaryMapNoKey : Strings.Welcome_SummaryMapEsriKey)),
 			(Strings.Common_Units, UnitsSummary(ChosenUnits())),
-			(Strings.Welcome_SummaryWatermark, WatermarkCheck.IsChecked == true ? Strings.Common_On : Strings.Main_Off),
 			(Strings.Welcome_SummaryOutputFolder,
 				string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? Strings.Welcome_NextToTheSourceFile : OutputFolderBox.Text)
 		];
@@ -787,7 +785,6 @@ public partial class WelcomeWindow : Window
 			: settings.DefaultMapProvider,
 			SpeedCorrectionPercent = SpeedEditor.Percent,
 			SmoothGpsMotion = SmoothGpsCheck.IsChecked == true,
-			ShowWatermark = WatermarkCheck.IsChecked == true,
 			DefaultOutputFolder = string.IsNullOrWhiteSpace(OutputFolderBox.Text) ? null : OutputFolderBox.Text,
 			WelcomeShown = true
 		});

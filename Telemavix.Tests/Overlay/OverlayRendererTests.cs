@@ -177,7 +177,7 @@ public sealed class OverlayRendererTests
 				// Drawn only while the GPS (or the flight log) has something to say, which this route never does - GpsAlertTests and FlightEventTests draw them on ones that do.
 				if (shown is GpsAlertElement or FlightAlertsElement) continue;
 
-				// The watermark is drawn only with Settings' switch on.
+				// The watermark is drawn only with the renderer's switch on (a preview that isn't of a render turns it off).
 				Assert.IsTrue(RenderLayout([shown], shown is WatermarkElement).Any(b => b != 0), $"{element.Type} drew nothing");
 			}
 		}
@@ -195,7 +195,7 @@ public sealed class OverlayRendererTests
 	}
 
 	[TestMethod]
-	public void Watermark_FollowsTheSettingsSwitch_AndAPresetWithoutOneGetsTheDefault()
+	public void Watermark_CantBeTurnedOff_AndALayoutWithoutOneGetsTheDefault()
 	{
 		List<DerivedFrame> frames = Route(300, 0);
 		WatermarkElement watermark = OverlayPreset.CreateDefault("test", "Test").Elements.OfType<WatermarkElement>().Single();
@@ -208,8 +208,9 @@ public sealed class OverlayRendererTests
 
 		Assert.IsTrue(Draw([watermark], true).Any(b => b != 0), "drawn in its first seconds");
 		CollectionAssert.AreEqual(Draw([watermark], true), Draw([], true), "a preset without one gets the default");
-		Assert.IsTrue(Draw([watermark with { Visible = false }], true).All(b => b == 0), "hidden");
-		Assert.IsTrue(Draw([watermark], false).All(b => b == 0), "Settings' switch off");
+		CollectionAssert.AreEqual(Draw([watermark], true), Draw([watermark with { Visible = false }], true), "hiding the widget changes nothing");
+		Assert.IsTrue(Draw([watermark with { AppearAtSeconds = 4, DisappearAtSeconds = 4.01 }], true).Any(b => b != 0), "its time can't shrink to nothing (the frame drawn is at 5 s)");
+		Assert.IsTrue(Draw([watermark], false).All(b => b == 0), "the renderer's switch off");
 	}
 
 	[TestMethod]

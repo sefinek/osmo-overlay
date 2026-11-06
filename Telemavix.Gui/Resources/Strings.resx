@@ -1972,7 +1972,7 @@ The cuts, view settings and overlay will be applied once these files are located
     <value>{0} - copy</value>
   </data>
   <data name="SettingsPresets_Covers" xml:space="preserve">
-    <value>A preset covers: speed calibration, orientation and GPS smoothing, the watermark, the route intro and the render settings (quality, codec, resolution, sound, metadata). The interface, the program's behavior, hardware decoding, shadows and map keys are shared by all presets.</value>
+    <value>A preset covers: speed calibration, orientation and GPS smoothing, the route intro and the render settings (quality, codec, resolution, sound, metadata). The interface, the program's behavior, hardware decoding, shadows and map keys are shared by all presets.</value>
   </data>
   <data name="SettingsPresets_DeleteMessage" xml:space="preserve">
     <value>Are you sure you want to delete the settings preset "{0}"? Widget layouts will remain unchanged. This can't be undone.</value>
@@ -2228,9 +2228,6 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   <data name="Settings_AssociationRegistered" xml:space="preserve">
     <value>Registered for this app</value>
   </data>
-  <data name="Settings_AttributionWatermark" xml:space="preserve">
-    <value>Telemavix Studio watermark</value>
-  </data>
   <data name="Settings_Author" xml:space="preserve">
     <value>Author</value>
   </data>
@@ -2413,9 +2410,6 @@ Free up space or choose a folder on another drive. Rendering will fail if the dr
   </data>
   <data name="Settings_LoopsTheInOutSelection" xml:space="preserve">
     <value>Loops the In/Out selection, or the whole recording. The Loop button (Q) toggles it at any time.</value>
-  </data>
-  <data name="Settings_MadeWithTelemavixAndThe" xml:space="preserve">
-    <value>Shows &apos;Made with Telemavix Studio&apos; and the project link at the bottom of the video for the first few seconds, then fades them out.</value>
   </data>
   <data name="Settings_Map" xml:space="preserve">
     <value>MAP</value>
@@ -3286,10 +3280,7 @@ Details: {0}</value>
     <value>Dependency updates available: {0} - see Settings &gt; About</value>
   </data>
   <data name="Watermark_Hint" xml:space="preserve">
-    <value>The "Made with Telemavix Studio" text with a link to the project. Enable it in Settings, then adjust its position, appearance and display time here. During the route intro, the watermark appears in the bottom-right corner of the card.</value>
-  </data>
-  <data name="Watermark_OffInSettings" xml:space="preserve">
-    <value>The watermark is turned off in Settings, so it won't appear in the video.</value>
+    <value>The "Made with Telemavix Studio" text with a link to the project. Adjust its position, appearance and display time here. During the route intro, the watermark appears in the bottom-right corner of the card.</value>
   </data>
   <data name="Welcome_360InsvRecordingsTestedOn" xml:space="preserve">
     <value>360° recordings in .insv format are displayed as a standard frame with adjustable viewing direction and field of view. Support has been tested on the X4. The app does not yet read GPS data from these files.</value>
@@ -3453,7 +3444,7 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
     <value>Where finished videos are saved. Empty means next to the source recording.</value>
   </data>
   <data name="Welcome_ProjectAssociationHint" xml:space="preserve">
-    <value>Double-click an .ovproj file to open the project with its saved overlay settings, cuts, key moments, etc.</value>
+    <value>Double-click an .ovproj file to open the recording project with its saved overlay settings, cuts, key moments, etc.</value>
   </data>
   <data name="Welcome_RenderingAndFiles" xml:space="preserve">
     <value>Rendering and files</value>
@@ -3544,9 +3535,6 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
   <data name="Welcome_RunBenchmark" xml:space="preserve">
     <value>Performance test</value>
   </data>
-  <data name="Welcome_ShowAttributionWatermark" xml:space="preserve">
-    <value>Show the Telemavix Studio watermark</value>
-  </data>
   <data name="Welcome_SmoothGpsHint" xml:space="preserve">
     <value>GPS positions update less often than video frames, so the compass trail and map may move in jumps. Smoothing provides continuous movement between consecutive positions.</value>
   </data>
@@ -3583,9 +3571,6 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
   <data name="Welcome_SummarySpeedCorrection" xml:space="preserve">
     <value>Speed correction</value>
   </data>
-  <data name="Welcome_SummaryWatermark" xml:space="preserve">
-    <value>Watermark</value>
-  </data>
   <data name="Welcome_SupportedDevices" xml:space="preserve">
     <value>Supported devices</value>
   </data>
@@ -3603,9 +3588,6 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Version {0}</value>
-  </data>
-  <data name="Welcome_WatermarkHint" xml:space="preserve">
-    <value>Displays a "Made with Telemavix Studio" watermark with a link to the project at the bottom of the video for the first few seconds.</value>
   </data>
   <data name="Welcome_WelcomeToTelemavix" xml:space="preserve">
     <value>Welcome to Telemavix Studio</value>
@@ -3686,13 +3668,13 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
     <value>Disk space is running low for longer renders. Rendering an hour of 4K video may require around {0}, including temporary space needed to save the file. The exact amount depends on the recording and render settings.</value>
   </data>
   <data name="Welcome_ConnectionTitle" xml:space="preserve">
-    <value>Map connectivity</value>
+    <value>Internet connection test</value>
   </data>
   <data name="Welcome_ConnectionDescription" xml:space="preserve">
-    <value>Maps require an internet connection. This test checks DNS and downloads a tile from Esri over HTTPS.</value>
+    <value>Check whether the app can connect to the internet and download data.</value>
   </data>
   <data name="Welcome_ConnectionHttpsLabel" xml:space="preserve">
-    <value>HTTPS and map tiles</value>
+    <value>Data download (HTTPS)</value>
   </data>
   <data name="Welcome_ConnectionRetry" xml:space="preserve">
     <value>Check again</value>
@@ -3707,10 +3689,10 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
     <value>The internet connection is working. Map downloads should be available.</value>
   </data>
   <data name="Welcome_ConnectionDnsHelp" xml:space="preserve">
-    <value>Could not resolve the server name or download the map. Check your connection, DNS settings, and VPN. If the network requires a login, open your browser and sign in, then try again.</value>
+    <value>Could not connect to the internet. Check your connection, DNS settings, and VPN. If the network requires a login, open your browser and sign in, then try again.</value>
   </data>
   <data name="Welcome_ConnectionHttpsHelp" xml:space="preserve">
-    <value>DNS is working, but the map could not be downloaded. Check your firewall, proxy, VPN, and any required network login. For TLS errors, also check your system date and time. Esri's server may be temporarily unavailable.</value>
+    <value>DNS is working, but data could not be downloaded over HTTPS. Check your firewall, proxy, VPN, and any required network login. For TLS errors, also check your system date and time.</value>
   </data>
   <data name="Welcome_ConnectionDnsFailed" xml:space="preserve">
     <value>DNS failed</value>
@@ -3725,7 +3707,7 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
     <value>Connection failed</value>
   </data>
   <data name="Welcome_ConnectionInvalidResponse" xml:space="preserve">
-    <value>Invalid map tile</value>
+    <value>Invalid server response</value>
   </data>
   <data name="Calibration_LoadPreview" xml:space="preserve">
     <value>Load a recording and preview the correction</value>

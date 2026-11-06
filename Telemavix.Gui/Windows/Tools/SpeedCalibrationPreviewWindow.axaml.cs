@@ -194,7 +194,7 @@ public partial class SpeedCalibrationPreviewWindow : Window
 				return;
 			}
 
-			OverlaySettings settings = OverlaySettingsStore.Load() with { SpeedCorrectionPercent = 0, ShowRouteIntro = false, ShowWatermark = false };
+			OverlaySettings settings = OverlaySettingsStore.Load() with { SpeedCorrectionPercent = 0, ShowRouteIntro = false };
 			SetLoadStage(Strings.Calibration_LoadSpeeds);
 			(IReadOnlyList<DerivedFrame> frames, double cruising, List<Peak> peaks) = await Task.Run(() =>
 			{
@@ -219,7 +219,7 @@ public partial class SpeedCalibrationPreviewWindow : Window
 			PreviewVideo.Width = width;
 			PreviewVideo.Height = height;
 			await _player.OpenAsync(summary, width, height, settings,
-				[new SpeedGaugeElement { X = OverlayElementBounds.ReferenceWidth - 650, Y = 1500, Scale = 1.75f }], _frames);
+				[new SpeedGaugeElement { X = OverlayElementBounds.ReferenceWidth - 650, Y = 1500, Scale = 1.75f }], _frames, showWatermark: false);
 			if (_closed) return;
 			Timeline.Maximum = Math.Max(0, _player.Duration.TotalSeconds - 1 / summary.Video.Fps);
 			double initialPercent = Percent;

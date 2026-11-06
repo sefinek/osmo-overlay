@@ -96,7 +96,7 @@ public partial class MainWindow
 		foreach (MusicClip missing in _music.Where(c => !File.Exists(c.Path)))
 			AppLogger.Warn(string.Format(Strings.Render_MusicMissing, missing.Path));
 		var options = new RenderOptions(inputPaths, outputPath, null, _detectedEncoder, _summary?.TelemetryFrames,
-			Layout: layout, ShowWatermark: _showWatermark, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
+			Layout: layout, SmoothGpsMotion: _smoothGpsMotion, CameraModel: _summary?.CameraModel,
 			GreenScreen: greenScreen, RangeStartSeconds: rangeStart, RangeEndSeconds: rangeEnd, CutOuts: cutOuts, Reframe: _reframe, Volume: [.. _volumeLine],
 			Music: [.. _music.Where(c => File.Exists(c.Path))], Alpha: alpha);
 

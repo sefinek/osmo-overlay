@@ -152,7 +152,6 @@ public partial class SettingsWindow : Window
 	public void Load(OverlaySettings settings)
 	{
 		LoadSettingsPresets();
-		ShowWatermarkCheck.IsChecked = settings.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = settings.SmoothGpsMotion;
 		OrientationSourceCombo.SelectedItem = OrientationSourceOptions.FirstOrDefault(o => o.Value == settings.OrientationSource) ?? OrientationSourceOptions[0];
 		SpeedEditor.Load(settings.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
@@ -165,7 +164,6 @@ public partial class SettingsWindow : Window
 	{
 		return RouteIntro.ApplyTo(ApplyExportSettings(settings)) with
 		{
-			ShowWatermark = ShowWatermarkCheck.IsChecked == true,
 			SmoothGpsMotion = SmoothGpsMotionCheck.IsChecked == true,
 			OrientationSource = (OrientationSourceCombo.SelectedItem as ChoiceOption<OrientationSource>)?.Value ?? OrientationSource.Accelerometer,
 			SpeedCorrectionPercent = SpeedEditor.Percent
@@ -566,7 +564,6 @@ public partial class SettingsWindow : Window
 
 		// The welcome window saved these itself; the checkboxes would otherwise write the old state back on close.
 		OverlaySettings saved = OverlaySettingsStore.Load();
-		ShowWatermarkCheck.IsChecked = saved.ShowWatermark;
 		SmoothGpsMotionCheck.IsChecked = saved.SmoothGpsMotion;
 		SpeedEditor.Load(saved.SpeedCorrectionPercent, RecordingCruisingSpeedKmh);
 		// The performance test it can open applies its suggestions straight to settings.json too.

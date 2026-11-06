@@ -646,14 +646,14 @@ public partial class MainWindow
 		if (IsActivePresetDefault) return false;
 
 		// The renderer draws the credit a visible map's terms require, the one of the map behind a track's picture, and the watermark
-		// while it's on in the settings, at a default spot when the layout has no widget for them - something that can't be
+		// at a default spot when the layout has no widget for them - something that can't be
 		// selected or edited. So the last credit widget stays, and the backdrop's own one for as long as that map is shown.
 		return element switch
 		{
 			MapAttributionElement { Id: OverlayPreset.BackdropCreditId } when _fullTelemetry?.Backdrop is not null => false,
 			MapAttributionElement => ActiveElements.Count(e => e is MapAttributionElement { Id: not OverlayPreset.BackdropCreditId }) > 1
 			                         || !MapCreditTimingLocked(MapSourcesForRoute()),
-			WatermarkElement => !_showWatermark || ActiveElements.OfType<WatermarkElement>().Count() > 1,
+			WatermarkElement => ActiveElements.OfType<WatermarkElement>().Count() > 1,
 			_ => true
 		};
 	}
@@ -1178,7 +1178,6 @@ public partial class MainWindow
 				WatermarkStyle.Populate(x);
 				WatermarkTiming.Populate(x, _previewPlayer.IntroShiftSeconds(x));
 				WatermarkShadow.Populate(x);
-				WatermarkOffHint.IsVisible = !_showWatermark;
 				WatermarkIntroHint.IsVisible = _previewPlayer.IntroShiftSeconds(x) > 0;
 				break;
 			}

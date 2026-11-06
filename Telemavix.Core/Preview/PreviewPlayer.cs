@@ -114,9 +114,10 @@ public sealed class PreviewPlayer : IDisposable
 	public event Action<double?>? MapDownloadProgress;
 
 	/// <param name="processedFrames">Optional telemetry already processed with the supplied settings, on the recording's timeline.</param>
+	/// <param name="showWatermark">False for a preview that is not of a render (the speed calibration's): the credit is only a layout's widget otherwise.</param>
 	public async Task OpenAsync(FileSummary summary, int previewWidth, int previewHeight,
 		OverlaySettings? settingsOverride = null, IReadOnlyList<OverlayElement>? layoutOverride = null,
-		IReadOnlyList<DerivedFrame>? processedFrames = null, TimeSpan? initialPosition = null, ExternalTrackPlayback? trackPlayback = null)
+		IReadOnlyList<DerivedFrame>? processedFrames = null, TimeSpan? initialPosition = null, ExternalTrackPlayback? trackPlayback = null, bool showWatermark = true)
 	{
 		var openingTime = Stopwatch.StartNew();
 		Close();
@@ -192,7 +193,7 @@ public sealed class PreviewPlayer : IDisposable
 		try
 		{
 			compositor = await Task.Run(() => new OverlayCompositor(frames => new OverlayRenderer(width, height, frames[0].Raw.AltitudeMeters, layout, frames,
-					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, settings.ShowWatermark && !plain && trackPlayback is null or { IsTrackOnly: true }, trackPlayback?.Track.DeviceName ?? summary.CameraModel,
+					TelemetryProcessor.Summarize(frames).MaxSpeedKmh, showWatermark && !plain && trackPlayback is null or { IsTrackOnly: true }, trackPlayback?.Track.DeviceName ?? summary.CameraModel,
 					summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroFor(routeIntro, outputTimeline))
 				{
 					DrawShadows = settings.PreviewDrawsShadows,
@@ -590,12 +591,6 @@ public sealed class PreviewPlayer : IDisposable
 	{
 		if (_recording is { } recording)
 			PublishStill(recording, recording.Compositor.Change(r => r.RouteIntro = suppress ? RouteIntroSettings.Disabled : RouteIntroFor(recording.RouteIntro, _outputTimeline)));
-	}
-
-	/// <summary>Lets Settings toggle the watermark live without reopening the file.</summary>
-	public void SetShowWatermark(bool show)
-	{
-		if (_recording is { } recording) PublishStill(recording, recording.Compositor.Change(r => r.ShowWatermark = show));
 	}
 
 	/// <summary>

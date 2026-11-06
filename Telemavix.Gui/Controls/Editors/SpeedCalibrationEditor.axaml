@@ -39,7 +39,7 @@
 				<TextBlock Classes="hint"
 				           Text="{x:Static local:Strings.SpeedCalibration_CompareTheSpeedYouRide}" TextWrapping="Wrap" />
 				<StackPanel Spacing="8">
-					<TextBlock Name="ResultText" FontSize="13" TextWrapping="Wrap" />
+					<TextBlock Name="ResultText" Classes="hint" Opacity="1" TextWrapping="Wrap" />
 					<Button Name="ApplyButton" Classes="accent" IsVisible="False" HorizontalAlignment="Right" />
 				</StackPanel>
 			</StackPanel>

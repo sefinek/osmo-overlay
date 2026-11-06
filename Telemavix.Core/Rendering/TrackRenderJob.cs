@@ -77,7 +77,7 @@ public static class TrackRenderJob
 			using TrackBackdrop? backdrop = await TrackBackdrop.BuildAsync(derived, settings, options.Format, ct);
 
 			using var renderer = new OverlayRenderer(width, height, shown[0].Raw.AltitudeMeters, layout, shown, TelemetryProcessor.Summarize(shown).MaxSpeedKmh,
-				settings.ShowWatermark, options.Track.DeviceName, summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroSettings.Disabled)
+				true, options.Track.DeviceName, summary.ContainerRecordingStartUtc, MapSources.From(settings), RouteIntroSettings.Disabled)
 			{
 				OutputDurationSeconds = totalFrames / fps,
 				CutCaptions = outputTimeline.Captions,

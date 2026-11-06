@@ -455,7 +455,7 @@ public static class RenderBenchmark
 		bool hardwareDecoding, IReadOnlyList<OverlayElement> layout, IReadOnlyList<DerivedFrame> route, int num, int den, Live live, CancellationToken ct)
 	{
 		using var renderer = new OverlayRenderer(output.Width, output.Height, route[0].Raw.AltitudeMeters, layout, route,
-			TelemetryProcessor.Summarize(route).MaxSpeedKmh, settings.ShowWatermark, mapSources: MapSources.From(settings))
+			TelemetryProcessor.Summarize(route).MaxSpeedKmh, true, mapSources: MapSources.From(settings))
 		{
 			DrawShadows = !settings.DisableShadows
 		};

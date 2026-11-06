@@ -14,7 +14,6 @@ public sealed record RenderOptions(
 	IReadOnlyList<TelemetryFrame>? TelemetryFrames = null,
 	bool Overwrite = true,
 	IReadOnlyList<OverlayElement>? Layout = null,
-	bool? ShowWatermark = null,
 	bool? SmoothGpsMotion = null,
 	string? CameraModel = null,
 	bool GreenScreen = false,

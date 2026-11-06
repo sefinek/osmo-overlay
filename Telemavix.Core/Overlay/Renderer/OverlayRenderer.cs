@@ -195,11 +195,11 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// <summary>Mutable so the GUI editor can reposition/toggle elements without rebuilding fonts.</summary>
 	public IReadOnlyList<OverlayElement> Layout { get; set; }
 
-	/// <summary>Mutable so the GUI can toggle it live from Settings without recreating the renderer.</summary>
-	public bool ShowWatermark { get; set; }
+	/// <summary>Disabled only for preview modes without a rendered overlay.</summary>
+	public bool ShowWatermark { get; }
 
 	/// <summary>
-	///     Mutable for the same reason as ShowWatermark above: a key typed in the GUI applies without a new renderer. Always
+	///     Mutable so a key typed in the GUI applies without a new renderer. Always
 	///     with this route's bounds, which the default provider's pick depends on (MapSources.Resolve).
 	/// </summary>
 	public MapSources MapSources
@@ -456,11 +456,8 @@ public sealed partial class OverlayRenderer : IDisposable
 		}
 
 		// Over the widgets the watermark is a widget of its own; the card shows it in its own corner.
-		if (isRouteIntroFrame && ShowWatermark && WatermarkOn) DrawWatermark(canvas, sampleTime);
+		if (isRouteIntroFrame && ShowWatermark) DrawWatermark(canvas, sampleTime);
 	}
-
-	/// <summary>A layout without a watermark widget gets it at the default spot; one with them shows it when any is visible.</summary>
-	private bool WatermarkOn => !Layout.Any(e => e is WatermarkElement) || Layout.Any(e => e is WatermarkElement { Visible: true });
 
 	/// <summary>Off: the widgets are drawn one after another straight onto the frame - the reference ParallelWidgets is checked against.</summary>
 	internal bool ParallelWidgets { get; set; } = true;
@@ -485,7 +482,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		if (ShowWatermark && !Layout.Any(e => e is WatermarkElement))
 			drawn = drawn.Append(DefaultWatermark);
 
-		bool parallel = ParallelWidgets && drawn.Any(e => (e.Visible || e is MapAttributionElement) && IsShadowed(e));
+		bool parallel = ParallelWidgets && drawn.Any(e => (e.Visible || e is MapAttributionElement or WatermarkElement) && IsShadowed(e));
 		List<(SKPicture Picture, SKRect Bounds)> widgets = [];
 
 		void Emit(OverlayElement element, ElementState state)
@@ -522,7 +519,7 @@ public sealed partial class OverlayRenderer : IDisposable
 				}
 				else
 				{
-					if (!element.Visible || (element is WatermarkElement && !ShowWatermark)) continue;
+					if (element is WatermarkElement ? !ShowWatermark : !element.Visible) continue;
 					state = ElementAnimation.At(AsShown(element), sampleTime, OutputDurationSeconds);
 				}
 
@@ -563,6 +560,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	/// </summary>
 	public OverlayElement AsShown(OverlayElement element)
 	{
+		if (element is WatermarkElement credit) element = EnforcedCredit(credit);
+
 		// The GPS alert times itself (it's up only while the GPS has something to say, fading in and out on its own): a time or an
 		// animation of the widget's own would only cut a notice short.
 		if (element is GpsAlertElement)
@@ -588,6 +587,18 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		double hideAt = arrived + after;
 		return hideAt < OutputDurationSeconds ? hideAt : null;
+	}
+
+	/// <summary>
+	///     The app's credit can't be turned off: whatever a preset or project file says, it is visible, and the time it is up
+	///     is at least WatermarkElement.MinimumSeconds, inside the film when its length is known.
+	/// </summary>
+	private WatermarkElement EnforcedCredit(WatermarkElement credit)
+	{
+		double appear = credit.AppearAtSeconds ?? 0;
+		if (OutputDurationSeconds > WatermarkElement.MinimumSeconds) appear = Math.Min(appear, OutputDurationSeconds - WatermarkElement.MinimumSeconds);
+		double? disappear = credit.DisappearAtSeconds is { } until ? Math.Max(until, appear + WatermarkElement.MinimumSeconds) : null;
+		return credit with { Visible = true, AppearAtSeconds = appear > 0 ? appear : null, DisappearAtSeconds = disappear };
 	}
 
 	private OverlayElement AsShownFromStart(OverlayElement element)

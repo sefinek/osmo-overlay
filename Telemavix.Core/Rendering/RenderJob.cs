@@ -158,11 +158,10 @@ public static class RenderJob
 			bool hasGpsFix = availability.GpsFix;
 			layout = availability.Apply(layout);
 			bool noAudio = options.NoAudio ?? settings.NoAudio;
-			bool showWatermark = options.ShowWatermark ?? settings.ShowWatermark;
 			var routeIntro = RouteIntroSettings.ForRecording(settings, hasGpsFix, camera, plan.StartsLate);
 			await MapKeyCheck.EnsureAsync(settings.MapApiKeys, ct);
 			using var renderer = new OverlayRenderer(output.Width, output.Height,
-				startAltitude, layout, derived, maxSpeedKmh, showWatermark, cameraModel,
+				startAltitude, layout, derived, maxSpeedKmh, true, cameraModel,
 				first.Source.ContainerCreationTimeUtc, MapSources.From(settings), routeIntro)
 			{
 				OutputDurationSeconds = plan.TotalFrames / fps,
