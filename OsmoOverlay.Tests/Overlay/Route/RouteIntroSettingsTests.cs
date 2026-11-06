@@ -87,4 +87,13 @@ public sealed class RouteIntroSettingsTests
 		Assert.IsFalse(RouteIntroStat.All.Contains(RouteIntroStats.Default));
 		Assert.IsTrue(RouteIntroStat.All.All(s => RouteIntroStat.DefaultLabel(s) == RouteIntroStat.DefaultLabel(s).ToUpperInvariant()));
 	}
+
+	[TestMethod]
+	public void CameraModelLabel_SaysDrone_ForAFlight_UnlessTheUserCaptionedIt()
+	{
+		Assert.AreNotEqual(RouteIntroStat.DefaultLabel(RouteIntroStats.CameraModel), RouteIntroStat.DefaultLabel(RouteIntroStats.CameraModel, drone: true));
+		Assert.AreEqual(RouteIntroStat.DefaultLabel(RouteIntroStats.Distance), RouteIntroStat.DefaultLabel(RouteIntroStats.Distance, drone: true));
+		var own = RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.CameraModel)] = "Sprzet" });
+		Assert.AreEqual("Sprzet", own.For(RouteIntroStats.CameraModel, drone: true));
+	}
 }

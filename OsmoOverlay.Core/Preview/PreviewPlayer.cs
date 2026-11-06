@@ -286,6 +286,9 @@ public sealed class PreviewPlayer : IDisposable
 		_recording?.AudioOutput?.SetGain(_audioGain);
 	}
 
+	/// <summary>Peaks (0-1, left and right) of what is coming out of the speakers now; zero when paused or without a device.</summary>
+	public (float Left, float Right) AudioLevel => _recording?.AudioOutput?.Level ?? default;
+
 	/// <summary>The sound's level over the recording (VolumeLine); the sound already queued for the device plays as it was.</summary>
 	public void SetVolumeLine(IReadOnlyList<VolumePoint> volume)
 	{

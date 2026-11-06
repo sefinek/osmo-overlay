@@ -60,6 +60,12 @@
   <data name="Audio_Mute" xml:space="preserve">
     <value>Wycisz (M)</value>
   </data>
+  <data name="Audio_ShowLevelPanel" xml:space="preserve">
+    <value>Pokaż poziom dźwięku zamiast panelu nakładki</value>
+  </data>
+  <data name="Audio_Title" xml:space="preserve">
+    <value>Dźwięk</value>
+  </data>
   <data name="Assets_LoadFailed" xml:space="preserve">
     <value>Nie udało się wczytać grafiki interfejsu: {0}</value>
   </data>
@@ -2840,7 +2846,7 @@ Zwolnij miejsce lub wybierz folder na innym dysku. Jeśli zabraknie miejsca, ren
   <data name="Summary_NoGpsMessage" xml:space="preserve">
     <value>To nagranie nie zawiera pozycji GPS. Widżety korzystające z tych danych, m.in. prędkościomierz, mapa, kompas i statystyki trasy, są niedostępne. Nadal możesz używać pozostałych widżetów obsługiwanych przez kamerę.
 
-W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
+W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie zawsze działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
   </data>
   <data name="Summary_NoGpsTitle" xml:space="preserve">
     <value>Brak danych GPS</value>
@@ -3584,13 +3590,13 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Wesprzyj na Ko-fi</value>
   </data>
   <data name="Welcome_TestedOnTheAction6" xml:space="preserve">
-    <value>Testowane na Action 6 i Action 5 Pro; inne modele (np. Action 4) też powinny działać. Wybierz pliki .MP4.</value>
+    <value>Testowane na Action 6 i Action 5 Pro; inne modele (np. Action 4) też powinny działać. Zwykle wystarczy sam plik .MP4.</value>
   </data>
   <data name="Welcome_ThisIsWhatWillBe" xml:space="preserve">
     <value>Ustawienia do zapisania:</value>
   </data>
   <data name="Welcome_UseTheOriginalFilesFrom" xml:space="preserve">
-    <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo nie zawierają telemetrii. W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
+    <value>Wybieraj oryginalne pliki z karty pamięci. Nagrania wyeksportowane z DJI Mimo nie zawierają telemetrii. W przypadku kamer DJI nagrywaj z pilotem DJI GPS Bluetooth Remote Controller lub korzystaj z GPS-u telefonu przez aplikację DJI Mimo. To drugie rozwiązanie bywa mniej wygodne i wydaje się nie zawsze działać prawidłowo. Przed rozpoczęciem nagrywania poczekaj, aż odbiornik GPS ustali pozycję.</value>
   </data>
   <data name="Welcome_Version" xml:space="preserve">
     <value>Wersja {0}</value>
@@ -3614,7 +3620,7 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
     <value>Obraz</value>
   </data>
   <data name="Zoom_Fit" xml:space="preserve">
-    <value>Dopasuj</value>
+    <value>Przybliżenie</value>
   </data>
   <data name="Settings_RouteIntroStartFinish" xml:space="preserve">
     <value>Zaznacz start i metę</value>
@@ -4594,13 +4600,13 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Drony DJI</value>
   </data>
   <data name="Welcome_DjiDronesTested" xml:space="preserve">
-    <value>Dzienniki lotu sprawdzone na Mavic 2, Mavic Air 2, Mavic 4 Pro, Flip i Avata 360. Plik MP4 nie zawiera telemetrii, więc dodaj dziennik lotu przyciskiem „Trasa GPS”. Inne modele nie były testowane.</value>
+    <value>Dzienniki lotu sprawdzone na Mavic Air 2, Mavic 4 Pro, Flip i Avata 360. Plik MP4 nie zawiera telemetrii, więc dodaj dziennik lotu przyciskiem „Trasa GPS”. Inne modele nie były testowane.</value>
   </data>
   <data name="Welcome_GoPro" xml:space="preserve">
     <value>GoPro</value>
   </data>
   <data name="Welcome_GoProTested" xml:space="preserve">
-    <value>Sprawdzone na HERO12 Black (pliki .MP4 i .LRV): akcelerometr, wektor grawitacji i ekspozycja. HERO12 nie ma GPS, więc widżety GPS wymagają zewnętrznej trasy FIT lub GPX. Inne modele nie były testowane.</value>
+    <value>Sprawdzone na HERO12 Black (pliki .MP4 i .LRV). HERO12 nie ma GPS, więc widżety GPS wymagają zewnętrznej trasy FIT lub GPX. Inne modele nie były testowane.</value>
   </data>
   <data name="Main_AddToQueue" xml:space="preserve">
     <value>Dodaj do kolejki</value>
@@ -5338,9 +5344,6 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="TrackOnly_Opened" xml:space="preserve">
     <value>Trasa {0}: podgląd widżetów bez nagrania wideo. Renderowanie zapisuje film z mapą i nakładką.</value>
   </data>
-  <data name="TrackRender_SaveTitle" xml:space="preserve">
-    <value>Zapisz film z trasy</value>
-  </data>
   <data name="TrackOnly_CantSave" xml:space="preserve">
     <value>Podglądu samej trasy nie można zapisać jako projektu.</value>
   </data>
@@ -5451,6 +5454,9 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="ExportNotice_UsageGuideLink" xml:space="preserve">
     <value>Zasady użycia i publikacji (po angielsku)</value>
+  </data>
+  <data name="Music_NeedsOwnPreset" xml:space="preserve">
+    <value>Do wbudowanego presetu nie można dodać muzyki. Najpierw go zduplikuj.</value>
   </data>
   <data name="Editor_SingleMapCredit" xml:space="preserve">
     <value>Już na nakładce: jeden podpis mapy obejmuje wszystkie widżety Mapa, więc drugi nigdy by się nie pojawił.</value>

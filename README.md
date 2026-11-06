@@ -113,7 +113,7 @@ Use the original files from the memory card. Footage exported from DJI Mimo has 
 | Other DJI Osmo Action (e.g. Action 4) | Untested, should work   | The same                                                                                    | The same                                                           |
 | GoPro HERO12 Black                    | Tested (`.MP4`, `.LRV`) | Tilt, G-force, ISO, shutter speed, white balance, audio level, wind noise, image brightness | None - the camera has no GPS, use an external track                |
 | Other GoPro with GPS                  | Untested                | The same, plus GPS (GPS5/GPS9, covered by synthetic tests only)                             | Built in                                                           |
-| DJI drones (Mavic 2, Mavic Air 2, Mavic 4 Pro, Flip, Avata 360) | Tested (flight logs)    | Nothing - no telemetry in the MP4, see the flight log below                                 | The flight log                                                     |
+| DJI drones (Mavic Air 2, Mavic 4 Pro, Flip, Avata 360) | Tested (flight logs)    | Nothing - no telemetry in the MP4, see the flight log below                                 | The flight log                                                     |
 | Insta360 X4                           | Experimental (`.insv`)  | Tilt, G-force                                                                               | Not read yet, use an external track                                |
 
 - Without GPS data the widgets that need it are disabled. Before recording with a DJI remote, wait for a satellite fix.
@@ -134,7 +134,7 @@ You can always add a log manually using **GPS track** in the Source card.
 Logs from newer firmware (version 13 and up) are encrypted.
 To read them, enter a DJI API key (the SDK key for an Open API app in your DJI developer account at [developer.dji.com](https://developer.dji.com)) in *Settings*, or set `OSMOOVERLAY_DJI_API_KEY`.
 Only key blocks from the log's header are sent to DJI, without GPS positions, and the downloaded keys are kept on your computer.
-Tested with Mavic 2, Mavic Air 2, Mavic 4 Pro, Flip and Avata 360 logs; other aircraft are unverified.
+Tested with Mavic Air 2, Mavic 4 Pro, Flip and Avata 360 logs; other aircraft are unverified.
 
 Height is above the take-off point, not sea level, so the Elevation widget is off in the *DJI drones* and *FPV drones* layouts.
 Flight mode names are confirmed only for a few modes, and the remote sticks assume mode 2.

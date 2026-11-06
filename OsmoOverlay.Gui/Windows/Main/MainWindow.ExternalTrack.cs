@@ -280,6 +280,7 @@ public partial class MainWindow
 			_trackOnly = true;
 			_trackOnlyPath = path;
 			_trackOnlyFormat = format;
+			OutputPathBox.Text = RenderOptions.DefaultOutputPath([path], OverlaySettingsStore.Load().DefaultOutputFolder);
 			_cleanFingerprint = null;
 			_availability = OverlayAvailability.Of(summary.TelemetryFrames!, true, null);
 			_mapSourcesForRoute = null;

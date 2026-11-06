@@ -5,17 +5,13 @@ using OsmoOverlay.Core.Overlay;
 
 namespace OsmoOverlay.Gui;
 
-/// <summary>The export rights notice (ExportNotice): asked once before the first render or queue run of any kind, opened on request after that.</summary>
+/// <summary>The export rights notice (ExportNotice): asked before every render or queue run of any kind, and opened on request.</summary>
 public partial class MainWindow
 {
-	/// <summary>True when the render may go on: the notice was confirmed now or earlier. The one gate every way of starting an export passes.</summary>
+	/// <summary>True when the render may go on: the notice was confirmed now. The one gate every way of starting an export passes.</summary>
 	private async Task<bool> ConfirmExportRightsAsync(Func<IReadOnlyList<ExportMap>> maps)
 	{
-		if (OverlaySettingsStore.Load().ExportNoticeAccepted) return true;
-		if (!await ExportNotice.AskAsync(this, maps())) return false;
-
-		OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ExportNoticeAccepted = true });
-		return true;
+		return await ExportNotice.AskAsync(this, maps());
 	}
 
 	private IReadOnlyList<ExportMap> CurrentExportMaps()
@@ -46,7 +42,6 @@ public partial class MainWindow
 
 	private async void OnExportRightsClick(object? sender, RoutedEventArgs e)
 	{
-		if (await ExportNotice.ShowAsync(this, CurrentExportMaps()))
-			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ExportNoticeAccepted = true });
+		await ExportNotice.ShowAsync(this, CurrentExportMaps());
 	}
 }

@@ -15,14 +15,23 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 	private static readonly Lock InitGate = new();
 	private static bool _sdlAudioReady;
 
+	private const int MaxLevelSlices = 250;
+
 	private readonly Lock _lock = new();
 	private readonly SDL_AudioStream* _stream;
 	private readonly int _bytesPerSecond;
+	private readonly int _sampleRate;
+	private readonly int _channels;
+	private readonly Queue<LevelSlice> _levels = new();
+	private long _pushedFrames;
+	private float _gain = 1;
 	private bool _disposed;
 
 	private AudioOutput(SDL_AudioStream* stream, int sampleRate, int channels)
 	{
 		_stream = stream;
+		_sampleRate = sampleRate;
+		_channels = Math.Max(1, channels);
 		_bytesPerSecond = sampleRate * channels * sizeof(float);
 
 		SDL_AudioSpec deviceSpec;
@@ -66,6 +75,30 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 		return new AudioOutput(stream, sampleRate, channels);
 	}
 
+	/// <summary>
+	///     What is coming out of the speakers right now, per channel (left, right; mono gives both the same), as peaks 0-1 after
+	///     the gain. Taken from the peaks of what was pushed, looked up at the point the device has reached (pushed minus what's
+	///     still queued and the device's buffer). Zero while paused or stopped.
+	/// </summary>
+	public (float Left, float Right) Level
+	{
+		get
+		{
+			lock (_lock)
+			{
+				if (_disposed) return default;
+
+				long played = _pushedFrames - SDL3.SDL_GetAudioStreamQueued(_stream) / (_channels * sizeof(float))
+				              - (long)(DeviceLatencySeconds * _sampleRate);
+				while (_levels.Count > 0 && _levels.Peek().EndFrame <= played) _levels.Dequeue();
+				if (_levels.Count == 0) return default;
+
+				LevelSlice slice = _levels.Peek();
+				return (slice.Left * _gain, slice.Right * _gain);
+			}
+		}
+	}
+
 	public void Push(ReadOnlySpan<float> samples)
 	{
 		if (samples.IsEmpty) return;
@@ -74,17 +107,53 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 		{
 			if (_disposed) return;
 
+			RecordLevels(samples);
 			fixed (float* data = samples) SDL3.SDL_PutAudioStreamData(_stream, (IntPtr)data, samples.Length * sizeof(float));
 		}
 	}
+
+	private void RecordLevels(ReadOnlySpan<float> samples)
+	{
+		int frames = samples.Length / _channels;
+		int sliceFrames = Math.Max(1, _sampleRate / 50);
+		for (int start = 0; start < frames; start += sliceFrames)
+		{
+			int end = Math.Min(frames, start + sliceFrames);
+			float left = 0, right = 0;
+			for (int i = start; i < end; i++)
+			{
+				float l = Math.Abs(samples[i * _channels]);
+				float r = _channels > 1 ? Math.Abs(samples[i * _channels + 1]) : l;
+				if (l > left) left = l;
+				if (r > right) right = r;
+			}
+
+			_levels.Enqueue(new LevelSlice(_pushedFrames + end, left, right));
+		}
+
+		// Nobody may be reading Level (it is only dequeued there) - keep a few seconds, the queue never holds more than the device does.
+		while (_levels.Count > MaxLevelSlices) _levels.Dequeue();
+
+		_pushedFrames += frames;
+	}
+
+	private void ResetLevels()
+	{
+		_levels.Clear();
+		_pushedFrames = 0;
+	}
+
+	private readonly record struct LevelSlice(long EndFrame, float Left, float Right);
 
 	/// <summary>0 = silent, 1 = the recording's own level.</summary>
 	public void SetGain(float gain)
 	{
 		lock (_lock)
 		{
-			if (!_disposed)
-				SDL3.SDL_SetAudioStreamGain(_stream, gain);
+			if (_disposed) return;
+
+			_gain = gain;
+			SDL3.SDL_SetAudioStreamGain(_stream, gain);
 		}
 	}
 
@@ -110,8 +179,10 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 	{
 		lock (_lock)
 		{
-			if (!_disposed)
-				SDL3.SDL_ClearAudioStream(_stream);
+			if (_disposed) return;
+
+			SDL3.SDL_ClearAudioStream(_stream);
+			ResetLevels();
 		}
 	}
 
@@ -123,6 +194,7 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 
 			SDL3.SDL_PauseAudioStreamDevice(_stream);
 			SDL3.SDL_ClearAudioStream(_stream);
+			ResetLevels();
 		}
 	}
 

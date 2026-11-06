@@ -706,7 +706,7 @@ public sealed partial class OverlayRenderer
 			RouteIntroStats.CameraModel => _cameraModel ?? "--",
 			_ => "--"
 		};
-		return (RouteIntro.LabelOf(stat), value);
+		return (RouteIntro.LabelOf(stat, stat == RouteIntroStats.CameraModel && KeyMoments.IsFlight(_allFrames)), value);
 
 		static string Joined((string Value, string Unit) formatted)
 		{

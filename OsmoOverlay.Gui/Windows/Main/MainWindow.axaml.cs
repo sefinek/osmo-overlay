@@ -703,6 +703,7 @@ public partial class MainWindow : Window
 		bool busy = phase is UiPhase.LoadingSummary or UiPhase.Rendering;
 		// Editing the input list mid-run would reset the phase under a running summary/render.
 		InputPanel.IsEnabled = !busy;
+		InputPanel.IsVisible = ExternalTrackPanel.IsVisible = !_trackOnly;
 		SaveProjectButton.IsEnabled = SaveProjectAsButton.IsEnabled = !_trackOnly;
 		if (busy)
 			ActionButton.IsEnabled = QueueAddButton.IsEnabled = false;

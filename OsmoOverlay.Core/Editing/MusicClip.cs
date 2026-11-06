@@ -40,8 +40,9 @@ public static class MusicTrack
 	public const double DuckRampSeconds = 0.4;
 
 	/// <summary>
-	///     Sorted, valid clips inside the output: a start not before 0, a length that fits the file (unless it loops) and the
-	///     output, level and ducking in range, the two fades not longer than the clip together. Clips may overlap - they mix.
+	///     Sorted, valid clips starting inside the output: a start not before 0, a length that fits the file (unless it loops),
+	///     level and ducking in range, the two fades not longer than the clip together. A clip may run past the output's end (as in a
+	///     video editor): that part is never played, and stays there for when the clip is moved back. Clips may overlap - they mix.
 	///     Without `sort` the order is kept (a clip being edited keeps its index).
 	/// </summary>
 	public static List<MusicClip> Normalize(IEnumerable<MusicClip> clips, double outputSeconds, bool sort = true)
@@ -58,7 +59,7 @@ public static class MusicTrack
 			double source = Math.Max(0, clip.SourceSeconds);
 			double start = Math.Max(0, clip.StartSeconds);
 			double inPoint = Math.Clamp(clip.InSeconds, 0, source > 0 ? Math.Max(0, source - MinLengthSeconds) : double.MaxValue);
-			double length = Math.Min(clip.LengthSeconds, outputSeconds - start);
+			double length = outputSeconds - start >= MinLengthSeconds ? clip.LengthSeconds : 0;
 			bool loop = clip.Loop && source > 0;
 			if (!loop && source > 0) length = Math.Min(length, source - inPoint);
 			if (length < MinLengthSeconds) continue;

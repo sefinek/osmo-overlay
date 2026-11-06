@@ -8,7 +8,7 @@ namespace OsmoOverlay.Drones.Dji;
 ///     A DJI flight log (DJI Fly's or GO 4's FlightRecord .txt): a 100-byte prefix, the details of the flight, and the records
 ///     the aircraft and the app wrote about 10 times a second. The details are readable as they are; from version 13 the records
 ///     are AES-encrypted and need the keychains DJI issues for the log (DjiKeychainClient). Layout after the open reference parser
-///     dji-log-parser; the fields used here were checked against a real Mavic 2 log (v14) and a Mavic Air 2 log with a Flight Reader CSV of it.
+///     dji-log-parser; the fields used here were checked against real Mavic Air 2 logs (v14), one with a Flight Reader CSV of it.
 /// </summary>
 /// <remarks>
 ///     Offsets of the records used (checked as said above):

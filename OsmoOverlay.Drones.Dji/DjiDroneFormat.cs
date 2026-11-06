@@ -10,7 +10,7 @@ using OsmoOverlay.Core.Telemetry;
 namespace OsmoOverlay.Drones.Dji;
 
 /// <summary>
-///     The camera of a DJI drone (Mavic 2 and the like): its MP4 holds the picture and nothing else - no telemetry stream, no
+///     The camera of a DJI drone (Mavic Air 2 and the like): its MP4 holds the picture and nothing else - no telemetry stream, no
 ///     DJI tag - so the file is told by its name (DJI_0001.MP4) and the telemetry is the flight log (DjiFlightLogFormat), added as a
 ///     track. Until it is, the recording has frames with no GPS fix and the overlay shows only what needs none. A file of
 ///     the DJI naming that carries a djmd stream belongs to the Osmo Action format, registered before this one.

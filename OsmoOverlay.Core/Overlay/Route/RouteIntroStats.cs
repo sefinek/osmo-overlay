@@ -44,8 +44,8 @@ public static class RouteIntroStat
 		RouteIntroStats.CameraModel
 	];
 
-	/// <summary>The caption on the card when the user gave none, in the interface's language - drawn as is, so in capitals.</summary>
-	public static string DefaultLabel(RouteIntroStats stat)
+	/// <summary>The caption on the card when the user gave none, in the interface's language - drawn as is, so in capitals. The camera model's is the drone's for a flight.</summary>
+	public static string DefaultLabel(RouteIntroStats stat, bool drone = false)
 	{
 		return (stat switch
 		{
@@ -61,7 +61,7 @@ public static class RouteIntroStat
 			RouteIntroStats.LowestPoint => CoreStrings.Overlay_LowestPoint,
 			RouteIntroStats.MaxLean => CoreStrings.Overlay_MaxLean,
 			RouteIntroStats.MaxGForce => CoreStrings.Overlay_MaxGForce,
-			RouteIntroStats.CameraModel => CoreStrings.Overlay_Camera,
+			RouteIntroStats.CameraModel => drone ? CoreStrings.Overlay_Drone : CoreStrings.Overlay_Camera,
 			_ => stat.ToString()
 		}).ToUpperInvariant();
 	}
@@ -83,9 +83,9 @@ public sealed record RouteIntroLabels(IReadOnlyDictionary<string, string> Texts)
 				.ToDictionary(t => t.Key, t => t.Value.Trim()));
 	}
 
-	public string For(RouteIntroStats stat)
+	public string For(RouteIntroStats stat, bool drone = false)
 	{
-		return Texts.TryGetValue(stat.ToString(), out string? text) ? text : RouteIntroStat.DefaultLabel(stat);
+		return Texts.TryGetValue(stat.ToString(), out string? text) ? text : RouteIntroStat.DefaultLabel(stat, drone);
 	}
 
 	/// <summary>For OverlaySettings: null when there's nothing of the user's.</summary>

@@ -24,7 +24,7 @@ public sealed class SettingsPresetTests
 		nameof(OverlaySettings.ReopenLastProject), nameof(OverlaySettings.LastProject), nameof(OverlaySettings.AutoSaveMinutes),
 		nameof(OverlaySettings.CacheCleanupDays), nameof(OverlaySettings.LoopByDefault), nameof(OverlaySettings.PreviewShadows),
 		nameof(OverlaySettings.ConfirmCloseWhileRendering), nameof(OverlaySettings.DisableShadows), nameof(OverlaySettings.DebugMode),
-		nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.DjiApiNoticeShown), nameof(OverlaySettings.ExportNoticeAccepted), nameof(OverlaySettings.WorkingAnimation), nameof(OverlaySettings.TrackMap),
+		nameof(OverlaySettings.DjiApiKey), nameof(OverlaySettings.DjiApiNoticeShown), nameof(OverlaySettings.WorkingAnimation), nameof(OverlaySettings.TrackMap),
 		nameof(OverlaySettings.TrackFormat)
 	];
 

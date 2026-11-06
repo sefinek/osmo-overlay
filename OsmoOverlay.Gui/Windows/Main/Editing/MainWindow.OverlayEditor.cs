@@ -172,6 +172,8 @@ public partial class MainWindow
 		DeletePresetButton.IsEnabled = editable;
 		ResetPresetButton.IsEnabled = editable;
 		DefaultPresetLockedHint.IsVisible = !editable;
+		MusicListItem.IsEnabled = editable;
+		ToolTip.SetTip(MusicListItem, editable ? Strings.Music_PaletteTip : Strings.Music_NeedsOwnPreset);
 		UpdateWidgetSettingsLock();
 
 		return;

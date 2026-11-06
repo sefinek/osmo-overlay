@@ -156,7 +156,7 @@ public partial class MainWindow
 	/// <summary>The palette's "Music" dropped on the timeline: the track shows up and asks for the file, to start where it was dropped.</summary>
 	private void OnMusicDrop(object? sender, DragEventArgs e)
 	{
-		if (_summary is null || e.DataTransfer.TryGetValue(MusicDragFormat) is null) return;
+		if (_summary is null || IsActivePresetDefault || e.DataTransfer.TryGetValue(MusicDragFormat) is null) return;
 
 		_musicTrackShown = true;
 		ShowMusic();
@@ -207,7 +207,7 @@ public partial class MainWindow
 
 	private async Task AddMusicAsync(double? outputSeconds)
 	{
-		if (_summary is null) return;
+		if (_summary is null || IsActivePresetDefault) return;
 
 		TopLevel topLevel = GetTopLevel(this) ?? this;
 		IReadOnlyList<IStorageFile> files = await topLevel.StorageProvider.OpenRememberedAsync("music", new FilePickerOpenOptions
@@ -246,8 +246,7 @@ public partial class MainWindow
 		double output = OutputSeconds;
 		double start = outputSeconds ?? _outputTimeline?.NearestOutputSeconds(PreviewTimeline.Value) ?? PreviewTimeline.Value;
 		start = Math.Clamp(start, 0, Math.Max(0, output - 1));
-		double length = Math.Min(sourceSeconds, output - start);
-		var clip = new MusicClip(path, start, 0, length, sourceSeconds);
+		var clip = new MusicClip(path, start, 0, sourceSeconds, sourceSeconds);
 		SetMusicSorted([.. _music, clip], clip);
 		CommitHistory("music");
 		SealHistory();
@@ -258,7 +257,7 @@ public partial class MainWindow
 	private void ShowMusicMenu(int? index, double outputSeconds)
 	{
 		var items = new List<MenuItem>();
-		var add = new MenuItem { Header = Strings.Music_Add };
+		var add = new MenuItem { Header = Strings.Music_Add, IsEnabled = !IsActivePresetDefault };
 		add.Click += (_, _) => _ = AddMusicAsync(outputSeconds);
 		items.Add(add);
 
@@ -268,6 +267,7 @@ public partial class MainWindow
 			edit.Click += (_, _) => ShowMusicEditor(i);
 			var duplicate = new MenuItem { Header = Strings.Music_Duplicate };
 			duplicate.Click += (_, _) => DuplicateMusic(i);
+			duplicate.IsEnabled = !IsActivePresetDefault;
 			var remove = new MenuItem { Header = Strings.Music_Remove };
 			remove.Click += (_, _) => RemoveMusic(i);
 			items.AddRange([edit, duplicate, remove]);
@@ -295,10 +295,10 @@ public partial class MainWindow
 		RemoveMusic(index);
 	}
 
-	/// <summary>At the playhead, cut down to what fits before the output's end.</summary>
+	/// <summary>At the playhead, whole (what runs past the output's end is not played).</summary>
 	private void PasteMusic()
 	{
-		if (_copiedMusic is not { } source || _summary is null) return;
+		if (_copiedMusic is not { } source || _summary is null || IsActivePresetDefault) return;
 
 		double output = OutputSeconds;
 		double playhead = _outputTimeline?.NearestOutputSeconds(PreviewTimeline.Value) ?? PreviewTimeline.Value;
@@ -337,7 +337,7 @@ public partial class MainWindow
 	/// <summary>Right after the original when there is room for it, else on top of it.</summary>
 	private void DuplicateMusic(int index)
 	{
-		if (index < 0 || index >= _music.Count) return;
+		if (index < 0 || index >= _music.Count || IsActivePresetDefault) return;
 
 		MusicClip original = _music[index];
 		double start = original.EndSeconds + original.LengthSeconds <= OutputSeconds + 1e-6 ? original.EndSeconds : original.StartSeconds;

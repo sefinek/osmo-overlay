@@ -5,8 +5,8 @@ namespace OsmoOverlay.Gui;
 
 /// <summary>
 ///     The notice on what may be done with an export (ExportRightsWindow): the program's licence, the rights to the recording,
-///     music and maps, and the terms of the maps this export really draws. The first one before any render is asked once
-///     (OverlaySettings.ExportNoticeAccepted); afterwards it is only opened on request, for the current export.
+///     music and maps, and the terms of the maps this export really draws. Asked before every render or queue run of any kind;
+///     the button in the Action card opens it on request, for the current export.
 /// </summary>
 internal static class ExportNotice
 {

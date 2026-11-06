@@ -1,4 +1,3 @@
-using Avalonia.Platform.Storage;
 using OsmoOverlay.Core;
 using OsmoOverlay.Core.Logging;
 using OsmoOverlay.Core.Overlay;
@@ -12,7 +11,7 @@ public partial class MainWindow
 {
 	private async Task RunTrackRenderAsync()
 	{
-		if (_fullTelemetry is not { } playback || _trackOnlyPath is not { } source) return;
+		if (_fullTelemetry is not { } playback || _trackOnlyPath is null) return;
 
 		if (QueueBusy)
 		{
@@ -22,15 +21,13 @@ public partial class MainWindow
 
 		if (!await ConfirmExportRightsAsync(CurrentExportMaps)) return;
 
-		IStorageFile? file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		string outputPath = OutputPathBox.Text?.Trim() ?? "";
+		if (outputPath.Length == 0)
 		{
-			Title = Strings.TrackRender_SaveTitle,
-			SuggestedFileName = Path.GetFileNameWithoutExtension(source) + "_overlay.mp4",
-			SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Path.GetDirectoryName(source) ?? "."),
-			DefaultExtension = "mp4",
-			FileTypeChoices = [new FilePickerFileType(Strings.Common_Mp4Video) { Patterns = ["*.mp4"] }]
-		});
-		if (file?.TryGetLocalPath() is not { } outputPath) return;
+			AppendLog(Strings.Render_EnterOutputPath);
+			return;
+		}
+
 		if (!await ConfirmComputerNotBusyAsync(_detectedEncoder)) return;
 
 		_cts = new CancellationTokenSource();

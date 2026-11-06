@@ -594,7 +594,7 @@ public sealed class MusicTimeline : Control
 				(double Seconds, double Distance)? endTarget = NearestTarget(dragged + clip.LengthSeconds);
 				if (startTarget is { } s && (endTarget is not { } e || s.Distance <= e.Distance)) newStart = s.Seconds;
 				else if (endTarget is { } e2) newStart = e2.Seconds - clip.LengthSeconds;
-				newStart = Math.Clamp(newStart, 0, Math.Max(0, OutputDurationSeconds - clip.LengthSeconds));
+				newStart = Math.Clamp(newStart, 0, Math.Max(0, OutputDurationSeconds - MinClipSeconds));
 				return clip with { StartSeconds = newStart };
 			}
 			case Zone.Start:

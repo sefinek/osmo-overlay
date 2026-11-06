@@ -14,13 +14,13 @@ public sealed class MusicTrackTests
 	}
 
 	[TestMethod]
-	public void Normalize_CutsTheClipToTheFileAndTheOutput()
+	public void Normalize_CutsTheClipToTheFile_ButKeepsWhatRunsPastTheOutput()
 	{
 		List<MusicClip> clips = MusicTrack.Normalize([Clip(50), Clip(0, 40, 30, 10)], Output);
 
 		Assert.AreEqual(2, clips.Count);
 		Assert.AreEqual(20, clips[0].LengthSeconds, 1e-9);
-		Assert.AreEqual(10, clips[1].LengthSeconds, 1e-9);
+		Assert.AreEqual(20, clips[1].LengthSeconds, 1e-9);
 	}
 
 	[TestMethod]

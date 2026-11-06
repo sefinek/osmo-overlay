@@ -533,6 +533,9 @@
   <data name="Overlay_Camera" xml:space="preserve">
     <value>Kamera</value>
   </data>
+  <data name="Overlay_Drone" xml:space="preserve">
+    <value>Dron</value>
+  </data>
   <data name="Overlay_Speed" xml:space="preserve">
     <value>Prędkość</value>
   </data>

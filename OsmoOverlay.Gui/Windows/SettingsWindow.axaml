@@ -822,7 +822,7 @@
 									<TextBlock Text="{x:Static local:Strings.Settings_FullScreenPreview}" Classes="rowTitle" />
 									<TextBlock Classes="rowHint" Text="{x:Static local:Strings.Settings_TheMonitorF11OpensThe}" />
 								</StackPanel>
-								<ComboBox Grid.Column="1" Name="PreviewMonitorCombo" />
+								<ComboBox Grid.Column="1" Name="PreviewMonitorCombo" MinWidth="400" />
 							</Grid>
 							<Border Classes="divider" />
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto">
@@ -835,7 +835,7 @@
 							</Grid>
 							<Grid Classes="settingRow" ColumnDefinitions="*,Auto" Margin="16,0,16,13">
 								<TextBlock Text="{x:Static local:Strings.Settings_Monitor}" Classes="rowHint" VerticalAlignment="Center" Margin="0" />
-								<ComboBox Grid.Column="1" Name="SecondScreenMonitorCombo" />
+								<ComboBox Grid.Column="1" Name="SecondScreenMonitorCombo" MinWidth="400" />
 							</Grid>
 						</StackPanel>
 					</Border>

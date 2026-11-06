@@ -69,9 +69,9 @@ public sealed record RouteIntroSettings(
 	}
 
 	/// <summary>The stat's caption on the card: the user's own, else its default.</summary>
-	public string LabelOf(RouteIntroStats stat)
+	public string LabelOf(RouteIntroStats stat, bool drone = false)
 	{
-		return (Labels ?? RouteIntroLabels.None).For(stat);
+		return (Labels ?? RouteIntroLabels.None).For(stat, drone);
 	}
 
 	public static RouteIntroSettings From(OverlaySettings settings)
