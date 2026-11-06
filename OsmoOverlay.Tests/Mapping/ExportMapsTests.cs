@@ -7,6 +7,40 @@ namespace OsmoOverlay.Tests.Mapping;
 public sealed class ExportMapsTests
 {
 	[TestMethod]
+	[DataRow(MapUse.Allowed, MapUse.Allowed, MapUse.Allowed)]
+	[DataRow(MapUse.Allowed, MapUse.NotStated, MapUse.NotStated)]
+	[DataRow(MapUse.NotStated, MapUse.Allowed, MapUse.NotStated)]
+	[DataRow(MapUse.PaidPlanOnly, MapUse.NotAllowed, MapUse.NotAllowed)]
+	[DataRow(MapUse.NotAllowed, MapUse.PaidPlanOnly, MapUse.NotAllowed)]
+	[DataRow(MapUse.PaidPlanOnly, MapUse.NotStated, MapUse.NotStated)]
+	[DataRow(MapUse.NotStated, MapUse.NotAllowed, MapUse.NotAllowed)]
+	[DataRow(MapUse.PaidPlanOnly, MapUse.Conditional, MapUse.PaidPlanOnly)]
+	[DataRow(MapUse.Conditional, MapUse.PaidPlanOnly, MapUse.PaidPlanOnly)]
+	[DataRow(MapUse.Allowed, MapUse.Conditional, MapUse.Conditional)]
+	public void CommercialVideo_RequiresBothPermissions(MapUse commercial, MapUse video, MapUse expected)
+	{
+		var terms = new MapTerms(commercial, video, MapCreditRule.WhileMapVisible, "https://example.com/terms");
+
+		Assert.AreEqual(expected, terms.CommercialVideo);
+	}
+
+	[TestMethod]
+	[DataRow("opentopomap")]
+	[DataRow("thunderforest-cycle")]
+	[DataRow("thunderforest-outdoors")]
+	[DataRow("thunderforest-landscape")]
+	[DataRow("thunderforest-atlas")]
+	public void ShareAlikeMaps_ReportTheirVideoConditions(string providerId)
+	{
+		MapProvider provider = MapProviders.Get(providerId);
+
+		Assert.AreEqual(providerId, provider.Id);
+		Assert.IsTrue(provider.Terms.ShareAlike);
+		Assert.AreEqual(MapUse.Conditional, provider.Terms.Video);
+		Assert.AreEqual(MapUse.Allowed, provider.Terms.Commercial);
+	}
+
+	[TestMethod]
 	public void NoVisibleMap_NoMaps()
 	{
 		OverlayElement[] layout = [new MapWidgetElement { X = 0, Y = 0, Visible = false }];

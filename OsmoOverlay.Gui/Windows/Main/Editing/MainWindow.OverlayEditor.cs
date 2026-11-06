@@ -181,9 +181,9 @@ public partial class MainWindow
 		// canvas as a widget that would just render "--"/0/a placeholder.
 		void SetWidgetAvailability(Border listItem, OverlayElementType type, bool presetEditable)
 		{
-			bool dataOk = IsTypeSupported(type);
-			listItem.IsEnabled = presetEditable && dataOk;
-			ToolTip.SetTip(listItem, dataOk ? null : UnsupportedReason(type));
+			bool dataOk = IsTypeSupported(type), canAdd = CanAddWidget(type);
+			listItem.IsEnabled = presetEditable && dataOk && canAdd;
+			ToolTip.SetTip(listItem, !dataOk ? UnsupportedReason(type) : canAdd ? null : Strings.Editor_SingleMapCredit);
 		}
 	}
 
@@ -227,6 +227,12 @@ public partial class MainWindow
 	// own clock is.
 	private static string TimeFallbackTip => Strings.Editor_TimeFallbackTip;
 
+	/// <summary>One credit covers every Map widget and only the first credit widget is ever drawn for them, so a second would sit on the overlay doing nothing.</summary>
+	private bool CanAddWidget(OverlayElementType type)
+	{
+		return type != OverlayElementType.MapAttribution || !ActiveElements.Any(e => e is MapAttributionElement { Id: not OverlayPreset.BackdropCreditId });
+	}
+
 	private bool IsTypeSupported(OverlayElementType type)
 	{
 		return OverlayDataRequirements.IsSupported(type, _availability);
@@ -237,13 +243,17 @@ public partial class MainWindow
 		return type is OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText && _availability is { GpsTimestamp: false, ContainerTime: true };
 	}
 
-	private static string UnsupportedReason(OverlayElementType type)
+	/// <summary>The loaded flight log has some drone data, so a missing drone widget is the log's gap, not a log left out.</summary>
+	private bool HasDroneLogData => _availability is { HeightAboveHome: true } or { Satellites: true } or { DroneBattery: true } or { Signal: true } or { FlightMode: true } or { DroneAttitude: true } or { DroneSticks: true };
+
+	private string UnsupportedReason(OverlayElementType type)
 	{
 		return type switch
 		{
 			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText =>
 				Strings.Editor_UnavailableNoTime,
 			OverlayElementType.SunWidget => Strings.Editor_UnavailableSun,
+			OverlayElementType.Elevation or OverlayElementType.Gradient when !_availability.AltitudeAboveSea => Strings.Editor_UnavailableDroneAltitude,
 			OverlayElementType.RollGauge or OverlayElementType.PitchGauge or OverlayElementType.GMeter =>
 				Strings.Editor_UnavailableAxes,
 			OverlayElementType.CameraInfo => Strings.Editor_UnavailableCameraInfo,
@@ -256,7 +266,7 @@ public partial class MainWindow
 			OverlayElementType.ImageLuma => Strings.Editor_UnavailableImageLuma,
 			OverlayElementType.Height or OverlayElementType.HomeDistance or OverlayElementType.VerticalSpeed or OverlayElementType.Satellites or OverlayElementType.DroneBattery
 				or OverlayElementType.FlightAlerts or OverlayElementType.Signal or OverlayElementType.FlightMode or OverlayElementType.RcSticks
-				or OverlayElementType.AttitudeIndicator or OverlayElementType.Orientation3D => Strings.Editor_UnavailableDroneLog,
+				or OverlayElementType.AttitudeIndicator or OverlayElementType.Orientation3D => HasDroneLogData ? Strings.Editor_UnavailableInDroneLog : Strings.Editor_UnavailableDroneLog,
 			_ => Strings.Editor_UnavailableGps
 		};
 	}
@@ -405,6 +415,7 @@ public partial class MainWindow
 			grid.Children.Add(warning);
 		}
 
+		editable &= CanRemoveElement(element);
 		if (editable || supported)
 		{
 			var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Margin = new Thickness(6, 0, 0, 0) };
@@ -473,7 +484,7 @@ public partial class MainWindow
 		// The selection's solid box replaces the hover's dashed one on the same widget.
 		HoverOutline.Classes.Set("shown", _hoveredElementId is not null && _hoveredElementId != _selectedElementId);
 		// Nothing to frame for a widget that isn't drawn - no data for it, or its layer muted/unsoloed.
-		if (_previewFullscreen || _selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
+		if (_summary is null || _previewFullscreen || _selectedElementId is not { } id || ActiveElements.FirstOrDefault(e => e.Id == id) is not { Visible: true } el ||
 		    !IsTypeSupported(el.Type) || OverlayLayers.Silenced(ActiveLayers).Contains(OverlayLayers.Key(el)))
 		{
 			SelectionHighlightBox.IsVisible = false;
@@ -628,6 +639,23 @@ public partial class MainWindow
 	///     palette drops always creating a new instance instead of revealing a hidden one, an unreachable
 	///     hidden leftover would just be permanent clutter in the saved preset.
 	/// </summary>
+	private bool CanRemoveElement(OverlayElement element)
+	{
+		if (IsActivePresetDefault) return false;
+
+		// The renderer draws the credit a visible map's terms require, the one of the map behind a track's picture, and the watermark
+		// while it's on in the settings, at a default spot when the layout has no widget for them - something that can't be
+		// selected or edited. So the last credit widget stays, and the backdrop's own one for as long as that map is shown.
+		return element switch
+		{
+			MapAttributionElement { Id: OverlayPreset.BackdropCreditId } when _fullTelemetry?.Backdrop is not null => false,
+			MapAttributionElement => ActiveElements.Count(e => e is MapAttributionElement { Id: not OverlayPreset.BackdropCreditId }) > 1
+			                         || !MapCreditTimingLocked(MapSourcesForRoute()),
+			WatermarkElement => !_showWatermark || ActiveElements.OfType<WatermarkElement>().Count() > 1,
+			_ => true
+		};
+	}
+
 	private void RemoveElementInstance(string id)
 	{
 		if (IsActivePresetDefault) return;
@@ -710,7 +738,7 @@ public partial class MainWindow
 		if (panel.Parent is Panel oldParent) oldParent.Children.Remove(panel);
 		panel.IsVisible = true;
 		WidgetSettingsPanelHost.Content = panel;
-		WidgetSettingsTitleRun.Text = GetWidgetLabel(element.Type);
+		WidgetSettingsTitleRun.Text = VisibleWidgetNames().FirstOrDefault(w => w.Element.Id == element.Id).Name ?? GetWidgetLabel(element.Type);
 
 		CutsColumnScroll.IsVisible = false;
 		UpdateCutsButton();

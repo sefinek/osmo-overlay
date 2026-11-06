@@ -21,13 +21,13 @@ public sealed partial class OverlayRenderer
 	public const double MapDynamicZoomMaxFactorMax = 15.0;
 	private const double MapTrailFitFraction = 0.7;
 	private const double MapZoomSmoothingSeconds = 2.5;
-	// Per Map widget: two of them share one mosaic but each has its own trail fit and smoothing.
+	// Per Map widget: two of them may share one mosaic but each has its own trail fit and smoothing.
 	private readonly Dictionary<string, ResettableEma> _mapZoomEmas = [];
 	// One layer per distinct tile source/zoom among the visible Map widgets: a widget draws the layer its own settings name
 	// (_mapLayerOf), so two Map widgets with different sources each show their own map. Layers and the widgets' assignment are
 	// swapped together in ApplyMapMosaic; _preparedMaps is what the last fetch was asked for.
 	private Dictionary<MapMosaicKey, MapLayer> _mapLayers = [];
-	private Dictionary<ElementMapKey, MapMosaicKey> _mapLayerOf = [];
+	private Dictionary<ElementMapKey, MapLayer> _mapLayerOf = [];
 	private MapAssignments? _preparedMaps;
 	// Nearest-neighbour turned the tiles into noise wherever the crop is scaled (the preview, a zoomed-out map). No
 	// mipmaps: the mosaic is drawn every frame and its mip chain (tens of MB) may not stay in Skia's cache.
@@ -169,15 +169,18 @@ public sealed partial class OverlayRenderer
 		}
 
 		var layers = new Dictionary<MapMosaicKey, MapLayer>();
-		var layerOf = new Dictionary<ElementMapKey, MapMosaicKey>();
+		var layerOf = new Dictionary<ElementMapKey, MapLayer>();
 		foreach (MapAssignment item in forKey?.Items ?? [])
 		{
-			layerOf[item.Source] = item.Key;
-			if (layers.ContainsKey(item.Key)) continue;
+			if (!layers.TryGetValue(item.Key, out MapLayer? layer))
+			{
+				if (mosaics?.Take(item.Key) is { } fresh) layer = new MapLayer(fresh);
+				else if (_mapLayers.Remove(item.Key, out MapLayer? held) && held.Mosaic is not null) layer = held;
+				else layer = new MapLayer(null);
+				layers[item.Key] = layer;
+			}
 
-			if (mosaics?.Take(item.Key) is { } fresh) layers[item.Key] = new MapLayer(fresh);
-			else if (_mapLayers.Remove(item.Key, out MapLayer? held) && held.Mosaic is not null) layers[item.Key] = held;
-			else layers[item.Key] = new MapLayer(null);
+			layerOf[item.Source] = layer;
 		}
 
 		mosaics?.Dispose();
@@ -426,7 +429,7 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.MapRadius;
 
-		MapLayer? layer = _mapLayerOf.TryGetValue(SourceOf(element), out MapMosaicKey layerKey) && _mapLayers.TryGetValue(layerKey, out MapLayer? found) ? found : null;
+		_mapLayerOf.TryGetValue(SourceOf(element), out MapLayer? layer);
 		if (layer?.Mosaic is not { } mosaic)
 		{
 			canvas.DrawCircle(0, 0, radius, PanelFillPaint(null, PanelOpacityDefault));

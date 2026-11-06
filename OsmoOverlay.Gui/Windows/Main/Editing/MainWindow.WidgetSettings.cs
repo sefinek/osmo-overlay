@@ -613,6 +613,16 @@ public partial class MainWindow
 	/// </summary>
 	private void UpdateMapCreditPanel()
 	{
+		// The second credit widget is the map behind a track's picture, always drawn with that map's own credit - not the Map widgets'.
+		if (_editingElementId == OverlayPreset.BackdropCreditId)
+		{
+			BackdropMap? backdrop = _fullTelemetry?.Backdrop?.Map;
+			MapCreditTextBox.Text = backdrop is null ? null : MapSourcesForRoute().Attribution(backdrop.ProviderId, showLabels: backdrop.ShowLabels);
+			MapCreditLockedHint.IsVisible = backdrop is not null;
+			MapCreditTiming.IsEnabled = false;
+			return;
+		}
+
 		MapSources sources = MapSourcesForRoute();
 		List<MapWidgetElement> maps = [.. ActiveElements.OfType<MapWidgetElement>().Where(m => m.Visible)];
 		bool locked = MapCreditTimingLocked(sources);

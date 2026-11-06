@@ -30,7 +30,7 @@ public partial class WelcomeWindow : Window
 {
 	private static readonly string[] StepNames =
 	[
-		Strings.Welcome_StepWelcome, Strings.Welcome_SupportedCameras, Strings.Common_Tools, Strings.Welcome_YourComputer, Strings.Welcome_MapTitle,
+		Strings.Welcome_StepWelcome, Strings.Welcome_SupportedDevices, Strings.Common_Tools, Strings.Welcome_YourComputer, Strings.Welcome_MapTitle,
 		Strings.Common_Units, Strings.Common_SpeedCalibration, Strings.Welcome_RenderingAndFiles, Strings.Welcome_StepAllSet
 	];
 	private static readonly Cursor HandCursor = new(StandardCursorType.Hand);

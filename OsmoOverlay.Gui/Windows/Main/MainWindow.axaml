@@ -463,9 +463,9 @@
 								</Grid>
 
 								<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-									<Button Grid.Column="0" Content="{x:Static local:Strings.Main_Save}" Click="OnSaveProjectClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveTheProjectCtrlS}"
+									<Button Name="SaveProjectButton" Grid.Column="0" Content="{x:Static local:Strings.Main_Save}" Click="OnSaveProjectClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveTheProjectCtrlS}"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-									<Button Grid.Column="1" Content="{x:Static local:Strings.Main_SaveAs}" Click="OnSaveProjectAsClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveAsANewFile}"
+									<Button Name="SaveProjectAsButton" Grid.Column="1" Content="{x:Static local:Strings.Main_SaveAs}" Click="OnSaveProjectAsClick" ToolTip.Tip="{x:Static local:Strings.Main_SaveAsANewFile}"
 									        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 								</Grid>
 

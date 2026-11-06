@@ -58,10 +58,14 @@ internal sealed class FlightEventTracker
 	public void OnOsd(byte[] c, double seconds)
 	{
 		int mode = OsdLayout.FlightMode(c);
-		if (_mode != mode) Events.Add(new FlightLogEvent(seconds, new FlightEvent(FlightEventKind.FlightMode, FlightModes.Name(mode), mode)));
+		bool motors = OsdLayout.MotorsOn(c);
+		bool stopping = _motorsOn is true && !motors;
+
+		// The mode the aircraft reports in the sample the motors stop in is the switch's position (a Mavic Air 2 lands in Confirm Landing,
+		// then says Sport with the motors off), not a change in flight.
+		if (_mode != mode && !stopping) Events.Add(new FlightLogEvent(seconds, new FlightEvent(FlightEventKind.FlightMode, FlightModes.Name(mode), mode)));
 		_mode = mode;
 
-		bool motors = OsdLayout.MotorsOn(c);
 		if (_motorsOn is { } before && before != motors)
 		{
 			Events.Add(new FlightLogEvent(seconds, new FlightEvent(motors ? FlightEventKind.MotorsOn : FlightEventKind.MotorsOff)));

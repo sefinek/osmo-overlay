@@ -206,6 +206,7 @@ public sealed partial class MapSourcePicker : UserControl
 			? publicEsri ? Strings.MapSource_BestNoKey : string.Format(Strings.MapSource_BestUses, provider.Name)
 			: terms.Note;
 		if (detail is not null) panel.Children.Add(Hint(detail));
+		if (terms.ShareAlike) panel.Children.Add(Hint(Strings.ExportNotice_ShareAlike));
 
 		var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12, RowSpacing = 3 };
 

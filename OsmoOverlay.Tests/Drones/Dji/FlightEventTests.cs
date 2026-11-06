@@ -36,6 +36,17 @@ public sealed class FlightEventTests
 	}
 
 	[TestMethod]
+	public void Decode_TheModeOfTheSampleTheMotorsStopInIsNotAChange()
+	{
+		var builder = new FlightLogBuilder(12, Started);
+		for (int i = 0; i < 6; i++) builder.Add(Osd, OsdRecord(50, 20, 0, 0, 0, 10, true, mode: i < 5 ? 33 : 31, motorsOn: i is >= 1 and < 5));
+
+		IReadOnlyList<FlightLogEvent> events = EventsOf(builder);
+
+		CollectionAssert.AreEqual(new[] { FlightEventKind.FlightMode, FlightEventKind.MotorsOn, FlightEventKind.MotorsOff }, events.Select(e => e.Event.Kind).ToArray());
+	}
+
+	[TestMethod]
 	public void Decode_AnUnknownModeIsNamedByItsNumber()
 	{
 		var builder = new FlightLogBuilder(12, Started);

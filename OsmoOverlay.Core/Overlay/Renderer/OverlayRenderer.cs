@@ -480,7 +480,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_mapCreditText = credit?.Text;
 		bool creditPlaced = false;
 		IEnumerable<OverlayElement> drawn = Layout;
-		if (credit is { Required: true } && !Layout.Any(e => e is MapAttributionElement))
+		if (credit is { Required: true } && !Layout.Any(e => e is MapAttributionElement { Id: not OverlayPreset.BackdropCreditId }))
 			drawn = drawn.Append(DefaultMapCredit);
 		if (ShowWatermark && !Layout.Any(e => e is WatermarkElement))
 			drawn = drawn.Append(DefaultWatermark);
@@ -510,6 +510,8 @@ public sealed partial class OverlayRenderer : IDisposable
 			foreach (OverlayElement element in drawn)
 			{
 				ElementState state;
+				if (element is MapAttributionElement { Id: OverlayPreset.BackdropCreditId }) continue;
+
 				if (element is MapAttributionElement)
 				{
 					// One credit line on screen, even with several credit widgets in the layout.
@@ -883,7 +885,22 @@ public sealed partial class OverlayRenderer : IDisposable
 	{
 		if (RoundWidgetBounds(element) is { } round) return round;
 
-		using SKPicture picture = RecordElement(element, frame);
+		string? previousCredit = _mapCreditText;
+		if (element is MapAttributionElement { Id: OverlayPreset.BackdropCreditId } && Backdrop is { } map
+			&& MapSources.Attribution(map.ProviderId, showLabels: map.ShowLabels) is { } backdropText)
+			_mapCreditText = backdropText;
+
+		SKPicture recorded;
+		try
+		{
+			recorded = RecordElement(element, frame);
+		}
+		finally
+		{
+			_mapCreditText = previousCredit;
+		}
+
+		using SKPicture picture = recorded;
 		SKRect bounds = picture.CullRect;
 		if (bounds.IsEmpty) return null;
 

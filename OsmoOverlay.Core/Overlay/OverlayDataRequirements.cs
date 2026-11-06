@@ -31,7 +31,8 @@ public readonly record struct OverlayAvailability(
 	bool Signal = false,
 	bool FlightMode = false,
 	bool DroneSticks = false,
-	bool DroneAttitude = false)
+	bool DroneAttitude = false,
+	bool AltitudeAboveSea = true)
 {
 	public static OverlayAvailability Of(IReadOnlyList<TelemetryFrame> frames, bool containerTime, ICameraFormat? camera)
 	{
@@ -53,7 +54,8 @@ public readonly record struct OverlayAvailability(
 			frames.Any(f => f.DroneSignal is { } s && (s.UplinkPercent is not null || s.DownlinkPercent is not null)),
 			frames.Any(f => !string.IsNullOrEmpty(f.FlightMode)),
 			frames.Any(f => f.DroneSticks is not null),
-			frames.Any(f => f.DroneAttitude is not null));
+			frames.Any(f => f.DroneAttitude is not null),
+			!frames.Any(f => f.HeightAboveHomeMeters is not null));
 	}
 
 	public IReadOnlyList<OverlayElement> Apply(IReadOnlyList<OverlayElement> layout)
@@ -75,9 +77,10 @@ public static class OverlayDataRequirements
 		return type switch
 		{
 			OverlayElementType.DateTimeText or OverlayElementType.UtcTimeText => data.GpsTimestamp || data.ContainerTime,
-			OverlayElementType.Compass or OverlayElementType.MapWidget or OverlayElementType.Elevation
-				or OverlayElementType.Gradient or OverlayElementType.Distance or OverlayElementType.SpeedGauge
+			OverlayElementType.Compass or OverlayElementType.MapWidget or OverlayElementType.Distance or OverlayElementType.SpeedGauge
 				or OverlayElementType.TripProgressBar or OverlayElementType.ProfileChart or OverlayElementType.TripStat => data.GpsFix,
+			// A flight log has no altitude above sea level (see FlightLog: the home record's altitude is the barometer's reference), only the height above take-off.
+			OverlayElementType.Elevation or OverlayElementType.Gradient => data.GpsFix && data.AltitudeAboveSea,
 			// Without a fix anywhere it would only ever say it's searching.
 			OverlayElementType.GpsAlert => data.GpsFix,
 			// The sun dot needs a real position and a real GPS timestamp (TelemetryProcessor leaves Sun at

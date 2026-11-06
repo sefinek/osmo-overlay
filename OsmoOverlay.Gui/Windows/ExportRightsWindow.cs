@@ -12,8 +12,6 @@ namespace OsmoOverlay.Gui;
 /// <summary>What the exported film may and may not be used for, as ticks and crosses, and the terms of the maps in the export. Closes with true once confirmed.</summary>
 internal sealed class ExportRightsWindow : Window
 {
-	private const string PolyFormUrl = "https://polyformproject.org/licenses/noncommercial/1.0.0/";
-
 	public ExportRightsWindow(IReadOnlyList<ExportMap> maps, bool confirm)
 	{
 		Title = Strings.ExportNotice_Title;
@@ -35,6 +33,7 @@ internal sealed class ExportRightsWindow : Window
 		body.Children.Add(Card(Strings.ExportNotice_ProgramHeader,
 			Row(true, Strings.ExportNotice_Allow_Private),
 			Row(true, Strings.ExportNotice_Allow_Free),
+			Row(true, Strings.ExportNotice_Allow_Organizations),
 			Row(false, Strings.ExportNotice_Deny_Monetized),
 			Row(false, Strings.ExportNotice_Deny_Earning),
 			Row(false, Strings.ExportNotice_Deny_Paid),
@@ -54,8 +53,8 @@ internal sealed class ExportRightsWindow : Window
 			Orientation = Orientation.Horizontal,
 			Children =
 			{
-				Link(Strings.ExportNotice_LicenseLink, PolyFormUrl),
-				Link(Strings.ExportNotice_LicenseFileLink, AppUpdates.RepositoryUrl + "/blob/main/LICENSE")
+				Link(Strings.ExportNotice_LicenseLink, AppUpdates.RepositoryUrl + "/blob/main/LICENSE"),
+				Link(Strings.ExportNotice_UsageGuideLink, AppUpdates.RepositoryUrl + "/blob/main/LICENSING.md")
 			}
 		});
 		body.Children.Add(Hint(Strings.MapTerms_Disclaimer));
@@ -105,7 +104,7 @@ internal sealed class ExportRightsWindow : Window
 		var panel = new StackPanel { Spacing = 4 };
 		panel.Children.Add(new TextBlock { Text = provider.Name, FontWeight = FontWeight.SemiBold });
 		panel.Children.Add(Row(Mark(terms.Video), VideoText(terms.Video)));
-		panel.Children.Add(Row(Mark(terms.Commercial), $"{Strings.MapTerms_Commercial}: {ExportNotice.UseText(terms.Commercial)}"));
+		panel.Children.Add(Row(Mark(terms.CommercialVideo), $"{Strings.ExportNotice_MapCommercial}: {ExportNotice.UseText(terms.CommercialVideo)}"));
 		panel.Children.Add(Row(null, $"{Strings.MapTerms_Credit}: {credit}"));
 		if (terms.Note is { } note) panel.Children.Add(Hint(note));
 		if (terms.ShareAlike) panel.Children.Add(Hint(Strings.ExportNotice_ShareAlike));

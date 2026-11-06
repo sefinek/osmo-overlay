@@ -37,9 +37,8 @@ public sealed class FlightLog
 	private const long MinPlausibleMs = 1_262_304_000_000, MaxPlausibleMs = 4_102_444_800_000;
 	private const int DetailsReadSize = 512;
 
-	// The OSD record is written at 10 Hz; its own fly time stands still while the motors are off, so the sample index is the clock.
-	private const double SampleSeconds = 0.1;
-	private const int VerticalSpeedHalfWindow = 5;
+	// The OSD record is written at 10 Hz (15 Hz by the Mavic 4 Pro); its own fly time stands still while the motors are off, so the sample index is the clock.
+	private const double DefaultSampleRate = 10, RateStep = 5, RateTolerance = 0.06;
 
 	// The component record (type 13): the aircraft's serial number, then its name as its owner gave it, then the camera's, the remote's and the battery's serials.
 	private const int AircraftNameOffset = 21, AircraftNameLength = 32;
@@ -230,14 +229,16 @@ public sealed class FlightLog
 		FlightHome? home = null;
 		int osdRecords = 0;
 
-		foreach ((byte type, byte[] content) in ReadRecords(keychains))
+		List<(byte Type, byte[] Content)> records = [.. ReadRecords(keychains)];
+		double sampleSeconds = 1 / SampleRate(records.Count(r => r.Type == OsdRecord && r.Content.Length >= OsdLayout.MinLength));
+		foreach ((byte type, byte[] content) in records)
 		{
-			double now = Math.Max(osdRecords - 1, 0) * SampleSeconds;
+			double now = Math.Max(osdRecords - 1, 0) * sampleSeconds;
 			switch (type)
 			{
 				case OsdRecord when content.Length >= OsdLayout.MinLength:
-					samples.Add(ReadSample(content, osdRecords * SampleSeconds, homeAltitude));
-					tracker.OnOsd(content, osdRecords * SampleSeconds);
+					samples.Add(ReadSample(content, osdRecords * sampleSeconds, homeAltitude));
+					tracker.OnOsd(content, osdRecords * sampleSeconds);
 					osdRecords++;
 					break;
 				case RcRecord when content.Length >= 10:
@@ -287,19 +288,32 @@ public sealed class FlightLog
 			clock = new DateTime(clockOffsets[clockOffsets.Count / 2], DateTimeKind.Utc);
 		}
 
-		return new FlightLogData(WithVerticalSpeed(samples), recordings, clock, home, tracker.Batteries, tracker.Events, tracker.Signals, aircraftName, tracker.Sticks);
+		return new FlightLogData(WithVerticalSpeed(samples, sampleSeconds), recordings, clock, home, tracker.Batteries, tracker.Events, tracker.Signals, aircraftName, tracker.Sticks);
+	}
+
+	/// <summary>
+	///     OSD records per second: the count over the flight time of the details block, taken as the nearest multiple of 5 Hz when it
+	///     is within 6% of one (the block's time is the flight's, so a log without it, or one that disagrees, keeps 10 Hz).
+	/// </summary>
+	private double SampleRate(int osdCount)
+	{
+		if (Totals is not { DurationSeconds: > 0 } totals || osdCount < 20) return DefaultSampleRate;
+
+		double rate = osdCount / totals.DurationSeconds, nearest = Math.Round(rate / RateStep) * RateStep;
+		return nearest > 0 && Math.Abs(rate - nearest) <= nearest * RateTolerance ? nearest : DefaultSampleRate;
 	}
 
 	/// <summary>
 	///     The climb rate from the height over a second around each sample: the height comes in steps of 0.1 m, so the difference of
 	///     two neighbours (10 per second) would only ever be 0, +-1 or +-2 m/s.
 	/// </summary>
-	private static List<FlightSample> WithVerticalSpeed(List<FlightSample> samples)
+	private static List<FlightSample> WithVerticalSpeed(List<FlightSample> samples, double sampleSeconds)
 	{
+		int halfWindow = Math.Max((int)Math.Round(0.5 / sampleSeconds), 1);
 		var result = new List<FlightSample>(samples.Count);
 		for (int i = 0; i < samples.Count; i++)
 		{
-			FlightSample from = samples[Math.Max(i - VerticalSpeedHalfWindow, 0)], to = samples[Math.Min(i + VerticalSpeedHalfWindow, samples.Count - 1)];
+			FlightSample from = samples[Math.Max(i - halfWindow, 0)], to = samples[Math.Min(i + halfWindow, samples.Count - 1)];
 			double span = to.Seconds - from.Seconds;
 			result.Add(span > 0 ? samples[i] with { VerticalSpeedMs = (to.HeightMeters - from.HeightMeters) / span } : samples[i]);
 		}

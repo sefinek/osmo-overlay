@@ -33,6 +33,27 @@ public sealed class OverlayDataRequirementsTests
 	}
 
 	[TestMethod]
+	[DataRow(OverlayElementType.Elevation, false)]
+	[DataRow(OverlayElementType.Gradient, false)]
+	[DataRow(OverlayElementType.SpeedGauge, true)]
+	[DataRow(OverlayElementType.MapWidget, true)]
+	public void IsSupported_AFlightLogHasNoAltitudeAboveSea(OverlayElementType type, bool expected)
+	{
+		Assert.AreEqual(expected, OverlayDataRequirements.IsSupported(type, new OverlayAvailability(true, true, true, AltitudeAboveSea: false)));
+		Assert.IsTrue(OverlayDataRequirements.IsSupported(OverlayElementType.Elevation, new OverlayAvailability(true, true, true)));
+	}
+
+	[TestMethod]
+	public void Of_AltitudeAboveSeaIsLostOnlyWithHeightAboveTakeOff()
+	{
+		List<TelemetryFrame> plain = [new(0, 0, 0, 0, 0, null, 0, 0, 1, ShutterSeconds: 0.001, HasGpsFix: true)];
+		List<TelemetryFrame> drone = [plain[0] with { HeightAboveHomeMeters = 12 }];
+
+		Assert.IsTrue(OverlayAvailability.Of(plain, true, null).AltitudeAboveSea);
+		Assert.IsFalse(OverlayAvailability.Of(drone, true, null).AltitudeAboveSea);
+	}
+
+	[TestMethod]
 	[DataRow(OverlayElementType.RollGauge, true)]
 	[DataRow(OverlayElementType.PitchGauge, true)]
 	[DataRow(OverlayElementType.GMeter, true)]

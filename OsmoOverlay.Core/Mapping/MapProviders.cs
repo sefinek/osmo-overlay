@@ -40,7 +40,17 @@ public sealed record MapTerms(
 	MapRegion? Region = null,
 	string? Note = null,
 	// The map images are CC BY-SA: the share-alike duty covers the map as used, which the export notice says without extending it to the whole film.
-	bool ShareAlike = false);
+	bool ShareAlike = false)
+{
+	public MapUse CommercialVideo => (Commercial, Video) switch
+	{
+		(MapUse.NotAllowed, _) or (_, MapUse.NotAllowed) => MapUse.NotAllowed,
+		(MapUse.NotStated, _) or (_, MapUse.NotStated) => MapUse.NotStated,
+		(MapUse.PaidPlanOnly, _) or (_, MapUse.PaidPlanOnly) => MapUse.PaidPlanOnly,
+		(MapUse.Conditional, _) or (_, MapUse.Conditional) => MapUse.Conditional,
+		_ => MapUse.Allowed
+	};
+}
 
 /// <summary>A provider covering one area only - a latitude/longitude box around it.</summary>
 public sealed record MapRegion(string Name, double South, double West, double North, double East)
@@ -122,8 +132,8 @@ public static class MapProviders
 
 	// "Die Lizenz CC-BY-SA der Online-Karte erlaubt deren kommerzielle Nutzung"; the licence text is to be shown "stets",
 	// "deutlich sichtbar"; the server is for apps as long as mass downloads don't overload it.
-	private static readonly MapTerms OpenTopoMapTerms = new(MapUse.Allowed, MapUse.NotStated, MapCreditRule.WhileMapVisible,
-		"https://opentopomap.org/about", Note: CoreStrings.Map_NoteSharedServer);
+	private static readonly MapTerms OpenTopoMapTerms = new(MapUse.Allowed, MapUse.Conditional, MapCreditRule.WhileMapVisible,
+		"https://opentopomap.org/about", Note: CoreStrings.Map_NoteSharedServer, ShareAlike: true);
 
 	// Videos "for usage in internet channels (YouTube, Vimeo, etc.) with a maximum 100,000 subscribers"; the free plan "is
 	// limited to non-commercial use"; the credit "is required to be shown on screen while the map is displayed"; only a
@@ -132,9 +142,9 @@ public static class MapProviders
 		"https://www.maptiler.com/terms/cloud", 7, Note: CoreStrings.Map_NoteMapTilerVideo);
 
 	// "Commercial use is permitted and encouraged"; map images are CC-BY-SA 4.0; tiles "may be cached in-browser and
-	// on-device"; nothing about video.
-	private static readonly MapTerms ThunderforestTerms = new(MapUse.Allowed, MapUse.NotStated, MapCreditRule.WhileMapVisible,
-		"https://www.thunderforest.com/terms");
+	// on-device"; CC-BY-SA permits use in any medium subject to its attribution and share-alike requirements.
+	private static readonly MapTerms ThunderforestTerms = new(MapUse.Allowed, MapUse.Conditional, MapCreditRule.WhileMapVisible,
+		"https://www.thunderforest.com/terms", ShareAlike: true);
 
 	// Commercial use within the free tier's limit, each customer with their own key; the credit "visible on the map itself",
 	// not hidden or faded; a client-side cache of at most 30 days.

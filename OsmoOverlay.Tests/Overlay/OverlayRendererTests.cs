@@ -163,6 +163,9 @@ public sealed class OverlayRendererTests
 				{
 					Visible = true, AppearAtSeconds = null, DisappearAtSeconds = null, AnimationType = OverlayAnimationType.None
 				};
+				// The backdrop's credit is drawn only with a map behind the picture - BackdropCreditTests.
+				if (shown is MapAttributionElement { Id: OverlayPreset.BackdropCreditId }) continue;
+
 				if (shown is MapAttributionElement)
 				{
 					// The credit is drawn only with a map on screen; GUGiK's may be brief, so the map alone doesn't add one.

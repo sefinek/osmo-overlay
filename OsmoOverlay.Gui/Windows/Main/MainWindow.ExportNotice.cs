@@ -46,6 +46,7 @@ public partial class MainWindow
 
 	private async void OnExportRightsClick(object? sender, RoutedEventArgs e)
 	{
-		await ExportNotice.ShowAsync(this, CurrentExportMaps());
+		if (await ExportNotice.ShowAsync(this, CurrentExportMaps()))
+			OverlaySettingsStore.Save(OverlaySettingsStore.Load() with { ExportNoticeAccepted = true });
 	}
 }

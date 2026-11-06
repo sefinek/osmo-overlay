@@ -10,7 +10,7 @@ public sealed class OverlayPresetTests
 {
 	private static OverlayElement Get(OverlayPreset preset, OverlayElementType type)
 	{
-		return preset.Elements.Single(e => e.Type == type);
+		return preset.Elements.First(e => e.Type == type);
 	}
 
 	[TestMethod]
@@ -123,7 +123,7 @@ public sealed class OverlayPresetTests
 		Assert.AreEqual(fpv.Elements.Count, fpv.Elements.Select(e => e.Id).Distinct().Count());
 		foreach (OverlayElementType type in new[] { OverlayElementType.FlightMode, OverlayElementType.ElapsedTimeText, OverlayElementType.VerticalSpeed, OverlayElementType.RcSticks, OverlayElementType.AttitudeIndicator, OverlayElementType.Orientation3D, OverlayElementType.DateTimeText, OverlayElementType.Watermark })
 			Assert.IsTrue(fpv.Elements.Single(e => e.Type == type).Visible, type.ToString());
-		Assert.IsTrue(fpv.Elements.Single(e => e is MapWidgetElement).Visible && fpv.Elements.Single(e => e is MapAttributionElement).Visible, "the map and its credit go together");
+		Assert.IsTrue(fpv.Elements.Single(e => e is MapWidgetElement).Visible && fpv.Elements.OfType<MapAttributionElement>().All(e => e.Visible), "the map and its credits go together");
 		foreach (OverlayElementType type in new[] { OverlayElementType.ProfileChart, OverlayElementType.TripProgressBar })
 			Assert.IsFalse(fpv.Elements.Single(e => e.Type == type).Visible, type.ToString());
 		Assert.IsFalse(drone.Elements.Single(e => e is FlightModeElement).Visible);

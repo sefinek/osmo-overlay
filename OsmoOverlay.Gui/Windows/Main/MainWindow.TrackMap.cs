@@ -113,6 +113,7 @@ public partial class MainWindow
 			bool playing = _previewPlayer.IsPlaying;
 			TimeSpan position = _fullTelemetryPosition;
 			ExternalTrackPlayback updated = _fullTelemetry = playback with { Backdrop = backdrop };
+			RefreshWidgetList();
 			try
 			{
 				await OpenPreviewPlayerAsync(summary, position, trackPlayback: updated);

@@ -15,7 +15,7 @@ internal static class ExportNotice
 		return new ExportRightsWindow(maps, true).ShowDialog<bool>(owner);
 	}
 
-	public static Task ShowAsync(Window owner, IReadOnlyList<ExportMap> maps)
+	public static Task<bool> ShowAsync(Window owner, IReadOnlyList<ExportMap> maps)
 	{
 		return new ExportRightsWindow(maps, false).ShowDialog<bool>(owner);
 	}

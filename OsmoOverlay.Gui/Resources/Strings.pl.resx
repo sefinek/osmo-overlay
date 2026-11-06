@@ -1695,7 +1695,7 @@ Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. W
     <value>Klucz API</value>
   </data>
   <data name="MapTerms_VideoNotStated" xml:space="preserve">
-    <value>Regulamin nie mówi nic o filmach</value>
+    <value>Użycie mapy w filmie: brak jednoznacznej informacji w regulaminie</value>
   </data>
   <data name="MapTerms_VideoPaid" xml:space="preserve">
     <value>W filmie tylko w płatnym planie</value>
@@ -1770,7 +1770,7 @@ Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. W
     <value>tak</value>
   </data>
   <data name="MapTerms_Commercial" xml:space="preserve">
-    <value>Użytek komercyjny (np. monetyzacja)</value>
+    <value>Ogólny użytek komercyjny map</value>
   </data>
   <data name="MapTerms_Coverage" xml:space="preserve">
     <value>Zasięg</value>
@@ -2050,7 +2050,7 @@ Cięcia, ustawienia widoku i nakładka zostaną zastosowane po odnalezieniu tych
     <value>Zestawy ustawień do różnych zastosowań, np. jazdy rowerem lub motocyklem. Każdy ma własną kalibrację prędkości, ustawienia renderowania, wstęp z trasą i układ widżetów.</value>
   </data>
   <data name="SettingsPresets_ThisPreset" xml:space="preserve">
-    <value>Ten preset</value>
+    <value>TEN PRESET</value>
   </data>
   <data name="Settings_RouteIntroWhenTrimmed" xml:space="preserve">
     <value>Pokazuj wstęp także po przycięciu początku nagrania</value>
@@ -3432,7 +3432,7 @@ Szczegóły: {0}</value>
 Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie zapłaty za ten program, najprawdopodobniej próbuje cię oszukać.</value>
   </data>
   <data name="Welcome_OsmoOverlayReadsTheTelemetryYour" xml:space="preserve">
-    <value>OsmoOverlay odczytuje telemetrię zapisaną w plikach obsługiwanych kamer. Osobny plik z danymi (dziennik lotu) jest potrzebny tylko w przypadku dronów DJI.</value>
+    <value>OsmoOverlay odczytuje telemetrię zapisaną w plikach obsługiwanych urządzeń. Osobny plik z danymi (dziennik lotu) jest potrzebny tylko w przypadku dronów DJI.</value>
   </data>
   <data name="Welcome_OsmoOverlayRendersWithFFmpegExifTool" xml:space="preserve">
     <value>OsmoOverlay używa FFmpeg do renderowania. Opcjonalny ExifTool służy do awaryjnego odczytu telemetrii, gdy wbudowany dekoder nie potrafi odczytać danych z nagrania.</value>
@@ -3577,8 +3577,8 @@ Uwaga: OsmoOverlay jest udostępniany bezpłatnie. Jeśli ktoś żąda od ciebie
   <data name="Welcome_SummaryWatermark" xml:space="preserve">
     <value>Znak wodny</value>
   </data>
-  <data name="Welcome_SupportedCameras" xml:space="preserve">
-    <value>Obsługiwane kamery</value>
+  <data name="Welcome_SupportedDevices" xml:space="preserve">
+    <value>Obsługiwane urządzenia</value>
   </data>
   <data name="Welcome_SupportOnKoFi" xml:space="preserve">
     <value>Wesprzyj na Ko-fi</value>
@@ -4446,6 +4446,15 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="Editor_UnavailableDroneLog" xml:space="preserve">
     <value>Ten widżet potrzebuje dziennika lotu drona. Dodaj go przyciskiem „Trasa GPS”.</value>
   </data>
+  <data name="Editor_UnavailableInDroneLog" xml:space="preserve">
+    <value>Wybrany dziennik lotu nie zawiera danych dla tego widżetu.</value>
+  </data>
+  <data name="Editor_UnavailableDroneAltitude" xml:space="preserve">
+    <value>Dziennik lotu drona nie podaje wysokości n.p.m. Użyj widżetu Wysokość nad startem.</value>
+  </data>
+  <data name="Summary_NoDroneAltitudeTip" xml:space="preserve">
+    <value>Dziennik lotu drona nie podaje wysokości n.p.m., tylko wysokość nad punktem startu.</value>
+  </data>
   <data name="Widget_DeviceDistance" xml:space="preserve">
     <value>Dystans licznika</value>
   </data>
@@ -4580,6 +4589,12 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   </data>
   <data name="Music_PaletteTip" xml:space="preserve">
     <value>Przeciągnij na oś czasu, aby dodać muzykę</value>
+  </data>
+  <data name="Welcome_DjiDrones" xml:space="preserve">
+    <value>Drony DJI</value>
+  </data>
+  <data name="Welcome_DjiDronesTested" xml:space="preserve">
+    <value>Dzienniki lotu sprawdzone na Mavic 2, Mavic Air 2, Mavic 4 Pro, Flip i Avata 360. Plik MP4 nie zawiera telemetrii, więc dodaj dziennik lotu przyciskiem „Trasa GPS”. Inne modele nie były testowane.</value>
   </data>
   <data name="Welcome_GoPro" xml:space="preserve">
     <value>GoPro</value>
@@ -5384,28 +5399,31 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Licencja programu - PolyForm Noncommercial 1.0.0</value>
   </data>
   <data name="ExportNotice_Allow_Private" xml:space="preserve">
-    <value>Użytek prywatny</value>
+    <value>Użytek prywatny i hobbystyczny bez planowanego celu komercyjnego</value>
   </data>
   <data name="ExportNotice_Allow_Free" xml:space="preserve">
-    <value>Publikacja bez zarabiania na filmie (np. na YouTube z wyłączoną monetyzacją)</value>
+    <value>Tworzenie i publikowanie filmów do celów niekomercyjnych</value>
   </data>
   <data name="ExportNotice_Deny_Monetized" xml:space="preserve">
-    <value>Publikacja na kanale z włączoną monetyzacją (np. w Programie Partnerskim YouTube)</value>
+    <value>Tworzenie filmów w celu zarabiania na reklamach lub sprzedaży</value>
   </data>
   <data name="ExportNotice_Deny_Earning" xml:space="preserve">
-    <value>Zarabianie na filmie przez reklamy, sponsoring lub sprzedaż</value>
+    <value>Tworzenie filmów sponsorowanych lub promujących działalność komercyjną</value>
   </data>
   <data name="ExportNotice_Deny_Paid" xml:space="preserve">
     <value>Płatne renderowanie filmów dla innych osób</value>
   </data>
   <data name="ExportNotice_Deny_Business" xml:space="preserve">
-    <value>Korzystanie z programu w firmie lub w innych celach komercyjnych</value>
+    <value>Inne wykorzystanie programu do celów komercyjnych</value>
   </data>
   <data name="ExportNotice_ProgramNote" xml:space="preserve">
-    <value>Użytek komercyjny wymaga zgody autora, o ile nie obejmuje go wyjątek opisany w licencji. Szczegóły znajdziesz w pełnym tekście licencji.</value>
+    <value>Liczy się cel użycia programu. Wyłączenie monetyzacji filmu nie zmienia jego komercyjnego celu, a sam udział kanału w programie partnerskim nie przesądza o zakazie. Poza celami dozwolonymi w licencji potrzebujesz osobnej zgody autora.</value>
   </data>
   <data name="ExportNotice_MaterialsHeader" xml:space="preserve">
     <value>Prawa do nagrania, muzyki i map</value>
+  </data>
+  <data name="ExportNotice_Allow_Organizations" xml:space="preserve">
+    <value>Użytek organizacji wskazanych w licencji, m.in. instytucji edukacyjnych i organizacji charytatywnych</value>
   </data>
   <data name="ExportNotice_MaterialsText" xml:space="preserve">
     <value>Licencja programu nie zmienia praw do twoich materiałów. Upewnij się, że możesz wykorzystać nagranie, muzykę i mapy w planowany sposób. Zgoda dostawcy map na użytek komercyjny nie znosi ograniczeń licencji programu.</value>
@@ -5413,14 +5431,17 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="ExportNotice_MapsHeader" xml:space="preserve">
     <value>Mapy w tym eksporcie</value>
   </data>
+  <data name="ExportNotice_MapCommercial" xml:space="preserve">
+    <value>Komercyjne użycie mapy w filmie (warunki dostawcy)</value>
+  </data>
   <data name="ExportNotice_NoMaps" xml:space="preserve">
-    <value>Ten eksport nie zawiera map, więc warunki ich dostawców nie mają zastosowania. Eksport z zielonym ekranem lub kanałem alfa również może zawierać mapę, jeśli jej widżet jest włączony.</value>
+    <value>Ten eksport nie zawiera map, więc warunki ich dostawców nie mają zastosowania.</value>
   </data>
   <data name="ExportNotice_CustomMap" xml:space="preserve">
     <value>Własne źródło map: sprawdź warunki dostawcy. Aplikacja nie ma informacji o jego licencji.</value>
   </data>
   <data name="ExportNotice_ShareAlike" xml:space="preserve">
-    <value>Obrazy tej mapy są na licencji CC BY-SA. Obowiązek share-alike dotyczy mapy w wykorzystanym kształcie; czy obejmuje cały film, zależy od sposobu włączenia mapy - aplikacja tego nie zakłada.</value>
+    <value>Obrazy mapy są objęte licencją CC BY-SA. Podaj autorów i licencję oraz zaznacz wprowadzone zmiany. Opracowania mapy trzeba udostępniać na warunkach tej samej lub zgodnej licencji. To, czy wymóg obejmuje cały film, zależy od sposobu wykorzystania mapy.</value>
   </data>
   <data name="ExportNotice_Footer" xml:space="preserve">
     <value>Warunki dotyczą bieżącego eksportu. Sprawdź je ponownie po zmianie mapy, planu usługi lub materiałów. Obowiązują również przy montażu eksportu z zielonym ekranem lub kanałem alfa w innym edytorze, w tym wymóg zachowania podpisów map.</value>
@@ -5428,7 +5449,10 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
   <data name="ExportNotice_LicenseLink" xml:space="preserve">
     <value>Licencja programu (PolyForm)</value>
   </data>
-  <data name="ExportNotice_LicenseFileLink" xml:space="preserve">
-    <value>Plik LICENSE w repozytorium</value>
+  <data name="ExportNotice_UsageGuideLink" xml:space="preserve">
+    <value>Zasady użycia i publikacji (po angielsku)</value>
+  </data>
+  <data name="Editor_SingleMapCredit" xml:space="preserve">
+    <value>Już na nakładce: jeden podpis mapy obejmuje wszystkie widżety Mapa, więc drugi nigdy by się nie pojawił.</value>
   </data>
 </root>

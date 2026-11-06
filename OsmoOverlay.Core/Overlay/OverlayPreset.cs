@@ -1,8 +1,14 @@
+using OsmoOverlay.Core.Mapping;
+using SkiaSharp;
+
 namespace OsmoOverlay.Core.Overlay;
 
 /// <summary>Layers: top to bottom, null in a preset no layer was ever changed in - see OverlayLayers.Normalize.</summary>
 public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> Elements)
 {
+	/// <summary>The id of the credit widget of the map-backdrop's (OverlayRenderer.BackdropCredit).</summary>
+	public const string BackdropCreditId = "MapAttribution.Backdrop";
+
 	public List<OverlayLayer>? Layers { get; init; }
 
 	/// <summary>Set by OverlayPresetStore.Save when the preset is first saved and each time its content changes; null for the built-in Default.</summary>
@@ -198,6 +204,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		// The frame's own bottom-left corner, closer to the edge than the margin, under the map (its text's baseline).
 		const float mapCreditInset = 12;
 		float mapCreditY = height - mapCreditInset - 6;
+		// The credit widget with BackdropCreditId is the one under a track's map-backdrop (OverlayRenderer.BackdropCredit): its right edge on the frame's, the widest credit (Esri's with its labels) fitting.
+		const float mapCreditScale = 0.8f;
+		var widestCredit = new MapSources(new Dictionary<string, string> { [MapProviders.EsriKeyGroup] = "-" });
+		SKRect backdropCreditBox = OverlayElementBounds.GetBounds(OverlayElementType.MapAttribution, 0, 0, 1, text: widestCredit.Attribution(null, showLabels: true));
+		float backdropCreditX = width - mapCreditInset - backdropCreditBox.Right * mapCreditScale;
 		float gMeterCx = width - m - (OverlayElementBounds.GMeterRadius + 3);
 		float gMeterCy = m + (OverlayElementBounds.GMeterRadius + 3);
 		float sunCx = width - m - (OverlayElementBounds.SunRadius + 2);
@@ -233,7 +244,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 			new SpeedGaugeElement { X = speedCx, Y = speedCy },
 			new RollGaugeElement { X = speedCx, Y = rollCy },
 			new MapWidgetElement { X = mapCx, Y = mapCy },
-			new MapAttributionElement { X = mapCreditInset, Y = mapCreditY, Scale = 0.8f },
+			new MapAttributionElement { X = mapCreditInset, Y = mapCreditY, Scale = mapCreditScale },
+			new MapAttributionElement { X = backdropCreditX, Y = mapCreditY, Scale = mapCreditScale, Id = BackdropCreditId },
 			new GMeterElement { X = gMeterCx, Y = gMeterCy },
 			// The opening of the bottom center, one layer: the watermark for the first seconds, fading out, and the progress bar
 			// fading in where it was as soon as it's gone (both counted from the route overview card's end when it's on).
@@ -279,8 +291,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		];
 
 		// Each type's built-in instance gets a stable id (its own type name) rather than a random Guid, so a
-		// freshly created preset's JSON is deterministic. Any additional instance of a type the GUI lets
-		// someone drag on later gets a real Guid.
-		return new OverlayPreset(id, name, [.. elements.Select(e => e with { Id = e.Type.ToString() })]);
+		// freshly created preset's JSON is deterministic - and a second built-in one its own. Any additional instance of a
+		// type the GUI lets someone drag on later gets a real Guid.
+		return new OverlayPreset(id, name, [.. elements.Select(e => e with { Id = e.Id.Length > 0 ? e.Id : e.Type.ToString() })]);
 	}
 }

@@ -126,7 +126,7 @@ public partial class MainWindow
 		if (_summary is null || IsActivePresetDefault) return false;
 		if (e.DataTransfer.TryGetValue(WidgetDragFormat) is not { } name || !Enum.TryParse(name, out type)) return false;
 
-		return IsTypeSupported(type);
+		return IsTypeSupported(type) && CanAddWidget(type);
 	}
 
 	private void OnOverlayCanvasDragOver(object? sender, DragEventArgs e)
@@ -379,6 +379,12 @@ public partial class MainWindow
 	/// </summary>
 	private void ShowHoverIconsFor(OverlayElement element)
 	{
+		if (_summary is null)
+		{
+			HideHoverIcons();
+			return;
+		}
+
 		SKRect bounds = GetElementBounds(element);
 		if (MapFullResPointToCanvas(bounds.Left, bounds.Top) is not { } topLeft ||
 		    MapFullResPointToCanvas(bounds.Right, bounds.Bottom) is not { } bottomRight)
@@ -403,7 +409,7 @@ public partial class MainWindow
 		HoverOutline.Classes.Set("shown", element.Id != _selectedElementId);
 
 		const double labelGap = 4;
-		bool editable = !IsActivePresetDefault;
+		bool editable = CanRemoveElement(element);
 		// Clear of the buttons on the right corner.
 		HoverLabel.MaxWidth = Math.Max(60, width - (editable ? RemoveWidgetButton.Width + WidgetGearHoverButton.Width : WidgetGearHoverButton.Width));
 		double labelTop = topLeft.Y - HoverLabel.Height - labelGap;

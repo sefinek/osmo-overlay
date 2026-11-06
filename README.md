@@ -104,16 +104,16 @@ xattr -dr com.apple.quarantine /Applications/OsmoOverlay.app
 If you only see a warning about an unidentified developer, right-clicking the app and choosing *Open* works too.
 The command-line renderer is inside the bundle: `OsmoOverlay.app/Contents/MacOS/OsmoOverlay.Cli`.
 
-## Supported cameras
+## Supported devices
 Use the original files from the memory card. Footage exported from DJI Mimo has no telemetry.
 
-| Camera                                | Status                  | Read from the recording                                                                     | GPS                                                                |
+| Device                                | Status                  | Read from the recording                                                                     | GPS                                                                |
 |:--------------------------------------|:------------------------|:--------------------------------------------------------------------------------------------|:-------------------------------------------------------------------|
 | DJI Osmo Action 6, Action 5 Pro       | Tested                  | GPS, speed, tilt, G-force, ISO, shutter speed, white balance                                | DJI GPS Bluetooth Remote Controller, or the phone through DJI Mimo |
 | Other DJI Osmo Action (e.g. Action 4) | Untested, should work   | The same                                                                                    | The same                                                           |
 | GoPro HERO12 Black                    | Tested (`.MP4`, `.LRV`) | Tilt, G-force, ISO, shutter speed, white balance, audio level, wind noise, image brightness | None - the camera has no GPS, use an external track                |
 | Other GoPro with GPS                  | Untested                | The same, plus GPS (GPS5/GPS9, covered by synthetic tests only)                             | Built in                                                           |
-| DJI drones (Mavic 2, Mavic Air 2)     | Tested (flight logs)    | Nothing - no telemetry in the MP4, see the flight log below                                 | The flight log                                                     |
+| DJI drones (Mavic 2, Mavic Air 2, Mavic 4 Pro, Flip, Avata 360) | Tested (flight logs)    | Nothing - no telemetry in the MP4, see the flight log below                                 | The flight log                                                     |
 | Insta360 X4                           | Experimental (`.insv`)  | Tilt, G-force                                                                               | Not read yet, use an external track                                |
 
 - Without GPS data the widgets that need it are disabled. Before recording with a DJI remote, wait for a satellite fix.
@@ -134,7 +134,7 @@ You can always add a log manually using **GPS track** in the Source card.
 Logs from newer firmware (version 13 and up) are encrypted.
 To read them, enter a DJI API key (the SDK key for an Open API app in your DJI developer account at [developer.dji.com](https://developer.dji.com)) in *Settings*, or set `OSMOOVERLAY_DJI_API_KEY`.
 Only key blocks from the log's header are sent to DJI, without GPS positions, and the downloaded keys are kept on your computer.
-Tested with Mavic 2 and Air 2 logs; other aircraft are unverified.
+Tested with Mavic 2, Mavic Air 2, Mavic 4 Pro, Flip and Avata 360 logs; other aircraft are unverified.
 
 Height is above the take-off point, not sea level, so the Elevation widget is off in the *DJI drones* and *FPV drones* layouts.
 Flight mode names are confirmed only for a few modes, and the remote sticks assume mode 2.
@@ -249,3 +249,7 @@ Commercial use beyond those permissions, including monetized videos, sponsored c
 Contact [contact@sefinek.net](mailto:contact@sefinek.net) to agree on terms before starting such use.
 
 Third-party libraries, tools and maps retain their own licenses and terms.
+
+See [Licensing and video publication](LICENSING.md) for examples, map obligations
+and an explanation of how commercial purpose differs from a channel's monetization
+status. This guide and the app's summary do not amend the [license](LICENSE).

@@ -116,6 +116,23 @@ public sealed class FlightLogTests
 	}
 
 	[TestMethod]
+	[DataRow(100, 10.0, 10.0)]
+	[DataRow(150, 10.0, 15.0)]
+	[DataRow(1503, 100.2, 15.0)]
+	[DataRow(100, 8.0, 10.0)]
+	[DataRow(100, 0.0, 10.0)]
+	public void Decode_TheSampleRateIsTheOsdCountOverTheFlightTimeOfTheDetails(int records, double flightSeconds, double expectedHz)
+	{
+		var builder = new FlightLogBuilder(12, Started) { DurationSeconds = flightSeconds };
+		for (int i = 0; i < records; i++) builder.Add(Osd, OsdRecord(50, 20, 0.1 * i * 2, 0, 0, 10, true));
+
+		IReadOnlyList<FlightSample> samples = FlightLog.Parse(builder.Build()).Decode(null).Samples;
+
+		Assert.AreEqual((records - 1) / expectedHz, samples[^1].Seconds, 1e-9);
+		Assert.AreEqual(0.2 * expectedHz, samples[records / 2].VerticalSpeedMs!.Value, 1e-6);
+	}
+
+	[TestMethod]
 	public void Decode_ARecordWhoseFeaturePointHasNoKeyIsLeftOut()
 	{
 		var builder = new FlightLogBuilder(14, Started);

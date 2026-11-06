@@ -144,7 +144,7 @@ List<string> Package(string rid, Flavor flavor)
 	Publish(cliProject, rid, flavor, publishDir);
 	if (isMac) WriteAppBundle(Path.Combine(packageDir, "OsmoOverlay.app", "Contents"));
 	if (rid.StartsWith("linux-", StringComparison.Ordinal)) WriteDesktopEntryInstaller(packageDir);
-	foreach (string document in new[] { "README.md", "LICENSE" })
+	foreach (string document in new[] { "README.md", "LICENSE", "LICENSING.md" })
 		File.Copy(Path.Combine(root, document), Path.Combine(packageDir, document));
 
 	List<string> produced = [];

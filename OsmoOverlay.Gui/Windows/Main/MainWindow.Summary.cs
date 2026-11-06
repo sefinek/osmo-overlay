@@ -470,10 +470,11 @@ public partial class MainWindow
 		// Without a GPS fix there's nothing to measure: a dash, not a "0.00 km" that reads like a recording that never moved.
 		bool hasGps = _availability.GpsFix;
 		TeleDistance.Text = hasGps ? $"{t.TotalDistanceMeters / 1000.0:0.00} km" : "-";
-		TeleAltitude.Text = hasGps ? $"{t.MinAltitudeMeters:0} - {t.MaxAltitudeMeters:0} m" : "-";
+		bool hasAltitude = hasGps && _availability.AltitudeAboveSea;
+		TeleAltitude.Text = hasAltitude ? $"{t.MinAltitudeMeters:0} - {t.MaxAltitudeMeters:0} m" : "-";
 		string? noGpsFixTip = hasGps ? null : Strings.Summary_NoGpsFixTip;
 		ToolTip.SetTip(TeleDistance, noGpsFixTip);
-		ToolTip.SetTip(TeleAltitude, noGpsFixTip);
+		ToolTip.SetTip(TeleAltitude, hasGps && !hasAltitude ? Strings.Summary_NoDroneAltitudeTip : noGpsFixTip);
 		ShowMaxSpeedInfo();
 	}
 

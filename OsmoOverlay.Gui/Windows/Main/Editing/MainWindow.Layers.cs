@@ -137,7 +137,7 @@ public partial class MainWindow
 		double? appear = shown.AppearAtSeconds is { } start && !double.IsFinite(start) ? LayerTracks.OutputDurationSeconds : shown.AppearAtSeconds;
 		appear = ElementAnimation.VisibleFrom(appear, RouteIntroEnd);
 		bool startLocked = _previewPlayer.SpeedGateSeconds(element) is not null, endLocked = _previewPlayer.ArrivalHideSeconds(element) is not null;
-		bool fixedTiming = element is GpsAlertElement || (element is MapAttributionElement && creditLocked);
+		bool fixedTiming = element is GpsAlertElement || element is MapAttributionElement { Id: OverlayPreset.BackdropCreditId } || (element is MapAttributionElement && creditLocked);
 		string? hint = element is GpsAlertElement ? Strings.Timeline_LockedGpsAlert
 			: fixedTiming ? Strings.Timeline_LockedMapCredit
 			: startLocked && endLocked ? Strings.Timeline_LockedStart + Environment.NewLine + Strings.Timeline_LockedEnd
