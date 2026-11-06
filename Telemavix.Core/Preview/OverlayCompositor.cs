@@ -146,7 +146,7 @@ internal sealed class OverlayCompositor : IDisposable
 		}
 	}
 
-	/// <summary>Changes the renderer (layout, watermark, route joins, a map mosaic) and composes the still again.</summary>
+	/// <summary>Changes the renderer (layout, route joins, a map mosaic) and composes the still again.</summary>
 	public ComposedPreviewFrame? Change(Action<OverlayRenderer> change)
 	{
 		lock (_lock)
