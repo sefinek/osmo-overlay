@@ -44,8 +44,12 @@ internal static class SpeedColorScale
 		int i = (int)x;
 		if (i >= Buckets - 1) return colors[^1];
 
-		SKColor a = colors[i], b = colors[i + 1];
-		double t = x - i;
+		return Blend(colors[i], colors[i + 1], x - i);
+	}
+
+	/// <summary>Two colors blended per channel in sRGB: for colors close enough together that Oklab would change nothing visible, and far cheaper.</summary>
+	internal static SKColor Blend(SKColor a, SKColor b, double t)
+	{
 		return new SKColor((byte)Math.Round(a.Red + (b.Red - a.Red) * t), (byte)Math.Round(a.Green + (b.Green - a.Green) * t),
 			(byte)Math.Round(a.Blue + (b.Blue - a.Blue) * t), (byte)Math.Round(a.Alpha + (b.Alpha - a.Alpha) * t));
 	}

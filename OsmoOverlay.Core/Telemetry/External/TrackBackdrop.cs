@@ -394,11 +394,6 @@ public sealed class TrackBackdrop : IDisposable
 		return Math.Abs(a.Red - b.Red) <= SolidColorTolerance && Math.Abs(a.Green - b.Green) <= SolidColorTolerance && Math.Abs(a.Blue - b.Blue) <= SolidColorTolerance;
 	}
 
-	private static SKColor Average(SKColor a, SKColor b)
-	{
-		return new SKColor((byte)((a.Red + b.Red) / 2), (byte)((a.Green + b.Green) / 2), (byte)((a.Blue + b.Blue) / 2), (byte)((a.Alpha + b.Alpha) / 2));
-	}
-
 	private void StrokeTrail(SKCanvas canvas, TrailShape shape, SKRect window, float scale, int height, byte lineAlpha)
 	{
 		float stroke = StrokeWidth(scale, height);
@@ -433,7 +428,7 @@ public sealed class TrackBackdrop : IDisposable
 				{
 					if (IsNearlyOneColor(segment.FromColor, segment.ToColor) || segment.From == segment.To)
 					{
-						_trailLine.Color = Average(segment.FromColor, segment.ToColor);
+						_trailLine.Color = SpeedColorScale.Blend(segment.FromColor, segment.ToColor, 0.5);
 						canvas.DrawLine(segment.From, segment.To, _trailLine);
 						continue;
 					}

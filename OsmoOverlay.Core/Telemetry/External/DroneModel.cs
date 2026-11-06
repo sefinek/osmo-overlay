@@ -61,6 +61,36 @@ internal sealed class DroneModel : IDisposable
 		return builder.Detach();
 	}
 
+
+	/// <summary>How one rotor looks: its color (front orange, rear light) brighter on the raised side, its disc fuller the faster it turns, and its blades smeared behind as a camera's exposure would.</summary>
+	private readonly struct RotorLook(DroneAttitude attitude, int x, int y, RotorSpin.RotorPose pose)
+	{
+		private readonly double _pace = Math.Clamp(pose.RevolutionsPerSecond / RotorSpin.TopRevolutionsPerSecond, 0, 1.3);
+		private readonly double _smear = pose.RevolutionsPerSecond * 360 * Exposure;
+		private readonly SKColor _color = y > 0 ? FrontRotor : RearRotor;
+
+		private int Direction => x * y > 0 ? 1 : -1;
+		public int GhostCount => _smear > 3 ? Ghosts : 1;
+		public SKColor Fill => _color.WithAlpha((byte)(24 + 70 * Math.Min(_pace, 1)));
+
+		public SKColor Ring
+		{
+			get
+			{
+				double raised = Math.Clamp((attitude.PitchDegrees * y - attitude.RollDegrees * x) * 4, -70, 70);
+				return _color.WithAlpha((byte)Math.Clamp(190 + raised, 90, 255));
+			}
+		}
+
+		/// <summary>The `ghost`-th copy of a blade (0 is the one at the pose): its angle in degrees and its color, fainter the further back.</summary>
+		public (double Degrees, SKColor Color) Ghost(int ghost)
+		{
+			int count = GhostCount;
+			double behind = count == 1 ? 0 : _smear * ghost / (count - 1);
+			double fade = count == 1 ? 1 : 1 - 0.8 * ghost / (count - 1);
+			return (pose.Revolutions * 360 * Direction - behind * Direction, Blade.WithAlpha((byte)((235 - 110 * Math.Min(_pace, 1)) * fade)));
+		}
+	}
 	/// <summary>One blade from the hub outward in a unit box (length 0..1, half-width -1..1): narrow at the root, widest two thirds out, a rounded tip.</summary>
 	private static SKPath BladeOf()
 	{
@@ -136,29 +166,22 @@ internal sealed class DroneModel : IDisposable
 		for (int i = 0; i < RotorSpin.Count; i++)
 		{
 			(int x, int y) = RotorSpin.Corners[i];
-			SKColor color = y > 0 ? FrontRotor : RearRotor;
-			double raised = Math.Clamp((attitude.PitchDegrees * y - attitude.RollDegrees * x) * 4, -70, 70);
+			var look = new RotorLook(attitude, x, y, rotors[i]);
 			float cx = x * reach, cy = -y * reach;
-			int direction = x * y > 0 ? 1 : -1;
-			double pace = Math.Clamp(rotors[i].RevolutionsPerSecond / RotorSpin.TopRevolutionsPerSecond, 0, 1.3);
 
-			_rotorFill.Color = color.WithAlpha((byte)(24 + 70 * Math.Min(pace, 1)));
+			_rotorFill.Color = look.Fill;
 			canvas.DrawCircle(cx, cy, rotorRadius, _rotorFill);
-			_rotorRing.Color = color.WithAlpha((byte)Math.Clamp(190 + raised, 90, 255));
+			_rotorRing.Color = look.Ring;
 			canvas.DrawCircle(cx, cy, rotorRadius, _rotorRing);
 
 			canvas.Save();
 			canvas.Translate(cx, cy);
-			double angle = rotors[i].Revolutions * 360 * direction;
-			double smear = rotors[i].RevolutionsPerSecond * 360 * Exposure;
-			int ghosts = smear > 3 ? Ghosts : 1;
-			for (int g = ghosts - 1; g >= 0; g--)
+			for (int g = look.GhostCount - 1; g >= 0; g--)
 			{
-				double behind = ghosts == 1 ? 0 : smear * g / (ghosts - 1);
-				double fade = ghosts == 1 ? 1 : 1 - 0.8 * g / (ghosts - 1);
-				_blade.Color = Blade.WithAlpha((byte)((235 - 110 * Math.Min(pace, 1)) * fade));
+				(double degrees, SKColor color) = look.Ghost(g);
+				_blade.Color = color;
 				canvas.Save();
-				canvas.RotateDegrees((float)(angle - behind * direction));
+				canvas.RotateDegrees((float)degrees);
 				canvas.Scale(bladeLength, bladeHalfWidth);
 				canvas.DrawPath(_bladeShape, _blade);
 				canvas.RotateDegrees(180);
@@ -263,28 +286,23 @@ internal sealed class DroneModel : IDisposable
 			double cx = x * arm, cy = y * arm;
 			parts.Add((Nearness(cx, cy, level), () =>
 			{
-				SKColor color = y > 0 ? FrontRotor : RearRotor;
-				double raised = Math.Clamp((attitude.PitchDegrees * y - attitude.RollDegrees * x) * 4, -70, 70);
-				double pace = Math.Clamp(pose.RevolutionsPerSecond / RotorSpin.TopRevolutionsPerSecond, 0, 1.3);
+				var look = new RotorLook(attitude, x, y, pose);
 				using SKPath disc = Polygon(Enumerable.Range(0, 28).Select(k =>
 					Project(cx + rotorRadius * Math.Cos(k * 2 * Math.PI / 28), cy + rotorRadius * Math.Sin(k * 2 * Math.PI / 28), level)));
-				_rotorFill.Color = color.WithAlpha((byte)(24 + 70 * Math.Min(pace, 1)));
+				_rotorFill.Color = look.Fill;
 				canvas.DrawPath(disc, _rotorFill);
 
-				int direction = x * y > 0 ? 1 : -1;
-				double angle = pose.Revolutions * 360 * direction, smear = pose.RevolutionsPerSecond * 360 * Exposure;
-				int ghosts = smear > 3 ? Ghosts : 1;
 				_bladeLine.StrokeWidth = Math.Max(2f, scale / 26);
-				for (int g = ghosts - 1; g >= 0; g--)
+				for (int g = look.GhostCount - 1; g >= 0; g--)
 				{
-					double behind = ghosts == 1 ? 0 : smear * g / (ghosts - 1), fade = ghosts == 1 ? 1 : 1 - 0.8 * g / (ghosts - 1);
-					double a = AngleMath.DegToRad(angle - behind * direction);
-					_bladeLine.Color = Blade.WithAlpha((byte)((235 - 110 * Math.Min(pace, 1)) * fade));
+					(double degrees, SKColor color) = look.Ghost(g);
+					double a = AngleMath.DegToRad(degrees);
+					_bladeLine.Color = color;
 					double bx = rotorRadius * 0.92 * Math.Cos(a), by = rotorRadius * 0.92 * Math.Sin(a);
 					canvas.DrawLine(Project(cx - bx, cy - by, level), Project(cx + bx, cy + by, level), _bladeLine);
 				}
 
-				_rotorRing.Color = color.WithAlpha((byte)Math.Clamp(190 + raised, 90, 255));
+				_rotorRing.Color = look.Ring;
 				canvas.DrawPath(disc, _rotorRing);
 				_droneFill.Color = Hub;
 				canvas.DrawCircle(Project(cx, cy, level), Math.Max(2f, scale / 22), _droneFill);
