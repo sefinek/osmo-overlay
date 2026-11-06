@@ -205,7 +205,7 @@
     <value>Darmowy serwer społeczności: nie może być nadmiernie obciążany, kafelki mogą się wczytywać wolniej.</value>
   </data>
   <data name="Map_NoteEsri" xml:space="preserve">
-    <value>Klucz z darmowego konta ArcGIS Location Platform: 2 mln kafelków miesięcznie, także do użytku komercyjnego. Esri pozwala pokazać swoje mapy w filmie, jeśli podpiszesz Esri i źródła zdjęć. Regulamin nie pozwala przechowywać kafelków, więc program nie zapisuje ich na dysku.</value>
+    <value>Darmowe konto ArcGIS Location Platform zapewnia klucz API i limit 2 mln kafelków miesięcznie, także do użytku komercyjnego. W filmie wymagany jest podpis Esri oraz źródeł zdjęć. Zgodnie z regulaminem aplikacja nie zapisuje kafelków na dysku.</value>
   </data>
   <data name="Map_NoteCarto" xml:space="preserve">
     <value>Darmowy klucz dostaniesz bez zakładania konta: do 5 mln zapytań miesięcznie przy użytku niekomercyjnym, przy komercyjnym do 1 mln.</value>

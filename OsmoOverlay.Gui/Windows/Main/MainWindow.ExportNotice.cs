@@ -21,7 +21,7 @@ public partial class MainWindow
 	private IReadOnlyList<ExportMap> CurrentExportMaps()
 	{
 		IReadOnlyList<OverlayElement>? layout = _overlayPresets.Count > 0 ? OverlayLayers.Drawn(ActiveElements, ActiveLayers) : null;
-		return ExportMaps.Used(layout, OverlaySettingsStore.Load());
+		return ExportMaps.Used(layout, OverlaySettingsStore.Load(), _trackOnly);
 	}
 
 	private IReadOnlyList<ExportMap> QueuedExportMaps()

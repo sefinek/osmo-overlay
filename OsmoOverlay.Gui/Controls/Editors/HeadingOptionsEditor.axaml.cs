@@ -25,19 +25,24 @@ public partial class HeadingOptionsEditor : UserControl
 	/// <summary>Raised on user edits only, not while Populate fills the controls.</summary>
 	public event Action<HeadingOptions>? Changed;
 
-	public void Populate(TrailOverlayElement element)
+	/// <summary>The dot option is offered only when the loaded data has a drone's yaw (a flight log) - for a camera it could never fire.</summary>
+	public void Populate(TrailOverlayElement element, bool droneData)
 	{
 		_populating = true;
+		_droneData = droneData;
 		StabilizeCheck.IsChecked = element.StabilizeHeading;
 		DotCheck.IsChecked = element.DotWhenNotFacingTravel;
+		DotCheck.IsVisible = DotHint.IsVisible = droneData;
 		ToleranceBox.Value = (decimal)element.DroneFacingToleranceDegrees;
 		ShowTolerance(element.DotWhenNotFacingTravel);
 		_populating = false;
 	}
 
+	private bool _droneData;
+
 	private void ShowTolerance(bool visible)
 	{
-		ToleranceLabel.IsVisible = ToleranceBox.IsVisible = visible;
+		ToleranceLabel.IsVisible = ToleranceBox.IsVisible = visible && _droneData;
 	}
 
 	private void OnChanged()

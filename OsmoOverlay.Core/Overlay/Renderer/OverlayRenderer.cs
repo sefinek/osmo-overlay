@@ -268,7 +268,7 @@ public sealed partial class OverlayRenderer : IDisposable
 		_headingArrow.Dispose();
 		foreach (SKPathEffect effect in _dashEffects.Values) effect.Dispose();
 		DisposeRoutes(_compassRoutes);
-		DisposeRoutes(_mapRoutes);
+		foreach (MapLayer layer in _mapLayers.Values) layer.Dispose();
 		foreach (SKFont font in _fontCache.Values) font.Dispose();
 		// A family that isn't installed on this machine resolves to _hudTypeface itself (see
 		// ResolveTypeface's fallback) - skip those entries so it isn't disposed twice.
@@ -278,7 +278,6 @@ public sealed partial class OverlayRenderer : IDisposable
 				typeface.Dispose();
 		}
 
-		_mapMosaic?.Dispose();
 		_routeIntroMosaic?.Dispose();
 		ClearRouteIntroLevels();
 		_routeIntroCard?.Dispose();
@@ -318,9 +317,8 @@ public sealed partial class OverlayRenderer : IDisposable
 	{
 		_rotorPhases = null;
 		_trail.Clear();
-		_trailPixels.Clear();
+		foreach (MapLayer layer in _mapLayers.Values) layer.ResetTrail();
 		DisposeRoutes(_compassRoutes);
-		DisposeRoutes(_mapRoutes);
 		_routeIntroCard?.Dispose();
 		_routeIntroCard = null;
 		_routeIntroBackdrop?.Dispose();
@@ -331,7 +329,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 	/// <summary>False once SetFrames brought in route points outside what the map widget's mosaic was built around.</summary>
 	public bool MapMosaicCoversRoute =>
-		_mapMosaic is not { } mosaic || mosaic.Route.Contains(GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))));
+		_mapLayers.Values.All(l => l.Mosaic is not { } mosaic || mosaic.Route.Contains(GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude)))));
 
 	private void ApplyFrames(IReadOnlyList<DerivedFrame> allFrames, double startAltitude, double observedMaxSpeedKmh)
 	{

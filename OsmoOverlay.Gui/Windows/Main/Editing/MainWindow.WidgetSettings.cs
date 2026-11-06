@@ -576,23 +576,14 @@ public partial class MainWindow
 	}
 
 	/// <summary>
-	///     A best-available style picked here is the default style (OverlaySettings.DefaultMapProvider, which the first-run
-	///     window's Map step shows too) and the widget follows it; a single provider is the widget's own.
+	///     A pick, a best-available style included, is the edited widget's own: it never touches the default style
+	///     (OverlaySettings.DefaultMapProvider), so other Map widgets keep their sources.
 	/// </summary>
 	private void OnMapSourceChanged(string providerId)
 	{
 		if (_suppressOverlayEvents || _editingElementId is not { } id) return;
 
-		bool style = providerId is MapProviders.AutoSatelliteId or MapProviders.StreetsAutoId;
-		if (style)
-		{
-			OverlaySettings settings = OverlaySettingsStore.Load();
-			string? defaultStyle = providerId == MapProviders.StreetsAutoId ? MapProviders.StreetsAutoId : null;
-			if (settings.DefaultMapProvider != defaultStyle) OverlaySettingsStore.Save(settings with { DefaultMapProvider = defaultStyle });
-			OnMapSourcesShared();
-		}
-
-		UpdateElement(id, el => el is MapWidgetElement m ? m with { MapProviderId = style ? null : providerId } : el);
+		UpdateElement(id, el => el is MapWidgetElement m ? m with { MapProviderId = providerId } : el);
 		UpdateMapCreditPanel();
 	}
 

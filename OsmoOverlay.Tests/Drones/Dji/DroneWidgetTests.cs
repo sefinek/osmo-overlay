@@ -83,7 +83,7 @@ public sealed class DroneWidgetTests
 	{
 		var drone = OverlayPreset.CreateDrone("x", "Drones");
 
-		Assert.IsTrue(drone.Elements.All(e => e.AppearAtSeconds == OverlayPreset.CreateDefault("d", "D").Elements.Single(o => o.Id == e.Id).AppearAtSeconds));
+		Assert.IsTrue(drone.Elements.Where(e => e is not ProfileChartElement).All(e => e.AppearAtSeconds == OverlayPreset.CreateDefault("d", "D").Elements.Single(o => o.Id == e.Id).AppearAtSeconds));
 		Assert.IsTrue(drone.Elements.All(e => e.AnimationType == OverlayPreset.CreateDefault("d", "D").Elements.Single(o => o.Id == e.Id).AnimationType));
 		Assert.IsFalse(drone.Elements.Single(e => e is SunWidgetElement).Visible);
 		Assert.IsFalse(drone.Elements.Single(e => e is GMeterElement).Visible);

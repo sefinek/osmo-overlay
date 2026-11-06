@@ -799,12 +799,12 @@ public sealed class PreviewPlayer : IDisposable
 	///     outside the compositor's lock (see OverlayRenderer.BuildMapMosaicAsync), only the swap into the renderer and
 	///     the still composed again happen inside it.
 	/// </summary>
-	private async Task PrepareMosaicAsync<TKey>(OpenRecording recording,
-		Func<OverlayRenderer, Action<int, int>, CancellationToken, Task<(RouteMapMosaic?, TKey)>> build,
-		Action<OverlayRenderer, RouteMapMosaic?, TKey> apply, string progressText, string completeText, string failureText, Action<int, int> progress,
-		CancellationToken ct)
+	private async Task PrepareMosaicAsync<TMosaic, TKey>(OpenRecording recording,
+		Func<OverlayRenderer, Action<int, int>, CancellationToken, Task<(TMosaic?, TKey)>> build,
+		Action<OverlayRenderer, TMosaic?, TKey> apply, string progressText, string completeText, string failureText, Action<int, int> progress,
+		CancellationToken ct) where TMosaic : class, IDisposable
 	{
-		RouteMapMosaic? mosaic;
+		TMosaic? mosaic;
 		TKey key;
 		try
 		{

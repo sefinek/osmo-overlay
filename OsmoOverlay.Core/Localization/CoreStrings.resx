@@ -205,7 +205,7 @@
     <value>A free community server: it mustn't be overloaded, and tiles may load more slowly.</value>
   </data>
   <data name="Map_NoteEsri" xml:space="preserve">
-    <value>A key from a free ArcGIS Location Platform account: 2 million tiles a month, commercial use included. Esri lets you show its maps in a film if you credit Esri and the imagery's sources. Its terms don't allow storing tiles, so the app doesn't save them to disk.</value>
+    <value>A free ArcGIS Location Platform account provides an API key and a monthly allowance of 2 million tiles, including for commercial use. Videos must credit Esri and the imagery sources. The app does not save tiles to disk, as required by the terms.</value>
   </data>
   <data name="Map_NoteCarto" xml:space="preserve">
     <value>You get a free key without making an account: up to 5 million requests a month for non-commercial use, up to 1 million for commercial use.</value>

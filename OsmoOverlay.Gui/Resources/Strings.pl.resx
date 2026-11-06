@@ -1788,7 +1788,7 @@ Jeśli anulujesz, aplikacja zapyta o to ponownie przy następnym uruchomieniu. W
     <value>Warunki własnego serwera zna tylko jego dostawca - sprawdź je przed publikacją filmu.</value>
   </data>
   <data name="MapTerms_Disclaimer" xml:space="preserve">
-    <value>Na podstawie regulaminów dostawców z 4 października 2026 r. To nie porada prawna - przed publikacją filmu sprawdź aktualne warunki.</value>
+    <value>Stan regulaminów dostawców: 4 października 2026 r. Przed publikacją sprawdź aktualne warunki. Informacje mają charakter pomocniczy i nie stanowią porady prawnej.</value>
   </data>
   <data name="MapTerms_NotStated" xml:space="preserve">
     <value>regulamin o tym nie mówi</value>
@@ -5369,61 +5369,61 @@ Punkty GPS: {2} · przerwy w pomiarze czasu: {3}</value>
     <value>Prawa do wyeksportowanego filmu</value>
   </data>
   <data name="ExportNotice_Confirm" xml:space="preserve">
-    <value>Rozumiem</value>
+    <value>Akceptuję warunki licencji</value>
   </data>
   <data name="Main_ExportRights" xml:space="preserve">
     <value>Prawa do eksportu</value>
   </data>
   <data name="Main_ExportRightsHint" xml:space="preserve">
-    <value>Co wolno zrobić z wyeksportowanym filmem i jakie warunki mają mapy w bieżącym eksporcie.</value>
+    <value>Zasady korzystania z programu i map użytych w bieżącym eksporcie.</value>
   </data>
   <data name="ExportNotice_Intro" xml:space="preserve">
-    <value>Co wolno zrobić z wyeksportowanym filmem. Licencja programu dotyczy programu, a nie Twojego nagrania, muzyki ani map.</value>
+    <value>Sprawdź zasady publikacji filmu oraz warunki korzystania z użytych materiałów i map.</value>
   </data>
   <data name="ExportNotice_ProgramHeader" xml:space="preserve">
-    <value>Program - PolyForm Noncommercial 1.0.0</value>
+    <value>Licencja programu - PolyForm Noncommercial 1.0.0</value>
   </data>
   <data name="ExportNotice_Allow_Private" xml:space="preserve">
-    <value>Użycie prywatne, do własnych celów</value>
+    <value>Użytek prywatny</value>
   </data>
   <data name="ExportNotice_Allow_Free" xml:space="preserve">
-    <value>Publikacja filmu, na którym nie zarabiasz (np. YouTube z wyłączoną monetyzacją)</value>
+    <value>Publikacja bez zarabiania na filmie (np. na YouTube z wyłączoną monetyzacją)</value>
   </data>
   <data name="ExportNotice_Deny_Monetized" xml:space="preserve">
-    <value>Publikacja filmu na kanale z włączoną monetyzacją (np. Program Partnerski YouTube)</value>
+    <value>Publikacja na kanale z włączoną monetyzacją (np. w Programie Partnerskim YouTube)</value>
   </data>
   <data name="ExportNotice_Deny_Earning" xml:space="preserve">
-    <value>Zarabianie na filmie: reklamy, sponsoring, sprzedaż</value>
+    <value>Zarabianie na filmie przez reklamy, sponsoring lub sprzedaż</value>
   </data>
   <data name="ExportNotice_Deny_Paid" xml:space="preserve">
-    <value>Odpłatne renderowanie filmów dla innych osób</value>
+    <value>Płatne renderowanie filmów dla innych osób</value>
   </data>
   <data name="ExportNotice_Deny_Business" xml:space="preserve">
-    <value>Używanie programu w firmie lub w innym celu komercyjnym</value>
+    <value>Korzystanie z programu w firmie lub w innych celach komercyjnych</value>
   </data>
   <data name="ExportNotice_ProgramNote" xml:space="preserve">
-    <value>Komercyjne użycie wymaga zgody autora, chyba że obejmuje je wyjątek wskazany w licencji. Decyduje pełny tekst licencji.</value>
+    <value>Użytek komercyjny wymaga zgody autora, o ile nie obejmuje go wyjątek opisany w licencji. Szczegóły znajdziesz w pełnym tekście licencji.</value>
   </data>
   <data name="ExportNotice_MaterialsHeader" xml:space="preserve">
-    <value>Twoje nagranie, muzyka i mapy</value>
+    <value>Prawa do nagrania, muzyki i map</value>
   </data>
   <data name="ExportNotice_MaterialsText" xml:space="preserve">
-    <value>Licencja programu nie jest licencją na wyeksportowany film i nie nadaje ani nie przenosi praw do Twoich materiałów. Za prawa do nagrania, muzyki i map odpowiadasz Ty. Zgoda dostawcy map na użycie komercyjne dotyczy tylko map i nie znosi ograniczeń licencji programu.</value>
+    <value>Licencja programu nie zmienia praw do twoich materiałów. Upewnij się, że możesz wykorzystać nagranie, muzykę i mapy w planowany sposób. Zgoda dostawcy map na użytek komercyjny nie znosi ograniczeń licencji programu.</value>
   </data>
   <data name="ExportNotice_MapsHeader" xml:space="preserve">
     <value>Mapy w tym eksporcie</value>
   </data>
   <data name="ExportNotice_NoMaps" xml:space="preserve">
-    <value>Brak, więc warunki dostawców map go nie dotyczą. Zielony ekran i kanał alfa mogą zawierać mapy, jeśli widżet mapy jest włączony.</value>
+    <value>Ten eksport nie zawiera map, więc warunki ich dostawców nie mają zastosowania. Eksport z zielonym ekranem lub kanałem alfa również może zawierać mapę, jeśli jej widżet jest włączony.</value>
   </data>
   <data name="ExportNotice_CustomMap" xml:space="preserve">
-    <value>Własne źródło: aplikacja nie zna jego licencji i nie deklaruje żadnych praw - sprawdź warunki dostawcy.</value>
+    <value>Własne źródło map: sprawdź warunki dostawcy. Aplikacja nie ma informacji o jego licencji.</value>
   </data>
   <data name="ExportNotice_ShareAlike" xml:space="preserve">
     <value>Obrazy tej mapy są na licencji CC BY-SA. Obowiązek share-alike dotyczy mapy w wykorzystanym kształcie; czy obejmuje cały film, zależy od sposobu włączenia mapy - aplikacja tego nie zakłada.</value>
   </data>
   <data name="ExportNotice_Footer" xml:space="preserve">
-    <value>To okno nie obiecuje uprawnień do przyszłych eksportów - możesz zmienić mapę, plan lub materiały. Warunki bieżącego eksportu sprawdzisz przyciskiem „Prawa do eksportu”. Oznaczenie map zostaje w obrazie, a obowiązki dotyczą także nałożenia eksportu z zielonym ekranem lub kanałem alfa na film w innym edytorze.</value>
+    <value>Warunki dotyczą bieżącego eksportu. Sprawdź je ponownie po zmianie mapy, planu usługi lub materiałów. Obowiązują również przy montażu eksportu z zielonym ekranem lub kanałem alfa w innym edytorze, w tym wymóg zachowania podpisów map.</value>
   </data>
   <data name="ExportNotice_LicenseLink" xml:space="preserve">
     <value>Licencja programu (PolyForm)</value>

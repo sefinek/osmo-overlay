@@ -121,7 +121,7 @@ public sealed class OverlayPresetTests
 
 		Assert.IsTrue(drone.Elements.Select(e => e.Id).All(id => fpv.Elements.Any(e => e.Id == id)));
 		Assert.AreEqual(fpv.Elements.Count, fpv.Elements.Select(e => e.Id).Distinct().Count());
-		foreach (OverlayElementType type in new[] { OverlayElementType.FlightMode, OverlayElementType.ElapsedTimeText, OverlayElementType.VerticalSpeed, OverlayElementType.RcSticks, OverlayElementType.AttitudeIndicator, OverlayElementType.Orientation3D, OverlayElementType.DateTimeText })
+		foreach (OverlayElementType type in new[] { OverlayElementType.FlightMode, OverlayElementType.ElapsedTimeText, OverlayElementType.VerticalSpeed, OverlayElementType.RcSticks, OverlayElementType.AttitudeIndicator, OverlayElementType.Orientation3D, OverlayElementType.DateTimeText, OverlayElementType.Watermark })
 			Assert.IsTrue(fpv.Elements.Single(e => e.Type == type).Visible, type.ToString());
 		Assert.IsTrue(fpv.Elements.Single(e => e is MapWidgetElement).Visible && fpv.Elements.Single(e => e is MapAttributionElement).Visible, "the map and its credit go together");
 		foreach (OverlayElementType type in new[] { OverlayElementType.ProfileChart, OverlayElementType.TripProgressBar })
@@ -145,13 +145,16 @@ public sealed class OverlayPresetTests
 	{
 		var basis = OverlayPreset.CreateDefault("d", "Default");
 		var drone = OverlayPreset.CreateDrone("x", "Drones");
-		double credit = basis.Elements.OfType<WatermarkElement>().Single().DisappearAtSeconds!.Value;
 		foreach (OverlayPreset preset in new[] { basis, drone })
 		{
+			double credit = preset.Elements.OfType<WatermarkElement>().Single().DisappearAtSeconds!.Value;
 			OverlayElement chart = Get(preset, OverlayElementType.ProfileChart);
 			Assert.AreEqual(credit, chart.AppearAtSeconds);
 			Assert.AreEqual(nameof(OverlayElementType.Watermark), chart.LayerId);
 		}
+
+		Assert.AreEqual(12, drone.Elements.OfType<WatermarkElement>().Single().DisappearAtSeconds);
+		Assert.AreEqual(12, OverlayPreset.CreateFpv("y", "FPV").Elements.OfType<WatermarkElement>().Single().DisappearAtSeconds);
 
 		List<DerivedFrame> frames = [];
 		for (int i = 0; i < 30; i++)

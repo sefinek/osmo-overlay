@@ -94,12 +94,25 @@ internal static class LogPanelExtensions
 			if (statusKey is not null && state.Statuses.TryGetValue(statusKey, out int index))
 			{
 				Entry entry = state.Entries[index];
-				int difference = text.Length - (entry.Run.Text?.Length ?? 0);
-				entry.Run.Text = text;
-				state.Length += difference;
-				for (int i = index + 1; i < state.Entries.Count; i++) state.Entries[i].Start += difference;
-				logScroll.ScrollToEnd();
-				return;
+				if (index == state.Entries.Count - 1)
+				{
+					int difference = text.Length - (entry.Run.Text?.Length ?? 0);
+					entry.Run.Text = text;
+					state.Length += difference;
+					logScroll.ScrollToEnd();
+					return;
+				}
+
+				// Other lines came after it: the status moves to the end, so its updates stay in view instead of changing out of sight.
+				int removed = (entry.Run.Text?.Length ?? 0) + Environment.NewLine.Length;
+				InlineCollection existing = logBox.Inlines!;
+				existing.RemoveAt(index * 2);
+				existing.RemoveAt(index * 2);
+				state.Entries.RemoveAt(index);
+				state.Statuses.Remove(statusKey);
+				state.Length -= removed;
+				for (int i = index; i < state.Entries.Count; i++) state.Entries[i].Start -= removed;
+				foreach (string key in state.Statuses.Where(s => s.Value > index).Select(s => s.Key).ToList()) state.Statuses[key]--;
 			}
 			var run = new Run(text);
 

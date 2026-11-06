@@ -4,6 +4,7 @@ using OsmoOverlay.Core.Mapping;
 using OsmoOverlay.Core.Telemetry;
 using SkiaSharp;
 using MapMosaicKey = (string Url, int Zoom, double MaxZoomOutFactor, string? LabelsUrl);
+using ElementMapKey = (string? ProviderId, int Zoom, double MaxZoomOutFactor, bool? Labels);
 
 namespace OsmoOverlay.Core.Overlay;
 
@@ -22,8 +23,12 @@ public sealed partial class OverlayRenderer
 	private const double MapZoomSmoothingSeconds = 2.5;
 	// Per Map widget: two of them share one mosaic but each has its own trail fit and smoothing.
 	private readonly Dictionary<string, ResettableEma> _mapZoomEmas = [];
-	private RouteMapMosaic? _mapMosaic;
-	private MapMosaicKey? _preparedMapKey;
+	// One layer per distinct tile source/zoom among the visible Map widgets: a widget draws the layer its own settings name
+	// (_mapLayerOf), so two Map widgets with different sources each show their own map. Layers and the widgets' assignment are
+	// swapped together in ApplyMapMosaic; _preparedMaps is what the last fetch was asked for.
+	private Dictionary<MapMosaicKey, MapLayer> _mapLayers = [];
+	private Dictionary<ElementMapKey, MapMosaicKey> _mapLayerOf = [];
+	private MapAssignments? _preparedMaps;
 	// Nearest-neighbour turned the tiles into noise wherever the crop is scaled (the preview, a zoomed-out map). No
 	// mipmaps: the mosaic is drawn every frame and its mip chain (tens of MB) may not stay in Skia's cache.
 	private static readonly SKSamplingOptions MapSampling = new(SKFilterMode.Linear);
@@ -32,25 +37,61 @@ public sealed partial class OverlayRenderer
 
 	private const int RouteSlots = 2 * 3;
 	private readonly RouteTrail _trail = new();
-	// GetTrailPixels' projection of _trail into _trailPixelsMosaic's pixel space.
-	private readonly List<SKPoint> _trailPixels = [];
-	private RouteMapMosaic? _trailPixelsMosaic;
 
 	// The trail's drawn routes, extended as the trail grows (SyncRoute) - the compass's in local meters, the map's in
 	// its mosaic's pixels. Indexed by RouteSlot (color by speed, GPS loss join): every Compass/MapWidget instance picks those on its own.
 	private readonly RouteGeometry?[] _compassRoutes = new RouteGeometry?[RouteSlots];
-	private readonly RouteGeometry?[] _mapRoutes = new RouteGeometry?[RouteSlots];
+
+	/// <summary>A map mosaic with what is cached for it: the trail projected into its pixels and the routes drawn in them.</summary>
+	private sealed class MapLayer(RouteMapMosaic? mosaic) : IDisposable
+	{
+		public RouteMapMosaic? Mosaic { get; } = mosaic;
+		public List<SKPoint> TrailPixels { get; } = [];
+		public RouteGeometry?[] Routes { get; } = new RouteGeometry?[RouteSlots];
+
+		public void ResetTrail()
+		{
+			TrailPixels.Clear();
+			DisposeRoutes(Routes);
+		}
+
+		public void Dispose()
+		{
+			DisposeRoutes(Routes);
+			Mosaic?.Dispose();
+		}
+	}
+
+	private static ElementMapKey SourceOf(MapWidgetElement element)
+	{
+		return (element.MapProviderId, element.MapZoom, ClampZoomOutFactor(element.MapDynamicZoomMaxFactor), element.ShowEsriLabels);
+	}
+
+	private MapAssignments MapAssignmentsOf(IReadOnlyList<OverlayElement> layout)
+	{
+		List<MapAssignment> items = [];
+		foreach (MapWidgetElement element in layout.OfType<MapWidgetElement>().Where(e => e.Visible))
+		{
+			ElementMapKey source = SourceOf(element);
+			if (items.Any(i => i.Source == source)) continue;
+
+			items.Add(new MapAssignment(source, (MapSources.UrlTemplate(element.MapProviderId), element.MapZoom, source.MaxZoomOutFactor,
+				MapSources.LabelsUrlTemplate(element.MapProviderId, showLabels: element.ShowEsriLabels)), element));
+		}
+
+		return new MapAssignments(items);
+	}
 
 	/// <summary>
-	///     Fetches every map tile the route needs and stitches them into one in-memory mosaic, so
-	///     DrawMapWidget just crops/pans a window per frame instead of hitting the network every frame.
-	///     No-ops when Layout has no visible MapWidget. Best-effort: a failure leaves _mapMosaic null
-	///     and MapWidget draws a placeholder instead of failing the render.
+	///     Fetches every map tile the route needs and stitches them into in-memory mosaics - one per distinct source and zoom
+	///     among the visible Map widgets - so DrawMapWidget just crops/pans a window per frame instead of hitting the network every
+	///     frame. No-ops when Layout has no visible MapWidget. Best-effort: a failure leaves that map without a mosaic
+	///     and its widgets draw a placeholder instead of failing the render.
 	/// </summary>
 	public async Task PrepareMapAsync(Action<int, int>? onTileProgress = null, CancellationToken ct = default)
 	{
-		(RouteMapMosaic? mosaic, MapMosaicKey? key) = await BuildMapMosaicAsync(onTileProgress, ct);
-		ApplyMapMosaic(mosaic, key);
+		(MapMosaicSet? mosaics, MapAssignments? key) = await BuildMapMosaicAsync(onTileProgress, ct);
+		ApplyMapMosaic(mosaics, key);
 	}
 
 	/// <summary>
@@ -58,65 +99,91 @@ public sealed partial class OverlayRenderer
 	///     can run the network I/O without holding the lock that serializes calls into Render - only
 	///     ApplyMapMosaic touches renderer state, so only it needs that lock. Pass the returned key back
 	///     into ApplyMapMosaic so a fetch superseded by a newer one (e.g. rapid zoom changes) gets
-	///     discarded instead of applied.
+	///     discarded instead of applied. Only the mosaics the renderer doesn't already hold are fetched.
 	/// </summary>
-	public async Task<(RouteMapMosaic? Mosaic, MapMosaicKey? Key)> BuildMapMosaicAsync(
+	public async Task<(MapMosaicSet? Mosaics, MapAssignments? Key)> BuildMapMosaicAsync(
 		Action<int, int>? onTileProgress = null, CancellationToken ct = default)
 	{
 		// Visible, not just present: a preset may carry a MapWidget the user turned off.
-		if (Layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
+		MapAssignments assignments = MapAssignmentsOf(Layout);
+		if (assignments.Items.Count == 0)
 			return (null, null);
 
+		_preparedMaps = assignments;
 		List<(double Lat, double Lon)> points = [.. _allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))];
-		string urlTemplate = MapSources.UrlTemplate(mapElement.MapProviderId);
-		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		string? labelsUrlTemplate = MapSources.LabelsUrlTemplate(mapElement.MapProviderId, showLabels: mapElement.ShowEsriLabels);
-		MapMosaicKey key = (urlTemplate, mapElement.MapZoom, maxFactor, labelsUrlTemplate);
-		_preparedMapKey = key;
-
-		if (MapSources.MissesApiKey(mapElement.MapProviderId))
-		{
-			AppLogger.Warn(string.Format(CoreStrings.Map_ApiKeyMissing, MapSources.NameOf(mapElement.MapProviderId)));
-			return (null, key);
-		}
-
-		// Fetched with enough tile margin for the widget's own configured zoom-out ceiling (not just
-		// the static 1x window), so a fresh fetch is never short on margin - and MaxZoomOutFactor being
-		// part of the key means bumping this setting always triggers exactly such a fresh fetch.
-		int paddingTiles = (int)Math.Ceiling(maxFactor);
-
+		var fetched = new MapMosaicSet();
 		try
 		{
-			// Task.Run: called from the GUI thread by PreviewPlayer, and without it every tile decode/draw
-			// continuation would resume there. The key above is still set synchronously on purpose -
-			// NeedsMapPrepare reads it right after this returns its Task. onTileProgress therefore fires
-			// on a thread-pool thread.
-			return (await Task.Run(() => RouteMapMosaic.BuildAsync(points, urlTemplate, mapElement.MapZoom, paddingTiles, ct, onTileProgress,
-				cacheMaxAge: MapSources.CacheMaxAge(mapElement.MapProviderId), labelsUrlTemplate: labelsUrlTemplate), ct), key);
+			foreach (MapAssignment item in assignments.Items.DistinctBy(i => i.Key))
+			{
+				if (_mapLayers.TryGetValue(item.Key, out MapLayer? held) && held.Mosaic is not null) continue;
+
+				MapWidgetElement element = item.Element;
+				if (MapSources.MissesApiKey(element.MapProviderId))
+				{
+					AppLogger.Warn(string.Format(CoreStrings.Map_ApiKeyMissing, MapSources.NameOf(element.MapProviderId)));
+					continue;
+				}
+
+				// Fetched with enough tile margin for the widget's own configured zoom-out ceiling (not just
+				// the static 1x window), so a fresh fetch is never short on margin - and MaxZoomOutFactor being
+				// part of the key means bumping this setting always triggers exactly such a fresh fetch.
+				int paddingTiles = (int)Math.Ceiling(item.Key.MaxZoomOutFactor);
+				try
+				{
+					// Task.Run: called from the GUI thread by PreviewPlayer, and without it every tile decode/draw
+					// continuation would resume there. _preparedMaps is still set synchronously above on purpose -
+					// NeedsMapPrepare reads it right after this returns its Task. onTileProgress therefore fires
+					// on a thread-pool thread.
+					RouteMapMosaic? mosaic = await Task.Run(() => RouteMapMosaic.BuildAsync(points, item.Key.Url, element.MapZoom, paddingTiles, ct, onTileProgress,
+						cacheMaxAge: MapSources.CacheMaxAge(element.MapProviderId), labelsUrlTemplate: item.Key.LabelsUrl), ct);
+					if (mosaic is not null) fetched.Add(item.Key, mosaic);
+				}
+				catch (Exception ex) when (ex is not OperationCanceledException)
+				{
+					AppLogger.Warn(ex, "Map widget: failed to prepare the route map - the widget will show a placeholder");
+				}
+			}
 		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
+		catch
 		{
-			AppLogger.Warn(ex, "Map widget: failed to prepare the route map - the widget will show a placeholder");
-			return (null, key);
+			fetched.Dispose();
+			throw;
 		}
+
+		return (fetched, assignments);
 	}
 
 	/// <summary>
-	///     Applies a mosaic built by BuildMapMosaicAsync, but only if `forKey` still matches the most
-	///     recently requested key (_preparedMapKey) - guards against two overlapping fetches (e.g.
+	///     Applies mosaics built by BuildMapMosaicAsync, but only if `forKey` still matches the most
+	///     recently requested assignment (_preparedMaps) - guards against two overlapping fetches (e.g.
 	///     rapid zoom changes) where a slower, older one finishes after a newer one already has. A
-	///     superseded mosaic is disposed instead of applied.
+	///     superseded set is disposed instead of applied. Mosaics already held that are still wanted are kept.
 	/// </summary>
-	public void ApplyMapMosaic(RouteMapMosaic? mosaic, MapMosaicKey? forKey)
+	public void ApplyMapMosaic(MapMosaicSet? mosaics, MapAssignments? forKey)
 	{
-		if (forKey is not null && forKey != _preparedMapKey)
+		if (forKey is not null && !forKey.Equals(_preparedMaps))
 		{
-			mosaic?.Dispose();
+			mosaics?.Dispose();
 			return;
 		}
 
-		_mapMosaic?.Dispose();
-		_mapMosaic = mosaic;
+		var layers = new Dictionary<MapMosaicKey, MapLayer>();
+		var layerOf = new Dictionary<ElementMapKey, MapMosaicKey>();
+		foreach (MapAssignment item in forKey?.Items ?? [])
+		{
+			layerOf[item.Source] = item.Key;
+			if (layers.ContainsKey(item.Key)) continue;
+
+			if (mosaics?.Take(item.Key) is { } fresh) layers[item.Key] = new MapLayer(fresh);
+			else if (_mapLayers.Remove(item.Key, out MapLayer? held) && held.Mosaic is not null) layers[item.Key] = held;
+			else layers[item.Key] = new MapLayer(null);
+		}
+
+		mosaics?.Dispose();
+		foreach (MapLayer old in _mapLayers.Values) old.Dispose();
+		_mapLayers = layers;
+		_mapLayerOf = layerOf;
 	}
 
 	/// <summary>
@@ -126,11 +193,8 @@ public sealed partial class OverlayRenderer
 	/// </summary>
 	public bool NeedsMapPrepare(IReadOnlyList<OverlayElement> layout)
 	{
-		if (layout.OfType<MapWidgetElement>().FirstOrDefault(e => e.Visible) is not { } mapElement)
-			return false;
-		double maxFactor = ClampZoomOutFactor(mapElement.MapDynamicZoomMaxFactor);
-		MapMosaicKey key = (MapSources.UrlTemplate(mapElement.MapProviderId), mapElement.MapZoom, maxFactor, MapSources.LabelsUrlTemplate(mapElement.MapProviderId, showLabels: mapElement.ShowEsriLabels));
-		return _preparedMapKey != key;
+		MapAssignments wanted = MapAssignmentsOf(layout);
+		return wanted.Items.Count > 0 ? !wanted.Equals(_preparedMaps) : _preparedMaps is { Items.Count: > 0 };
 	}
 
 	/// <summary>Keeps a hand-edited or out-of-range preset value from pushing the crop/fetch math outside sane bounds.</summary>
@@ -362,7 +426,8 @@ public sealed partial class OverlayRenderer
 	{
 		const float radius = OverlayElementBounds.MapRadius;
 
-		if (_mapMosaic is null)
+		MapLayer? layer = _mapLayerOf.TryGetValue(SourceOf(element), out MapMosaicKey layerKey) && _mapLayers.TryGetValue(layerKey, out MapLayer? found) ? found : null;
+		if (layer?.Mosaic is not { } mosaic)
 		{
 			canvas.DrawCircle(0, 0, radius, PanelFillPaint(null, PanelOpacityDefault));
 			DrawOutlined(canvas, CoreStrings.Overlay_Map.ToUpperInvariant(), 0, -10, _labelFont, White, SKTextAlign.Center);
@@ -374,10 +439,10 @@ public sealed partial class OverlayRenderer
 			using var clip = new SKRoundRect(SKRect.Create(-radius, -radius, radius * 2, radius * 2), radius);
 			canvas.ClipRoundRect(clip, antialias: true);
 
-			SKPoint center = _mapMosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
+			SKPoint center = mosaic.GetPixel(frame.Raw.Latitude, frame.Raw.Longitude);
 			// Computed once and shared with GetMapZoomFactor (when dynamic zoom needs it) and the trail
 			// draw below, instead of both re-running the same Web Mercator projection per trail point.
-			List<SKPoint> trailPixels = GetTrailPixels();
+			List<SKPoint> trailPixels = GetTrailPixels(layer);
 
 			double zoomFactor = element.MapDynamicZoom
 				? GetMapZoomFactor(frame, element, center, trailPixels)
@@ -388,13 +453,13 @@ public sealed partial class OverlayRenderer
 			if (element.RotateWithHeading) canvas.RotateDegrees((float)-ShownHeading(frame, element));
 			var src = SKRect.Create(center.X - cropRadius, center.Y - cropRadius, cropRadius * 2, cropRadius * 2);
 			var dest = SKRect.Create(-radius, -radius, radius * 2, radius * 2);
-			canvas.DrawImage(_mapMosaic.Image, src, dest, MapSampling);
+			canvas.DrawImage(mosaic.Image, src, dest, MapSampling);
 
 			float mapScale = radius / cropRadius;
 			var toWidget = SKMatrix.CreateScaleTranslation(mapScale, mapScale, -center.X * mapScale, -center.Y * mapScale);
 			if (element.TrailVisible)
 			{
-				DrawTrailRoute(canvas, _mapRoutes, trailPixels, toWidget, element);
+				DrawTrailRoute(canvas, layer.Routes, trailPixels, toWidget, element);
 				if (!frame.StartsAfterCut && trailPixels.Count > 0) DrawTrailTail(canvas, toWidget.MapPoint(trailPixels[^1]), toWidget.MapPoint(center), frame.SpeedKmh, element);
 			}
 
@@ -418,26 +483,18 @@ public sealed partial class OverlayRenderer
 	///     re-running the same (mildly expensive - Math.Log/Math.Tan per point) projection separately
 	///     over what can be a many-thousand-point trail by the end of a long recording.
 	/// </summary>
-	private List<SKPoint> GetTrailPixels()
+	private List<SKPoint> GetTrailPixels(MapLayer layer)
 	{
 		// Incremental: _trail is always (re)built from frame 0 by the same deterministic steps (see
 		// RouteTrail), so a longer trail only ever extends a shorter one - already projected points stay
-		// valid, and only a trail that got shorter (a seek backwards) or a different mosaic invalidates them.
-		if (!ReferenceEquals(_trailPixelsMosaic, _mapMosaic))
-		{
-			_trailPixels.Clear();
-			_trailPixelsMosaic = _mapMosaic;
-			// Another mosaic places the same points at other pixels.
-			DisposeRoutes(_mapRoutes);
-		}
-		else if (_trailPixels.Count > _trail.Count)
-		{
-			_trailPixels.RemoveRange(_trail.Count, _trailPixels.Count - _trail.Count);
-		}
+		// valid, and only a trail that got shorter (a seek backwards) invalidates them. A layer's mosaic never
+		// changes (another one is another layer), so its pixels stay valid for as long as it lives.
+		List<SKPoint> pixels = layer.TrailPixels;
+		if (pixels.Count > _trail.Count) pixels.RemoveRange(_trail.Count, pixels.Count - _trail.Count);
 
-		for (int i = _trailPixels.Count; i < _trail.Count; i++)
-			_trailPixels.Add(_mapMosaic!.GetPixel(_trail[i].Lat, _trail[i].Lon));
-		return _trailPixels;
+		for (int i = pixels.Count; i < _trail.Count; i++)
+			pixels.Add(layer.Mosaic!.GetPixel(_trail[i].Lat, _trail[i].Lon));
+		return pixels;
 	}
 
 	/// <summary>Hex string (e.g. "#46DC6E") from OverlayElement.TrailColor, or the built-in green when null/unparsable - fails soft, same policy as the time widgets' Locale/DateFormat.</summary>

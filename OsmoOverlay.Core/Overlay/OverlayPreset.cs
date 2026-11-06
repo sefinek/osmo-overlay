@@ -17,6 +17,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	// The default watermark's seconds on screen, and its baseline under the progress bar's center - where the bar is drawn.
 	private const double WatermarkSeconds = 6;
 	private const float WatermarkBelowBar = 14;
+	// The drone layouts keep the credit longer, and what comes in after it (the height profile) waits for it.
+	private const double DroneWatermarkSeconds = 12;
 
 	/// <summary>
 	///     The layout for a DJI drone's footage: the default one without what a drone has no data for (the camera's roll and G-force, a
@@ -46,7 +48,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 					DateTimeTextElement or ElevationElement or GradientElement or RollGaugeElement or GMeterElement or SunWidgetElement or GpsAlertElement
 						or TripProgressBarElement => e with { Visible = false },
 					CompassElement compass => compass with { Visible = false, DotWhenNotFacingTravel = true },
-					ProfileChartElement chart => chart with { Y = chartY, Visible = true, Series = ProfileSeries.Height, Axis = ProfileAxis.Time, AutoHeight = true },
+					WatermarkElement => e with { DisappearAtSeconds = DroneWatermarkSeconds },
+					ProfileChartElement chart => chart with { Y = chartY, AppearAtSeconds = DroneWatermarkSeconds, Visible = true, Series = ProfileSeries.Height, Axis = ProfileAxis.Time, AutoHeight = true },
 					MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false, RotateWithHeading = true, DotWhenNotFacingTravel = true },
 					DroneBatteryElement battery => battery with { X = m, Y = top, Visible = true, ShowIcon = true, ColorByCharge = true, ShowVoltage = true, ShowTemperature = false, ShowCurrent = true, CurrentBesideVoltage = true, ShowCells = false },
 					SignalElement => e with { X = signalX, Y = top, Visible = true },
@@ -127,6 +130,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 						Orientation3DElement orientation => orientation with { X = width / 2f + dial + FpvDialGap / 2, Y = bottom - dial, Visible = true, SpinRotors = true },
 						MapWidgetElement map => map with { MapZoom = 17, MapDynamicZoom = true, MapDynamicZoomMaxFactor = 3, ShowEsriLabels = false, RotateWithHeading = true, DotWhenNotFacingTravel = true },
 						CompassElement compass => compass with { Visible = false, DotWhenNotFacingTravel = true },
+						WatermarkElement => e with { DisappearAtSeconds = DroneWatermarkSeconds, Y = bottom - dial * 2 - OverlayElementBounds.WatermarkNoticeGap - FpvWatermarkAboveDials },
 						SpeedGaugeElement or MapAttributionElement => e,
 						_ => e with { Visible = false }
 					};
@@ -147,7 +151,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	private const float DroneGpsWidth = 240;
 	private const float DroneSignalWidth = 280;
 	private const float DroneTopGap = 60;
-	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 450, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60;
+	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 450, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvWatermarkAboveDials = 48;
 	private const float DroneColumnStep = 220;
 
 	// The sticks and the two dials stacked down the right edge under the top row: where the first starts, and the gap between them.
@@ -203,8 +207,9 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		// at their default positions.
 		float progressBarCx = width / 2f;
 		float progressBarCy = height - m - 16;
-		// In the progress bar's place, before it: the bar takes over the bottom center once the watermark has gone.
-		float watermarkY = progressBarCy + WatermarkBelowBar;
+		// In the progress bar's place, before it: the bar takes over the bottom center once the watermark has gone. Its anchor is the
+		// credit line's baseline; the licence note under it takes the place that line had, so the lowest edge stays on the same guide.
+		float watermarkY = progressBarCy + WatermarkBelowBar - OverlayElementBounds.WatermarkNoticeGap;
 		// Centered above the progress bar, which is as wide.
 		float chartX = progressBarCx - OverlayElementBounds.ChartWidth / 2;
 		float chartY = progressBarCy - (OverlayElementBounds.ProgressBarHeight / 2 + 60 + OverlayElementBounds.ChartTop + OverlayElementBounds.ChartHeight);

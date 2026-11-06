@@ -917,7 +917,7 @@ public partial class MainWindow
 				CompassRotateCheck.IsChecked = x.RotateWithHeading;
 				CompassNorthCheck.IsChecked = x.ShowNorthLabel;
 				CompassHeadingTextCheck.IsChecked = x.ShowHeadingText;
-				CompassHeading.Populate(x);
+				CompassHeading.Populate(x, _availability.DroneAttitude);
 				CompassTrail.Populate(x);
 				CompassMarker.Populate(x);
 				CompassPanelFill.Populate(x);
@@ -1026,7 +1026,7 @@ public partial class MainWindow
 				MapZoomOutMaxBox.IsVisible = x.MapDynamicZoom;
 				MapZoomOutMaxHint.IsVisible = x.MapDynamicZoom;
 				MapRotateCheck.IsChecked = x.RotateWithHeading;
-				MapHeading.Populate(x);
+				MapHeading.Populate(x, _availability.DroneAttitude);
 				MapTrail.Populate(x);
 				MapMarker.Populate(x);
 				MapTiming.Populate(x);

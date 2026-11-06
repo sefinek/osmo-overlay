@@ -60,7 +60,7 @@ internal sealed class ExportRightsWindow : Window
 		});
 		body.Children.Add(Hint(Strings.MapTerms_Disclaimer));
 
-		var ok = new Button { Content = confirm ? Strings.ExportNotice_Confirm : Strings.ConfirmDialog_Ok, IsDefault = true, Classes = { "accent" } };
+		var ok = new Button { Content = Strings.ExportNotice_Confirm, IsDefault = true, Classes = { "accent" } };
 		ok.Click += (_, _) => Close(true);
 		var buttons = new StackPanel
 		{

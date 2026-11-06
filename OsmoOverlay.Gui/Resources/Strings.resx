@@ -1788,7 +1788,7 @@ Cancel asks again on the next start. "Skip this update" stops the reminders abou
     <value>Only its provider knows a custom server's terms - check them before publishing a video.</value>
   </data>
   <data name="MapTerms_Disclaimer" xml:space="preserve">
-    <value>Based on the providers' terms as of 4 October 2026. Not legal advice - check the current terms before publishing a video.</value>
+    <value>Based on the providers' terms as of 4 October 2026. Check the current terms before publishing. This information is for guidance and is not legal advice.</value>
   </data>
   <data name="MapTerms_NotStated" xml:space="preserve">
     <value>the terms don't say</value>
@@ -5369,61 +5369,61 @@ GPS points: {2} · timer pauses: {3}</value>
     <value>Rights to the exported film</value>
   </data>
   <data name="ExportNotice_Confirm" xml:space="preserve">
-    <value>I understand</value>
+    <value>I accept the licence terms</value>
   </data>
   <data name="Main_ExportRights" xml:space="preserve">
     <value>Export rights</value>
   </data>
   <data name="Main_ExportRightsHint" xml:space="preserve">
-    <value>What may be done with the exported film and the terms of the maps in the current export.</value>
+    <value>Terms for using the app and the maps included in the current export.</value>
   </data>
   <data name="ExportNotice_Intro" xml:space="preserve">
-    <value>What you may do with the exported film. The program's licence covers the program, not your recording, your music or the maps.</value>
+    <value>Check the terms for publishing your video and using the included materials and maps.</value>
   </data>
   <data name="ExportNotice_ProgramHeader" xml:space="preserve">
-    <value>The program - PolyForm Noncommercial 1.0.0</value>
+    <value>App licence - PolyForm Noncommercial 1.0.0</value>
   </data>
   <data name="ExportNotice_Allow_Private" xml:space="preserve">
-    <value>Private use, for your own purposes</value>
+    <value>Private use</value>
   </data>
   <data name="ExportNotice_Allow_Free" xml:space="preserve">
-    <value>Publishing a film you do not earn from (e.g. YouTube with monetization turned off)</value>
+    <value>Publishing without earning money from the video (e.g. on YouTube with monetization off)</value>
   </data>
   <data name="ExportNotice_Deny_Monetized" xml:space="preserve">
-    <value>Publishing a film on a channel with monetization turned on (e.g. the YouTube Partner Programme)</value>
+    <value>Publishing on a monetized channel (e.g. in the YouTube Partner Programme)</value>
   </data>
   <data name="ExportNotice_Deny_Earning" xml:space="preserve">
-    <value>Earning from a film: ads, sponsorship, selling it</value>
+    <value>Earning money from the video through ads, sponsorship or sales</value>
   </data>
   <data name="ExportNotice_Deny_Paid" xml:space="preserve">
-    <value>Paid rendering of films for other people</value>
+    <value>Rendering videos for others for a fee</value>
   </data>
   <data name="ExportNotice_Deny_Business" xml:space="preserve">
-    <value>Using the program in a business or for any other commercial purpose</value>
+    <value>Using the app in a business or for other commercial purposes</value>
   </data>
   <data name="ExportNotice_ProgramNote" xml:space="preserve">
-    <value>Commercial use needs the author's permission, unless an exception named in the licence applies. The full licence text decides.</value>
+    <value>Commercial use requires the author's permission unless an exception in the licence applies. See the full licence text for details.</value>
   </data>
   <data name="ExportNotice_MaterialsHeader" xml:space="preserve">
-    <value>Your recording, music and maps</value>
+    <value>Rights to your recording, music and maps</value>
   </data>
   <data name="ExportNotice_MaterialsText" xml:space="preserve">
-    <value>The program's licence is not a licence for the exported film and does not grant or transfer rights to your materials. You answer for your rights to the recording, the music and the maps. A map provider's permission for commercial use covers the maps only and does not lift the program's licence limits.</value>
+    <value>The app's licence does not change the rights to your materials. Make sure you may use the recording, music and maps as intended. A map provider's permission for commercial use does not remove the app's licence restrictions.</value>
   </data>
   <data name="ExportNotice_MapsHeader" xml:space="preserve">
     <value>Maps in this export</value>
   </data>
   <data name="ExportNotice_NoMaps" xml:space="preserve">
-    <value>None, so no map provider's terms apply to it. Green screen and alpha exports can contain maps if a map widget is on.</value>
+    <value>This export contains no maps, so map providers' terms do not apply. Green screen and alpha exports can also include a map if its widget is enabled.</value>
   </data>
   <data name="ExportNotice_CustomMap" xml:space="preserve">
-    <value>Your own source: the app does not know its licence and declares no rights - check the provider's terms.</value>
+    <value>Custom map source: check the provider's terms. The app has no information about its licence.</value>
   </data>
   <data name="ExportNotice_ShareAlike" xml:space="preserve">
     <value>The map images are CC BY-SA. The share-alike duty concerns the map as used; whether it reaches your whole film depends on how the map is included - the app does not assume it does.</value>
   </data>
   <data name="ExportNotice_Footer" xml:space="preserve">
-    <value>This notice does not promise rights for future exports - you may change a map, a plan or your materials. Use the "Export rights" button to see the terms of the current export. The map credit stays in the picture, and the obligations also apply when you lay a green screen or alpha export over a film in another editor.</value>
+    <value>These terms apply to the current export. Check them again if you change the map, service plan or materials. They also apply when compositing a green screen or alpha export in another editor, including the requirement to keep map credits.</value>
   </data>
   <data name="ExportNotice_LicenseLink" xml:space="preserve">
     <value>Program licence (PolyForm)</value>

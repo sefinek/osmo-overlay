@@ -7,7 +7,7 @@
 		<CheckBox Name="StabilizeCheck" Content="{x:Static local:Strings.Heading_Stabilize}" />
 		<TextBlock Classes="infoLabel checkHint" Text="{x:Static local:Strings.Heading_StabilizeHint}" />
 		<CheckBox Name="DotCheck" Content="{x:Static local:Strings.Heading_DotWhenNotFacing}" />
-		<TextBlock Classes="infoLabel checkHint" Text="{x:Static local:Strings.Heading_DotWhenNotFacingHint}" />
+		<TextBlock Name="DotHint" Classes="infoLabel checkHint" Text="{x:Static local:Strings.Heading_DotWhenNotFacingHint}" />
 		<TextBlock Name="ToleranceLabel" Text="{x:Static local:Strings.Heading_FacingTolerance}" Classes="infoLabel" Margin="0" />
 		<NumericUpDown Name="ToleranceBox" Increment="5" FormatString="0" HorizontalAlignment="Stretch" />
 	</StackPanel>

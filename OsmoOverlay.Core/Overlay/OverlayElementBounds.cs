@@ -57,10 +57,16 @@ public static class OverlayElementBounds
 
 	// The map credit has to stay readable.
 	public const float MinMapCreditScale = 0.75f;
+	public const float MinWatermarkScale = 0.80f;
 
 	public static float MinScale(OverlayElement element)
 	{
-		return element is MapAttributionElement ? MinMapCreditScale : MinElementScale;
+		return element switch
+		{
+			MapAttributionElement => MinMapCreditScale,
+			WatermarkElement => MinWatermarkScale,
+			_ => MinElementScale
+		};
 	}
 
 	public static float ClampScale(OverlayElement element, float scale)

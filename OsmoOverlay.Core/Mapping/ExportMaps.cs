@@ -13,11 +13,12 @@ public static class ExportMaps
 	///     resolves them (MapSources.Resolve). Whether a widget is hidden for lack of a GPS fix isn't known here, so a source
 	///     may be listed that the finished film doesn't show.
 	/// </summary>
-	public static IReadOnlyList<ExportMap> Used(IEnumerable<OverlayElement>? layout, OverlaySettings settings)
+	public static IReadOnlyList<ExportMap> Used(IEnumerable<OverlayElement>? layout, OverlaySettings settings, bool trackBackdrop = false)
 	{
 		var sources = MapSources.From(settings);
 		List<string?> ids = [.. (layout ?? []).OfType<MapWidgetElement>().Where(m => m.Visible).Select(m => m.MapProviderId)];
 		if (settings.ShowRouteIntro) ids.Add(settings.RouteIntroMapProvider);
+		if (trackBackdrop) ids.Add(TrackMapSettings.From(settings).ProviderId);
 
 		return
 		[

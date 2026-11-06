@@ -222,6 +222,27 @@ public sealed class MapSourcesTests
 	}
 
 	[TestMethod]
+	public async Task MapWidgets_ChangingOneWidgetsSourceInvalidatesThePreparedMaps_AndSameSourcesShareOne()
+	{
+		MapWidgetElement first = new() { X = 0, Y = 0, Visible = true, MapProviderId = MapProviders.EoxId };
+		MapWidgetElement second = new() { X = 100, Y = 0, Visible = true, MapProviderId = MapProviders.EoxId };
+		OverlayElement[] layout = [first, second];
+		using var renderer = new OverlayRenderer(1280, 720, 0, layout, [], routeIntro: RouteIntroSettings.From(new OverlaySettings()));
+
+		await renderer.BuildMapMosaicAsync(ct: TestContext.CancellationToken);
+		Assert.IsFalse(renderer.NeedsMapPrepare(layout));
+
+		OverlayElement[] changed = [first, second with { MapProviderId = MapProviders.GugikId }];
+		Assert.IsTrue(renderer.NeedsMapPrepare(changed));
+
+		OverlayElement[] zoomed = [first, second with { MapZoom = first.MapZoom + 1 }];
+		Assert.IsTrue(renderer.NeedsMapPrepare(zoomed));
+
+		OverlayElement[] hidden = [first, second with { Visible = false }];
+		Assert.IsFalse(renderer.NeedsMapPrepare(hidden), "A hidden widget's own source isn't wanted - the other still shares the prepared one");
+	}
+
+	[TestMethod]
 	public void EveryBuiltInCredit_BreaksItsLongLinesByHand()
 	{
 		// The credit is drawn line by line, never wrapped - a longer line runs across the frame (OverlayRenderer.DrawCredit).
