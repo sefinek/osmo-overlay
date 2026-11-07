@@ -1035,7 +1035,10 @@ public partial class MainWindow
 				SpeedThemeDefaultRadio.IsChecked = x.Theme == SpeedGaugeTheme.Default;
 				SpeedThemeLegacyRadio.IsChecked = x.Theme == SpeedGaugeTheme.Legacy;
 				SpeedThemeRingRadio.IsChecked = x.Theme == SpeedGaugeTheme.Ring;
+				SpeedThemeModernRadio.IsChecked = x.Theme == SpeedGaugeTheme.Modern;
 				SpeedPanelGroup.IsVisible = x.Theme != SpeedGaugeTheme.Ring;
+				SpeedScaleLabelPanel.IsVisible = x.Theme is SpeedGaugeTheme.Default or SpeedGaugeTheme.Modern;
+				SpeedScaleLabelBox.Value = (decimal)x.ScaleLabelSize;
 				SpeedMaxBox.Value = (decimal?)x.MaxSpeed;
 				UpdateSpeedMaxPlaceholder(x.Units);
 				SpeedStyle.Populate(x);

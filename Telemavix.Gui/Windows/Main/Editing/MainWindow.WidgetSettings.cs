@@ -445,9 +445,17 @@ public partial class MainWindow
 		if (_editingElementId is not { } id) return;
 		SpeedGaugeTheme theme = SpeedThemeRingRadio.IsChecked == true ? SpeedGaugeTheme.Ring
 			: SpeedThemeLegacyRadio.IsChecked == true ? SpeedGaugeTheme.Legacy
+			: SpeedThemeModernRadio.IsChecked == true ? SpeedGaugeTheme.Modern
 			: SpeedGaugeTheme.Default;
 		SpeedPanelGroup.IsVisible = theme != SpeedGaugeTheme.Ring;
+		SpeedScaleLabelPanel.IsVisible = theme is SpeedGaugeTheme.Default or SpeedGaugeTheme.Modern;
 		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { Theme = theme } : el);
+	}
+
+	private void OnSpeedScaleLabelChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+		if (_suppressOverlayEvents || _editingElementId is not { } id || SpeedScaleLabelBox.Value is not { } size) return;
+		UpdateElement(id, el => el is SpeedGaugeElement s ? s with { ScaleLabelSize = (float)size } : el);
 	}
 
 	private void OnSpeedMaxChanged(object? sender, NumericUpDownValueChangedEventArgs e)

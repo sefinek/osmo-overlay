@@ -38,6 +38,15 @@ public sealed partial class OverlayRenderer
 	public const double SpeedGaugeMaxMin = 20;
 	public const double SpeedGaugeMaxMax = 500;
 
+	public const float ScaleLabelSizeDefault = 1f;
+	public const float ScaleLabelSizeMin = 0.6f;
+	public const float ScaleLabelSizeMax = 2f;
+
+	private static float ScaleLabelSizeOf(SpeedGaugeElement element)
+	{
+		return Math.Clamp(element.ScaleLabelSize, ScaleLabelSizeMin, ScaleLabelSizeMax);
+	}
+
 	private static SKPaint CreateGaugeBandPaint(SKColor color)
 	{
 		return new SKPaint
@@ -68,7 +77,18 @@ public sealed partial class OverlayRenderer
 	/// <summary>The scale top a gauge without its own MaxSpeed gets: the recording's top speed in `units`, snapped.</summary>
 	public double AutoGaugeMaxSpeed(UnitSystem units)
 	{
-		return SnapGaugeMaxSpeed(units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh);
+		return FitToLabelStep(SnapGaugeMaxSpeed(units == UnitSystem.Imperial ? _observedMaxSpeedKmh * KmhToMph : _observedMaxSpeedKmh));
+	}
+
+	/// <summary>
+	///     Rounds an automatic scale top up to a multiple of the step its labels will use, so the last label sits on the top and
+	///     the labels are evenly spaced (70 with a step of 20 becomes 80). A step never changes by this: a smaller one that
+	///     didn't fit the snapped top doesn't fit a larger one either.
+	/// </summary>
+	private static double FitToLabelStep(double max)
+	{
+		double step = ScaleStep(max);
+		return Math.Min(Math.Ceiling(max / step) * step, SpeedGaugeMaxMax);
 	}
 
 	/// <summary>
@@ -255,6 +275,13 @@ public sealed partial class OverlayRenderer
 		return 500;
 	}
 
+	/// <summary>The values the scale is labeled at: every step from 0. A hand-picked top between two steps has no label of its own.</summary>
+	internal static IEnumerable<double> ScaleLabelValues(double max)
+	{
+		double step = ScaleStep(max);
+		for (double value = 0; value <= max + 0.001; value += step) yield return value;
+	}
+
 	private void DrawDefaultSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
 	{
 		const float radius = OverlayElementBounds.SpeedRadius;
@@ -269,18 +296,17 @@ public sealed partial class OverlayRenderer
 		canvas.DrawCircle(0, 0, radius - 4, PanelFillPaint(element));
 		canvas.DrawCircle(0, 0, radius - 4, _ringStroke3White140);
 
-		SKFont labelFont = TextFont(element, 26);
+		SKFont labelFont = TextFont(element, 33 * ScaleLabelSizeOf(element));
 		SKColor textColor = TextColorOf(element);
 		SKColor outlineColor = OutlineColorOf(element);
-		double step = ScaleStep(max);
-		for (double value = 0; value <= max + 0.001; value += step)
+		foreach (double value in ScaleLabelValues(max))
 		{
 			double angle = AngleMath.DegToRad(startAngle + sweep * (value / max));
 			(float cos, float sin) = ((float)Math.Cos(angle), (float)Math.Sin(angle));
 			canvas.DrawLine(cos * (DefaultArcRadius - 16), sin * (DefaultArcRadius - 16), cos * (DefaultArcRadius - 26), sin * (DefaultArcRadius - 26),
 				_ringStroke3White160);
-			DrawOutlined(canvas, F(value, "0"), cos * (DefaultArcRadius - 52), sin * (DefaultArcRadius - 52) + 9, labelFont, textColor,
-				SKTextAlign.Center, 0.8f, outlineColor, element.OutlineWidth);
+			DrawOutlined(canvas, F(value, "0"), cos * (DefaultArcRadius - 54), sin * (DefaultArcRadius - 54) + 12, labelFont, textColor,
+				SKTextAlign.Center, 0.9f, outlineColor, element.OutlineWidth);
 		}
 
 		var arcRect = new SKRect(-DefaultArcRadius, -DefaultArcRadius, DefaultArcRadius, DefaultArcRadius);
@@ -305,6 +331,94 @@ public sealed partial class OverlayRenderer
 			outlineColor, element.OutlineWidth);
 	}
 
+	private const int ModernSegments = 60;
+	private const float ModernStartAngle = 135f;
+	private const float ModernSweep = 270f;
+	private const float ModernInnerRadius = 196f;
+	private const float ModernOuterRadius = 232f;
+	private const float ModernHeadExtra = 12f;
+
+	private static SKPaint CreateModernSegmentPaint(float width)
+	{
+		return new SKPaint
+		{
+			IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = width, StrokeCap = SKStrokeCap.Round
+		};
+	}
+
+	/// <summary>Where segment `index` sits, in radians: the middle of its slice of the sweep.</summary>
+	private static (float Cos, float Sin) ModernSegmentDirection(int index)
+	{
+		double angle = AngleMath.DegToRad(ModernStartAngle + ModernSweep * (index + 0.5) / ModernSegments);
+		return ((float)Math.Cos(angle), (float)Math.Sin(angle));
+	}
+
+	private static void AddModernSegment(SKPathBuilder builder, int index, float extraOutward = 0)
+	{
+		(float cos, float sin) = ModernSegmentDirection(index);
+		float outer = ModernOuterRadius + extraOutward;
+		builder.MoveTo(cos * ModernInnerRadius, sin * ModernInnerRadius);
+		builder.LineTo(cos * outer, sin * outer);
+	}
+
+	private static SKPath CreateModernSegments()
+	{
+		using var builder = new SKPathBuilder();
+		for (int i = 0; i < ModernSegments; i++) AddModernSegment(builder, i);
+		return builder.Detach();
+	}
+
+	/// <summary>
+	///     Modern: the dark dial with the speed as a ring of separate segments that light up in a gradient, the last lit one
+	///     longer and white as the "needle". Only whole segments light, so the value reads like a digital instrument and the
+	///     look doesn't depend on how fast the frames change.
+	/// </summary>
+	private void DrawModernSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
+	{
+		const float radius = OverlayElementBounds.SpeedRadius;
+
+		bool imperial = element.Units == UnitSystem.Imperial;
+		double displaySpeed = imperial ? speedKmh * KmhToMph : speedKmh;
+		double max = GaugeMaxSpeed(element);
+		double fraction = Math.Clamp(displaySpeed / max, 0, 1);
+		int lit = (int)Math.Round(fraction * ModernSegments);
+
+		canvas.DrawCircle(0, 0, radius - 4, PanelFillPaint(element));
+		canvas.DrawCircle(0, 0, radius - 4, _ringStroke3White140);
+
+		canvas.DrawPath(_speedModernSegments, _speedModernDimPaint);
+		if (lit > 1)
+		{
+			using var builder = new SKPathBuilder();
+			for (int i = 0; i < lit - 1; i++) AddModernSegment(builder, i);
+			using SKPath litPath = builder.Detach();
+			canvas.DrawPath(litPath, _speedModernLitPaint);
+		}
+
+		if (lit > 0)
+		{
+			using var builder = new SKPathBuilder();
+			AddModernSegment(builder, lit - 1, ModernHeadExtra);
+			using SKPath headPath = builder.Detach();
+			canvas.DrawPath(headPath, _speedModernHeadPaint);
+		}
+
+		SKFont labelFont = TextFont(element, 31 * ScaleLabelSizeOf(element));
+		SKColor textColor = TextColorOf(element);
+		SKColor outlineColor = OutlineColorOf(element);
+		foreach (double value in ScaleLabelValues(max))
+		{
+			double angle = AngleMath.DegToRad(ModernStartAngle + ModernSweep * (value / max));
+			DrawOutlined(canvas, F(value, "0"), (float)(Math.Cos(angle) * 158), (float)(Math.Sin(angle) * 158) + 11, labelFont, textColor,
+				SKTextAlign.Center, 0.85f, outlineColor, element.OutlineWidth);
+		}
+
+		DrawOutlined(canvas, F(displaySpeed, "0"), 0, 44, TextFont(element, 132), textColor, SKTextAlign.Center,
+			outlineColor: outlineColor, outlineWidthScale: element.OutlineWidth);
+		DrawOutlined(canvas, imperial ? "MPH" : "KM/H", 0, 94, TextFont(element, 34), textColor, SKTextAlign.Center, 0.75f,
+			outlineColor, element.OutlineWidth);
+	}
+
 	private void DrawSpeedGauge(SKCanvas canvas, SpeedGaugeElement element, double speedKmh)
 	{
 		switch (element.Theme)
@@ -314,6 +428,9 @@ public sealed partial class OverlayRenderer
 				return;
 			case SpeedGaugeTheme.Ring:
 				DrawRingSpeedGauge(canvas, element, speedKmh);
+				return;
+			case SpeedGaugeTheme.Modern:
+				DrawModernSpeedGauge(canvas, element, speedKmh);
 				return;
 		}
 

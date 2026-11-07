@@ -1279,7 +1279,7 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
     <value>Pliki wejściowe</value>
   </data>
   <data name="Main_InTheGaugeSUnits" xml:space="preserve">
-    <value>W jednostkach prędkościomierza. Pozostaw puste, aby użyć maksymalnej prędkości nagrania zaokrąglonej w górę do najbliższej wielokrotności 10.</value>
+    <value>W jednostkach prędkościomierza. Pozostaw puste, aby użyć maksymalnej prędkości nagrania zaokrąglonej w górę tak, aby ostatnia cyfra skali wypadła dokładnie na jej końcu.</value>
   </data>
   <data name="Main_KeepThe360ViewLevel" xml:space="preserve">
     <value>Utrzymuje poziomy horyzont w nagraniu 360° na podstawie danych akcelerometru. Po wyłączeniu widok przechyla się razem z kamerą.</value>
@@ -1343,6 +1343,9 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   </data>
   <data name="Main_Marker" xml:space="preserve">
     <value>ZNACZNIK</value>
+  </data>
+  <data name="Main_Modern" xml:space="preserve">
+    <value>Nowoczesny</value>
   </data>
   <data name="Main_MaxGForce" xml:space="preserve">
     <value>Maks. G</value>
@@ -1529,6 +1532,9 @@ W każdej kategorii znajdziesz do trzech momentów ze skrajnymi wartościami. Mo
   </data>
   <data name="Main_Scale" xml:space="preserve">
     <value>SKALA</value>
+  </data>
+  <data name="Main_ScaleNumbersSize" xml:space="preserve">
+    <value>Rozmiar cyfr skali</value>
   </data>
   <data name="Main_Settings" xml:space="preserve">
     <value>USTAWIENIA</value>

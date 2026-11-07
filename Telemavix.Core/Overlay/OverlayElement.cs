@@ -615,13 +615,15 @@ public sealed record GpsAlertTexts
 /// <summary>
 ///     Default: the dark dial with a gradient arc that lights up to the speed, a scale and a needle. Legacy: the earlier dial
 ///     with four colored bands. Ring: no panel, an open ring with a gradient arc and a needle that travels around it.
+///     Modern: the dark dial with the speed as a ring of segments that light up in a gradient.
 ///     The numbers are fixed because they're saved in presets.
 /// </summary>
 public enum SpeedGaugeTheme
 {
 	Default = 0,
 	Ring = 1,
-	Legacy = 2
+	Legacy = 2,
+	Modern = 3
 }
 
 public sealed record SpeedGaugeElement : StyledOverlayElement, IPanelElement
@@ -640,6 +642,8 @@ public sealed record SpeedGaugeElement : StyledOverlayElement, IPanelElement
 	public SpeedGaugeTheme Theme { get; init; } = SpeedGaugeTheme.Default;
 	// The scale's top in the gauge's units; null follows the recording's top speed (OverlayRenderer.GaugeMaxSpeed).
 	public double? MaxSpeed { get; init; }
+	// A multiplier of the scale's numbers (Default and Modern themes - the others have none).
+	public float ScaleLabelSize { get; init; } = OverlayRenderer.ScaleLabelSizeDefault;
 }
 
 /// <summary>Left/right lean - DerivedFrame.RollDegrees.</summary>

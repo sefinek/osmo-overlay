@@ -86,6 +86,33 @@ public sealed class OverlayAppearanceTests
 	}
 
 	[TestMethod]
+	public void SpeedGauge_ModernThemeDrawsItsOwnDialAndFollowsTheScale()
+	{
+		byte[] standard = Render(new SpeedGaugeElement { X = 1920, Y = 1080, MaxSpeed = 100 });
+		byte[] modern = Render(new SpeedGaugeElement { X = 1920, Y = 1080, MaxSpeed = 100, Theme = SpeedGaugeTheme.Modern });
+		byte[] modernHigherScale = Render(new SpeedGaugeElement { X = 1920, Y = 1080, MaxSpeed = 200, Theme = SpeedGaugeTheme.Modern });
+
+		CollectionAssert.AreNotEqual(standard, modern);
+		CollectionAssert.AreNotEqual(modern, modernHigherScale);
+	}
+
+	[TestMethod]
+	public void SpeedGauge_AutomaticTopOfTheScaleIsLabeledAndEvenlySpaced()
+	{
+		foreach ((double observed, double top) in new[] { (65.0, 80.0), (30.0, 30), (130.0, 150), (210.0, 250), (95.0, 100), (480.0, 500) })
+		{
+			List<DerivedFrame> frames = Frames();
+			using var renderer = new OverlayRenderer(Width, Height, 0, [], frames, observed, false);
+
+			double auto = renderer.AutoGaugeMaxSpeed(UnitSystem.Metric);
+			double[] labels = OverlayRenderer.ScaleLabelValues(auto).ToArray();
+
+			Assert.AreEqual(top, auto, $"the top for {observed}");
+			Assert.AreEqual(auto, labels[^1], $"the last label for {observed}");
+		}
+	}
+
+	[TestMethod]
 	public void Element_KeepsItsShadowPanelAndScaleInJson()
 	{
 		OverlayElement original = new SpeedGaugeElement

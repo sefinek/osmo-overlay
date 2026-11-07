@@ -1762,6 +1762,8 @@
 														<StackPanel Orientation="Horizontal" Spacing="12">
 															<RadioButton Name="SpeedThemeDefaultRadio" Content="{x:Static local:Strings.Main_Default}"
 															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged" />
+															<RadioButton Name="SpeedThemeModernRadio" Content="{x:Static local:Strings.Main_Modern}"
+															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged" />
 															<RadioButton Name="SpeedThemeRingRadio" Content="{x:Static local:Strings.Main_Ring}"
 															             GroupName="SpeedTheme" Click="OnSpeedThemeChanged"
 															             ToolTip.Tip="{x:Static local:Strings.Main_RingThemeHint}" />
@@ -1790,6 +1792,11 @@
 														<NumericUpDown Name="SpeedMaxBox" FormatString="0"
 														               PlaceholderText="{x:Static local:Strings.Main_Auto}" HorizontalAlignment="Stretch" ValueChanged="OnSpeedMaxChanged" />
 														<TextBlock Classes="hint" Text="{x:Static local:Strings.Main_InTheGaugeSUnits}" />
+														<StackPanel Name="SpeedScaleLabelPanel" Spacing="8">
+															<TextBlock Text="{x:Static local:Strings.Main_ScaleNumbersSize}" Classes="infoLabel" Margin="0" />
+															<NumericUpDown Name="SpeedScaleLabelBox" Minimum="0.6" Maximum="2" Increment="0.05"
+															               FormatString="0.00" HorizontalAlignment="Stretch" ValueChanged="OnSpeedScaleLabelChanged" />
+														</StackPanel>
 													</StackPanel>
 												</Border>
 												<Border Classes="settingsGroup">

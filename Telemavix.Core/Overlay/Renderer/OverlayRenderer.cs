@@ -91,6 +91,11 @@ public sealed partial class OverlayRenderer : IDisposable
 	private readonly SKShader _speedDefaultShader;
 	private readonly SKPath _speedDefaultNeedle = CreateDefaultNeedle();
 	private readonly SKPath _speedRingNeedle = CreateRingNeedle();
+	private readonly SKPath _speedModernSegments = CreateModernSegments();
+	private readonly SKPaint _speedModernDimPaint = CreateModernSegmentPaint(8);
+	private readonly SKPaint _speedModernHeadPaint = CreateModernSegmentPaint(10);
+	private readonly SKPaint _speedModernLitPaint = CreateModernSegmentPaint(8);
+	private readonly SKShader _speedModernShader;
 	private readonly SKPaint _whiteFill = new() { Color = SKColors.White, IsAntialias = true, Style = SKPaintStyle.Fill };
 	// Recolored per widget with its MarkerColor, like the panel fill.
 	private readonly SKPaint _markerFillPaint = new() { IsAntialias = true, Style = SKPaintStyle.Fill };
@@ -173,6 +178,12 @@ public sealed partial class OverlayRenderer : IDisposable
 			[0f, 0.42f, 0.74f, 1f], SKShaderTileMode.Clamp, 0, 270, SKMatrix.CreateRotationDegrees(135));
 		_speedDefaultArcPaint = new SKPaint
 			{ IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 20, StrokeCap = SKStrokeCap.Butt, Shader = _speedDefaultShader };
+		_speedModernShader = SKShader.CreateSweepGradient(new SKPoint(0, 0),
+			[new SKColor(40, 215, 255), new SKColor(110, 120, 255), new SKColor(255, 70, 150)],
+			[0f, 0.55f, 1f], SKShaderTileMode.Clamp, 0, ModernSweep, SKMatrix.CreateRotationDegrees(ModernStartAngle));
+		_speedModernLitPaint.Shader = _speedModernShader;
+		_speedModernDimPaint.Color = new SKColor(255, 255, 255, 45);
+		_speedModernHeadPaint.Color = SKColors.White;
 		_speedRingOuterPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
 		_speedRingShader = SKShader.CreateSweepGradient(new SKPoint(0, 0),
 			[new SKColor(60, 190, 70), new SKColor(245, 180, 40), new SKColor(240, 120, 40), new SKColor(225, 40, 50)],
@@ -256,6 +267,11 @@ public sealed partial class OverlayRenderer : IDisposable
 		_speedDefaultShader.Dispose();
 		_speedDefaultNeedle.Dispose();
 		_speedRingNeedle.Dispose();
+		_speedModernSegments.Dispose();
+		_speedModernDimPaint.Dispose();
+		_speedModernHeadPaint.Dispose();
+		_speedModernLitPaint.Dispose();
+		_speedModernShader.Dispose();
 		_whiteFill.Dispose();
 		_markerFillPaint.Dispose();
 		_outlineStrokePaint.Dispose();

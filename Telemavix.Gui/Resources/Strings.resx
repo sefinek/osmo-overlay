@@ -1279,7 +1279,7 @@ Each category lists up to three moments with extreme values. You can jump to a m
     <value>Input files</value>
   </data>
   <data name="Main_InTheGaugeSUnits" xml:space="preserve">
-    <value>In the speedometer&apos;s units. Leave blank to use the recording&apos;s maximum speed, rounded up to the nearest multiple of 10.</value>
+    <value>In the speedometer&apos;s units. Leave blank to use the recording&apos;s maximum speed, rounded up so that the scale&apos;s last number falls exactly on its end.</value>
   </data>
   <data name="Main_KeepThe360ViewLevel" xml:space="preserve">
     <value>Keeps the horizon level in the 360° recording using accelerometer data. When disabled, the view tilts with the camera.</value>
@@ -1343,6 +1343,9 @@ Each category lists up to three moments with extreme values. You can jump to a m
   </data>
   <data name="Main_Marker" xml:space="preserve">
     <value>MARKER</value>
+  </data>
+  <data name="Main_Modern" xml:space="preserve">
+    <value>Modern</value>
   </data>
   <data name="Main_MaxGForce" xml:space="preserve">
     <value>Max G-force</value>
@@ -1529,6 +1532,9 @@ Each category lists up to three moments with extreme values. You can jump to a m
   </data>
   <data name="Main_Scale" xml:space="preserve">
     <value>SCALE</value>
+  </data>
+  <data name="Main_ScaleNumbersSize" xml:space="preserve">
+    <value>Size of the scale numbers</value>
   </data>
   <data name="Main_Settings" xml:space="preserve">
     <value>SETTINGS</value>
