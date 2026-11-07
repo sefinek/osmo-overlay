@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <AssemblyName>Telemavix</AssemblyName>
     <RootNamespace>Telemavix.Gui</RootNamespace>

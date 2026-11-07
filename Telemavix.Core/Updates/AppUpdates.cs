@@ -18,7 +18,7 @@ public sealed record ReleaseAsset(string Name, string DownloadUrl, long Size, st
 public sealed record AppRelease(NuGetVersion Version, string PageUrl, DateTimeOffset? PublishedAt, ReleaseAsset? Installer);
 
 /// <summary>
-///     The app's own updates, from the GitHub repository's latest release (prereleases and drafts excluded by the API).
+///     The app's own updates, from the GitHub repository's latest release (a stable copy never sees prereleases; a prerelease copy sees the newest of all).
 ///     On Windows an installed copy updates itself: the release's setup is downloaded, verified against its SHA-256 and
 ///     started with /UPDATE, which removes the previous version and starts the app again (Telemavix.Build/Installer).
 ///     A copy that wasn't installed by that setup (an extracted zip) only gets pointed at the release page.
@@ -38,6 +38,8 @@ public static class AppUpdates
 	public const string MutexName = @"Global\OsmoOverlay-" + InstallerGuid;
 
 	private const string LatestReleaseApi = "https://api.github.com/repos/sefinek/telemavix-studio/releases/latest";
+
+	private const string ReleasesApi = "https://api.github.com/repos/sefinek/telemavix-studio/releases?per_page=30";
 
 	// Before Http: static initializers run in declaration order, and the User-Agent reads it.
 	public static NuGetVersion CurrentVersion { get; } = NuGetVersion.Parse(typeof(AppUpdates).Assembly
@@ -75,12 +77,21 @@ public static class AppUpdates
 		using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		timeout.CancelAfter(TimeSpan.FromSeconds(20));
 
-		using HttpResponseMessage response = await Http.GetAsync(LatestReleaseApi, timeout.Token);
+		// /releases/latest never returns a prerelease, so a prerelease copy reads the list to see newer betas too.
+		bool includePrereleases = CurrentVersion.IsPrerelease;
+		using HttpResponseMessage response = await Http.GetAsync(includePrereleases ? ReleasesApi : LatestReleaseApi, timeout.Token);
 		if (response.StatusCode == HttpStatusCode.NotFound) return null;
 		response.EnsureSuccessStatusCode();
 
 		JsonNode json = JsonNode.Parse(await response.Content.ReadAsStringAsync(timeout.Token))
 		                ?? throw new InvalidDataException("Empty release response.");
+		if (includePrereleases)
+		{
+			JsonNode? newest = NewestRelease(json);
+			if (newest is null) return null;
+			json = newest;
+		}
+
 		(AppRelease release, string? sumsUrl) = ParseRelease(json, InstallerSuffix());
 
 		// Assets uploaded before GitHub started publishing digests have none - the release's SHA256SUMS file does.
@@ -88,6 +99,19 @@ public static class AppUpdates
 			release = release with { Installer = installer with { Sha256 = FindChecksum(await Http.GetStringAsync(sumsUrl, timeout.Token), installer.Name) } };
 
 		return release;
+	}
+
+	/// <summary>The release with the highest version in a /releases list (drafts and tags that aren't versions skipped); null when none.</summary>
+	internal static JsonNode? NewestRelease(JsonNode releases)
+	{
+		return (releases as JsonArray ?? [])
+			.OfType<JsonNode>()
+			.Where(r => r["draft"]?.GetValue<bool>() != true)
+			.Select(r => (Release: r, Version: NuGetVersion.TryParse(r["tag_name"]?.GetValue<string>()?.TrimStart('v', 'V'), out NuGetVersion? v) ? v : null))
+			.Where(x => x.Version is not null)
+			.OrderByDescending(x => x.Version!, VersionComparer.VersionRelease)
+			.Select(x => x.Release)
+			.FirstOrDefault();
 	}
 
 	/// <param name="installerSuffix">The end of this machine's installer's file name (InstallerSuffix), null for none.</param>

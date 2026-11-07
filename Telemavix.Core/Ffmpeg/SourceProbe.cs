@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Telemavix.Core.Cameras;
+using Telemavix.Core.Logging;
 using Telemavix.Core.Reframe;
 
 namespace Telemavix.Core.Ffmpeg;
@@ -259,8 +260,9 @@ public static partial class SourceProbe
 			List<int> gaps = [.. times.Zip(times.Skip(1), (a, b) => (int)Math.Round((b - a) * fps)).Where(g => g > 0).Order()];
 			return gaps.Count > 0 ? gaps[gaps.Count / 2] : null;
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			AppLogger.Info($"Couldn't measure the keyframe interval: {ex.Message}");
 			return null;
 		}
 	}
@@ -282,8 +284,9 @@ public static partial class SourceProbe
 			Match match = TierFlagRegex().Match(stderr);
 			return match.Success ? match.Groups[1].Value == "1" : null;
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			AppLogger.Info($"Couldn't read the HEVC tier flag: {ex.Message}");
 			return null;
 		}
 	}

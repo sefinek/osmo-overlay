@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using Telemavix.Core.Logging;
@@ -8,11 +7,11 @@ namespace Telemavix.Core;
 /// <summary>
 ///     Keeps a secret (an API key) unreadable in the files it is stored in. A protected value is "enc1:" plus base64; a value
 ///     without the prefix is a plain one from before and is returned as it is (and protected the next time it's saved).
-///     Windows: DPAPI (CryptProtectData), bound to the user's account. Elsewhere: AES-GCM with a random key in a file only the
+///     Windows: DPAPI (ProtectedData), bound to the user's account. Elsewhere: AES-GCM with a random key in a file only the
 ///     user can read (0600) next to the settings - it keeps a key out of a settings file that's pasted into a bug report or
 ///     copied to a backup, not out of reach of whoever already runs as this user (the same limit DPAPI has).
 /// </summary>
-public static partial class SecretProtector
+public static class SecretProtector
 {
 	private const string Prefix = "enc1:";
 	private const int KeySize = 32, NonceSize = 12, TagSize = 16;
@@ -35,7 +34,7 @@ public static partial class SecretProtector
 		try
 		{
 			byte[] plain = Encoding.UTF8.GetBytes(value);
-			byte[] protectedBytes = OperatingSystem.IsWindows() ? ProtectWindows(plain) : ProtectAes(plain);
+			byte[] protectedBytes = OperatingSystem.IsWindows() ? ProtectedData.Protect(plain, Entropy, DataProtectionScope.CurrentUser) : ProtectAes(plain);
 			return Prefix + Convert.ToBase64String(protectedBytes);
 		}
 		catch (Exception ex) when (ex is CryptographicException or IOException or UnauthorizedAccessException or PlatformNotSupportedException)
@@ -53,7 +52,7 @@ public static partial class SecretProtector
 		try
 		{
 			byte[] data = Convert.FromBase64String(value[Prefix.Length..]);
-			byte[] plain = OperatingSystem.IsWindows() ? UnprotectWindows(data) : UnprotectAes(data);
+			byte[] plain = OperatingSystem.IsWindows() ? ProtectedData.Unprotect(data, Entropy, DataProtectionScope.CurrentUser) : UnprotectAes(data);
 			return Encoding.UTF8.GetString(plain);
 		}
 		catch (Exception ex) when (ex is CryptographicException or FormatException or IOException or UnauthorizedAccessException
@@ -119,65 +118,6 @@ public static partial class SecretProtector
 			}
 
 			return _key = created;
-		}
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	private struct DataBlob
-	{
-		public uint Size;
-		public nint Data;
-	}
-
-	private const uint CryptProtectUiForbidden = 0x1;
-
-	[LibraryImport("crypt32.dll", SetLastError = true)]
-	[return: MarshalAs(UnmanagedType.Bool)]
-	private static partial bool CryptProtectData(ref DataBlob dataIn, nint description, ref DataBlob entropy, nint reserved, nint prompt,
-		uint flags, out DataBlob dataOut);
-
-	[LibraryImport("crypt32.dll", SetLastError = true)]
-	[return: MarshalAs(UnmanagedType.Bool)]
-	private static partial bool CryptUnprotectData(ref DataBlob dataIn, nint description, ref DataBlob entropy, nint reserved, nint prompt,
-		uint flags, out DataBlob dataOut);
-
-	[LibraryImport("kernel32.dll")]
-	private static partial nint LocalFree(nint memory);
-
-	private delegate bool DpapiCall(ref DataBlob input, ref DataBlob entropy, out DataBlob output);
-
-	private static byte[] ProtectWindows(byte[] plain)
-	{
-		return Dpapi(plain, static (ref input, ref entropy, out output) =>
-			CryptProtectData(ref input, 0, ref entropy, 0, 0, CryptProtectUiForbidden, out output));
-	}
-
-	private static byte[] UnprotectWindows(byte[] data)
-	{
-		return Dpapi(data, static (ref input, ref entropy, out output) =>
-			CryptUnprotectData(ref input, 0, ref entropy, 0, 0, CryptProtectUiForbidden, out output));
-	}
-
-	private static unsafe byte[] Dpapi(byte[] input, DpapiCall call)
-	{
-		fixed (byte* inputPointer = input)
-		fixed (byte* entropyPointer = Entropy)
-		{
-			var inBlob = new DataBlob { Size = (uint)input.Length, Data = (nint)inputPointer };
-			var entropyBlob = new DataBlob { Size = (uint)Entropy.Length, Data = (nint)entropyPointer };
-			if (!call(ref inBlob, ref entropyBlob, out DataBlob outBlob))
-				throw new CryptographicException(Marshal.GetLastPInvokeError());
-
-			try
-			{
-				byte[] result = new byte[outBlob.Size];
-				Marshal.Copy(outBlob.Data, result, 0, result.Length);
-				return result;
-			}
-			finally
-			{
-				LocalFree(outBlob.Data);
-			}
 		}
 	}
 }

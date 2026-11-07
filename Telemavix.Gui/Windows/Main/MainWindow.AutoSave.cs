@@ -43,7 +43,8 @@ public partial class MainWindow
 			Directory.CreateDirectory(AutoSaveFolder);
 			BuildProject().Save(path);
 			// Written every time (cheap), but only worth a log line when the project changed since the last backup.
-			string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+			using FileStream saved = File.OpenRead(path);
+			string hash = Convert.ToHexString(SHA256.HashData(saved));
 			if (hash == _lastBackupHash) return;
 
 			_lastBackupHash = hash;

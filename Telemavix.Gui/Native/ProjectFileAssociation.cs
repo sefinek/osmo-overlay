@@ -10,7 +10,7 @@ namespace Telemavix.Gui.Native;
 ///     rights needed. The installer writes the same keys (ProgId and the command line must match Telemavix.iss). Does
 ///     nothing off Windows, or when the app runs through the dotnet muxer (no executable of its own to point at).
 /// </summary>
-internal static class ProjectFileAssociation
+internal static partial class ProjectFileAssociation
 {
 	public const string ProgId = "OsmoOverlay.Project";
 
@@ -92,6 +92,6 @@ internal static class ProjectFileAssociation
 		}
 	}
 
-	[DllImport("shell32.dll")]
-	private static extern void SHChangeNotify(int eventId, uint flags, IntPtr item1, IntPtr item2);
+	[LibraryImport("shell32.dll")]
+	private static partial void SHChangeNotify(int eventId, uint flags, IntPtr item1, IntPtr item2);
 }

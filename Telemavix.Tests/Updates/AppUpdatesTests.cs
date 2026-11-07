@@ -30,6 +30,22 @@ public sealed class AppUpdatesTests
 	}
 
 	[TestMethod]
+	public void NewestRelease_PicksHighestVersionIncludingPrereleases_SkippingDrafts()
+	{
+		var list = JsonNode.Parse("""
+		                          [
+		                            { "tag_name": "v0.6.0", "draft": true },
+		                            { "tag_name": "v0.5.0-beta.3", "draft": false },
+		                            { "tag_name": "v0.5.0-beta.10", "draft": false },
+		                            { "tag_name": "nightly", "draft": false },
+		                            { "tag_name": "v0.4.0", "draft": false }
+		                          ]
+		                          """)!;
+		Assert.AreEqual("v0.5.0-beta.10", AppUpdates.NewestRelease(list)!["tag_name"]!.GetValue<string>());
+		Assert.IsNull(AppUpdates.NewestRelease(JsonNode.Parse("[]")!));
+	}
+
+	[TestMethod]
 	public void CurrentVersion_InitializesTheTypeAndItsHttpClient()
 	{
 		string expected = typeof(AppUpdates).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;

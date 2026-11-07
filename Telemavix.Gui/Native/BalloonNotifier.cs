@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
 
@@ -9,7 +10,7 @@ namespace Telemavix.Gui.Native;
 ///     shows its own ConfirmDialog instead. No persistent tray icon is left behind: one is added just
 ///     long enough to display the balloon, then removed a few seconds later.
 /// </summary>
-internal static class BalloonNotifier
+internal static partial class BalloonNotifier
 {
 	private const int IconId = 1;
 
@@ -34,22 +35,22 @@ internal static class BalloonNotifier
 
 			var data = new NotifyIconData
 			{
-				cbSize = Marshal.SizeOf<NotifyIconData>(),
+				cbSize = Unsafe.SizeOf<NotifyIconData>(),
 				hWnd = hwnd,
 				uID = IconId,
 				uFlags = NifIcon | NifTip | NifInfo,
 				hIcon = LoadIconW(IntPtr.Zero, IdiInformation),
-				szTip = "Telemavix Studio",
-				szInfo = message,
-				szInfoTitle = title,
 				dwInfoFlags = NiifInfo | NiifNoSound
 			};
+			Copy("Telemavix Studio", data.szTip);
+			Copy(message, data.szInfo);
+			Copy(title, data.szInfoTitle);
 
 			// NIM_ADD can fail harmlessly if an icon with this uID is already registered (e.g. a
 			// previous notification's removal is still pending) - NIM_MODIFY below is what actually
 			// needs to succeed to show the balloon.
-			Shell_NotifyIcon(NimAdd, ref data);
-			Shell_NotifyIcon(NimModify, ref data);
+			Notify(NimAdd, ref data);
+			Notify(NimModify, ref data);
 
 			_ = RemoveAfterDelay(hwnd);
 		}
@@ -64,17 +65,31 @@ internal static class BalloonNotifier
 
 		var data = new NotifyIconData
 		{
-			cbSize = Marshal.SizeOf<NotifyIconData>(), hWnd = hwnd, uID = IconId,
-			szTip = "", szInfo = "", szInfoTitle = ""
+			cbSize = Unsafe.SizeOf<NotifyIconData>(), hWnd = hwnd, uID = IconId
 		};
-		Shell_NotifyIcon(NimDelete, ref data);
+		Notify(NimDelete, ref data);
 	}
 
-	[DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-	private static extern bool Shell_NotifyIcon(int dwMessage, ref NotifyIconData lpData);
+	private static void Copy(string text, Span<char> destination)
+	{
+		destination.Clear();
+		text.AsSpan(0, Math.Min(text.Length, destination.Length - 1)).CopyTo(destination);
+	}
 
-	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
-	private static extern IntPtr LoadIconW(IntPtr hInstance, int lpIconName);
+	private static unsafe void Notify(int message, ref NotifyIconData data)
+	{
+		fixed (NotifyIconData* pointer = &data)
+		{
+			Shell_NotifyIcon(message, pointer);
+		}
+	}
+
+	[LibraryImport("shell32.dll", EntryPoint = "Shell_NotifyIconW")]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static unsafe partial bool Shell_NotifyIcon(int dwMessage, NotifyIconData* lpData);
+
+	[LibraryImport("user32.dll")]
+	private static partial IntPtr LoadIconW(IntPtr hInstance, int lpIconName);
 
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 	private struct NotifyIconData
@@ -86,20 +101,35 @@ internal static class BalloonNotifier
 		public int uCallbackMessage;
 		public IntPtr hIcon;
 
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-		public string szTip;
+		public Text128 szTip;
 
 		public int dwState;
 		public int dwStateMask;
 
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-		public string szInfo;
+		public Text256 szInfo;
 
 		public int uTimeoutOrVersion;
 
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-		public string szInfoTitle;
+		public Text64 szInfoTitle;
 
 		public int dwInfoFlags;
+	}
+
+	[InlineArray(64)]
+	private struct Text64
+	{
+		private char _element;
+	}
+
+	[InlineArray(128)]
+	private struct Text128
+	{
+		private char _element;
+	}
+
+	[InlineArray(256)]
+	private struct Text256
+	{
+		private char _element;
 	}
 }
