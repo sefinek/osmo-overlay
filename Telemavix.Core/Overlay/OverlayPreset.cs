@@ -159,6 +159,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	private const float DroneTopGap = 60;
 	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 450, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvWatermarkAboveDials = 48;
 	private const float DroneColumnStep = 220;
+	private const float StatColumnStep = 160;
 
 	// The sticks and the two dials stacked down the right edge under the top row: where the first starts, and the gap between them.
 	private const float DroneControlsTop = 200;
@@ -182,9 +183,11 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		float pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40);
 
 		float dateY = m + 34;
-		float distanceY = firstThirdY - 99;
-		float gradientY = distanceY - 220;
-		float elevationY = gradientY - 220;
+		// The stats column keeps its top (Elevation, where it has always been) and closes up below it: a stat is about 120 px
+		// tall at 4K, so the old 220 px step left a gap nearly as tall as the stat itself.
+		float elevationY = firstThirdY - 99 - 440;
+		float gradientY = elevationY + StatColumnStep;
+		float distanceY = gradientY + StatColumnStep;
 		// Appended after the always-visible stats column instead of spliced between DateTimeText and
 		// Elevation - it's off by default, so it must not shift anything else's default position just
 		// to make room for it.
