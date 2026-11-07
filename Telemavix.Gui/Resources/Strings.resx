@@ -3736,12 +3736,6 @@ Note: Telemavix Studio is provided free of charge. If someone asks you to pay fo
   <data name="Calibration_PreviewLoading" xml:space="preserve">
     <value>Loading the recording and telemetry...</value>
   </data>
-  <data name="Calibration_PreviewPlay" xml:space="preserve">
-    <value>Play</value>
-  </data>
-  <data name="Calibration_PreviewPause" xml:space="preserve">
-    <value>Pause</value>
-  </data>
   <data name="Calibration_PreviewUse" xml:space="preserve">
     <value>Use this correction</value>
   </data>
@@ -5238,9 +5232,6 @@ GPS points: {2} · timer pauses: {3}</value>
   </data>
   <data name="FullTelemetry_Open" xml:space="preserve">
     <value>Preview full telemetry</value>
-  </data>
-  <data name="FullTelemetry_Loading" xml:space="preserve">
-    <value>Preparing full telemetry...</value>
   </data>
   <data name="FullTelemetry_Recording" xml:space="preserve">
     <value>Recording</value>
