@@ -32,16 +32,14 @@ public sealed class FileSummaryCacheTests
 	public void DeleteUnused_RemovesOnlyEntriesNotUsedForThatLong()
 	{
 		string oldSummary = CacheFile("a.json.br", 31);
-		string oldUncompressed = CacheFile("c.json", 31);
 		string oldWaveform = CacheFile("a.waveform", 31);
 		string fresh = CacheFile("b.json.br", 29);
 		string other = CacheFile("notes.txt", 365);
 
-		Assert.AreEqual(3, FileSummaryCache.DeleteUnused(TimeSpan.FromDays(30), _directory));
+		Assert.AreEqual(2, FileSummaryCache.DeleteUnused(TimeSpan.FromDays(30), _directory));
 
 		Assert.IsFalse(File.Exists(oldSummary));
 		Assert.IsFalse(File.Exists(oldWaveform));
-		Assert.IsFalse(File.Exists(oldUncompressed));
 		Assert.IsTrue(File.Exists(fresh));
 		Assert.IsTrue(File.Exists(other), "only the cache's own files are touched");
 	}
@@ -49,7 +47,7 @@ public sealed class FileSummaryCacheTests
 	[TestMethod]
 	public void MarkUsed_KeepsAnEntryFromTheNextCleanup()
 	{
-		string summary = CacheFile("a.json", 31);
+		string summary = CacheFile("a.json.br", 31);
 
 		FileSummaryCache.MarkUsed(summary);
 

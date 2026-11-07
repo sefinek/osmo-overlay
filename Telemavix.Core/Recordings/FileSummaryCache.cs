@@ -31,14 +31,12 @@ internal static class FileSummaryCache
 	public static (FileSummary? Summary, int? StaleFormatVersion, long StaleSizeBytes) TryLoad(IReadOnlyList<string> inputPaths)
 	{
 		string cachePath = GetCachePath(inputPaths);
-		// An entry from before entries were compressed (plain JSON) - read like any other, then dropped as stale.
-		bool legacy = !File.Exists(cachePath) && File.Exists(LegacyPath(cachePath));
-		string path = legacy ? LegacyPath(cachePath) : cachePath;
+		string path = cachePath;
 		if (!File.Exists(path)) return (null, null, 0);
 
 		try
 		{
-			if (ReadHeader(path, !legacy) is not { } header || header.Files.Count != inputPaths.Count) return (null, null, 0);
+			if (ReadHeader(path) is not { } header || header.Files.Count != inputPaths.Count) return (null, null, 0);
 
 			for (int i = 0; i < inputPaths.Count; i++)
 			{
@@ -49,7 +47,7 @@ internal static class FileSummaryCache
 					return (null, null, 0);
 			}
 
-			if (legacy || header.FormatVersion != FormatVersion)
+			if (header.FormatVersion != FormatVersion)
 			{
 				long size = new FileInfo(path).Length;
 				TryDelete(path);
@@ -57,7 +55,7 @@ internal static class FileSummaryCache
 			}
 
 			CacheEntry? entry;
-			using (Stream stream = OpenEntry(path, true))
+			using (Stream stream = OpenEntry(path))
 				entry = JsonSerializer.Deserialize<CacheEntry>(stream);
 			if (entry is null) return (null, null, 0);
 
@@ -82,10 +80,9 @@ internal static class FileSummaryCache
 	///     35 MB - and still read the way it's written, so a new field in a frame needs nothing here.
 	///     Read streaming, never into one string.
 	/// </summary>
-	private static Stream OpenEntry(string path, bool compressed)
+	private static Stream OpenEntry(string path)
 	{
-		FileStream file = File.OpenRead(path);
-		return compressed ? new BrotliStream(file, CompressionMode.Decompress) : file;
+		return new BrotliStream(File.OpenRead(path), CompressionMode.Decompress);
 	}
 
 	/// <summary>
@@ -93,11 +90,11 @@ internal static class FileSummaryCache
 	///     recording's and current, without reading and deserializing the rest of it; an older version may not even fit
 	///     today's types. Null when the start isn't laid out that way.
 	/// </summary>
-	private static (int FormatVersion, List<FileStamp> Files)? ReadHeader(string path, bool compressed)
+	private static (int FormatVersion, List<FileStamp> Files)? ReadHeader(string path)
 	{
 		byte[] buffer = new byte[64 * 1024];
 		int length;
-		using (Stream stream = OpenEntry(path, compressed))
+		using (Stream stream = OpenEntry(path))
 			length = stream.ReadAtLeast(buffer, buffer.Length, false);
 
 		var reader = new Utf8JsonReader(buffer.AsSpan(0, length), length < buffer.Length, default);
@@ -116,11 +113,6 @@ internal static class FileSummaryCache
 		}
 
 		return version is { } v && files is not null ? (v, files) : null;
-	}
-
-	private static string LegacyPath(string cachePath)
-	{
-		return cachePath[..^CompressedSuffix.Length];
 	}
 
 	/// <summary>
@@ -153,7 +145,7 @@ internal static class FileSummaryCache
 		if (!Directory.Exists(directory)) return [];
 
 		// The timeline's waveforms (WaveformCache) live alongside and go with the rest.
-		return Directory.GetFiles(directory, "*.json" + CompressedSuffix).Concat(Directory.GetFiles(directory, "*.json"))
+		return Directory.GetFiles(directory, "*.json" + CompressedSuffix)
 			.Concat(Directory.GetFiles(directory, "*.tmp")).Concat(WaveformCache.Files(directory)).Distinct();
 	}
 
@@ -214,7 +206,6 @@ internal static class FileSummaryCache
 				using var compressed = new BrotliStream(stream, CompressionLevel.Fastest, true);
 				JsonSerializer.Serialize(compressed, entry);
 			});
-			if (File.Exists(LegacyPath(cachePath))) TryDelete(LegacyPath(cachePath));
 			return true;
 		}
 		catch (Exception ex)
