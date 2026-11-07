@@ -503,7 +503,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 			context.DrawRectangle(RouteIntroBrush, null, new Rect(X(0), CompactIntroTop(middle), Math.Max(3, X(intro.End) - X(0)), 3), 1.5, 1.5);
 
 		DrawCuts(context, middle - CompactCutHeight / 2, middle + CompactCutHeight / 2);
-		if (Highlight is { } highlight) DrawSelection(context, highlight, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2, brackets: false);
+		if (Highlight is { } highlight) DrawSelection(context, highlight, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2, false);
 		if (_selection is { } selection)
 			DrawSelection(context, selection, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2);
 		DrawMoments(context, middle - CompactSelectionHeight / 2, middle + CompactSelectionHeight / 2 - 4);
@@ -563,7 +563,7 @@ public sealed class PreviewTimeline : RangeBase, ICustomHitTest
 		DrawRouteIntro(context, videoTop);
 		DrawFiles(context, videoTop, bottom);
 		DrawCuts(context, videoTop, bottom);
-		if (Highlight is { } highlight) DrawSelection(context, highlight, videoTop, bottom, brackets: false);
+		if (Highlight is { } highlight) DrawSelection(context, highlight, videoTop, bottom, false);
 		if (_selection is { } selection) DrawSelection(context, selection, videoTop, bottom);
 		DrawVolume(context, width);
 		DrawMoments(context, 0, bottom);

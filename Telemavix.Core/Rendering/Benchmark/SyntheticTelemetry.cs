@@ -117,7 +117,7 @@ internal static class SyntheticTelemetry
 			{
 				// No fix: the last one held (a DJI's GpsForwardFill), or (0, 0) before the first.
 				frame = new TelemetryFrame(i, t, lastFix?.Latitude ?? 0, lastFix?.Longitude ?? 0, lastFix?.AltitudeMeters ?? 0, gpsTime,
-					accelX, accelY, accelZ, null, Iso(ride), Shutter(ride), ColorTemperature(file), HasGpsFix: false);
+					accelX, accelY, accelZ, null, Iso(ride), Shutter(ride), ColorTemperature(file), false);
 			}
 
 			result.Add(frame);

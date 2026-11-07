@@ -1,6 +1,6 @@
+using SkiaSharp;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Tests.Overlay;
 
@@ -156,8 +156,10 @@ public sealed class TextAlignTests
 	{
 		for (int y = Height - 1; y >= 0; y--)
 		for (int x = 0; x < Width; x++)
+		{
 			if (buffer[(y * Width + x) * 4 + 3] >= 64)
 				return y;
+		}
 
 		return -1;
 	}

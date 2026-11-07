@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -120,7 +121,7 @@ public sealed class LevelMeter : Control
 
 	private static FormattedText Label(string text, double size, IBrush brush)
 	{
-		return new FormattedText(text, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush);
+		return new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface.Default, size, brush);
 	}
 
 	private void RenderVertical(DrawingContext context)

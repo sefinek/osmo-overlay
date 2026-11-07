@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using SkiaSharp;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Core.Overlay;
 
@@ -914,7 +914,7 @@ public sealed partial class OverlayRenderer : IDisposable
 
 		string? previousCredit = _mapCreditText;
 		if (element is MapAttributionElement { Id: OverlayPreset.BackdropCreditId } && Backdrop is { } map
-			&& MapSources.Attribution(map.ProviderId, showLabels: map.ShowLabels) is { } backdropText)
+		                                                                            && MapSources.Attribution(map.ProviderId, showLabels: map.ShowLabels) is { } backdropText)
 			_mapCreditText = backdropText;
 
 		SKPicture recorded;

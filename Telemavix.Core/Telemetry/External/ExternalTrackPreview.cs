@@ -77,8 +77,11 @@ public static class ExternalTrackPreview
 
 		List<TelemetryFrame> merged = ExternalTrackMerge.Apply(frames, track, track.StartUtc);
 		for (int i = 1; i < merged.Count; i++)
+		{
 			if (merged[i].HasGpsFix && !merged[i - 1].HasGpsFix)
 				merged[i] = merged[i] with { StartsAfterGap = true };
+		}
+
 		ct.ThrowIfCancellationRequested();
 		return merged;
 	}

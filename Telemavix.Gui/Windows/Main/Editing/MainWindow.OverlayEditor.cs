@@ -4,8 +4,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
-using Telemavix.Core.Overlay;
 using SkiaSharp;
+using Telemavix.Core.Overlay;
 
 namespace Telemavix.Gui;
 
@@ -1051,7 +1051,7 @@ public partial class MainWindow
 			case OverlayElementType.MapWidget:
 			{
 				var x = (MapWidgetElement)el;
-				MapSourceEditor.Load(x.MapProviderId, OverlaySettingsStore.Load(), x.ShowEsriLabels, perMapLabels: true);
+				MapSourceEditor.Load(x.MapProviderId, OverlaySettingsStore.Load(), x.ShowEsriLabels, true);
 				MapZoomBox.Value = x.MapZoom;
 				MapDynamicZoomCheck.IsChecked = x.MapDynamicZoom;
 				MapZoomOutMaxBox.Value = (decimal)x.MapDynamicZoomMaxFactor;

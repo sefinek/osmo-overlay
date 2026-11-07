@@ -1,8 +1,8 @@
+using SkiaSharp;
 using Telemavix.Core.Localization;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Core.Overlay;
 
@@ -57,7 +57,7 @@ public sealed partial class OverlayRenderer
 	private RouteIntroMosaicKey CurrentRouteIntroKey()
 	{
 		return new RouteIntroMosaicKey(MapSources.UrlTemplate(RouteIntro.MapProviderId),
-			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, routeIntro: true), RouteIntro.MapZoom,
+			GeoBounds.Of(_allFrames.Select(f => (f.Raw.Latitude, f.Raw.Longitude))), MapSources.LabelsUrlTemplate(RouteIntro.MapProviderId, true), RouteIntro.MapZoom,
 			RouteIntro.MapZoomIn ? RouteIntro.MapZoomInFactor : 1);
 	}
 
@@ -180,8 +180,8 @@ public sealed partial class OverlayRenderer
 		double? zoomOut = RouteIntroZoomOut(sampleTime);
 		var key = new RouteIntroCardKey(outW, outH, RouteIntro, _routeIntroMosaic, _routeIntroMapLoading || _preparedRouteIntroKey is null);
 		SKImage card = zoomOut is null
-			? CachedRouteIntroCard(ref _routeIntroCard, ref _routeIntroCardKey, key, withMap: true)
-			: CachedRouteIntroCard(ref _routeIntroBackdrop, ref _routeIntroBackdropKey, key, withMap: false);
+			? CachedRouteIntroCard(ref _routeIntroCard, ref _routeIntroCardKey, key, true)
+			: CachedRouteIntroCard(ref _routeIntroBackdrop, ref _routeIntroBackdropKey, key, false);
 
 		canvas.Save();
 		int layer = alpha >= 1f ? -1 : canvas.SaveLayer(AlphaPaint(alpha));
@@ -296,7 +296,7 @@ public sealed partial class OverlayRenderer
 		DrawRouteIntroMapLabel(canvas, mapRect);
 
 		// On the map, the whole time the card is: what every provider's terms ask for at the least.
-		if (MapSources.Attribution(RouteIntro.MapProviderId, routeIntro: true) is { } credit)
+		if (MapSources.Attribution(RouteIntro.MapProviderId, true) is { } credit)
 			DrawCredit(canvas, credit, mapRect.Left + 24f, mapRect.Bottom - 24f, _smallFont, White);
 	}
 

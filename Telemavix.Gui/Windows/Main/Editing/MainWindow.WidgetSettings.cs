@@ -661,7 +661,7 @@ public partial class MainWindow
 	private void RefreshMapSourceEditor()
 	{
 		if (_editingElementId is { } id && ActiveElements.FirstOrDefault(e => e.Id == id) is MapWidgetElement map)
-			MapSourceEditor.Load(map.MapProviderId, OverlaySettingsStore.Load(), map.ShowEsriLabels, perMapLabels: true);
+			MapSourceEditor.Load(map.MapProviderId, OverlaySettingsStore.Load(), map.ShowEsriLabels, true);
 	}
 
 	private void OnMapSourcesShared()

@@ -9,7 +9,7 @@ public class DroneMarkerTests
 	private static DerivedFrame Frame(double travel, DroneAttitude? attitude)
 	{
 		TelemetryFrame raw = new(0, 0, 50, 20, 100, null, 0, 0, 1, DroneAttitude: attitude);
-		return new DerivedFrame(raw, 20, travel, 0, 0, 0, 0, default, 0, 0, 0, 0, 0, false, StableHeadingDegrees: travel);
+		return new DerivedFrame(raw, 20, travel, 0, 0, 0, 0, default, 0, 0, 0, 0, 0, StableHeadingDegrees: travel);
 	}
 
 	[TestMethod]

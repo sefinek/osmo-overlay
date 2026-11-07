@@ -9,8 +9,17 @@ namespace Telemavix.Core.Overlay;
 ///     (color, by speed or not, width in pixels of a 1080-pixel-high picture), the part still ahead dimmed when ShowAhead; MarkerScale
 ///     sizes the aircraft or the dot.
 /// </summary>
-public sealed record TrackMapSettings(string? ProviderId = null, bool ShowLabels = true, bool Follow = true, int MaxZoom = 18, bool ShowTrail = true,
-	bool ColorBySpeed = true, string? TrailColor = null, float TrailWidth = 3, bool ShowAhead = true, float MarkerScale = 1.3f)
+public sealed record TrackMapSettings(
+	string? ProviderId = null,
+	bool ShowLabels = true,
+	bool Follow = true,
+	int MaxZoom = 18,
+	bool ShowTrail = true,
+	bool ColorBySpeed = true,
+	string? TrailColor = null,
+	float TrailWidth = 3,
+	bool ShowAhead = true,
+	float MarkerScale = 1.3f)
 {
 	/// <summary>In pixels of a 1080-pixel-high picture; the line scales with the picture.</summary>
 	public const float DefaultTrailWidth = 3, DefaultMarkerScale = 1.3f;

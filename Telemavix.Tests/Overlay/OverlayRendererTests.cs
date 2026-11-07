@@ -1,7 +1,7 @@
+using SkiaSharp;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Tests.Overlay;
 

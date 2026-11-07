@@ -116,7 +116,7 @@ public partial class MainWindow
 
 			// Both are only needed once the log below is written, and neither depends on the other or on that.
 			VideoInfo output = OutputVideo.For(summary.Video, OverlaySettingsStore.Load());
-			Task<string> encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
+			var encoderProbe = Task.Run(() => FfmpegPipeline.SelectVideoEncoder(output));
 			Task speedsRead = Task.Run(() => RecordingSpeeds(summary));
 
 			AppLogger.Info(
@@ -137,7 +137,7 @@ public partial class MainWindow
 				FormatHelper.FormatBytes(summary.FileSizeBytes)));
 			AppendLog(summary.Audio is { } audio
 				? string.Format(Strings.Summary_LogAudio, $"{audio.CodecName.ToUpperInvariant()}, {audio.SampleRate / 1000.0:0.###} kHz, " +
-					(audio.Channels == 1 ? Strings.Summary_AudioMono : audio.Channels == 2 ? Strings.Summary_AudioStereo : Plural.Format(Strings.Summary_AudioChannels, audio.Channels)))
+				                                          (audio.Channels == 1 ? Strings.Summary_AudioMono : audio.Channels == 2 ? Strings.Summary_AudioStereo : Plural.Format(Strings.Summary_AudioChannels, audio.Channels)))
 				: Strings.Summary_LogAudioNone);
 
 			AppendLog(string.Format(Strings.Summary_LogCameraModel, summary.CameraModel ?? Strings.Common_Unknown));
@@ -157,9 +157,11 @@ public partial class MainWindow
 				_availability = OverlayAvailability.Of(rawFrames, summary.ContainerRecordingStartUtc is not null, summary.CameraFormat);
 
 				int withGpsSpeed = rawFrames.Count(f => f.GpsSpeedMs is not null);
-				AppendLog(withGpsSpeed == rawFrames.Count ? string.Format(Strings.Summary_LogGpsSpeedAll, rawFrames.Count) : withGpsSpeed > 0
-					? string.Format(Strings.Summary_LogGpsSpeed, withGpsSpeed, rawFrames.Count, rawFrames.Count - withGpsSpeed)
-					: Strings.Summary_LogGpsSpeedNone);
+				AppendLog(withGpsSpeed == rawFrames.Count
+					? string.Format(Strings.Summary_LogGpsSpeedAll, rawFrames.Count)
+					: withGpsSpeed > 0
+						? string.Format(Strings.Summary_LogGpsSpeed, withGpsSpeed, rawFrames.Count, rawFrames.Count - withGpsSpeed)
+						: Strings.Summary_LogGpsSpeedNone);
 
 				if (!_availability.GpsFix)
 				{

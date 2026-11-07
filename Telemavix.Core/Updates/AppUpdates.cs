@@ -41,8 +41,8 @@ public static class AppUpdates
 
 	// Before Http: static initializers run in declaration order, and the User-Agent reads it.
 	public static NuGetVersion CurrentVersion { get; } = NuGetVersion.Parse(typeof(AppUpdates).Assembly
-		.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-		?? typeof(AppUpdates).Assembly.GetName().Version?.ToString() ?? "0.0.0");
+		                                                                        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+	                                                                        ?? typeof(AppUpdates).Assembly.GetName().Version?.ToString() ?? "0.0.0");
 	public static string CurrentVersionLabel { get; } = CurrentVersion.ToNormalizedString();
 
 	private static readonly HttpClient Http = CreateHttpClient();

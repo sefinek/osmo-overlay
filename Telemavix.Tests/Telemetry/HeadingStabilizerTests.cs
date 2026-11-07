@@ -10,8 +10,11 @@ public sealed class HeadingStabilizerTests
 
 	private static TelemetryFrame[] Frames(int count, Func<int, bool>? gap = null, Func<int, bool>? fix = null)
 	{
-		return [.. Enumerable.Range(0, count).Select(i =>
-			new TelemetryFrame(i, i / Hz, 50, 20, 200, null, 0, 1, 0, HasGpsFix: fix?.Invoke(i) ?? true, StartsAfterGap: gap?.Invoke(i) ?? false))];
+		return
+		[
+			.. Enumerable.Range(0, count).Select(i =>
+				new TelemetryFrame(i, i / Hz, 50, 20, 200, null, 0, 1, 0, HasGpsFix: fix?.Invoke(i) ?? true, StartsAfterGap: gap?.Invoke(i) ?? false))
+		];
 	}
 
 	private static double[] Compute(TelemetryFrame[] frames, Func<int, double> speed, Func<int, double> heading)
@@ -88,7 +91,7 @@ public sealed class HeadingStabilizerTests
 	[TestMethod]
 	public void NoFix_HoldsTheDirection_AndAGapStartsOver()
 	{
-		TelemetryFrame[] frames = Frames(200, gap: i => i == 100, fix: i => i is < 40 or >= 60);
+		TelemetryFrame[] frames = Frames(200, i => i == 100, i => i is < 40 or >= 60);
 		double[] result = Compute(frames, _ => 40, i => i < 100 ? 90 : 180);
 
 		for (int i = 40; i < 60; i++) Assert.AreEqual(90, result[i], 1e-9, "held without a fix");

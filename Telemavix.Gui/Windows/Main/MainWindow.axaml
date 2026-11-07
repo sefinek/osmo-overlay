@@ -931,20 +931,20 @@
 							</Button>
 						</StackPanel>
 						<Grid Name="AudioPanel" Grid.Column="2" ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="6" Margin="12,0,0,0"
-							      HorizontalAlignment="Right" VerticalAlignment="Center" IsEnabled="False" ToolTip.ShowOnDisabled="True">
-								<local:LevelMeter Name="AudioMeter" Grid.Column="0" Width="0" Height="14"
-								                  VerticalAlignment="Center" Margin="0,0,6,0" />
-								<Button Name="MuteButton" Grid.Column="1" Classes="previewToolButton" VerticalAlignment="Center" Click="OnMuteClick"
-								        ToolTip.Tip="{x:Static local:Strings.Main_UnmuteM}">
-									<Panel Width="14" Height="14">
-										<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" />
-										<local:IconView Name="MuteSlash" Data="{StaticResource IconMuteSlash}" Foreground="{StaticResource DangerHoverBrush}" />
-									</Panel>
-								</Button>
-								<Slider Name="VolumeSlider" Grid.Column="2" Classes="compact" Minimum="0" Maximum="1" Width="100" VerticalAlignment="Center"
-								        ValueChanged="OnVolumeChanged" ToolTip.Tip="{x:Static local:Strings.Main_PreviewVolume}" />
-								<TextBlock Name="VolumeText" Grid.Column="3" Width="34" FontSize="12" Opacity="0.6" TextAlignment="Right" VerticalAlignment="Center" />
-							</Grid>
+						      HorizontalAlignment="Right" VerticalAlignment="Center" IsEnabled="False" ToolTip.ShowOnDisabled="True">
+							<local:LevelMeter Name="AudioMeter" Grid.Column="0" Width="0" Height="14"
+							                  VerticalAlignment="Center" Margin="0,0,6,0" />
+							<Button Name="MuteButton" Grid.Column="1" Classes="previewToolButton" VerticalAlignment="Center" Click="OnMuteClick"
+							        ToolTip.Tip="{x:Static local:Strings.Main_UnmuteM}">
+								<Panel Width="14" Height="14">
+									<local:IconView Name="MuteIcon" Data="{StaticResource IconVolumeMuted}" />
+									<local:IconView Name="MuteSlash" Data="{StaticResource IconMuteSlash}" Foreground="{StaticResource DangerHoverBrush}" />
+								</Panel>
+							</Button>
+							<Slider Name="VolumeSlider" Grid.Column="2" Classes="compact" Minimum="0" Maximum="1" Width="100" VerticalAlignment="Center"
+							        ValueChanged="OnVolumeChanged" ToolTip.Tip="{x:Static local:Strings.Main_PreviewVolume}" />
+							<TextBlock Name="VolumeText" Grid.Column="3" Width="34" FontSize="12" Opacity="0.6" TextAlignment="Right" VerticalAlignment="Center" />
+						</Grid>
 					</Grid>
 					<Border Grid.Row="1" Name="PreviewFullscreenNotice" Background="{StaticResource SurfaceSunkenBrush}" CornerRadius="6"
 					        IsVisible="False">

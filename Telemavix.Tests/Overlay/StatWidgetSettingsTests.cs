@@ -69,7 +69,7 @@ public sealed class StatWidgetSettingsTests
 	[TestMethod]
 	public void AHeightOrADistanceTurnsColorOnlyPastItsLimits()
 	{
-		List<DerivedFrame> frames = Frames(Flight(height: 130, away: 700));
+		List<DerivedFrame> frames = Frames(Flight(130, 700));
 		var height = new HeightElement { X = Anchor * 3, Y = Anchor * 3, ShadowEnabled = false };
 		var away = new HomeDistanceElement { X = Anchor * 3, Y = Anchor * 3, ShadowEnabled = false };
 

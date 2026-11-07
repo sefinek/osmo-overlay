@@ -2,8 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Telemavix.Core.Overlay;
 using SkiaSharp;
+using Telemavix.Core.Overlay;
 
 namespace Telemavix.Gui;
 

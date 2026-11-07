@@ -77,7 +77,7 @@ public sealed class ExportMapsTests
 	public void RouteIntro_AddsItsOwnProviderOnlyWhenOn()
 	{
 		var off = new OverlaySettings(ShowRouteIntro: false) { ShowRouteIntro = false, RouteIntroMapProvider = MapProviders.EoxId };
-		var on = off with { ShowRouteIntro = true };
+		OverlaySettings on = off with { ShowRouteIntro = true };
 
 		Assert.IsEmpty(ExportMaps.Used(null, off));
 		Assert.AreEqual(MapProviders.EoxId, ExportMaps.Used(null, on).Single().ProviderId);

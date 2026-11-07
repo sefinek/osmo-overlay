@@ -48,7 +48,7 @@ public partial class MainWindow
 			if (project is not null)
 			{
 				await ApplyProjectPresetAsync(project);
-				ApplyProjectEdits(project, restorePosition: false);
+				ApplyProjectEdits(project, false);
 			}
 
 			long preparationMs = openingTime.ElapsedMilliseconds;

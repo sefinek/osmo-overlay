@@ -14,6 +14,7 @@ public sealed class ProcessHelperTests
 	{
 		bool original = AppLogger.Verbose;
 		List<AppLogLevel> levels = [];
+
 		void OnLog(string message, AppLogLevel level)
 		{
 			if (message.StartsWith("Running:", StringComparison.Ordinal)) levels.Add(level);

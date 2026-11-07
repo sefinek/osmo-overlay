@@ -235,6 +235,7 @@ public partial class MainWindow
 				ToolTip.SetTip(text, tip);
 				ToolTip.SetShowDelay(text, 300);
 			}
+
 			return text;
 		});
 	}

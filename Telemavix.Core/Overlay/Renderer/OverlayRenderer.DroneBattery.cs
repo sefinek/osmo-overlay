@@ -1,6 +1,6 @@
+using SkiaSharp;
 using Telemavix.Core.Localization;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Core.Overlay;
 
@@ -77,6 +77,7 @@ public sealed partial class OverlayRenderer
 			string voltage = battery?.VoltageV is { } volts ? $"{F(volts, "0.0")} V" : "-- V";
 			rows.Add((beside ? voltage + CurrentSeparator + current : voltage, cells));
 		}
+
 		if (element.ShowTemperature)
 		{
 			(string value, string unit) = FormatTemperature(battery?.TemperatureCelsius, element.Units);

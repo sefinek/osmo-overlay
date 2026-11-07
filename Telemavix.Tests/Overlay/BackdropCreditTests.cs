@@ -1,7 +1,7 @@
+using SkiaSharp;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Tests.Overlay;
 
@@ -50,6 +50,7 @@ public sealed class BackdropCreditTests
 	{
 		List<DerivedFrame> frames = TelemetryProcessor.Process([new TelemetryFrame(0, 0, 50, 20, 100, null, 0, 0, 1)], null);
 		MapAttributionElement widget = new() { X = 12, Y = 2100, Id = OverlayPreset.BackdropCreditId };
+
 		SKRect Measure(BackdropMap? backdrop)
 		{
 			using var renderer = new OverlayRenderer(Width, Height, 0, [widget], frames, showWatermark: false) { Backdrop = backdrop };

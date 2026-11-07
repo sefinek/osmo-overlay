@@ -63,6 +63,7 @@ internal static class LogPanelExtensions
 					break;
 				}
 			}
+
 			if (!Equals(ToolTip.GetTip(logBox), details)) ToolTip.SetTip(logBox, details);
 		};
 		logBox.PointerExited += (_, _) => ToolTip.SetTip(logBox, null);
@@ -114,6 +115,7 @@ internal static class LogPanelExtensions
 				for (int i = index; i < state.Entries.Count; i++) state.Entries[i].Start -= removed;
 				foreach (string key in state.Statuses.Where(s => s.Value > index).Select(s => s.Key).ToList()) state.Statuses[key]--;
 			}
+
 			var run = new Run(text);
 
 			// Only set Foreground for Warn/Error - leaving it untouched for Info means it stays
@@ -145,6 +147,7 @@ internal static class LogPanelExtensions
 				state.Statuses.Clear();
 				state.Length = 0;
 			}
+
 			ToolTip.SetTip(logBox, null);
 		}
 
@@ -162,6 +165,7 @@ internal static class LogPanelExtensions
 				inlines.Add(run);
 				inlines.Add(new LineBreak());
 			}
+
 			copy.Length = original.Length;
 		}
 	}

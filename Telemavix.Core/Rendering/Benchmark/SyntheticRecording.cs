@@ -28,18 +28,18 @@ public static class SyntheticRecording
 		[
 			new Scene("testsrc2=s=3840x2160", 2.5),
 			new Scene("color=c=white:s=3840x2160", 0.1),
-			new Scene("life=s=960x540:mold=10:ratio=0.12:death_color=#1a1a2a:life_color=#e8c070:seed=7", 2.4, Blocky: true),
+			new Scene("life=s=960x540:mold=10:ratio=0.12:death_color=#1a1a2a:life_color=#e8c070:seed=7", 2.4, true),
 			new Scene("gradients=s=1920x1080:speed=0.08:n=7:seed=3", 2.0),
 			new Scene("color=c=black:s=3840x2160", 0.05),
 			new Scene("smptehdbars=s=3840x2160", 1.95),
 			new Scene("mandelbrot=s=960x540:end_scale=0.01:start_scale=1.5:end_pts=60", 1.0)
-		], FreezeFrames: (420, 470)),
+		], (420, 470)),
 		new(600, 0.0075, "0,4.95,5.0,9.2",
 		[
 			new Scene("zoneplate=s=1920x1080:kt2=4:kx2=24:ky2=20:kxt=12", 2.5),
 			new Scene("mandelbrot=s=960x540:end_scale=0.002:start_scale=2:end_pts=100", 2.5),
 			new Scene("testsrc2=s=1920x1080:r=1", 2.0, Pan: true),
-			new Scene("cellauto=s=960x540:rule=110:random_fill_ratio=0.5:scroll=1:seed=5", 2.0, Blocky: true),
+			new Scene("cellauto=s=960x540:rule=110:random_fill_ratio=0.5:scroll=1:seed=5", 2.0, true),
 			new Scene("testsrc2=s=3840x2160", 1.0)
 		], DroppedFrame: 300),
 		new(600, 0, "0,1.0,1.1,1.2",
@@ -49,7 +49,7 @@ public static class SyntheticRecording
 			new Scene("zoneplate=s=1920x1080:kt2=6:kx2=30:ky2=30:kxt=20", 1.8),
 			new Scene("color=c=white:s=3840x2160", 0.08),
 			new Scene("gradients=s=1920x1080:speed=0.12:n=5:seed=11", 3.0),
-			new Scene("life=s=960x540:mold=6:ratio=0.2:death_color=#10202a:life_color=#70d0f0:seed=13", 2.12, Blocky: true)
+			new Scene("life=s=960x540:mold=6:ratio=0.2:death_color=#10202a:life_color=#70d0f0:seed=13", 2.12, true)
 		])
 	];
 

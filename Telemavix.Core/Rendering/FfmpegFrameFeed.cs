@@ -35,7 +35,7 @@ internal static class FfmpegFrameFeed
 		using var producerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		CancellationToken producerCt = producerCts.Token;
 
-		Task producer = Task.Run(async () =>
+		var producer = Task.Run(async () =>
 		{
 			try
 			{

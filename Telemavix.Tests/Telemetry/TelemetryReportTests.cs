@@ -55,11 +55,11 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void CheckLean_RollSignTellsRightFromLeft()
 	{
-		var right = TelemetryReport.Create(Frames(30, roll: 25), true);
+		var right = TelemetryReport.Create(Frames(30, 25), true);
 
 		Assert.IsTrue(right.CheckLean(Lean.Right));
 		Assert.IsFalse(right.CheckLean(Lean.Left), "a wrong sign shows as the other lean");
-		Assert.IsTrue(TelemetryReport.Create(Frames(30, roll: -25), true).CheckLean(Lean.Left));
+		Assert.IsTrue(TelemetryReport.Create(Frames(30, -25), true).CheckLean(Lean.Left));
 	}
 
 	[TestMethod]
@@ -73,7 +73,7 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void CheckLean_ALevelCameraLeansNoWay()
 	{
-		var level = TelemetryReport.Create(Frames(30, roll: 2, pitch: -1), true);
+		var level = TelemetryReport.Create(Frames(30, 2, -1), true);
 
 		Assert.IsFalse(level.CheckLean(Lean.Right));
 		Assert.IsFalse(level.CheckLean(Lean.NoseDown));
@@ -82,8 +82,8 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void CheckLean_IsAMedianSoABriefJoltDoesNotDecideIt()
 	{
-		List<DerivedFrame> frames = Frames(30, roll: 25);
-		frames[10] = Frame(10, roll: -80);
+		List<DerivedFrame> frames = Frames(30, 25);
+		frames[10] = Frame(10, -80);
 
 		Assert.IsTrue(TelemetryReport.Create(frames, true).CheckLean(Lean.Right));
 	}
@@ -91,7 +91,7 @@ public sealed class TelemetryReportTests
 	[TestMethod]
 	public void CheckLean_NeverPassesWhenTheCamerasAxesAreUnknown()
 	{
-		Assert.IsFalse(TelemetryReport.Create(Frames(30, roll: 25), false).CheckLean(Lean.Right));
+		Assert.IsFalse(TelemetryReport.Create(Frames(30, 25), false).CheckLean(Lean.Right));
 		StringAssert.Contains(TelemetryReport.Create(Frames(30), false).ToText(), "unknown");
 	}
 

@@ -75,7 +75,7 @@ public sealed class QueueDetailsTests
 	{
 		string copy = Queued(Project());
 
-		Assert.AreEqual(Path.Combine(_dir, "elsewhere.mp4"), QueueDetails.Of(new QueueRequest(copy, Output: Path.Combine(_dir, "elsewhere.mp4")), new OverlaySettings()).OutputPath);
+		Assert.AreEqual(Path.Combine(_dir, "elsewhere.mp4"), QueueDetails.Of(new QueueRequest(copy, Path.Combine(_dir, "elsewhere.mp4")), new OverlaySettings()).OutputPath);
 		Assert.AreEqual(Path.Combine(_dir, "out_alpha.webm"), QueueDetails.Of(new QueueRequest(copy, Alpha: AlphaCodec.Vp9), new OverlaySettings()).OutputPath);
 	}
 

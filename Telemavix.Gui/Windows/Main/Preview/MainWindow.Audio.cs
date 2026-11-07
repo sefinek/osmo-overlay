@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -24,8 +25,8 @@ public partial class MainWindow
 	{
 		_meterTimer.Tick += (_, _) =>
 		{
-			long now = System.Diagnostics.Stopwatch.GetTimestamp();
-			double seconds = _meterLastTick == 0 ? 0 : System.Diagnostics.Stopwatch.GetElapsedTime(_meterLastTick, now).TotalSeconds;
+			long now = Stopwatch.GetTimestamp();
+			double seconds = _meterLastTick == 0 ? 0 : Stopwatch.GetElapsedTime(_meterLastTick, now).TotalSeconds;
 			_meterLastTick = now;
 			(float left, float right) = AudioPanel.IsEnabled && _previewPlayer.IsPlaying ? _previewPlayer.AudioLevel : default;
 			(_soundPanelShown ? SoundMeter : AudioMeter).Update(left, right, seconds);

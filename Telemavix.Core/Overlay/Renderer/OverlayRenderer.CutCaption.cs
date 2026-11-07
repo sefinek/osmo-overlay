@@ -59,7 +59,7 @@ public sealed partial class OverlayRenderer
 		float y = box.Top + CutCaptionPaddingY + CutCaptionLineHeight / 2 + CutCaptionTextSize * 0.35f;
 		foreach (string line in lines)
 		{
-			DrawOutlined(canvas, line, 0, y, font, White, SKTextAlign.Center, opacity: active.Alpha);
+			DrawOutlined(canvas, line, 0, y, font, White, SKTextAlign.Center, active.Alpha);
 			y += CutCaptionLineHeight;
 		}
 

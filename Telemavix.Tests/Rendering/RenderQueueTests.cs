@@ -165,7 +165,7 @@ public sealed class RenderQueueTests
 	{
 		var fake = new Fake();
 		RenderQueue queue = fake.Queue();
-		QueueItem item = queue.Add(new QueueRequest(Project("a", recording: "missing.mp4")));
+		QueueItem item = queue.Add(new QueueRequest(Project("a", "missing.mp4")));
 
 		await queue.RunAsync(ExistingOutput.Skip, CancellationToken.None);
 
@@ -271,7 +271,7 @@ public sealed class RenderQueueTests
 		var fake = new Fake();
 		RenderQueue queue = fake.Queue();
 		string elsewhere = Path.Combine(_dir, "elsewhere.mp4");
-		queue.Add(new QueueRequest(Project("a", output: "a.mp4"), Output: elsewhere));
+		queue.Add(new QueueRequest(Project("a", output: "a.mp4"), elsewhere));
 
 		await queue.RunAsync(ExistingOutput.Skip, CancellationToken.None);
 

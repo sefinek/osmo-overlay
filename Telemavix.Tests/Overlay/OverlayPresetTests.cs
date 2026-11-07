@@ -1,7 +1,7 @@
 using System.Globalization;
+using SkiaSharp;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Tests.Overlay;
 
@@ -131,13 +131,13 @@ public sealed class OverlayPresetTests
 		var snappy = (FlightAlertsElement)fpv.Elements.Single(e => e is FlightAlertsElement);
 		Assert.IsTrue(snappy.FadeSeconds < calm.FadeSeconds && snappy.ShowSeconds < calm.ShowSeconds && snappy.SlideIn && !calm.SlideIn);
 		Assert.IsTrue(fpv.Elements.OfType<LabeledStatElement>().All(e => e.AccentColor == "#FFFFFF"), "the OSD is white");
-		AssertWidgetsDoNotOverlap(fpv, allOn: false);
+		AssertWidgetsDoNotOverlap(fpv, false);
 	}
 
 	[TestMethod]
 	public void CreateDrone_NoShownWidgetCoversAnother()
 	{
-		AssertWidgetsDoNotOverlap(OverlayPreset.CreateDrone("x", "Drones"), allOn: false);
+		AssertWidgetsDoNotOverlap(OverlayPreset.CreateDrone("x", "Drones"), false);
 	}
 
 	[TestMethod]
@@ -179,11 +179,11 @@ public sealed class OverlayPresetTests
 			Assert.AreEqual(edge, element.X + OverlayElementBounds.TextBoxRight(element), 0.5, $"{type} ends on the margin");
 		}
 
-		var average = fpv.Elements.OfType<TripStatElement>().Single(e => e.Stat == TripStatKind.AverageSpeed);
+		TripStatElement average = fpv.Elements.OfType<TripStatElement>().Single(e => e.Stat == TripStatKind.AverageSpeed);
 		Assert.AreEqual(TextAlign.Right, average.TextAlign);
 		Assert.AreEqual(edge, average.X + OverlayElementBounds.TextBoxRight(average), 0.5, "the average speed ends on the margin");
 
-		var climb = Get(fpv, OverlayElementType.VerticalSpeed);
+		OverlayElement climb = Get(fpv, OverlayElementType.VerticalSpeed);
 		Assert.AreEqual(OverlayElementBounds.Margin, climb.X, "the climb rate is in the left column");
 
 		var mode = (StyledOverlayElement)Get(fpv, OverlayElementType.FlightMode);
@@ -223,7 +223,7 @@ public sealed class OverlayPresetTests
 
 	private static void AssertDefaultWidgetsDoNotOverlap()
 	{
-		AssertWidgetsDoNotOverlap(OverlayPreset.CreateDefault("d", "Default"), allOn: true);
+		AssertWidgetsDoNotOverlap(OverlayPreset.CreateDefault("d", "Default"), true);
 	}
 
 	private static void AssertWidgetsDoNotOverlap(OverlayPreset preset, bool allOn)

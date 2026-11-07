@@ -1,8 +1,8 @@
+using SkiaSharp;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
 using Telemavix.Core.Telemetry.External;
-using SkiaSharp;
 
 namespace Telemavix.Tests.Telemetry.External;
 

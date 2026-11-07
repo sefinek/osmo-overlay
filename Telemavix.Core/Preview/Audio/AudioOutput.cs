@@ -1,6 +1,6 @@
+using SDL;
 using Telemavix.Core.Localization;
 using Telemavix.Core.Logging;
-using SDL;
 
 namespace Telemavix.Core.Preview;
 
@@ -89,7 +89,7 @@ public sealed unsafe class AudioOutput : IAudioClockSource, IDisposable
 				if (_disposed) return default;
 
 				long played = _pushedFrames - SDL3.SDL_GetAudioStreamQueued(_stream) / (_channels * sizeof(float))
-				              - (long)(DeviceLatencySeconds * _sampleRate);
+				                            - (long)(DeviceLatencySeconds * _sampleRate);
 				while (_levels.Count > 0 && _levels.Peek().EndFrame <= played) _levels.Dequeue();
 				if (_levels.Count == 0) return default;
 

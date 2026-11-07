@@ -21,19 +21,19 @@ public sealed class RouteIntroSettingsTests
 	{
 		var settings = new OverlaySettings { ShowRouteIntro = true };
 
-		Assert.IsTrue(RouteIntroSettings.ForRecording(settings, true, null, trimmed: false).Enabled);
-		Assert.IsFalse(RouteIntroSettings.ForRecording(settings, true, null, trimmed: true).Enabled, "off by default: the card sums up the ride from its start");
-		Assert.IsTrue(RouteIntroSettings.ForRecording(settings with { RouteIntroWhenTrimmed = true }, true, null, trimmed: true).Enabled);
+		Assert.IsTrue(RouteIntroSettings.ForRecording(settings, true, null, false).Enabled);
+		Assert.IsFalse(RouteIntroSettings.ForRecording(settings, true, null, true).Enabled, "off by default: the card sums up the ride from its start");
+		Assert.IsTrue(RouteIntroSettings.ForRecording(settings with { RouteIntroWhenTrimmed = true }, true, null, true).Enabled);
 		Assert.IsFalse(new OverlaySettings().RouteIntroWhenTrimmed, "off unless asked for");
 	}
 
 	[TestMethod]
 	public void Applies_OnlyATrimmedStartNeedsTheSetting()
 	{
-		Assert.IsTrue(RouteIntroSettings.Applies(false, trimmed: false));
-		Assert.IsFalse(RouteIntroSettings.Applies(false, trimmed: true));
-		Assert.IsTrue(RouteIntroSettings.Applies(true, trimmed: true));
-		Assert.IsTrue(RouteIntroSettings.Applies(true, trimmed: false));
+		Assert.IsTrue(RouteIntroSettings.Applies(false, false));
+		Assert.IsFalse(RouteIntroSettings.Applies(false, true));
+		Assert.IsTrue(RouteIntroSettings.Applies(true, true));
+		Assert.IsTrue(RouteIntroSettings.Applies(true, false));
 	}
 
 	[TestMethod]
@@ -42,7 +42,7 @@ public sealed class RouteIntroSettingsTests
 		var routeIntro = new RouteIntroSettings(false, 7.5, RouteIntroStats.MaxSpeed | RouteIntroStats.MaxLean, UnitPreferences.Metric, true, "carto-dark",
 			false, "Początek", "", RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.MaxLean)] = "MAKS. PRZECHYŁ" }),
 			MapZoom: 16, Title: "Weekend", Subtitle: "Dzień 2", ElevationProfile: false, MapZoomIn: true, MapZoomInFactor: 2.5, MapZoomInSeconds: 4, MapZoomInDelaySeconds: 1);
-		var settings = new OverlaySettings(ActivePresetId: "p1", SpeedCorrectionPercent: 4.2);
+		var settings = new OverlaySettings("p1", SpeedCorrectionPercent: 4.2);
 
 		OverlaySettings applied = routeIntro.ApplyTo(settings);
 
@@ -91,9 +91,9 @@ public sealed class RouteIntroSettingsTests
 	[TestMethod]
 	public void CameraModelLabel_SaysDrone_ForAFlight_UnlessTheUserCaptionedIt()
 	{
-		Assert.AreNotEqual(RouteIntroStat.DefaultLabel(RouteIntroStats.CameraModel), RouteIntroStat.DefaultLabel(RouteIntroStats.CameraModel, drone: true));
-		Assert.AreEqual(RouteIntroStat.DefaultLabel(RouteIntroStats.Distance), RouteIntroStat.DefaultLabel(RouteIntroStats.Distance, drone: true));
+		Assert.AreNotEqual(RouteIntroStat.DefaultLabel(RouteIntroStats.CameraModel), RouteIntroStat.DefaultLabel(RouteIntroStats.CameraModel, true));
+		Assert.AreEqual(RouteIntroStat.DefaultLabel(RouteIntroStats.Distance), RouteIntroStat.DefaultLabel(RouteIntroStats.Distance, true));
 		var own = RouteIntroLabels.From(new Dictionary<string, string> { [nameof(RouteIntroStats.CameraModel)] = "Sprzet" });
-		Assert.AreEqual("Sprzet", own.For(RouteIntroStats.CameraModel, drone: true));
+		Assert.AreEqual("Sprzet", own.For(RouteIntroStats.CameraModel, true));
 	}
 }

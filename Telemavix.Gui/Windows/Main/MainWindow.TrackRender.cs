@@ -1,7 +1,6 @@
 using Telemavix.Core;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Overlay;
-using Telemavix.Core.Telemetry.External;
 using Telemavix.Gui.Native;
 
 namespace Telemavix.Gui;

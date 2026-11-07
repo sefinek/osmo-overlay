@@ -26,14 +26,14 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void NoMinimum_IsAllowed()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		Assert.IsFalse(RemoteAccess.Evaluate(Answer(key, null), key, Current, Now, true).Blocked);
 	}
 
 	[TestMethod]
 	public void BelowMinimum_IsBlocked_WithItsUrl()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		AccessDecision decision = RemoteAccess.Evaluate(Answer(key, "0.6.0", "https://example.test/get"), key, Current, Now, true);
 		Assert.IsTrue(decision.Blocked);
 		Assert.AreEqual(NuGetVersion.Parse("0.6.0"), decision.MinVersion);
@@ -43,7 +43,7 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void AtOrAboveMinimum_IsAllowed()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		Assert.IsFalse(RemoteAccess.Evaluate(Answer(key, "0.5.0"), key, Current, Now, true).Blocked);
 		Assert.IsFalse(RemoteAccess.Evaluate(Answer(key, "0.4.0"), key, Current, Now, true).Blocked);
 	}
@@ -51,7 +51,7 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void NonHttpsUrl_IsDropped()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		Assert.IsNull(RemoteAccess.Evaluate(Answer(key, "0.6.0", "file:///c:/windows/system32/calc.exe"), key, Current, Now, true).Url);
 		Assert.IsNull(RemoteAccess.Evaluate(Answer(key, "0.6.0", "http://example.test"), key, Current, Now, true).Url);
 	}
@@ -59,15 +59,15 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void SignedWithAnotherKey_Throws()
 	{
-		using ECDsa trusted = ECDsa.Create();
-		using ECDsa attacker = ECDsa.Create();
+		using var trusted = ECDsa.Create();
+		using var attacker = ECDsa.Create();
 		Assert.ThrowsExactly<InvalidDataException>(() => RemoteAccess.Evaluate(Answer(attacker, "99.0.0"), trusted, Current, Now, true));
 	}
 
 	[TestMethod]
 	public void ChangedPayload_Throws()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		string signed = Answer(key, null);
 		string tampered = signed.Replace("\\u0022minVersion\\u0022:null", "\\u0022minVersion\\u0022:\\u002299.0.0\\u0022");
 		Assert.AreNotEqual(signed, tampered);
@@ -77,7 +77,7 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void Expired_IsRefusedWhenFresh_ButKeptAnswerStillCounts()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		string old = Answer(key, "0.6.0", expiresAt: Now.AddDays(-3));
 		Assert.ThrowsExactly<InvalidDataException>(() => RemoteAccess.Evaluate(old, key, Current, Now, true));
 		Assert.IsTrue(RemoteAccess.Evaluate(old, key, Current, Now, false).Blocked);
@@ -86,7 +86,7 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void MissingParts_Throw()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		Assert.ThrowsExactly<InvalidDataException>(() => RemoteAccess.Evaluate("""{ "success": true }""", key, Current, Now, true));
 		Assert.ThrowsExactly<InvalidDataException>(() => RemoteAccess.Evaluate("""{ "payload": "{}" }""", key, Current, Now, true));
 	}
@@ -94,9 +94,9 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void AnyOfTheTrustedKeys_Signs()
 	{
-		using ECDsa first = ECDsa.Create();
-		using ECDsa spare = ECDsa.Create();
-		using ECDsa other = ECDsa.Create();
+		using var first = ECDsa.Create();
+		using var spare = ECDsa.Create();
+		using var other = ECDsa.Create();
 		Assert.IsTrue(RemoteAccess.Evaluate(Answer(spare, "0.6.0"), [first, spare], Current, Now, true).Blocked);
 		Assert.ThrowsExactly<InvalidDataException>(() => RemoteAccess.Evaluate(Answer(other, "0.6.0"), [first, spare], Current, Now, true));
 	}
@@ -104,7 +104,7 @@ public sealed class RemoteAccessTests
 	[TestMethod]
 	public void Decision_CarriesWhenItWasIssued()
 	{
-		using ECDsa key = ECDsa.Create();
+		using var key = ECDsa.Create();
 		Assert.AreEqual(Now.AddHours(-1), RemoteAccess.Evaluate(Answer(key, null), key, Current, Now, true).IssuedAt);
 		Assert.AreEqual(Now.AddHours(-1), RemoteAccess.Evaluate(Answer(key, "0.6.0"), key, Current, Now, true).IssuedAt);
 	}
@@ -132,7 +132,7 @@ public sealed class RemoteAccessTests
 		Assert.HasCount(2, RemoteAccess.PublicKeys);
 		foreach (string key in RemoteAccess.PublicKeys)
 		{
-			using ECDsa ecdsa = ECDsa.Create();
+			using var ecdsa = ECDsa.Create();
 			ecdsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(key), out _);
 			Assert.AreEqual(256, ecdsa.KeySize);
 		}

@@ -152,8 +152,8 @@ public sealed class MapSourcesTests
 		Assert.IsNotNull(labels);
 		Assert.Contains("/arcgis/imagery/labels/static/tile/{hz}/{hy}/{hx}?token=e%20%261", labels);
 		Assert.AreEqual(labels, sources.LabelsUrlTemplate(MapProviders.EsriImageryId));
-		Assert.IsNull(sources.LabelsUrlTemplate(null, routeIntro: true));
-		Assert.AreEqual(labels, (sources with { ShowRouteIntroEsriLabels = true, ShowEsriLabels = false }).LabelsUrlTemplate(null, routeIntro: true));
+		Assert.IsNull(sources.LabelsUrlTemplate(null, true));
+		Assert.AreEqual(labels, (sources with { ShowRouteIntroEsriLabels = true, ShowEsriLabels = false }).LabelsUrlTemplate(null, true));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.StreetsAutoId));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.MapTilerSatelliteId));
 		Assert.IsNull(sources.LabelsUrlTemplate(MapProviders.CustomId));
@@ -179,8 +179,8 @@ public sealed class MapSourcesTests
 		Assert.Contains("© OpenStreetMap contributors", hybrid);
 		Assert.Contains("Earthstar Geographics", imagery);
 		Assert.DoesNotContain("TomTom", imagery!);
-		Assert.DoesNotContain("TomTom", sources.Attribution(null, routeIntro: true)!);
-		Assert.Contains("TomTom", (sources with { ShowRouteIntroEsriLabels = true }).Attribution(null, routeIntro: true)!);
+		Assert.DoesNotContain("TomTom", sources.Attribution(null, true)!);
+		Assert.Contains("TomTom", (sources with { ShowRouteIntroEsriLabels = true }).Attribution(null, true)!);
 	}
 
 	[TestMethod]

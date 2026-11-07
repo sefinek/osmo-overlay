@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
-using Telemavix.Core.Mapping;
 using SkiaSharp;
+using Telemavix.Core.Mapping;
 
 namespace Telemavix.Tests.Mapping;
 

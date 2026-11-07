@@ -9,6 +9,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using SkiaSharp;
 using Telemavix.Core;
 using Telemavix.Core.Dependencies;
 using Telemavix.Core.Ffmpeg;
@@ -18,7 +19,6 @@ using Telemavix.Core.Mapping;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Updates;
 using Telemavix.Gui.Native;
-using SkiaSharp;
 
 namespace Telemavix.Gui;
 

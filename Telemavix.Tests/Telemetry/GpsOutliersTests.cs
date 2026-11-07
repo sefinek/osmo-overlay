@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Telemavix.Core;
 using Telemavix.Core.Cameras;
 using Telemavix.Core.Ffmpeg;
@@ -129,7 +130,7 @@ public sealed class GpsOutliersTests
 		List<TelemetryFrame> frames = Ride(1500, _ => 10);
 		for (int i = 1; i < frames.Count; i++) frames[i] = frames[i] with { GpsSpeedMs = 200 };
 
-		var watch = System.Diagnostics.Stopwatch.StartNew();
+		var watch = Stopwatch.StartNew();
 		IReadOnlyList<TelemetryFrame> repaired = GpsOutliers.Repair(frames);
 		watch.Stop();
 

@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Sockets;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Telemavix.Core.Updates;
 using SkiaSharp;
+using Telemavix.Core.Updates;
 
 namespace Telemavix.Gui;
 

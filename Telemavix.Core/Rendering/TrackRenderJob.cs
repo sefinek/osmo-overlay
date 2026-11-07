@@ -14,9 +14,17 @@ namespace Telemavix.Core;
 /// <param name="Format">The picture's size and rate: no file says them (TrackOnlyFormat).</param>
 /// <param name="Playback">The track already processed for the preview; used only when it was made with the same GPS smoothing and speed correction as the render's.</param>
 /// <param name="Music">Clips on the output's timeline (MusicTrack); the only sound there is.</param>
-public sealed record TrackRenderOptions(ExternalTrack Track, TrackOnlyFormat Format, string OutputPath, string? Encoder = null, bool Overwrite = true,
-	IReadOnlyList<OverlayElement>? Layout = null, IReadOnlyList<MusicClip>? Music = null, OverlaySettings? Settings = null,
-	IReadOnlyList<TimeRange>? CutOuts = null, ExternalTrackPlayback? Playback = null);
+public sealed record TrackRenderOptions(
+	ExternalTrack Track,
+	TrackOnlyFormat Format,
+	string OutputPath,
+	string? Encoder = null,
+	bool Overwrite = true,
+	IReadOnlyList<OverlayElement>? Layout = null,
+	IReadOnlyList<MusicClip>? Music = null,
+	OverlaySettings? Settings = null,
+	IReadOnlyList<TimeRange>? CutOuts = null,
+	ExternalTrackPlayback? Playback = null);
 
 /// <summary>
 ///     A GPS track rendered with no recording (TrackOnlyRecording): the picture the full telemetry preview shows (TrackBackdrop,
@@ -49,7 +57,7 @@ public static class TrackRenderJob
 
 			OverlaySettings settings = options.Settings ?? OverlaySettingsStore.Load();
 			(FileSummary summary, ExternalTrackPlayback playback) = options.Playback is { IsTrackOnly: true } ready && ready.SmoothGpsMotion == settings.SmoothGpsMotion &&
-			                                                          ready.SpeedCorrectionPercent == settings.SpeedCorrectionPercent
+			                                                        ready.SpeedCorrectionPercent == settings.SpeedCorrectionPercent
 				? TrackOnlyRecording.Create(ready, options.Format)
 				: TrackOnlyRecording.Create(options.Track, settings, options.Format);
 			IReadOnlyList<DerivedFrame> derived = playback.DerivedFrames;

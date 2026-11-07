@@ -47,7 +47,7 @@ public partial class MainWindow
 		OverlaySettings settings = OverlaySettingsStore.Load();
 		var map = TrackMapSettings.From(settings);
 		_loadingTrackMap = true;
-		TrackMapSource.Load(map.ProviderId, settings, map.ShowLabels, perMapLabels: true);
+		TrackMapSource.Load(map.ProviderId, settings, map.ShowLabels, true);
 		TrackMapFollowCheck.IsChecked = map.Follow;
 		TrackMapZoomBox.Value = map.MaxZoom;
 		TrackMapTrail.Populate(map.ShowTrail, map.TrailColor, map.ColorBySpeed, map.TrailWidth);

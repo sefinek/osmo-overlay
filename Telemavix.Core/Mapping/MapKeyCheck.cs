@@ -100,7 +100,7 @@ public static class MapKeyCheck
 	{
 		try
 		{
-			using JsonDocument document = JsonDocument.Parse(json);
+			using var document = JsonDocument.Parse(json);
 			return document.RootElement.TryGetProperty("error", out JsonElement error) && error.TryGetProperty("code", out JsonElement code) &&
 			       code.TryGetInt32(out int number) && number is 498 or 499 or 403;
 		}

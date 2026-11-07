@@ -186,7 +186,7 @@ public partial class MainWindow : Window
 		// XAML, so the two can't silently drift apart if either constant ever changes.
 		MapZoomBox.Minimum = RouteMapMosaic.MinZoom;
 		MapZoomBox.Maximum = RouteMapMosaic.MaxZoom;
-		MapZoomOutMaxBox.Minimum =(decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
+		MapZoomOutMaxBox.Minimum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMin;
 		MapZoomOutMaxBox.Maximum = (decimal)OverlayRenderer.MapDynamicZoomMaxFactorMax;
 		SpeedMaxBox.Minimum = (decimal)OverlayRenderer.SpeedGaugeMaxMin;
 		SpeedMaxBox.Maximum = (decimal)OverlayRenderer.SpeedGaugeMaxMax;
@@ -489,6 +489,7 @@ public partial class MainWindow : Window
 			await DjiApiNotice.ShowAsync(this);
 			updated = updated with { DjiApiNoticeShown = true };
 		}
+
 		if (updated != saved) OverlaySettingsStore.Save(updated);
 		SetDebugMode(updated.DebugMode);
 		ReloadPresetsAfterUnitsChange(before, saved);

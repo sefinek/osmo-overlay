@@ -1,8 +1,8 @@
+using SkiaSharp;
 using Telemavix.Core.Localization;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 using MapMosaicKey = (string Url, int Zoom, double MaxZoomOutFactor, string? LabelsUrl);
 using ElementMapKey = (string? ProviderId, int Zoom, double MaxZoomOutFactor, bool? Labels);
 

@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Telemavix.Core;
-using Telemavix.Core.Logging;
 using Telemavix.Core.Localization;
+using Telemavix.Core.Logging;
 
 namespace Telemavix.Gui;
 

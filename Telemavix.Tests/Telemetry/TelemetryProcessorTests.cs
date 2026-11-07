@@ -152,7 +152,7 @@ public sealed class TelemetryProcessorTests
 		List<TelemetryFrame> standing =
 		[
 			.. Enumerable.Range(0, 600).Select(i => new TelemetryFrame(i, i / 10.0, StartLat + (rng.NextDouble() - 0.5) * 2e-5,
-				StartLon + (rng.NextDouble() - 0.5) * 2e-5, 200, null, 0, 0, 1, GpsSpeedMs: 0.05))
+				StartLon + (rng.NextDouble() - 0.5) * 2e-5, 200, null, 0, 0, 1, 0.05))
 		];
 
 		Assert.AreEqual(0, TelemetryProcessor.Process(standing, null)[^1].CumulativeDistanceMeters);

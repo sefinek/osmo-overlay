@@ -275,6 +275,7 @@ public sealed class FlightLogTests
 		Func<string?> original = DjiKeychains.ApiKey;
 		int thread = Environment.CurrentManagedThreadId;
 		bool dataExceptionThrown = false;
+
 		void OnException(object? sender, FirstChanceExceptionEventArgs args)
 		{
 			if (Environment.CurrentManagedThreadId == thread && args.Exception is InvalidDataException) dataExceptionThrown = true;

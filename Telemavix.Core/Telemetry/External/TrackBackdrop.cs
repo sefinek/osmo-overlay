@@ -1,9 +1,9 @@
 using System.Runtime.InteropServices;
+using SkiaSharp;
 using Telemavix.Core.Localization;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Overlay;
-using SkiaSharp;
 
 namespace Telemavix.Core.Telemetry.External;
 
@@ -300,7 +300,7 @@ public sealed class TrackBackdrop : IDisposable
 						Span<RotorSpin.RotorPose> rotors = stackalloc RotorSpin.RotorPose[RotorSpin.Count];
 						_rotorPhases ??= RotorSpin.Phases(frames, _referenceKmh);
 						RotorSpin.At(frames, _rotorPhases, trackSeconds, _referenceKmh, rotors);
-						_drone.Draw(canvas, point, height / 20f * _options.MarkerScale, attitude, rotors, beam: true);
+						_drone.Draw(canvas, point, height / 20f * _options.MarkerScale, attitude, rotors, true);
 					}
 					else DrawDot(canvas, point, height);
 				}
@@ -422,24 +422,24 @@ public sealed class TrackBackdrop : IDisposable
 		}
 		else
 		{
-				// In the route's order, so where it crosses itself the later stretch is on top. A stretch whose ends are about one color is
-				// drawn plain: a gradient shader per stretch is the costly part, and most stretches of a smoothed route are that close.
-				foreach (TrailSegment segment in shape.Segments)
+			// In the route's order, so where it crosses itself the later stretch is on top. A stretch whose ends are about one color is
+			// drawn plain: a gradient shader per stretch is the costly part, and most stretches of a smoothed route are that close.
+			foreach (TrailSegment segment in shape.Segments)
+			{
+				if (IsNearlyOneColor(segment.FromColor, segment.ToColor) || segment.From == segment.To)
 				{
-					if (IsNearlyOneColor(segment.FromColor, segment.ToColor) || segment.From == segment.To)
-					{
-						_trailLine.Color = SpeedColorScale.Blend(segment.FromColor, segment.ToColor, 0.5);
-						canvas.DrawLine(segment.From, segment.To, _trailLine);
-						continue;
-					}
-
-					_gradientColors[0] = segment.FromColor;
-					_gradientColors[1] = segment.ToColor;
-					using SKShader shader = SKShader.CreateLinearGradient(segment.From, segment.To, _gradientColors, SKShaderTileMode.Clamp);
-					_trailLine.Shader = shader;
+					_trailLine.Color = SpeedColorScale.Blend(segment.FromColor, segment.ToColor, 0.5);
 					canvas.DrawLine(segment.From, segment.To, _trailLine);
-					_trailLine.Shader = null;
+					continue;
 				}
+
+				_gradientColors[0] = segment.FromColor;
+				_gradientColors[1] = segment.ToColor;
+				using var shader = SKShader.CreateLinearGradient(segment.From, segment.To, _gradientColors, SKShaderTileMode.Clamp);
+				_trailLine.Shader = shader;
+				canvas.DrawLine(segment.From, segment.To, _trailLine);
+				_trailLine.Shader = null;
+			}
 		}
 
 		_trailOutline.StrokeWidth = stroke * CoreWidthFactor;

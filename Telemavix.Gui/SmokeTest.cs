@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
+using SkiaSharp;
 using Telemavix.Core.Cameras;
 using Telemavix.Core.Dependencies;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Preview;
-using SkiaSharp;
 
 namespace Telemavix.Gui;
 

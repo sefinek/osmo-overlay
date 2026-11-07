@@ -10,11 +10,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using SkiaSharp;
 using Telemavix.Core;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Preview;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Gui;
 

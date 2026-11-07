@@ -1,4 +1,3 @@
-using Telemavix.Core.Overlay;
 using SkiaSharp;
 
 namespace Telemavix.Core.Telemetry.External;
@@ -61,7 +60,6 @@ internal sealed class DroneModel : IDisposable
 		return builder.Detach();
 	}
 
-
 	/// <summary>How one rotor looks: its color (front orange, rear light) brighter on the raised side, its disc fuller the faster it turns, and its blades smeared behind as a camera's exposure would.</summary>
 	private readonly struct RotorLook(DroneAttitude attitude, int x, int y, RotorSpin.RotorPose pose)
 	{
@@ -91,6 +89,7 @@ internal sealed class DroneModel : IDisposable
 			return (pose.Revolutions * 360 * Direction - behind * Direction, Blade.WithAlpha((byte)((235 - 110 * Math.Min(_pace, 1)) * fade)));
 		}
 	}
+
 	/// <summary>One blade from the hub outward in a unit box (length 0..1, half-width -1..1): narrow at the root, widest two thirds out, a rounded tip.</summary>
 	private static SKPath BladeOf()
 	{
@@ -325,7 +324,7 @@ internal sealed class DroneModel : IDisposable
 			SKPoint front = Project(0, halfLength, level + 0.02), rear = Project(0, -halfLength, level + 0.02);
 			_gradientColors[0] = BodyLight;
 			_gradientColors[1] = Hub;
-			using (SKShader shader = SKShader.CreateLinearGradient(front, rear, _gradientColors, SKShaderTileMode.Clamp))
+			using (var shader = SKShader.CreateLinearGradient(front, rear, _gradientColors, SKShaderTileMode.Clamp))
 			using (var paint = new SKPaint { IsAntialias = true, Shader = shader })
 				canvas.DrawPath(body, paint);
 

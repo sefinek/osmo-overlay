@@ -55,7 +55,7 @@ public sealed class SettingsPresetTests
 	[TestMethod]
 	public void ApplyTo_WritesOnlyWhatThePresetCovers()
 	{
-		var other = new OverlaySettings(ActivePresetId: "layout", AppTheme: "Amoled", HardwareDecoding: false, DefaultOutputFolder: "out",
+		var other = new OverlaySettings("layout", AppTheme: "Amoled", HardwareDecoding: false, DefaultOutputFolder: "out",
 			SpeedCorrectionPercent: 3, DjiApiNoticeShown: true);
 		var values = new SettingsPresetValues(SpeedCorrectionPercent: 12.5, NoAudio: true, OutputCodec: "hevc", OutputAspect: "4:5", OutputPadToAspect: true, RouteIntroDurationSeconds: 20,
 			OrientationSource: OrientationSource.Quaternion);

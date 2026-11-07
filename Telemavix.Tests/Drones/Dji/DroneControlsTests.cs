@@ -1,8 +1,8 @@
+using SkiaSharp;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
 using Telemavix.Core.Telemetry.External;
 using Telemavix.Drones.Dji;
-using SkiaSharp;
 using static Telemavix.Tests.Drones.Dji.FlightLogBuilder;
 
 namespace Telemavix.Tests.Drones.Dji;

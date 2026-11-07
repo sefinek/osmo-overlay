@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using NuGet.Versioning;
 using Telemavix.Core.Localization;
@@ -65,7 +66,7 @@ public static class RemoteAccess
 			if (decision.Blocked) AppLogger.Warn(string.Format(CoreStrings.RemoteAccess_SwitchedOff, AppUpdates.CurrentVersionLabel, decision.MinVersion));
 			return decision;
 		}
-		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or System.Text.Json.JsonException
+		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or JsonException
 			                           or CryptographicException or FormatException)
 		{
 			if (ct.IsCancellationRequested) throw;
@@ -90,7 +91,7 @@ public static class RemoteAccess
 		{
 			return File.Exists(CachePath) ? Evaluate(File.ReadAllText(CachePath), DateTimeOffset.UtcNow, false) : AccessDecision.Allowed;
 		}
-		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or JsonException
 			                           or CryptographicException or FormatException)
 		{
 			return AccessDecision.Allowed;
@@ -117,7 +118,7 @@ public static class RemoteAccess
 		{
 			foreach (string publicKey in PublicKeys)
 			{
-				ECDsa key = ECDsa.Create();
+				var key = ECDsa.Create();
 				keys.Add(key);
 				key.ImportSubjectPublicKeyInfo(Convert.FromBase64String(publicKey), out _);
 			}

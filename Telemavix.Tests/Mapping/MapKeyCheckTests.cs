@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using Telemavix.Core.Mapping;
 
 namespace Telemavix.Tests.Mapping;
@@ -16,7 +17,7 @@ public sealed class MapKeyCheckTests
 
 	private static HttpResponseMessage Json(HttpStatusCode status, string body)
 	{
-		return new HttpResponseMessage(status) { Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json") };
+		return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
 	}
 
 	private Task<MapKeyVerdict> Check(Func<HttpResponseMessage> respond)

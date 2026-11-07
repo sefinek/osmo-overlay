@@ -86,7 +86,7 @@ public sealed class SpeedCalibrationTests
 	[TestMethod]
 	public void Process_RaisesOnlyTheShownSpeed()
 	{
-		TelemetryFrame[] frames = [.. Enumerable.Range(0, 60).Select(i => new TelemetryFrame(i, i / 30.0, 50 + i * 1e-5, 20, 200, null, 0, 0, 1, GpsSpeedMs: 6))];
+		TelemetryFrame[] frames = [.. Enumerable.Range(0, 60).Select(i => new TelemetryFrame(i, i / 30.0, 50 + i * 1e-5, 20, 200, null, 0, 0, 1, 6))];
 
 		List<DerivedFrame> plain = TelemetryProcessor.Process(frames, null);
 		List<DerivedFrame> corrected = TelemetryProcessor.Process(frames, null, false, 10);

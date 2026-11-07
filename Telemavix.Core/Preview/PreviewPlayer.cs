@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using SkiaSharp;
 using Telemavix.Core.Cameras;
 using Telemavix.Core.Localization;
 using Telemavix.Core.Logging;
@@ -8,7 +9,6 @@ using Telemavix.Core.Overlay;
 using Telemavix.Core.Reframe;
 using Telemavix.Core.Telemetry;
 using Telemavix.Core.Telemetry.External;
-using SkiaSharp;
 
 namespace Telemavix.Core.Preview;
 
@@ -141,8 +141,8 @@ public sealed class PreviewPlayer : IDisposable
 
 		// The opens block; awaiting them through Task.Run keeps this method - and the FrameReady it raises - on the UI thread. The picture's and
 		// the sound's don't depend on each other, so they open at the same time.
-		Task<LibavVideoSource> videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer, trackPlayback));
-		Task<(IAudioSamples?, AudioOutput?)> audioOpen = Task.Run(() => trackPlayback is null or { IsTrackOnly: true } ? OpenAudio(segments) : (null, null));
+		var videoOpen = Task.Run(() => new LibavVideoSource(segments, summary.Video.Fps, previewWidth, previewHeight, pool, reframer, trackPlayback));
+		var audioOpen = Task.Run(() => trackPlayback is null or { IsTrackOnly: true } ? OpenAudio(segments) : (null, null));
 		try
 		{
 			await Task.WhenAll(videoOpen, audioOpen);
@@ -244,7 +244,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		// Map and route-intro tiles are fetched in the background, not awaited here: a slow or unreachable tile server
 		// would otherwise hold up even the first frame. The widgets draw their placeholder until the tiles land.
-		StartMosaics(recording, intro: true, map: layout.Any(e => e is MapWidgetElement { Visible: true }));
+		StartMosaics(recording, true, layout.Any(e => e is MapWidgetElement { Visible: true }));
 	}
 
 	public void Close()
@@ -486,7 +486,7 @@ public sealed class PreviewPlayer : IDisposable
 		PublishStill(recording, still);
 		// The map widget's mosaic stays unless the route now reaches past it; the route intro's unless the route's extent changed.
 		OverlayRenderer renderer = recording.Compositor.Renderer;
-		StartMosaics(recording, intro: renderer.NeedsRouteIntroPrepare(), map: !renderer.MapMosaicCoversRoute);
+		StartMosaics(recording, renderer.NeedsRouteIntroPrepare(), !renderer.MapMosaicCoversRoute);
 	}
 
 	/// <summary>The card the recording opened with - or none on an output starting later than the recording (a trimmed start), unless the card is wanted there too.</summary>
@@ -512,7 +512,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		layout = recording.Compositor.Filter(layout);
 		PublishStill(recording, recording.Compositor.Change(r => r.Layout = layout));
-		StartMosaics(recording, intro: false, map: recording.Compositor.Renderer.NeedsMapPrepare(layout));
+		StartMosaics(recording, false, recording.Compositor.Renderer.NeedsMapPrepare(layout));
 	}
 
 	/// <summary>When a speed-gated trip progress bar appears in the open recording (OverlayRenderer.SpeedGateSeconds) - null with none open.</summary>
@@ -554,7 +554,7 @@ public sealed class PreviewPlayer : IDisposable
 	/// </summary>
 	public SKRect? MeasureElement(OverlayElement element, TimeSpan position)
 	{
-		return _recording?.Compositor.MeasureElement(element, position, approximate: IsPlaying);
+		return _recording?.Compositor.MeasureElement(element, position, IsPlaying);
 	}
 
 	/// <summary>
@@ -580,7 +580,7 @@ public sealed class PreviewPlayer : IDisposable
 
 		PublishStill(recording, recording.Compositor.Change(r => r.MapSources = sources));
 		OverlayRenderer renderer = recording.Compositor.Renderer;
-		StartMosaics(recording, intro: renderer.NeedsRouteIntroPrepare(), map: renderer.NeedsMapPrepare(renderer.Layout));
+		StartMosaics(recording, renderer.NeedsRouteIntroPrepare(), renderer.NeedsMapPrepare(renderer.Layout));
 	}
 
 	/// <summary>

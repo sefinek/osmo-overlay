@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
+using SkiaSharp;
 using Telemavix.Core.Ffmpeg;
 using Telemavix.Core.Logging;
 using Telemavix.Core.Mapping;
 using Telemavix.Core.Overlay;
 using Telemavix.Core.Telemetry;
-using SkiaSharp;
 
 namespace Telemavix.Core;
 
@@ -455,7 +455,7 @@ public static class RenderBenchmark
 		bool hardwareDecoding, IReadOnlyList<OverlayElement> layout, IReadOnlyList<DerivedFrame> route, int num, int den, Live live, CancellationToken ct)
 	{
 		using var renderer = new OverlayRenderer(output.Width, output.Height, route[0].Raw.AltitudeMeters, layout, route,
-			TelemetryProcessor.Summarize(route).MaxSpeedKmh, true, mapSources: MapSources.From(settings))
+			TelemetryProcessor.Summarize(route).MaxSpeedKmh, mapSources: MapSources.From(settings))
 		{
 			DrawShadows = !settings.DisableShadows
 		};

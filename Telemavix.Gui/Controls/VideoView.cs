@@ -6,8 +6,8 @@ using Avalonia.Media;
 using Avalonia.Rendering.Composition;
 using Avalonia.Skia;
 using Avalonia.Threading;
-using Telemavix.Core.Preview;
 using SkiaSharp;
+using Telemavix.Core.Preview;
 
 namespace Telemavix.Gui;
 

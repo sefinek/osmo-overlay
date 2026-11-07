@@ -196,7 +196,7 @@ public sealed class FlightLog
 		if (!IsEncrypted) return request;
 
 		List<(int FeaturePoint, byte[] Data)> current = [];
-		foreach ((byte type, byte[] content) in ReadRecords(null, keyBlocksOnly: true))
+		foreach ((byte type, byte[] content) in ReadRecords(null, true))
 		{
 			if (type == KeyStorageRecord && content.Length >= 4)
 			{
