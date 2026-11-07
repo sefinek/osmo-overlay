@@ -159,7 +159,7 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 	private const float DroneTopGap = 60;
 	private const float FpvDateBelowTime = 64, FpvBatteryWidth = 450, FpvSignalWidth = 242, FpvLeftColumnTop = 296, FpvRightColumnTop = 150, FpvRowStep = 160, FpvAlertsBelowTop = 170, FpvDialGap = 60, FpvWatermarkAboveDials = 48;
 	private const float DroneColumnStep = 220;
-	private const float StatColumnStep = 160;
+	private const float StatColumnStep = 190;
 
 	// The sticks and the two dials stacked down the right edge under the top row: where the first starts, and the gap between them.
 	private const float DroneControlsTop = 200;
@@ -183,8 +183,8 @@ public sealed record OverlayPreset(string Id, string Name, List<OverlayElement> 
 		float pitchCx = speedCx - (OverlayElementBounds.TiltRadius * 2 + 40);
 
 		float dateY = m + 34;
-		// The stats column keeps its top (Elevation, where it has always been) and closes up below it: a stat is about 120 px
-		// tall at 4K, so the old 220 px step left a gap nearly as tall as the stat itself.
+		// The stats column keeps its top (Elevation, where it has always been) and closes up below it: the old 220 px step left
+		// a gap nearly as tall as the stat itself (about 120 px at 4K), 160 was too tight.
 		float elevationY = firstThirdY - 99 - 440;
 		float gradientY = elevationY + StatColumnStep;
 		float distanceY = gradientY + StatColumnStep;

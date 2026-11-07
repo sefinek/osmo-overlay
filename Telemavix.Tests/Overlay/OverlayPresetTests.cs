@@ -22,8 +22,8 @@ public sealed class OverlayPresetTests
 		[
 			(OverlayElementType.DateTimeText, 70, 104),
 			(OverlayElementType.Elevation, 69, 204.333f),
-			(OverlayElementType.Gradient, 70, 424.333f),
-			(OverlayElementType.Distance, 71, 644.333f),
+			(OverlayElementType.Gradient, 70, 394.333f),
+			(OverlayElementType.Distance, 71, 584.333f),
 			(OverlayElementType.SpeedGauge, 3512, 1832),
 			(OverlayElementType.RollGauge, 3512, 1421),
 			(OverlayElementType.MapWidget, 331.5f, 1828.5f),
